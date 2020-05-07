@@ -112,7 +112,7 @@
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
       integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
-     *  no_weisheit, fix_recomb, ns_pardf
+     *  no_weisheit, ns_pardf
       integer kstart, kstart1, kend, kpart
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
@@ -127,7 +127,7 @@
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
      &  wrk(:,:,:)
-      save fix_cx, no_weisheit, rtnt_in, rtnn_in, fix_recomb
+      save fix_cx, no_weisheit, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
       logical unread
 *   ..procedures
@@ -138,8 +138,7 @@
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
       external cfverr, cfruin, is_comment
 *   ..initialisation
-      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/16/,
-     & fix_recomb/0/
+      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/16/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *

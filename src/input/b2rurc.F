@@ -180,6 +180,11 @@
       cutlo = machsfr()
 
 * ..read rate coefficients
+      if (version.ge.'03.000.007') then
+        call cfruin (nget, 1, fix_recomb, 'fix_recomb')
+      else
+        fix_recomb = -1
+      end if
 *   ..read dimensions
       call cfruin (nget, 3, idum, 'rtnt,rtnn,rtns')
       call alloc_b2mod_b2cmrc(idum(0), idum(1), idum(2))
