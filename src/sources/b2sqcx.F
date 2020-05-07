@@ -1,13 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqcx (nCv, ns, ev, amh0, th0, rlcx0, rcx)
+      subroutine b2sqcx (nCv, ns, ev, amh0, th0, thn0, rlcx0, rcx)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
       real (kind=R8) ::
-     *   ev, amh0, th0(nCv), rlcx0(nCv,0:1,0:ns-1)
+     *   ev, amh0, th0(nCv), thn0(nCv), rlcx0(nCv,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   rcx(nCv,0:ns-1)
@@ -43,7 +43,7 @@
 *   ..local variables
       integer ncall, styl0, n2, iCv, is
       real (kind=R8) ::
-     *   phm0, cutlo, cutll, t0
+     *   phm0, cutlo, cutll, t0, t_av
       real (kind=R8) ::
      *   wrk0(nCv)
       save ncall, styl0, phm0
@@ -88,7 +88,8 @@
       cutlo = max(machsfr(),exp(cutll))
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iCv = 1, nCv
-        wrk0(iCv) = log(th0(iCv)/(amh0*ev))
+        t_av = 0.5_R8*(th0(iCv)+thn0(iCv))
+        wrk0(iCv) = log(t_av/(amh0*ev))
       enddo
 
 * ..main computation
