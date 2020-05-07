@@ -641,7 +641,7 @@
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
-        if (solveei(mpg%cvReg(iCv1))) then
+        if (solveen(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
