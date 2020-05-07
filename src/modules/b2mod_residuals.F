@@ -4,6 +4,7 @@
      *  resco(:,:,:),
      *  reshe(:,:),
      *  reshi(:,:),
+     *  reshn(:,:),
      *  resmo(:,:,:),
      *  resmt(:,:),
      *  respo(:,:),
@@ -24,6 +25,7 @@
       allocate(resco(-1:nxd,-1:nyd,0:nsd-1))
       allocate(reshe(-1:nxd,-1:nyd))
       allocate(reshi(-1:nxd,-1:nyd))
+      allocate(reshn(-1:nxd,-1:nyd))
       allocate(resmo(-1:nxd,-1:nyd,0:nsd-1))
       allocate(resmt(-1:nxd,-1:nyd))
       allocate(respo(-1:nxd,-1:nyd))
@@ -33,6 +35,7 @@
       resco=0.0_R8
       reshe=0.0_R8
       reshi=0.0_R8
+      reshn=0.0_R8
       resmo=0.0_R8
       resmt=0.0_R8
       respo=0.0_R8
@@ -48,6 +51,7 @@
       deallocate(resco)
       deallocate(reshe)
       deallocate(reshi)
+      deallocate(reshn)
       deallocate(resmo)
       deallocate(resmt)
       deallocate(respo)
