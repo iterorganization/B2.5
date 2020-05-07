@@ -66,6 +66,7 @@ csw 19oct2012, added save attribute!!!
       integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
+      integer, save :: iout = 0
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
@@ -136,6 +137,8 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       character*13, save, allocatable :: ion_name(:)
+      character*3 :: chistrai
+      character*3 :: chncall
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
@@ -359,6 +362,7 @@ c not sure this is the right place
         call ipgeti ('eirene_savef30', save_f30)
         call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
+        call ipgeti ('eirene_mc_iout', iout)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
@@ -975,6 +979,8 @@ c*** Print the particle fluxes for each stratum and species
                 end do !}
               end if !}
             end do !}
+
+
 
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
@@ -2603,6 +2609,16 @@ c*** before correction (r), after correction (c), after iteration (i)
               end do !}  ! ix
           end if !}
         end do !}  ! is
+
+        if (iout.ne.0) then
+          write (chistrai,'(i1)') istrai
+          call my_out_us(70,nCv,0,sei_av(:,istrai),'sei'//chistrai)
+          if (istrai.eq.1) then
+            write (chncall,'(i3.3)') ncall
+            call my_out_us(70,nCv,0,sei_av(:,istrai),'sei1_'//chncall)
+          endif
+        endif
+        
         do ic=1,nCv !{
             if(ic <= mpg%nCi .and.
      &         mpg%cvReg(ic).ne.0) then !{
