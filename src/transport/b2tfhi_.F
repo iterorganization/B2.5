@@ -61,7 +61,8 @@
       real (kind=R8) ::
      *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), vdia_par,     !srv 17.05.99
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
-     &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1)
+     &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
+     *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1)
 cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
@@ -123,6 +124,11 @@ cpax
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
+
+       if (tn_style.ne.0.and.mdf_fhi.eq.1) then
+         call xerrab('mdf_fhi not yet available for',
+     &               'non-default energy equation')
+       endif
       endif
 
 *   ..set dummy arrays
@@ -232,37 +238,103 @@ cpax
      &  dv%fchanml(:,1) + vis_per*dv%fchvisper(:,1) + 
      &  vis_q*dv%fchvisq(:,1))*ycur
 
-*   ..convective coefficients
-      floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
-     &  flidia(:,0) + scur(:,0)
-      floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
-     &  flidia(:,1) + scur(:,1)
+      if (iout.eq.2) then
+        call my_out_us(70,nFc,1,co%chcn(:,0),'chcn0')
+        call my_out_us(70,nFc,1,co%chci(:,0),'chci0')
+        call my_out_us(70,nFc,1,co%chcn(:,1),'chcn1')
+        call my_out_us(70,nFc,1,co%chci(:,1),'chci1')
+      endif
 
-      floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
-     &  scur(:,0)
-      floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
-     &  scur(:,1)
+
+*   ..convective coefficients
+      if (tn_style.eq.0) then
+        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
+     &    flidia(:,0) + scur(:,0)
+        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
+     &    flidia(:,1) + scur(:,1)
+
+        flon0(:,0) = 0.0_R8
+        flon0(:,1) = 0.0_R8
+      elseif (tn_style.eq.1) then
+        do is= 0,ns-1
+          if (.not.is_neutral(is)) then
+            floi0(:,0) = floi0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
+            floi0(:,1) = floi0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+          endif 
+          flon0(:,0) = 0.0_R8
+          flon0(:,1) = 0.0_R8
+        enddo
+      else
+        do is= 0,ns-1
+          if (.not.is_neutral(is)) then
+            floi0(:,0) = floi0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
+            floi0(:,1) = floi0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+          else
+            flon0(:,0) = flon0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
+            flon0(:,1) = flon0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+          endif
+        enddo
+      endif
+
+      if (iout.eq.2) then
+        call my_out_us(70,nFc,1,floi0(:,0),'floi0')
+        call my_out_us(70,nFc,1,flon0(:,0),'flon0')
+        call my_out_us(70,nFc,1,floi0(:,1),'floi1')
+        call my_out_us(70,nFc,1,flon0(:,1),'flon1')
+      endif
+
+      if (tn_style.eq.0) then !! default combined ion-neutral energy equation
+      
+        floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
+     &    scur(:,0)
+        floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
+     &    scur(:,1)
 
 *   ..apply discretization scheme
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
-     &  co%chci,fhi0_mdf,dumm0,dumm1)
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
+     &    co%chci,fhi0_mdf,dumm0,dumm1)
 
 *   ..compute fluxes
-      dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
-      dv%fhi(:,1) = fhi0_mdf(:,1) +  (floi0(:,1) - floi0_mdf(:,1))*tif
+        dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
+        dv%fhi(:,1) = fhi0_mdf(:,1) +  (floi0(:,1) - floi0_mdf(:,1))*tif
 
-      dv%fhi_mdf(:,0)  = fhi0_mdf(:,0) - dv%fhiPSch(:,0)
-      dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
+        dv%fhi_mdf(:,0)  = fhi0_mdf(:,0) - dv%fhiPSch(:,0)
+        dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
 
 *   ..compute floi, coni
-      floi0 = dv%floi
-      coni0 = dv%coni(:,:,0)
-      call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
-     &  dv%floi,dv%coni)
+        floi0 = dv%floi
+        coni0 = dv%coni(:,:,0)
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
+     &    dv%floi,dv%coni)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
-      dv%floi = dv%floi + floi0
-      dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
+        dv%floi = dv%floi + floi0
+        dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
+
+      elseif (tn_style.eq.1) then
+        !! TODO_AFN
+        call xerrab('pure ion energy equation not yet implemented')
+      else
+        if(mdf_fhi.eq.1) then
+          call xerrab('non-default energy eqs not yet for mdf')
+        endif
+
+*   ..apply discretization scheme
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0,
+     &    co%chci,dv%fhi,dumm0,dumm1)
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%tn,flon0,
+     &    co%chcn,dv%fhn,dumm0,dumm1)
+
+*   ..compute floi, coni
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
+     &    dv%floi,dv%coni)
+*   ..compute flon, conn
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
+     &    dv%flon,dv%conn)
+
+      endif
+
+
 
 #ifdef WG_TODO
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
@@ -761,6 +833,17 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fni_he(1,1),'b2tfhi__fniy')
        call my_out_us(70,nCv,0,dv%ni(:,0),'b2tfhi__ni0')
        call my_out_us(70,nCv,0,dv%ni(:,1),'b2tfhi__ni1')
+c neutrals
+       call my_out_us(70,nFc,1,dv%flon(1,0),'b2tfhi__flonx')
+       call my_out_us(70,nFc,1,dv%flon(1,1),'b2tfhi__flony')
+       call my_out_us(70,nFc,1,dv%conn(1,0,0),'b2tfhi__connx0')
+       call my_out_us(70,nFc,1,dv%conn(1,0,1),'b2tfhi__connx1')
+       call my_out_us(70,nFc,1,dv%conn(1,0,2),'b2tfhi__connx2')
+       call my_out_us(70,nFc,1,dv%conn(1,1,0),'b2tfhi__conny0')
+       call my_out_us(70,nFc,1,dv%conn(1,1,1),'b2tfhi__conny1')
+       call my_out_us(70,nFc,1,dv%conn(1,1,2),'b2tfhi__conny2')
+       call my_out_us(70,nFc,1,dv%fhn(1,0),'b2tfhi__fhnx')
+       call my_out_us(70,nFc,1,dv%fhn(1,1),'b2tfhi__fhny')
       endif                                                             !srv 18.06.08 }
 * ..return
       ncall = ncall+1
