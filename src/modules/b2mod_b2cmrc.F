@@ -1,7 +1,7 @@
       module b2mod_b2cmrc
       use b2mod_types
 *     (/b2cmrc/ contains atomic rate coefficients)
-      integer, save :: rtnt, rtnn, rtns
+      integer, save :: rtnt, rtnn, rtns, fix_recomb = 0
       integer, save :: rtdumm
 ! old      parameter (rtnt=40, rtnn=16, rtnsmx=75)
       real (kind=R8), allocatable, save ::

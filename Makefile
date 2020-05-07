@@ -723,6 +723,9 @@ ${OBJDIR}/eirmod_parmmod.${MOD}:
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
+
+${OBJDIR}/eirmod_module_avltree.${MOD}:
+	touch ${OBJDIR}/eirmod_module_avltree.${MOD}
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
