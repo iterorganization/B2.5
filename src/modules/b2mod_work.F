@@ -3,12 +3,14 @@
       real (kind=R8), allocatable, save ::
      *  conb(:,:,:,:,:),  conc(:,:,:,:),                              !srv 13.10.06
      *  cone(:,:,:,:,:),  coni(:,:,:,:,:),                            !srv 02.01.07
+     *  conn(:,:,:,:,:),
      *  corpa(:,:,:),  corpo(:,:),
-     *  corte(:,:),  corti(:,:),
+     *  corte(:,:),  corti(:,:), cortn(:,:),
      *  corua(:,:,:),  corut(:,:),
      *  delne(:,:), delni(:,:,:), delna(:,:,:),  delpo(:,:),  
      *  delte(:,:),  delti(:,:),  delua(:,:,:),
      *  flob(:,:,:,:),  floe(:,:,:,:),  floi(:,:,:,:),
+     *  flon(:,:,:,:),
      *  floe_noc(:,:,:,:),                                          !srv 28.10.02
      *  floi_noc(:,:,:,:),                                          !srv 28.10.02
      *  pcca(:,:,:,:,:),  pccm(:,:,:,:),
@@ -33,6 +35,7 @@
       allocate(corpo(-1:nxd,-1:nyd))
       allocate(corte(-1:nxd,-1:nyd))
       allocate(corti(-1:nxd,-1:nyd))
+      allocate(cortn(-1:nxd,-1:nyd))
       allocate(corua(-1:nxd,-1:nyd,0:nsd-1))
       allocate(corut(-1:nxd,-1:nyd))
       allocate(delne(-1:nxd,-1:nyd))
@@ -45,6 +48,7 @@
       allocate(flob(-1:nxd,-1:nyd,0:1,0:1))
       allocate(floe(-1:nxd,-1:nyd,0:1,0:1))
       allocate(floi(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(flon(-1:nxd,-1:nyd,0:1,0:1))
       allocate(floe_noc(-1:nxd,-1:nyd,0:1,0:1))                       !srv 28.10.02
       allocate(floi_noc(-1:nxd,-1:nyd,0:1,0:1))                       !srv 28.10.02
       allocate(pcca(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
@@ -105,6 +109,7 @@
       deallocate(corpo)
       deallocate(corte)
       deallocate(corti)
+      deallocate(cortn)
       deallocate(corua)
       deallocate(corut)
       deallocate(delne)
@@ -117,6 +122,7 @@
       deallocate(flob)
       deallocate(floe)
       deallocate(floi)
+      deallocate(flon)
       deallocate(floe_noc)
       deallocate(floi_noc)
       deallocate(pcca)
