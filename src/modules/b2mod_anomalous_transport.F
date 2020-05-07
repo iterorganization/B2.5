@@ -7,6 +7,7 @@
      *   hce0(:,:),
      *   alf0(:,:),
      *   hci0(:,:),
+     *   hcn0(:,:),
      *   hcib(:,:,:),
      *   chcb(:,:,:,:,:),
      *   dpa0(:,:,:),
@@ -27,6 +28,7 @@
       deallocate(hce0)
       deallocate(alf0)
       deallocate(hci0)
+      deallocate(hcn0)
       deallocate(hcib)
       deallocate(chcb)
       deallocate(dpa0)
@@ -49,6 +51,7 @@
       allocate(hce0(-1:nxd,-1:nyd))
       allocate(alf0(-1:nxd,-1:nyd))
       allocate(hci0(-1:nxd,-1:nyd))
+      allocate(hcn0(-1:nxd,-1:nyd))
       allocate(hcib(-1:nxd,-1:nyd,0:nsd-1))
       allocate(chcb(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(dpa0(-1:nxd,-1:nyd,0:nsd-1))
@@ -73,6 +76,7 @@
         call cfrure (nread, size(hce0), hce0, 'hce0')
         call cfrure (nread, size(alf0), alf0, 'alf0')
         call cfrure (nread, size(hci0), hci0, 'hci0')
+        call cfrure (nread, size(hcn0), hcn0, 'hcn0')
         call cfrure (nread, size(hcib), hcib, 'hcib')
         call cfrure (nread, size(dpa0), dpa0, 'dpa0')
         call cfrure (nread, size(dna0), dna0, 'dna0')
@@ -108,6 +112,7 @@
         call cfwure (nwrite, size(hce0), hce0, 'hce0')
         call cfwure (nwrite, size(alf0), alf0, 'alf0')
         call cfwure (nwrite, size(hci0), hci0, 'hci0')
+        call cfwure (nwrite, size(hcn0), hcn0, 'hci0')
         call cfwure (nwrite, size(hcib), hcib, 'hcib')
         call cfwure (nwrite, size(dpa0), dpa0, 'dpa0')
         call cfwure (nwrite, size(dna0), dna0, 'dna0')
