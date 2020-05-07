@@ -6,6 +6,7 @@
      *  sch(:,:,:),
      *  she(:,:,:),
      *  shi(:,:,:),
+     *  shn(:,:,:),
      *  sne(:,:,:),
      *  smo(:,:,:,:),
      *  shef(:,:,:),                                           !srv 10.11.02                
@@ -82,6 +83,7 @@
       allocate(she(-1:nxd,-1:nyd,0:3))
       allocate(sne(-1:nxd,-1:nyd,0:1))
       allocate(shi(-1:nxd,-1:nyd,0:3))
+      allocate(shn(-1:nxd,-1:nyd,0:3))
       allocate(smo(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(sna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(shef(-1:nxd,-1:nyd,0:3))                        !sv 10.11.02
@@ -212,6 +214,7 @@
       deallocate(she)
       deallocate(sne)
       deallocate(shi)
+      deallocate(shn)
       deallocate(smo)
       deallocate(shef)                        !sv 10.11.02
       deallocate(shif)                        !sv 10.11.02
