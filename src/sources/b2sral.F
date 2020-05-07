@@ -153,6 +153,14 @@
      &  rt%rza, st_ext%za, dv%fna, st_ext%fa, dv%fch, dv%fne)
       call b2xpfi (nFc, ns, dv%fna, dv%fni)
 
+      if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_a'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_a'//chk)
+        enddo
+      endif
+
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
@@ -224,10 +232,21 @@
        sr%smo = srw%smo0
        sr%she = srw%she0
        sr%shi = srw%shi0
+       sr%shn = srw%shn0
        sr%sch = srw%sch0
        sr%sne = srw%sne0
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
+
+      if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_b'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_b'//chk)
+        enddo
+      endif
+
+
 #ifdef WG_TODO
       elseif(style.eq.1) then
 !! FIXME : Need to add sne in argument list here ???
@@ -278,6 +297,7 @@
       call b2xzdd (nCv, 1, mpg, srw%sne0)
       call b2xzdd (nCv, 3, mpg, srw%she0)
       call b2xzdd (nCv, 3, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, mpg, srw%shn0)
       call b2xzdd (nCv, 3, mpg, srw%sch0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
@@ -285,6 +305,7 @@
       call b2saxpy (nCv*2, 1.0_R8, srw%sne0, 1, sr%sne, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%she0, 1, sr%she, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
+      call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
       do is=0,ns-1                                                      !srv 18.05.09 {
         snatot(is)=0.0_R8
@@ -296,6 +317,16 @@
       write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
       if(main_call.or.wrong_flow)                                  !xpb !srv 18.05.09 }
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
+
+
+      if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_c'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_c'//chk)
+        enddo
+      endif
+
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
@@ -309,6 +340,7 @@
       call b2xzdd (nCv, 1, mpg, srw%sne0)
       call b2xzdd (nCv, 3, mpg, srw%she0)
       call b2xzdd (nCv, 3, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, mpg, srw%shn0)
       call b2xzdd (nCv, 3, mpg, srw%sch0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
@@ -316,7 +348,11 @@
       call b2saxpy (nCv*2, 1.0_R8, srw%sne0, 1, sr%sne, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%she0, 1, sr%she, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
+      call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
+
+
+
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
@@ -339,6 +375,14 @@
         call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
       endif
 #endif
+       if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_d'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_d'//chk)
+        enddo
+      endif
+
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
       call b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
@@ -350,16 +394,26 @@
       enddo
       call b2xzdd (nCv, 3, mpg, srw%she0)
       call b2xzdd (nCv, 3, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, mpg, srw%shn0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
       call b2saxpy (nCv*4*ns, 1.0_R8, srw%smq0, 1, sr%smq, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%she0, 1, sr%she, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
+      call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
 *     (no contribution to sch or sne)
 *   ..compute sources due to charge exchange
       rcxnareg=0.0_R8
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
+
+      if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_e'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_e'//chk)
+        enddo
+      endif
 !WG_TODO      rcxna=0.0_R8
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
@@ -378,7 +432,7 @@
 
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
-        call b2sqcx (nCv, ns, ev, am(iscx(k)), pl%ti,
+        call b2sqcx (nCv, ns, ev, am(iscx(k)), pl%ti, pl%tn,
      &   rt%rlcx(1,0,0,k), rtw%rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
@@ -405,6 +459,16 @@
           call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, shi0_cx, 1)
         endif                         ! IYS 06.11.2017
       enddo
+
+
+      if (iout.eq.2) then
+        do k=0,3 !! AFN_TODO: remove
+          write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_f'//chk)
+            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_f'//chk)
+        enddo
+      endif
+
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         write(*,*) 'Writing cx sources'
@@ -450,6 +514,7 @@
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,sr%she(1,k),'b2sral_she'//chk)
           call my_out_us(70,nCv,0,sr%shi(1,k),'b2sral_shi'//chk)
+          call my_out_us(70,nCv,0,sr%shn(1,k),'b2sral_shn'//chk)
           call my_out_us(70,nCv,0,sr%sch(1,k),'b2sral_sch'//chk)
 #ifdef WG_TODO
           if (use_astra.ne.0) then
