@@ -700,8 +700,8 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
 
-      if (tn_style.ne.0) then !! if tn_style.ne.0 fhn should be exactly zero.
-        call b2xvsg (nCv, dv%fhn, 1, 'fhn', '.eq.')
+      if (tn_style.ne.2) then !! if tn_style.ne.2 fhn should be exactly zero.
+        call b2xvsg (nCv, dv%fhn, 1, 'fhn', '.le.')
       endif
 
       call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
