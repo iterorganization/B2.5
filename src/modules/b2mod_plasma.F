@@ -11,6 +11,7 @@
      *  fne_32(:,:,:,:),    fne_52(:,:,:,:),
      *  fhe(:,:,:,:),  fhe0(:,:,:,:),  fhep(:,:,:,:),  fhet(:,:,:,:),
      *  fhi(:,:,:,:),  fhi0(:,:,:,:),  fhip(:,:,:,:),  fhit(:,:,:,:),
+     *  fhn(:,:,:,:),
      *  fna(:,:,:,:,:),  fna0(:,:,:,:,:),  fnap(:,:,:,:,:),
      *  fne(:,:,:,:),    fni(:,:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
@@ -75,6 +76,7 @@
       allocate(fhit(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhi_mdf(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
       allocate(fhiPSch(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
+      allocate(fhn(-1:nxd,-1:nyd,0:1,0:1))                   
       allocate(fna_he(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))              !srv 21.01.00
       allocate(fna_fcor(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 01.10.99
       allocate(fnaPSch(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 13.10.06
@@ -193,6 +195,7 @@
       deallocate(fhi0)
       deallocate(fhip)
       deallocate(fhit)
+      deallocate(fhn)
       deallocate(fna)
       deallocate(fna0)
       deallocate(fnap)
@@ -289,6 +292,7 @@
         call cfrure (nread, size(fhi0), fhi0, 'fhi0')
         call cfrure (nread, size(fhip), fhip, 'fhip')
         call cfrure (nread, size(fhit), fhit, 'fhit')
+        call cfrure (nread, size(fhn),  fhn,  'fhn')
         call cfrure (nread, size(fna),  fna,  'fna' )
         call cfrure (nread, size(fna0), fna0, 'fna0')
         call cfrure (nread, size(fnap), fnap, 'fnap')
