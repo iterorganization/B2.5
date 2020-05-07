@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2wups (nput, nx, ny, ns,
-     &  ne, na, ua, uadia, te, ti, po,
-     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  ne, na, ua, uadia, te, ti, tn, po,
+     &  fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -18,10 +18,12 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                  !xpb
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny)
+     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
+     &  po(-1:nx,-1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1), 
+     &  fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),          !srv 10.06.08
      &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
@@ -115,11 +117,13 @@
       call cfwure (nput, n2*4*ns, uadia, 'uadia')
       call cfwure (nput, n2, te, 'te')
       call cfwure (nput, n2, ti, 'ti')
+      call cfwure (nput, n2, tn, 'tn')
       call cfwure (nput, n2, po, 'po')
 *   ..save fluxes
       call cfwure (nput, n2*4*ns, fna, 'fna')
       call cfwure (nput, n2*4, fhe, 'fhe')
       call cfwure (nput, n2*4, fhi, 'fhi')
+      call cfwure (nput, n2*4, fhn, 'fhn')
       call cfwure (nput, n2*4, fch, 'fch')
       call cfwure (nput, n2*4, fch_32, 'fch_32')
       call cfwure (nput, n2*4, fch_52, 'fch_52')
