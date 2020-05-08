@@ -81,34 +81,34 @@
      *  pitx, fke, fse, fal, fke_Zh
       external subini, subend, xertst, sfill
       external b2xvsg, ipgeti
-      pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
-      fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
-      fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
-      fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
-      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)     !srv 02.12.10
+
       real (kind=R8) c11e, c13e, c15e
       parameter (c11e = 1.0000_R8, c13e = 0.9487_R8, c15e =-0.8964_R8)
       real (kind=R8) c31e
       parameter (c31e = c13e)
       real (kind=R8) c33e, c35e, c55e
+      real (kind=R8) c53e
+      real (kind=R8) d13e, d15e, d35e
+      real (kind=R8) h135e, h153e, h315e
+      real (kind=R8) f135e
+*   ..initialisation
+      data ncall/0/, model/1/
+      pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
+      fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
+      fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
+      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)     !srv 02.12.10
       c33e(z) = 1.3000_R8 + 0.5657_R8/z
       c35e(z) =-1.3040_R8 - 0.3207_R8/z
       c55e(z) = 1.5464_R8 + 0.9091_R8/z
-      real (kind=R8) c53e
       c53e(z) = c35e(z)
-      real (kind=R8) d13e, d15e, d35e
       d13e(z) = c11e   *c33e(z) - c13e   *c13e
       d15e(z) = c11e   *c55e(z) - c15e   *c15e
       d35e(z) = c33e(z)*c55e(z) - c35e(z)*c35e(z)
-      real (kind=R8) h135e, h153e, h315e
       h135e(z) = c15e   *c33e(z) - c13e   *c35e(z)
       h153e(z) = c13e   *c55e(z) - c15e   *c53e(z)
       h315e(z) = c35e(z)*c11e    - c31e   *c15e
-      real (kind=R8) f135e
       f135e(z) = c55e(z)*d13e(z) - c35e(z)*h315e(z) - c15e   *h135e(z)
-*   ..initialisation
-      data ncall/0/, model/1/
-
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
