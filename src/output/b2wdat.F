@@ -116,12 +116,11 @@
       intrinsic abs                                                !srv
       real (kind=R8) ::                                            !srv
      *   hy1, expu2, machsfr                                       !srv
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
-
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
