@@ -147,8 +147,6 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic abs, mod
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -177,7 +175,8 @@
      3     sput_chem_cutoff_beta/3.0_R8/,
      4     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      5     redep_alpha/0.0_R8/, potential_at_guard_cell/1/
-
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
