@@ -70,7 +70,6 @@
      *   roxa
       external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
       save ncall, styl0, styl1, 
      1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest
@@ -78,7 +77,7 @@
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/,
      &  limthii/0.3e0_R8/, limthee/0.3e0_R8/,
      &  zlitest/0/
-
+      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *-----------------------------------------------------------------------
 *.computation
 
