@@ -155,15 +155,12 @@
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
 !      sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
 !      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                      !srv 24.08.08
 !     &            hz(ix,iy)
 !!     &            hz(topix(ix,iy),topiy(ix,iy))
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, 
@@ -177,14 +174,17 @@
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-      real (kind=R8) :: hybr, harm, pit, upwind
+!!      real (kind=R8) :: hybr, harm, pit, upwind
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
-      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
+!!      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
+!!      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
+!!      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+!!      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
+      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.computation
 

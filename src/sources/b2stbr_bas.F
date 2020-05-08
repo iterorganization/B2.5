@@ -97,10 +97,10 @@
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 
      *   smax, smin, hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       save ncall
       data ncall/0/
+      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
