@@ -891,9 +891,11 @@ contains
         if (icnt.gt.0) then
           r0 = r0 / float(icnt)
           if (ffbz(jxa,-1,0).ne.0.0_R8) then
+            b0r0 = ffbz(jxa,-1,0)
             b0 = ffbz(jxa,-1,0)/r0
           else if (isymm.eq.0) then
             b0 = bb(jxa,-1,2)
+            b0r0 = b0*r0
           else if (isymm.eq.1 .or. isymm.eq.2) then
             b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
                               &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
@@ -905,6 +907,13 @@ contains
           end if
         else
           b0 = bb(jxa,-1,2)
+          if (isymm.eq.1 .or. isymm.eq.2) then
+            b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
+                              &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
+          else if (isymm.eq.3 .or. isymm.eq.4) then
+            b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
+                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+          end if
         end if
         !> Careful: Sign convention for magnetic field in IDS
         !>          is OPPOSITE to that in SOLPS toroidal geometries

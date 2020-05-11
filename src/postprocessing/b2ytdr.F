@@ -3860,8 +3860,9 @@ cxpb  Start reading input.dat file
             else
               I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
               I3 = SCAN(ZEILE(I2+1:),' ')
+              IH = MIN(I3,6)
               HANDLE=REPEAT(' ',6)
-              HANDLE(1:I3) = ZEILE(I2:I2+I3-1)
+              HANDLE(1:IH) = ZEILE(I2:I2+IH-1)
 c   cfile card found. Is this one of the permitted external files?
               if (streql(handle,'AMJUEL')) then
                 WRITE(IUNOT,'(A47)')

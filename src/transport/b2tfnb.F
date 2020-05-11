@@ -704,7 +704,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &        kmprti, cddb, conb)
 
 *   ..compute Pfirsch-Schlueter particle fluxes                          !srv 13.10.06
-      call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb,            !srv 02.04.18
+       call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb,            !srv 02.04.18
      &   nb, ti, cddb, fnbPSch)
 
       endif
