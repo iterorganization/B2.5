@@ -10,7 +10,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
 #ifndef NO_CDF
-      use b2mod_mwti
+      use b2mod_cdf
 #endif
 #ifdef B25_EIRENE
       use eirmod_infcop
