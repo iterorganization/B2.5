@@ -171,9 +171,17 @@
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       if(ncall.gt.1 .or. .not.main_call) return
+*-----------------------------------------------------------------------
+*.end b2stbc_fb_post
 
+      end subroutine b2stbc_fb_post
+
+
+      subroutine b2stbc_fb_final
+      use b2mod_types
+      use b2mod_feedback
+      implicit none
 * ..finalise feedback
-      entry b2stbc_fb_final
       feedback_namelist_used = feedback_namelist_used .or.
      .        max(saved_cbshe_core, saved_cbshi_core,
      .            saved_cbsna_core, saved_cbsch_core,
@@ -184,12 +192,7 @@
         call write_b2mod_feedback(99,'    ')
       endif
       return
-
-*-----------------------------------------------------------------------
-*.end b2stbc_fb_post
-
-      end subroutine b2stbc_fb_post
-
+      end subroutine b2stbc_fb_final
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
