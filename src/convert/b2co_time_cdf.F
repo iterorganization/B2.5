@@ -3,6 +3,7 @@
       use b2mod_geo
       use b2mod_mwti
       use b2mod_indirect
+      use b2mod_cdf
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
