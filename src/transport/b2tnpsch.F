@@ -84,6 +84,9 @@
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
       endif
 
+!       write(*,*) 'b2tnpsch: isb = ',isb,' drift_style = ',drift_style,
+!     &   ' redef_gmtry = ', redef_gmtry
+
       write(chns,'(i3.3)') isb
       fnbPSch = 0.0_R8                                                   !srv 13.10.06
 

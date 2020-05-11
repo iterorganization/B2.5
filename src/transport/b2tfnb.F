@@ -1242,7 +1242,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          else
           if (drift_style.eq.0) then
            wrk6(ix,iy) = 
-     &      (ubdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     &      (vbdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5      2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6      +vol(leftix(ix,iy),leftiy(ix,iy))/
      7      hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1269,12 +1269,17 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
            wrk9(ix,iy)= vbdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)*hzl(ix,iy)     ! IYS 07.05.2020
      &      *(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk8(ix,iy) = vbdia(ix,iy,0)*
+     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
          endif
         enddo
        enddo
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
+        call my_out(70,nx,ny,wrk8,'b2tfnb_vadianax'//chns//'_1')
         call my_out(70,nx,ny,wrk9,'b2tfnb_vadianahzx'//chns)
        endif
 !        do iy = -1, ny
@@ -1688,8 +1693,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
       if((iout_b2npmo.ne.0 .and. balance) .or. 
      &     (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
-       write(*,*) 'b2tfnb: isb = ',isb,' drift_style = ',drift_style,
-     &   ' redef_gmtry = ', redef_gmtry
+!       write(*,*) 'b2tfnb: isb = ',isb,' drift_style = ',drift_style,
+!     &   ' redef_gmtry = ', redef_gmtry
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1724,12 +1729,17 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
             wrk9(ix,iy) = vbdia(ix,iy,1)*gs(ix,iy,1)*hzb(ix,iy)*
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+!            wrk8(ix,iy) = vbdia(ix,iy,1)*
+!     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+!     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+!     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
          endif
         enddo
        enddo
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,wrk6,'b2tfnb_vadianay'//chns)
+        call my_out(70,nx,ny,wrk8,'b2tfnb_vadianay'//chns//'_1')
         call my_out(70,nx,ny,wrk9,'b2tfnb_vadianahzy'//chns)
        endif
 !       do iy = -1, ny
