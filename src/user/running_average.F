@@ -13,18 +13,7 @@
 
       implicit none
 
-      integer, intent(in) :: nx, ny, ns, iav_cont
-      logical, intent(in) :: lpr, ler
-
-      real (kind=R8), intent(inout) ::
-     *  na_arg(-1:nx,-1:ny,0:ns-1), ua_arg(-1:nx,-1:ny,0:ns-1),
-     &  te_arg(-1:nx,-1:ny), ti_arg(-1:nx,-1:ny), po_arg(-1:nx,-1:ny)
-      real (kind=R8), intent(inout) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
-
-      character(*) :: savefile
+      integer, intent(in) :: nx, ny, ns
 
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
@@ -98,9 +87,12 @@
 
       return
 
+      contains
 
-      entry run_av_init (iav_cont, nx, ny, ns, lpr, ler)
-
+      subroutine run_av_init (iav_cont, nx, ny, ns, lpr, ler)
+      implicit none
+      integer, intent(in) :: nx, ny, ns, iav_cont
+      logical, intent(in) :: lpr, ler
       call subini ('run_av_init')
 
       if (.not.allocated(na_mean)) then
@@ -235,8 +227,11 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call subend ()
 
       return
+      end subroutine run_av_init
 
-      entry run_av_fin
+      subroutine run_av_fin
+      implicit none
+
 
       if (.not.allocated(na_mean)) return
 
@@ -264,9 +259,13 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (e_sch)
 
       return
+      end subroutine run_av_fin
 
-      entry run_av_save (savefile, nx, ny, ns, lpr, ler)
-
+      subroutine run_av_save (savefile, nx, ny, ns, lpr, ler)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(in) :: lpr, ler
+      character(*) :: savefile
       call subini ('run_av_save')
 
       n2 = (nx+2)*(ny+2)
@@ -347,11 +346,15 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call subend ()
 
       return
+      end subroutine run_av_save
 
-
-      entry run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg, po_arg,
-     &                          nx, ny, ns)
-
+      subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, 
+     &                          ua_arg, po_arg, nx, ny, ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(inout) ::
+     *  na_arg(-1:nx,-1:ny,0:ns-1), ua_arg(-1:nx,-1:ny,0:ns-1),
+     &  te_arg(-1:nx,-1:ny), ti_arg(-1:nx,-1:ny), po_arg(-1:nx,-1:ny)
       call subini ('run_av_get_plasma')
 
       na_arg = na_mean
@@ -363,11 +366,16 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call subend ()
 
       return
+      end subroutine run_av_get_plasma
 
-
-      entry run_av_get_sources (sna0, smo0, she0, shi0,
+      subroutine run_av_get_sources (sna0, smo0, she0, shi0,
      &                          sch0, sne0, nx, ny, ns)
-
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(inout) ::
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
+     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       call subini ('run_av_get_sources')
 
       sna0 = sna_mean
@@ -378,5 +386,6 @@ ctb..as the mean of the product does not equal the product of the means etc.
       sch0 = sch_mean
 
       call subend ()
+      end subroutine run_av_get_sources
 
       end subroutine running_average

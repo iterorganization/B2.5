@@ -13,7 +13,6 @@
       implicit none
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns
-      character(*), intent(in) :: batch_name
  
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
@@ -83,7 +82,11 @@
 
       return
 
-      entry batch_av_all_init(nx,ny,ns)
+      contains
+
+      subroutine batch_av_all_init(nx,ny,ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
 
       if (.not.allocated(na_mean)) then
 
@@ -142,8 +145,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
       naver = 0
       
       return
+      end subroutine batch_av_all_init
 
-      entry batch_av_all_fin
+      subroutine batch_av_all_fin
+      implicit none
 
       if (.not.allocated(na_mean)) return
 
@@ -171,8 +176,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (e_sch)
 
       return
+      end subroutine batch_av_all_fin
 
-      entry batch_av_all_save (batch_name,nx,ny,ns)
+      subroutine batch_av_all_save (batch_name,nx,ny,ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      character(*), intent(in) :: batch_name
 
       n2 = (nx+2)*(ny+2)
 #ifdef B25_EIRENE
@@ -233,5 +242,6 @@ ctb..as the mean of the product does not equal the product of the means etc.
       close(iun)
       return
       
-      end subroutine batch_av_all
+      end subroutine batch_av_all_save
       
+      end subroutine batch_av_all
