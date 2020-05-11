@@ -131,7 +131,7 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifndef NO_CDF
-      use b2mod_mwti
+      use b2mod_cdf
 #endif
       implicit none
 #ifndef NO_CDF
