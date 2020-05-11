@@ -1304,7 +1304,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           fpsi=0.0_R8
           ffbz=0.0_R8
 
-          write(*,*) "Somebody has filled ffbz with zeros"
+          write(*,*) "Somebody has filled ffbz with zeroes"
           write(*,*) " ... and is going to read it from some file again"
 
 ! IYS 21.02.2020

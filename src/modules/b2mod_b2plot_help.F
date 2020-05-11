@@ -490,7 +490,7 @@
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
-     4    'Toroidal magnetic flux function (Wb)',
+     4    'Toroidal magnetic flux function (Wb/m)',
      5    'Plasma pressure (Pa)',
      6    'Power loss due to molecule radiation (W)',
      7    'Power loss due to molecular ion radiation (W)'/

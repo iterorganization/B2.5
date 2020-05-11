@@ -295,7 +295,8 @@ contains
         character*32 ADAS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
-        logical match_found, streql
+        character*256 filename
+        logical match_found, streql, exists
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
         logical isadigit
@@ -326,6 +327,14 @@ contains
         call ipgetr ('b2stbc_volrec_sol', volrec_sol)
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
         call ipgeti ('balance_netcdf', balance_netcdf)
+        if (balance_netcdf.ne.0) then
+          filename='balance.nc'
+          call find_file(filename,exists)
+          if (.not.exists) then
+            write(*,*) 'Missing balance.nc file: data skipped!'
+            balance_netcdf = 0
+          end if
+        end if
         match_found = .false.
         is = ismain
         do while (is.ge.0 .and. .not.match_found)
@@ -891,8 +900,12 @@ contains
         if (icnt.gt.0) then
           r0 = r0 / float(icnt)
           if (ffbz(jxa,-1,0).ne.0.0_R8) then
-            b0r0 = ffbz(jxa,-1,0)
-            b0 = ffbz(jxa,-1,0)/r0
+            if (isymm.eq.0) then
+              b0r0 = ffbz(jxa,-1,0)
+            else
+              b0r0 = ffbz(jxa,-1,0)/(2.0_R8 * pi)
+            end if
+            b0 = b0r0/r0
           else if (isymm.eq.0) then
             b0 = bb(jxa,-1,2)
             b0r0 = b0*r0
