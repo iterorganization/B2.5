@@ -443,6 +443,7 @@ c   extra call at this place within internal iteration)
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
+      
       call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
      &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
@@ -700,9 +701,6 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
 
-      if (tn_style.ne.2) then !! if tn_style.ne.2 fhn should be exactly zero.
-        call b2xvsg (nCv, dv%fhn, 1, 'fhn', '.le.')
-      endif
 
       call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
      &  dv%fhe, dv%fhi, dv%fhn, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%tn, 
