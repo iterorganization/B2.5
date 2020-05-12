@@ -8,6 +8,8 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
+      use b2mod_ma28_for_9diag
+     , , only : restart_ma28_for_9
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
