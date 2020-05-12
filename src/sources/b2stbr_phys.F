@@ -96,9 +96,9 @@
 
 c for KUL advanced fluid neutral boundary conditions
       integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
-     &  sign_cosa = 1, sign_sina = 1, kul_recycle = 0, 
+     &  kul_recycle = 0, 
      &  tn_style = 0, print_output = 0, split_fluxes = 1,
-     &  remove_FC_el = 0, pn_cosa = 0
+     &  remove_FC_el = 0
       integer :: isn 
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy2, dnndz2, dumm0(nFc,0:1),
@@ -146,8 +146,6 @@ c for KUL advanced fluid neutral boundary conditions
       if (ncall.eq.0) then                                          !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
        call ipgeti ('b2stbr_kul_recycle', kul_recycle)
-       call ipgeti ('b2stbr_sign_cosa', sign_cosa)
-       call ipgeti ('b2stbr_sign_sina', sign_sina)
        call ipgeti ('b2stbr_use_uy_uz_0', use_uy_uz_0)
        call ipgeti ('b2stbr_use_uy_uz_1', use_uy_uz_1)
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
@@ -162,7 +160,7 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2stbr_print_output', print_output)    
        call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
-       call ipgeti ('b2stbr_pn_cosa', pn_cosa)          
+
 
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
@@ -550,7 +548,7 @@ c dnndz2            the gradient of the main neutral species density across the 
       real (kind=R8) Phi_app, pof, isign, dnndy2, dnndz2                            
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack, is0old, idir
+      integer is0, is1, is2, is, js, k, iwall, itrack, is0old
       real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
      &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
      &     eself, sput_frac_chem_sum, be_frac, 
@@ -865,19 +863,11 @@ c   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 c  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 c   Nuclear Fusion 57.11 (2017): 116043.
 
-!! preliminary calculations
-
-           farea = geo%fcs(iFc) !! area of the face
-           if (istra.eq.1.or.istra.eq.2) then !! AFN_TODO temporary fix for easy backwards compatibility
-           idir = 0 
-           else
-           idir = 1
-           endif
 
 c AFN_TODO check signs
-
-           cosa = sign_cosa*geo%fcQalf(iFc,0)
-           sina = sign_sina*geo%fcQalf(iFc,1)
+           farea = geo%fcs(iFc) !! area of the face
+           cosa = geo%fcQalf(iFc,0)
+           sina = geo%fcQalf(iFc,1)
 
 !! calculate the gradient of the neutral density perpendicular to the boundary face. AFN_TODO correct for non-orthogonal case
            dnndthetac = pl%na(iCn,is0)/geo%fcHc(iFc,2)
@@ -900,10 +890,10 @@ c                dnndzv = (dnndthetav - dnndyv.*sin(alpha))./cos(alpha);
 
            if((is0.ne.is0old)) then 
              if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
-             smon = -isign* 
+             smon = -isign*cosa* 
      &            am(is0)*mp/3.0_R8*nnwwnsum**2 /
      &            nnsum*farea*
-     &            geo%cvbb(iCv,0)/geo%cvbb(iCv,3)*geo%cvhz(iCv)
+     &            abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*geo%cvhz(iCv)
              srw%smo0(iCv,0,is0old) = srw%smo0(iCv,0,is0old) + smon
              nnsum = 0
              nnwwnsum = 0
@@ -924,7 +914,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              is0,is2,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,t0,  
-     &              cosa, sina, use_uy_uz_0, pn_cosa,     
+     &              cosa, sina, use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -983,11 +973,11 @@ cmb   net neutral energy source from recycling
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
      &              use_uy_uz_0,use_uy_uz_1, 
-     &              print_output,split_fluxes,pn_cosa,
+     &              print_output,split_fluxes,
      &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
              call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,istra,
-     &            farea,pl,tnf,geo,1,cosa,sina,pn_cosa,
+     &            farea,pl,tnf,geo,1,cosa,sina,
      &            fnni,fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
              endif
@@ -1011,13 +1001,13 @@ cmb   net momentum sources from neutral particle reflection
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,rt,dnndy2,dnndz2,
-     &              cosa, sina, use_uy_uz_0, pn_cosa,
+     &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,recyc(is,istra),pl,tnf,
-     &              geo,cosa, sina,pn_cosa,
+     &              geo,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
@@ -1054,8 +1044,8 @@ c temporary switch to evaluate the effect.
            if (is.eq.nsmax) then   !! see eq. 62-63 of the main reference.
                if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
                smon = -isign* 
-     &            (1-idir)*am(is0)*mp/3.0_R8*nnwwnsum**2/
-     &            nnsum*farea*geo%cvbb(iCv,0)/geo%cvbb(iCv,3)*
+     &            cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/
+     &            nnsum*farea*abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*
      &            geo%cvhz(iCv)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
      &                                    neutral_sources_rescale   
