@@ -235,7 +235,7 @@ c     Other initializations
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            print_output,split_fluxes,pn_cosa,
+     &            print_output,split_fluxes,
      &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
@@ -252,7 +252,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1, pn_cosa
+     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
       integer,intent(in)::print_output, split_fluxes  
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
@@ -407,14 +407,8 @@ c     Convert particle flux densities in fluxes
       fnni  = fnni*area
 
 c     Calculate incident poloidal momentum flux of neutrals
-      if (pn_cosa.eq.1) then
-        fmomnip = isign*(fmoz*cosa + fmoy*sina)* 
+      fmomnip = isign*(fmoz*cosa + fmoy*sina)* 
      2     area +isign*pn*area*cosa
-      else
-        fmomnip = isign*(fmoz*cosa + fmoy*sina)* 
-     2     area +isign*pn*area
-      endif
- 
       fmomnit = -fmox*area
 c     calculate parallel momentum boundary flux
       fmomni = pit*fmomnip + pit2*fmomnit        
@@ -441,7 +435,7 @@ c     If flux has incorrect sign, resort to Maxwellian distribution for BC's
       end subroutine CalcIncidentFluxes
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-     &            area,pl,tf,geo,isrc, cosa, sina,pn_cosa,
+     &            area,pl,tf,geo,isrc, cosa, sina,
      &            fnni,fnnic,fnniv,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
@@ -460,7 +454,7 @@ c     isrc is the sign of the source needed for the hybrid delta f method
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       integer,intent(in) :: iCv, iFc, isn, istra,
-     &    isrc, pn_cosa
+     &    isrc
       real (kind=R8),intent(in) :: area, tf, isign, cosa, sina
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
@@ -528,14 +522,8 @@ c     Convert particle flux densities in fluxes
       fnni  = fnni*area
 
 c     Calculate incident poloidal momentum flux of neutrals 
-      if (pn_cosa.eq.1) then
       fmomnip = isign*(fmoz*cosa + fmoy*sina)*
      2   area + isign*pn*area*cosa
-      else
-      fmomnip = isign*(fmoz*cosa + fmoy*sina)*
-     2   area + isign*pn*area
-      endif
-      
       fmomnit = -fmox*area
       fmomni = pit*fmomnip + pit2*fmomnit   
      
@@ -555,7 +543,7 @@ c     Convert energy flux densities in net energy flux contributions
      &             isign,
      &            isn,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
-     &            geo,t0, cosa, sina, use_uy_uz_0, pn_cosa,
+     &            geo,t0, cosa, sina, use_uy_uz_0,
      &            fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle,momentum and energy fluxes based 
@@ -571,7 +559,7 @@ c     nif = plasma density on face, isn neutral species index
 !!      type (B2Rates), intent (in) :: rt
       integer, intent(in):: iCv, nCi, iFc,
      &     isn, iscx0, iwall,istra,
-     &     use_uy_uz_0, pn_cosa
+     &     use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nif,nef,t0,isign, tif, tef, cosa, sina
 c     Output variables: Incident neutral flux has been broken up in two parts:
@@ -693,13 +681,8 @@ c     recycled total energy flux density of neutrals
 
 
 c     Calculate recycled poloidal momentum flux of neutrals
-      if (pn_cosa.eq.1) then
-        fmomrecp = -isign*(fmozc*cosa + fmoyc*sina)*
+      fmomrecp = -isign*(fmozc*cosa + fmoyc*sina)*
      2              area +isign*pnc*area*cosa
-      else
-        fmomrecp = -isign*(fmozc*cosa + fmoyc*sina)*
-     2              area +isign*pnc*area
-      endif
       fmomrect = fmoxc*area
       fmomrec = pit*fmomrecp + pit2*fmomrect         
 c     Convert energy flux densities in energy fluxes
@@ -713,7 +696,7 @@ c     Convert energy flux densities in energy fluxes
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,rt,dnndy2,
      &            dnndz,
-     &            cosa, sina, use_uy_uz_0,pn_cosa,
+     &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
@@ -728,7 +711,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
 
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, iwall,istra, use_uy_uz_0, pn_cosa
+     &    isn, iscx0, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy2
@@ -919,13 +902,8 @@ c     reflected total energy flux density of neutrals
 
 
 c     Calculate reflected poloidal momentum flux of neutrals
-      if (pn_cosa.eq.1) then
       fmomreflp = -isign*(fmoz*cosa + fmoy*sina)* 
      2   area +isign*pn*area*cosa
-      else
-      fmomreflp = -isign*(fmoz*cosa + fmoy*sina)* 
-     2   area +isign*pn*area
-      endif
       fmomreflt = fmox*area
       fmomrefl = pit*fmomreflp + pit2*fmomreflt         
 c     Convert energy flux densities in energy fluxes
@@ -949,7 +927,7 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,pl,tf,                         
-     &            geo, cosa, sina,pn_cosa,
+     &            geo, cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
@@ -961,7 +939,7 @@ c     for the incident neutrals.
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra, pn_cosa
+      integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
       real (kind=R8),intent(in):: area, recyc0, isign, tf, sina, cosa
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
@@ -1102,13 +1080,8 @@ c     reflected total energy flux density of neutrals
 
 
 c     Calculate reflected poloidal momentum flux of neutrals
-      if (pn_cosa.eq.1) then
       fmomreflp = -isign*(fmoz*cosa + fmoy*sina)* 
      2   area +isign*pn*area*cosa
-      else
-      fmomreflp = -isign*(fmoz*cosa + fmoy*sina)* 
-     2   area +isign*pn*area
-      endif
       fmomreflt = fmox*area
       fmomrefl = pit*fmomreflp + pit2*fmomreflt         
 c     Convert energy flux densities in energy fluxes
