@@ -26,7 +26,7 @@ module b2mod_mwti
 #endif
 contains
 
-  subroutine b2mwti (itim, tim, ntim, ntim_batch, &
+  subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
     use b2mod_geo
@@ -51,7 +51,8 @@ contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer, Intent(In) :: itim, ntim, ntim_batch, nx, ny, ns, ismain, ismain0
+    integer, Intent(In) :: itim, ntim, b2time, ntim_batch, &
+                           nx, ny, ns, ismain, ismain0
     real (kind=R8), Intent(In) :: tim, BoRiS
     logical, Intent(In) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
@@ -244,50 +245,52 @@ contains
         close(99)
       endif
 #ifndef NO_CDF
-      filename='b2time.nc'
-      call find_file(filename,ex)
-      call ipgetr ('b2mndr_stim', stim)
-      if (.not.ex.or.stim.ge.0.0_R8) then
-        ntstep = 0
-        write(6,'(a)') trim(filename)//' will be created'
-        call b2crtimecdf(filename, &
-          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
-          ncid, .false., iret)
-        call check_cdf_status(iret)
-        iret = nf_open(trim(filename),NCWRITE,ncid)
-        call check_cdf_status(iret)
-      else if (ex.and.stim.lt.0.0_R8) then
-        rw='read'
-        iret = nf_open(filename,NF_NOWRITE,ncid)
-        call check_cdf_status(iret)
-        iret = nf_inq(ncid,ndims,nvars,natts,unlimid)
-        call check_cdf_status(iret)
+      if (b2time.gt.0) then
+        filename='b2time.nc'
+        call find_file(filename,ex)
+        call ipgetr ('b2mndr_stim', stim)
+        if (.not.ex.or.stim.ge.0.0_R8) then
+          ntstep = 0
+          write(6,'(a)') trim(filename)//' will be created'
+          call b2crtimecdf(filename, &
+            nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
+            ncid, .false., iret)
+          call check_cdf_status(iret)
+          iret = nf_open(trim(filename),NCWRITE,ncid)
+          call check_cdf_status(iret)
+        else if (ex.and.stim.lt.0.0_R8) then
+          rw='read'
+          iret = nf_open(filename,NF_NOWRITE,ncid)
+          call check_cdf_status(iret)
+          iret = nf_inq(ncid,ndims,nvars,natts,unlimid)
+          call check_cdf_status(iret)
+          imap(1)=1
+          call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+          call check_cdf_status(iret)
+          ntstep = nint(tstepn(1))
+          iret = nf_close(ncid)
+          write(6,'(a)') trim(filename)//' will be appended'
+          iret = nf_open(trim(filename),NCWRITE,ncid)
+          call check_cdf_status(iret)
+        else
+          ntstep = 0
+          write(6,'(a)') trim(filename)//' will be replaced'
+          call b2crtimecdf(filename, &
+            nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
+            write_2d, ncid, .false., iret)
+          call check_cdf_status(iret)
+          iret = nf_open(trim(filename),NCWRITE,ncid)
+          call check_cdf_status(iret)
+        end if
+        write(*,*) 'ntstep = ', ntstep
+        rw='write'
         imap(1)=1
+        tstepn(1) = ntstep
         call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
         call check_cdf_status(iret)
-        ntstep = nint(tstepn(1))
         iret = nf_close(ncid)
-        write(6,'(a)') trim(filename)//' will be appended'
-        iret = nf_open(trim(filename),NCWRITE,ncid)
-        call check_cdf_status(iret)
-      else
-        ntstep = 0
-        write(6,'(a)') trim(filename)//' will be replaced'
-        call b2crtimecdf(filename, &
-          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
-          write_2d, ncid, .false., iret)
-        call check_cdf_status(iret)
-        iret = nf_open(trim(filename),NCWRITE,ncid)
         call check_cdf_status(iret)
       end if
-      write(*,*) 'ntstep = ', ntstep
-      rw='write'
-      imap(1)=1
-      tstepn(1) = ntstep
-      call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
-      call check_cdf_status(iret)
-      iret = nf_close(ncid)
-      call check_cdf_status(iret)
 
       if (ntim_batch.gt.0) then
         nbatch = ntim/ntim_batch
