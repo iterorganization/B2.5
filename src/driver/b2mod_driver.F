@@ -2069,7 +2069,8 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     .              nx,ny,ns,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
@@ -2406,7 +2407,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     *                nx,ny,ns,ismain,ismain0,
      *                BoRiS,.true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
