@@ -51,13 +51,12 @@ c
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.03.10
       integer, save :: kwrite_bnr = -1                                !srv 18.03.10
       integer, save :: b2swtest=0
-      save lfirst, ncall, nwrite
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      save ncall, nwrite
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -139,7 +138,7 @@ c        IF (A1HN.EQ.0.0_R8) THEN
 
 csw 12oct2012 in case of b2swtest=T --> reinit solver
 c             (maybe necessary in case of multi-fluid?)
-      if(b2swtest.eq.1) lfirst=.true.
+      if(b2swtest.eq.1) lfirst_ilu=.true.
 
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
        write(*,*) 'Opening 76'
@@ -211,7 +210,7 @@ cdpc
       else
         WRITE(6,*) 'ILUTERN'
       endif
-      if(lfirst) then
+      if(lfirst_ilu) then
         write(*,*) 'ilutern: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
         iflag=0
@@ -221,7 +220,7 @@ cdpc
         icnh_save(i)=icnh(i)
         a1h_save(i)=a1h(i)
       enddo
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu) then
         call ma28bd
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
@@ -236,7 +235,7 @@ cdpc
           enddo
         endif
       endif
-      if(lfirst.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
+      if(lfirst_ilu.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
         call ma28ad
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
@@ -246,7 +245,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false.
+        lfirst_ilu=.false.
       endif
       call ma28id
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
@@ -298,13 +297,8 @@ cdpc
       ncall=ncall+1
       call subend ()
       RETURN
-
-      entry restart_ma28
-      lfirst=.true.
-      write(*,*) 'Restarting ma28'
-      return
-
 *=======================================================================
 *//END ILUTERN//
 
       END
+

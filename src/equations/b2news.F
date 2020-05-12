@@ -23,6 +23,14 @@
       use b2mod_facdrift_ExB
      , , only : b2news_facdrift_fac_ExB_init,
      & b2news_facdrift_fac_ExB_inc, b2news_facdrift_fac_ExB_dec
+      use b2mod_ysmp_sdrv
+     , , only : restart_sdrv_for_7
+      use b2mod_ma28
+     , , only : restart_ma28
+      use b2mod_ma28_for_7diag
+     , , only : restart_ma28_for_7
+      use b2mod_ma28_for_9diag
+     , , only : restart_ma28_for_9
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr

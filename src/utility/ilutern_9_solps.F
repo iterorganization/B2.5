@@ -43,12 +43,11 @@ c
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02
       integer, save :: kwrite_bnr = -1                                !srv 18.05.02
-      save lfirst, ncall, nwrite
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      save ncall, nwrite
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -136,7 +135,7 @@ cdpc
         endif
       endif
 cdpc
-      if(lfirst) then
+      if(lfirst_ilu9) then
         write(*,*) 'ilutern_9: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
       endif
@@ -147,7 +146,7 @@ cdpc
         a1h_save(i)=a1h(i)
       enddo
 
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu9) then
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
@@ -162,7 +161,7 @@ cdpc
         endif
       endif
 
-      if(lfirst.or.iflag.lt.0) then
+      if(lfirst_ilu9.or.iflag.lt.0) then
         call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
@@ -173,7 +172,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false. 
+        lfirst_ilu9=.false. 
       endif
 
       call ma28idcopy
@@ -225,13 +224,8 @@ cdpc
       call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
-
-      entry restart_ma28_for_9
-      lfirst=.true.
-      write(*,*) 'Restarting ma28_for_9'
-      return
-
 *=======================================================================
 *//END ILUTERN_9//                                                    !srv 13.10.06
 
       END
+
