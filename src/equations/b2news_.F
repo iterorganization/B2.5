@@ -487,6 +487,20 @@ c   extra call at this place within internal iteration)
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
+c Necessary for smooth restart with Rhie-Chow:
+c The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
+c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to 
+c b2npmo with rxf = 0 and recompute fluxes.
+      if (ncall.eq.0) then
+        call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
+     &    ncall, solving(1), 0.0_R8, pl, dv, rt, co, sr, st_ext,
+     &    ier0)
+        do is = nsmin, nsmax-1
+*    ..compute particle flux
+          call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl,
+     &      dv, co, rt, .true.)
+        enddo
+      endif
       call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
      &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
