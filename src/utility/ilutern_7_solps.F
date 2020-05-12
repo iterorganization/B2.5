@@ -52,12 +52,11 @@ c
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
-      save lfirst, ncall, nwrite
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      save ncall, nwrite
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -213,7 +212,7 @@ cdpc
       else
          WRITE(6,*) 'ILUTERN'
       endif
-      if(lfirst) then
+      if(lfirst_ilu7) then
          write(*,*) 'ilutern_7: nz = ',nz                      !srv 11.01.00
          call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
          iflag=0
@@ -223,7 +222,7 @@ cdpc
          icnh_save(i)=icnh(i)
          a1h_save(i)=a1h(i)
       enddo
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu7) then
          call ma28bdcopy3                                          !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
          if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag
@@ -235,7 +234,7 @@ cdpc
           enddo
          endif
       endif
-      if(lfirst.or.iflag.lt.0) then
+      if(lfirst_ilu7.or.iflag.lt.0) then
          call ma28adcopy3                                          !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
          if(nltrsol.gt.0 .or. iflag.lt.0)
@@ -245,7 +244,7 @@ cdpc
          do i=1,solvdim
           icnhkeep(i)=icnh(i)
          enddo
-         lfirst=.false.
+         lfirst_ilu7=.false.
       endif
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
@@ -299,13 +298,8 @@ cdpc
       ncall=ncall+1
       call subend ()
       RETURN
-
-      entry restart_ma28_for_7                                     !srv 11.01.00
-      lfirst=.true.
-      write(*,*) 'Restarting ma28'
-      return
-
 *=======================================================================
 *//END ILUTERN//
 
       END
+

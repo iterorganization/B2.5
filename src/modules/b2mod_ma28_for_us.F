@@ -24,6 +24,7 @@
      * icnh_save(:)
 
       integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      logical, save :: lfirst_ilu_us = .true.
 
       contains
 
@@ -81,5 +82,12 @@
       deallocate(icnh_save)
 
       end subroutine dealloc_b2mod_ma28_for_us
+
+      subroutine restart_ma28_for_us
+      implicit none
+      lfirst_ilu_us=.true.
+      write(*,*) 'Restarting ma28_for_us'
+      return
+      end subroutine restart_ma28_for_us
 
       end module b2mod_ma28_for_us                                   !sv 13.10.06 }
