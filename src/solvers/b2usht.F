@@ -11,6 +11,8 @@
       use b2mod_numerics_namelist
       use b2us_geo
       use b2us_map
+      use b2mod_ma28_for_us
+     , , only : restart_ma28_for_us
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt
