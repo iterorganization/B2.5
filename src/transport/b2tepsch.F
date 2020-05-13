@@ -38,7 +38,7 @@
       integer ix, iy, is, ixl, iyl, ixb, iyb
       integer, save :: ncall = 0
       integer, save :: PSch_style = 1
-      integer, save :: drift_style = 1                                   !IYS 11.02.2020
+      integer, save :: drift_style                                       !IYS 11.02.2020
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      &  facdriftm
@@ -51,8 +51,13 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
-       if (drift_style.eq.2 .and. redef_gmtry .eq. 1) PSch_style=2       !IYS 11.02.2020
+       if (drift_style.eq.2 .and. redef_gmtry.eq.1) PSch_style=2         !IYS 11.02.2020
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       end if
 *   ..test nx, ny

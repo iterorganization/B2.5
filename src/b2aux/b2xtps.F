@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &  non_commensurate, flip,
+     &  non_commensurate, flip, redef_gmtry,
      &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
@@ -25,7 +25,8 @@
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate
+      integer nx, ny, ns, nx1, ny1, ns1, nncutmax
+      integer non_commensurate, redef_gmtry
       integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
       integer leftcut(nncutmax), leftcut1(nncutmax)
@@ -143,7 +144,7 @@
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na_new, na_min, sum
       save na_new, na_min, drift_style
-      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, drift_style/1/
+      data na_new/1.0e14_R8/, na_min/1.0e4_R8/
 *   ..procedures
       external subini, subend, xertst, ipgetr, sfill, b2saxpy
       external b2xtvc, b2xtfx, b2xtfy
@@ -168,6 +169,11 @@
      & 'faulty internal parameter na_new')
       call xertst (na_new.gt.na_min,
      & 'na_new must be larger than na_min!')
+      if (redef_gmtry.eq.0) then
+        drift_style = 1
+      else
+        drift_style = 2
+      end if
       call ipgeti ('b2tfnb_drift_style', drift_style)
 * ..transform state
       n2 = (nx1+2)*(ny1+2)
@@ -508,7 +514,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
-            if (drift_style.eq.1) then
+            if (drift_style.gt.0) then
              call b2xtfx (nx, ny, nx1, ny1, uadia(-1,-1,0,is),
      &        uadia1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
@@ -713,7 +719,7 @@
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_521(-1,-1,1,is1), 1)
-            if (drift_style.eq.1) then
+            if (drift_style.gt.0) then
              call b2xtfx (nx, ny, nx1, ny1, uadia(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
@@ -1088,7 +1094,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
-      if (drift_style.eq.1) then
+      if (drift_style.gt.0) then
         call b2xtfx (nx, ny, nx1, ny1,
      &        veecrb(-1,-1,0), veecrb1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,

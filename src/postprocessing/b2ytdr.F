@@ -157,7 +157,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
-      integer neutrals_namelist, use_eirene
+      integer neutrals_namelist, use_eirene, redef_gmtry_save
       integer numerics_namelist, sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
@@ -924,11 +924,13 @@ c 2002-09-11: logic revised
 *   ..read header for old geometry
         call cfruch (70, 120, lblgm, 'label')
         call cfruin (70, 1, idum, 'isymm')
-*   ..read old geometry and metric
+*   ..read old geometry and metric (do not overwrite redef_gmtry)
+        redef_gmtry_save = redef_gmtry
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
      &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
      &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
+        redef_gmtry = redef_gmtry_save
         call get_jsep(nx,ny,jxi,jxa,jsep)
         flip = LSN.neqv.LSN1
         if (flip) then
@@ -1193,7 +1195,7 @@ c 2002-09-11: logic revised
       end do
 *   ..compute new state
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &    non_commensurate, flip,
+     &    non_commensurate, flip, redef_gmtry,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,

@@ -207,7 +207,7 @@
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
      & bc_type21_ref/1/, no_current/0/,
-     & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
+     & use_astra/0/, use_eirene/0/, ndes_sol/0.0_R8/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
@@ -246,6 +246,11 @@
        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2mndr_astra', use_astra)
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
@@ -1278,7 +1283,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &              vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
-                else if (drift_style.eq.1) then
+                else
                   t0 =
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*0.5_R8*
@@ -1322,7 +1327,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &             vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-                else if (drift_style.eq.1) then
+                else
                   t0 =
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*0.5_R8*

@@ -318,9 +318,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When b2agdr_redef_gmtry.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant
-                                        and that toroidal magnetic field times major radius is the same constant for all cells independently whether it is computed in cell centers, cell
-                                        faces and cell corners.
+					When b2agdr_redef_gmtry.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two neighbouring flux surfaces remains constant and that toroidal magnetic field times major radius is the same constant for all cells independently of whether it is computed at cell centers, cell faces, or cell corners.
 				</description>
 			</switch>
 			<switch>
@@ -4311,24 +4309,32 @@
 			</switch>
 			<switch>
 				<name>b2tfnb_drift_style</name>
-				<default>1</default>
+				<default>See description</default>
 				<type>integer</type>
 				<description>
-					When set to '0', drift velocities are calculated in cell centers. When set to '1', drift velocities are calculated in cell faces.
-                                        When set to '2', drift velocities are calculated in cell faces too, but better approximation of drift velocities and corresponding fluxes is ised.
-                                        This approximation guarantees that the divergence of ExB drift velocity and diamagnetic drift flux are numerically zero in constant B-field,
-                                        which simplifies the physical analysis.
-                                        Setting 'b2tfnb_drift_style'='2' requires that (and may be activated only if) the b2fgmtry file is generated with 'redef_gmtry'='1'.                                        
+					When set to '0', drift velocities are calculated at cell centers (old SOLPS5.0 style).
+					When set to '1', drift velocities are calculated at cell faces (SOLPS5.2 style).
+					When set to '2', drift velocities are calculated at cell faces too, but a better approximation of the drift velocities and corresponding fluxes is used. This approximation guarantees that the divergences of the ExB drift velocity and diamagnetic drift fluxes are numerically zero in a constant B-field, which simplifies the physical analysis.
+					Setting 'b2tfnb_drift_style' to '2' requires that (and may be activated only if) the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '1' (default). If 'b2agdr_redef_gmtry' was set to '0', the default value for 'b2tfnb_drift_style' is '1'.
 					It is recommended '2'.
 				</description>
 			</switch>
 			<switch>
 				<name>b2tfnb_PSch_style</name>
-				<default>1</default>
+				<default>See description</default>
 				<type>integer</type>
 				<description>
-					Controls the numeric approximation of so-called PSch-fluxes of particles and internal energy (divergent part of diamagnetic drift in B2-5.2 approach). 
-                                        Default is '1', however, if is not defined explicitly, accepts the value '2' if 'b2tfnb_drift_style'='2' and 'redef_gmtry'='1'. 
+					Controls the numerical approximation for the so-called Pfirsch-Schlueter fluxes of particles and internal energy (divergent part of diamagnetic drift in the SOLPS5.2 physics model).
+					Default value is '2' if the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '1' and 'b2tfnb_drift_style' is '2' (defaults). Otherwise, the default value is '1'.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tiner_fch_inert_style</name>
+				<default>See description</default>
+				<type>integer</type>
+				<description>
+					Controls the numerical approximation for the inertia current.
+					Default value is '2' if the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '1' and 'b2tfnb_drift_style' is '2' (defaults). Otherwise, the default value is '0'.
 				</description>
 			</switch>
 			<switch>

@@ -87,7 +87,7 @@
       integer, save :: ion_vlct_restrict = 0                            !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       character chns*3                                                  !srv 16.09.02
-      integer, save :: drift_style = 1                                  !srv 21.06.08
+      integer, save :: drift_style                                      !srv 21.06.08
       real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -123,10 +123,10 @@
 !!FR Local save variables that get updated need to be THREADPRIVATE
 !!FR Local save variables that are read only are okay - no change needed.
 !!FR Because alpha, gamma, flux_limit_min_ti, area_fix & others could
-!!FR potentially be written to by multiple threads on their ncall==0 
-!!FR iteration we need to make them THREADPRIVATE too. 
+!!FR potentially be written to by multiple threads on their ncall==0
+!!FR iteration we need to make them THREADPRIVATE too.
 !!TF Note that variables that appear in DATA statement have implied SAVE attribute.
-      !$OMP THREADPRIVATE(ncall) 
+      !$OMP THREADPRIVATE(ncall)
       !$OMP THREADPRIVATE(alpha, gamma)
       !$OMP THREADPRIVATE(flux_limit_min_ti, area_fix, no_hybr)
       !$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
@@ -192,6 +192,11 @@
      &   'from zero ')                                                   !srv 09.07.03 }
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
         call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
+        if (redef_gmtry.eq.0) then
+          drift_style = 1
+        else
+          drift_style = 2
+        end if
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
@@ -312,7 +317,7 @@ c Drift terms
         call intfacev(nx,ny,bottomix,bottomiy,vol,nbti,wpb)
         do iy = -1, ny
           do ix = -1, nx                                                 !xpb
-cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
+cxpb  Must check that we are not at the island X-point or at the mesh edge
             if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
      &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
@@ -641,7 +646,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
              vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)                    !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
-     2      *(poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))              !srv 13.05.16 }
+     2      *(poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))             !srv 13.05.16 }
      &      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)            ! IYS 04.03.2019
 
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
@@ -690,17 +695,17 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           end if
         end if
 
-       else           ! drift_style                                    ! IYS 11.02.2020 {                            
+       else           ! drift_style                                      ! IYS 11.02.2020 {
 
          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
          CALL XERRAB (
-     &   'faulty definition of drift_style and redef_gmtry, ' // 
-     &   'or logical mistake occured')
+     &   'faulty definition of drift_style and redef_gmtry, ' //
+     &   'or logical mistake occurred')
 
-       endif          ! drift_style                                    ! IYS 11.02.2020 } 
+       endif          ! drift_style                                      ! IYS 11.02.2020 }
 
-       call b2txnpsch (nx, ny, isb, guard_flows, facdrift,                !srv 02.04.18 {
+       call b2txnpsch (nx, ny, isb, guard_flows, facdrift,               !srv 02.04.18 {
      &        kmprti, cddb, conb)
 
 *   ..compute Pfirsch-Schlueter particle fluxes                          !srv 13.10.06
@@ -709,7 +714,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
       endif
 
-      if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
+      if (isb.ne.ismain .and. .not.is_neutral(isb)) then                 !lk 02.06.11 {
         do iy = 0, ny
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) then
@@ -717,7 +722,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
               t1 = (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy)))
      &          /2.0_R8
               vbar =
-     .         abs(bb(ix,iy,0) + bb(leftix(ix,iy),leftiy(ix,iy),0))     !srv 11.01.13
+     .         abs(bb(ix,iy,0) + bb(leftix(ix,iy),leftiy(ix,iy),0))      !srv 11.01.13
      &           /(bb(ix,iy,3) + bb(leftix(ix,iy),leftiy(ix,iy),3))
      &          *sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))
               t2 = 1.0_R8 + abs(fnbPSch(ix,iy,0))/(
@@ -856,7 +861,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
-     7     hx(leftix(ix,iy),leftiy(ix,iy))) + scur                            !srv 17.07.08 }
+     7     hx(leftix(ix,iy),leftiy(ix,iy))) + scur                      !srv 17.07.08 }
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
@@ -867,7 +872,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      2     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      3     +vol(leftix(ix,iy),leftiy(ix,iy))/
-     7     hx(leftix(ix,iy),leftiy(ix,iy))) 
+     7     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+         !srv 01.10.99 01.07.05
      &     termhz(ix,iy)+                                               !srv 05.11.09
      1     (ub2dia(ix,iy,0)+ub2dia(leftix(ix,iy),leftiy(ix,iy),0))/
@@ -880,7 +885,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
      &                  term(ix,iy)                                     !srv 20.06.08
-         elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then      !srv 21.06.08 {
+         elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then       !srv 21.06.08 {
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
      4      ubdia(ix,iy,0)*
@@ -902,8 +907,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      2     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      3      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
-     &      termhz(ix,iy) + 
-     &   (ub2dia(ix,iy,0) / (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
+     &      termhz(ix,iy) +
+     &   (ub2dia(ix,iy,0) / (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) !srv this is correct. Keep in mind hz*vol/hx and interpolation of hz
      &      + scur / (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy))))
      &      *(hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
      &      hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
@@ -923,7 +928,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           flo_53 = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +               !ajs 06.04.20 Part of the convective flow added in total energy flux
      1     vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
-     &     termhz(ix,iy) + 
+     &     termhz(ix,iy) +
      &     (ub2dia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy) + scur)*hzl(ix,iy)    ! IYS 04.03.2019 - 11.02.2020
 !     &      *(hz(ix,iy) + hz(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8       !IYS 04.03.2019 - 11.02.2020
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
@@ -1179,9 +1184,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if((iout_b2npc9.ne.0 .and. balance) .or. 
+      if((iout_b2npc9.ne.0 .and. balance) .or.
      &   (iout_b2npco.ne.0 .and. balance) .or.
-     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc7.ne.0 .and. balance) .or.
      &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
      &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
@@ -1230,7 +1235,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      if((iout_b2npmo.ne.0 .and. balance) 
+      if((iout_b2npmo.ne.0 .and. balance)
      &   .or. (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
@@ -1240,13 +1245,13 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           wrk8(ix,iy) = 0.0_R8
          else
           if (drift_style.eq.0) then
-           wrk6(ix,iy) = 
+           wrk6(ix,iy) =
      &      (vbdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5      2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6      +vol(leftix(ix,iy),leftiy(ix,iy))/
      7      hx(leftix(ix,iy),leftiy(ix,iy)))*
      &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-           wrk8(ix,iy) = 
+           wrk8(ix,iy) =
      &      (vbdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5      2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
      6      +hz(leftix(ix,iy),leftiy(ix,iy))*
@@ -1644,9 +1649,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if((iout_b2npc9.ne.0 .and. balance) .or. 
+      if((iout_b2npc9.ne.0 .and. balance) .or.
      &   (iout_b2npco.ne.0 .and. balance) .or.
-     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc7.ne.0 .and. balance) .or.
      &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
      &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
@@ -1684,7 +1689,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      if((iout_b2npmo.ne.0 .and. balance) .or. 
+      if((iout_b2npmo.ne.0 .and. balance) .or.
      &     (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
@@ -1699,7 +1704,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-           wrk8(ix,iy) = 
+           wrk8(ix,iy) =
      &       (vbdia(ix,iy,1)+vbdia(bottomix(ix,iy),bottomiy(ix,iy),1))
      &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
      &        hz(bottomix(ix,iy),bottomiy(ix,iy))

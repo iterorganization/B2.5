@@ -37,7 +37,7 @@
       real (kind=R8) ::
      &  facdriftm
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
-      integer, save :: drift_style = 1                                   !IYS 11.02.2020
+      integer, save :: drift_style                                       !IYS 11.02.2020
 #ifdef CLASSICAL_CURRENT
       integer is
       real (kind=R8) :: hy1,
@@ -60,6 +60,11 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                               !srv
        call ipgetr ('b2tfhe_dia_cur', dia_cur)                           !srv
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
       end if
 *   ..set n2

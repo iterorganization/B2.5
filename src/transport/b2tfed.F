@@ -45,7 +45,7 @@
       external b2xvsg
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
-      data ncall/0/, drift_style/1/,
+      data ncall/0/,
      * poleldr/1.0_R8/, poldidr/1.0_R8/,
      * radeldr/1.0_R8/, raddidr/1.0_R8/
 
@@ -61,6 +61,11 @@
       n2 = (nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+        if (redef_gmtry.eq.0) then
+          drift_style = 1
+        else
+          drift_style = 2
+        end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgetr ('b2tfnb_poleldr', poleldr)                         !srv 25.04.00 {
         call ipgetr ('b2tfnb_radeldr', radeldr)
@@ -86,7 +91,7 @@ c Drift terms
           call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
           do iy = -1, ny
             do ix = -1, nx                                        	 !xpb
-cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
+cxpb  Must check that we are not at the island X-point or at the mesh edge
               if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
      &           topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &           rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
@@ -206,20 +211,20 @@ cxpb  Standard case
            enddo
          enddo
 
-       elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then              ! IYS 11.02.2020
+       elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then             ! IYS 11.02.2020
 
          weight = 1.0e0_R8                                               !lk   
          call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
          do iy = 0, ny-1
            do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
-               veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+               veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)                !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2              *(poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))*        !srv 13.05.16 }
      &           wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy)   ! IYS 04.03.2019
                vedia(ix,iy,0) = -poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &           0.5_R8 * (te(leftix(ix,iy),leftiy(ix,iy)) + te(ix,iy))
      &           * wbbl(ix,iy,2) / (qe * hyl(ix,iy) * qc(ix,iy))         ! IYS 04.03.2019
-     &           *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
+     &           *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))  !srv 05.03.99
              endif
            enddo
          enddo
@@ -244,7 +249,7 @@ cxpb  Standard case
      &      'redef_gmtry = ',redef_gmtry
          CALL XERRAB (
      &   'faulty definition of drift_style and redef_gmtry, ' // 
-     &   'or logical mistake occured')
+     &   'or logical mistake occurred')
 
        endif
 

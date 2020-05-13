@@ -45,7 +45,7 @@
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
       integer, save :: iout = 0                                          !srv 02.04.18
       integer, save :: PSch_style = 1                                    !srv 12.11.08
-      integer, save :: drift_style = 1                                   !IYS 11.02.2020
+      integer, save :: drift_style                                       !IYS 11.02.2020
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -74,8 +74,13 @@
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tnpsch_iout', iout)                              !srv 02.04.18
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
-        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
-        if (drift_style.eq.2 .and. redef_gmtry .eq. 1) PSch_style=2       !IYS 11.02.2020
+        if (redef_gmtry.eq.0) then
+          drift_style = 1
+        else
+          drift_style = 2
+        end if
+        call ipgeti ('b2tfnb_drift_style', drift_style)                  !IYS 11.02.2020
+        if (drift_style.eq.2 .and. redef_gmtry.eq.1) PSch_style=2        !IYS 11.02.2020
         call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif
 *   ..extensive tests on first few calls

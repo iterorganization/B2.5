@@ -64,7 +64,7 @@ c
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       character chns*3                                                 !srv 16.09.02
-      integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
+      integer, save :: drift_style, iout = 0                           !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrapolate,in,
      1 eirene_uub_style, print_minmax, eirene_background
       external ipgetr, ipgeti, subini, subend, xerrab
@@ -100,6 +100,11 @@ c
         call ipgeti('eirene_uub_style',eirene_uub_style)
         call ipgeti('eirene_background',eirene_background)
         call ipgeti('eirene_print_minmax',print_minmax)
+        if (redef_gmtry.eq.0) then
+          drift_style = 1
+        else
+          drift_style = 2
+        end if
         call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
         call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
       endif 
@@ -124,7 +129,7 @@ c
       vaecrbc = vaecrb
       wadiac  = wadia
       vadiac  = vadia
-      if (drift_style.eq.1) then
+      if (drift_style.gt.0) then
         do is=0,ns-1
           call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
           call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)

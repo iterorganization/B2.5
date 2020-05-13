@@ -41,7 +41,7 @@
      *  fhe(-1:nx,-1:ny,0:1),
      &  fhet(-1:nx,-1:ny,0:1), 
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
-     1  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
+     1  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),                !srv 02.01.07
      2  fllime(-1:nx,-1:ny)
 *   ..local variables
       real (kind=R8) :: upfac, hybfac !djm Jan2017
@@ -70,7 +70,7 @@
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
-      integer, save :: drift_style = 1
+      integer, save :: drift_style
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
@@ -113,13 +113,18 @@
       call subini ('b2tfhe')
       if (ncall.eq.0) then                                               !xpb
        call ipgeti ('b2tfhe_no_current', no_current)                     !xpb
-       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call ipgeti ('b2news_poteq', pot_eq)                              !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
