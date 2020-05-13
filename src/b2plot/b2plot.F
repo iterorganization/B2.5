@@ -1583,7 +1583,7 @@ c
           nz=4
           call copy(bb,1.0_R8,nz,textcomponents)
         case('ffbz')
-          description='Toroidal magnetic flux function (Wb)'
+          description='Toroidal magnetic flux function (Wb/m)'
           nz=1
           call copy(fbz,1.0_R8,nz,textbl)
         case('psi')

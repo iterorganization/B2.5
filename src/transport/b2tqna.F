@@ -1124,6 +1124,87 @@ c
 
        if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
+         case (10)                                                !etm 24.07.19 {
+          mintopcut=minval(topcut(1:nncut))
+*   ..modification of case (9)
+          do iy = -1, ny                  ! for SOL and PR region
+           do ix = -1, nx
+            if(.not.on_closed_surface(ix,iy)) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is) =    alfa3
+               fvsc(ix,iy,is) = vs_alfa3
+               ftic(ix,iy,is) = ti_alfa3
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa3
+            endif
+           enddo
+          enddo
+          step = 0.  ! no step
+          do iy = mintopcut,ny          ! for SOL region
+           do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.2) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+
+               fdnc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
+     &          alfa2, delta2, alfa3)
+               fvsc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
+     &          vs_alfa2, vs_delta2, vs_alfa3)
+               ftic(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
+     &          ti_alfa2, ti_delta2, ti_alfa3)
+              endif
+             enddo
+             ftec(ix,iy)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
+     &          te_alfa2, te_delta2, te_alfa3)
+            endif
+           enddo
+          enddo
+
+          step = 0.  ! no step
+          do iy = -1, mintopcut-1   ! for inner surfaces
+           do ix=-1,nx
+            if(on_closed_surface(ix,iy)) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -delta1, 1.0_R8, -delta1+step, alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+               fvsc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -vs_delta1, 1.0_R8, -vs_delta1+step, vs_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+               ftic(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -ti_delta1, 1.0_R8, -ti_delta1+step, ti_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+              endif
+             enddo
+             ftec(ix,iy)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -te_delta1, 1.0_R8, -te_delta1+step, te_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+            endif
+           enddo
+          enddo                                                   !srv 2.05.09 }
+
+          do iy = -1, ny                  ! special multiplier below X-pt
+           do ix = -1, nx
+            if(mod(region(ix,iy,0),4).ne.1 .and.   ! NOT Core
+     &         mod(region(ix,iy,0),4).ne.2) then   ! NOT SOL
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is)   =    alfa4
+               fvsc(ix,iy,is)   = vs_alfa4
+               ftic(ix,iy,is)   = ti_alfa4
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa4
+            endif
+           enddo
+          enddo
          case(9)                                                !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barrier function

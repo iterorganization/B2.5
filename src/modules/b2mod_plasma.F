@@ -385,10 +385,10 @@
         call cfrure (nread, size(fchinert), fchinert, 'fchinert')
       endif
       if(b2fplasma_version.ge.'03.000.007') then
-        call cfrure (nread, size(fht), fht, 'fht')
-        call cfrure (nread, size(fhj), fhj, 'fhj')
-        call cfrure (nread, size(fhm), fhm, 'fhm')
-        call cfrure (nread, size(fhp), fhp, 'fhp')
+        call cfrure_opt (nread, size(fht), fht, 'fht')
+        call cfrure_opt (nread, size(fhj), fhj, 'fhj')
+        call cfrure_opt (nread, size(fhm), fhm, 'fhm')
+        call cfrure_opt (nread, size(fhp), fhp, 'fhp')
       endif
 
       return

@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+IRISLIB     ?= /fusion/projects/codes/solps/SOLPS-ITER/public_lib/GA.gfortran
 NCDIR       ?= ${NETCDF_DIR}
 NAGDIR      ?= ${IRISLIB}
 MSCL_ROOT   ?= ${IRISLIB}

@@ -232,10 +232,10 @@ c      if(nidim .ne. 2) call line(2)
           if (iyref.ne.-2) then
             if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
      &         (iystart.le.ysep.and.iyend.ge.ysep)) then
-              dsep=wrk(ysep)-
+              dsep=wrk(ysep)+
      1         dist(cr(ixx,ysep),cz(ixx,ysep),
-     1            0.5_R8*(crx(ixx,ysep,0)+crx(ixx,ysep,1)),
-     2            0.5_R8*(cry(ixx,ysep,0)+cry(ixx,ysep,1)))
+     1            0.5_R8*(crx(ixx,ysep,2)+crx(ixx,ysep,3)),
+     2            0.5_R8*(cry(ixx,ysep,2)+cry(ixx,ysep,3)))
             else
               dsep=0.0_R8
             endif
