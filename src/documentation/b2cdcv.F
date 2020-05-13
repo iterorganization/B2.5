@@ -69,6 +69,30 @@
 *     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
 *     It will hold that 0.lt.bb(,,3).
 *
+*     wbbl - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbl(ix,iy,0:3) specifies the
+*     magnetic field at left face the (ix,iy) cell.
+*     Meaning of components are similat to the bb array.
+*
+*     wbbr - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbr(ix,iy,0:3) specifies the
+*     magnetic field at right face the (ix,iy) cell.
+*     Meaning of components are similat to the bb array.
+*
+*     wbbv - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbv(ix,iy,0:3) specifies the
+*     magnetic field at bottom face the (ix,iy) cell.
+*     Meaning of components are similat to the bb array.
+*
+*     wbbc - (-1:nx+1,-1:ny+1,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbv(ix,iy,0:3) specifies the
+*     magnetic field at the left bottom corner of the (ix,iy) cell.
+*     For ix=nx+1 wbbc is related to the right bottom corner of 
+*     the cell with ix=nx, similarly for iy=ny+1 wbbc is related to
+*     the left top corner of the cell iy=ny. wbbc(nx+1,ny+1,:) is related
+*     to the right top corner of the cell (ix=nx,iy=ny)
+*     Meaning of components are similat to the bb array.
+*
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
@@ -80,6 +104,7 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter, the y-diameter and z-diameter respectively, of the 
 *     (ix,iy) cell.
+*     If redef_gmtry=1, hz(:,:)*bb(:,:,2)=ffbz(:,:,2).
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,) and 0.lt.hz(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
@@ -91,7 +116,7 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
+*     qc - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
 *     t is the complementary angle between the x-direction of the 
 *     (ix,iy) cell and its left face.
@@ -109,6 +134,30 @@
 *     gsy(-1:nx,iy) will hold 0.
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.
+*
+*     hy1 - (-1:nx,-1:ny) real*8 array.
+*     Actual distance between neighbouring flux surfaces
+*     hy1(:,:) = hy(:,:) * qc(:,:) and
+*     vol(:,:) = hx(:,:) * hy1(:,:) * hz(:,)
+*     It will hold that 0.lt.qc(,).le.1.
+*
+*     hxb, hyl - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), hxb(ix,iy) and hyl(ix,iy) specify the
+*     x-diameter and the y-diameter, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hxb(,) and 0.lt.hyl(,).
+*
+*     hzb, hzl, hzc - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), hzb(ix,iy) specify the
+*     length along the toroidal direction, respectively, of the bottom and
+*     left faces of the (ix,iy).
+*     hzl(:,:) * hyl(:,:) = gs(:,:,0)
+*     hzl(:,:) * hxb(:,:) = gs(:,:,1)
+*     If redef_gmtry=1, hzl(:,:) * wbbl(:,:,2) = ffbz(:,:,2), hzb(:,:) * wbbv(:,:,2) = ffbz(:,:,2),
+*     hzc(-1:nx,-1:ny) * wbbc(-1:nx,-1:ny,2) = ffbz(:,:,2), and quantities
+*     hyl(:,:) * qc(:,:) * hzl(:,:) * wbbl(:,:,0) = hy(:,:) * qz(:,:,1) * hz(:,:) * bb(:,:,0)
+*     do not depend on poloidal coordinate x (ix).
+*     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,).
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0

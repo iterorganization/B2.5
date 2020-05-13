@@ -318,7 +318,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When b2agdr_redef_gmtry.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant.
+					When b2agdr_redef_gmtry.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant
+                                        and that toroidal magnetic field times major radius is the same constant for all cells independently whether it is computed in cell centers, cell
+                                        faces and cell corners.
 				</description>
 			</switch>
 			<switch>
@@ -4313,7 +4315,20 @@
 				<type>integer</type>
 				<description>
 					When set to '0', drift velocities are calculated in cell centers. When set to '1', drift velocities are calculated in cell faces.
-					 It is recommended '1'.
+                                        When set to '2', drift velocities are calculated in cell faces too, but better approximation of drift velocities and corresponding fluxes is ised.
+                                        This approximation guarantees that the divergence of ExB drift velocity and diamagnetic drift flux are numerically zero in constant B-field,
+                                        which simplifies the physical analysis.
+                                        Setting 'b2tfnb_drift_style'='2' requires that (and may be activated only if) the b2fgmtry file is generated with 'redef_gmtry'='1'.                                        
+					It is recommended '2'.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_PSch_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the numeric approximation of so-called PSch-fluxes of particles and internal energy (divergent part of diamagnetic drift in B2-5.2 approach). 
+                                        Default is '1', however, if is not defined explicitly, accepts the value '2' if 'b2tfnb_drift_style'='2' and 'redef_gmtry'='1'. 
 				</description>
 			</switch>
 			<switch>
