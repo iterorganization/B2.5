@@ -1,6 +1,8 @@
 # Test whether necessary variables are set
 LD_MSCL   ?= `pkg-config mscl --libs`
+ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lpthread -lXrender -lbz2 -lgfortran
+endif
 LD_NAG    ?= `pkg-config nag --libs`
 NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
 LD_NETCDF ?= `nf-config --flibs`

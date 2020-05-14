@@ -2,10 +2,12 @@
 NODENAME  ?= $(shell echo `hostname`)
 LD_NETCDF ?= `nf-config --flibs`
 LD_MSCL   ?= `pkg-config mscl --libs`
-#LD_NCARG ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
+ifdef NCARG_ROOT
+#LD_NCARG ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11
+LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
+endif
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NAG    ?= -lnag_nag
-LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 EQUIVS     = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Ds2min=d2min
