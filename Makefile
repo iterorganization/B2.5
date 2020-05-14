@@ -291,9 +291,13 @@ NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
 
 .PHONY: DEFAULT NOPLOT ALL VERSION mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
-DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE}
-ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE} ${XDEXE}
+DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
+ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
+ifdef NCARG_ROOT
+DEFAULT: ${GEEXE} ${GREXE}
+ALL: ${GEXE} ${GREXE}
+endif
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
