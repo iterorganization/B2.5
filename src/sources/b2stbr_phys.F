@@ -563,7 +563,7 @@ c new variables for advanced fluid neutral reflection/recycling model
       real (kind=R8) :: fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni,
      &     fmomrefl, 
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
-     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,temp,
+     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     dnndz,dnndzc,dnndzv, sina, cosa, dnndthetac, dnndthetav
 
 
@@ -943,8 +943,8 @@ cmb   net neutral energy source from recycling
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
 
 
-!!         A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
-!!         while B2.5 uses internal energy equations.
+c         A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
+c         while B2.5 uses internal energy equations.
 
              q_conv=
      &             (isign*(tnf*pl%ua(iCv,is)*geo%fcpbs(iFc)*
@@ -954,7 +954,6 @@ cmb   net neutral energy source from recycling
      &             pl%ua(iCv,is0)**2 +
      &             (cvsf(iFc,0)+cvsf(iFc,1))))*
      &             neutral_sources_rescale
-             temp =  (cvsf(iFc,0)+cvsf(iFc,1))
 
 
 
