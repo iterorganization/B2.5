@@ -168,7 +168,8 @@
 !        print *, 'intcore done'
         do iy = -1, ny
          do ix = -1, nx
-          if(topix(ix,iy).gt.nx .or. topiy(ix,iy).gt.ny) then
+          if(topiy(ix,iy).eq.ny+1 .or. bottomiy(ix,iy).eq.-2 
+     &       .or. leftix(ix,iy).eq.-2) then
             fhiPSch(ix,iy,0) = 0.0e0_R8
             coni(ix,iy,0,:) = 0.0e0_R8
           else
@@ -277,7 +278,8 @@
 !        print *,'psch y start'
         do iy = -1, ny
          do ix = -1, nx
-          if(rightiy(ix,iy).gt.ny .or. rightix(ix,iy).gt.nx) then
+          if(bottomiy(ix,iy).eq.-2 
+     &       .or. leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
             fhiPSch(ix,iy,1) = 0.0e0_R8
             coni(ix,iy,1,:)  = 0.0e0_R8
           else
