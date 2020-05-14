@@ -142,6 +142,11 @@
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
+            coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
+            coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
             endif
            enddo
           endif
@@ -170,6 +175,11 @@
                 fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 
      &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy),is)-
      &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+                coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
+                coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
               endif
             enddo
           endif
@@ -180,11 +190,6 @@
 
       do is = 0, ns-1
           if(.not.is_neutral(is)) then
-            coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-            coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
           endif
       enddo
 !      iy = ny
@@ -279,6 +284,11 @@
                 fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy),is)-
      &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+                coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
+     &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
+                coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*     ! 0.25*2
+     &       cddi(ix,iy,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
+     &                        ti(leftix(ix,iy),leftiy(ix,iy))           !srv 02.01.07 }
               endif
             enddo
           endif
