@@ -83,7 +83,8 @@
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(nFc,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
-     1	pol_anom_scale
+     4	pol_anom_scale,
+     5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1)
       save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
@@ -166,6 +167,8 @@
      &   co%dpa0(1,is), co%cdpa(1,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dpa0(1,is), co%cdpa(1,1,is))
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dpa0(1,is), cdpa0(1,is))
         call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
      &   co%vla0(1,0,is), co%cvla(1,0,is))
         call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
@@ -178,6 +181,8 @@
      &   co%hcib(1,is), co%chcb(1,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1,is), co%chcb(1,1,is))
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hcib(1,is), chcib(1,is))
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
@@ -195,6 +200,8 @@
      &   co%dpa0(1,is), co%cdpahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1,is), co%cdpahz(1,1,is))
+       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+     &   co%dpa0(1,is), cdpa0hz(1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
      &   co%vla0(1,0,is), co%cvlahz(1,0,is))
        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
@@ -302,14 +309,14 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   .. apply flux limit to neutrals contribution to cdpa
         wrk = 1.0_R8
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &    pl%ti, pl%tn, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
+     &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, flc) !srv 09.07.03 30.11.15
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
-     &    pl%te, pl%ti, pl%tn, rt%rza, co%cdpahz, flchz) 
+     &    pl%te, pl%ti, pl%tn, rt%rza, cdpa0hz, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }
 
 *   ..apply flux limit to neutrals contribution to chcb
-      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%tn,
-     &  co%chcb, co%fllim0fhi)
+      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
+     &  pl%tn, chcib, co%chcb, co%fllim0fhi)
        co%chci = 0.0_R8
        co%chcn = 0.0_R8
       do is = 0, ns-1
