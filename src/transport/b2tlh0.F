@@ -1,5 +1,5 @@
-      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, tn,
-     & chcb, fllim0fhi)
+      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, ti,
+     & tn, chcib, chcb, fllim0fhi)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -11,8 +11,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  na(nCv,0:ns-1), tn(nCv),
-     1  chcb(nFc,0:1,0:ns-1)
+     *  na(nCv,0:ns-1), ti(nCv), tn(nCv), 
+     1  chcib(nFc,0:ns-1), chcb(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &	fllim0fhi(nFc,0:1,0:ns-1)
@@ -22,6 +22,7 @@
 *     ------------------------------------------------------------------
 *   ..local variables
       integer iFc, is, ncall, c3
+      integer, save :: style = 0
       integer, save :: iout = 0                                   !srv 13.01.04 {
       real (kind=R8), allocatable :: w1(:)
       character charns*3                                          !srv 13.01.04 }
@@ -51,6 +52,7 @@
         call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_tn) !! do not change name of switch for compatibility with existing input files?
         flux_limit_min_tn=flux_limit_min_tn*ev
         call ipgeti ('b2tlh0_iout', iout)                         !srv 13.01.04
+        call ipgeti ('b2tlh0_style', style)
       endif
 
       call sfill(nFc*2*ns, 1.0_R8, fllim0fhi, 1)
@@ -59,32 +61,58 @@
       if (alpha.ne.0.0_R8) then
 *   .. compute differences of temperature
        call diff(nCv, nFc, nVx, 0, geo, mpg, tn, tnv, dtnf)
-       do is = 0, ns-1
-        if (is_neutral(is)) then
-         do iFc = 1, nFc
-          t0 = (tn(mpg%fcCv(iFc,1))    + tn(mpg%fcCv(iFc,2)))/2.0_R8
-          t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
+       if (style.eq.0) then
+        do is = 0, ns-1
+         if (is_neutral(is)) then
+          do iFc = 1, nFc
+           t0 = (tn(mpg%fcCv(iFc,1))    + tn(mpg%fcCv(iFc,2)))/2.0_R8
+           t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *   .. compute neutral heat conductivity flux limit in poloidal direction
-          dtn = abs(chcb(iFc,0,is)*dtnf(iFc,0))
-          vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
-     &      geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
-          t2 = 1.0_R8/(1.0_R8 + 
-     .      (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
-          chcb(iFc,0,is) = chcb(iFc,0,is)*t2
-	  fllim0fhi(iFc,0,is) = t2
-          maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+           dtn = abs(chcb(iFc,0,is)*dtnf(iFc,0))
+           vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
+     &       geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
+           t2 = 1.0_R8/(1.0_R8 + 
+     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+           chcb(iFc,0,is) = chcb(iFc,0,is)*t2
+	   fllim0fhi(iFc,0,is) = t2
+           maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *   .. compute neutral heat conductivity flux limit in radial diretion
-          dtn = abs(chcb(iFc,1,is)*dtnf(iFc,1))
-          vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
+           dtn = abs(chcb(iFc,1,is)*dtnf(iFc,1))
+           vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &      geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
-          t2 = 1.0_R8/(1.0_R8 +
-     .      (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
-          chcb(iFc,1,is) = chcb(iFc,1,is)*t2
-	  fllim0fhi(iFc,1,is) = t2
-          maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-         end do
-        end if
-       end do
+           t2 = 1.0_R8/(1.0_R8 +
+     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+           chcb(iFc,1,is) = chcb(iFc,1,is)*t2
+	   fllim0fhi(iFc,1,is) = t2
+           maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+          end do
+         end if
+        end do
+       else
+cwdk    flux limit total gradient-driven flow, not individual poloidal
+cwdk    or radial contributions, since neutral transport is isotropic
+        do is = 0, ns-1
+         if (is_neutral(is)) then
+          do iFc = 1, nFc
+           t0 = (tn(mpg%fcCv(iFc,1))    + tn(mpg%fcCv(iFc,2)))/2.0_R8
+           t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
+*   .. compute neutral heat conductivity flux limit
+           dtn = chcib(iFc,is)*sqrt(dtnf(iFc,0)**2+dtnf(iFc,1)**2)
+           vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*geo%fcS(iFc)
+           t2 = 1.0_R8/(1.0_R8 + 
+     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+*   .. limit in poloidal direction
+           chcb(iFc,0,is) = chcb(iFc,0,is)*t2
+	   fllim0fhi(iFc,0,is) = t2
+           maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+*   .. limit in radial diretion
+           chcb(iFc,1,is) = chcb(iFc,1,is)*t2
+	   fllim0fhi(iFc,1,is) = t2
+           maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+          end do
+         end if
+        end do
+       endif
       endif
 
  100  continue
