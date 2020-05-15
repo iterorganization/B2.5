@@ -4325,7 +4325,7 @@
 				<type>integer</type>
 				<description>
 					Controls the numerical approximation for the so-called Pfirsch-Schlueter fluxes of particles and internal energy (divergent part of diamagnetic drift in the SOLPS5.2 physics model).
-					Default value is '2' if the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '1' and 'b2tfnb_drift_style' is '2' (defaults). Otherwise, the default value is '1'.
+					Default value is '2', unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
 				</description>
 			</switch>
 			<switch>
@@ -4334,7 +4334,7 @@
 				<type>integer</type>
 				<description>
 					Controls the numerical approximation for the inertia current.
-					Default value is '2' if the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '1' and 'b2tfnb_drift_style' is '2' (defaults). Otherwise, the default value is '0'.
+					Default value is '2' unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
 				</description>
 			</switch>
 			<switch>
