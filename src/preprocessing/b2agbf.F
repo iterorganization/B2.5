@@ -88,11 +88,6 @@
      *  t0, p0x, p0y
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *  norm, cornerDist
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      cornerDist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       external subini, subend, xertst
 
 *-----------------------------------------------------------------------
