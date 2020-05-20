@@ -160,6 +160,8 @@ C
       external lnblnk, subini, subend
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 C
       SAVE      IZ1MIN
@@ -219,7 +221,7 @@ C
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
+      call get_environment_variable ('SOLPSTOP', solpstop)
 #endif
 #endif
       if(solpstop.eq.' ') then

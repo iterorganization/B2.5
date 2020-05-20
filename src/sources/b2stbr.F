@@ -148,7 +148,7 @@
       external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic abs, mod
+      intrinsic abs, mod, cpu_time
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,

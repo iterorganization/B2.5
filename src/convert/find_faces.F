@@ -29,7 +29,7 @@
 
       type(fcpart), pointer :: head, tail
       type(fcpart), pointer :: face
-
+      intrinsic pack
       
 !  find all faces belonging to surface structure INDSS
       ncoss = count(m%fcLbl == indss)

@@ -21,6 +21,8 @@ c     the zoom common
       external lnblnk, streql
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -39,7 +41,7 @@ c      call plinit()
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('B2PLOT_DEV', 0, devenv, lenval, ierror)
 #else
-      call getenv ('B2PLOT_DEV', devenv)
+      call get_environment_variable ('B2PLOT_DEV', devenv)
 #ifdef WINDOWS
       devenv = 'x11 ps'                           !srv 17.12.07
 #endif

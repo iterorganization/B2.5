@@ -48,6 +48,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
+      intrinsic cpu_time
       real (kind=R8) ::
      *   b2sasum
       EXTERNAL XERRAB, b2sasum

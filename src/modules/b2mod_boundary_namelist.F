@@ -1576,6 +1576,7 @@ c.. Test consistency with region boundaries
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
+      intrinsic huge
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
