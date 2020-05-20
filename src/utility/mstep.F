@@ -8,7 +8,7 @@ cInitial revision
 c
 c$Id: mstep.F 1032 2007-05-21 09:07:53Z dpc $
 c_______________________________________________________________________
-      SUBROUTINE MSTEP(IBND,NS,N,Y,YT,DY,DIF,H,T0,TN,YF,REPS,NSTP,NMAX,
+      SUBROUTINE MSTEP(IBND,NS,N,Y,YT,DY,H,T0,TN,YF,REPS,NSTP,NMAX,
      1  IER,IFLG,iopt,WK,IWK) 
       use b2mod_types
 
@@ -17,7 +17,6 @@ c  as done by Mrityunjay Kundu in his IPR report.
 
       implicit none
       integer ibnd,n,ns,nstp,nmax,ier,iflg,iopt,nmx
-      EXTERNAL DIF 
       real (kind=R8) :: YT(N),Y(N,7),DY(N,7),WK(N,3+2*N),
      1  YF(N),DEL(4),H,T0,TN,REPS,EPS
       PARAMETER(NMX=100000,EPS=1.0e-30_R8) 
@@ -50,7 +49,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
         IF((H.LT.0.0_R8).EQV.(TN.GT.T0)) H=-H 
  
         T=T0 
-        CALL STRT4(IBND,NS,N,Y,DY,DIF,H,T,REPS,IFLG,TSTEP,NSTP,IER,WK) 
+        CALL STRT4(IBND,NS,N,Y,DY,H,T,REPS,IFLG,TSTEP,NSTP,IER,WK) 
         IF(IER.GT.0) RETURN 
         IJ=4 
         IJM1=3 
@@ -74,10 +73,10 @@ c  as done by Mrityunjay Kundu in his IPR report.
       REPS1=ABS(REPS*H/TSTEP) 
  
       if(iopt.eq.1) then
-        CALL GEAR(IBND,NS,N,Y,DY,DIF,H,T,REPS1,NSTP,IJ,IJM1,IJM2, 
+        CALL GEAR(IBND,NS,N,Y,DY,H,T,REPS1,NSTP,IJ,IJM1,IJM2, 
      1          IJM3,IJM4,IFLAG,IER,WK,WK(1,4),IWK) 
       else
-        CALL ADAMS(IBND,NS,N,Y,DY,DIF,H,T,REPS1,NSTP,IJ,IJM1,IJM2, 
+        CALL ADAMS(IBND,NS,N,Y,DY,H,T,REPS1,NSTP,IJ,IJM1,IJM2, 
      1           IJM3,IJM4,IER,WK) 
       endif
  
@@ -140,9 +139,9 @@ c  as done by Mrityunjay Kundu in his IPR report.
               DY(I,IJ)=DY(I,IJM1) 
 5000        CONTINUE 
             T=T0-H/2.0_R8 
-            CALL DIF(IBND,NS,T,N,Y(1,IJM1),DY(1,IJM1)) 
+            CALL lines2c(IBND,NS,T,N,Y(1,IJM1),DY(1,IJM1)) 
             T=T-H 
-            CALL DIF(IBND,NS,T,N,Y(1,IJM3),DY(1,IJM3)) 
+            CALL lines2c(IBND,NS,T,N,Y(1,IJM3),DY(1,IJM3)) 
             NSTP=NSTP+2 
             H=H/2.0_R8 
           ELSE 
@@ -153,7 +152,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
             DO 5200 I=1,N 
               Y(I,1)=Y(I,IJM1) 
 5200        CONTINUE
-            CALL STRT4(IBND,NS,N,Y,DY,DIF,H,T,REPS,IFLG,TSTEP,NSTP,IER,
+            CALL STRT4(IBND,NS,N,Y,DY,H,T,REPS,IFLG,TSTEP,NSTP,IER,
      .                 WK) 
             IF(IER.GT.0) THEN 
               DO 5300 I=1,N 
@@ -221,14 +220,13 @@ c  as done by Mrityunjay Kundu in his IPR report.
       RETURN
       END SUBROUTINE MSTEP
 c_______________________________________________________________________
-      SUBROUTINE STRT4(IBND,NS,N,Y,DY,DIF,H,T,REPS,IFLG,TSTEP,NSTP,IER,
+      SUBROUTINE STRT4(IBND,NS,N,Y,DY,H,T,REPS,IFLG,TSTEP,NSTP,IER,
      1 WK) 
       use b2mod_types
       implicit none
       integer n,nit,iflg,nstp,ier,ibnd,ns
       real (kind=R8) :: eps, sfac, h, t, reps, tstep
       PARAMETER(EPS=1.0e-30_R8,SFAC=0.90_R8,NIT=20) 
-      EXTERNAL DIF 
       real (kind=R8) :: Y(N,4),DY(N,4),WK(N,2) 
  
       integer i, it
@@ -237,13 +235,13 @@ c_______________________________________________________________________
       T0=T 
       IER=0 
       DO 4000 IT=1,NIT 
-        CALL DIF(IBND,NS,T0,N,Y(1,1),DY(1,1)) 
-        CALL RK4(IBND,NS,N,T0,Y(1,1),DY(1,1),H,Y(1,2),DIF,WK) 
+        CALL lines2c(IBND,NS,T0,N,Y(1,1),DY(1,1)) 
+        CALL RK4(IBND,NS,N,T0,Y(1,1),DY(1,1),H,Y(1,2),WK) 
         T=T0+H 
-        CALL DIF(IBND,NS,T,N,Y(1,2),DY(1,2)) 
-        CALL RK4(IBND,NS,N,T,Y(1,2),DY(1,2),H,Y(1,3),DIF,WK) 
+        CALL lines2c(IBND,NS,T,N,Y(1,2),DY(1,2)) 
+        CALL RK4(IBND,NS,N,T,Y(1,2),DY(1,2),H,Y(1,3),WK) 
         H2=2.0_R8*H 
-        CALL RK4(IBND,NS,N,T0,Y(1,1),DY(1,1),H2,Y(1,4),DIF,WK) 
+        CALL RK4(IBND,NS,N,T0,Y(1,1),DY(1,1),H2,Y(1,4),WK) 
         NSTP=NSTP+11 
  
         RERR=0 
@@ -256,10 +254,10 @@ c_______________________________________________________________________
  
         IF(RERR.LE.REPS.OR.IFLG.GT.0) THEN 
           T=T+H 
-          CALL DIF(IBND,NS,T,N,Y(1,3),DY(1,3)) 
-          CALL RK4(IBND,NS,N,T,Y(1,3),DY(1,3),H,Y(1,4),DIF,WK) 
+          CALL lines2c(IBND,NS,T,N,Y(1,3),DY(1,3)) 
+          CALL RK4(IBND,NS,N,T,Y(1,3),DY(1,3),H,Y(1,4),WK) 
           T=T+H 
-          CALL DIF(IBND,NS,T,N,Y(1,4),DY(1,4)) 
+          CALL lines2c(IBND,NS,T,N,Y(1,4),DY(1,4)) 
           NSTP=NSTP+5 
           DO 3000 I=1,N 
             WK(I,2)=Y(I,4) 
@@ -278,11 +276,11 @@ c_______________________________________________________________________
       END SUBROUTINE STRT4
  
 c_______________________________________________________________________
-      SUBROUTINE RK4(IBND,NS,N,T,Y0,DY0,H,Y1,DIF,WK) 
+      SUBROUTINE RK4(IBND,NS,N,T,Y0,DY0,H,Y1,WK) 
       use b2mod_types
       implicit none
       integer n, ns, ibnd
-      external DIF
+      external lines2c
       real (kind=R8) :: T,H
       real (kind=R8) :: Y0(N),DY0(N),Y1(N),WK(N,2) 
  
@@ -296,27 +294,27 @@ c_______________________________________________________________________
 1000  CONTINUE
  
       T1=T+H2 
-      CALL DIF(IBND,NS,T1,N,WK,WK(1,2)) 
+      CALL lines2c(IBND,NS,T1,N,WK,WK(1,2)) 
       DO 1200 I=1,N 
         Y1(I)=Y1(I)+H*WK(I,2)
         WK(I,1)=Y0(I)+H2*WK(I,2) 
 1200  CONTINUE
  
-      CALL DIF(IBND,NS,T1,N,WK,WK(1,2)) 
+      CALL lines2c(IBND,NS,T1,N,WK,WK(1,2)) 
       DO 1400 I=1,N 
         Y1(I)=Y1(I)+H*WK(I,2) 
         WK(I,1)=Y0(I)+H*WK(I,2) 
 1400  CONTINUE
  
       T1=T+H 
-      CALL DIF(IBND,NS,T1,N,WK,WK(1,2)) 
+      CALL lines2c(IBND,NS,T1,N,WK,WK(1,2)) 
       DO 1600 I=1,N 
         Y1(I)=Y0(I)+(Y1(I)+H2*WK(I,2))/3.0_R8 
 1600  CONTINUE
       RETURN
       END SUBROUTINE RK4
 c_______________________________________________________________________
-      SUBROUTINE GEAR(IBND,NS,N,Y,DY,DIF,H,T,REPS,NSTP,IJ,IJM1,IJM2, 
+      SUBROUTINE GEAR(IBND,NS,N,Y,DY,H,T,REPS,NSTP,IJ,IJM1,IJM2, 
      1                IJM3,IJM4,IFLAG,IER,WK1,WK,IWK)
       use b2mod_types 
       implicit none
@@ -345,7 +343,7 @@ c_______________________________________________________________________
       IPAS=0 
       IER=0 
       NSTP=NSTP+1 
-      CALL DIF(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
+      CALL lines2c(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
       DO 1200 J=1,N 
         WK1(J,3)=Y(J,IJ)-(48.0_R8*Y(J,IJM1)-36.0_R8*Y(J,IJM2) + 
      &  16.0_R8*Y(J,IJM3) - 3.0_R8*Y(J,IJM4)+12.0_R8*H*DY(J,IJ))/25.0_R8 
@@ -358,7 +356,7 @@ c_______________________________________________________________________
           IF(DK.EQ.0.0_R8) DK=100.0_R8*REPS 
           Y(IP,IJ)=X1+DK 
           NSTP=NSTP+1 
-          CALL DIF(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
+          CALL lines2c(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
           DO 1800 J=1,N 
             WK(J,1)=Y(J,IJ)-(48.0_R8*Y(J,IJM1)-36.0_R8*Y(J,IJM2) + 
      &       16.0_R8*Y(J,IJM3) - 3.0_R8*Y(J,IJM4) +
@@ -405,7 +403,7 @@ c_______________________________________________________________________
 3500    CONTINUE 
  
         NSTP=NSTP+1 
-        CALL DIF(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
+        CALL lines2c(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
         IF(RERR.LT.CFAC*REPS) RETURN 
         DO 3800 J=1,N 
           WK1(J,3)=Y(J,IJ)-(48.0_R8*Y(J,IJM1)-36.0_R8*Y(J,IJM2)+
@@ -531,12 +529,12 @@ C       IF(ABS(A(N,N)).LT.REPS) RETURN
       RETURN
       END SUBROUTINE GAUELM
 c_______________________________________________________________________
-      SUBROUTINE ADAMS(IBND,NS,N,Y,DY,DIF,H,T,REPS,NSTP,IJ,IJM1,IJM2, 
+      SUBROUTINE ADAMS(IBND,NS,N,Y,DY,H,T,REPS,NSTP,IJ,IJM1,IJM2, 
      1                 IJM3,IJM4,IER,WK)
       use b2mod_types 
       IMPLICIT none
       integer n, nit, nstp, ij, ijm1, ijm2, ijm3, ijm4, ier, ibnd, ns
-      external dif
+      external lines2c
       real (kind=R8) :: eps, cfac, reps, h, t
       PARAMETER(EPS=1.e-30_R8,NIT=10,CFAC=0.20_R8) 
       real (kind=R8) :: Y(N,7),DY(N,7),WK(N,2) 
@@ -554,7 +552,7 @@ c_______________________________________________________________________
  
       DO 3000 J=1,NIT 
         NSTP=NSTP+1 
-        CALL DIF(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
+        CALL lines2c(IBND,NS,T,N,Y(1,IJ),DY(1,IJ)) 
         RERR=0.0_R8 
 
         DO 2600 K=1,N 
@@ -571,7 +569,7 @@ c_______________________________________________________________________
       RETURN 
       END SUBROUTINE ADAMS
 c_______________________________________________________________________
-      SUBROUTINE RKM(IBND,NS,N,Y,YT,DY,DIF,H,T0,TN,REPS,NSTEP,NMAX,IER,
+      SUBROUTINE RKM(IBND,NS,N,Y,YT,DY,H,T0,TN,REPS,NSTEP,NMAX,IER,
      . WK) 
       use b2mod_types
       implicit none
@@ -580,7 +578,7 @@ c_______________________________________________________________________
       real (kind=R8) :: H, T0, TN, REPS
       PARAMETER(NMX=10000,SFAC=0.9_R8,EPS=1.0e-30_R8) 
       PARAMETER(E1=0.20_R8,E2=0.25_R8,CE=15.0_R8) 
-      EXTERNAL DIF 
+      EXTERNAL lines2c 
       real (kind=R8) :: Y(N),YT(N),DY(N),WK(N,5) 
  
       integer I
@@ -602,15 +600,15 @@ c_______________________________________________________________________
       endif
       IF(H.EQ.0.0.OR.ABS(H).GT.ABS(TSTEP)) H=TSTEP 
       IF((H.LT.0.0_R8).EQV.(TN.GT.T0)) H=-H 
-      CALL DIF(IBND,NS,T0,N,Y,DY) 
+      CALL lines2c(IBND,NS,T0,N,Y,DY) 
  
 1000  NSTEP=NSTEP+1 
       H2=H/2.0_R8 
-      CALL RK4(IBND,NS,N,T0,Y,DY,H2,WK(1,4),DIF,WK) 
+      CALL RK4(IBND,NS,N,T0,Y,DY,H2,WK(1,4),WK) 
       T1=T0+H2 
-      CALL DIF(IBND,NS,T1,N,WK(1,4),WK(1,5)) 
-      CALL RK4(IBND,NS,N,T1,WK(1,4),WK(1,5),H2,WK(1,3),DIF,WK) 
-      CALL RK4(IBND,NS,N,T0,Y,DY,H,WK(1,4),DIF,WK) 
+      CALL lines2c(IBND,NS,T1,N,WK(1,4),WK(1,5)) 
+      CALL RK4(IBND,NS,N,T1,WK(1,4),WK(1,5),H2,WK(1,3),WK) 
+      CALL RK4(IBND,NS,N,T0,Y,DY,H,WK(1,4),WK) 
  
       RERR=0 
       DO 2000 I=1,N 
@@ -630,7 +628,7 @@ c_______________________________________________________________________
         DO 3000 I=1,N 
           Y(I)=WK(I,3)-(WK(I,4)-WK(I,3))/CE 
 3000    CONTINUE
-        CALL DIF(IBND,NS,T0,N,Y,DY) 
+        CALL lines2c(IBND,NS,T0,N,Y,DY) 
         IF(ABS((TN-T0)/TSTEP).LT.REPS) RETURN 
  
         IF(RERR.EQ.0.0_R8) THEN 

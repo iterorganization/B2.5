@@ -1100,6 +1100,7 @@ contains
     integer ixpt,ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
+    intrinsic min, max
     real (kind=R8) :: &
         & geom_match_dist
     data geom_match_dist/1.0e-6_R8/
@@ -1114,7 +1115,6 @@ contains
     match(ix1,iy1,ix2,iy2)= &
         & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. &
         & geom_match_dist
-    intrinsic min, max
     !
 #ifndef BUILDING_CARRE
     call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
