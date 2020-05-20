@@ -240,6 +240,8 @@ c
 c
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -325,7 +327,7 @@ c
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
+      call get_environment_variable ('SOLPSTOP', solpstop)
 #endif
 #endif
       textan=''

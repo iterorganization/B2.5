@@ -109,7 +109,7 @@
 
       real(R8) :: xco(4), yco(4), babs
       logical lfound, swapped, classical, bound, lkeep
-
+      intrinsic pack
 !  assume a structured quadrilateral grid
 
 !  store information for easy back-transformation to structured format

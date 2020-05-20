@@ -194,6 +194,7 @@
       implicit none
       real (kind=R8) ::
      *   x02alf
+      intrinsic huge
 *     ------------------------------------------------------------------
 *     A FORTRAN intrinsic for the NAG routine of the same name, for the
 *     case of an eight-byte real*8 environment.
@@ -207,6 +208,7 @@
       implicit none
       real (kind=R8) ::
      *   x02amf
+      intrinsic tiny
 *     --------------------------------------------------------------------
 *     A FORTRAN intrinsic substitute for the NAG routine of the same name, 
 *     for the case of an eight-byte real*8 environment.
