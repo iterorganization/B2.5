@@ -277,14 +277,29 @@ csw
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step (add_init)
+      subroutine b2mn_step
       implicit none
-      integer add_init
 
-      call b2mndr_1 (nout, ns, add_init, geo, mpg, state, state_ext)
+
+      call b2mndr_1 (nout, ns, geo, mpg, state, state_ext)
+
+      end subroutine b2mn_step
+
+      subroutine b2mn_pp(J)
+      use b2mod_types
+      implicit none
+      real(kind=R8) :: J
+      integer iCv
+
+      J = 0.0_R8
+      do iCv = 1, mpg%nCv
+       J = max(J,state%pl%te(iCv))
+      enddo
+      write(*,*) "Cost function value: ",J
 
       return
-      end subroutine b2mn_step
+      end subroutine b2mn_pp
+
 
       subroutine b2mn_fin ()
       implicit none

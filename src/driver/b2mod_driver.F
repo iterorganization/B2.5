@@ -1787,13 +1787,13 @@ c new CDF movie option (1st frame at t=0)
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, add_ntim, geo, mpg, state, 
+      subroutine b2mndr_1 (nout, ns, geo, mpg, state, 
      &  state_ext)
       implicit none
 #ifdef JET
-      integer nout(0:9), nx, ny, ns, add_ntim
+      integer nout(0:9), nx, ny, ns
 #else
-      integer nout(0:8), nx, ny, ns, add_ntim
+      integer nout(0:8), nx, ny, ns
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -1808,6 +1808,7 @@ c new CDF movie option (1st frame at t=0)
       character*256 systemarg
       logical ok, found
 *   ..procedures
+      intrinsic cpu_time
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
 
@@ -1818,7 +1819,6 @@ c new CDF movie option (1st frame at t=0)
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11
       quit_residual=.false.                                         !jwk
-      ntim = ntim + add_ntim
       ne_wanted_next_time=tim
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
