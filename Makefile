@@ -871,8 +871,8 @@ ${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
 ifdef LD_NETCDF
 	@- /bin/rm -f ${NCODIR}/$*.o
 	@-mkdir -p ${NCODIR}
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.f90
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
 else
 	$(warning NETCDF library not present!)
 endif
