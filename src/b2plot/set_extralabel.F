@@ -20,6 +20,8 @@ C ===================================================================
       character*1 backslash
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -165,7 +167,7 @@ C ===================================================================
 #ifdef USE_PXFGETENV
         CALL PXFGETENV (var, 0, envvar, lenval, ierror)
 #else
-        call getenv (var, envvar)
+        call get_environment_variable (var, envvar)
 #endif
         if(envvar.eq.' ') then
           write(*,*) 'Environment variable ',var(1:lnblnk(var)),
