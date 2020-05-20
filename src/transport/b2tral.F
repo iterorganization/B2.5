@@ -80,7 +80,7 @@
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
      1  fch_anomalous/1.0_R8/, no_current/0/
-
+      intrinsic huge
 *-----------------------------------------------------------------------
 *.computation
 

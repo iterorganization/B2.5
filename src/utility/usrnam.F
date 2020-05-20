@@ -14,6 +14,8 @@
       character usrnm*16
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
       save usrnm
       data usrnm/' '/
@@ -28,19 +30,19 @@
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('LOGNAME', 0, usrnm, lenval, ierror)
 #else
-       call getenv ('LOGNAME', usrnm)
+       call get_environment_variable ('LOGNAME', usrnm)
 #endif
        if (usrnm.eq.' ') then
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('USER', 0, usrnm, lenval, ierror)
 #else
-        call getenv ('USER', usrnm)
+        call get_environment_variable ('USER', usrnm)
 #endif
         if (usrnm.eq.' ') then
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('user', 0, usrnm, lenval, ierror)
 #else
-         call getenv ('user', usrnm)
+         call get_environment_variable ('user', usrnm)
 #endif
          if (usrnm.eq.' ') then
           usrnm = 'anonymous'
