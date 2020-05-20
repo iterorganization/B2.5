@@ -142,7 +142,7 @@ c No. of equations to be solved.
       hstep = dt
       nmax = 100000000
       rerr = 1.0e-8_R8
-      call mstep(ibnd,ns,neq,u1,ut,du,lines2c,hstep,t0,tn,yf,
+      call mstep(ibnd,ns,neq,u1,ut,du,hstep,t0,tn,yf,
      &  rerr,nstep,nmax,ier,iflg,iopt,wk,iwk)
       call xertst(ier.eq.0,'ier.ne.0 in heatdiff1D')
       if (output.ge.10) write(6,*) 'No. of successful steps = ',nstep
