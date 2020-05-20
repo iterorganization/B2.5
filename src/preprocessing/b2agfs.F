@@ -576,6 +576,8 @@ c
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -617,7 +619,7 @@ c
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
 #else
-      call getenv ('DEVICE', device)
+      call get_environment_variable ('DEVICE', device)
 #endif
 #endif
       if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input

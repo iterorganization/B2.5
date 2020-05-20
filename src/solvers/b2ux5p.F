@@ -69,7 +69,7 @@
       integer, allocatable, save :: iwrk(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min
+      intrinsic min, cpu_time
       external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu

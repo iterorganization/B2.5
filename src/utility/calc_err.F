@@ -83,6 +83,7 @@
      &    uacf(nCv), L2norm, Cnorm                                      !srv 09.07.18
        logical l_exist
        character chns*2, chnCv*6
+       intrinsic norm2
 
        write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'_us.dat')
@@ -225,6 +226,7 @@
        logical l_exist
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
+       intrinsic norm2
 
        pass='../exact_'//trim(nmvar)//'_us.dat'
        inquire(file=trim(pass),exist=l_exist)

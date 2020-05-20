@@ -75,7 +75,7 @@
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min
+      intrinsic min, cpu_time
       external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
      &  slv5pt, iluter, xerrab
 *   ..initialization

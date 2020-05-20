@@ -22,7 +22,7 @@ C
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
+      INTRINSIC MOD, cpu_time
       real (kind=R8) ::
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
