@@ -2144,6 +2144,8 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -2157,7 +2159,7 @@ CA GET THE VALUE OF ADASCENT WHICH SETS UP TOPLEVEL DATA DIRECTORY.
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('ADASCENT', 0, ENV, lenval, ierror)
 #else
-      call getenv ('ADASCENT', ENV)
+      call get_environment_variable ('ADASCENT', ENV)
 #endif
 #endif
       DEFUID = ENV

@@ -56,6 +56,7 @@ c*** Local variables
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)
       real (kind=R8) :: r,z,bq,dr,dz,qmx,qmn,rmp,ztp,ztt,pwr_tot
       logical found
+      intrinsic huge
 c----------------------------------------------------------------------
       rd_in(x)=a+b*x**cc+d*(1.0_R8-x**e)**f
       rd_out(x)=a0+x*(a1+x*a2)

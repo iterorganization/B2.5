@@ -1124,6 +1124,7 @@ c m = mass of a particle
 c      real (kind=R8):: S15AEC
       external subini, subend
 c      external S15AEC !mb NAG erf function
+      intrinsic erf
       call subini('CalcMomentsMaxwellian')
       
       if (uold.eq.u.and.Told.eq.t.and.mold.eq.m) then

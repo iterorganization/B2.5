@@ -13,6 +13,8 @@
       real (kind=R8), save :: dtim = 1.0_R8
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 #ifndef NO_CDF
       integer :: status
@@ -127,7 +129,7 @@ c prepare the b2tallies.nc.xxxx file
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
-      call getenv ('PLASMASTATE', plasmastate)
+      call get_environment_variable ('PLASMASTATE', plasmastate)
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif

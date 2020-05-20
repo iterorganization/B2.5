@@ -1257,6 +1257,8 @@ c=======================================================================
       integer nwrite
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -1279,8 +1281,8 @@ c     ------------------------------------------------------------------
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
-      call getenv ('GRPSOLPS', grpsolps)
-      call getenv ('LOCSOLPS', locsolps)
+      call get_environment_variable ('GRPSOLPS', grpsolps)
+      call get_environment_variable ('LOCSOLPS', locsolps)
 #endif
 #endif
       version = grpsolps//'_'//locsolps
