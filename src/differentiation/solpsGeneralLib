@@ -1,0 +1,1000 @@
+function x05baf:
+  external:
+  shape: (result)
+  type: (float())
+
+function isUnusedCell:
+  external:
+  shape: (param 1, result)
+  type: (integer(), boolean())
+
+function isGhostCell:
+  external:
+  shape: (param 1, result)
+  type: (integer(), boolean())
+
+function isRealCell:
+  external:
+  shape: (param 1, result)
+  type: (integer(), boolean())
+
+function isClassicalGrid:
+  external:
+  shape: (param 1, result)
+  type: (integer(), boolean())
+
+function isInDomain:
+  external:
+  shape: (param 1, param 2, param 3, param 4, result)
+  type: (integer(), integer(), integer(), integer(), boolean())
+
+function isBoundaryCell:
+  external:
+  shape: (param 1, result)
+  type: (integer(), boolean())
+
+
+subroutine tallies:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine nf_inq:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine nf_inq_varid:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine nf_inq_var:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine nf_inq_dim:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine assert:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine repeat:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gspli:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gspmi:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gstxi:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsfai:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsln:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gslwsc_d:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsplci:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsmk:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gspmci:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gstxfp:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine gstxci:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsfais:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsfasi:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsfaci:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsfaci:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gsasf:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gopwk:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine gridal:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id, id, id, id, id, id, id, id)
+
+subroutine labmod:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id, id, id, id, id, id, id, id)
+
+subroutine tick4:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine arinam:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine entsr:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine arpram:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine arscam:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6, param 7, param 8)
+ deps: (id, id, id, id, id, id, id, id)
+
+subroutine adset:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine aderc:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine adbcxr:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine cprset:
+ external:
+ shape:()
+ deps: ()
+
+subroutine cpseti:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine cpsetc:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine cprect:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6, param 7, param 8)
+ deps: (id, id, id, id, id, id, id, id)
+
+subroutine cpclam:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine cplbam:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine cplbdr:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine cpdrpl:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine CPCLDM:
+ external:
+ shape:(param 1, param 2, param 3, param 4,
+        param 5)
+ deps: (id, id, id, id, id)
+
+subroutine cpcldr:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+function nerro:
+  external:
+  shape: (param 1, result)
+  type: (integer(), integer())
+
+function nf_open:
+  external:
+  shape: (param 1, param 2, param 3, result)
+  type: (character(), integer(), integer(), integer())
+
+function nf_close:
+  external:
+  shape: (param 1, result)
+  type: (integer(), integer())
+
+function nf_create:
+  external:
+  shape: (param 1, param 2, param 3, result)
+  type: (character(), integer(), integer(), integer())
+
+function nf_def_dim:
+  external:
+  shape: (param 1, param 2, param 3, param 4, result)
+  type: (integer(), character(), integer(), integer(), integer())
+
+function nf_enddef:
+  external:
+  shape: (param 1, result)
+  type: (integer(), integer())
+
+
+function int2str:
+  external:
+  shape: (param 1, result)
+  type: (integer(), character())
+
+subroutine cdfmovie:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine b2crtimecdf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6,
+        param 7, param 8, param 9, param 10, param 11, param 12, param 13)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id, id)
+
+subroutine rwcdf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine rwcdf_settime:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine rwcdf_setbatch:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine check_cdf_status:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine nancheck:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine lower_case:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine eirene_mc:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
+ deps: (id, id, id, id, id, id, id)
+
+subroutine font:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine b2plot:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine curved_d:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine gpl_d:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine gpm_d:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine set_d:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6,
+        param 7, param 8, param 9)
+ deps: (id, id, id, id, id, id, id, id, id)
+
+subroutine gtx_d:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine gsmksc_d:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gschxp_d:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gschsp_d:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gschh_d:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gschup_d:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine gscr_d:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine cpsetr_d:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine b2yrdr:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine b2wgrc:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6,
+        param 7, param 8, param 9, param 10, param 11, param 12,
+        param 13, param 14, param 15, param 16, param 17, param 18, param 19)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
+
+subroutine plotcontour:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6,
+        param 7, param 8, param 9, param 10, param 11, param 12)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id)
+
+subroutine create_cdf_start:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine create_cdf_field2:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine create_cdf_field3:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine create_cdf_end:
+ external:
+ shape:()
+ deps: ()
+
+subroutine put_cdf_start:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine put_cdf_field2:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine put_cdf_field3:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine put_cdf_end:
+ external:
+ shape:()
+ deps: ()
+
+subroutine get_cdf_ntstep:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine get_cdf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
+ deps: (id, id, id, id, id, id, id)
+
+subroutine create_cdf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine put_cdf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine b2wrsep:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrsepi:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrseps:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrsepf:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrint:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrinti:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrints:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2wrintf:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2usrtrc:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id ,id, id, id, id)
+
+subroutine b2usrtri:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2usrtrs:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2usrtrf:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnm:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2blnmi:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2blnms:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2blnmf:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2blne:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnei:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnes:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnef:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnc:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blnci:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blncs:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2blncf:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine b2trace:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id ,id, id, id, id, id, id, id)
+
+subroutine b2trci:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id ,id, id, id, id, id, id, id)
+
+subroutine b2trcc:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id ,id, id, id, id, id, id, id)
+
+subroutine b2trcs:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id ,id, id, id, id, id, id, id)
+
+subroutine b2trcf:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id ,id, id, id, id, id, id, id)
+
+subroutine wallon:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id ,id, id, id)
+
+subroutine set_wall_on:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine set_wlinlog:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine walloff:
+ external:
+ shape:()
+ deps: ()
+
+subroutine b2filei:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2filew:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine b2filef:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine targeton:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id ,id, id)
+
+subroutine set_trglinlog:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine lblbartraj:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id ,id)
+
+subroutine lblbartrajcol:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine initialise_plotting:
+ external:
+ shape:()
+ deps: ()
+
+subroutine initialise_plotting_flags:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_color_map:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_fill_option:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine initialise_plotting_0:
+ external:
+ shape:()
+ deps: ()
+
+subroutine set_lbsz:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_ndec:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine get_ndec:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_noax:
+ external:
+ shape:()
+ deps: ()
+
+subroutine swap_aspect:
+ external:
+ shape:()
+ deps: ()
+
+subroutine set_zero:
+ external:
+ shape:()
+ deps: ()
+
+subroutine toggle_label_lines:
+ external:
+ shape:()
+ deps: ()
+
+subroutine set_device:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_line_font_size:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_axes_color:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_header_color:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_title_color:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_barlabel_color:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine set_extralabel_color:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine xerrab:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine xerset:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine xerget:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine subini:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine subend:
+ external:
+ shape:()
+ deps: ()
+
+subroutine subxnd:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine lefta:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine righta:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine lbfill:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine lbfilx:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine lbfilq:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine gnmap2:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine gndfm2:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine gnmap3:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine gndfm3:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine combfile:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10,
+        param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18, param 19, param 20)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
+
+subroutine b2agsp:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8)
+ deps: (id, id, id, id, id, id, id, id)
+
+subroutine b2agsi:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine cfverr:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine cfverw:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine my_out_us:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine ipsetc:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine ipgetc:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine ipprhp:
+ external:
+ shape:()
+ deps: ()
+
+subroutine ipfini:
+ external:
+ shape:()
+ deps: ()
+
+subroutine lwimax:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine lwmax:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine init_page:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
+ deps: (id, id, id, id, id, id, id, id, id)
+
+subroutine pagini:
+ external:
+ shape:()
+ deps: ()
+
+subroutine pagend:
+ external:
+ shape:()
+ deps: ()
+
+subroutine pagdef:
+ external:
+ shape:()
+ deps: ()
+
+subroutine nf_def_var:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine nf_put_att_text:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine nf_inq_varndims:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine nf_inq_vardimid:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine nf_inq_dimlen:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine nf_put_vara_text:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine nf_put_vara_double:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine nf_redef:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine nf_put_var_text:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine nf_put_var_int:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine nf_put_var_double:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
