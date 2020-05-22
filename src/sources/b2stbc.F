@@ -300,9 +300,11 @@
           volsum(1)=volsum(1) + vol(ix,iy)
         endif                                                            !xpb
       enddo                                                      !sv 24.03.99
-      praverage(1)=prsum(1)/volsum(1)                                    !xpb
-      qeaverage(1)=qesum(1)/gssum(1)
-      qiaverage(1)=qisum(1)/gssum(1)
+      if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
+      if (gssum(1).gt.0.0_R8) then
+        qeaverage(1)=qesum(1)/gssum(1)
+        qiaverage(1)=qisum(1)/gssum(1)
+      end if
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
       tesum(2)=0.0_R8
@@ -382,8 +384,8 @@
           volsum(2)=volsum(2) + vol(ix,iy)
         endif                                                            !xpb
       enddo                                                              !xpb
+      if (volsum(2).gt.0.0_R8) praverage(2)=prsum(2)/volsum(2)           !xpb
       if (gssum(2).gt.0.0_R8) then
-        praverage(2)=prsum(2)/volsum(2)                                  !xpb
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
       endif

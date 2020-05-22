@@ -373,7 +373,7 @@
          volsum=volsum + vol(ix,iy)                               !srv 24.03.99
         endif                                                     !srv 26.11.02
        enddo                                                      !srv 24.03.99
-       pzaverage=pzsum/volsum                                     !srv 24.03.99 18.01.02
+       if (volsum.gt.0.0_R8) pzaverage=pzsum/volsum               !srv 24.03.99 18.01.02
       else                                                        !srv 08.08.02
        iy = 0                                                     !srv 24.03.99  07.06.02 {
        pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
@@ -387,7 +387,7 @@
          num_inner=num_inner+1                                    !srv 26.11.02
         endif                                                     !srv 26.11.02
        enddo                                                      !srv 24.03.99
-       pzaverage=pzsum*0.5e0_R8/num_inner                         !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
+       if (num_inner.gt.0) pzaverage=pzsum*0.5e0_R8/num_inner     !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
       endif                                                       !srv 08.08.02
 *   ..find the average ne, te, ti, bb for inner flux surface      !srv 15.12.00 18.10.04
       bbsum = 0.0e0_R8                                            !srv 18.10.04
@@ -405,9 +405,11 @@
         bzhzsum = bzhzsum+bb(ix,iy,2)*vol(ix,iy)**2/gs(ix,iy,2)   !lk 20.11.07 !srv 07.05.13
        endif                                                      !srv 26.11.02
       enddo                                                       !srv 15.12.00
-      bbaverage=bbsum/volsum                                      !srv 18.10.04
-      tiaverage=tisum/volsum                                      !srv 15.12.00
-      bzhzaverage=bzhzsum/volsum                                  !lk 20.11.07
+      if (volsum.gt.0.0_R8) then
+       bbaverage=bbsum/volsum                                     !srv 18.10.04
+       tiaverage=tisum/volsum                                     !srv 15.12.00
+       bzhzaverage=bzhzsum/volsum                                 !lk 20.11.07
+      end if
 *   ..find the average ua**2, na for inner flux surface           !srv 22.01.02 {
       do is = 0, ns-1
        uasum  = 0.0e0_R8                                           !srv 15.02.02
@@ -420,9 +422,11 @@
          nasum  = nasum  + na(ix,iy,is)*vol(ix,iy)
         endif                                                      !srv 26.11.02
        enddo
-       ua2average(is) = ua2sum/volsum                              !srv 07.04.00 15.02.02
-       uaaverage(is) = uasum/volsum                                !srv 07.04.00 15.02.02 16.04.02
-       naaverage(is) = nasum/volsum
+       if (volsum.gt.0.0_R8) then
+        ua2average(is) = ua2sum/volsum                             !srv 07.04.00 15.02.02
+        uaaverage(is) = uasum/volsum                               !srv 07.04.00 15.02.02 16.04.02
+        naaverage(is) = nasum/volsum
+       end if
       enddo                                                        !srv 22.01.02 }
 
       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 01.02.09
@@ -3042,7 +3046,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 #endif
               endif
               t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
-              t1=0.0e0_R8   ! Sum of volume averaged density
+              t1=0.0e0_R8   ! Sum of volume-averaged density
               DO IBW=IB,NBC
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -4170,6 +4174,9 @@ cxpb  and max(,,) statement for stability
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
      2       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(on_closed_surface(BC_LIST_X(1,IB),
+     .                                    BC_LIST_Y(1,IB)),
+     &       'BCMOM = 14 intended for core boundaries only!')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -4233,6 +4240,9 @@ cxpb  and max(,,) statement for stability
      .       'specified parallel velocity as a function of',
      &       ' poloidal coordinate ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(on_closed_surface(BC_LIST_X(1,IB),
+     .                                    BC_LIST_Y(1,IB)),
+     &       'BCMOM = 15 intended for core boundaries only!')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -8684,7 +8694,7 @@ cxpb Careful here because of BC number clash
             TIS = 0.0_R8 ! Poloidally density-averaged ion temperature in the boundary cell
             NIVS = 0.0_R8
             t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
-            t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
+            t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
