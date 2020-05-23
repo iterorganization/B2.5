@@ -295,8 +295,13 @@ DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 ifdef NCARG_ROOT
+ifeq ($(strip ${GLI_HOME}),)
+$(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
+endif
 DEFAULT: ${GEEXE} ${GREXE}
 ALL: ${GEEXE} ${GREXE}
+else
+$(warning B2.5 graphical post-processing programs will not be compiled because NCARG_ROOT is not defined.)
 endif
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}

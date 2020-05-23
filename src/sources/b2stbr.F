@@ -1490,9 +1490,6 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       if (sputter_namelist_used) then
         call read_b2mod_sputter_namelist
      .     (99,'    ',sputter_namelist_used)
-      else
-        sputter_yield =0.0_R8
-        sputter_yield2=0.0_R8
       endif
       nx_sp = nx_tmp
       ny_sp = ny_tmp
