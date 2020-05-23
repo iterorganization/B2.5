@@ -616,13 +616,15 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &       0.5_R8 * (ti(leftix(ix,iy),leftiy(ix,iy)) + ti(ix,iy)) *
      &         wbbl(ix,iy,2) / (qe*zb(ix,iy) * hyl(ix,iy) * qc(ix,iy))   ! IYS 04.03.2019
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
-           wbdia(ix,iy,0) = - facdrift(ix,iy)/                           !srv 13.05.16 {
-     1        (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     2        (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
-     2         (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))/
-     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe  !srv 13.05.16 }
+           wbdia(ix,iy,0) = - facdrift(ix,iy)/                           ! IYS 04.03.2019 {
+     1        (qe*zb(ix,iy) * hyl(ix,iy) * qc(ix,iy))  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+!     2        (bb(ix,iy,2)/bb(ix,iy,3)**2
+!     2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
+!    2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
+     &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
+     2         (nbtic(topix(ix,iy),topiy(ix,iy)) - nbtic(ix,iy)) /
+     &         (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy))) * 2.0_R8
+!     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe  !IYS 04.03.2019 }
            ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)             !srv 17.05.99
            ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0e0_R8*vbdia(ix,iy,0)   !srv 01.10.99
           endif                                                          !srv 26.11.02
@@ -669,13 +671,13 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &     0.5_R8*(ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))*
      &       wbbv(ix,iy,2) / (qe*zb(ix,iy) * hxb(ix,iy))
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
-           wbdia(ix,iy,1) = facdrift(ix,iy)/                             !srv 13.05.16 {
-     1      (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-     2       bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*
-     2     (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))/
-     &     (nbzbc(rightix(ix,iy),rightiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe !srv 13.05.16 }
+           wbdia(ix,iy,1) = facdrift(ix,iy)/                             !IYS 04.03.2019 {
+     1      (qe*zb(ix,iy) * hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     2      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 *
+!     2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
+!     2       bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*
+     2     (nbtic(rightix(ix,iy),rightiy(ix,iy)) - nbtic(ix,iy)) /
+     &     (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy)) * 2.0_R8 !/qe     !IYS 04.03.2019 }
 
            ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)             !srv 17.05.99
            ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0e0_R8*vbdia(ix,iy,1)   !srv 01.10.99
