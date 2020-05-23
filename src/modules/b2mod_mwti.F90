@@ -1492,7 +1492,11 @@ contains
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
     ! Create and enter define mode
+#ifndef ITM
     iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+#else
+    iret = nf_create(trim(filename), ncclob, ncid)
+#endif
     call check_cdf_status(iret)
     ! define dimensions
     if (.not.batch_only) then

@@ -76,6 +76,8 @@
       call xertst (.not.errdim,
      1 'faulty NXMAX, NYMAX and/or NSDMAX')
 #endif
+      sputter_yield=0.0_R8
+      sputter_yield2=0.0_R8
       ntargsp=0
       target_index=0
       target_intcode=-1
