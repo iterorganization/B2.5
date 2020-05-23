@@ -14,7 +14,7 @@ LD_NAG ?= -L${NAG_LIB} -lnag_nag -lnag_mkl
 LD_MPI ?= -L${MPDIR}/lib64 -lmpi -lmpigf
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-DEFINES += -DDOFLUSH -DNO_IEEE # -DNO_CDF
+DEFINES += -DDOFLUSH -DNO_IEEE -DNO_OPT # -DNO_CDF
 
 ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
