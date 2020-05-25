@@ -4335,6 +4335,7 @@
 				<description>
 					Controls the numerical approximation for the inertia current.
 					Default value is '2' unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
+					A value of '0' recovers the older behaviour (versions 3.0.6 or less).
 				</description>
 			</switch>
 			<switch>

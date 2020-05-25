@@ -65,14 +65,10 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_guard_flows', guard_flows)
        if (redef_gmtry.eq.0) then
-!         drift_style = 1
           fch_inert_style = 1
        else
-!         drift_style = 2
           fch_inert_style = 2
        end if
-!       call ipgeti ('b2tfnb_drift_style', drift_style)                  !IYS 11.02.2020
-!       if (drift_style.eq.2 .and. redef_gmtry.eq.1) fch_inert_style=2   !IYS 11.02.2020
        call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)         !srv 07.07.99
       endif
 *   ..test nx, ny
