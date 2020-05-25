@@ -36,7 +36,7 @@ endif
 ifdef SOLPS_DEBUG
 #FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv \
--Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
+-Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Wreal-q-constant #-Wall
 # -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
 LDOPTS = -g -C
 else

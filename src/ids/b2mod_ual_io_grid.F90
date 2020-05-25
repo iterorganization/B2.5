@@ -471,7 +471,6 @@ contains
         integer :: nix
         integer :: niy
         integer :: i    !< Iterator
-        integer :: j    !< Iterator
         integer :: dir
         integer :: nFc  !< Number of all faces/edges (x + y aligned)
         integer :: geometryType  !< Geometry identifier index

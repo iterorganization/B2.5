@@ -19,7 +19,6 @@
      * !bzbr(:,:),
      * bzbv(:,:)
 
-
       contains
 
       subroutine alloc_b2mod_geo_corner(nxd,nyd)
