@@ -183,6 +183,8 @@
       call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
       call sfill (nCv*4, 0.0_R8, shn0_ion, 1)
       call sfill (nCv*4, 0.0_R8, shn0_rec, 1)
+
+
 *   ..compute sources due to ionisation
       rsanareg=0.0_R8
       rsahireg=0.0_R8
@@ -219,6 +221,7 @@
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
+           rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
            elseif (tn_style.eq.1) then
                !! AFN_TODO
                call xerrab('pure ion energy equation not yet available')
@@ -234,14 +237,15 @@
              shn0_ion(iCv,3) = shn0_ion(iCv,3)-
      &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv)) 
            !! neutrals that ionize have energy according to Tn, but source scaling is still based on ti and ni.
+           !! AFN_TODO: what to do for rsahireg?
            endif
 
-
-
 !WG_TODO           rsahi(iCv,is) = t1
-           rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
+
           endif
         enddo
+
+
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
@@ -377,6 +381,8 @@ c accounted for)
            endif
          endif
         enddo
+
+
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
