@@ -82,6 +82,7 @@
       call cfwure (nwrite, size(resco), resco, 'resco')
       call cfwure (nwrite, size(reshe), reshe, 'reshe')
       call cfwure (nwrite, size(reshi), reshi, 'reshi')
+      call cfwure (nwrite, size(reshn), reshn, 'reshn')
       call cfwure (nwrite, size(resmo), resmo, 'resmo')
       call cfwure (nwrite, size(resmt), resmt, 'resmt')
       call cfwure (nwrite, size(respo), respo, 'respo')
