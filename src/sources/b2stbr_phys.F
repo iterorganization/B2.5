@@ -98,7 +98,7 @@ c for KUL advanced fluid neutral boundary conditions
       integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
      &  kul_recycle = 0, 
      &  tn_style = 0, print_output = 0, split_fluxes = 1,
-     &  remove_FC_el = 0
+     &  remove_FC_el = 0, add_q_conv = 1
       integer :: isn 
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy2, dnndz2, dumm0(nFc,0:1),
@@ -160,6 +160,7 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2stbr_print_output', print_output)    
        call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
+       call ipgeti ('b2stbr_add_q_conv', add_q_conv)    
 
 
       endif                                                         !srv 22.08.08 }
@@ -388,7 +389,7 @@ c for KUL recycling/reflection model
             call recycle(
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
-     &           Phi_app, lcore, dnndy2, dnndz2)
+     &           Phi_app, lcore, dnndy2, dnndz2, cvsf)
           enddo
 
         endif       ! crcstra(istra)
@@ -533,7 +534,7 @@ c for KUL recycling/reflection model
       contains
 
       subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore,
-     &                   dnndy2, dnndz2)
+     &                   dnndy2, dnndz2, cvsf0)
 c iCv             number of the guard cell
 c iCn             number of the neighbour cell
 c iFc             number of the guard cell face
@@ -552,7 +553,8 @@ c dnndz2            the gradient of the main neutral species density across the 
       real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
      &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
      &     eself, sput_frac_chem_sum, be_frac, 
-     &     be_suppression_factor, ytmp, ztmp, wrk(ndepth_nml),t0
+     &     be_suppression_factor, ytmp, ztmp, wrk(ndepth_nml),t0,
+     &     cvsf0(nFc,0:1)
       real (kind=R8) mass_density, local_reflection
       character*13 hlp_frm
       external mass_density
@@ -952,21 +954,25 @@ c         while B2.5 uses internal energy equations.
      &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
      &             *0.5_R8*am(is0)*mp*
      &             pl%ua(iCv,is0)**2 +
-     &             (cvsf(iFc,0)+cvsf(iFc,1))))*
+     &             (cvsf0(iFc,0)+cvsf0(iFc,1))))*
      &             neutral_sources_rescale
 
 
 
              if (tn_style.eq.0) then
-               srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
+               if (add_q_conv.eq.1) then
+                 srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
+               endif
              elseif (tn_style.eq.1) then
                !! do nothing, no neutral contributions in the boundary conditions of the pure ion energy equation
              else
-               srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
+               if (add_q_conv.eq.1) then
+                 srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
+               endif
              endif
 
              if (maxw(istra).eq.0) then
-             call CalcIncidentFluxes(iCv,iCn,iFc,isign,
+               call CalcIncidentFluxes(iCv,iCn,iFc,isign,
      &              is0,is2,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
@@ -975,8 +981,8 @@ c         while B2.5 uses internal energy equations.
      &              print_output,split_fluxes,
      &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
-             call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,istra,
-     &            farea,pl,tnf,geo,1,cosa,sina,
+               call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
+     &            istra,farea,pl,tnf,geo,1,cosa,sina,
      &            fnni,fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
              endif
@@ -1014,6 +1020,7 @@ cmb   net momentum sources from neutral particle reflection
              nnrefl = 0
              nnwwnrefl = 0
              fenerefl = 0
+             fene_el = 0
              endif
 
              smon = (fmomni+fmomrefl)*geo%cvhz(iCv)*
