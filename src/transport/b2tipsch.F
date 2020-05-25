@@ -50,7 +50,6 @@
       integer, save :: iout = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       integer, save :: PSch_style
-!      integer, save :: drift_style                                      !IYS 11.02.2020
       real (kind=R8) ::
      *   facdriftm                                                      !srv 25.01.02
       save ncall
@@ -71,14 +70,10 @@
        call ipgeti ('b2tipsch_iout', iout)                              !srv 16.09.02
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
        if (redef_gmtry.eq.0) then
-!         drift_style = 1
          PSch_style = 1
        else
-!         drift_style = 2
          PSch_style = 2
-      end if
-!       call ipgeti ('b2tfnb_drift_style', drift_style)                  !IYS 11.02.2020
-!       if (drift_style.eq.2 .and. redef_gmtry.eq.1) PSch_style=2        !IYS 11.02.2020
+       end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif                                                             !srv
 *   ..set n2
@@ -116,7 +111,7 @@
 !          enddo
 !         endif
 !        enddo
-      if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
+       if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
         do iy = 0, ny-1
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
@@ -154,7 +149,7 @@
           endif
          enddo
         enddo
-      else
+       else
 !        print *,'b2tipsch style=2'
         weight = 1.0e0_R8
         nati2 = 0.0
@@ -189,12 +184,12 @@
           enddo
         enddo
 !        print *, 'psch x done'
-      endif
+       endif
 
-      do is = 0, ns-1
-          if(.not.is_neutral(is)) then
-          endif
-      enddo
+       do is = 0, ns-1
+         if(.not.is_neutral(is)) then
+         endif
+       enddo
 !      iy = ny
 !       do ix = -1, nx
 !         if(leftix(ix,iy).eq.-2) then
@@ -213,7 +208,7 @@
 !          enddo
 !         endif
 !        enddo
-      if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
+       if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
 *   ..compute P.Sch y-flux
         iy = -1
         fhiPSch(:,iy,1)=0.0e0_R8
@@ -274,7 +269,7 @@
           enddo
          enddo
         enddo
-      else
+       else
 !        print *,'psch y start'
         do iy = -1, ny
          do ix = -1, nx
@@ -299,15 +294,14 @@
           enddo
         enddo
 !        print *, 'psch y done'
-      endif
+       endif
 
-
-      do iy = -1, ny
-       do ix = 0, nx
-        fhiPSch(ix,iy,:) = 2.5e0_R8*fhiPSch(ix,iy,:)*facdrift(ix,iy)
-        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)           !srv 02.01.07
+       do iy = -1, ny
+        do ix = 0, nx
+         fhiPSch(ix,iy,:) = 2.5e0_R8*fhiPSch(ix,iy,:)*facdrift(ix,iy)
+         coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)          !srv 02.01.07
+        enddo
        enddo
-      enddo
 
 c  ..set null flux in guard cells  ?
 !      fhiPSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case
@@ -316,21 +310,19 @@ c  ..set null flux in guard cells  ?
 !      fhiPSch( :,ny,0)=0.0e0_R8
       endif
 
-
-
 csw 18feb2014 remove fluxes between guard cells
-        do ix=-1,nx
-         do iy=-1,ny
-           if(iffboundx(ix,iy).ne.0) then
-             fhiPSch(ix,iy,0)=0.0_R8
-             coni(ix,iy,0,:)=0.0_R8
-           endif
-           if(iffboundy(ix,iy).ne.0) then
-             fhiPSch(ix,iy,1)=0.0_R8
-             coni(ix,iy,1,:)=0.0_R8
-           endif
-         enddo
+      do ix=-1,nx
+        do iy=-1,ny
+          if(iffboundx(ix,iy).ne.0) then
+            fhiPSch(ix,iy,0)=0.0_R8
+            coni(ix,iy,0,:)=0.0_R8
+          endif
+          if(iffboundy(ix,iy).ne.0) then
+            fhiPSch(ix,iy,1)=0.0_R8
+            coni(ix,iy,1,:)=0.0_R8
+          endif
         enddo
+      enddo
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO

@@ -1361,7 +1361,14 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
           OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv
         enddo                                                            !sv
       enddo                                                              !sv
-      OnedBsqc(:,:)=1.0_R8/wbbc(:,:,3)**2
+      if (redef_gmtry.eq.0) then
+*  .. interpolate OnedBsq for corners of cell
+        call my_intcor (nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)
+      else
+        OnedBsqc(:,:)=1.0_R8/wbbc(:,:,3)**2
+      endif
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
       do iy=-1,ny                                                        !srv 11.03.08 {
         do ix=-1,nx

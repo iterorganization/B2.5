@@ -539,7 +539,7 @@ c<<<
                     endif
                   endif
                   flxex(ls) = flxex(ls) + ext_sna(ix,iy,is-1) ! External source
-               endif
+                endif
 
 
               endif ! if (j.ne.0 .and. leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
