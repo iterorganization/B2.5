@@ -6469,10 +6469,6 @@ cghgh
           if (mdf_fhi.ne.0) then
             call xerrab('BCENI = 9 not yet imlemented for mdf')
           endif
-          if (tn_style.ne.0) then
-            call xerrab('BCENI = 9 not yet imlemented for non-default',
-     &                   'energy equations')
-          endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
