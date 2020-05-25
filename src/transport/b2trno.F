@@ -71,6 +71,7 @@
      &                 tn_style = 0
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
+      integer, save :: flux_limit_to_vsa = 1
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
       integer, save :: user_transport = 0                             !mb  11.10.17  
       real (kind=R8), save :: fch_stochastic = 0.0_R8,
@@ -81,10 +82,11 @@
       real (kind=R8) ::
      *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
-     2  flc(nFc,0:1,0:ns-1),          !srv 09.07.03 30.11.15
-     3  flchz(nFc,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
+     2  flc(nFc,0:1,0:ns-1), flchz(nFc,0:1,0:ns-1),                   !srv 09.07.03 30.11.15
+     3  flv(nFc,0:1,0:ns-1), flvhz(nFc,0:1,0:ns-1),
      4	pol_anom_scale,
-     5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1)
+     5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1),
+     6  cvsa0(nFc,0:ns-1), cvsa0hz(nFc,0:ns-1)
       save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
@@ -110,6 +112,7 @@
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
+        call ipgeti ('b2trno_flux_limit_to_vsa', flux_limit_to_vsa)
         call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
@@ -177,6 +180,8 @@
      &   co%vsa0(1,is), co%cvsa(1,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1,is), co%cvsa(1,1,is))
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vsa0(1,is), cvsa0(1,is))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1,is), co%chcb(1,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -214,6 +219,8 @@
      &   co%vsa0(1,is), co%cvsahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%vsa0(1,is), co%cvsahz(1,1,is))                            !srv 01.07.05 }
+       call b2txcc (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+     &   co%vsa0(1,is), cvsa0hz(1,is))
       enddo                                                           !srv 09.01.01
 
 
@@ -313,6 +320,15 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
      &    pl%te, pl%ti, pl%tn, rt%rza, cdpa0hz, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }
+
+      if(flux_limit_to_vsa .ne. 0) then                                   !srv 15.06.08 {
+*   .. apply flux limit to neutrals contribution to cvsa
+        wrk = 1.0_R8
+        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na,
+     &    pl%ua, pl%te, pl%tn, rt%rza, cvsa0, co%cvsa, flv)
+        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
+     &    pl%ua, pl%te, pl%tn, rt%rza, cvsa0hz, co%cvsahz, flvhz) 
+      endif
 
 *   ..apply flux limit to neutrals contribution to chcb
       call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
