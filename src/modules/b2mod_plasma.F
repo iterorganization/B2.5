@@ -606,6 +606,7 @@
       call cfwure (nwrite, size(ti),   ti,   'ti')
       call cfwure (nwrite, size(ti0),  ti0,  'ti0')
       call cfwure (nwrite, size(tip),  tip,  'tip')
+      call cfwure (nwrite, size(tn),   tn,   'tn')
       call cfwure (nwrite, size(ua),   ua,   'ua')
       call cfwure (nwrite, size(ua0),  ua0,  'ua0')
       call cfwure (nwrite, size(uap),  uap,  'uap')
