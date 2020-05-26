@@ -12,7 +12,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1), te(nCv), ti(nCv), 
-     *  rza(nCv,0:ns-1), fcHz(nFc), cvsa0(nCv,0:ns-1)
+     *  rza(nCv,0:ns-1), fcHz(nFc), cvsa0(nFc,0:ns-1)
 *   ..input and output arguments
       real (kind=R8) ::
      *  cvsa(nFc,0:1,0:ns-1)
