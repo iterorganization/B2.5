@@ -21,7 +21,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer ix, iy, is
       integer mintopcut                                                 !lk
       integer, save :: ncall = 0
       integer, save :: qstyle = 0                                       !lk 23.05.06 05.07.07 {
@@ -39,7 +39,7 @@
      *    qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                       !srv 20.12.99
      *    tauia(-1:nx,-1:ny,0:ns-1)                                     !srv 28.03.99 11.07.99
 *   ..procedures
-      intrinsic max, abs
+      intrinsic abs
       real (kind=R8) ::
      *   hy1
       external subini, subend, xertst
@@ -57,8 +57,6 @@
        call ipgeti ('b2siav_style_qip', qstyle)                         !lk 23.05.06 05.07.07
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       

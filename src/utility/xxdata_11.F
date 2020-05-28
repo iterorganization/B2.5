@@ -22,27 +22,27 @@ c           determine its standard, resolved and partition organisation.
 c
 c  calling program: various
 c
-c  notes:    (1) A `standard' adf11 file contains gcr data between one
+c  notes:    (1) A 'standard' adf11 file contains gcr data between one
 c                whole ionisation stage and another whole ionisation
 c                stage.
-c                A `resolved' (or partial) adf11 file contains gcr data
+c                A 'resolved' (or partial) adf11 file contains gcr data
 c                between a set of metastables of one ionisation stage
 c                and a set of metastables of another ionisation stage.
 c                A resolved file is distinguished from a standard file
-c                by the presence of a `connection vector' in the adf11
+c                by the presence of a 'connection vector' in the adf11
 c                data file header lines.
 c                The connection vector specifies the number of meta-
 c                stables in each ionisation stage which are coupled
 c                together by gcr data.
-c            (2) A `partitioned' adf11 file contains gcr data between
+c            (2) A 'partitioned' adf11 file contains gcr data between
 c                clumps of ionisation stages or metastables or comb-
-c                inations of the two called `partitions'.
-c                A `partition level' is a specification of the
+c                inations of the two called 'partitions'.
+c                A 'partition level' is a specification of the
 c                partitions which span all the ionisation stages (and
 c                metastables) of an element.  Successive partition
 c                levels give a hierarchy corresponding to larger
 c                partitions and greater clumping.
-c                A `superstage' is a set of partitions which are close-
+c                A 'superstage' is a set of partitions which are close-
 c                coupled.
 c                There are thus equivalences :
 c                        ionisation stage   -   superstage
@@ -51,7 +51,7 @@ c                        ion charge         -   superstage index
 c                A partitioned adf11 file may be standard (with each
 c                superstage comprising only one partition) or resolved.
 c                A partitioned file is distinguished by the presence of
-c                `partition specification block' in the adf11 data
+c                'partition specification block' in the adf11 data
 c                file header lines.
 c            (3) When a partition specification block is present, it
 c                should be ordered from the highest partition level
@@ -292,8 +292,6 @@ c-----------------------------------------------------------------------
       character cptn_stack(ndstack)*80
       character cdonors(ndonors)*12
 c-----------------------------------------------------------------------
-      data      cterm /'------------------------------------------------
-     &--------------------------------'/
       data      cclass/'/ACD','/SCD','/CCD','/PRB','/PRC',
      &                 '/QCD','/XCD','/PLT','/PLS','/ZCD',
      &                 '/YCD','/ECD'/
@@ -323,6 +321,8 @@ c-----------------------------------------------------------------------
        lres = .false.
        lptn   = .false.
        nptnl  = 0
+
+       cterm = repeat('-',80)
 
    10  read(iunit,'(1a80)') cstrg
        ic = ic + 1
@@ -903,9 +903,11 @@ C
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
-      CHARACTER  CH0*1   , CH9*1   , BLANK*1   , CPLUS*1   , CMINUS*1
+      CHARACTER  CH0*1  , CH9*1  , BLANK*1  , CPLUS*1  , CMINUS*1  ,
+     &           CCOLON*1
 C-----------------------------------------------------------------------
-      PARAMETER( CH0='0', CH9='9', BLANK=' ', CPLUS='+', CMINUS='-' )
+      PARAMETER( CH0='0', CH9='9', BLANK=' ', CPLUS='+', CMINUS='-',
+     &           CCOLON=':' )
 C-----------------------------------------------------------------------
       CHARACTER  STR*(*)
 C-----------------------------------------------------------------------
@@ -957,6 +959,8 @@ C
             RETURN
          ENDIF
 C
+      IF ( STR(I1:I1).EQ.CCOLON ) I1 = I1 + 1 
+
       IF   ( ( STR(I1:I1).EQ.CPLUS  )
      &                  .OR.
      &       ( STR(I1:I1).EQ.CMINUS ) ) IS=1
@@ -1228,7 +1232,7 @@ C----------------------------------------------------------------------
        i=1
 
        if (type.eq.'UC' .or. type.eq.'uc') then
-10        if    ( ichar(input(i:i)) .ge. ichar('a')
+   10     if    ( ichar(input(i:i)) .ge. ichar('a')
      &    .and.   ichar(input(i:i)) .le. ichar('z')
      &          ) output(i:i)=char(ichar(input(i:i))+ichar('A')
      &                                              -ichar('a'))
@@ -1238,7 +1242,7 @@ C----------------------------------------------------------------------
        endif
 
        if (type.eq.'LC' .or. type.eq.'lc') then
-20        if    ( ichar(input(i:i)) .ge. ichar('A')
+   20     if    ( ichar(input(i:i)) .ge. ichar('A')
      &    .and.   ichar(input(i:i)) .le. ichar('Z')
      &          ) output(i:i)=char(ichar(input(i:i))+ichar('a')
      &                                              -ichar('A'))

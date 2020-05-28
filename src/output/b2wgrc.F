@@ -205,9 +205,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -230,9 +230,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -255,9 +255,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -280,9 +280,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -305,9 +305,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -330,9 +330,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -355,9 +355,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -380,9 +380,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -400,7 +400,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -418,7 +418,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -436,7 +436,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -454,7 +454,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -472,7 +472,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -490,7 +490,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -508,7 +508,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -526,7 +526,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo

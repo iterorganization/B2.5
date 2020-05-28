@@ -50,7 +50,7 @@ c*** ig = -12 :
 c***
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (densities, temperatures, fluid velocities)
-c***  in the outer divertor - for H. Wuerz
+c***  in the Eastern divertor - for H. Wuerz
 c***
 c*** ig = -11 :
 c***
@@ -152,10 +152,11 @@ c=======================================================================
 c
       integer ig, ih(3)
       real (kind=R8), allocatable ::
-     . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:), mach(:,:,:), pr(:,:)
+     . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:), mach(:,:,:), pz(:,:)
       real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s(3), hlp_ms(3),
      . mass, vel, vth
       character*2, allocatable :: hlp_al(:)
+      character*5 :: trg_lbl
       character*11, allocatable :: hlp_sg(:)
       character hlp_frmr*600
       integer, allocatable :: mz_hlp(:)
@@ -208,22 +209,28 @@ c-----------------------------------------------------------------------
         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(1),i,0)+wldpm(nlim+ltns(1),i,0)
         end do
-        write(lun, frm) 'inner',(hlp_pi(i),i=1,nspecies),
+        trg_lbl = 'inner'
+        if (.not.LSN) trg_lbl = 'outer'
+        write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(1),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(1),0)
-        do i=1,natmi
+        if (ltns(2).ne.0) then
+         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
-        end do
-        do i=1,nmoli
+         end do
+         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
-        end do
-        write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+         end do
+         trg_lbl = 'outer'
+         if (.not.LSN) trg_lbl = 'inner'
+         write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(2),0)
+        end if
         deallocate(hlp_pi,hlp_po)
         deallocate(hlp_at,hlp_ml)
 c-----------------------------------------------------------------------
@@ -321,19 +328,20 @@ c-----------------------------------------------------------------------
       else if(ig.eq.-8) then
 c-----------------------------------------------------------------------
         allocate(mach(-1:nx,-1:ny,2))
-        allocate(pr(-1:nx,-1:ny))
-        call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+        allocate(pz(-1:nx,-1:ny))
+        call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
         do iy=-1,ny
           do ix=-1,nx
             mass=0.0_R8
             vel=0.0_R8
             do is=0,ns-1
+              if (is_neutral(is)) cycle
               mass=mass+am(is)*mp*na(ix,iy,is)
               vel=vel+rza(ix,iy,is)*na(ix,iy,is)*ua(ix,iy,is)
             end do
-            vth=sqrt(pr(ix,iy)/mass)
+            vth=sqrt(pz(ix,iy)/mass)
             mach(ix,iy,1)=vel/(vth*ne(ix,iy))
-            mach(ix,iy,1)=pr(ix,iy)*(1.0_R8+mach(ix,iy,1)**2)
+            mach(ix,iy,1)=pz(ix,iy)*(1.0_R8+mach(ix,iy,1)**2)
           end do
         end do
         open(lun,file='pr.dat')
@@ -395,7 +403,7 @@ c-----------------------------------------------------------------------
 
         close(lun)
         deallocate(mach)
-        deallocate(pr)
+        deallocate(pz)
 c-----------------------------------------------------------------------
       else if(ig.eq.-9) then
 c-----------------------------------------------------------------------
@@ -512,7 +520,8 @@ c-----------------------------------------------------------------------
         open(unit=lun,file=filename)
         write(lun,'(2a)') '# ', trim(extralabel)
         write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
-        write(lun,'(3x,2hix,3x,2hiy,6x,1hx,11x,1hy,11x,3hz01)')
+        write(lun,'(3x,a2,3x,a2,6x,a1,11x,a1,11x,a3)')
+     .   'ix','iy','x','y','z01'
         do iy = 0, ny-1
           do ix = 0, nx-1
             write(lun,'(2i5,1p,3e12.4)')

@@ -201,7 +201,7 @@
       do while (iscx(k).ne.isneut .and. k.lt.nscx)
         k = k+1
       enddo
-      call xertst (k.lt.nscx, 'CX species index not found!')
+      if (k.ge.nscx) write(*,*) 'CX species index not found!'
 cxpb
 cxpb  We follow the launched neutrals over their pre-computed trajectories
 cxpb  and distribute the associated sources along the way.
@@ -221,8 +221,8 @@ cxpb  neutrals to be eion=shi/sna.
       do ia=1,no_of_slices
          dist_end=dist_start
          flown_time=0.0_R8
-	 ixend=-2
-	 iyend=-2
+         ixend=-2
+         iyend=-2
          ptr=index(indptr,ia,0)
          do while (flown_time.lt.flight_time .and. 
      1     ptr.le.index(indptr,ia,1))
@@ -230,11 +230,13 @@ cxpb  neutrals to be eion=shi/sna.
             iy=celly(table(ptr,0))
             vcx=0.0_R8
             vnn=0.0_R8
-            do ision = 0, ns-1 
-              rcx=expu(rlcx(ix,iy,0,ision,k)+
-     *         rlcx(ix,iy,1,ision,k)*log(ti(ix,iy)/(am(isneut)*ev)))
-              vcx=vcx+rcx*na(ix,iy,ision)
-            enddo
+            if (k.lt.nscx) then
+              do ision = 0, ns-1
+                rcx=expu(rlcx(ix,iy,0,ision,k)+
+     *           rlcx(ix,iy,1,ision,k)*log(ti(ix,iy)/(am(isneut)*ev)))
+                vcx=vcx+rcx*na(ix,iy,ision)
+              enddo
+            end if
             rion=expu(rlsa(ix,iy,0,isneut)+
      *         rlsa(ix,iy,1,isneut)*log(te(ix,iy)/ev))
             vion=rion*ne(ix,iy)

@@ -1,4 +1,4 @@
-      subroutine b2pnwl(*)
+      subroutine b2pnwl(iret)
 c
 c  version : 11.11.97 20:52
 c
@@ -9,6 +9,7 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -17,6 +18,7 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
+      integer iret
 c*** Local variables
 c
       integer lun
@@ -47,7 +49,16 @@ c*** Set the default values
       npumplis=0
       nwldprt=0
 c*** Read the data from dg files
-      call b2pinp(*999)
+      iret=0
+      call b2pinp(iret)
+      if (iret.eq.1) goto 999
+c*** Re-order jedge data if less than ntrgsx targets
+      if (ntrgsa.lt.ntrgsx) then
+        do i=1,ntrgsa
+          jedge(ntrgsa+i)=jedge(ntrgsx+i)
+          jedge(ntrgsx+i)=0
+        end do
+      end if
 c
 c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
@@ -81,7 +92,8 @@ c*** The shadowing structure must be closed, therefore it starts from
 c*** an arbitrary point.
 
       lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(*999)
+      call b2pwsrt(iret)
+      if (iret.eq.1) goto 999
 cc<<<
 c      print *,'After b2pwsrt',nwldprt
 c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
@@ -245,18 +257,41 @@ c        write(lun,'(1p,e16.3)') a
 c        close(lun)
 c      end if
       write(*,*) '*** Target loading with neutrals ***'
-      write(*,700) 'Total power released',
+      if (ltns(2).eq.0) then
+       write(*,700) 'Total power released',
+     ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0)
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0)
+       do i=1,natmi
+        write(*,710) text_an(i),' atom flux',wldna(nlim+ltns(1),i,0)
+        write(*,710) text_an(i),' average energy',
+     ,                                       ewlda(nlim+ltns(1),i,0)
+       end do
+       if(ic .gt. 0) then
+        wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
+     .      -wldna(nlim+ltns(1),ic,0)
+        do i=1,nmoli
+          if (mlcmp(ic,i).gt.0) then
+            wwyn=wwyn+mlcmp(ic,i)*(wldrm(nlim+ltns(1),i,0)
+     .                            +wldpm(nlim+ltns(1),i,0)
+     .                            -wldnm(nlim+ltns(1),i,0))
+          end if
+        end do
+        write(*,700) 'Net   C erosion',wwyn
+        write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0)
+       end if
+      else
+       write(*,700) 'Total power released',
      ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0),
      ,              wldnek(nlim+ltns(2),0)+wldnep(nlim+ltns(2),0)
-      write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
-     ,                                      wldnep(nlim+ltns(2),0)
-      do i=1,natmi
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
+     ,                                       wldnep(nlim+ltns(2),0)
+       do i=1,natmi
         write(*,710) text_an(i),' atom flux',
      ,               wldna(nlim+ltns(1),i,0),wldna(nlim+ltns(2),i,0)
         write(*,710) text_an(i),' average energy',
      ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
-      end do
-      if(ic .gt. 0) then
+       end do
+       if(ic .gt. 0) then
         wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
      .      -wldna(nlim+ltns(1),ic,0)
         wwyg=wldra(nlim+ltns(2),ic,0)+wldpa(nlim+ltns(2),ic,0)
@@ -274,6 +309,7 @@ c      end if
         write(*,700) 'Net   C erosion',wwyn,wwyg
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
+       end if
       end if
 c     if (j_h_at(1).ne.0) then
 c      print 700,'Hydrogen  atom flux',wldna(nlim+ltns(1),j_h_at(1),0),
@@ -309,13 +345,13 @@ c     end if
   710 format(1x,a2,a20,':',1p,2e14.3)
       return
 c----------------------------------------------------------------------
- 999  return 1
+  999 return
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c
 c
 c======================================================================
-      subroutine b2pwsrt(*)
+      subroutine b2pwsrt(iret)
 c
 c*** sort the lists of target sections to simply connected chains
 c----------------------------------------------------------------------
@@ -329,6 +365,7 @@ c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -337,6 +374,7 @@ c
       use b2mod_eirdiag
 #endif
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -351,7 +389,7 @@ c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
       logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
       parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
@@ -359,7 +397,12 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -371,7 +414,7 @@ c      end do
 cc%%%
       no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
      &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
-
+      iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
@@ -395,7 +438,7 @@ c*** initialise the chain counter and the chain list
             lwsrtwrk(nwsrtwrk)=is
 c*** both ends of the first element will be checked (goup=.true. here)
             k=2
-            do 100 ii=2,nwldlis(il)
+            do ii=2,nwldlis(il)
 c              print *,'do 100:',ii,is,goup
               do ik=1,k
 c                print *,'do ik:',ik,is,goup
@@ -455,8 +498,9 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
- 100        k=1
- 50         if(nwsrtwrk .ne. nwldlis(il)) then
+  100         k=1
+            end do
+   50       if(nwsrtwrk .ne. nwldlis(il)) then
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
@@ -469,13 +513,15 @@ c*** No connection found
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
+     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
+     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
+     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
+     .                 nnreg(0).eq.8)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)
                   if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -486,7 +532,6 @@ c*** No connection found
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -497,7 +542,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -508,7 +552,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/

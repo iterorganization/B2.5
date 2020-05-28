@@ -54,21 +54,33 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS   += -DIMAS
-endif
-LD_UAL   ?= `pkg-config imas-lowlevel imas-g95 --cflags`
-INCMODS  += `pkg-config --cflags imas-g95`
-IMASLIBS  = ${LD_UAL} -lggd-${COMPILER}
-else
-ifdef ITM_ENVIRONMENT_LOADED
 ifndef SOLPS_CPP
 EQUIVS   += -DITM
 endif
-INCMODS  += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_g95_0.93 -I${ITM_GGD_HOME}/include/amd64_g95_0.93 -I${UAL_INCLUDE}/amd64_g95 -I${ITM_ITMCONSTANTS_DIR}/include/amd64_g95_0.93
-IMASLIBS  = ${LD_UAL} -lUALFORTRANInterface_g95
+
+ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 15; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL   ?= `pkg-config imas-g95 ggd --libs`
+INCMODS  += `pkg-config imas-g95 ggd --cflags`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL   ?= `pkg-config imas-g95 --libs` -lggd-g95
+INCMODS  += `pkg-config imas-g95 --cflags`
+else
+GGD_MINOR_VERSION ?= 0
+LD_UAL   ?= `pkg-config imas-lowlevel imas-g95 --libs`
+INCMODS  += `pkg-config imas-lowlevel imas-g95 --cflags`
 endif
+endif
+ifndef SOLPS_CPP
+EQUIVS   += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+endif
+IMASLIBS  = ${LD_UAL} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
 endif
 
 LD = $(FC)

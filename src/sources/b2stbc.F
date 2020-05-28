@@ -2,17 +2,17 @@
 *.specification
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,                                        !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
+     &  BoRiS, facdrift, fac_ExB,                                       !xpb
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,             !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
+     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)      !xpb
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -29,6 +29,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_time
+      use b2mod_diag
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -92,21 +93,21 @@
      *   sna0ep, she0ep, shi0ep, t0, testqe, testqi,
      *   b2stbc_neoclassical, b2stbc_fchy_dia,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
-     1   nasum(0:ns-1,2), teave(2), tiave(2),
-     1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
+     1   nasum(0:ns-1,2),
+     1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
-      integer boundary_namelist, diagno, b2stbc_fchy_dia_coreonly,
+      integer diagno, b2stbc_fchy_dia_coreonly,
      *   area_fix, sheath_drift_fix
       integer element_done(-1:nx)
       integer b2stbc_feedback, secmodel
-      save ncall, sna0ep, she0ep, shi0ep, boundary_namelist, diagno,
+      save ncall, sna0ep, she0ep, shi0ep, diagno,
      *   b2stbc_neoclassical, b2stbc_fchy_dia, integral_current,
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
      *   area_fix, sheath_drift_fix
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic nint
       real (kind=R8) ::
      *   b2ssum, hy1
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
@@ -116,7 +117,7 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
-     1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
+     1   shi0ep/1.0e-36_R8/, diagno/0/,
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
      4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
@@ -138,7 +139,7 @@
        call ipgetr ('b2stbc_shi0ep', shi0ep)
        call xertst (0.0_R8.le.shi0ep, 
      .  'faulty internal parameter shi0ep')
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call get_boundary_namelist
        call ipgeti ('b2stbc_diagno',diagno)                              !xpb
        call ipgetr ('b2stbc_neoclassical', b2stbc_neoclassical)          !xpb
        call xertst (0.0_R8.le.b2stbc_neoclassical .and.                  !xpb
@@ -302,9 +303,6 @@
       praverage(1)=prsum(1)/volsum(1)                                    !xpb
       qeaverage(1)=qesum(1)/gssum(1)
       qiaverage(1)=qisum(1)/gssum(1)
-      teave(1)=tesum(1)/gssum(1)
-      tiave(1)=tisum(1)/gssum(1)
-      naave(:,1)=nasum(:,1)/gssum(1)
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
       tesum(2)=0.0_R8
@@ -388,9 +386,6 @@
         praverage(2)=prsum(2)/volsum(2)                                  !xpb
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
-        teave(2)=tesum(2)/gssum(2)
-        tiave(2)=tisum(2)/gssum(2)
-        naave(:,2)=nasum(:,2)/gssum(2)
       endif
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
 
@@ -683,6 +678,31 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
+
+! { IYS 04.06.2018
+      sna_stbc_neut = 0.0_R8
+      if (ank_tracing .gt. 0) then    
+        do is = 1,nspecies  ! is stands here for the ls - the index of isonuclear sequences.  Do not mix with the fluid index!!!
+          do iy = 1, nbc  ! iy stands here for the boundary index
+            do ix = 1, BC_LIST_SIZE(iy) ! ix stands here for the index which conuts cells along the boundary
+!           avoid corner cells 
+              if ( .not. (
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) ) )
+     &        sna_stbc_neut(is,iy) = sna_stbc_neut(is,iy) +
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),0,EB2SPCR(is)) + 
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),1,EB2SPCR(is)) * 
+     &           na(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),EB2SPCR(is))
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 04.06.2018 }
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

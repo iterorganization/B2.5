@@ -13,9 +13,6 @@
       use b2mod_b2cmpa
       use b2mod_b2cmgs
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -68,17 +65,16 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:2), ishot, idum(0:9), nx, ny, ns, n2, io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
-      real (kind=R8), allocatable :: za(:), zero(:,:)
-      character*120 lblmn, lblgm
+      integer ninp(0:0), nout(0:2)
+      real (kind=R8), allocatable :: zero(:,:)
 #ifdef MDSPLUS
 #     include "mdslib.inc"
+      integer idum(0:9), io, ishot, n2, nx, ny, ns
       integer status, retlen, dbversion
       integer ix, iy, i, j, is
+      character*120 lblmn, lblgm
       integer, allocatable :: idummy(:,:)
+      real (kind=R8), allocatable :: za(:)
       logical file_open
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
@@ -131,16 +127,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2rd_mpi_child'
-      endif
-#endif
       call prgini ('b2rd')
 *   ..open files
       zero = 0.0_R8
@@ -324,8 +310,7 @@
         fch_p(:,:,0)=fch(:,:,0)                               !srv 10.06.09
         fch_p(:,:,1)=0.0_R8                                   !srv 10.06.09
         do is = 0, ns-1
-          kinrgy(:,:,is)=0.5_R8*am(is)*mp*
-     .     (ua(:,:,is)**2+uadia(:,:,0,is)**2+uadia(:,:,1,is)**2)
+          kinrgy(:,:,is)=0.5_R8*am(is)*mp*ua(:,:,is)**2
         enddo
       else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),
@@ -810,6 +795,24 @@
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
       call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
 
+*   .. copied from b2rugm (DPC 2018-11-07)
+      cell_width = hx
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
+      do iy = -1, ny
+         do ix = -1, nx
+            qcb(ix,iy) = cosang (
+     &         crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &         (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &         (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+            if(qcb(ix,iy).le.0.0_R8) then
+               write(*,'(a,1f12.6,2i5)')
+     1            'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
+               write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+               write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+            endif
+         enddo
+      enddo
+
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
@@ -904,10 +907,6 @@
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2rd'
 
 *-----------------------------------------------------------------------

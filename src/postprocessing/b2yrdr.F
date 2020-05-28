@@ -54,21 +54,21 @@
 *
 *  4. references
 *
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -316,8 +316,8 @@
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, or from some'//
-     &   ' other source.'
+     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' or from some other source.'
       endif
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')
@@ -338,11 +338,11 @@
 *   ..initialise species index
       is = 0
 *   ..loop over nuclear species
- 10   if (is.ne.rtns) then
+   10 if (is.ne.rtns) then
 *    ..find range of this nuclear species
        is1 = is+1
- 20    if (is1.ne.rtns) then
-	 if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
+   20  if (is1.ne.rtns) then
+         if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
          is1 = is1+1
          goto 20
         endif

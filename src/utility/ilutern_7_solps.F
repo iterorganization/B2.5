@@ -48,9 +48,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       logical lfirst
       integer ncall, nwrite
@@ -239,7 +237,7 @@ cdpc
          call ma28adcopy3                                          !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
          if(nltrsol.gt.0 .or. iflag.lt.0)
-     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
+     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
          do i=1,solvdim
@@ -250,7 +248,7 @@ cdpc
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                          !srv 28.06.16 {
@@ -265,7 +263,7 @@ cdpc
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
-   2      format(' ma28ad for ',a13,': iflag =',i9/,
+    2     format(' ma28ad for ',a13,': iflag =',i9/,
      1     ' minirn =',i9,' solvdim1 =',i9,
      2     ' minicn =',i9,' solvdim =',i9)                         !srv 09.07.02
         do i=1,solvdim
@@ -283,7 +281,7 @@ cdpc
         endif
         if(nltrsol.gt.0 .or. iflag.lt.0)
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3     format(' ma28id for ',a13,': iflag =',i9,
+    3    format(' ma28id for ',a13,': iflag =',i9,
      2          ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)  !srv 09.07.02 28.06.16 }
 
       endif                                                        !srv 28.06.16 }
@@ -302,10 +300,10 @@ cdpc
 
       entry restart_ma28_for_7                                     !srv 11.01.00
       lfirst=.true.
-      write(*,*) 'Restarting ma28'
+      write(*,*) 'Restarting ma28_for_7'                           !srv 02.04.18
       return
 
 *=======================================================================
-*//END ILUTERN//
+*//END ILUTERN_7//
 
       END

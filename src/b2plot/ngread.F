@@ -172,49 +172,49 @@ C
 C
       do 114 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
- 114  CONTINUE
+  114 CONTINUE
 
 * neutral molecules radial particle flux
 C
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
- 115  CONTINUE
+  115 CONTINUE
 
 * neutral atom poloidal particle flux
 C
       do 214 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
- 214  CONTINUE
+  214 CONTINUE
 
 * neutral molecules poloidal particle flux
 C
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
- 215  CONTINUE
+  215 CONTINUE
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
- 314  CONTINUE
+  314 CONTINUE
 
 * neutral molecules radial energy flux
 C
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
- 415  CONTINUE
+  415 CONTINUE
 
 * neutral atom poloidal energy flux
 C
       do 514 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
- 514  CONTINUE
+  514 CONTINUE
 
 * neutral molecules poloidal energy flux
 C
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
- 515  CONTINUE
+  515 CONTINUE
 
       call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
       call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
@@ -615,7 +615,7 @@ cank
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
         end if
- 999    continue
+  999   continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
@@ -643,12 +643,13 @@ cc<<<
       call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
       call extend(emiss,ndx,ndy,1,nnx,nny,1)
       call extend(emissmol,ndx,ndy,1,nnx,nny,1)
+cxpb We do not extend the volumetric losses quantities
 cank 960511
-      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
-      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
 cxpb
       deallocate(ft44data)
 #endif

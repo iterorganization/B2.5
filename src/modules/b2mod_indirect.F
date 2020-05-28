@@ -30,6 +30,7 @@
      *  cflags(:,:,:)
       logical, allocatable, save ::
      *  on_closed_surface(:,:)
+      logical, save :: LSN
 
       logical, save :: b2mod_indirect_allocated = .false.
 
@@ -64,6 +65,7 @@
       leftcut   = nxd+1
       redef_pbs = 0
       cflags    = 0
+      LSN = .true.
       b2mod_indirect_allocated = .true.
 
       return
@@ -398,7 +400,6 @@
       implicit none
       real (kind=R8) :: quadArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      intrinsic abs
 
       quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
      .           TriangleArea(x2, y2, x3, y3, x0, y0)

@@ -13,8 +13,8 @@ c======================================================================
       integer lun
       parameter (lun=96)
       integer i
-      logical open_file
-      character*16 ufile
+      logical open_file, file_ok
+      character*24 ufile
       external b2pwinm, open_file, subini, subend, xerrab
 c======================================================================
 c*** This routine works once
@@ -32,7 +32,7 @@ c
         lwldstrt(i)=0
       end do
       lppp=0
-      jedge(1:4)=0
+      jedge(1:2*ntrgsx)=0
       add_rad=0.0_R8
       nadsrc=0
       do i=1,ntrgsx
@@ -51,6 +51,7 @@ c
       immed=.false.
       mimp=lun
       ufile='param.dg'
+      call find_file(ufile,file_ok)
 c      open(lun,file=ufile,status='old',err=998)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.
@@ -71,7 +72,7 @@ c
       call subend ()
       return
 c======================================================================
- 998  write(*,*) 'Error opening the file ',ufile
+  998 write(*,*) 'Error opening the file ',ufile
       call xerrab ('Error opening file in b2pwinp')
 c======================================================================
       end subroutine b2pwinp

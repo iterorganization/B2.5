@@ -159,7 +159,7 @@ c>>>
       filedata(ntrc_tst)=.true.
       go to 1000
 c
- 900  write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+  900 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -238,11 +238,11 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-  5   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+    5 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
- 10   if(.not.filedata(ntrc_src)) go to 35
+   10 if(.not.filedata(ntrc_src)) go to 35
 c
       filedata(ntrc_src)=.false.
       f=fn_ntrc(ntrc_src)
@@ -306,18 +306,18 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
- 30   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   30 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
- 35   do k=1,nf_tmp
+   35 do k=1,nf_tmp
         l=k+1
         if(filedata(l)) then
           f=fn_ntrc(l)
           rewind(ntrc(l))
- 20       read(ntrc(l),'(a1)',end=25) hlp_c
+   20     read(ntrc(l),'(a1)',end=25) hlp_c
           go to 20
- 25       backspace ntrc(l)
+   25     backspace ntrc(l)
         end if
       end do
       call subend()
@@ -332,18 +332,18 @@ c======================================================================
           open(ntrc(l),file=f,err=290)
           rewind(ntrc(l))
           iline = 0
- 200      read(ntrc(l),'(a1)',end=205) hlp_c
+  200     read(ntrc(l),'(a1)',end=205) hlp_c
           if (hlp_c.eq.'#') then
             iline = iline + 1
           end if
           go to 200
- 205      backspace ntrc(l)
+  205     backspace ntrc(l)
         end if
         goto 299
- 290    write(*,*) 'b2filec: cannot open file ',trim(f)
+  290   write(*,*) 'b2filec: cannot open file ',trim(f)
         filedata(l)=.false.
         iline=-1
- 299    continue
+  299   continue
       end do
       return
 c======================================================================
@@ -364,11 +364,11 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   62   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
- 65   if(filedata(ntrc_res)) then
+   65 if(filedata(ntrc_res)) then
         f=fn_ntrc(ntrc_res)
         inquire(ntrc(ntrc_res),opened=op)
         l=3
@@ -380,11 +380,11 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
- 72     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   72   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
- 75   if(filedata(ntrc_src)) then
+   75 if(filedata(ntrc_src)) then
         f=fn_ntrc(ntrc_src)
         inquire(ntrc(ntrc_src),opened=op)
         l=3
@@ -398,7 +398,7 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
- 77     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   77   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
@@ -425,17 +425,17 @@ c
 #else
           l=1
           open(ntrc(j),file=f,err=86)
- 80       read(ntrc(j),'(a1)',end=82) hlp_c
+   80     read(ntrc(j),'(a1)',end=82) hlp_c
           go to 80
- 82       backspace ntrc(j)
+   82     backspace ntrc(j)
 #endif
 #endif
           go to 100
 c
- 86       write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   86     write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
           filedata(j)=.false.
         end if
- 100  continue
+  100 continue
       return
 c======================================================================
   700 format(a1,2x,4i10)

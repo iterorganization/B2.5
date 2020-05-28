@@ -111,7 +111,8 @@ cxpb Data file material properties
      *  matsurf_vapprs_B(:),
      *  matsurf_stick_coef(:),
      *  matsurf_vapor_temp(:),
-     *  matsurf_heat_sublim(:)
+     *  matsurf_heat_sublim(:),
+     *  matsurf_relconstituents(:,:)
 
       character*32, allocatable, save :: coating_long_name(:)
       character*32, allocatable, save :: coating_temp_unit(:)
@@ -167,6 +168,7 @@ cxpb Data file material properties
       character*2, save :: track_species_save(ntrack)
       logical, save :: track_chem_sput(ntrack)
 
+      real (kind=R8) :: layer_nrelconstituents(nwall,6+ntrack)
       real (kind=R8), allocatable :: r1(:), r2(:), z1(:), z2(:)
 
       namelist /wall_save/ ndepth_nml, track_species,
@@ -177,7 +179,8 @@ cxpb Data file material properties
      *  backscattering, backscattering_energy, plate_time, plate_area,
      *  monolayer_deposition, monolayer_erosion,
      *  layer_nconstituents, layer_nzconstituents,
-     *  layer_nrelconstituents, layer_thermal_contact,
+     *  layer_relconstituents, layer_nrelconstituents,
+     *  layer_thermal_contact,
      *  coating_thickness, coating_material_name,
      *  layer_alloys, inertial_cooling
 
@@ -352,6 +355,7 @@ cxpb Data file material properties
       target_temp = 0.0_R8
       plate_time = 0.0_R8
       layer_thermal_contact = 1.0_R8
+      layer_nrelconstituents = 0.0_R8
 
       call subend()
       return
@@ -492,6 +496,14 @@ cxpb Data file material properties
 #else
         read(nread,wall_save)
 #endif
+cxpb For backward compatibility, NRELCONSTITUENTS --> RELCONSTITUENTS
+        if (maxval(layer_nrelconstituents).gt.0.0_R8) then
+          if (maxval(layer_relconstituents).gt.0.0_R8) then
+            layer_nrelconstituents = 0.0_R8
+          else
+            layer_relconstituents = layer_nrelconstituents
+          end if
+        end if
         write(*,*) 'Read ', trim(filename)
         close(nread)
       else
@@ -508,7 +520,9 @@ cxpb Data file material properties
       call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
      . 'Invalid array size NDEPTH_NML!')
       return
- 999  call xerrab ('Error while reading WALL_SAVE namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading WALL_SAVE namelist!')
+#endif
       end subroutine read_b2mod_wall_namelist
 
       subroutine write_b2mod_wall_namelist(nwrite,nx,ny,ns,edition)
@@ -530,10 +544,9 @@ cxpb Data file material properties
       open(nwrite,file=trim(filename))
       write(nwrite,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ')
+        if(.not.streql(layer_alloys(itrack),' '))
      .    write(nwrite,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
+     .    'LAYER_ALLOYS(',itrack,')= ''', layer_alloys(itrack),''','
       enddo
       write(nwrite,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
       do itrack=1,ntargsp
@@ -725,8 +738,8 @@ cxpb  Use explicit writing of non-default elements only
             if (.not.found) j = j + 1
           enddo
           if (found) todo = todo.or.
-     .        layer_nrelconstituents(ibnd,i).ne.
-     .        matsurf_nrelconstituents(ibnd,j)
+     .        layer_relconstituents(ibnd,i).ne.
+     .        matsurf_relconstituents(ibnd,j)
         end do
         if (todo) then
           write(nwrite,'(a20,i4,a2,i2,a1)')
@@ -737,8 +750,8 @@ cxpb  Use explicit writing of non-default elements only
      .         'LAYER_NZCONSTITUENTS(',ibnd,',',i,')=  ',
      .          layer_nzconstituents(ibnd,i),','
             write(nwrite,'(a23,i4,a1,i2,a2,1es15.8,a1)')
-     .         'LAYER_NRELCONSTITUENTS(',ibnd,',',i,')=',
-     .          layer_nrelconstituents(ibnd,i),','
+     .         'LAYER_RELCONSTITUENTS(',ibnd,',',i,')=',
+     .          layer_relconstituents(ibnd,i),','
           end do
         end if
         do itrack=1,ntargsp
@@ -790,10 +803,10 @@ cxpb  Use explicit writing of non-default elements only
       integer nmax, i, ic, ibnd, ifile, itrack
       integer old_file, idone(100), idum(0:9)
       real (kind=R8) :: sum
-      logical open_file, silent_open, done
-      external open_file, silent_open, xertst
+      logical open_file, silent_open, streql, done, written
+      external open_file, silent_open, streql, xertst
       character*2  adum
-      character*24 filename, name(100)
+      character*24 filename, fname(100)
       character*32 str_dummy
       character*256 filenamecat
 
@@ -807,15 +820,20 @@ cxpb  Use explicit writing of non-default elements only
 
       nmax=1
       ifile=0
+      idone=0
+      fname=' '
       write(*,*) 'Obtaining nominal surface properties'
       do ibnd = 1, nbnd
+        if (streql(surface_material_name(ibnd),' ')) cycle
         filename='Surface_properties/'
      &   //trim(surface_material_name(ibnd))
-        name(ifile+1) = filename
+        call xertst(ifile.lt.100,
+     .   'increase array sizes in read_b2mod_wall')
+        fname(ifile+1) = filename
         idone(ifile+1) = ibnd
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
@@ -854,22 +872,29 @@ cxpb  Use explicit writing of non-default elements only
       enddo
       allocate(matsurf_nzconstituents(nwall,nmax))
       allocate(matsurf_nrelconstituents(nwall,nmax))
+      allocate(matsurf_relconstituents(nwall,nmax))
       matsurf_nzconstituents=0
       matsurf_nrelconstituents=0
+      matsurf_relconstituents=0.0_R8
 
-      ifile=0
+      ifile = 0
       do ibnd = 1, nbnd
+        if (streql(surface_material_name(ibnd),' ')) cycle
         filename='Surface_properties/'
      &   //trim(surface_material_name(ibnd))
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
         end do
         if (.not.done) then
+          call xertst(ifile.lt.100,
+     .     'increase array sizes in read_b2mod_wall')
           ifile = ifile + 1
+          fname(ifile) = filename
+          idone(ifile) = ibnd
           if(silent_open(99,filename,
      .       'data.local|modules/B2.5/Database',filenamecat)) then
             read(99,*) str_dummy
@@ -896,12 +921,14 @@ cxpb Normalise surface constituents
           sum = sum + matsurf_nrelconstituents(ibnd,i)
         end do
         do i = 1, matsurf_nconstituents(ibnd)
-          matsurf_nrelconstituents(ibnd,i) =
+          matsurf_relconstituents(ibnd,i) =
      .     matsurf_nrelconstituents(ibnd,i)/sum
         end do
       end do
 
       ifile=0
+      idone=0
+      fname=' '
       write(*,*) 'Obtaining nominal bulk properties'
       do ibnd = 1, nbnd
         matbulk_Kappa_perp_A1(ibnd) = 0.0_R8
@@ -909,12 +936,15 @@ cxpb Normalise surface constituents
         matbulk_Kappa_perp_A3(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A4(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A5(ibnd) = 0.0_R8
+        if (streql(bulk_material_name(ibnd),' ')) cycle
         filename='Bulk_properties/'//trim(bulk_material_name(ibnd))
-        name(ifile+1) = filename
+        call xertst(ifile.lt.100,
+     .   'increase array sizes in read_b2mod_wall')
+        fname(ifile+1) = filename
         idone(ifile+1) = ibnd
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
@@ -943,7 +973,7 @@ cxpb Normalise surface constituents
             read(99,*) matbulk_Kappa_perp_A3(ibnd)
             read(99,*) matbulk_Kappa_perp_A4(ibnd)
             read(99,*) matbulk_Kappa_perp_A5(ibnd)
-98          close(99)
+   98       close(99)
             if (matbulk_Kappa_perp_A1(ibnd).eq.0.0_R8) then
               matbulk_Kappa_perp_A1(ibnd) = matbulk_Kappa_A1(ibnd)
               matbulk_Kappa_perp_A2(ibnd) = matbulk_Kappa_A2(ibnd)
@@ -977,7 +1007,7 @@ cxpb Normalise surface constituents
         endif
       enddo
 
-      ifile=0
+      ifile = 0
       do ibnd = 1, nbnd
         if (coating_thickness(ibnd).gt.0.0_R8) then
           if (ifile.eq.0) write(*,*) 'Obtaining coating properties'
@@ -986,12 +1016,15 @@ cxpb Normalise surface constituents
           coating_Kappa_perp_A3(ibnd) = 0.0_R8
           coating_Kappa_perp_A4(ibnd) = 0.0_R8
           coating_Kappa_perp_A5(ibnd) = 0.0_R8
+          if (streql(coating_material_name(ibnd),' ')) cycle
           filename='Bulk_properties/'//trim(coating_material_name(ibnd))
-          name(ifile+1) = filename
+          call xertst(ifile.lt.100,
+     .     'increase array sizes in read_b2mod_wall')
+          fname(ifile+1) = filename
           idone(ifile+1) = ibnd
           done = .false.
           do i = 1, ifile
-            if (trim(filename).eq.trim(name(i))) then
+            if (streql(filename,fname(i))) then
               done = .true.
               old_file = idone(i)
             end if
@@ -1020,7 +1053,7 @@ cxpb Normalise surface constituents
               read(99,*) coating_Kappa_perp_A3(ibnd)
               read(99,*) coating_Kappa_perp_A4(ibnd)
               read(99,*) coating_Kappa_perp_A5(ibnd)
-97            close(99)
+   97         close(99)
               if (coating_Kappa_perp_A1(ibnd).eq.0.0_R8) then
                 coating_Kappa_perp_A1(ibnd) = coating_Kappa_A1(ibnd)
                 coating_Kappa_perp_A2(ibnd) = coating_Kappa_A2(ibnd)
@@ -1031,7 +1064,7 @@ cxpb Normalise surface constituents
             endif
           else
             coating_long_name(ibnd) = coating_long_name(old_file)
-            coating_temp_unit(ibnd) = coating_temp_unit(ibnd)
+            coating_temp_unit(ibnd) = coating_temp_unit(old_file)
             coating_format(ibnd) = coating_format(old_file)
             coating_target_density(ibnd) =
      .       coating_target_density(old_file)
@@ -1060,9 +1093,11 @@ cxpb Normalise surface constituents
         endif
       enddo
 
+      written = .false.
       do ifile = 1, nalloys
-        if(layer_alloys(ifile).ne.' ') then
-          if (ifile.eq.0) write(*,*) 'Obtaining alloy properties'
+        if(.not.streql(layer_alloys(ifile),' ')) then
+          if (.not.written) write(*,*) 'Obtaining alloy properties'
+          written = .true.
           filename='Bulk_properties/'//trim(layer_alloys(ifile))
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then
@@ -1080,7 +1115,7 @@ cxpb Normalise surface constituents
             read(99,*) alloy_Cp_B2(ifile)
             read(99,*) alloy_Cp_B3(ifile)
             read(99,*) alloy_Cp_B4(ifile)
-96          close(99)
+            close(99)
           endif
           filename='Surface_properties/'//trim(layer_alloys(ifile))
           if(open_file(99,filename,
@@ -1103,10 +1138,12 @@ cxpb Normalise surface constituents
         endif
       enddo
 
+      written = .false.
       do itrack = 1, ntargsp
-        if (track_species(itrack).ne.'  ') then
-          if (itrack.eq.1)
+        if (.not.streql(track_species(itrack),'  ')) then
+          if (.not.written)
      >     write(*,*) 'Obtaining tracked species properties'
+          written = .true.
           filename='Bulk_properties/'//trim(track_species(itrack))
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then

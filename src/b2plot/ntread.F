@@ -22,7 +22,9 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_indirect
       use b2mod_constants
+      use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
@@ -47,8 +49,6 @@ c
       external subini, subend
 #ifdef B25_EIRENE
       external ipgetr, xertst
-      real (kind=R8) :: triangleArea
-      external triangleArea
 *   ..initialisation
       data width /1.0_R8/
       save width
@@ -92,12 +92,12 @@ C
 C
       READ(33,*,IOSTAT=IO,ERR=1983) NRKNOT  !VK IO
       IF(IO.NE.0) NRKNOT=0 !VK
-      WRITE(*,'(a14,i6)') 'NRKNOT      = ',NRKNOT
+      WRITE(*,'(a14,i8)') 'NRKNOT      = ',NRKNOT
 C
 C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(34,*,IOSTAT=IO,ERR=1984) NTRII   !VK IO
       IF(IO.NE.0) NTRII=0 !VK
-      WRITE(*,'(a14,i6)') 'NTRII       = ',NTRII
+      WRITE(*,'(a14,i8)') 'NTRII       = ',NTRII
 
       READ (35,*,IOSTAT=IO,ERR=1985) IDUMMY
       IF(IO.NE.0) IDUMMY=0 !VK
@@ -315,27 +315,27 @@ C
 *//END NTREAD//
 
 #ifndef HPUX
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FORT.33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FORT.34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
+ 1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.35 file!')
 #else
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FTN33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FTN34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
+ 1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn35 file!')
 #endif

@@ -64,7 +64,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
 
       IF((TN.LE.T0).EQV.(H.GT.0.0d0)) GO TO 6000
       IF(TSTEP.EQ.0.0_R8) GO TO 6000
-3400  IJM4=IJM3
+ 3400 IJM4=IJM3
       IJM3=IJM2
       IJM2=IJM1
       IJM1=IJ
@@ -86,14 +86,14 @@ c  as done by Mrityunjay Kundu in his IPR report.
         R2=ABS(Y(I,IJ))+ABS(Y(I,IJ)-Y(I,IJM1))+EPS
         R1=ABS(WK(I,1)-Y(I,IJ))/R2
         IF(R1.GT.RERR) RERR=R1
-4500  CONTINUE
+ 4500 CONTINUE
       RERR=ABS(0.25_R8*RERR*TSTEP/H)
 
       IF(T.EQ.T0) THEN
         IER=123
         DO 4600 I=1,N
           YF(I)=Y(I,IJ)
-4600    CONTINUE
+ 4600   CONTINUE
         RETURN
       ENDIF
 
@@ -102,7 +102,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
           T0=T0+H
           DO 4700 I=1,N
             WK(I,2)=WK(I,1)
-4700      CONTINUE
+ 4700     CONTINUE
           NST=NST+1
           IF((TN.LE.T0).EQV.(H.GT.0.0_R8)) GO TO 6000
           IF(ABS((TN-T0)/TSTEP).LE.REPS) GO TO 6000
@@ -118,7 +118,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
               DY(I,IJM1)=DY(I,IJM2)
               DY(I,IJM2)=DY(I,IJM4)
               DY(I,IJM3)=DY(I,I2)
-4800        CONTINUE
+ 4800       CONTINUE
             NST=4
           ENDIF
 
@@ -138,7 +138,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
               Y(I,IJM1)=Y1
               Y(I,IJM3)=Y2
               DY(I,IJ)=DY(I,IJM1)
-5000        CONTINUE
+ 5000       CONTINUE
             T=T0-H/2.0_R8
             CALL DIF(IBND,NS,T,N,Y(1,IJM1),DY(1,IJM1))
             T=T-H
@@ -152,13 +152,13 @@ c  as done by Mrityunjay Kundu in his IPR report.
             H=H/8.0_R8
             DO 5200 I=1,N
               Y(I,1)=Y(I,IJM1)
-5200        CONTINUE
+ 5200       CONTINUE
             CALL STRT4(IBND,NS,N,Y,DY,DIF,H,T,REPS,IFLG,TSTEP,NSTP,IER,
      .                 WK)
             IF(IER.GT.0) THEN
               DO 5300 I=1,N
                 YF(I)=Y(I,IJM1)
-5300          CONTINUE
+ 5300         CONTINUE
               RETURN
             ENDIF
             IJ=4
@@ -176,7 +176,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
             IER=122
             DO 5400 I=1,N
               YF(I)=Y(I,IJM1)
-5400        CONTINUE
+ 5400       CONTINUE
             RETURN
           ENDIF
 
@@ -185,13 +185,13 @@ c  as done by Mrityunjay Kundu in his IPR report.
         IF(IER.GT.0) THEN
           DO 5600 I=1,N
             YF(I)=Y(I,IJM1)
-5600      CONTINUE
+ 5600     CONTINUE
           RETURN
         ENDIF
         T0=T0+H
         DO 5700 I=1,N
           WK(I,2)=WK(I,1)
-5700    CONTINUE
+ 5700   CONTINUE
         IF((TN.LE.T0).EQV.(H.GT.0.0_R8)) GO TO 6000
         IF(ABS((TN-T0)/TSTEP).LE.REPS) GO TO 6000
       ENDIF
@@ -200,10 +200,10 @@ c  as done by Mrityunjay Kundu in his IPR report.
       IER=133
       DO 5800 I=1,N
         YF(I)=Y(I,IJ)
-5800  CONTINUE
+ 5800 CONTINUE
       RETURN
 
-6000  TX=(TN-T0)/H
+ 6000 TX=(TN-T0)/H
       DO 7000 I=1,N
         DEL(1)=DY(I,IJ)*H
         DEL(2)=Y(I,IJ)-Y(I,IJM1)
@@ -212,12 +212,12 @@ c  as done by Mrityunjay Kundu in his IPR report.
         DO 6501 J1=2,3
           DO 6500 J2=4,J1,-1
             DEL(J2)=DEL(J2-1)-DEL(J2)
-6500      CONTINUE
-6501    CONTINUE
+ 6500     CONTINUE
+ 6501   CONTINUE
         DEL(4)=DEL(3)-0.50_R8*DEL(4)
         YF(I)=Y(I,IJ)+TX*(DEL(1)+TX*(DEL(2)+(TX+1)*(DEL(3)+
      1        (TX+1)*DEL(4)/2.0_R8)))
-7000  CONTINUE
+ 7000 CONTINUE
       RETURN
       END SUBROUTINE MSTEP
 c_______________________________________________________________________
@@ -251,7 +251,7 @@ c_______________________________________________________________________
           R2=ABS(Y(I,1))+ABS(Y(I,2))+ABS(Y(I,3))+EPS
           R1=ABS(Y(I,3)-Y(I,4))/R2
           IF(R1.GT.RERR) RERR=R1
-2000    CONTINUE
+ 2000   CONTINUE
         RERR=RERR*TSTEP/H
 
         IF(RERR.LE.REPS.OR.IFLG.GT.0) THEN
@@ -263,7 +263,7 @@ c_______________________________________________________________________
           NSTP=NSTP+5
           DO 3000 I=1,N
             WK(I,2)=Y(I,4)
-3000      CONTINUE
+ 3000     CONTINUE
           RETURN
         ELSE
           H=SFAC*H*(REPS/RERR)**0.250_R8
@@ -272,7 +272,7 @@ c_______________________________________________________________________
             RETURN
           ENDIF
         ENDIF
-4000  CONTINUE
+ 4000 CONTINUE
       IER=115
       RETURN
       END SUBROUTINE STRT4
@@ -293,26 +293,26 @@ c_______________________________________________________________________
       DO 1000 I=1,N
         Y1(I)=H2*DY0(I)
         WK(I,1)=Y0(I)+Y1(I)
-1000  CONTINUE
+ 1000 CONTINUE
 
       T1=T+H2
       CALL DIF(IBND,NS,T1,N,WK,WK(1,2))
       DO 1200 I=1,N
         Y1(I)=Y1(I)+H*WK(I,2)
         WK(I,1)=Y0(I)+H2*WK(I,2)
-1200  CONTINUE
+ 1200 CONTINUE
 
       CALL DIF(IBND,NS,T1,N,WK,WK(1,2))
       DO 1400 I=1,N
         Y1(I)=Y1(I)+H*WK(I,2)
         WK(I,1)=Y0(I)+H*WK(I,2)
-1400  CONTINUE
+ 1400 CONTINUE
 
       T1=T+H
       CALL DIF(IBND,NS,T1,N,WK,WK(1,2))
       DO 1600 I=1,N
         Y1(I)=Y0(I)+(Y1(I)+H2*WK(I,2))/3.0_R8
-1600  CONTINUE
+ 1600 CONTINUE
       RETURN
       END SUBROUTINE RK4
 c_______________________________________________________________________
@@ -339,7 +339,7 @@ c_______________________________________________________________________
         Y(J,IJ)=T1+6275.0_R8*(Y(J,IJM1)-WK1(J,2))/8003.0_R8
 
         WK1(J,1)=T1
-1000  CONTINUE
+ 1000 CONTINUE
 
       LJ=N
       IPAS=0
@@ -349,7 +349,7 @@ c_______________________________________________________________________
       DO 1200 J=1,N
         WK1(J,3)=Y(J,IJ)-(48.0_R8*Y(J,IJM1)-36.0_R8*Y(J,IJM2) +
      &  16.0_R8*Y(J,IJM3) - 3.0_R8*Y(J,IJM4)+12.0_R8*H*DY(J,IJ))/25.0_R8
-1200  CONTINUE
+ 1200 CONTINUE
 
       IF(IFLAG.EQ.0) THEN
         DO 2000 IP=1,N
@@ -364,18 +364,18 @@ c_______________________________________________________________________
      &       16.0_R8*Y(J,IJM3) - 3.0_R8*Y(J,IJM4) +
      &       12.0_R8*H*DY(J,IJ))/25.0_R8
            WK(J,N+IP)=(WK(J,1)-WK1(J,3))/DK
-1800      CONTINUE
+ 1800     CONTINUE
           Y(IP,IJ)=X1
-2000    CONTINUE
+ 2000   CONTINUE
 
         NUM=N
         IFLG=0
         DO 2500 I=1,N
           DO 2400 J=1,N
             WK(J,I)=0.0_R8
-2400      CONTINUE
+ 2400     CONTINUE
           WK(I,I)=1.0_R8
-2500    CONTINUE
+ 2500   CONTINUE
 
         CALL GAUELM(N,NUM,WK(1,N+1),WK,DET,IWK,LJ,IER1,IFLG)
         IF(IER1.GT.0) THEN
@@ -388,7 +388,7 @@ c_______________________________________________________________________
       DO 2800 I=1,N
         WK(I,N+1)=WK1(I,3)
         WK(I,N+2)=Y(I,IJ)
-2800  CONTINUE
+ 2800 CONTINUE
 
       DO 5000 IPAS=1,NIT
 
@@ -397,12 +397,12 @@ c_______________________________________________________________________
           S1=0.0_R8
           DO 3200 K=1,N
             S1=S1+WK(J,K)*WK(K,N+1)
-3200      CONTINUE
+ 3200     CONTINUE
           R2=ABS(Y(J,IJ))+ABS(Y(J,IJ)-Y(J,IJM1))+EPS
           RERR=MAX(RERR,ABS(S1/R2))
           Y(J,IJ)=WK(J,N+2)-S1
           WK(J,N+3)=-S1
-3500    CONTINUE
+ 3500   CONTINUE
 
         NSTP=NSTP+1
         CALL DIF(IBND,NS,T,N,Y(1,IJ),DY(1,IJ))
@@ -411,13 +411,13 @@ c_______________________________________________________________________
           WK1(J,3)=Y(J,IJ)-(48.0_R8*Y(J,IJM1)-36.0_R8*Y(J,IJM2)+
      &     16.0_R8*Y(J,IJM3)- 3.0_R8*Y(J,IJM4)+
      &     12.0_R8*H*DY(J,IJ))/25.0_R8
-3800    CONTINUE
+ 3800   CONTINUE
 
         DO 4000 J=1,N
           WK(J,N+4)=WK1(J,3)-WK(J,N+1)
           WK(J,N+1)=WK1(J,3)
           WK(J,N+2)=Y(J,IJ)
-4000    CONTINUE
+ 4000   CONTINUE
         SS=0.0_R8
         DO 4300 J=1,N
           S1=0.0_R8
@@ -425,11 +425,11 @@ c_______________________________________________________________________
           DO 4100 K=1,N
             S1=S1+WK(K,N+3)*WK(K,J)
             S2=S2+WK(J,K)*WK(K,N+4)
-4100      CONTINUE
+ 4100     CONTINUE
           WK1(J,3)=S1
           Y(J,IJ)=S2-WK(J,N+3)
           SS=SS+S1*WK(J,N+4)
-4300    CONTINUE
+ 4300   CONTINUE
 
         IF(SS.EQ.0.0_R8) THEN
           IER=125
@@ -438,9 +438,9 @@ c_______________________________________________________________________
         DO 4400 J=1,N
           DO 4440 K=1,N
             WK(K,J)=WK(K,J)-Y(K,IJ)*WK1(J,3)/SS
-4440      CONTINUE
-4400    CONTINUE
-5000  CONTINUE
+ 4440     CONTINUE
+ 4400   CONTINUE
+ 5000 CONTINUE
       IER=125
       RETURN
       END SUBROUTINE GEAR
@@ -471,7 +471,7 @@ c_______________________________________________________________________
               R1=ABS(A(L,K))
               KM=L
             ENDIF
-2200      CONTINUE
+ 2200     CONTINUE
 
           IDINT(K)=KM
           IF(KM.NE.K) THEN
@@ -479,7 +479,7 @@ c_______________________________________________________________________
               T1=A(K,L)
               A(K,L)=A(KM,L)
               A(KM,L)=T1
-2300        CONTINUE
+ 2300       CONTINUE
             DET=-DET
           ENDIF
 
@@ -490,10 +490,10 @@ C         IF(ABS(A(K,K)).LT.REPS) RETURN
             A(L,K)=A(L,K)/A(K,K)
             DO 2500 L1=K+1,N
               A(L,L1)=A(L,L1)-A(L,K)*A(K,L1)
-2500        CONTINUE
-2501    CONTINUE
+ 2500       CONTINUE
+ 2501     CONTINUE
 
-2600    CONTINUE
+ 2600   CONTINUE
         DET=DET*A(N,N)
         IDINT(N)=N
         IF(A(N,N).EQ.0.0_R8) RETURN
@@ -517,17 +517,17 @@ C       IF(ABS(A(N,N)).LT.REPS) RETURN
           ENDIF
           DO 3100 L=K+1,N
             X(L,J)=X(L,J)-A(L,K)*X(K,J)
-3100      CONTINUE
-3000    CONTINUE
+ 3100     CONTINUE
+ 3000   CONTINUE
 
         X(N,J)=X(N,J)/A(N,N)
         DO 3300 K=N-1,1,-1
           DO 3200 L=N,K+1,-1
             X(K,J)=X(K,J)-X(L,J)*A(K,L)
-3200      CONTINUE
+ 3200     CONTINUE
           X(K,J)=X(K,J)/A(K,K)
-3300    CONTINUE
-5000  CONTINUE
+ 3300   CONTINUE
+ 5000 CONTINUE
       RETURN
       END SUBROUTINE GAUELM
 c_______________________________________________________________________
@@ -550,7 +550,7 @@ c_______________________________________________________________________
      &                37.0_R8*DY(J,IJM3) - 9.0_R8*DY(J,IJM4))/24.0_R8
         Y(J,IJ)=T1 + 251.0_R8*(Y(J,IJM1) - WK(J,2))/270.0_R8
       WK(J,1)=T1
-2000  CONTINUE
+ 2000 CONTINUE
 
       DO 3000 J=1,NIT
         NSTP=NSTP+1
@@ -564,9 +564,9 @@ c_______________________________________________________________________
           T1=ABS((Y(K,IJ)-T2)/R1)
           IF(T1.GT.RERR) RERR=T1
           Y(K,IJ)=T2
-2600    CONTINUE
+ 2600   CONTINUE
         IF(RERR.LT.CFAC*REPS) RETURN
-3000  CONTINUE
+ 3000 CONTINUE
       IER=125
       RETURN
       END SUBROUTINE ADAMS
@@ -604,7 +604,7 @@ c_______________________________________________________________________
       IF((H.LT.0.0_R8).EQV.(TN.GT.T0)) H=-H
       CALL DIF(IBND,NS,T0,N,Y,DY)
 
-1000  NSTEP=NSTEP+1
+ 1000 NSTEP=NSTEP+1
       H2=H/2.0_R8
       CALL RK4(IBND,NS,N,T0,Y,DY,H2,WK(1,4),DIF,WK)
       T1=T0+H2
@@ -617,7 +617,7 @@ c_______________________________________________________________________
         R2=ABS(Y(I))+ABS(WK(I,3)-Y(I))+EPS
         R1=ABS(WK(I,4)-WK(I,3))/R2
         IF(R1.GT.RERR) RERR=R1
-2000  CONTINUE
+ 2000 CONTINUE
       RERR=ABS(RERR*TSTEP/(CE*H))
 
       IF(T1.EQ.T0) THEN
@@ -629,7 +629,7 @@ c_______________________________________________________________________
         T0=T0+H
         DO 3000 I=1,N
           Y(I)=WK(I,3)-(WK(I,4)-WK(I,3))/CE
-3000    CONTINUE
+ 3000   CONTINUE
         CALL DIF(IBND,NS,T0,N,Y,DY)
         IF(ABS((TN-T0)/TSTEP).LT.REPS) RETURN
 

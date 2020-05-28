@@ -114,7 +114,7 @@
      .            .gt. 0.0_R8
       return
 
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
       end subroutine read_b2mod_feedback
 
       subroutine write_b2mod_feedback(nwrite,edition)
@@ -193,7 +193,7 @@ cxpb size is changed in DIMENSIONS.F
       endif
       return
 
- 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+  999 call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
       end subroutine read_b2mod_feedback_control
 
       subroutine write_b2mod_feedback_control(nwrite)

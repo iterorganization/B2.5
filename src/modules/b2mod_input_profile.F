@@ -279,13 +279,13 @@
      &             'AXIAL-SOURCES: sna ',spec,xr(ix),xf(ix)
                   if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: smo ',spec,xr(ix),xf(ix)
-                  if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.3) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: she ',xr(ix),xf(ix)
-                  if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.4) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: shi ',xr(ix),xf(ix)
-                  if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.5) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
-                  if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
                 endif
               endif
@@ -297,19 +297,19 @@
      &           'PROFILE-SOURCES: sna ',spec,pr(iy),pf(iy)
                 if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: smo ',spec,pr(iy),pf(iy)
-                if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.3) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: she ',pr(iy),pf(iy)
-                if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.4) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: shi ',pr(iy),pf(iy)
-                if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.5) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
-                if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
               endif
             endif
             if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
- 1        continue
+    1     continue
         enddo
       enddo
 ! Calculation of the total power input
@@ -348,10 +348,10 @@
       endif
         
       goto 100
- 98   write (*,*) 'Error in computing axial profile'
+   98 write (*,*) 'Error in computing axial profile'
       goto 100
- 99   write (*,*) 'Error in reading the dsp file'
- 100  continue
+   99 write (*,*) 'Error in reading the dsp file'
+  100 continue
 
       ext_sna(:,:,:)=sna0(:,:,0,:)
       ext_smo(:,:,:)=smo0(:,:,0,:)
@@ -409,7 +409,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !     write(*,profile)
       return
 
- 999  call xerrab ('Error while reading PROFILE namelist!')
+  999 call xerrab ('Error while reading PROFILE namelist!')
       end subroutine read_source_profile
 
       end subroutine source_input
@@ -441,7 +441,8 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8), dimension(-1:nx,-1:ny) :: 
      &    hci0,hce0,sig0,alf0,ne,te,ti
        
-      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
+      real(kind=R8), save :: scaling_width(nscale)
+      real(kind=R8), save :: scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
      &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
@@ -520,8 +521,8 @@ cdjm Jan2017 Keep linearised sources for balance
         ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
         ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
         if (scaling_width(isc).eq.0.0_R8 .and. ixwidth(isc).gt.1)
-     $    scaling_width(isc) = 0.5_R8*
-     $      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
+     >   scaling_width(isc) = 0.5_R8*
+     .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
       if (elm_time_period.gt.0.)then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
@@ -757,15 +758,15 @@ cdjm Jan2017 Keep linearised sources for balance
 
 !           deallocate(f,r,pr,pf,felm,pelm)
             iloop=iloop+1
-  1         continue
+    1       continue
           enddo
         enddo
       enddo
        
        
       goto 100
- 99   write (*,*) 'Error in reading the dsp file'
- 100  continue
+   99 write (*,*) 'Error in reading the dsp file'
+  100 continue
        
       if (new_files) then
         close(93)
@@ -816,7 +817,7 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
- 999  call xerrab ('Error while reading TRANSPORT inputfile!')
+  999 call xerrab ('Error while reading TRANSPORT inputfile!')
       end subroutine read_transport_input
 
       end subroutine transport_input
@@ -875,13 +876,13 @@ c*** Clear data to forget previous profiles
       end if
       i = 0
       nya = 0
- 91   continue
+   91 continue
       i = i + 1
       read (91,*,END=92,ERR=97) prtmp
       prdsa(i) = prtmp
       nya = i
       if (i.lt.ny+2) goto 91
- 92   continue
+   92 continue
       nfitanf=1
       IFA=0
       do i=1,nya
@@ -909,9 +910,9 @@ c*** Clear data to forget previous profiles
         pr(i)=pra(nfitanf-1+i)
       enddo
       goto 108
- 97   ifa=1
+   97 ifa=1
          
- 108  continue
+  108 continue
       close (91)
       ncall=ncall+1
       call subend ()
@@ -1010,9 +1011,9 @@ c*** Clear data to forget previous profiles
 !     allocate (pr(1:ndim))
         
       goto 108
- 97   ifa=1
+   97 ifa=1
          
- 108  continue
+  108 continue
       ncall=ncall+1
       call subend ()
       return

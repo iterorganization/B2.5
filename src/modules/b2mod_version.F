@@ -79,7 +79,7 @@ c    Version 01.001.030  08.05.09 corrected boundary conditions bcene=3 in b2stb
 c    Version 01.001.031  11.05.09 introduced subroutine b2tinnt for calculating
 c                                 ion-neutrals current
 c    Version 01.001.032  15.05.09 exchanged subroutine set_transport_srv for case(5)
-c    Version 01.001.033  22.05.09 introduced case(9) instaed of case(5) with new barier
+c    Version 01.001.033  22.05.09 introduced case(9) instead of case(5) with new barrier
 c                                 function for h-regime
 c    Version 01.001.034  10.06.09 exchanged definition of sig0(ix,iy) in b2tqna
 c    Version 01.001.035  16.06.09 corrected definition of alfe0(ix,iy,0) in b2tfhe_
@@ -156,7 +156,7 @@ c                                 with modificated particle anf heating fluxes.
 c                        27.10.10 commented parts which use files b2fstati_add and b2fstate_add
 c                                 commented key 'b2news_re_compute_pb'
 c    Version 01.001.059  18.11.10 replaced b2ardr.F by new from xpb
-c                        02.12.10 introduced Zdanov's expression for fke(z) in b2tqce.F
+c                        02.12.10 introduced Zhdanov expression for fke(z) in b2tqce.F
 c    Version 01.001.060  20.01.11 inserted factor 5/3 before cvla into fna_he
 c    Version 01.001.061  27.01.11 changed the applying of correction for boundary cells. See b2npmo.F
 c    Version 01.001.062  02.02.11 corrected boundary condition BCENI==22 at 'N'
@@ -174,7 +174,7 @@ c                                 corrected output in b2urmo.F and its interface
 c                                 replaced default value area_fix=0 by area_fix=3
 c    Version 01.001.067  02.06.11 introduced restriction of diamagnetic velocities of impurity ions in b2tfnb.F
 c                        09.06.11 introduced new numerical manner of calculation fnbPSch(ix,iy,0) and fnbPSch(ix,iy,1)
-c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene's sputer.F There was very strange "access violation" in this place
+c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene sputer.F There was very strange "access violation" in this place
 c                        22.07.11 corrected grlib.F (dummy) and masr3.F
 c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA
 c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)
@@ -205,17 +205,17 @@ c                        12.03.12 added check that we have some particle diffusi
 c                        14.03.12 added diagnostic output in subroutine write_b2_to_astra
 c                        23.03.12 added diagnostic output in subroutine b2stbr.F
 c                        26.03.12 introduced restriction for argument of exp in subroutine recycle from file b2stbr_phys.F
-c                        28.03.12 added the procedure of smoothing of Eirene's sources suggested by Senichenkov
+c                        28.03.12 added the procedure of smoothing of Eirene sources suggested by Senichenkov
 c                        12.04.12 added additional diagnostics for particles of fluxes
 c    Version 01.001.073  12.04.12 deleted the modified fluxes from recycling boundary conditions
-c                        21.05.12 modified the algotithm of searching radial midpalne coordinates in module b2mod_b2_to_astra
+c                        21.05.12 modified the algorithm of searching radial midpalne coordinates in module b2mod_b2_to_astra
 c                        14.06.12 added setting constatnt electron and ion temperature from ASTRA
 c                        15.06.12 replaced natm by nnatmi in b2stbr.F
 c                        20.06.12 added restriction of usage BCCON=8 in case of coupling B2-ASTRA
 c                        21.06.12 added NB sources in case of coupling B2-ASTRA
 c                        16.07.12 added test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
 c                                 ehxp is set up zero subroutine b2nxfx when electric potential is zero (pot_eq=0)
-c                        26.07.12 corrected contribution of source's ASTRA in b2sral
+c                        26.07.12 corrected contribution of ASTRA sources in b2sral
 c                        21.09.12 test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
 c                                 has been replaced by warning message.
 c                        26.09.12 introduced the freezing of na, te, ti when 'b2tfhe_mdf','b2tfhi_mdf' and 'b2tfnb_mdf' are '1'
@@ -267,7 +267,7 @@ c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
 c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
-c    Version 03.000.006  29.06.19 New default model b2sigp_style.eq.2
+c    Version 03.000.006  29.06.18 New default model b2sigp_style.eq.2
 c                                 Added redef_pbs switch to b2fgmtry file
 c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms

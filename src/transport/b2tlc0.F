@@ -3,8 +3,8 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-	use b2mod_b2cmpa
-	use b2mod_rates
+      use b2mod_b2cmpa
+      use b2mod_rates
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -78,8 +78,8 @@
             flc(ix,iy,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
            endif
-	  enddo
-	 enddo
+          enddo
+         enddo
 *   ..compute perpendicular neutral difusion flux limit
          do ix = -1, nx
           do iy = -1, ny
@@ -97,9 +97,9 @@
             cdpa(ix,iy,1,is) = cdpa(ix,iy,1,is)*t2
             flc(ix,iy,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-	   endif
-	  enddo
-	 enddo
+           endif
+          enddo
+         enddo
         endif
        enddo
       endif

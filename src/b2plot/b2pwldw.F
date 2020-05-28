@@ -1,4 +1,4 @@
-      subroutine b2pwldw(lun,trgl,izn,iln,boundary_namelist,BoRiS)
+      subroutine b2pwldw(lun,trgl,izn,iln,BoRiS)
       use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
@@ -41,6 +41,8 @@ c***  Impinging ion flux     \
 c***  Average ion energy      |  for each species
 c***  Impinging atom flux     |
 c***  Average atom energy    /
+c***  Impinging molecule flux    \ for each molecular species
+c***  Average molecule energy    /
 c***  Net erosion             |   for each kind of sputtered material
 c***  Gross erosion           |
 c***
@@ -81,8 +83,11 @@ c=======================================================================
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
+#else
+      real (kind=R8) :: pump, pumptot
+      character*13 species_name
 #endif
-      integer lun,izn,iln,boundary_namelist
+      integer lun,izn,iln
       real (kind=R8) :: BoRiS
       logical trgl,ft44
 
@@ -94,14 +99,11 @@ c***  iznt    : plot zone of the last done target
 c***  zz      : reference distance
 c***  i_ersmtr: index of eroded material for the wall segments
 
-      integer i,j,k,l,m,n,i1,i2,i3,ib,is,iss,iy,im,jj,js,kk,ils,itg,jcf,
-     ,  jci,itrg,izns,iznt,nclm_ld,nclm_er,nclm_pk,nx_hlp,m_hlp(ntrgsx),
+      integer i,j,k,l,m,n,i1,i2,ib,is,iss,iy,im,js,kk,ils,itg,
+     ,  itrg,izns,iznt,
      ,  i_ersmtr(nsgmx),l_ersmtr(0:nsgmx),
      ,  iatm,imol,ia,ims,ind,IAS,shift,
-     ,  l_srfmtr(0:nsgmx),
-     ,  sptlistrg(0:nsgmx),sptliswll(DEF_NATM+DEF_NMOL)
-      integer :: nyd
-      parameter (nyd=DEF_NYD)
+     ,  sptlistrg(0:nsgmx)
 
 c*** Arrays to store the target profiles
 c***  xtrg    : coordinate along the target
@@ -117,6 +119,8 @@ c***  whtpl   : plasma heat
 c***  wpttrg  : particle power to the target
 c***  wpltrg  : plasma power to the target
 c***  wnutrg  : neutral power to the target
+c***  wnmtrg  : power with molecules to the target
+c***  wnatrg  : power with atoms to the target
 c***  wrdtrg  : radiation power to the target
 c***  wtttrg  : total power to the target
 c***  fiitrg  : impinging ion flux 
@@ -132,13 +136,26 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
+c*** Arrays to store the peak values
+c***  wpk_tt  : peak power - total
+c***  wpk_rd  : peak power - radiation
+c***  wpk_pl  : peak power - plasma
+c***  wpk_nu  : peak power - neutrals
+c***  wlc_tt  : location of total peak
+c***  wlc_rd  : location of radiation peak
+c***  wlc_pl  : location of plasma peak
+c***  wlc_nu  : location of neutral peak
+c***  wrd_pk  : radiation at total peak
+c***  wpl_pk  : plasma at total peak
+c***  wnu_pk  : neutrals at total peak
+
+      real (kind=R8) :: h,p,t,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
      ,  titrg(0:NY-1,ntrgsx),
      ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
-     ,  wptpl(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx), wnutpr(0:NY-1,ntrgsx),
      ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
      ,  wpttrg(0:NY-1,ntrgsx),
      ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
@@ -155,16 +172,17 @@ c***  spttrg  : sputtering [g/y]
      ,  nmitrg(0:NY-1,ntrgsx,DEF_NMOL),
      ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
      ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
-     ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(DEF_NLIM+DEF_NSTS)
+     ,  sjs_w(0:ntrgsx),sptmass,sptflx(DEF_NLIM+DEF_NSTS)
+c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
 c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
 c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
-c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
-c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    ewldm   :   their average energy. Equal to EOTML/POTML
 c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
 c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
@@ -189,6 +207,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
+c***  n_hdpr_ml : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -207,7 +226,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m,nclm_na,nclm_nm
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -218,7 +237,7 @@ c***  sfpr_m    : list of active materials
       integer n_line_x, n_sfpr_sp, n_sfpr_er
       integer do_spt_wll(DEF_NLIM+DEF_NSTS)
       real (kind=R8), allocatable :: w_line(:)
-      real (kind=R8) :: s_hlp, nsecyr
+      real (kind=R8) :: nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
       logical :: first,do_trg,match_found,do_spt
       character*(m_hdpr) tab*1,hdpr_c(n_hdpr_c),hdpr_t(n_hdpr_t),
@@ -248,7 +267,6 @@ c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
-      integer eb2atm(DEF_NATM),spt_atm
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
@@ -257,8 +275,10 @@ c***  wllersf   : ratio of erosion to sputtering for different meterials
       external streql
       data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
       data srfs_x /'Be','C','C'  ,'Fe','Fe','Fe','Mo' ,'W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 56., 96. , 184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 7.8, 10.2, 19.3/
+      data srfs_a /9.0_R8,12.0_R8,12.0_R8,56.0_R8,56.0_R8,56.0_R8,
+     .            96.0_R8,184.0_R8/
+      data srfs_d /1.8_R8, 2.0_R8, 2.0_R8, 7.8_R8, 7.8_R8, 7.8_R8,
+     .            10.2_R8,19.3_R8/
       save
 c=======================================================================
 
@@ -285,19 +305,23 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
 #endif
         call find_file(filename,ft44)
         do_trg=.true.
-        write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
-#ifndef B25_EIRENE      
-        do ia=1,natmi
-          TEXTA(ia)=adjustl(TEXTAN(ia-1))
-        end do
-#endif
         do is=1,n_sfpr_s !{
           sfpr_s(is)=adjustl(species_list(is))
         end do !}
-        do ia=1,natmi
+#ifndef B25_EIRENE
+        nclm_na=nspecies
+        nclm_nm=0   
+        do ia=1,nspecies
+          TEXTA(ia)=species_list(ia)
+        end do
+#else
+        nclm_na=natmi
+        nclm_nm=nmoli
+#endif
+        do ia=1,nclm_na
           sfpr_a(ia)=adjustl(TEXTA(ia))
         end do
 c        print *,'First call. format:',frmt_hlp,':'                  !###
@@ -320,10 +344,13 @@ c        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
             k=k+1
             iy=(bcstart(i)+bcend(i))/2
             if(l.eq.nx) then !{
-              if(ntrgts.eq.2) then !{
+              if(ntrgts.eq.1) then !{
+                phi_hlp(1)=get_phi_applied(boundary_namelist,l,iy)
+                eni_hlp(1)=enipar(i,1)+2.0_R8-enipar(i,2)
+              else if(ntrgts.eq.2) then !{
                 phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
-              else !}{
+              else if (ntrgts.eq.4) then !}{
                 phi_hlp(4)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(4)=enipar(i,1)+2.0_R8-enipar(i,2)
               end if !}
@@ -383,7 +410,6 @@ c carlis list of indexes of wall materials referred to list of ACTIVE materials
 c        print *,'Input materials: ',sfpr_m                        !###
 c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
         l_ersmtr(0)=0
-        l_srfmtr(0)=0
         m=0
         do k=1,n_sfpr_er !{
           l=0
@@ -402,8 +428,6 @@ c        the list is not erdered as the list of possible materials
             sfpr_m(m)=srfs_x(l)
 c carlis     [s/y*m2*mm]   =[s/y]*[m2/cm2*mm/cm*]*[g/mol]/[1/mol]/[g/cm3]
             wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l)) 
-c carlis list of indexes that tells for each ACTIVE material the counterpat in POSSIBLE list
-            l_srfmtr(k)=l 
 c carlis list of indexes that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
             l_ersmtr(k)=m
           end if !}
@@ -424,7 +448,6 @@ c carlis substitute indexes of wall materials with the new ordering of ACTIVE li
 c        print *,'i_sptmtr'                                    !###
 c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
 
-        sptliswll(:)=0
         do_spt_wll(:)=0
         sptflx(j)=0.0_R8
         i=0
@@ -437,7 +460,6 @@ c carlis evaluate number of sputtered atoms and molecules
             if (wldspta(j,ia,0).gt.0.0_R8) then
               sptflx(j)=wldspta(j,ia,0)
               do_spt_wll(j)=ia
-              sptliswll(ia)=1
               match_found=.true.
             end if
           end do
@@ -453,7 +475,6 @@ c carlis evaluate number of sputtered atoms and molecules
             if (wldsptm(j,imol,0).gt.0.0_R8) then
               sptflx(j)=wldsptm(j,imol,0)
               do_spt_wll(j)=imol+natm
-              sptliswll(imol+natm)=1
               match_found=.true.
             end if
           end do
@@ -469,10 +490,10 @@ c carlis evaluate number of sputtered atoms and molecules
           write(*,*) 'Sputtered species : ',(sfpr_sp(i),i=1,n_sfpr_sp)
         end if !}
         n_line_x=n_hdpr_c+n_hdpr_t+
-     ,           n_hdpr_s*n_sfpr_s+natmi*n_hdpr_a+
-     ,           n_hdpr_ml*nmoli+n_hdpr_sp*n_sfpr_sp+
+     ,           n_hdpr_s*n_sfpr_s+nclm_na*n_hdpr_a+
+     ,           n_hdpr_ml*nclm_nm+n_hdpr_sp*n_sfpr_sp+
      ,           n_hdpr_er*n_sfpr_er
-        write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
+        write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'
 c carlis calculation of total pumped fluxes
 #ifdef B25_EIRENE
         print *,'Pumped fluxes'
@@ -527,7 +548,8 @@ c carlis calculation of total pumped fluxes
               end if
             end do
             pumptot=pumptot+pump
-            print *,'Pumped ',trim(adjustl(textpl(is))),
+            call species(is,species_name,.false.)
+            print *,'Pumped ',trim(adjustl(species_name)),
      ,              ': ',pump,' (1/s)'
           end if
         end do
@@ -536,19 +558,6 @@ c carlis calculation of total pumped fluxes
 
         first=.false.
       end if !} end first call
-c     carlis eb2atm contains the indexes of the B2 atoms mapped to eirene
-c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
-c            eb2atm will be [1 4 2 3]
-      do ia=1,natmi !initialize
-        eb2atm(ia)=ia
-      end do
-      do is=1,nspecies !species over B2
-        do ia=1,natmi !species over Eirene
-          if (streql(TEXTA(ia),species_list(is))) then
-           eb2atm(is)=ia
-          end if
-        end do
-      end do
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
 
@@ -645,9 +654,14 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
             l=1
             u=-1
             do j=1,ntrgts !{
+              if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                u=1
+                l=0
+              end if
               k=ltrgpos(j)
               kk=k+l
               ISS=ltns(j)
+              if (ISS.eq.0) cycle
               IND=eirdiag_nds_ind(ISS)
               IA=IND+1
               do iy=0,ny-1 !{
@@ -660,7 +674,7 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                     wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
-     *               *(1.0_R8-BoRiS)*kinrgy(kk,iy,is)
+     *               *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
      *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
@@ -672,7 +686,7 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2)
+     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,is)
      .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
@@ -705,6 +719,9 @@ c                   carlis Using values directly calculated from Eirene
      .                           +ewldmr_res(is,iy+IA))*
      .                            sarea_res(iy+IA)
                   enddo
+                  wnutpr(iy,j)=ewldrp_res(iy+IA)
+                  whtpl(iy,j)=whtpl(iy,j)-wnutpr(iy,j)
+                  wpltrg(iy,j)=wpltrg(iy,j)-wnutpr(iy,j)
                   do is=1,nioni
                     mion=0.0_R8
                     imol=1
@@ -748,6 +765,7 @@ c            print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !###
               if (ft44) then
                 if(ntns.eq.ntrgts) then !{
                   js=ltns(j)+nlim
+                  if (ltns(j).eq.0) cycle
                   wo=wldnek(js,0)+wldnep(js,0)
 c                  print *,'j,js,wo = ',j,js,wo    !###
                   if(wi(j).gt.0.0_R8) then !{
@@ -790,15 +808,20 @@ c*** Particle fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
 c!###{
 c                print *,'is,j,i1,i2,k,kk,ib=',is,j,i1,i2,k,kk,ib
-c                zz=0
+c                zz=0.0_R8
 c                print '(3x,12(2x,a8))','phi','fti','tn','wo','wwo',
 c     ,            'fiitrg','eiitrg','faitrg','eaitrg','dab2',
 c     ,            'tab2','s'
@@ -836,14 +859,19 @@ c              write(*,'(1p,12e10.2)') (wwi(i),i=1,ntrgts)
             end do !} loop over active species
 
 c*** Atomic fluxes and energies
-            do iatm=1,natmi !{
+            do iatm=1,nclm_na !{
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -913,10 +941,15 @@ c*** Molecules fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                endif
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -972,6 +1005,7 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
               shift=lppp+1
               do j=1,ntrgts !{
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 sjs_t(j)=0.0_R8
@@ -1109,7 +1143,7 @@ c*** Print the column headers
             k=k+l+m+2
           end do !}
         end do !}
-        do i=1,natmi !{
+        do i=1,nclm_na !{
           m=len_trim(sfpr_a(i))
           do j=1,n_hdpr_a !{
             l=len_trim(hdpr_a(j))
@@ -1118,7 +1152,7 @@ c*** Print the column headers
             k=k+l+m+2
           end do !}
         end do !}
-        do i=1,nmoli !{
+        do i=1,nclm_nm !{
           ssmol=textmn(i-1)
           ssmol=adjustl(ssmol)
           m=len_trim(ssmol)
@@ -1178,6 +1212,7 @@ c        print *,hdr_line(1:k-1)
      .   'density of neutral atoms of species XX [1/m^3]'
         write(lun,740) 'pa_XX',tab,
      .   'pressure of neutral atoms of species XX [Pa]'
+#ifdef B25_EIRENE
         write(lun,740) 'flxm_XX',tab,
      .   'incident flux of molecules XX [1/m^2/s]'
         write(lun,740) 'Eavm_XX',tab,
@@ -1186,6 +1221,7 @@ c        print *,hdr_line(1:k-1)
      .   'density of molecules XX [1/m^3]'
         write(lun,740) 'pm_XX',tab,
      .   'pressure of molecules XX [Pa]'
+#endif
         write(lun,740) 'ersne_XX',tab,
      .   'net erosion of wall material XX [mm/y]'
         write(lun,740) 'ersng_XX',tab,
@@ -1194,7 +1230,7 @@ c        print *,hdr_line(1:k-1)
      .   'net sputtering of wall material XX [g/y]'
         write(lun,740) 'sptng_XX',tab,
      .   'gross sputtering of wall material XX [g/y]'
-  740 format('# ',2a,' : ',a)
+  740   format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
 c*** Print the line
@@ -1217,23 +1253,23 @@ c*** Print the line
           w_line(k+2)=0.0 !average ion energy
           k=k+n_hdpr_s
         end do !}
-        do is=1,natmi !{
+        do is=1,nclm_na !{
           w_line(k+1)=wldna(m,is,0)/segm_area(ils)
-          w_line(k+2)=ewlda(m,is,0)/eV
+          w_line(k+2)=ewlda(m,is,0)
           w_line(k+3)=0.0 !atom density
           w_line(k+4)=0.0 !atom pressure
           k=k+n_hdpr_a
         end do !}
-        do is=1,nmoli !{
+        do is=1,nclm_nm !{
           w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecule flux
-          w_line(k+2)=ewldm(m,is,0)/eV !molecule energy
+          w_line(k+2)=ewldm(m,is,0) !molecule energy
           w_line(k+3)=0.0 !molecule density
           w_line(k+4)=0.0 !molecule pressure
           k=k+n_hdpr_ml
         end do !}
         if (do_spt_wll(m).gt.0) then
           do is=1,n_sfpr_sp
-	    if(do_spt_wll(m).eq.is) then !{
+            if(do_spt_wll(m).eq.is) then !{
 c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
               if (do_spt_wll(m).le.natm) then
@@ -1310,12 +1346,12 @@ c carlis        [mm/y] = [1/s]*[s*mm*m2/y]/[m2]
           end do
         else
 c carlis sputtering not happening on this wall but possibly on other walls of the same plot zone
-	  do is=1,n_sfpr_sp
+          do is=1,n_sfpr_sp
             w_line(k+1)=0.0_R8
             w_line(k+2)=0.0_R8
             k=k+n_hdpr_sp
           end do
-	  do is=1,n_sfpr_er
+          do is=1,n_sfpr_er
             w_line(k+1)=0.0_R8
             w_line(k+2)=0.0_R8
             k=k+n_hdpr_er
@@ -1338,14 +1374,14 @@ c        print *,'itrg,iy=',itrg,iy
           w_line(k+2)=eiitrg(iy,itrg,is)/eV
           k=k+n_hdpr_s
         end do !}
-        do is=1,natmi !{
+        do is=1,nclm_na !{
           w_line(k+1)=faitrg(iy,itrg,is)
           w_line(k+2)=eaitrg(iy,itrg,is)/eV
           w_line(k+3)=naitrg(iy,itrg,is)
           w_line(k+4)=paitrg(iy,itrg,is)
           k=k+n_hdpr_a
         end do !}
-        do is=1,nmoli !{
+        do is=1,nclm_nm !{
           w_line(k+1)=fmitrg(iy,itrg,is) !molecule flux
           w_line(k+2)=emitrg(iy,itrg,is)/eV !molecule energy
           w_line(k+3)=nmitrg(iy,itrg,is) !molecule density
@@ -1375,12 +1411,12 @@ c        print *,'itrg,iy=',itrg,iy
           end do
         else
 c carlis sputtering not happening on this target but possibly on other walls of the same plot zone
-	  do is=1,n_sfpr_sp
+          do is=1,n_sfpr_sp
             w_line(k+1)=0.0_R8
             w_line(k+2)=0.0_R8
             k=k+n_hdpr_sp
           end do
-	  do is=1,n_sfpr_er
+          do is=1,n_sfpr_er
             w_line(k+1)=0.0_R8
             w_line(k+2)=0.0_R8
             k=k+n_hdpr_er
@@ -1411,7 +1447,7 @@ c      print *,'About to write a line:',k,' values'   !###
       if(k.gt.0) write(lun,frmt_hlp) (w_line(i),tab,i=1,k)
       deallocate(w_line)
 c      print *,'TEXTMN*',adjustl(TEXTMN),'*'
-c      print *,'TEXTin*',adjustl(TEXTin),'*'
+c      print *,'TEXTIN*',adjustl(TEXTIN),'*'
 
 c=======================================================================
       end

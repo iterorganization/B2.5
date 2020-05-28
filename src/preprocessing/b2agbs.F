@@ -15,9 +15,8 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..local variables
-      integer i, j, ix, iy, ixl, ixr, jxi, jxa, jsep
-      integer ntubes(-1:ny), ixref(nncutmax,-1:ny),
-     *  iseg(-1:nx,-1:ny), nseg(-1:nx,-1:ny),
+      integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
+      integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
      *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny)
@@ -53,7 +52,7 @@
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
           ixright(iseg(ix,iy),iy) = ix
- 20       continue
+   20     continue
           if (leftix(ixl,iy).ne.-2) then
             ixl = leftix(ixl,iy)
             if (iseg(ixl,iy).ne.0) then
@@ -67,7 +66,7 @@
             end if
             goto 20
           end if
- 30       continue
+   30     continue
           if (rightix(ixr,iy).ne.nx+1) then
             ixr = rightix(ixr,iy)
             if (iseg(ixr,iy).ne.0) then
@@ -81,13 +80,13 @@
             end if
             goto 30
           end if
- 40       continue
+   40     continue
         end do
       end do
 
 *   ..select reference location for each flux tube
 *   ..we use the outer midplane whenever possible, then the inner midplane,
-*   ..otherwise the cell half-way along the flux tube in computational space
+*   ..otherwise the cell to the right of the left end of the flux tube.
       ixref = -2
       call get_jsep(nx,ny,jxi,jxa,jsep)
       do iy = -1, ny
@@ -97,17 +96,13 @@
           else if (i.eq.iseg(jxi,iy)) then
             ixref(i,iy) = jxi
           else
-            ix = ixleft(i,iy)
-            do j = 1, isnum(i,iy)/2
-              ix = rightix(ix,iy)
-            end do
-            ixref(i,iy) = ix
+            ixref(i,iy) = rightix(ixleft(i,iy),iy)
           end if
         end do
       end do
 
 *   ..correct pbsx, hx, and hy to enforce:
-*   ..B_{pol}*hy1*hz constant (at western cell face and cell centers)
+*   ..B_{pol}*hy1*hz constant (on western cell face and at cell centers)
 *   ..vol = hy1*hx*hz
       do iy = -1, ny
         do ix = -1, nx

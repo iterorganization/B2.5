@@ -73,7 +73,7 @@ c*** Values by regions
 
       real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum)
-      character*2 hlp_hr(nrgn_tmp)*8
+      character hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
@@ -81,7 +81,7 @@ c*** Values by species
       real (kind=R8) :: equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) :: Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), Natm_tmp)
-      character*2 hlp_hs(nspc_tmp)*8
+      character hlp_hs(nspc_tmp)*8
 
 c*** Values by species and regions
       integer nsar_tmp, na_tmp
@@ -90,7 +90,7 @@ c*** Values by species and regions
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX) ! IYS 29.09.2017 added total number of neutrals
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum) ! IYS 29.09.2017
-      character*2 hlp_ha(nsar_tmp)*8
+      character hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
       integer nfl_tmp
@@ -100,12 +100,13 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_srt)
       real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
-      real (kind=R8) ::
-     *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm, imol ! IYS 29.09.2017
+      integer iatm ! IYS 29.09.2017
+#ifdef B25_EIRENE
+      integer imol
+#endif
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hr / 'totenre_' /
@@ -127,7 +128,6 @@ c
      +  hlp_ha,
      +  nfl_tmp,
      +  lun,
-     +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
      +  ex, warn_tmp,
      +  tab, hlp_c, f, hlp_frm, hlp_frf
@@ -225,6 +225,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
 
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
@@ -243,7 +248,7 @@ c Check version
      ,     '!!! b2wrsrt: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c*** It was a major change of the file format - impossible to continue
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           filedata(ltrc) = .false.
           return
@@ -296,17 +301,17 @@ c Check the number quantities computed for each species in each region
         end if
 
 c Check the number of strata
-        if(nfl_tmp .ne. nstrai) then
+        if(nfl_tmp .ne. nstrat) then
           warn_tmp = .true.
           write(*,'(a,i3,3a,i3)')
-     ,     '!!! b2wrsrt: current number of strata ',nstrai,
+     ,     '!!! b2wrsrt: current number of strata ',nstrat,
      ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
@@ -315,9 +320,9 @@ c However, there exist two level of inconsistency strength!..
         if(warn_tmp) write(*,*) ' You should remove the file!'
 
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
 
       else
 c*** New file
@@ -326,7 +331,7 @@ c*** New file
         ns_tmp  = nspc_tmp
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
-        nfl_tmp = nstrai
+        nfl_tmp = nstrat
         write(lun,700) lv,nr_tmp,ns_tmp,na_tmp,
      ,                      nrg_tmp,nsp_tmp,nfl_tmp,
      ,                      label
@@ -369,15 +374,15 @@ c>>>
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrsrt: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrsrt: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrsrt: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2wrsrt: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrsrt: cannot write in the file ',trim(f)
+   94 write(*,*) 'b2wrsrt: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -394,21 +399,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2wrsrt: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrsrt: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

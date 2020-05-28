@@ -45,13 +45,12 @@
 *   ..common blocks
 *   ..local variables
       integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
-      integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
+      integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
-      integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
-     *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
+     *  Total_current(-1:ny), Total_flux(-1:ny),                   !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
      *  wrk2(-1:nx,-1:ny), wrkt(-1:ny,-1:nx),                      !srv 23.11.00
@@ -66,6 +65,7 @@
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
      &  cutll, cutlo, t0, phi_app,
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
@@ -78,16 +78,17 @@
      *   qe_iup_sum, qi_iup_sum, q_iup_sum,
      *   uvbtot, voltot                                            !iyv 29.11.13
       character chns*3                                             !srv 27.04.01
-      character(23) hlp_frm                                        !srv 03.04.13
+      character*32 hlp_frm                                         !srv 03.04.13
       character*26 boundary_location(nbcd)
-      character(7), save :: folder                        !srv 26.09.17
-      logical ex                                          !srv 26.09.17
+      character(7), save :: folder                                 !srv 26.09.17
 #ifdef B25_EIRENE
       integer js
       real (kind=R8), save :: hlp_neu_peak
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
+      integer len_of_digits
+      external len_of_digits
       external subini, subend, ipgeti, machsfr
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
@@ -96,8 +97,8 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
-      save ncall, iout, use_astra, boundary_namelist
-      data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+      save ncall, iout, use_astra
+      data ncall/0/, iout/0/, use_astra/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -115,7 +116,7 @@
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
        call ipgeti('b2mndr_astra', use_astra)
-       call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
+       call get_boundary_namelist
 *    ..try to create a file in optional output folder
        open(70,file='output/__1__.dat',err=10)
 *    ..folder exists: future output will be done in folder
@@ -124,12 +125,9 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10    folder=''
- 20    continue
+   10   folder=''
+   20   continue
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-
 * ..initialisation
       if (use_astra.ne.0) then
         iout_iout_ASTRA = 1
@@ -137,26 +135,29 @@
         iout_iout_ASTRA = 0
       endif
 
-      mintopcut = ny                                               !srv 25.02.16
-      if(nncut > 0) mintopcut = minval(topcut(1:nncut))            !iyv 29.11.13 25.02.16
+      mintopcut = ny                                              !srv 25.02.16
+      if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
 
-      if (iout.eq.1) then                                          !srv begin if for iout
+      if (iout.eq.1) then                                         !srv begin if for iout
 
        call get_jsep(nx,ny,jxi,jxa,jsep)
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
-       B0out=0.0_R8
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
-       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 30.01.15 {
+       call b2xpro (nx, ny, ns, mp, am, na, ro)                   !srv 30.01.15 {
+       call b2xprz (nx, ny, ns, mp, am, na, rz)                   !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-       cst = sqrt(pr/ro)
+       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+       cst = sqrt(pz/rz)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
-       call my_out(70,nx,ny,pr,'pr')                                !srv 30.01.15 }
-       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
-       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
+       call my_out(70,nx,ny,rz,'rz')
+       call my_out(70,nx,ny,pr,'pr')                              !srv 30.01.15 }
+       call my_out(70,nx,ny,pz,'pz')                              !srv 30.01.15 }
+       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                    !srv
+       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                    !srv
 
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -360,8 +361,8 @@
       call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
       call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
 
-      call my_out(70,nx,ny,qz(-1,-1,0),'qz0cost')
-      call my_out(70,nx,ny,qz(-1,-1,1),'qz1sint')
+      call my_out(70,nx,ny,qz(-1,-1,0),'qz0sint')
+      call my_out(70,nx,ny,qz(-1,-1,1),'qz1cost')
 
       call my_out(70,nx,ny,wbbl(-1,-1,0),'bbxl')
       call my_out(70,nx,ny,wbbl(-1,-1,2),'bbzl')
@@ -492,8 +493,9 @@
       do is = 0,ns-1
         write (70,"(a,1x,a2,i1)") 'Total_particle_flux ',
      &     adjustr(is_codes(is)),nint(zamin(is))
-        write(70,"(' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
-     &     '    sfna   ','    sfna_mdf ')")
+        write(70,'(6a)')
+     &     ' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
+     &     '    sfna   ','    sfna_mdf '
         do iy = ny,-1, -1
           sfuadia(iy,is)  =0.0_R8
           sfvadia(iy,is)  =0.0_R8
@@ -587,21 +589,21 @@
         if(nncut.eq.2)  then           !iyv 04.02.11
           call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
-          ix2=nxtr+1  !outer upper
+          ix2=nxtr    !outer upper
         endif
 
         do iy=-1,ny
           do is = 0, ns-1
             if(.not.is_neutral(is)) then          !iyv 07.02.11
-! pr_inner
+! pr_West
               wrk1(-1,iy)=wrk1(-1,iy)+na(-1,iy,is)*
      &         (rza(-1,iy,is)*te(-1,iy)+ti(-1,iy))
-! pr_outer
+! pr_East
               wrk1(0,iy)=wrk1(0,iy)+na(nx,iy,is)*
      &         (rza(nx,iy,is)*te(nx,iy)+ti(nx,iy))
-! ro_inner
+! ro_West
               wrk1(1,iy) = wrk1(1,iy)+am(is)*mp*na(-1,iy,is)
-! ro_outer
+! ro_East
               wrk1(2,iy) = wrk1(2,iy)+am(is)*mp*na(nx,iy,is)
 
               if(nncut.eq.2) then !{    !iyv 04.02.11
@@ -619,13 +621,13 @@
             endif
           enddo
 
-! qe inner
+! qe West
           phi_app = get_phi_applied(boundary_namelist,-1,iy)
           wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
      &     ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
      &     ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)*
      &     expu2(max(-50.0_R8, -qe*(po(-1,iy)-phi_app)/te(-1,iy))) )
-! qe outer
+! qe East
           phi_app = get_phi_applied(boundary_namelist,nx,iy)
           wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
      &     ( te(nx,iy)*(2.0e0_R8)+qe*po(nx,iy)*(1.0_R8-gammae) )*
@@ -638,7 +640,7 @@
               wrk0(2,iy)=wrk0(2,iy)+na(nx,iy,is)
            endif
          enddo
-! qi inner
+! qi West
          wrk0(3,iy)=2.5e0_R8*
      &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
@@ -648,7 +650,7 @@
 !  does not disturb the guard cells and all the fluid sources related to neutrals
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
-! qi outer
+! qi East
          wrk0(4,iy)=2.5e0_R8*
      &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
@@ -715,11 +717,12 @@
           hlp=hlp+abs(fna(0,iy,0,is)*(
      .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
      .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
+     .    ((kinrgy(0,iy,is)+ti(0,iy))*hx(-1,iy)+
+     .     (kinrgy(-1,iy,is)+ti(-1,iy))*hx(0,iy))/
      .     (hx(-1,iy)+hx(0,iy))))
         end do !}
         hlp=hlp/s
-        wrk0(5,iy) = hlp + wrk0(-1,iy)+wrk0(3,iy)
+        wrk0(5,iy) = hlp + wrk0(-1,iy) + wrk0(3,iy)
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -737,19 +740,22 @@
           hlp=hlp+abs(fna(nx,iy,0,is)*(
      .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
      .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(nx,iy,is)*hx(nx-1,iy)+kinrgy(nx-1,iy,is)*hx(nx,iy))/
+     .    ((kinrgy(nx,iy,is)+ti(nx,iy))*hx(nx-1,iy)+
+     .     (kinrgy(nx-1,iy,is)+ti(nx-1,iy))*hx(nx,iy))/
      .     (hx(nx-1,iy)+hx(nx,iy))))
         end do !}
         hlp=hlp/s
-        wrk0(6,iy) = hlp + wrk0(0,iy)+wrk0(4,iy)
+        wrk0(6,iy) = hlp + wrk0(0,iy) + wrk0(4,iy)
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut)+nlim
-      do iy=0,ny-1 !{
-      wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
+      js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
+      if (ltns(nncut*2).gt.0) then
+        do iy=0,ny-1 !{
+          wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
-      enddo
+        enddo
+      endif
 #endif
 
 ! for double_null geometry     !iyv 04.02.11
@@ -759,25 +765,25 @@
 
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          s=gs(ix2,iy,0)
+          s=gs(ix2+1,iy,0)
           hlp=0.0_R8
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2,iy,0,is)*(
-     .       (rpt(ix2,iy,is)*hx(ix2-1,iy)+
-     .        rpt(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix2,iy,is)*hx(ix2-1,iy)+
-     .        kinrgy(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))))
+            hlp=hlp+abs(fna(ix2+1,iy,0,is)*(
+     .       (rpt(ix2,iy,is)*hx(ix2+1,iy)+
+     .        rpt(ix2+1,iy,is)*hx(ix2,iy))/
+     .       (hx(ix2+1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
+     .      ((kinrgy(ix2,iy,is)+ti(ix2,iy))*hx(ix2+1,iy)+
+     .       (kinrgy(ix2+1,iy,is)+ti(ix2+1,iy))*hx(ix2,iy))/
+     .       (hx(ix2+1,iy)+hx(ix2,iy))))
           end do !}
           hlp=hlp/s
-          wrk0(14,iy) = hlp + wrk0(8,iy)+wrk0(12,iy)
+          wrk0(14,iy) = hlp + wrk0(8,iy) + wrk0(12,iy)
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
         js=ltns(3)+nlim
         do iy=0,ny-1 !{
-          wrk0(14,iy) = wrk0(14,iy) +(wldnek(js,0)+wldnep(js,0))*
+          wrk0(14,iy)=wrk0(14,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                                       hlp_neu_peak/hlp_s
         enddo
 #endif
@@ -791,12 +797,12 @@
      .       (rpt(ix1,iy,is)*hx(ix1-1,iy)+
      .        rpt(ix1-1,iy,is)*hx(ix1,iy))/
      .       (hx(ix1-1,iy)+hx(ix1,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix1,iy,is)*hx(ix1-1,iy)+
-     .        kinrgy(ix1-1,iy,is)*hx(ix1,iy))/
+     .      ((kinrgy(ix1,iy,is)+ti(ix1,iy))*hx(ix1-1,iy)+
+     .       (kinrgy(ix1-1,iy,is)+ti(ix1-1,iy))*hx(ix1,iy))/
      .       (hx(ix1-1,iy)+hx(ix1,iy))))
           end do !}
           hlp=hlp/s
-          wrk0(13,iy) = hlp + wrk0(7,iy)+wrk0(11,iy)
+          wrk0(13,iy) = hlp + wrk0(7,iy) + wrk0(11,iy)
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -873,22 +879,22 @@
      &          'Energy e-flux to outer lower plate     =',es11.3/
      &          'Energy i-flux to outer lower plate     =',es11.3//
 
-     &          'Energy e-flux to inner low plate       =',es11.3/
-     &          'Energy i-flux to inner low plate       =',es11.3/
+     &          'Energy e-flux to inner lower plate     =',es11.3/
+     &          'Energy i-flux to inner lower plate     =',es11.3/
      &          'Energy e-flux to inner upper plate     =',es11.3/
      &          'Energy i-flux to inner upper plate     =',es11.3//
 
      &          'Total Energy flux to outer upper plate =',es11.3/
-     &          'Total Energy flux to outer low plate   =',es11.3/
+     &          'Total Energy flux to outer lower plate =',es11.3/
      &          'Total Energy flux to inner upper plate =',es11.3/
-     &          'Total Energy flux to inner low plate   =',es11.3/ )
+     &          'Total Energy flux to inner lower plate =',es11.3/ )
 
       else
 
-        write (70,"(5x,'iy',5x,'qe_out',5x,'qi_out',4x,'qei_out',
-     &                    4x,'q_outtg',
-     &                    5x,'qe_inn',5x,'qi_inn',4x,'qei_inn',
-     &                    4x,'q_inntg')")
+        write (70,
+     &   "(5x,a2,5x,a6,5x,a6,4x,a7,4x,a7,5x,a6,5x,a6,4x,a7,4x,a7)")
+     &   'iy','qe_out','qi_out','qei_out','q_outtg','qe_inn',
+     &   'qi_inn','qei_inn','q_inntg'
         do iy = ny, -1, -1
           write(70,"(5x,i2,8(1x,es10.3))") iy,
      &             wrk0(0,iy), wrk0(4,iy), wrk0(0,iy) + wrk0(4,iy),
@@ -898,18 +904,22 @@
         write(70,51) qe_out_sum, qi_out_sum, q_out_sum,
      &               qe_inn_sum, qi_inn_sum, q_inn_sum
 
-   51   format(/'Energy e-flux to outer plate      =',es11.3/
-     &          'Energy i-flux to outer plate      =',es11.3/
-     &          'Total Energy flux to outer plate  =',es11.3/
-     &          'Energy e-flux to inner plate      =',es11.3/
-     &          'Energy i-flux to inner plate      =',es11.3//
-     &          'Total Energy flux to inner plate  =',es11.3/)
+   51   format(/'Energy e-flux to Eastern plate      =',es11.3/
+     &          'Energy i-flux to Eastern plate      =',es11.3/
+     &          'Total Energy flux to Eastern plate  =',es11.3/
+     &          'Energy e-flux to Western plate      =',es11.3/
+     &          'Energy i-flux to Western plate      =',es11.3//
+     &          'Total Energy flux to Western plate  =',es11.3/)
       endif
       close(70)
 
       ishift = 0
 
-      open(70,file=trim(folder)//'table_low_inner.dat')        !srv 26.09.17
+      if (LSN) then
+        open(70,file=trim(folder)//'table_lower_inner.dat')    !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_outer.dat')    !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -919,7 +929,8 @@
         write(70,"(1x,9es14.6)")                               !srv 03.04.13
      &     crdy_c_cell(ixx+ishift,iy),
      &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
-     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,
+     &     ne(ixx+ishift,iy),
      &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
      &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
      &     na(ixx+ishift,iy,ismain) *
@@ -928,7 +939,11 @@
       enddo
       close(70)
 
-      open(70,file=trim(folder)//'table_low_outer.dat')        !srv 26.09.17
+      if(LSN) then
+        open(70,file=trim(folder)//'table_lower_outer.dat')      !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_inner.dat')      !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -940,7 +955,7 @@
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
      &     na(ixx-ishift,iy,ismain) *
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(0,iy)/1.0e6_R8, wrk0(4,iy)/1.0e6_R8, wrk0(6,iy)/1.0e6_R8
@@ -957,14 +972,14 @@
         do iy = 0,ny
           ixx=ix1
           write(70,"( 1x,9es14.6)")                              !srv 03.04.13
-     &     crdy_c_cell(ixx+ishift,iy),
-     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
-     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     crdy_c_cell(ixx-ishift,iy),
+     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
+     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
 
-     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
-     &     na(ixx+ishift,iy,ismain) *
-     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
+     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     na(ixx-ishift,iy,ismain) *
+     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(7,iy)/1.0e6_R8, wrk0(11,iy)/1.0e6_R8,
      &     wrk0(13,iy)/1.0e6_R8
         enddo
@@ -978,13 +993,13 @@
         do iy = 0,ny
           ixx=ix2
           write(70,"( 1x,9es14.6)")                               !srv 03.04.13
-     &     crdy_c_cell(ixx-ishift,iy),
-     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
-     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
-     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
-     &     na(ixx-ishift,iy,ismain) *
-     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
+     &     crdy_c_cell(ixx+ishift,iy),
+     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
+     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
+     &     na(ixx+ishift,iy,ismain) *
+     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &     wrk0(8,iy)/1.0e6_R8, wrk0(12,iy)/1.0e6_R8,
      &     wrk0(14,iy)/1.0e6_R8
         enddo
@@ -994,8 +1009,12 @@
 !______________________________________________________________________________ !iyv 15.10.09 }
 
       if(iout.eq.2) then                                  !srv 06.05.09 {
-*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at inner
-        open(70,file=trim(folder)//'inner.dat')           !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at Western edge
+        if(LSN) then
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
           iw = 0
           do ix = -1,nx
@@ -1028,7 +1047,11 @@
         enddo
         close(70)
 
-        open(70,file=trim(folder)//'outer.dat')           !srv 26.09.17
+        if (LSN) then
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
          iw = 0
          do ix = -1,nx
@@ -1082,28 +1105,49 @@
 
        open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
-       write(70,"(1x,' Separatrix Location on Inner Lower =',
-     &             12es14.6)") cry(ix+ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Lower =',
+     &      cry(ix+ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Upper =',
+     &      cry(ix+ishift,mintopcut,0)
+       endif
        ix = nx
-       write(70,"(1x,' Separatrix Location on Outer Lower =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Lower =',
+     &      crx(ix-ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Upper =',
+     &      crx(ix-ishift,mintopcut,0)
+       endif
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
-           write(70,"(1x,' Separatrix Location on Outer Upper =',
-     &             12es14.6)") crx(ix+ishift,mintopcut,0)
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix Location on Outer Upper =',
+     &        crx(ix+ishift,mintopcut,0)
          endif
          if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
-           write(70,"(1x,' Separatrix Location on Inner Upper =',
-     &             12es14.6)") cry(ix-ishift,mintopcut,0)
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix Location on Inner Upper =',
+     &        cry(ix-ishift,mintopcut,0)
          endif
        enddo
        ix = nmdpl
-       write(70,"(1x,' Separatrix Location on Outer Mdpln =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
+       write(70,"(1x,a,12es14.6)")
+     &  ' Separatrix Location on Outer Mdpln =',
+     &    crx(ix-ishift,mintopcut,0)
        close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner
-       open(70,file=trim(folder)//'inner_na_ua.dat')              !srv 03.04.13 { 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Western edge
+       if (LSN) then
+         open(70,file=trim(folder)//'inner_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       else
+         open(70,file=trim(folder)//'outer_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       endif
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do iy = -1,ny
          iw = 0
@@ -1131,8 +1175,12 @@
       enddo
       close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at outer
-      open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Eastern edge
+      if (LSN) then
+        open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'inner_na_ua.dat')       !srv 26.09.17
+      endif
       do iy = -1,ny
         iw = 0
         do ix = -1,nx
@@ -1385,8 +1433,10 @@
      &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1)
 !            do is = 0, ns-1                                       ! ask Rozhansky
 !              kintmp =
-!     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-!     .          kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+!     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*
+!     .          hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+!     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
+!     .          ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
 !     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
 !              Total_energy_flux_i(iy) =
 !     &         Total_energy_flux_i(iy) + kintmp*(1.0_R8-BoRiS)
@@ -1447,7 +1497,7 @@
      &   'of the dead region NYISO1', (NYISO1(IS),IS=1,NNISO)
        write (70,*) ' Row number of top right corner ',
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
-       close (70)                                                   !srv
+       close (70)                                                  !srv
 
        open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 
@@ -1455,7 +1505,9 @@
        sum_ssna= 0.0_R8
 
        do is=0, ns-1
-        write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+        write (hlp_frm,'(a,i1,a)')
+     .   '(a,1x,a2,i',len_of_digits(nint(zamin(is))),')'
+        write (70,hlp_frm) 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
         sdiv(is) = 0.0_R8
@@ -1518,7 +1570,12 @@
         sum_ssna = sum_ssna + ssna(is)
 
         sum_sdiv = sum_sdiv +sdiv(is)
-        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        if (nint(zamin(is)).lt.10) then
+          write(hlp_frm,'(a)') '(a,9x,a2,i1,4x,3(a,es15.7,4x))'
+        else
+          write(hlp_frm,'(a)') '(a,9x,a2,i2,3x,3(a,es15.7,4x))'
+        endif
+        write (70,hlp_frm) 'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
@@ -1535,7 +1592,9 @@
        sum_ssna = 0.0_R8
 
        do is=0, ns-1
-         write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+         write (hlp_frm,'(a,i1,a)')
+     .    '(a,1x,a2,i',len_of_digits(nint(zamin(is))),')'
+         write (70,hlp_frm) 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
          sdiv(is) = 0.0_R8
@@ -1591,7 +1650,12 @@
         sum_ssna = sum_ssna + ssna(is)
 
         sum_sdiv = sum_sdiv +sdiv(is)
-        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        if (nint(zamin(is)).lt.10) then
+          write(hlp_frm,'(a)') '(a,9x,a2,i1,4x,3(a,es15.7,4x))'
+        else
+          write(hlp_frm,'(a)') '(a,9x,a2,i2,3x,3(a,es15.7,4x))'
+        endif
+        write (70,hlp_frm) 'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)

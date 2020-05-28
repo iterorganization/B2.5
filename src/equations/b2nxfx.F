@@ -100,7 +100,7 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-	   if(rightix(ix,iy).eq.nx+1) then
+           if(rightix(ix,iy).eq.nx+1) then
              ehxp(ix,iy) = 0.0_R8
            else
              ehxp(ix,iy) = 
@@ -109,7 +109,7 @@
      &        (wrk0(rightix(ix,iy),rightiy(ix,iy))-qe*ne(ix,iy)*
      &         wrk1(rightix(ix,iy),rightiy(ix,iy)))/
      &        (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-	   endif
+           endif
          elseif(rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 
      &     (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*           !srv 11.01.13
@@ -154,9 +154,11 @@
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 0.0e0_R8
          else
-          ehxp(ix,iy) = ((wrk0(ix,iy)+wrk0(leftix(ix,iy),leftiy(ix,iy)))
+          ehxp(ix,iy) = ((wrk0(ix,iy)+
+     &                    wrk0(rightix(ix,iy),rightiy(ix,iy)))
      &                  *0.5e0_R8-
-     &                  (wrk1(ix,iy)+wrk1(leftix(ix,iy),leftiy(ix,iy)))
+     &                   (wrk1(ix,iy)+
+     &                    wrk1(rightix(ix,iy),rightiy(ix,iy)))
      &                  *0.5e0_R8*qe*ne(ix,iy))
      &                  *bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)
          endif

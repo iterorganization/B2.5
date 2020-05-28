@@ -4,7 +4,7 @@ C 2002.11.01
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
-      
+
       integer, save ::
      *  nxpp, nypp, nspp,
      *  iyeard
@@ -36,7 +36,7 @@ C 2002.11.01
      *  dm(:,:),
      *  rsepx(:),    zsepx(:),
      *  zmass(:),    sqezrad(:,:,:),
-     *  ro(:,:),   pr(:,:), pmach(:,:,:),
+     *  rz(:,:),     pz(:,:), pmach(:,:,:),
      *  rbcore(:),   zbcore(:),
      *  rbwall(:,:), zbwall(:,:),
      *  rtemp(:)
@@ -56,6 +56,10 @@ c   ..functions
 
       real (kind=R8) ::
      *  vdot, vlen, thetasepx
+#else
+#ifdef IMAS
+      character*120, save :: labgeo
+#endif
 #endif
 
       contains
@@ -121,8 +125,8 @@ c   ..allocate
       allocate(izch(1:nsd))
       allocate(izs2is(1:nsd))
       allocate(sqezrad(-1:nxd,-1:nyd,1:nsd))
-      allocate(ro(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
-      allocate(pr(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
+      allocate(rz(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
+      allocate(pz(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
       allocate(pmach(-1:nxd,-1:nyd,0:nsd-1))  ! was 1:nsd
 
       allocate(itagdv(-1:nxd,-1:nyd))
@@ -173,8 +177,8 @@ c   ..deallocate
       deallocate(izch)
       deallocate(izs2is)
       deallocate(sqezrad)
-      deallocate(ro)
-      deallocate(pr)
+      deallocate(rz)
+      deallocate(pz)
       deallocate(pmach)
 
       deallocate(itagdv)
@@ -287,17 +291,17 @@ c   ..collect non-dominant species
       nz = nspp - nzs - 2
 
 c   ..mach number of each species
-      ro    = 0.0_R8
-      pr    = 0.0_R8
+      rz    = 0.0_R8
+      pz    = 0.0_R8
       pmach = 0.0_R8
 
-      call b2xppr( nxpp, nypp, nspp, ne, na, te, ti, pr )
-      call b2xpro( nxpp, nypp, nspp, mp, am, na, ro )
+      call b2xppz( nxpp, nypp, nspp, ne, na, te, ti, pz )
+      call b2xprz( nxpp, nypp, nspp, mp, am, na, rz )
       call b2xzef( nx, ny, ns, rz2, na, ne, zeff)
 
       do is = 0, nspp - 1
          call b2xpmc( nxpp, nypp
-     *              , ua(-1,-1,is), pr(-1,-1), ro(-1,-1)
+     *              , ua(-1,-1,is), pz(-1,-1), rz(-1,-1)
      *              , pmach(-1,-1,is) )
       enddo
 
@@ -618,7 +622,7 @@ c   ..copy the grid to start extending the grid
          enddo
       enddo
 
-c   ..add a row of extra cells at each target (inner then outer)
+c   ..add a row of extra cells at each target (West then East)
 c     by linear extrapolation
       do it = 1 , 2
 
@@ -657,7 +661,7 @@ c     by linear extrapolation
 
       enddo
 
-c   ..add a further row of extra cells at each target (inner then outer)
+c   ..add a further row of extra cells at each target (West then East)
 c     by extrapolating, parallel to sepx outer boundary, to zmin
       iys = topcut(1)
 
@@ -1257,6 +1261,10 @@ c=======================================================================
       integer nwrite
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -1275,12 +1283,29 @@ c     ------------------------------------------------------------------
       grpsolps=' '
       locsolps=' '
 #else
+#ifdef NAGFOR
+        call get_environment_variable('GRPSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('GRPSOLPS',value=grpsolps)
+        elseif (ierror.eq.1) then
+          grpsolps=' '
+        endif
+        call get_environment_variable('LOCSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('LOCSOLPS',value=locsolps)
+        elseif (ierror.eq.1) then
+          locsolps=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
       call getenv ('GRPSOLPS', grpsolps)
       call getenv ('LOCSOLPS', locsolps)
+#endif
 #endif
 #endif
       version = grpsolps//'_'//locsolps

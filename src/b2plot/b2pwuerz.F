@@ -5,7 +5,7 @@ c version : 22.09.2000 00:03
 c=======================================================================
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (density, temperatures, fluid velocity)
-c***  in the outer divertor - for H. Wuerz
+c***  in the Eastern divertor - for H. Wuerz
 c***
 c*** Output files:
 c***
@@ -29,7 +29,6 @@ c*** Local variables
 c
       integer ix,iy,is,i,j,k
       integer, allocatable :: mz_hlp(:)
-      real (kind=R8) :: vr,vz,vt,u
       real (kind=R8) :: pit
       character hlp_frmr*600
       character*2, allocatable :: hlp_al(:)

@@ -130,7 +130,7 @@
 *   ..read parameters from tracing file
       call cfruch (ninp(6), 120, lblmn, 'label')
       call b2ruzd (ninp(6), b2ftrack_version,
-     & ns, zamin, zamax, zn, am, .true.)
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..tracing loop
    10 if (.not.cfendf(ninp(6))) then
 *    ..get itim, itcnt
@@ -185,6 +185,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

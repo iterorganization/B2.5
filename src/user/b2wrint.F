@@ -77,9 +77,6 @@ c***..............................................(species and regions)
 c***     SSNIreg_  ssna_tmp   neutral-related source of ions
 c***
 c***...........................................................(strata)
-c***     Stratum_  fluxt_tmp  primary sources of neutrals
-c***
-c***...............................................(species and strata)
 c***     SSNIstr_             neutral-related source of ions
 c***     sclfact_  sclf_tmp   scaling factors for neutral fluxes
 c***     sclrtio_  rtio_tmp   figure of merit for scaling (should be 0)
@@ -125,7 +122,7 @@ c*** Values by regions
      , (equr_tmp(1,7), eesum),     (equr_tmp(1,8), eisum),
      , (equr_tmp(1,9), kisum),
      , (equr_tmp(1,10), nesum),    (equr_tmp(1,11), volsum)
-      character*2 hlp_hr(nrgn_tmp)*8
+      character hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
@@ -136,7 +133,7 @@ c*** Values by species
       real (kind=R8) ::
      *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
-      character*2 hlp_hs(nspc_tmp)*8
+      character hlp_hs(nspc_tmp)*8
 
 c*** added 20010716
 c#ifdef SCL_IMP_RCI
@@ -164,14 +161,13 @@ c*** Values by species and regions
       equivalence 
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
-      character*2 hlp_ha(nsar_tmp)*8
+      character hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
       integer nstr_tmp, nf_tmp, nfl_tmp
       parameter (nstr_tmp=1)
       real (kind=R8) ::
      *     equf_tmp(DEF_NSTRA,nstr_tmp)
-      real (kind=R8) :: fluxt_tmp(DEF_NSTRA)
       character hlp_hf(nstr_tmp)*8
 c
 c*** Values by species and strata
@@ -201,7 +197,10 @@ c*** Local variables of general use
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm,imol ! IYS 29.09.2017
+#ifdef B25_EIRENE
+      integer iatm ! IYS 29.09.2017
+      integer imol
+#endif
 c#ifdef SCL_IMP_RCI
 c     integer iy
 c#endif
@@ -251,7 +250,6 @@ c#endif
      +  hlp_ha,
      +  nf_tmp, nfl_tmp,
      +  equf_tmp,
-     +  fluxt_tmp,
      +  hlp_hf,
      +  nb_tmp, equb_tmp, hlp_hb,
      +  lun,
@@ -279,15 +277,11 @@ c
 c*** Compute the data
 c
 csw 18nov2013 check alloc
-#ifdef B25_EIRENE
       if(allocated(volsumn)) then
-#endif
-        hlp_sumn=sum(volsumn(1:nstrai))
-        hlp_sume=sum(volsumee(1:nstrai))
-        hlp_sumi=sum(volsumei(1:nstrai))
-#ifdef B25_EIRENE
+        hlp_sumn=sum(volsumn(1:nstrat))
+        hlp_sume=sum(volsumee(1:nstrat))
+        hlp_sumi=sum(volsumei(1:nstrat))
       endif
-#endif
 
       hlp_brms = 0.0_R8
       hlp_rdim = 0.0_R8
@@ -313,8 +307,8 @@ csw 18nov2013 check alloc
           ssna_tmp(is,k) = ssna_tmp(is,k) + ssnireg(is,k)
         end do
       end do
-      do iatm = 1, nnatmi
 #ifdef B25_EIRENE
+      do iatm = 1, nnatmi
         is = latmscl(iatm)
         if (is.eq.0) cycle
         Natm_tmp(is) = Natm_tmp(is) + pdena_int(iatm,0)
@@ -323,8 +317,8 @@ csw 18nov2013 check alloc
      &      Natm_tmp(is)   = Natm_tmp(is) +
      &        mlcmp(is,imol) * pdenm_int(imol,0)
         enddo
-#endif
       end do
+#endif
 
 csw 20sep2013 added
       do iy=0,ny-1
@@ -366,16 +360,6 @@ csw 20sep2013 added
         enddo
       enddo
 
-      do j=1,nstrai
-csw 18nov2013 check alloc
-#ifdef B25_EIRENE
-        if(allocated(srcstrn)) then
-#endif
-          fluxt_tmp(j) = srcstrn(j)
-#ifdef B25_EIRENE
-        endif
-#endif
-      end do
       hlp_s   = 0.0_R8
       hlp_v   = 0.0_R8
       hlp_zs  = 0.0_R8
@@ -411,7 +395,7 @@ csw 18nov2013 check alloc
       if (hlp_zn2 .gt. 0.0_R8) hlp_zefn = hlp_zn1 / hlp_zn2
 
       do i=0,nnatmi
-        do j=1,nstrai
+        do j=1,nstrat
           sclf_tmp(i,j) = sclstra(i,j)
           rtio_tmp(i,j) = sclrtio(i,j)-1.0_R8
 #ifdef B25_EIRENE
@@ -478,6 +462,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
         read(lun,*,err=92) hlp_c, nv,
@@ -499,7 +488,7 @@ c Check version
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc) = .false.
             return
@@ -581,10 +570,10 @@ c Check the number of quantities computed for each stratum
         end if
 
 c Check the number of strata
-        if(nfl_tmp .ne. nstrai) then
+        if(nfl_tmp .ne. nstrat) then
           warn_tmp = .true.
           write(*,'(a,i3,3a,i3)')
-     ,     '!!! b2wrint: current number of strata ',nstrai,
+     ,     '!!! b2wrint: current number of strata ',nstrat,
      ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
@@ -602,15 +591,15 @@ c
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         ng_tmp  = nglb_tmp
@@ -623,7 +612,7 @@ c#endif
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
         nf_tmp  = nstr_tmp
-        nfl_tmp = nstrai
+        nfl_tmp = nstrat
         nb_tmp  = nssb_tmp
         write(lun,700) lv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,                      nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
@@ -698,15 +687,15 @@ c      print *,hlp_frm    !###
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrint: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrint: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2wrint: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
+   94 write(*,*) 'b2wrint: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -723,21 +712,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2wrint: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

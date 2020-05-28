@@ -12,9 +12,6 @@
       use b2mod_version
       use b2mod_indirect
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -87,9 +84,6 @@
 *   ..local variables
       integer ninp(0:8), nout(0:6), nx1, ny1, idum(0:9)
       integer io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
@@ -131,16 +125,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yt_mpi_child'
-      endif
-#endif
       call prgini ('b2yt')
 *   ..open files
       call cfopen (ninp(0),'b2yt.dat','old','formatted')
@@ -211,10 +195,6 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgfin ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yt'
 
 *-----------------------------------------------------------------------

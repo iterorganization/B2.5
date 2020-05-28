@@ -45,7 +45,6 @@ c--------------------------------------------------------------------
      *       ntau(0:nsdecl,0:nsdecl), m(0:nsdecl), t(0:nsdecl), 
      &       xi(0:nsdecl,0:nzdecl-1), x, nud, nue,
      &       den(0:nsdecl,0:nzdecl-1)
-      real (kind=R8) :: erf
       real (kind=R8) ::
      *       ph, g, pi, xab
 

@@ -64,7 +64,7 @@ c***     pwr_plsm pwtpl   plasma to the target
 c***     pwr_neut pwtnu   neutrals to the target
 c***     pwr_ionz pwtio   ionisation energy to the target
 c***     pwr_diss pwtds   dissociation energy to the target
-c***   suffices: il, ol, iu, ou, wl for inner an outer targets and wall
+c***   suffices: il, ol, iu, ou, wl for inner and outer targets and wall
 c-----------------------------------------------------------------------
 c*** Global values
       integer nglb_tmp, ng_tmp
@@ -95,7 +95,7 @@ c*** Values by species
       parameter (nspc_tmp=1)
       real (kind=R8), allocatable :: radim_tmp(:)
       character*2, allocatable :: hlp_spc(:)
-      character*2 hlp_hs(nspc_tmp)*8
+      character*8 hlp_hs(nspc_tmp)
       real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
 c-----------------------------------------------------------------------
@@ -121,21 +121,25 @@ c*** nt_tmp is the number of values read and to be written
      ,     (equt_tmp(1,5), pwtds_tmp)
       character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
      ,          hlp_trgs(ntrgs_tmp,2)*2
-      integer ntgs(ntrgs_tmp)
       integer, allocatable :: ltgs(:,:)
-      data ntgs / ntrgs_tmp*1 /
       integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
       logical ltarg_hlp(ntrgs_tmp)
 c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf, js, nv
-      real (kind=R8) :: hlp_h, hlp_p, hlp
+      integer i, j, k, l, n, ic, is, ix, iy,
+     .        ixr, iyr, ixf, iyf, nv
+      real (kind=R8) :: hlp_h, hlp_p
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
       logical ex, warn_tmp
       character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
+#ifdef B25_EIRENE
+      integer, save :: m, js
+      integer, save :: ntgs(ntrgs_tmp)
+      data ntgs / ntrgs_tmp*1 /
+      real (kind=R8), save :: hlp
+#endif
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c-----------------------------------------------------------------------
@@ -184,12 +188,12 @@ c
      ,     pwtnu_tmp, pwtio_tmp,
      ,     pwtds_tmp,
      +  hlp_trg, hlp_ht,
-     +  ltgs, ntgs,
+     +  ltgs,
      +  indt_hlp, nsrf_hlp,
      +  ltarg_hlp,
      +  lun,
-     +  i, j, k, l, m, ic, is, ix, iy, js, nv,
-     +  hlp_h, hlp_p, hlp,
+     +  i, j, k, l, ic, is, ix, iy, nv,
+     +  hlp_h, hlp_p,
      +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp, ex, warn_tmp,
      +  f, hlp_c, hlp_frm, tab, hlp_frf
 c=======================================================================
@@ -237,7 +241,7 @@ c*** Does it belong to the core boundary?
           end if !}
         end do !}
 c
- 10     do 100 j = 1,ntrgf_tmp !{
+   10   do 100 j = 1,ntrgf_tmp !{
 c*** Belongs to the target j?
           ltarg_hlp(j)=.false.
           do k = 1,nsrf_hlp(j) !{
@@ -246,7 +250,7 @@ c*** Belongs to the target j?
               go to 100
             end if !}
           end do !}
- 100    continue !}
+  100   continue !}
 c
 c*** Across or along the field?
         lcross_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N'
@@ -402,7 +406,7 @@ c>>>
 #ifdef B25_EIRENE
       do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
-     .               crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
+     .     crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
           l=msns(1,ic)
           m=msns(2,ic)
           hlp=0.0_R8
@@ -414,7 +418,7 @@ c>>>
           k=0
           if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W') then !{
             do i=1,nbc !{
-              if(bcchar(i).eq.crcstra(ic) .and. 
+              if(bcchar(i).eq.crcstra(ic) .and.
      &           bc_list_x(1,i).eq.rc_list_x(1,ic)) k=i
             end do !}
           end if !}
@@ -500,7 +504,7 @@ c
             enrte_tmp=enrte_tmp+ne(ix,iy)*te(ix,iy)*vol(ix,iy)
             enrti_tmp=enrti_tmp+ni(ix,iy,1)*ti(ix,iy)*vol(ix,iy)
             do is =0,ns_ext-1 !{
-              enrti_tmp = enrti_tmp + 
+              enrti_tmp = enrti_tmp +
      .         na_ext(ix,iy,is)*ta_ext(ix,iy,is)*vol(ix,iy)
             end do !}
           end if !}
@@ -589,7 +593,7 @@ c*** First, targets in B2
       k=0
       do j=1,nbc !{
         if(bcchar(j).eq.'W' .or. bcchar(j).eq.'E') then !{
-          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and. 
+          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and.
      &       maxval(bc_list_y(1:bc_list_size(j),j)).ge.ny-1) then !{
             k=k+1
             if(k.le.ntrgs_tmp) then !{
@@ -608,7 +612,7 @@ c*** First, targets in B2
 c*** Sort the targets
       do l=1,k !{
         do i=l+1,k !{
-          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i))) 
+          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i)))
      >     then !{
             j=indt_hlp(1,l)
             indt_hlp(1,l)=indt_hlp(1,i)
@@ -680,6 +684,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
@@ -691,7 +700,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv.lt.960825 .or. (nv.le.961229 .and. ni_tmp.eq.0)) then !{
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -742,15 +751,15 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(.not.filedata(ltrc)) then !{
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if !}
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else !}{
 c*** New file
         ng_tmp=nglb_tmp
@@ -773,11 +782,11 @@ c*** New file
      -                                    ng_tmp+ns_tmp*n+nt_tmp*nz_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2blne: cannot open file ',trim(f)
+   90 write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blne: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blne: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -794,21 +803,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blne: cannot open file ',trim(f)
+  190 write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

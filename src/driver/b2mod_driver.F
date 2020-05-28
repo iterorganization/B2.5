@@ -25,8 +25,10 @@
       use b2mod_user_namelist
       use b2mod_ma28_for_7diag
       use b2mod_ma28_for_9diag
+      use b2mod_ma28_for_11diag                                         !srv 02.04.18
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
@@ -59,6 +61,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -87,7 +92,10 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+      integer, save :: cdf_old_format
+      integer       :: iret
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -111,7 +119,7 @@
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
       logical lwti, lwav, lrav, lrer
-      character(22) :: batch_name, aver_name, run_av_name 
+      character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -120,6 +128,7 @@
      3  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer ncid
 #endif
 #ifdef CATALYST
@@ -866,7 +875,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       balance_netcdf = 0 ! Default: do not create balance arrays
+       balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
@@ -1115,13 +1124,13 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
-           write(*,*) 'Adding ',log(neutral_sources_rescale),
-     *         ' to relevant rtlra'
+           write(*,*)
+     *      'Adding ',log(neutral_sources_rescale),' to relevant rtlra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
              endif
            enddo
          else
@@ -1178,7 +1187,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+       call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
@@ -1187,6 +1196,42 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
+       call ipgeti ('b2mndr_cdf_default', cdf_default)
+#ifndef NO_CDF
+       if (cdf_default .eq. 0) then        ! not set
+         write(*,*) 'Using the default NetCDF format'
+       else if (cdf_default .eq. 1) then   ! NetCDF classic
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_classic,cdf_old_format)
+         write(*,*) 'Using the NetCDF classic format'
+       else if (cdf_default .eq. 2) then   ! NetCDF 64bit
+#ifdef NC_64BIT_OFFSET
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit_offset,
+     1    cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit offset format'
+#else
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit,cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit format'
+#endif
+       else if (cdf_default .eq. 3) then   ! NetCDF netcdf4
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4,cdf_old_format)
+         write(*,*) 'Using the NetCDF netcdf4 format'
+       else if (cdf_default .eq. 4) then   ! NetCDF netcdf4_classic
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4_classic,
+     1    cdf_old_format)
+         write(*,*) 'Using the NetCDF netcdf4_classic format'
+       else if (cdf_default .eq. 5) then   ! NetCDF 64bit_data
+#ifdef NC_64BIT_DATA
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit_data,cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit_data format'
+#else
+         write(*,*) 'NetCDF 64bit_data format unavailable'
+         write(*,*) 'Reverting to NetCDF 64bit format'
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit,cdf_old_format)
+#endif
+       else
+         call xerrab('b2mndr_cdf_default not in range 1::5')
+       endif
+#endif
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1303,7 +1348,8 @@ csw 09oct2012
         signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
       else
         signmf = 0.0_R8
-        call xerrab ('error in b2mndr , signmf = 0 in b2mndr')         !srv 09.10.09
+        call xertst (isymm.eq.2.or.isymm.eq.4,
+     &   'error in b2mndr , signmf = 0 in b2mndr')
       endif
       write(*,*) 'conn'
       do iy=-1,ny
@@ -1339,7 +1385,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol(:,:)/gs(:,:,2)           !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
 c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
@@ -1457,10 +1503,10 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
 
-*   initialize and/or read running averages 
+*   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+        call run_av_init (iav_cont, nx, ny, ns, .true., lrer)
       end if
 
 *   get averaged plasma profiles
@@ -1538,7 +1584,7 @@ c   --> better way doing this is necessary)
         if(density_rescale < 0.d0) then
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
-           na(:,:,is)=na(:,:,is)*(-density_rescale)
+           na(:,:,is) = na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
@@ -1551,7 +1597,7 @@ c   --> better way doing this is necessary)
            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
-           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
+           kinrgy(:,:,is) = kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1600,8 +1646,8 @@ c   --> better way doing this is necessary)
       if(ncall.eq.0.and.neutral_rescale.ne.1.0_R8) then
         do is=0,ns-1
           if(is_neutral(is)) then
-            na(:,:,is)=na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is)=fna(:,:,0:1,is)*neutral_rescale
+            na(:,:,is) = na(:,:,is)*neutral_rescale
+            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
             fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
             fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
             fna_nodrift(:,:,0:1,is) =
@@ -1611,7 +1657,7 @@ c   --> better way doing this is necessary)
             fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
             fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
             fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
-            kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
+            kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
         write(*,*) 'Rescaled neutrals by ',neutral_rescale
@@ -1732,7 +1778,12 @@ c   --> better way doing this is necessary)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
-      call b2stbr_init (nx, ny, ns, BoRiS)
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,tim)
+      else
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
@@ -1753,6 +1804,7 @@ cxpb for neutral fluxes used in b2stbc_phys
         endif
       endif
 #endif
+      call b2stbr_init (nx, ny, ns, BoRiS)
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
@@ -1772,7 +1824,7 @@ c new CDF movie option (1st frame at t=0)
 
       call subend()
       return
- 999  call xerrab
+  999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
@@ -1786,9 +1838,14 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
-      integer i, is, js
+      integer i
       character*256 filename, fort31name
+#ifdef B25_EIRENE
       character*256 systemarg
+#ifdef NAGFOR
+      integer ierror, status
+#endif
+#endif
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -1898,7 +1955,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
         endif
-*    ..extra writes of b2fplasmf.xxxx       
+*    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
           nwrit_plas = nwrit_plas + 1
@@ -2019,21 +2076,22 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     .              nx,ny,ns,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
-          write (batch_name,'(a18,i4.4)') 
+          write (batch_name,'(a18,i4.4)')
      .           'batch_av/batch_av.',edition_batch
           call batch_av_all_save (batch_name,nx,ny,ns)
           write(*,*) 'Saved ',batch_name
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
-          lrav = mod(itim,ntim_run) == 0 
+          lrav = mod(itim,ntim_run) == 0
           write (*,*) ' itim,ntim_run,lrav ', itim,ntim_run,lrav
           if (lrav) then
              edition_run = edition_run + 1
-             write (run_av_name,'(a14,i4.4)') 
+             write (run_av_name,'(a14,i4.4)')
      .              'run_av/run_av.',edition_run
              call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
              write(*,*) 'Saved ',run_av_name
@@ -2063,25 +2121,25 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
      &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,b2mndr_elapsed-(elapsedval-elapsedinit)))         !srv 18.05.09
         else if (etim.ne.0.0_R8 .and. etim.gt.stim) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
         else
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
@@ -2161,24 +2219,60 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifndef HPUX
             inquire(file='fort.13',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy fort.13 fort.13.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp fort.13 fort.13.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='fort.15',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy fort.15 fort.15.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp fort.15 fort.15.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #else
             inquire(file='ftn13',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy ftn13 ftn13.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp ftn13 ftn13.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='ftn15',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy ftn15 ftn15.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp ftn15 ftn15.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #endif
           endif
@@ -2201,7 +2295,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
-     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
+     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix),
      &   float(topiy))
         endif
 #endif
@@ -2228,15 +2322,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
-     1 write(*,*) 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
-      if(itim.ge.ntim)
-     1 write(*,*) 'stopping because itim >= ntim: ',itim,ntim
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
+     . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
+      if(itim.ge.ntim) write(*,'(1x,a,2(i8,1x))')
+     1 'stopping because itim >= ntim: ',itim,ntim
       if(etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8)
-     1 write(*,*) 'stopping because tim >= etim: ',tim,etim
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
+     . 'stopping because tim >= etim: ',tim,etim
       if(etim.eq.stim.and.stim.gt.0.0_R8)
-     1 write(*,*) 'stopping because etim = stim: ',etim,stim
+     & write(*,'(1x,a,1p,2(e12.5,1x))')
+     1 'stopping because etim = stim: ',etim,stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,*)
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(1x,a,1p,2(e12.5,1x))')
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
@@ -2325,7 +2422,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     *                nx,ny,ns,ismain,ismain0,
      *                BoRiS,.true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
@@ -2336,7 +2434,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns,BoRiS)
         endif
       endif
-*   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
+*   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         call write_balance(nx,ny,ns)
@@ -2394,6 +2492,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_neoclassical
       call dealloc_b2mod_ma28_for_7diag
       call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_ma28_for_11diag                                 !srv 02.04.18
       call dealloc_b2mod_eirene_sources
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
@@ -2424,7 +2523,8 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
+     *             rate_za, rate_z2, rate_pt, rate_pi
+!!    real (R8) :: rate_cx
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac

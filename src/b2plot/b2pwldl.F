@@ -1,4 +1,4 @@
-      subroutine b2pwldl(boundary_namelist,BoRiS)
+      subroutine b2pwldl(BoRiS)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2plot_wall_loading
@@ -19,7 +19,6 @@ c*** coordinates of the segment centers and the corresponding values of
 c*** the distance along the wall.
 c=======================================================================
       implicit none
-      integer boundary_namelist
       real (kind=R8) :: BoRiS
 
 c*** Local variables
@@ -27,12 +26,10 @@ c*** Local variables
       integer lun_w, lfn_hlp
       parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       integer i,l,il
-      character tab, fn_hlp*(lfn_hlp)
+      character fn_hlp*(lfn_hlp)
 c=======================================================================
 
       print *,'Starting b2pwldl...' !###
-
-      tab=char(9)
 
 c*** Calculate the radiation load on the specified wall zones
 c*** (data input and geometry initialisation also done there)
@@ -53,16 +50,16 @@ c*** use the zone index to label the plot zone
           fn_hlp='wlld_'//lblwldpt(il)(1:l)//'.dat'
         end if !}
 c*** Open the file and write the heading line
-        print *,'About to open :',fn_hlp,':'
+        print *,'About to open : ',fn_hlp,' :'
         open(lun_w,file=fn_hlp,err=20)
         write(lun_w,'(a,i2,2a)') '#Wall loading zone ',il,' : ',label
 
         do i=1,nwldlis(il) !{
 c*** Write the next line to the output file
-          call b2pwldw(lun_w,.false.,il,i,boundary_namelist,BoRiS)
+          call b2pwldw(lun_w,.false.,il,i,BoRiS)
         end do !}
         close(lun_w)
- 20   continue !}
+   20 continue !}
 
       print *,'Leaving b2pwldl...' !###
 

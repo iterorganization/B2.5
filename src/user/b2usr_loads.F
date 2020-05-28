@@ -43,16 +43,16 @@ C PREPARING GEOMETRY DATA
           ntrgs=4
         end if
 C A PIECE OF CODE FROM B2PLOT
-        ltrgpos(1)=-1
+        ltrgpos(1)=0
         k=2
         if(ntrgs.eq.4) then
-          ltrgpos(2)=nxtl
+          ltrgpos(2)=nxtl-1
           ltrgpos(3)=nxtr+1
           k=4
         end if !}
-        ltrgpos(k)=nx
+        ltrgpos(k)=nx-1
 C AREAS OF THE SURFACE ELEMENTS
-        l=1
+        l=0
         do j=1,nncut*2
           k=ltrgpos(j)
           wtarg_max(j)=0.0_R8
@@ -60,8 +60,12 @@ C AREAS OF THE SURFACE ELEMENTS
             strg(iy,j)=gs(k+l,iy,0)
           end do
           call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
-          if(shift(j).lt.0) then
-            write(*,*) "error in b2usr_loads: the EIRENE data on ",
+          if(shift(j).eq.-1) then
+            write(*,*) "Error in b2usr_loads: the EIRENE data ",
+     w                 "is apparently missing. ",
+     w                 "No neutral fluxes will be calculated."
+          else if(shift(j).lt.0) then
+            write(*,*) "Error in b2usr_loads: the EIRENE data on ",
      w                 "neutral fluxes is incorrect. ",
      w                 "No neutral fluxes will be calculated."
           else
@@ -72,9 +76,9 @@ C AREAS OF THE SURFACE ELEMENTS
         ifirst=.false.
       end if
 
-      write(*,*) "calculating incident power flux in b2usr_loads"
+      write(*,*) "Calculating incident power flux in b2usr_loads"
 
-      l=1
+      l=0
       do j=1,ntrgs
         k=ltrgpos(j)
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
@@ -83,24 +87,25 @@ C AREAS OF THE SURFACE ELEMENTS
           hlp=abs(fhe(k+l,iy,0)+fhi(k+l,iy,0)+fhi_ext(k+l,iy,0))
           do is=0,ns-1
             hlp=hlp+abs(fna(k+l,iy,0,is)*(rpt(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*kinrgy(k,iy,is)))
+     .                 (1.0_R8-BoRiS)*(kinrgy(k,iy,is)+ti(k,iy))))
           end do
           do is=0,ns_ext-1
             hlp=hlp+abs(fa_ext(k+l,iy,0,is)*(pt_ext(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
-     .                  ua_ext(k,iy,is)**2))
+     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
+     .                  ua_ext(k,iy,is)**2+ta_ext(k,iy,is))))
           end do
+          hlp=hlp+(1.0_R8-BoRiS)*fne(k+l,iy,0)*te(k,iy)
           hlp=hlp/strg(iy,j)
           wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
           if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
-csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
+csw 02jan2017 corrected flip of l variable (i.e. put it AFTER iy loop)
         end do
         l=1-l
       end do
 
       if(debug_flags(81).gt.0) then
         write(frm,700) ntrgs,char(9) !format string
-700     format('((',i3,'(1h',a1,',e15.7)))')
+  700   format('((',i3,'(1h',a1,',e15.7)))')
 C total power
         open(3,file='targb2.datv')
         do iy=0,ny-1

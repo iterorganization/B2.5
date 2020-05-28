@@ -252,7 +252,7 @@
       integer, save :: fhiycore_kinetic_energy, ncallfeedback
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra
+     &                 isfeedback, nesepm_istra, use_eirene
       real (kind=R8) :: amtol,
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
@@ -277,7 +277,6 @@
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
-      integer, save :: boundary_namelist = 0
       character*72 message
       logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
@@ -304,8 +303,8 @@
 *   ..initialisation
       parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
-     &  na_feedback_prev/DEF_NATM*0.0_R8/,
+     &  n_flux_zero/0/, dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -315,7 +314,7 @@
      3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
      3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
      3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
-     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0/,
+     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0_R8/,
      3  nesepm_integral_error/0.0_R8/,
      4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
@@ -354,7 +353,7 @@
        dt_prev = dtim
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
        call ipgeti ('b2sral_style', b2sral_style)
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call get_boundary_namelist
        consistent = .true.
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).le.0) cycle
@@ -539,6 +538,7 @@
      *       neutral_sources_rescale)
        call xertst (0.0_R8.le.neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
+       call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_nesepm_istra', nesepm_istra)
        if(nesepm_istra.gt.0) then
          call xertst (nesepm_istra.le.nstrat,
@@ -667,9 +667,10 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
 
-      if(maxval(na_feedback_target(0:nspecies-1)).gt.0.0_R8) then
+      if(maxval(na_feedback_target(0:nspecies-1)).gt.0.0_R8 .or.
+     &   maxval(na_feedback_choice(0:nspecies-1)).gt.0) then
 ! we have a request for feedback control of na
-! my idea here is to break the actions into 3 phases
+! the idea here is to break the actions into 3 phases
 ! 1/ calculate something based on the present state of the plasma depending on a
 !    species block based on "na_feedback_choice"
 ! 2/ compare this with the reference value and calculate a change
@@ -677,8 +678,7 @@
 
          do ispecies = 0, nspecies-1
 
-            if(na_feedback_target(ispecies) .gt. 0.0_R8 .and.
-     &         na_feedback_choice(ispecies) .gt. 0 .and.
+            if(na_feedback_choice(ispecies) .gt. 0 .and.
      &         na_feedback_option(ispecies) .gt. 0 .and.
      &         na_feedback_actuator(ispecies) .gt.0) then
 
@@ -693,7 +693,7 @@
                case (1) ! local density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_density for sequence ',
      &                    ispecies+1
@@ -728,7 +728,7 @@
                case (2) ! local electron density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_electron_density for sequence ',
      &                    ispecies+1
@@ -759,7 +759,7 @@
                case (3) ! nesepm electron density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'nesepm_electron_density for sequence ',
      &                    ispecies+1
@@ -780,7 +780,7 @@
                case (4) ! total particle content for that sequence
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total particle content for sequence ',
      &                    ispecies+1
@@ -813,7 +813,7 @@
                case (5) ! total ion content for that sequence (not including neutrals)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total ion content for sequence ',
      &                    ispecies+1
@@ -847,7 +847,7 @@
                case (6) ! neutral particle flux through the core boundary
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'core boundary flux for sequence ',
      &                    ispecies+1
@@ -868,13 +868,14 @@
                     end do !}
                   end do !}
 #endif
-                  is_start = eb2spcr(ispecies+1)+1
+                  is_start = eb2spcr(ispecies+1)
                   is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
                   allocate(charge_frac(1:is_end-is_start+1))
                   charge_frac = 0.0_R8
                   sum_s = 0.0_R8
                   do is = is_start, is_end
                     iss = is-is_start+1
+                    if (is_neutral(is).and.use_eirene.ne.0) cycle
                     do iy = na_feedback_iy1(ispecies),
      .                      na_feedback_iy2(ispecies)
                       do ix = na_feedback_ix1(ispecies),
@@ -892,7 +893,7 @@
                case (7) ! relative average concentration of this species at the separatrix
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                 'b2stbc_fb_pre_choice: using ',
      &                 'average separatrix concentration for sequence ',
      &                  ispecies+1
@@ -902,30 +903,82 @@
                   is_start=-1
                   is_end=-1
                   do is=0, ns-1
-                     if(is_neutral(is)) cycle
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      if(is_neutral(is).and.use_eirene.ne.0) cycle
+                      do ix = 0, nx-1
+                        if(on_closed_surface(ix,jsep))
+     >                      then
+                          na_feedback_current =
+     &                           na_feedback_current + (na(ix,jsep,is) +
+     &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          if (is.eq.is_start+1) then
+                            sum_e = sum_e + (ne(ix,jsep) +
+     &                           ne(topix(ix,jsep),topiy(ix,jsep))) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          end if
+                        endif
+                      enddo
+                      is_end=is
+                    endif
+                  enddo
+                  na_feedback_current = na_feedback_current/sum_e
+
+               case (8) ! relative average concentration of this species on desired domain
+
+                  if(ncall.eq.0) then
+                     write(*,'(a,a,i3)')
+     &                 'b2stbc_fb_pre_choice: using average ',
+     &                 'concentration for sequence ', ispecies+1
+                  endif
+                  na_feedback_current = 0.0_R8
+                  sum_e = 0.0_R8
+                  is_start=-1
+                  is_end=-1
+                  do is=0, ns-1
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      if(is_neutral(is).and.use_eirene.ne.0) cycle
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies)
+                        do ix = na_feedback_ix1(ispecies),
+     &                           na_feedback_ix2(ispecies)
+                          na_feedback_current =
+     &                           na_feedback_current +
+     &                           na(ix,iy,is) * vol(ix,iy)
+                          if (is.eq.is_start+1) then
+                                sum_e = sum_e +
+     .                           ne(ix,iy) * vol(ix,iy)
+                          end if
+                        enddo
+                      enddo
+                      is_end=is
+                    endif
+                  enddo
+                  na_feedback_current = na_feedback_current/sum_e
+
+               case (9) ! inner midplane electron density
+
+                  if(ncall.eq.0) then
+                     write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &                    'inner_midplance_electron_density'//
+     &                    'for sequence ',
+     &                    ispecies+1
+                  endif
+
+                  na_feedback_current = 0.5_R8 *
+     *                 (ne(jxi,jsep)+
+     *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
+                  is_start=-1
+                  is_end=-1
+                  do is=0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
-                        do iy = na_feedback_iy1(ispecies),
-     &                          na_feedback_iy2(ispecies)
-                           do ix = na_feedback_ix1(ispecies),
-     &                             na_feedback_ix2(ispecies)
-                             if(on_closed_surface(bottomix(ix,iy),
-     .                                            bottomiy(ix,iy)))
-     >                        then
-                                na_feedback_current =
-     &                             na_feedback_current +
-     &                             na(ix,iy,is) * gs(ix,iy,1)
-                                if (is.eq.is_start) then
-                                  sum_e = sum_e +
-     .                             ne(ix,iy) * gs(ix,iy,1)
-                                end if
-                              endif
-                           enddo
-                        enddo
                         is_end=is
                      endif
                   enddo
-                  na_feedback_current = na_feedback_current/sum_e
 
                case default
                   write(*,*) 'na feedback_choice not coded ',
@@ -942,7 +995,7 @@
                case (1) ! rescale slowed by na_feedback_alpha
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'slowed_rescale for sequence ',
      &                    ispecies+1
@@ -957,7 +1010,7 @@
                case (2) ! pure rescale
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
@@ -969,7 +1022,7 @@
                case (3) ! rescale slowed by tanh_log
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'tanh_log_rescale for sequence ',
      &                    ispecies+1
@@ -986,7 +1039,7 @@
                         ! N = A + B*(time-T)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 linear increase for sequence ',
      &                    ispecies+1
@@ -1035,7 +1088,7 @@
                         ! Nt = A*exp((time-T)*B)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 exponential decay for sequence ',
      &                    ispecies+1
@@ -1106,17 +1159,24 @@
                case (1) ! gas puff via boundary condition
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'gas_puff for sequence ',
      &                    ispecies+1
                   endif
 
-                  if(feedback_namelist_used .and.
-     &                 ncall .eq. 0 .and.
+                  if((feedback_namelist_used .or. ncall .eq. 0) .and.
      &                 saved_na_feedback_actuator(ispecies) .eq. 0.0_R8)
-     &                 saved_na_feedback_actuator(ispecies) =
+     >             then
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength.le.0, set by CONPAR(',
+     .                is_start,',',na_feedback_ib(ispecies),',1) !'
+                    call xertst(
+     .                 conpar(is_start, na_feedback_ib(ispecies), 1)
+     .                 .gt.0.0_R8, trim(message) )
+                    saved_na_feedback_actuator(ispecies) =
      &                 conpar(is_start, na_feedback_ib(ispecies), 1)
+                  end if
 
                   if (na_feedback_option(ispecies).lt.4) then
                     saved_na_feedback_actuator(ispecies) =
@@ -1149,7 +1209,7 @@
                case (2) ! rescale na
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
@@ -1161,7 +1221,7 @@
                case (3) ! core boundary flux condition
 
                  if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'core boundary flux condition for sequence ',
      &                    ispecies+1
@@ -1214,10 +1274,11 @@
                write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ', 
      &              ispecies+1, saved_na_feedback_actuator(ispecies)
 
+               if(na_feedback_choice(ispecies).eq.6)
+     >          deallocate(charge_frac)
+
             endif
 
-            if(na_feedback_choice(ispecies).eq.6)
-     >       deallocate(charge_frac)
          enddo
 
          feedback_namelist_used = .true.

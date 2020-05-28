@@ -4,8 +4,8 @@
       subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+     &  te, ti, po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, !iyv 07.03.18
+     &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
       use b2mod_diag
@@ -16,6 +16,7 @@
       use b2mod_first_flight
       use b2mod_constants
       use b2mod_indirect
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
@@ -29,6 +30,9 @@
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
 #ifdef B25_EIRENE
+      use b2mod_sources
+     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
+     ,          ext_sna
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
@@ -56,7 +60,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
+     &  fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
@@ -86,38 +91,43 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
+      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k               !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call=0
-      integer, save :: out_tfiles = 1                                !xpb 28.09.16
-      integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
+      integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
+      integer, save :: out_tfiles = 1                                   !xpb 28.09.16
+      integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
-      integer, save :: ird_aver=0                                    !pb 30.09.16
+     &                 ncall_iout = -1, iout_b2wdat = 0                 !srv 23.03.12
+      integer, save :: ird_aver=0                                       !pb 30.09.16
 #ifdef B25_EIRENE
-      integer ia, im
+      integer ia, im, ip
       character ch3*3
+      real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
+     &  sna_eir_tot(nspecies), sna_puff(nspecies),
+     &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
+     &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
-      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
-      character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
+      real (kind=R8) ::
+     &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
+     &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
+     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
+      real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
+     *                        sna_corr = 0.0_R8                         !iyv 07.03.18
+      character chns*3, chk*1                                           !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
      *  tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns-1), tresn(0:ns-1),
      *  trese(0:ns-1), trfln(0:ns-1), trfle(0:ns-1), t_frac, t0
-      real (kind=R8) ::                                              !srv 29.04.10 {
-     &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),  !IYS 27.01.17
-     &  flxtmp(0:nx+1,0:ny+1)
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
-     2  sput_chem_model, boundary_namelist,
-     3  reflection_on, sputter_energy_on,
+     2  sput_chem_model, reflection_on, sputter_energy_on,
      4  b2wall_netcdf, potential_at_guard_cell,
      5  sput_frac_flag
       real (kind=R8) ::
@@ -136,6 +146,7 @@
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
+      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
       logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -146,7 +157,7 @@
       real (kind=R8), save :: stim = 0.0_R8
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
-      character*256 filename
+      character*256, save :: filename
 #endif
 *   ..procedures
       logical lnext
@@ -163,8 +174,7 @@
      1     use_eirene, neutral_rescale, neutral_sources_rescale, output,
      2     coreregno, coreregn2, core_sources_rescale, alpha,
      3     neutrals_namelist, therm_evap, sput_res,
-     5     sput_chem_model, boundary_namelist,
-     7     reflection_on, sputter_energy_on,
+     5     sput_chem_model, reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
      9     potential_at_guard_cell,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
@@ -178,7 +188,7 @@
      *     neutral_sources_rescale/1.0_R8/, output/0/,
      1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
-     7     sput_chem_model/0/, boundary_namelist/0/,
+     7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
      2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/,
      3     sput_chem_cutoff_beta/3.0_R8/,
@@ -208,17 +218,27 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
+        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
+        call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
+        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
+        call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
+        if( sna_corr .gt. 0.0_R8 ) then
+           allocate(t1(1:nspecies))
+           t1=0.0_R8
+        endif                                                        !iyv 07.03.18 }
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
-     &                      recycled_neutrals_contr)
+     &                       recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr,
      &      'faulty internal parameter recycled_neutrals_contr')
-        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+        call get_boundary_namelist
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
         call ipgeti ('b2stbr_first_flight', first_flight)
         if(first_flight.ne.0) then
@@ -397,8 +417,9 @@
       call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (n2*4, 0.0_R8, she0_eir, 1)
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
-      fatm_eir = 0.0_R8
-      datm_eir = 0.0_R8                                            !srv 29.04.10 }
+
+      sna_stbr_neut = 0.0
+      sna_stbr_sput = 0.0
 
       tchem=0.0_R8
       tchee=0.0_R8
@@ -455,7 +476,7 @@ c   --> better solution wanted here..
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res,
@@ -484,7 +505,7 @@ c   --> better solution wanted here..
      &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_frc, sput_phys,
@@ -637,9 +658,181 @@ c   --> better solution wanted here..
 
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
+        fatm_eir = 0.0_R8
+        datm_eir = 0.0_R8                                                !srv 29.04.10
+        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
+
+*   ..main part of implementation of method of effective sources (ES)
+        if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
+          if ( iout .ne. 0 )
+     >      write(*,*) '******* sna_eir correction calculations *******'
+          sna_core = 0.0_R8
+          iy = 0
+          do ix = -1, nx
+            if(on_closed_surface(ix,iy)) then
+              do is = 0, ns-1
+                if ( is_neutral(is) ) cycle
+                k = b2espcr(is)
+                if (mdf_fnb.ne.0) then
+                  sna_core(k) = sna_core(k) + fna_mdf(ix,iy,1,is)
+                else
+                  sna_core(k) = sna_core(k) + fna(ix,iy,1,is)
+                end if
+              end do
+            end if
+          end do
+
+!  Add contribution from Eirene core boundary fluxes
+!         do ia = 1, nnatmi
+!           if (latmscl(ia).eq.b2espcr(is)) then
+!             do k = 1, ncns
+!               ix = nnlimi + lcns(k)
+!               sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
+!     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+!               do im = 1, nnmoli
+!                 if (mlcmp(ia,im).gt.0) then
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+!     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
+!     &                              - wldpm(ix,im,0))
+!                 end if
+!               end do
+!             end do
+!           end if
+!         end do
+
+          sna_eir_tot= 0.0_R8
+          ext_sna_tot= 0.0_R8
+          do ix=-1, nx
+            do iy=-1,ny
+              do is = 0, ns-1
+                if( is_neutral(is) ) cycle
+                k = b2espcr(is)
+                sna_eir_tot(k) = sna_eir_tot(k) +
+     &           sna0_eir(ix,iy,0,is) +
+     &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
+                ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is)
+              enddo
+            enddo
+          enddo
+
+          sna_puff =0.0_R8
+          do is=1,nstrat
+            do ia=1,nnatmi
+              if(latmscl(ia).eq.0) cycle
+              if(crcstra(is).eq.'C') then
+                if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =
+     &           userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+              end if
+            end do
+          enddo
+
+          sna_pump = 0.0_R8
+          sna_sptt = 0.0_R8
+          do ia = 1, nnatmi
+            k = latmscl(ia)
+            if (k.eq.0) cycle
+            sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) + eirspta(ia)
+            sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + eirpump(ia)
+            do im = 1, nnmoli
+              if (mlcmp(ia,im).gt.0) then
+                sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirpump(nnatmi+im)
+                sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirsptm(im)
+              endif
+            enddo
+          end do
+          do ip = 1, nnplsi
+            is = latmscl(lkindp(ip))
+            if (is.eq.0) cycle
+            sna_pump(is) = sna_pump(is) +
+     &                         eirpump(nnatmi+nnmoli+nnioni+ip)
+          enddo
+
+
+          if ( iout .ne. 0 ) then
+            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir_tot',
+     &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
+            do k = 1, nspecies
+              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k),
+     &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
+            enddo
+
+            write(*,'(a3,3a17)') 'ia','dG/sna_eir_tot','t1(ia)','t(ia)'
+          endif
+
+          do k = 1, nspecies
+            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+     &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
+     &            sna_eir_tot(k)
+            t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
+     &                     exp(-c_pumpavr)*t1(k)
+ !           t1(k) = t01(k)
+            t(k) = 1.0_R8 +
+     &              max( min( taumax,t1(k) ), -taumax )
+            if ( iout .ne. 0 )
+     &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
+          enddo
+
+          do is = 0, ns-1
+            if( is_neutral(is) ) cycle
+            k = b2espcr(is)
+!            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
+            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
+            sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+!            else
+!!            write(*,'(a,i3, a5, i3, a3)')
+!!     &   'Source correction is not applied for sputtered particles k=',
+!!     &       k,  'is=', is, eirtxt(k)
+!          endif
+          enddo
+
+        end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
+
+*       compute total eirene sources for averaging
+cwdk only total eirene source are averaged!
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
+cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk       down in this routine
+        do is = 0, ns-1
+          sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) +
+     &      sna0_eir(:,:,1,is)*na(:,:,is)
+          smo0_eir_tot(:,:,is) = smo0_eir(:,:,0,is) +
+     &      smo0_eir(:,:,1,is)*ua(:,:,is) +
+     &      smo0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
+     &      smo0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
+        enddo
+        she0_eir_tot = she0_eir(:,:,0) + she0_eir(:,:,1)*te +
+     &    she0_eir(:,:,2)*ne + she0_eir(:,:,3)*ne*te
+        shi0_eir_tot = shi0_eir(:,:,0) + shi0_eir(:,:,1)*ti +
+     &    shi0_eir(:,:,2)*ni(:,:,0) + shi0_eir(:,:,3)*ni(:,:,0)*ti
+
+*       get averaged sources
+        if (ird_aver > 0) then
+
+cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!),
+cwdk i.e. fully replaced by the averaged values from b2faveri
+          sna0_eir = 0.0_R8
+          smo0_eir = 0.0_R8
+          she0_eir = 0.0_R8
+          shi0_eir = 0.0_R8
+
+cwdk get the averaged sources
+          call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
+     &                            she0_eir_tot, shi0_eir_tot,
+     &                            nx, ny, ns)
+
+cwdk note: only total eirene source are averaged!
+cwdk these are now put back into the constant part of the sources (0-component)
+          do is = 0,ns-1
+            sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)
+            smo0_eir(:,:,0,is) = smo0_eir_tot(:,:,is)
+          enddo
+          she0_eir(:,:,0) = she0_eir_tot
+          shi0_eir(:,:,0) = shi0_eir_tot
+        endif
 
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
@@ -657,10 +850,6 @@ c   --> better solution wanted here..
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
 
-*   get averaged sources
-        if (ird_aver > 0) 
-     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
-     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
@@ -940,8 +1129,9 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
        enddo                                                          !srv 29.04.10 }
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-     &         .or. iout_b2wdat.eq.4 ) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )   !srv 02.04.18
+     &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -1012,8 +1202,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
+        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*te+
+     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
         wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
      &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
@@ -1057,6 +1247,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       data ncall/0/, use_eirene/0/, ank_mods/0/
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
+        call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+        call xertst(1.le.ns, 'faulty argument ns')
         call ipgeti('b2mndr_eirene',use_eirene)
         call ipgeti('eirene_ank_mods',ank_mods)
       endif
@@ -1114,7 +1306,7 @@ c        write(*,*) 'Called neutr_scl'
       logical new_sputter_namelist, catch_up, wall_namelist_used
       character*256 filename
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic mod
       external subini, subend, xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,

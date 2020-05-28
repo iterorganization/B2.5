@@ -1,19 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, 
+      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx,
      &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  coreregno, coreregn2, output,
-     &  neutral_sources_rescale, core_sources_rescale,  
-     &  sput_src, sput_frc, sput_phys, 
+     &  neutral_sources_rescale, core_sources_rescale,
+     &  sput_src, sput_frc, sput_phys,
      &  sput_chem_alpha, sput_phys_alpha, alpha,
-     &  sput_chem_model, therm_evap, sput_res,  
+     &  sput_chem_model, therm_evap, sput_res,
      &  reflection_on, sputter_energy_on, main_call,
-     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta, 
-     &  shi0_ff, f_redep, potential_at_guard_cell, 
+     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
+     &  shi0_ff, f_redep, potential_at_guard_cell,
      &  recycled_neutrals_contr)
 
       use b2mod_types
@@ -32,8 +32,8 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
-      integer coreregno, coreregn2, sput_src, 
-     *   sput_chem_model, boundary_namelist, reflection_on, 
+      integer coreregno, coreregn2, sput_src,
+     *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
@@ -49,7 +49,7 @@
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  neutral_sources_rescale, core_sources_rescale, 
+     *  neutral_sources_rescale, core_sources_rescale,
      &  sput_frc, sput_phys, sput_chem_alpha, sput_phys_alpha,
      &  therm_evap, sput_res, alpha,
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
@@ -95,7 +95,7 @@
       intrinsic abs, max, exp
       external subini, subend, xertst
       external b2xvsg, b2xvff, smin, smax
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *   smax, smin, hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
@@ -110,16 +110,16 @@
 *     cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
 *     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
 *     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-*     on the boundary region ireg. 
-*     cbrec(0,is,ireg) gives the recycling coefficient for particles 
+*     on the boundary region ireg.
+*     cbrec(0,is,ireg) gives the recycling coefficient for particles
 *         of charged species (is) to neutrals of the same species
 *     cbrec(1,is,ireg) gives the associated energy recycling coefficient
-*     cbrec(3,is,ireg) gives an additional contribution to physical 
+*     cbrec(3,is,ireg) gives an additional contribution to physical
 *         sputtering from species (is)
-*     cbrec(4,is,ireg) gives an additional contribution to chemical 
+*     cbrec(4,is,ireg) gives an additional contribution to chemical
 *         sputtering from species (is)
-*     cbrec(6,is,ireg) gives the recycling coefficient for particles 
-*         of charged species (is) to (is+1) (intended mainly for the 
+*     cbrec(6,is,ireg) gives the recycling coefficient for particles
+*         of charged species (is) to (is+1) (intended mainly for the
 *         core boundary)
 *
 *     Description of some local variables:
@@ -137,7 +137,7 @@
       call subini ('b2stbr_bas')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       write(*,*) 'First call of b2stbr_bas' 
+       write(*,*) 'First call of b2stbr_bas'
        call ipgeti ('b2stbr_bas_iout', iout)                         !srv 11.07.05
       endif
 *   ..set n2
@@ -153,10 +153,10 @@
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &  'faulty argument range qz(,,0)')
        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &  'faulty argument range qz(,,1)')
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
@@ -178,7 +178,7 @@
       call b2xvff (nx, ny, fch, 'fch')
       call b2xvff (nx, ny, fne, 'fne')
       call b2xvff (nx, ny, fni, 'fni')
- 
+
       redep_max=0.0_R8
       yself_max=0.0_R8
 
@@ -205,13 +205,13 @@
           Phi_app = get_phi_applied(boundary_namelist,ix,-1)
           lcore=((ireg.eq.coreregno .and. isymm.ne.0) .or.
      &           (ireg.eq.coreregn2 .and. nncut.ge.2))   ! xpb: no sputtering in core!
-          if(plate_model.eq.2 .and. .not.lcore .and. main_call 
+          if(plate_model.eq.2 .and. .not.lcore .and. main_call
      &     .and. ix.eq.ibegin) then
             isize = iend - ibegin + 1
             allocate(list_x(isize),list_y(isize),area(isize))
             do iy = 1, isize
               list_x(iy) = ibegin + iy - 1
-              area(iy) = 
+              area(iy) =
      .         gs(topix(ibegin+iy-1,-1),topiy(ibegin+iy-1,-1),1)
             end do
             list_y(1:isize) = -1
@@ -325,7 +325,7 @@
 *   ..initialize ireg
         ireg = cbirea
 *   ..loop over boundary cells
-        do iy = -1, ny       
+        do iy = -1, ny
           if(region(ix,iy,0).ne.0.and.   ! do not do dead cells or corners
      &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
 *    ..update ireg
@@ -364,45 +364,45 @@
         enddo
        endif
       enddo
-      
+
       if (iout.eq.1) then                                          !srv 11.07.05 {
         do is = 0, ns-1
-	  write (charns,'(i3.3)') is
-	  do k=0,3
-	    write (chark,'(i1)') k
-	    call my_out(70,nx,ny,smo0(-1,-1,k,is),
+          write (charns,'(i3.3)') is
+          do k=0,3
+            write (chark,'(i1)') k
+            call my_out(70,nx,ny,smo0(-1,-1,k,is),
      &                       'smo_br_bas'//chark//charns)
-	  enddo
-	  do k=0,1
-	    write (chark,'(i1)') k
-	    call my_out(70,nx,ny,sna0(-1,-1,k,is),
+          enddo
+          do k=0,1
+            write (chark,'(i1)') k
+            call my_out(70,nx,ny,sna0(-1,-1,k,is),
      &                       'sna_br_bas'//chark//charns)
-	  enddo
-	enddo
+          enddo
+        enddo
         do k=0,3
-	  write (chark,'(i1)') k
-	  call my_out(70,nx,ny,she0(-1,-1,k),'she_br_bas'//chark)
-	  call my_out(70,nx,ny,shi0(-1,-1,k),'shi_br_bas'//chark)
-	  call my_out(70,nx,ny,sch0(-1,-1,k),'sch_br_bas'//chark)
-	enddo
-	open(70,file='t_files.dat')
+          write (chark,'(i1)') k
+          call my_out(70,nx,ny,she0(-1,-1,k),'she_br_bas'//chark)
+          call my_out(70,nx,ny,shi0(-1,-1,k),'shi_br_bas'//chark)
+          call my_out(70,nx,ny,sch0(-1,-1,k),'sch_br_bas'//chark)
+        enddo
+        open(70,file='t_files.dat')
         write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'            !srv 11.03.13 {
-	write(70,hlp_frm) ' tchem=',tchem
-	write(70,hlp_frm) ' tchee=',tchee
-	write(70,hlp_frm) ' tphys=',tphys
-	write(70,hlp_frm) ' tphye=',tphye
-	write(70,hlp_frm) ' thevp=',thevp
-	write(70,hlp_frm) ' thvpe=',thvpe
-	write(70,hlp_frm) ' trese=',trese
-	write(70,hlp_frm) ' tresn=',tresn
-	write(70,hlp_frm) ' trfln=',trfln
-	write(70,hlp_frm) ' trfle=',trfle                           !srv 11.03.13 }
-	close(70)
+        write(70,hlp_frm) ' tchem=',tchem
+        write(70,hlp_frm) ' tchee=',tchee
+        write(70,hlp_frm) ' tphys=',tphys
+        write(70,hlp_frm) ' tphye=',tphye
+        write(70,hlp_frm) ' thevp=',thevp
+        write(70,hlp_frm) ' thvpe=',thvpe
+        write(70,hlp_frm) ' trese=',trese
+        write(70,hlp_frm) ' tresn=',tresn
+        write(70,hlp_frm) ' trfln=',trfln
+        write(70,hlp_frm) ' trfle=',trfle                           !srv 11.03.13 }
+        close(70)
       endif                                                         !srv 11.07.05 }
 
       if (redep_max.gt.0.0_R8 .and. (main_call.or.output.gt.1))
      .  write(*,*) 'Maximum redeposition coefficient ', redep_max
-      if(redep_max.gt.0.0_R8 .and. (yself_max.gt.1.0_R8 .or. 
+      if(redep_max.gt.0.0_R8 .and. (yself_max.gt.1.0_R8 .or.
      .  ((main_call.and.output.ge.1).or.output.gt.1)))
      .   write(*,*) 'Maximum self-sputtering coefficient ', yself_max
       write(*,*) 'Maximum redeposition coefficient ', redep_max
@@ -453,9 +453,9 @@ c lcore           is this a core element
 !        write(6,*) 'Potential taken at real cell (bas)'
         pof = po(ixn,iyn)
       endif
-      zaf(0:ns-1) = 
+      zaf(0:ns-1) =
      &  (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      rpf(0:ns-1) = 
+      rpf(0:ns-1) =
      &  (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
       qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir)+
      &                        fhi_ext(ixf,iyf,idir)))/area
@@ -531,7 +531,7 @@ cdpc
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
-         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))     
+         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
@@ -548,11 +548,11 @@ cdpc
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then     ! xpb: no sputtering in core!
@@ -561,11 +561,11 @@ c chemical sputtering
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
                if(sput_chem_model.eq.1) then
                   if (Ei.gt.0.0_R8) then
-                     t1=t0 * (sput_frc+cbrec(4,is,ireg)) * 
+                     t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
-                     chemical_sputtering(iwall,is) = 
-     .                    (sput_frc+cbrec(4,is,ireg)) * 
+                     chemical_sputtering(iwall,is) =
+     .                    (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                   else
@@ -602,7 +602,7 @@ c chemical sputtering
                   sputter_yield2(ix,iy,is,1)=t2
                   tchee(is)=tchee(is)+t2
                   shi0(ix,iy,0) = shi0(ix,iy,0)+t2
-                  if (is2.ne.-1) 
+                  if (is2.ne.-1)
      >             shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
                else
                   sputter_yield2(ix,iy,is,1)=0.0_R8
@@ -620,12 +620,12 @@ c physical sputtering
      .              sputter(sput_dst+1,zaf(sput_dst+1),sput_dst,
      .                      (pof-Phi_app)*zaf(sput_dst+1)*ev)*
      1              (sput_phys+cbrec(3,sput_dst+1,ireg))
-               if(f_redep(ixn,iyn,sput_dst).gt.0.0_R8 .and. 
+               if(f_redep(ixn,iyn,sput_dst).gt.0.0_R8 .and.
      1            redep_self_sputter.gt.0.0_R8 .and.
      2            (output.gt.2 .or. (main_call.and.output.ge.2) .or.
-     3            redep_self_sputter.ge.1.0_R8)) 
-     >           write(*,'(a,1x,a2,2i4,1p,2g12.5)') 
-     .            'Self-sputtering coefficient ', is_codes(sput_dst), 
+     3            redep_self_sputter.ge.1.0_R8))
+     >           write(*,'(a,1x,a2,2i4,1p,2g12.5)')
+     .            'Self-sputtering coefficient ', is_codes(sput_dst),
      .            ix, iy, pof-Phi_app, redep_self_sputter
                yself_max=max(yself_max,redep_self_sputter)
                t1=t0 * sputter(is,zaf(is),sput_dst,Ei*ev) *
@@ -633,8 +633,8 @@ c physical sputtering
      2           (1.0_R8-f_redep(ixn,iyn,sput_dst))/
      3           (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
 ! the two lines above are the reduction of sputtering due to prompt redeposition
-! and then the multiplication due to self-sputtering of the redeposited particles 
-               physical_sputtering(iwall,is) = 
+! and then the multiplication due to self-sputtering of the redeposited particles
+               physical_sputtering(iwall,is) =
      .              sputter(is,zaf(is),sput_dst,Ei*ev) *
      1              (sput_phys+cbrec(3,is,ireg)) *
      2           (1.0_R8-f_redep(ixn,iyn,sput_dst))/
@@ -658,7 +658,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                  deposition(iwall,itrack) = deposition(iwall,itrack) +
      1            dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
-     3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))                  
+     3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))
                endif
                if(sputter_energy_on.ne.0) then
                   redep_self_energy =
@@ -667,7 +667,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      1              (sput_phys+cbrec(3,sput_dst+1,ireg))
                   t2=t0 * sputter2(is,sput_dst,Ei*ev) *
      1              (sput_phys+cbrec(3,is,ireg))*Ei*ev *
-     2		    (1.0_R8-f_redep(ixn,iyn,sput_dst))
+     2              (1.0_R8-f_redep(ixn,iyn,sput_dst))
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons!
                   t3=-t0*ev*sputter(is,zaf(is),sput_dst,Ei*ev)*
@@ -682,7 +682,7 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
      1              redep_self_energy*(pof-Phi_app)*ev/
      2              (1.0_R8-
      3                 f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
-                  physical_sputtering_energy(iwall,is) = 
+                  physical_sputtering_energy(iwall,is) =
      .                 sputter2(is,sput_dst,Ei*ev) *
      1                 (sput_phys+cbrec(3,is,ireg))
                   if(ncall .ne. 0 .or. sputter_namelist_used) then
@@ -693,15 +693,15 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
                   tphye(is)=tphye(is)+t2+t3
                   shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                   she0(ix,iy,0) = she0(ix,iy,0) + t3
-                  if (is2.ne.-1) 
+                  if (is2.ne.-1)
      >             shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
                else
-                  physical_sputtering_energy(iwall,is) = 0.0_R8 
+                  physical_sputtering_energy(iwall,is) = 0.0_R8
                   sputter_yield2(ix,iy,is,2)=0.0_R8
                endif
             else
                physical_sputtering(iwall,is) = 0.0_R8
-               physical_sputtering_energy(iwall,is) = 0.0_R8            
+               physical_sputtering_energy(iwall,is) = 0.0_R8
                sputter_yield(ix,iy,is,2)=0.0_R8
                sputter_yield2(ix,iy,is,2)=0.0_R8
             endif
@@ -721,12 +721,12 @@ c thermal evaporation of species is if bulk or tracked
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
      1              dtim*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
-               if (is2.ne.-1) 
+               if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
                thevp(is)=thevp(is)+t1
                thvpe(is)=thvpe(is)+t2
             else
-               thermal_evaporation(iwall,is) = 0.0_R8 
+               thermal_evaporation(iwall,is) = 0.0_R8
             endif
 c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
             if(sput_res.gt.0.0_R8.and.
@@ -745,7 +745,7 @@ c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
      1              dtim*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
-               if (is2.ne.-1) 
+               if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
                tresn(is)=tresn(is)+t1
                trese(is)=trese(is)+t2
@@ -753,8 +753,8 @@ c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
                RES_sputtering(iwall,is) = 0.0_R8
             endif
 c back scattering
-            if (cbrec(0,is,ireg).eq.0.0_R8 .and. 
-     &          cbrec(1,is,ireg).eq.0.0_R8 .and. .not.is_neutral(is) 
+            if (cbrec(0,is,ireg).eq.0.0_R8 .and.
+     &          cbrec(1,is,ireg).eq.0.0_R8 .and. .not.is_neutral(is)
      &    .and. reflection_on.ne.0) then ! use reflection model
                t1=t0 * reflect(is,Ei*ev,iwall)
                t2=t0 * reflect2(is,Ei*ev,iwall)*Ei*ev
@@ -765,15 +765,15 @@ c back scattering
      1                 dtim*plate_time_factor(iwall)*t1
                endif
                backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
-               backscattering_energy(iwall,is) = 
+               backscattering_energy(iwall,is) =
      &              reflect2(is,Ei*ev,iwall)
                if(reflection_on.eq.1) then
                  sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
                else
                  sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0) + t1    ! reflection to the neutral
                endif
-               shi0(ix,iy,0) = shi0(ix,iy,0) + t2           
-               if (is2.ne.-1) 
+               shi0(ix,iy,0) = shi0(ix,iy,0) + t2
+               if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
                trfln(is)=trfln(is)+t1
                trfle(is)=trfle(is)+t2

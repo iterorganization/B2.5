@@ -23,7 +23,7 @@ C =====================================================================
 #endif
       real xbox(8),ybox(8),
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
-      integer ix,iy,icol,ici,n,i,ic,
+      integer icol,ici,n,i,
      2 no_available_colors,noz,nozm,nfmtz
       real floor,ceil
       external floor,ceil
@@ -58,7 +58,7 @@ C =====================================================================
 
       IF(NOFECLS.EQ.0) THEN                ! standard contouring
         IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm

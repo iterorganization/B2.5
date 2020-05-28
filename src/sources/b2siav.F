@@ -12,6 +12,8 @@
       use b2mod_b2cmpa
       use b2mod_balance                                               !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_plasma
+     & , only : fac_vis                                               !srv 22.05.18
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -46,14 +48,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, ix, iy, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
+     &     addvis=1.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
@@ -86,8 +88,6 @@
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
       s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
@@ -95,7 +95,7 @@
       smbvv = 0.0_R8
 
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
+        if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 
@@ -287,7 +287,8 @@
           do iy=0,ny-1
             do ix=0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                t0=addvis*vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
+                t0=fac_vis(ix,iy)*addvis*                           !srv 22.05.18
+     &                 vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
      &            sqrt(bb(ix,iy,3))*hz(ix,iy)
                 smbvh(ix,iy,0) = smbvh(ix,iy,0)
      &            +t0*(wrk1(rightix(ix,iy),rightiy(ix,iy))-wrk1(ix,iy))

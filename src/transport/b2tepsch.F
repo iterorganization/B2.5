@@ -27,7 +27,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, ixl, iyl, ixb, iyb
+      integer ix, iy, is, ixl, iyl, ixb, iyb
       integer, save :: ncall = 0
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -42,8 +42,6 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')   
       

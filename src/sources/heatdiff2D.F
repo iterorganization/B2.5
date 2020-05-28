@@ -30,7 +30,7 @@ c Program to solve the heat diffusion equation in 2 dimensions
 
       do iwall = 1, isize
         bndx(iwall) = xymap(list_x(iwall),list_y(iwall))
-        qin = 
+        qin =
      .   max(0.0_R8,isign*(fhi(ixf(iwall),iyf(iwall),idir)+
      .                     fhi_ext(ixf(iwall),iyf(iwall),idir)))/
      .   area(iwall)
@@ -55,7 +55,7 @@ c Program to solve the heat diffusion equation in 2 dimensions
      .                     te(list_x(iwall),list_y(iwall))*
      .                    (1.0_R8-BoRiS)))/area(iwall)
         Q(iwall)=qin+qel
-        Tp(iwall,1:ndepth_nml) = target_temp(bndx(iwall),1:ndepth_nml)    
+        Tp(iwall,1:ndepth_nml) = target_temp(bndx(iwall),1:ndepth_nml)
       enddo
 
       call heatdiff2D(isize,ns,bndx,Q,dt,Tp)
@@ -114,11 +114,11 @@ c  Tp = Target surface temperature (K).
       integer, allocatable, save :: iwrk(:)
       real (kind=R8) ::
      *   aa5(nw,ndepth_nml,-2:2), nrmc(0:itmax-1)
-      real (kind=R8) :: t0, ta, tb, tc, x(ndepth_nml), y(nw,ndepth_nml), 
+      real (kind=R8) :: t0, ta, tb, tc, x(ndepth_nml), y(nw,ndepth_nml),
      *   rho
 
-      real (kind=R8) :: 
-     *   Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, 
+      real (kind=R8) ::
+     *   Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT,
      *   qevap, qrad, mass_density, cond_coef
       external Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT,
      *   qevap, qrad, mass_density, cond_coef
@@ -141,9 +141,9 @@ c       function of the position "x" at ndepth_nml grid points.
           do i=1,ndepth_nml
             Tp(iwall,i) = U(iwall,i)
           enddo
-          call subend ()
-          return
         enddo
+        call subend ()
+        return
       else
         do iwall = 1, nw
           do i = 1, ndepth_nml
@@ -189,12 +189,12 @@ c       function of the position "x" at ndepth_nml grid points.
         rhs(iwall,i)    = rhs(iwall,i) + Qtot
 *    ..main terms
         do i = 2, ndepth_nml-1
-          ta = dKappabydT(bndx(iwall),i,Tp(iwall,i)) * 
-     1     (Tp(iwall,i+1)-Tp(iwall,i-1)) / 
+          ta = dKappabydT(bndx(iwall),i,Tp(iwall,i)) *
+     1     (Tp(iwall,i+1)-Tp(iwall,i-1)) /
      2     (x(i+1)-x(i-1))**2
-          tb = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) / 
+          tb = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) /
      .     (x(i+1)-x(i)) / (x(i+1)-x(i-1))
-          tc = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) / 
+          tc = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) /
      .     (x(i)-x(i-1)) / (x(i+1)-x(i-1))
           aa5(iwall,i,-2) = aa5(iwall,i,-2) + ta      - tc
           aa5(iwall,i, 0) = aa5(iwall,i, 0)      + tb + tc
@@ -245,7 +245,7 @@ c$$$        endif
         Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
      1        -qevap(bndx(iwall),ns,Tp(iwall,i))
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
-     2   (0.5_R8*(y(iwall,i)+y(iwall+1,i))) 
+     2   (0.5_R8*(y(iwall,i)+y(iwall+1,i)))
         aa5(iwall,i,-1) = 0.0_R8
         aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
         aa5(iwall,i, 1) = aa5(iwall,i, 1) - t0
@@ -255,8 +255,8 @@ c$$$        endif
       do iwall = 2, nw-1
         do i = 1, ndepth_nml-1
           if (y(iwall,i).gt.0.0_R8) then
-            ta = dKappa_perpbydT(bndx(iwall),i,Tp(iwall,i)) * 
-     1       (Tp(iwall+1,i)-Tp(iwall-1,i)) / 
+            ta = dKappa_perpbydT(bndx(iwall),i,Tp(iwall,i)) *
+     1       (Tp(iwall+1,i)-Tp(iwall-1,i)) /
      2       (y(iwall,i)+0.5_R8*(y(iwall-1,i)+y(iwall+1,i)))**2
             tb = 2.0_R8 * Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      .       y(iwall,i) / (y(iwall+1,i)+y(iwall,i))
@@ -323,7 +323,7 @@ c$$$        endif
 *   ..copy over new solution
       do iwall = 1, nw
         do i = 1, ndepth_nml
-          Tp(iwall,i) = min( U(iwall,i), 
+          Tp(iwall,i) = min( U(iwall,i),
      .                       matsurf_vapor_temp(bndx(iwall)))
         enddo
       enddo

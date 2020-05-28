@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,   !cjk
-     &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw, 
+      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,  !cjk
+     &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
       use b2mod_geo
@@ -37,8 +37,8 @@ c     minimum value for real arrays to avoid division by zero
 c     conversion of constants to CGS units
       real erg, cm, gauss, gramm
       parameter (erg=1.e7, cm=1.e2, gauss=1.e4, gramm=1.e3)
-      real kB_cgs, eV_cgs, e_cgs, c_cgs
-      parameter (kB_cgs=KBolt*erg, eV_cgs=ev*erg,
+      real eV_cgs, e_cgs, c_cgs
+      parameter (eV_cgs=ev*erg,
      &           e_cgs=qe*c*10., c_cgs=c*cm)
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
@@ -54,13 +54,13 @@ c     conversion of constants to CGS units
 *
 *     NEO_VALIDITY computes diagnostics parameters for the neoclassical
 *     transport
-*     
+*
 *
 *
 *  3. description
 *
 *     This routine computes the following diagnostics parameters:
-*     
+*
 *     - vtha   : the thermal velocity of species a
 *     - nuab   : the collision frequency of species a with species b
 *     - nua    : the sum of nuab over all species b
@@ -86,7 +86,7 @@ c     conversion of constants to CGS units
 *     to the one-dimensional nature of the implemented neoclassical model
 *-----------------------------------------------------------------------
 *   ..local variables
-      integer n2, ix, iy, is, is2, ixref, iyref, irmin, irmax
+      integer n2, ix, iy, is, is2, ixref, iyref
       save ixref, iyref
       real (kind=R8) ::
      *   hy1(-1:nx,-1:ny)
@@ -100,14 +100,24 @@ c     conversion of constants to CGS units
 
 *   ..subprogram start-up calls
       call subini ('neo_validity')
-      if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+      if(nnreg(0).eq.4) then
+        if (LSN) then
+          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        endif
+        iyref=2*topcut(1)/3
+      elseif(nnreg(0).eq.5) then
+        ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
         iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.8) then
         ixref=(rightcut(1)+rightcut(2))/2
         iyref=2*min(topcut(1),topcut(2))/3
+      elseif(nnreg(0).eq.2) then
+        ixref=nx/2
+        iyref=2*topcut(1)/3
       else
-        ixref=3*nx/4
+        ixref=nx/2
         iyref=ny/2
       endif
       call ipgeti ('set_transport_ixref', ixref)
@@ -160,21 +170,17 @@ c     conversion of constants to CGS units
 
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
-	ix=jxa
-	call xertst (on_closed_surface(ix,iy), 'Not in core!')
-	irmin=jxa
-	irmax=jxa
-	crmin=cr(ix,iy)
-	crmax=crmin
-	ix=rightix(ix,iy)
-	do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
-	  if(cr(ix,iy).lt.crmin) irmin=ix
-	  if(cr(ix,iy).gt.crmax) irmax=ix
-	  crmin=min(crmin,cr(ix,iy))
-	  crmax=max(crmax,cr(ix,iy))
-	  ix=rightix(ix,iy)
-	enddo
-	call xertst (ix.eq.jxa, 'Core not continuous!')
+        ix=jxa
+        call xertst (on_closed_surface(ix,iy), 'Not in core!')
+        crmin=cr(ix,iy)
+        crmax=crmin
+        ix=rightix(ix,iy)
+        do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
+          crmin=min(crmin,cr(ix,iy))
+          crmax=max(crmax,cr(ix,iy))
+          ix=rightix(ix,iy)
+        enddo
+        call xertst (ix.eq.jxa, 'Core not continuous!')
         rmaj_(iy)=0.5_R8*(crmin+crmax)
       enddo
 
@@ -416,7 +422,7 @@ c     conversion of constants to CGS units
         endif
 *      Larmor radius
         rhol(ix,iy,ns)=me*gramm*c_cgs*vtha(ix,iy,ns)/
-     &    (e_cgs*bb(ix,iy,3)*gauss*cm)        
+     &    (e_cgs*bb(ix,iy,3)*gauss*cm)
 *      ratio of Larmor radius to minimum gradient length
         deltal(ix,iy,ns)=rhol(ix,iy,ns)/minlnlt
 *      width of Banana orbit
@@ -439,7 +445,7 @@ c     conversion of constants to CGS units
      &    omega(ix,iy,ns))
        enddo
       enddo
- 
+
 
 *   ..return
       call subend ()
@@ -476,59 +482,59 @@ c#     include "b2cmpa.h"
       call subini ('chang_hinton')
       transport=0.0_R8
       do iy=-1,jsep
-	if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
-	ix=jxa
-	call xertst (on_closed_surface(ix,iy), 'Not in core')
-	irmin=jxa
-	irmax=jxa
-	crmin=cr(ix,iy)
-	crmax=crmin
-	czmin=cz(ix,iy)
-	czmax=czmin
-	ix=rightix(ix,iy)
-	do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
-	  if(cr(ix,iy).lt.crmin) irmin=ix
-	  if(cr(ix,iy).gt.crmax) irmax=ix
-	  crmin=min(crmin,cr(ix,iy))
-	  crmax=max(crmax,cr(ix,iy))
-	  czmin=min(czmin,cz(ix,iy))
-	  czmax=max(czmax,cz(ix,iy))
-	  ix=rightix(ix,iy)
-	enddo
-	call xertst (ix.eq.jxa, 'Core not continuous')
-	if (b2plot_debug.ge.8) 
+        if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
+        ix=jxa
+        call xertst (on_closed_surface(ix,iy), 'Not in core')
+        irmin=jxa
+        irmax=jxa
+        crmin=cr(ix,iy)
+        crmax=crmin
+        czmin=cz(ix,iy)
+        czmax=czmin
+        ix=rightix(ix,iy)
+        do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
+          if(cr(ix,iy).lt.crmin) irmin=ix
+          if(cr(ix,iy).gt.crmax) irmax=ix
+          crmin=min(crmin,cr(ix,iy))
+          crmax=max(crmax,cr(ix,iy))
+          czmin=min(czmin,cz(ix,iy))
+          czmax=max(czmax,cz(ix,iy))
+          ix=rightix(ix,iy)
+        enddo
+        call xertst (ix.eq.jxa, 'Core not continuous')
+        if (b2plot_debug.ge.8)
      >   write(*,*) 'crmin,crmax,czmin,czmax',
-     1	 crmin,crmax,czmin,czmax
-	bave=cr(ix,iy)*2.0_R8/(crmax+crmin)*bb(ix,iy,3)
-	if (b2plot_debug.ge.8) write(*,*) 'ne,te,ti,b,q: ',
-     1	 ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
-	epsilon=(crmax-crmin)/(crmax+crmin)
-	if (b2plot_debug.ge.8) write(*,*) 'epsilon: ',epsilon
-	if (lambda.lt.0.0_R8) then
-	  lnlam=max(-lambda,17.3_R8-
-     1	   log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     2	   1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-	else
-	  lnlam = lambda
-	endif
-	if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam
-	cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
-	cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
-	cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
-	cr1min=0.5_R8*(crx(irmin,iy,0)+crx(irmin,iy,2))
-	if (b2plot_debug.ge.8) 
+     1   crmin,crmax,czmin,czmax
+        bave=cr(ix,iy)*2.0_R8/(crmax+crmin)*bb(ix,iy,3)
+        if (b2plot_debug.ge.8) write(*,*) 'ne,te,ti,b,q: ',
+     1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
+        epsilon=(crmax-crmin)/(crmax+crmin)
+        if (b2plot_debug.ge.8) write(*,*) 'epsilon: ',epsilon
+        if (lambda.lt.0.0_R8) then
+          lnlam=max(-lambda,17.3_R8-
+     1     log(ne(ix,iy)/1e20_R8)/2.0_R8+
+     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
+        else
+          lnlam = lambda
+        endif
+        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam
+        cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
+        cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
+        cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
+        cr1min=0.5_R8*(crx(irmin,iy,0)+crx(irmin,iy,2))
+        if (b2plot_debug.ge.8)
      >   write(*,*) 'cr2max,cr2min,cr1max,cr1min: ',
-     1	 cr2max,cr2min,cr1max,cr1min
-	deltap=((cr2max+cr2min)-(cr1max+cr1min))/
-     1	 ((cr2max-cr2min)-(cr1max-cr1min))
+     1   cr2max,cr2min,cr1max,cr1min
+        deltap=((cr2max+cr2min)-(cr1max+cr1min))/
+     1   ((cr2max-cr2min)-(cr1max-cr1min))
         deltap=-2._R8
-	if (b2plot_debug.ge.8) write(*,*) 'deltap: ',deltap
-	f1=(1_R8+1.5_R8*(epsilon**2+epsilon*deltap)+
-     1	 0.375_R8*epsilon**3*deltap)/(1_R8+0.5_R8*epsilon*deltap)
-	if (b2plot_debug.ge.8) write(*,*) 'f1: ',f1
-	f2=sqrt(1_R8-epsilon**2)*(1.0_R8+0.5_R8*epsilon*deltap)/
-     1	 (1_R8+deltap/epsilon*(sqrt(1_R8-epsilon**2)-1.0_R8))
-	if (b2plot_debug.ge.8) write(*,*) 'f2: ',f2
+        if (b2plot_debug.ge.8) write(*,*) 'deltap: ',deltap
+        f1=(1_R8+1.5_R8*(epsilon**2+epsilon*deltap)+
+     1   0.375_R8*epsilon**3*deltap)/(1_R8+0.5_R8*epsilon*deltap)
+        if (b2plot_debug.ge.8) write(*,*) 'f1: ',f1
+        f2=sqrt(1_R8-epsilon**2)*(1.0_R8+0.5_R8*epsilon*deltap)/
+     1   (1_R8+deltap/epsilon*(sqrt(1_R8-epsilon**2)-1.0_R8))
+        if (b2plot_debug.ge.8) write(*,*) 'f2: ',f2
 *   ..calculate alpha
         alpha=0._R8
         ammin=54._R8
@@ -551,57 +557,57 @@ c#     include "b2cmpa.h"
         enddo
         alpha=alpha/(na(ix,iy,is_fuel)*rz2(ix,iy,is_fuel))
         if (b2plot_debug.ge.8) write(*,*) 'alpha: ', alpha
-	do is=0,ns-1
-	  if(.not. is_neutral(is)) then
-	    if (b2plot_debug.ge.8) write(*,*) 'rza,am,na: ',
+        do is=0,ns-1
+          if(.not. is_neutral(is)) then
+            if (b2plot_debug.ge.8) write(*,*) 'rza,am,na: ',
      >       rza(ix,iy,is),am(is),na(ix,iy,is)
-	    vthi=sqrt(ti(ix,iy)/mp/am(is))
-	    if (b2plot_debug.ge.8) write(*,*) 'vthi: ',vthi
-	    omegaci=rza(ix,iy,is)*qe*bave/mp/am(is)
-	    if (b2plot_debug.ge.8) write(*,*) 'omegaci: ',omegaci
-	    rhoi=sqrt(2.0_R8)*vthi/omegaci
-	    if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
-	    taui=12.0_R8*pi**1.5_R8*eps0**2*
-     1	     (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2	     (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
-	    if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
-	    nui=1.0_R8/taui
-	    nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
-     1	     epsilon**(1.5_R8)/vthi
-	    if (b2plot_debug.ge.8) write(*,*) 'nustari: ',nustari
-	    mustari=nustari*(1.0_R8+1.54_R8*alpha)
-	    if (b2plot_debug.ge.8) write(*,*) 'mustari: ',mustari
+            vthi=sqrt(ti(ix,iy)/mp/am(is))
+            if (b2plot_debug.ge.8) write(*,*) 'vthi: ',vthi
+            omegaci=rza(ix,iy,is)*qe*bave/mp/am(is)
+            if (b2plot_debug.ge.8) write(*,*) 'omegaci: ',omegaci
+            rhoi=sqrt(2.0_R8)*vthi/omegaci
+            if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
+            taui=12.0_R8*pi**1.5_R8*eps0**2*
+     1       (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
+     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+            if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
+            nui=1.0_R8/taui
+            nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
+     1       epsilon**(1.5_R8)/vthi
+            if (b2plot_debug.ge.8) write(*,*) 'nustari: ',nustari
+            mustari=nustari*(1.0_R8+1.54_R8*alpha)
+            if (b2plot_debug.ge.8) write(*,*) 'mustari: ',mustari
             bracket1=(0.66_R8*(1.0_R8+1.54_R8*alpha)+
-     3	             (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
-     4		     (1_R8+3.75_R8*alpha))/
-     5		     (1.0_R8+1.03_R8*mustari**0.5_R8+0.31*mustari)
+     3               (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
+     4               (1_R8+3.75_R8*alpha))/
+     5               (1.0_R8+1.03_R8*mustari**0.5_R8+0.31*mustari)
             bracket2=0.59_R8*mustari*epsilon/
-     6	       (1_R8+0.74_R8*mustari*epsilon**1.5_R8)*
-     7	       (1_R8+
-     8	         1.33_R8*alpha*(1.0_R8+0.60_R8*alpha)/
-     9		 (1.0_R8+1.79_R8*alpha))
+     6         (1_R8+0.74_R8*mustari*epsilon**1.5_R8)*
+     7         (1_R8+
+     8           1.33_R8*alpha*(1.0_R8+0.60_R8*alpha)/
+     9           (1.0_R8+1.79_R8*alpha))
             if (b2plot_debug.ge.8) write(*,*) 'bracket1 =', bracket1
             if (b2plot_debug.ge.8) write(*,*) 'bracket2 =', bracket2
-	    chi=epsilon**(-1.5_R8)*
-     1	     safetyfactor(iy)**2*rhoi**2/taui*
-     2	     ((0.66_R8*(1.0_R8+1.54_R8*alpha)+
-     3	             (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
-     4		     (1_R8+3.75_R8*alpha))/
-     5		     (1.0_R8+1.03_R8*mustari**0.5_R8+0.31*mustari)*f1
-     5	      +0.59_R8*mustari*epsilon/
-     6	       (1_R8+0.74_R8*mustari*epsilon**1.5_R8)*
-     7	       (1_R8+
-     8	         1.33_R8*alpha*(1.0_R8+0.60_R8*alpha)/
-     9		 (1.0_R8+1.79_R8*alpha))*(f1-f2))
-	    if (b2plot_debug.ge.8) write(*,*) 'chi: ',chi
-	    transport(ix,iy,is)=chi
-	    ix=rightix(ix,iy)
-	    do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
-	      transport(ix,iy,is)=chi
-	      ix=rightix(ix,iy)
-	    enddo
-	  endif
-	enddo
+            chi=epsilon**(-1.5_R8)*
+     1       safetyfactor(iy)**2*rhoi**2/taui*
+     2       ((0.66_R8*(1.0_R8+1.54_R8*alpha)+
+     3               (1.88_R8*epsilon**0.5_R8-1.54_R8*epsilon)*
+     4               (1_R8+3.75_R8*alpha))/
+     5               (1.0_R8+1.03_R8*mustari**0.5_R8+0.31*mustari)*f1
+     5        +0.59_R8*mustari*epsilon/
+     6         (1_R8+0.74_R8*mustari*epsilon**1.5_R8)*
+     7         (1_R8+
+     8           1.33_R8*alpha*(1.0_R8+0.60_R8*alpha)/
+     9           (1.0_R8+1.79_R8*alpha))*(f1-f2))
+            if (b2plot_debug.ge.8) write(*,*) 'chi: ',chi
+            transport(ix,iy,is)=chi
+            ix=rightix(ix,iy)
+            do while(ix.ne.jxa.and.ix.ge.-1.and.ix.le.nx)
+              transport(ix,iy,is)=chi
+              ix=rightix(ix,iy)
+            enddo
+          endif
+        enddo
       enddo
       call subend ()
       return

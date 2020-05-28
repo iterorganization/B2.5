@@ -10,9 +10,6 @@
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
 #include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
@@ -40,7 +37,7 @@ c<<<
       real (kind=R8) :: hlp_pls(nbcd,ns)
       real (kind=R8), allocatable, save :: hlp_neu(:,:)
       integer kst_hlp
-      integer use_recyceir
+      integer use_recyceir, use_eirene
       real (kind=R8) :: recyctmp
       real (kind=R8), save :: stim = 0.0_R8
 c>>>
@@ -105,7 +102,8 @@ c*** from 960808 on
      ,     flxrl_tmp(:)
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
+      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab,
+     ,     hlp_prt*26
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -131,7 +129,7 @@ c*** Column headers:
      3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
      4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
 *   ..initialisation
-      data use_recyceir /1/
+      data use_recyceir /1/, use_eirene /0/
 c
       data first / .true. /
 c----------------------------------------------------------------------
@@ -153,20 +151,22 @@ c======================================================================
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
+        call ipgeti ('b2mndr_eirene', use_eirene)
         print *,'=== Regions of the grid:'
-        print *
         l=ny+1
         n=mod(l-1,10)+1
+        i=(nx+2)/10+1
+        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            print '(1x,i4,1x,i1,40(1x,10i1))',j,
-     ,                                         (region(i,j,0),i=-1,nx)
+            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
           end do
           l=l-1
         end do
+        write(*,'()')
 c>>>
 c
 c*** Initialisation
@@ -227,17 +227,24 @@ c      do i=1,nlimps
       end do
 
 c<<<
-      if(debug_flags(90).gt.0) then
+      if(debug_flags(90).gt.0.and.use_eirene.ne.0) then
         print *
         print *,'%%% Eirene data in B2 %%%'
         do k=debug_flags(92),debug_flags(93)
           print *
           print *,'wldpp:',k
+          write (hlp_prt,'(a,i3,a)') '(1p,i4,',nnplsi,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
-            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
+            write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
-          print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          if (nnmoli.gt.0) then
+            print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          else
+            print *,'wldpeb, wldpa, hlpit_pl:',k
+          end if
+          write (hlp_prt,'(a,i3,a)')
+     .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
             ks=0
             do ls=1,nspecies
@@ -247,7 +254,7 @@ c<<<
                 hlpit_pl(ls)=hlpit_pl(ls)+wldpp(j,ks,k)
               end do
             end do
-            print '(1p,i4,20e12.4)',j,wldpeb(j,k),
+            write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
            end do
@@ -355,10 +362,11 @@ c>>>
       end do
 c<<<
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c       write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',2*nspecies,'e12.4)'
+c       write (*,hlp_prt) '%%% hlpit_lp, hlpit_rp: ',
 c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
-     ,                                        (hlpiw_s(i),i=1,nspecies)
+        write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',nspecies,'e12.4)'
+        write (*,hlp_prt) '%%# hlpiw_s : ',(hlpiw_s(i),i=1,nspecies)
       end if
 c>>>
 
@@ -422,7 +430,7 @@ c>>>
 c*** Correct the source for d/dt terms
         hlpis=hlpis+hlpid
 c<<<
-c        print '(a,1p,4e12.4)',
+c        print '(1x,a,1p,4e12.4)',
 c     ,      '%%% Ion fluxes: hlpit, hlpiw, hlpic, hlpid =',
 c     ,                       hlpit, hlpiw, hlpic, hlpid
 c        print *,'%%% hlpit_l     hlpit_r     hlpit_t'
@@ -571,7 +579,7 @@ c>>>
         end do
 c<<<
         if(debug_flags(90).gt.0) then
-          print '(a,1p,5e12.4)',
+          print '(1x,a,1p,5e12.4)',
      ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls
@@ -684,24 +692,29 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
         go to 42
- 40     read(lun,*,err=92) hlp_c,i,j
+   40   read(lun,*,err=92) hlp_c,i,j
         lv_trc(ltrc)=lv
         if(i.lt.960727) then
           nc=16
         else
           go to 92
         end if
- 42     if(nv.ne.lv) then
+   42   if(nv.ne.lv) then
           write(*,'(a,i8,3a,i8)')
      ,     '!!! b2blnc: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -712,7 +725,7 @@ c*** It was a major change of the file format - impossible to continue
      ,     '!!! b2blnc: current number of columns ',np_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nc
           if(nc.gt.np_tmp) then
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -723,13 +736,14 @@ c*** It was a major change of the file format - impossible to continue
           write(*,'(a,i2,3a,i2)')
      ,     '!!! b2blnc: current number of species ',nspecies,
      ,      ' differs from that in the file ',trim(f),' : ',j
-          write(*,*) 'No tracing file - remove the existing file first!'
+          write(*,*) 'No ',trim(f),' tracing file - ',
+     ,                              'remove the existing file first!'
           filedata(ltrc)=.false.
           return
         end if
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
         nc=np_tmp
         write(lun,700) lv,nspecies,np_tmp,label
@@ -744,11 +758,11 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,                                                  np_tmp*nspecies
       return
 c======================================================================
- 90   write(*,*) 'b2blnc: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blnc: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -765,21 +779,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnc: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

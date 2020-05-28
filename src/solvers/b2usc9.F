@@ -29,7 +29,8 @@
 *  1. purpose
 *
 *     B2USC9 computes a correction towards the solution of the
-*     continuity equation for one atomic species on nine point stencil.
+*     continuity equation for one atomic species using a
+*     nine-point stencil.
 *     
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
@@ -195,7 +196,7 @@
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg, conb(-1,-1,0,3),
      &  aa9, name)                                                      !srv 02.01.07

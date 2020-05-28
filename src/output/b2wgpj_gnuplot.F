@@ -3,8 +3,7 @@
 
       subroutine b2wgpj_gnuplot (nprt, nx, ny, ns, 
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, 
-     &  ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  ne, fne, kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -20,7 +19,7 @@
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), ni(-1:nx,-1:ny,0:1),
      &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -69,7 +68,11 @@
 *   ..procedures
       intrinsic max
 #ifndef NAGF95
+#ifndef NAGFOR
       integer iargc
+#else
+      integer lenval, ierror
+#endif
 #endif
       external subini, subend, xertst
 
@@ -90,17 +93,27 @@
 
 * ..make two-dimensional plots
       islice=1
+#ifndef NAGFOR
       if(iargc().le.0) then
+#else
+      if(command_argument_count().le.0) then
+#endif
          want='te  '
       else
+#ifndef NAGFOR
          call getarg(1,want)
          if(iargc().ge.2) then
             call getarg(2,slice)
+#else
+         call get_command_argument(1,want,lenval,ierror)
+         if(command_argument_count().ge.2) then
+            call get_command_argument(2,slice,lenval,ierror)
+#endif
             read(slice,*,err=5) islice
             islice=min(max(islice,0),ns-1)
          endif
       endif
- 5    continue
+    5 continue
       write(*,'(a,a,i4)') '#',want,islice
       if(want.eq.'te  ') then
          do iy=-1,ny

@@ -73,8 +73,7 @@
 
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
-     *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist,
-     *  nsmin, nsmax
+     *  ramp_slow, ier0, no_solve, ix, iy, nsmin, nsmax
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
@@ -85,7 +84,7 @@
      *  nstg_areshe, nstg_areshi, nstg_aresco
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
-     *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
+     *  nstg_areshe, nstg_areshi, nstg_aresco
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical test_residual, quit_residual, main_call
       logical solving(4)
@@ -95,7 +94,7 @@
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -107,7 +106,7 @@
 *   ..initialisation
       data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
-      data no_solve/0/, boundary_namelist/0/
+      data no_solve/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
 *
 *-----------------------------------------------------------------------
@@ -166,7 +165,6 @@
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -182,11 +180,6 @@
        call ipgeti ('b2mndt_av', iav_run)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       if (boundary_namelist.ge.1) then
-         call initialize_b2mod_boundary(nx,ny,ns,tim)
-       else
-         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
-       endif
       else
        if (boundary_namelist.ge.1) then
          call catchup_b2mod_boundary(nx,ny,ns,tim)
@@ -320,18 +313,21 @@ ctmp.dpc
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
-          if(style.ne.0) then                                            !srv 18.06.08 {
+!          if(style.ne.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                    fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
-!     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
-!     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
-          endif                                                          !srv 18.06.08 }
+            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
+     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
+            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
+     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+!          endif                                                         !srv 18.06.08 }
+*      ..compute electron drift velocities
+          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
+     &     te, po, vedia, veecrb)
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -349,7 +345,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,             !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,      !srv 09.01.01 02.04.18
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
@@ -389,14 +385,14 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
+           ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nxtl, nxtr,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
            else                                                          !srv 01.07.08 {
             call b2news_(nx, ny, ns, nxtl, nxtr,
-     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0)               !srv 16.07.10 23.11.10
+     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
            endif                                                         !srv 01.07.08 )
            flush(6)
            if(ier0.eq.10) then
@@ -474,9 +470,9 @@ ctmp.dpc
            goto 3
          else if (ntim.eq.0) then ! compute derived quantities
            if(ion_vlct_restrict .ne. 0 ) then                            !iyv 06.02.14
-             call b2xpro (nx, ny, ns, mp, am, na, ro)
-             call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-             wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+             call b2xprz (nx, ny, ns, mp, am, na, rz)
+             call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+             wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
              call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
              call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                     cssb(-1,-1,1))
@@ -553,8 +549,11 @@ ctmp.dpc
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
-     &      reshe, reshi, wrk0, corte, corti, ier0)
+     &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
          endif
+*     ..save total heat sources for printout at end of run
+         she = shef
+         shi = shif
 *     ..end intermediate iteration
          istg(1) = istg(1)+1
          goto 2
@@ -577,3 +576,4 @@ ctmp.dpc
 *.end b2mndt
 
       end subroutine b2mndt
+

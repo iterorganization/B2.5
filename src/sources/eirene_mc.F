@@ -38,6 +38,8 @@ c  version : 26.07.2002 23:39
       use b2mod_work
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_comusr
+     , , only: texts, nsph, nspa, nspam
       use eirmod_extrab25
 #else
       use b2mod_braeir
@@ -55,7 +57,9 @@ csw 19oct2012, added save attribute!!!
 
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
-     1 nesepm_istra, use_recyceir
+     1 nesepm_istra, use_recyceir, b2stbc_feedback
+      integer, allocatable, save :: feedback_strata(:)
+      logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
@@ -129,18 +133,19 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
+      character*256 filename
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical last, saved_volrec_used, na_feedback_on
+      logical ex, last, saved_volrec_used, na_feedback_on
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
      2 no_sseicorr, save_f30, stab_corr
       save ncall, output_style, saved_volrec_used,
-     * pfrregno1, pfrregno2, solregno, isfeedback,
+     * pfrregno1, pfrregno2, solregno, isfeedback, b2stbc_feedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
@@ -155,16 +160,16 @@ csw 26feb2014
       real (kind=R8) :: relax
 
       real (kind=R8), save, allocatable ::
-     .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
+     .  sni_av(:,:,:,:), smo_av(:,:,:,:), sei_av(:,:,:), see_av(:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     .   sni_av_papl(:,:,:,:),sni_av_pmpl(:,:,:,:),
-     .   sni_av_pipl(:,:,:,:),sni_av_pppl(:,:,:,:),
-     .   smo_av_mapl(:,:,:,:),smo_av_mmpl(:,:,:,:),
-     .   smo_av_mipl(:,:,:,:),smo_av_cppv(:,:,:,:),
-     .   see_av_eael(:,:,:), see_av_emel(:,:,:),
-     .   see_av_eiel(:,:,:), see_av_epel(:,:,:),
-     .   sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
-     .   sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
+     .  sni_av_papl(:,:,:,:), sni_av_pmpl(:,:,:,:),
+     .  sni_av_pipl(:,:,:,:), sni_av_pppl(:,:,:,:),
+     .  smo_av_mapl(:,:,:,:), smo_av_mmpl(:,:,:,:),
+     .  smo_av_mipl(:,:,:,:), smo_av_cppv(:,:,:,:),
+     .  see_av_eael(:,:,:), see_av_emel(:,:,:),
+     .  see_av_eiel(:,:,:), see_av_epel(:,:,:),
+     .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
+     .  sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:,:),
      &  smo_h(:,:,:,:,:),
@@ -180,18 +185,18 @@ csw 26feb2014
 ! _s is an abbreviation from 'sum'
      &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     &  sni_h_papl(:,:,:,:,:),sni_h_pmpl(:,:,:,:,:),
-     &  sni_h_pipl(:,:,:,:,:),sni_h_pppl(:,:,:,:,:),
-     &  smo_h_mapl(:,:,:,:,:),smo_h_mmpl(:,:,:,:,:),
-     &  smo_h_mipl(:,:,:,:,:),smo_h_cppv(:,:,:,:,:),
+     &  sni_h_papl(:,:,:,:,:), sni_h_pmpl(:,:,:,:,:),
+     &  sni_h_pipl(:,:,:,:,:), sni_h_pppl(:,:,:,:,:),
+     &  smo_h_mapl(:,:,:,:,:), smo_h_mmpl(:,:,:,:,:),
+     &  smo_h_mipl(:,:,:,:,:), smo_h_cppv(:,:,:,:,:),
      &  see_h_eael(:,:,:,:), see_h_emel(:,:,:,:),
      &  see_h_eiel(:,:,:,:), see_h_epel(:,:,:,:),
      &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
      &  sei_h_eipl(:,:,:,:), sei_h_eppl(:,:,:,:),
-     &  sni_s_papl(:,:,:,:),sni_s_pmpl(:,:,:,:),
-     &  sni_s_pipl(:,:,:,:),sni_s_pppl(:,:,:,:),
-     &  smo_s_mapl(:,:,:,:),smo_s_mmpl(:,:,:,:),
-     &  smo_s_mipl(:,:,:,:),smo_s_cppv(:,:,:,:),
+     &  sni_s_papl(:,:,:,:), sni_s_pmpl(:,:,:,:),
+     &  sni_s_pipl(:,:,:,:), sni_s_pppl(:,:,:,:),
+     &  smo_s_mapl(:,:,:,:), smo_s_mmpl(:,:,:,:),
+     &  smo_s_mipl(:,:,:,:), smo_s_cppv(:,:,:,:),
      &  see_s_eael(:,:,:), see_s_emel(:,:,:),
      &  see_s_eiel(:,:,:), see_s_epel(:,:,:),
      &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
@@ -202,11 +207,15 @@ csw 26feb2014
       intrinsic min, mod, abs, sqrt, log
       external subini, subend, xertst, ipgeti, ipgetr, rratio
       logical lnext
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
-     .  linearisation/1/, solregno/3/,
+     .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
      2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
@@ -251,8 +260,9 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(2,2+NATM))
+        allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
-          call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'
@@ -265,6 +275,8 @@ c not sure this is the right place
      >   call ipgeti ('eirene_mc_linearization', linearisation)
         call xertst (linearisation.eq.1 .or. linearisation.eq.0,
      .   'faulty input parameter linearisation')
+        call ipgeti ('b2stbc_feedback', b2stbc_feedback)
+        lfeedback = b2stbc_feedback.ne.0
         call ipgetr ('b2stbc_ndes', ndes)
         call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
         call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
@@ -282,8 +294,12 @@ c not sure this is the right place
         call ipgetr ('b2stbc_ndes_sol', ndes_sol)
         call xertst (0.0_R8.le.ndes_sol,
      1   'faulty internal parameter ndes_sol')
+        call ipgeti ('b2stbc_isfeedback', isfeedback)
+        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
+     1   'faulty internal parameter isfeedback')
+        feedback_strata=0
         call ipgeti ('eirene_nesepm_istra', nesepm_istra)
-        if(nesepm_istra.gt.0) then
+        if(nesepm_istra.gt.0.and.lfeedback) then
           call xertst (nesepm_istra.le.nstrat,
      1     'faulty internal parameter nesepm_istra')
           call xertst (crcstra(nesepm_istra).eq.'C',
@@ -295,44 +311,55 @@ c not sure this is the right place
             endif
           enddo
         endif
-        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+        if((ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
      *    volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &    nepedm_sol.gt.0.0_R8) then
+     &    nepedm_sol.gt.0.0_R8).and.lfeedback) then
           call xertst (nesepm_istra.gt.0,
      &     'No "C" stratum for feedback scheme specified !')
           icount = 0
           do istrai = 1, nstrat
-            if (crcstra(istrai).eq.'C' .and.
+            if (crcstra(istrai).eq.'C' .and. lfeedback .and.
      .          species_start(istrai).le.isfeedback .and.
      .          species_end(istrai).ge.isfeedback) icount = icount+1
           end do
           call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
      .     'Multiple definitions of puff strata, use nesepm_istra')
+          feedback_strata(b2espcr(isfeedback)-1)=nesepm_istra
         endif
+        do is = 0, nspecies-1
+          if (na_feedback_actuator(is).eq.1) then
+            do istrai = 1, nstrat
+              if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.eb2spcr(is+1) .and.
+     .          species_end(istrai).ge.eb2spcr(is+1)) then
+                  feedback_strata(is) = istrai
+              end if
+            end do
+          end if
+        end do
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
         call xertst (0.0_R8.le.private_flux_puff,
      1   'faulty internal parameter private_flux_puff')
         call ipgeti ('b2stbc_pfrregno1', pfrregno1)
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
-        call ipgeti ('b2stbc_isfeedback', isfeedback)
-        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
-     1   'faulty internal parameter isfeedback')
-        if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
-     1     .or.nesepm_pfr.gt.0.0_R8) then !{
-          call xertst (cbirso.le.pfrregno1.and.
-     1     pfrregno1.le.cbirso+cbnrso-1,
-     2     'faulty internal parameter pfrregno1')
-          call xertst (cbirso.le.pfrregno2.and.
-     1     pfrregno2.le.cbirso+cbnrso-1,
-     2     'faulty internal parameter pfrregno2')
-        endif !}
-        if (nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
-     1      nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
-          call xertst (cbirno.le.solregno.and.
-     1     solregno.le.cbirno+cbnrno-1,
-     2     'faulty internal parameter solregno')
+        if (lfeedback) then
+           if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+     1       .or.nesepm_pfr.gt.0.0_R8) then !{
+            call xertst (cbirso.le.pfrregno1.and.
+     1       pfrregno1.le.cbirso+cbnrso-1,
+     2       'faulty internal parameter pfrregno1')
+            call xertst (cbirso.le.pfrregno2.and.
+     1       pfrregno2.le.cbirso+cbnrso-1,
+     2       'faulty internal parameter pfrregno2')
+          endif !}
+          if (nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
+     1        nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
+            call xertst (cbirno.le.solregno.and.
+     1       solregno.le.cbirno+cbnrno-1,
+     2       'faulty internal parameter solregno')
+          endif
         endif
         call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
@@ -342,7 +369,7 @@ c not sure this is the right place
         call ipgeti ('eirene_ionising_core', ionising_core)
         if (ionising_core.eq.0)     ! for backward compatibility
      >   call ipgeti ('eirene_ionizing_core', ionising_core)
-        call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+        call xertst (ionising_core.ge.-nbc.and.ionising_core.le.1,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
@@ -394,7 +421,7 @@ csw 26feb2013
         call ipgeti('eirene_lvib',itmp)
         lvib=itmp.ne.0
         write(*,*) 'lvib = ',lvib
-        call xertst(.not.(ank_mods.ne.0 .and. ionising_core.ne.0),
+        call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr',no_sseicorr)
@@ -519,13 +546,16 @@ c*** recyc     : fudge factors for the sources in B2
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
+        if (na_feedback_actuator(is).eq.1)
+     >   call xertst(nesepm_istra.gt.0.or.maxval(feedback_strata).gt.0,
+     &    'No gas puff feedback strata set!')
         na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
      &                   na_feedback_actuator(is).eq.1.and.
-     &                   nesepm_istra.gt.0
+     &                   feedback_strata(is).gt.0
         if (na_feedback_on) then
           na_feedback_on = na_feedback_on .and.
-     &      species_start(nesepm_istra).le.eb2spcr(is+1).and.
-     &      species_end(nesepm_istra).ge.eb2spcr(is+1)
+     &      species_start(feedback_strata(is)).le.eb2spcr(is+1).and.
+     &      species_end(feedback_strata(is)).ge.eb2spcr(is+1)
         end if
       end do
 
@@ -533,6 +563,11 @@ c*** recyc     : fudge factors for the sources in B2
       tflux=0.0_R8
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
+        feedback_stratum=.false.
+        do is=0,nspecies-1
+          feedback_stratum=feedback_stratum.or.
+     .                     istrai.eq.feedback_strata(is)
+        end do
         flux_scale(istrai)=1.0_R8
         IF(crcstra(istrai).eq.'W') then !{
           do is = species_start(istrai),species_end(istrai) !{
@@ -585,7 +620,7 @@ c*** recyc     : fudge factors for the sources in B2
         else if(crcstra(istrai).eq.'C') then !}{
           if (ncall.ge.ncallfeedback.and.istrai.eq.nesepm_istra.and.
      &     (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
-     &      private_flux_puff.gt.0.0_R8)) then !{
+     &      private_flux_puff.gt.0.0_R8).and.lfeedback) then !{
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
      1         cbsna(0,isfeedback,pfrregno2))/neutral_sources_rescale
@@ -593,7 +628,7 @@ c*** recyc     : fudge factors for the sources in B2
               tflux(istrai)=
      1         cbsna(0,isfeedback,pfrregno1)/neutral_sources_rescale
             end if !}
-            if(ncall.eq.0) then
+            if(ncall.eq.ncallfeedback) then
               if(nesepm_pfr.gt.0.0_R8) then
                 write(*,*) '"nesepm_pfr" feedback on stratum ',istrai
               else if(ndes.gt.0.0_R8) then
@@ -604,28 +639,28 @@ c*** recyc     : fudge factors for the sources in B2
               endif
             endif
           else if (ncall.ge.ncallfeedback.and.nesepm_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
           else if (time_dep_puff(istrai)) then !}{
             if (tim.lt.gpdata(1,1,istrai)) then
@@ -657,15 +692,18 @@ c*** recyc     : fudge factors for the sources in B2
               endif
             end if
           else if (ncall.ge.ncallfeedback.and.
-     &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
+     &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-              if (na_feedback_target(is).gt.0.0_R8.and.
-     &            na_feedback_actuator(is).eq.1.and.
-     &            species_start(nesepm_istra).le.
-     &               eb2spcr(is+1)+nfluids(is+1).and.
-     &            species_end(nesepm_istra).ge.eb2spcr(is+1)) then !{
-                tflux(istrai)=tflux(istrai)+
-     .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+              if (feedback_strata(is).gt.0) then !{
+                if (na_feedback_target(is).gt.0.0_R8.and.
+     &              na_feedback_actuator(is).eq.1.and.
+     &              species_start(feedback_strata(is)).le.
+     &              eb2spcr(is+1)+nfluids(is+1).and.
+     &            species_end(feedback_strata(is)).ge.eb2spcr(is+1))
+     >           then !{
+                  tflux(istrai)=tflux(istrai)+
+     .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+                end if !}
               end if !}
             end do !}
           else !}{
@@ -722,9 +760,29 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 csw 25jan2011 LTIME=.false. in eirsrt call
         my_ltime=.false.
 
+#ifndef HPUX
+        filename='fort.44'
+#else
+        filename='ftn44'
+#endif
+        call find_file(filename,ex)
         call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
      *   b2brem,b2rad,b2qie(0),b2vdp,
      1   eirene_step_cpu)
+#ifdef B25_EIRENE
+        if(.not.ex) then
+          do is=1,nnatmi
+            if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
+          end do
+          do is=1,nnmoli
+            if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
+          end do
+          do is=1,nnioni
+            if(streql(textin(is-1),' ')) textin(is-1) = texts(is+nspam)
+          end do
+          call map_ion_components
+        end if
+#endif
         eircount=1
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
@@ -752,7 +810,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-       call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
@@ -811,20 +869,23 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         sum_wld(1:2,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
           sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
           sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
           do is = 1, nnatmi
             sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
      .       is,istrai)
-            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .       is,istrai)
+            if (ltns(2).ne.0)
+     >       sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
+     .        is,istrai)
           end do
         end do
-        write(*,*) 'Summed inner target data : '
+        write(*,*) 'Summed Western target data : '
         write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nnatmi)
-        write(*,*) 'Summed outer target data : '
+        write(*,*) 'Summed Eastern target data : '
         write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nnatmi)
       endif
@@ -876,7 +937,7 @@ cxpb
 
         if(dbg_eir_mc.gt.9 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
-          print *
+          write(*,'()')
           print *,'%%% Eirene data in B2 %%%',nlimps
           print '(a,5(i3,1x))','nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
@@ -889,8 +950,12 @@ cxpb
           write(hlp_frm4,'(a,i2,a)')
      ,     '(1p,i4,',1+nnatmi+nnmoli,'e11.4)'
           do k=0,nstrat !{
-            print *
-            print *,'wldna, wldnm, wldra, wldrm:',k
+            write(*,'()')
+            if (nnmoli.gt.0) then
+              print *,'wldna, wldnm, wldra, wldrm:',k
+            else
+              print *,'wldna, wldra:',k
+            end if
             write (*,hlp_frm1)
      ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
      ,         ('ra',i,i=1,nnatmi),('rm',i,i=1,nnmoli)
@@ -915,7 +980,7 @@ cxpb
               end if !}
             end do !}
 
-            print *
+            write(*,'()')
             print *,'wldpp:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=.false.
@@ -925,8 +990,12 @@ cxpb
               if (hlp_pr)
      >         write(*,hlp_frm3) j,(wldpp(j,i,k),i=1,nnplsi)
             end do !}
-            print *
-            print *,'wldpeb, wldpa, wldpm:',k
+            write(*,'()')
+            if (nnmoli.gt.0) then
+              print *,'wldpeb, wldpa, wldpm:',k
+            else
+              print *,'wldpeb, wldpa:',k
+            end if
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=wldpeb(j,k).ne.0.0_R8
               do i=1,nnatmi !{
@@ -940,7 +1009,7 @@ cxpb
      ,           (wldpm(j,i,k),i=1,nnmoli)
             end do !}
           end do !}
-          print *,'%%%'
+          print '(a)','%%%'
         end if !}
         if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
@@ -1146,8 +1215,8 @@ c!###}
             do ix=1,nx !{
               do iy=1,ny !{
                 do is=0,ns-1 !{
+                  ls=b2eatcr(is)
                   if(.not.is_neutral(is)) then !{
-                    ls=b2eatcr(is)
                     if(lstrascl(istrai,ls).gt.0) then !{
                       sni(ix,iy,fluids_list(is),istrai)=
      *                   sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
@@ -1238,7 +1307,7 @@ c!###}
                   wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
                 end if !}
 c!###{
-c              if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
+c               if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
 c     ,          ' @@@ istrai,j,ls,log,scl,wldpa,wldna,wldra',
 c     ,          istrai,j,ls,hlp_log,hlp_scl(ls),wldpa(j,ls,istrai),
 c     ,                       wldna(j,ls,istrai),wldra(j,ls,istrai)
@@ -1325,8 +1394,8 @@ c>>>
             do ix=1,nx !{
               do iy=1,ny !{
                 do is=0,ns-1 !{
+                  ls=b2eatcr(is)
                   if(.not.is_neutral(is)) then !{
-                    ls=b2eatcr(is)
                     if(lstrascl(istrai,ls).gt.0) then !{
                       sni(ix,iy,fluids_list(is),istrai)=
      *                 sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
@@ -1550,8 +1619,8 @@ c*** Here only the second pass of correction
             end do !}
 
             do is=0,ns-1 !{
+              ls=b2eatcr(is)
               if(.not.is_neutral(is)) then !{
-                ls=b2eatcr(is)
                 if(lstrascl(istrai,ls).gt.0) then !{
                   do ix=1,nx !{
                     do iy=1,ny !{
@@ -1589,6 +1658,10 @@ c*** Here only the second pass of correction
                   end do !}
                 end if !}
               end if !}
+            end do !}
+          else if(crcstra(istrai).eq.'T') then !}{
+            do ls = 1,nnatmi !{
+              hlp_scp(ls,istrai)=1.0_R8
             end do !}
           end if !}
 c!###{
@@ -1733,8 +1806,8 @@ c!###}
 
 
 csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
-c             (this is new and similar to Kotov's SOLPS4 style, it is NOT IYSs
-c              style)
+c             (this is new and similar to SOLPS4 style from Kotov,
+c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
         allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    size(sni,3), size(sni,4)))
@@ -1869,7 +1942,7 @@ c              style)
        endif
        ih_end=ihist
       else if (nhist.gt.1) then
-csw 25feb2014  fix IYS's version of source term averaging (running average)
+csw 25feb2014  fix IYS version of source term averaging (running average)
 c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
         ihist=ihist+1
@@ -2305,15 +2378,15 @@ c   and apply linearisation
 * by ns
         recyc_hlp=0.0_R8
         do is=0,ns-1 !{
+          j=b2eatcr(is)
+          if(use_recyceir.gt.0) then
+            recyctmp=recyceir(istrai)
+          else
+            recyctmp=recyc(is,istrai)
+          endif
+          recyc_hlp=max(recyc_hlp,recyctmp)
           if(.not.is_neutral(is)) then !{
             ifl=fluids_list(is)
-            j=b2eatcr(is)
-            if(use_recyceir.gt.0) then
-              recyctmp=recyceir(istrai)
-            else
-              recyctmp=recyc(is,istrai)
-            endif
-            recyc_hlp=max(recyc_hlp,recyctmp)
             do iy=-1,ny !{
               do ix=-1,nx !{
                 if(leftix(ix,iy).ne.-2 .and.
@@ -2672,7 +2745,7 @@ c*** before correction (r), after correction (c), after iteration (i)
                   endif
                 end if !}
               end do !}  ! ix
-            end do !}  !iy
+            end do !}  ! iy
           end if !}
         end do !}  ! is
         do iy=-1,ny !{
@@ -3204,7 +3277,7 @@ c
 !                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radarr(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
                  rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
                  rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
                  recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
@@ -3231,7 +3304,7 @@ c
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
-     .  SUM(radarr(1:nx,1:ny)), rad_neutr
+     .  SUM(radarr(0:nx-1,0:ny-1)), rad_neutr
 
       if(.not.filedata(ntrc_int)) then
         write(*,'(a,1p,1000g12.4)')
@@ -3259,12 +3332,27 @@ cxpb  core recycling into ions of the highest ionisation stage
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
-        do iy = -1, ny
-          do ix = -1, nx
-            do j = 1, nnatmi
+        do j = 1, nnatmi
+          ! compute the average density on the core boundary (t1)
+          t1 = 0.0_R8
+          do iy = -1, ny
+            do ix = -1, nx
               if (bottomiy(ix,iy).eq.-2 .and.
      &            on_closed_surface(ix,iy)) then
+                t1 = t1 +
+     &           na(topix(ix,iy),topiy(ix,iy),ishigh(j))*
+     &           gs(topix(ix,iy),topiy(ix,iy),1)
+              end if
+            end do
+          end do
+          t1 = t1/core_surface
+          do iy = -1, ny
+            do ix = -1, nx
+              if (bottomiy(ix,iy).eq.-2 .and.
+     &            on_closed_surface(ix,iy)) then
+! the recycling flux is modulated as per the poloidal density distribution
                 t0=core_flux(j)*
+     *           (na(topix(ix,iy),topiy(ix,iy),ishigh(j))/t1)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
@@ -3304,9 +3392,9 @@ cxpb  core recycling into ions of the highest ionisation stage
                   endif
                 end if !}
               endif
-            enddo
-          enddo
-        enddo
+            enddo  !ix}
+          enddo  !iy}
+        enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
@@ -3315,13 +3403,16 @@ cxpb  core recycling into ions of the highest ionisation stage
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     1       write(*,'(a,i3,1x,i3,a,i3)')
+     .       'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
-C           call xerrab ('eirene_mc: bccon <> 13')
+c            call xerrab
+c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     .       'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif
         enddo
@@ -3332,6 +3423,20 @@ C           call xerrab ('eirene_mc: bccon <> 13')
         cum_volrec=cum_volrec+VOLSUMN(istrai)
       enddo
       cum_volrec=-cum_volrec/qe
+
+! { IYS 12.01.2018
+      sna_eir = 0.0_R8
+      if (ank_tracing .gt. 0) then    
+        do is = 1, nspecies
+          do iy = -1, ny
+            do ix = -1, nx
+              sna_eir(is) = sna_eir(is) +
+     &           sna0(ix,iy,0,eb2spcr(is)+1) + 
+     &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 12.01.2018 }
 
       if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
         do istrai=1, nstrat !{
@@ -3407,6 +3512,7 @@ csw 26feb2014
       endif
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
+      deallocate(feedback_strata)
 
       return
 

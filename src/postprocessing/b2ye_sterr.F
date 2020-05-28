@@ -1,5 +1,5 @@
 
-      subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2, 
+      subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2,
      .                      meansample)
 
       use b2mod_types
@@ -25,7 +25,7 @@
 *  3. description
 *
 *     For a detailed description of the equations see K. Ghoos et al.,
-*     Numerical error estimation in Random Noise coupled plasma edge 
+*     Numerical error estimation in Random Noise coupled plasma edge
 *     simulations in nuclear fusion reactors, M&C2017
 *
 *     This routine performs the following steps.
@@ -64,7 +64,7 @@
         meangroup2 = 0.0_R8
         meanbatch2 = 0.0_R8
         rho = 0.0_R8
-	logrho = 0.0_R8
+        logrho = 0.0_R8
         tau = 0.0_R8
       end if
 
@@ -80,6 +80,11 @@
       M = NN/30
       if (first_call) then
         write (*,*) ' Size of groups overlapping batches: ',M
+        if (NN.lt.30) then
+          write (*,*)' This should be at least 1, please continue',
+     ,               'averaging procedure'
+          call xerrab('Insufficient number of batches')
+        endif
         if (M.lt.30) then
           write (*,*) ' Preferably, this should be larger than 30, ',
      ,                'consider continue the averaging'
@@ -101,6 +106,7 @@
       ncutoff = 30
       ifail = 0
       check = .true.
+      nfit = 0
       CALL G13ABF(meanbatch, NN, NN-ncutoff, meansamplebis, varbatchbis,
      .            rho, STAT, IFAIL )
 *     --- for fit only take samples before the first one that is

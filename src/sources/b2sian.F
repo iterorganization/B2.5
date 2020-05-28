@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian (nx, ny, isb, bb, vol, hx, hy, hz, qz, fchanml, !srv 25.09.17 {
-     &           smban)
+      subroutine b2sian (nx, ny, isb, facdrift, fac_ExB, bb, vol,        !srv 15.04.19 25.09.17 {
+     &           hx, hy, hz, qz, fchanml, smban)
       use b2mod_types
       use b2mod_constants
       use b2mod_indirect
@@ -13,6 +13,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
+     &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                    !srv 15.04.19
      &   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &   fchanml(-1:nx,-1:ny,0:1)
@@ -32,11 +33,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, ix, iy, k
       integer, save :: iout = 0
       character chns*3, chark*1
       real (kind=R8) ::
-     *    phm0
+     *    phm0, t0                                                       !srv 15.04.19
       save ncall, phm0
 *   ..procedures
       real (kind=R8) ::
@@ -58,8 +59,6 @@
        call ipgetr ('b2sian_phm0', phm0)
        call ipgeti ('b2sian_iout', iout)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8
@@ -68,13 +67,15 @@
         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+     &        bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1 .or.
+     &        bb(ix,iy,2).eq.0.0_R8) then
             smban(ix,iy,0) = 0.0e0_R8
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8
             smban(ix,iy,3) = 0.0e0_R8
            else
-            smban(ix,iy,0) = -phm0*hz(ix,iy)*hy1(ix,iy)*
+            t0= phm0*min(facdrift(ix,iy),fac_ExB(ix,iy))                 !srv 15.04.19
+            smban(ix,iy,0) = -t0*hz(ix,iy)*hy1(ix,iy)*                   !srv 15.04.19
      &          bb(ix,iy,0)/bb(ix,iy,2)*bb(ix,iy,3)*
      &          (fchanml(ix,iy,1)+
      &           fchanml(topix(ix,iy),topiy(ix,iy),1))*0.5_R8

@@ -47,8 +47,6 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
       real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
-      real (kind=R8) :: Cp, Kappa, mass_density
-      external Cp, Kappa, mass_density
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -60,8 +58,7 @@ c  Tp = Target surface temperature (K).
 #else
       external pdedef, bndary, D03PCF
 #endif
-      integer ncall
-      data ncall/0/
+      integer, save :: ncall = 0
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
       common /location/ iwall, ns
@@ -230,7 +227,7 @@ cxpb  Will need to update this later for a better computation
      .     (Tc + KBc/KAc) *
      .     exp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
-c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
+c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',xn
       enddo
       xx(1) = x(1)
       Tl = uu(2)
@@ -810,14 +807,14 @@ c....................................................................
       end function qrad
 
 c....................................................................
-c   Ref: 1) C. Garc'ia Rosales, Erosion processes in plasma-wall
+c   Ref: 1) C. Garcia Rosales, Erosion processes in plasma-wall
 c           interactions, J. Nucl. Mater. 211 (1994) Pg.202-214.
 c        2) R.A. Langley, Evaporation, Data Compendium for Plasma
 c           Surface Interactions, Special Issue, NUCLEAR FUSION,
 c           IAEA, Vienna, (1984) 55-61.
 c  Table of A and B for some first wall materials in Fusion research:
 c  (Ref (2) above).
-c  (note that A and B are provided such that the vappres is in Pascals.
+c  (note that A and B are provided such that the vappres is in Pascals).
 c  element    |  A       |  B      |
 c  Aluminum   | -16165   | 10.91   |
 c  Beryllium  | -16720   | 11.61   |
@@ -845,7 +842,7 @@ c     Steel   | -14321.9 | 9.44    |
       external subini, subend, ipgetr
       intrinsic min
 
-c  Ts       ->  temperature of the Graphite plate in Kelvin.
+c  Ts       ->  temperature of the plate in Kelvin.
 c  flxthev  ->  Flux of target atoms evaporated ( / m^2 /s )
 c  qevap -> Energy lost (Joules / m^2 / s)
 

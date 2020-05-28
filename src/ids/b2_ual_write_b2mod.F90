@@ -119,7 +119,9 @@
 !!      (b2fgmtry, b2fstate etc.) and run the following command:
 !!
 !!      @verbatim
-!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot <shot> --run <run> --username <username> --device <device> --version <version> --step <step>
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot <shot> --run <run> --username <username> --device <device> --version <version>
+!!          --step <step>
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -133,7 +135,8 @@
 !!
 !!      Example of the command:
 !!      @verbatim
-!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
 !!      @endverbatim
 !!
 !!      \b References:
@@ -158,16 +161,16 @@
 
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of "un*formatted".
 !!
@@ -215,23 +218,9 @@ program b2_ual_write_b2mod
     use b2mod_ual
     use b2mod_grid_mapping
     use b2mod_ual_io
-    use ids_schemas     ! IGNORE
-                        !! These are the Fortran type definitions for the
-                        !! Physics Data Model
-    use ids_routines    ! IGNORE
-                        !! These are the Access Layer routines + management of
-                        !! IDS structures
-    use ids_assert      ! IGNORE
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
+#if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
     use ids_grid_examples       ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
+#endif
 
     implicit none
 
@@ -351,12 +340,13 @@ program b2_ual_write_b2mod
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   treename, shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version )
@@ -387,7 +377,7 @@ contains
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
             !< (i. e. solps-iter, iter, aug)
@@ -408,10 +398,17 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
+#if IMAS_MINOR_VERSION < 15
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
             &   grid_subset(gridSubset_index)%identifier%index
+#else
+        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#endif
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
         call imas_close( idx )

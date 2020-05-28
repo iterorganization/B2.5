@@ -64,8 +64,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
-     &        ixl, iyl, ixb, iyb
+      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr
       integer, save :: iout = 0                                      !srv 16.09.02
       integer, save :: lim_flux = 0, mdf_fhi = 0                     !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
@@ -73,7 +72,7 @@
       real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                          !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8       !srv 02.10.17
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8       !srv 02.10.17
       real (kind=R8) ::
      *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0,
      1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
@@ -137,169 +136,13 @@
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      fhiPSch = 0.0e0_R8                                              !srv 13.10.06
-      coni    = 0.0e0_R8                                              !srv 02.01.07
-      if(maxval(facdrift).ne.0.0e0_R8) then
-*   ..compute P.Sch heat x-flux                                       !srv 13.10.06 {
-!      iy = -1
-!       do ix = -1, nx
-!	  if(leftix(ix,iy).eq.-2) then
-!         fhiPSch(ix,iy,0)=0.0e0_R8
-!	  else
-!	   do is = 0, ns-1
-!	    if(za(is) .ne. 0.0e0_R8) then
-!          fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.5e0_R8*(
-!     &    cddi(ix,topiy(ix,iy),1,is)*
-!     &    (na(ix,topiy(ix,iy),is)*ti(ix,topiy(ix,iy))**2-
-!     &                        na(ix,iy,is)*ti(ix,iy)**2)+
-!     &    cddi(leftix(ix,iy),topiy(ix,iy),1,is)*
-!     &     (na(leftix(ix,iy),topiy(ix,iy),is)*
-!     &      ti(leftix(ix,iy),topiy(ix,iy))**2
-!     &                 -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)
-!     &                               )
-!	    endif
-!	   enddo
-!	  endif
-!	 enddo
-
-      do iy = 0, ny-1
-       do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2) then
-         fhiPSch(ix,iy,0) = 0.0e0_R8
-	   coni(ix,iy,0,:) = 0.0e0_R8
-	  else
-	   do is = 0, ns-1
-	    if(.not.is_neutral(is)) then
-	     ixl = leftix(ix,iy)
-	     iyl = leftiy(ix,iy)
-           fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.25e0_R8*PSch*(
-     &     cddi(topix(ix,iy),topiy(ix,iy),1,is)*
-     &     (na(topix(ix,iy),topiy(ix,iy),is)*
-     &      ti(topix(ix,iy),topiy(ix,iy))**2-na(ix,iy,is)*ti(ix,iy)**2)+
-     &     cddi(topix(ixl,iyl),topiy(ixl,iyl),1,is)*
-     &     (na(topix(ixl,iyl),topiy(ixl,iyl),is)*
-     &      ti(topix(ixl,iyl),topiy(ixl,iyl))**2
-     &                -na(ixl,iyl,is)*ti(ixl,iyl)**2)+
-     &     cddi(ixl,iyl,1,is)*
-     &     (na(ixl,iyl,is)*ti(ixl,iyl)**2
-     &                     -na(bottomix(ixl,iyl),bottomiy(ixl,iyl),is)*
-     &                      ti(bottomix(ixl,iyl),bottomiy(ixl,iyl))**2)+
-     &     cddi(ix,iy,1,is)*
-     &     (na(ix,iy,is)*ti(ix,iy)**2
-     &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
-     &                               )
-           coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
-     *               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-           coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
-     &     cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-	    endif
-	   enddo
-	  endif
-	 enddo
-      enddo
-
-!      iy = ny
-!       do ix = -1, nx
-!	  if(leftix(ix,iy).eq.-2) then
-!         fhiPSch(ix,iy,0)=0.0e0_R8
-!	  else
-!	   do is = 0, ns-1
-!          fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.5e0_R8*(
-!     &     cddi(leftix(ix,iy),iy,1,is)*
-!     &    (na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2
-!     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
-!     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)+
-!     &     cddi(ix,iy,1,is)*
-!     &    (na(ix,iy,is)*ti(ix,iy)**2
-!     &             -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!	   enddo
-!	  endif
-!	 enddo
-
-*   ..compute P.Sch y-flux
-      iy = -1
-      fhiPSch(:,iy,1)=0.0e0_R8
-      do iy = 0, ny
-       do ix = -1, nx
-	  do is = 0, ns-1
-!	   if(leftix(ix,iy).eq.-2) then
-!          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
-!     &     cddi(rightix(ix,iy),iy,0,is)*
-!     &     (na(rightix(ix,iy),iy,is)*ti(rightix(ix,iy),iy)**2
-!     &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
-!     &     cddi(rightix(ix,iy),bottomiy(ix,iy),0,is)*
-!     &     (na(rightix(ix,iy),bottomiy(ix,iy),is)*
-!     &             ti(rightix(ix,iy),bottomiy(ix,iy))**2
-!     &           -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!	   elseif(rightix(ix,iy).eq.nx+1) then
-!          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
-!     &     cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
-!     &                -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)+
-!     &     cddi(ix,bottomiy(ix,iy),0,is)*
-!     &     (na(ix,bottomiy(ix,iy),is)*ti((ix),bottomiy(ix,iy))**2
-!     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
-!     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)
-!     &                               )
-!	   else
-	  if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-	    fhiPSch(ix,iy,1) = 0.0e0_R8
-	    coni(ix,iy,1,:)  = 0.0e0_R8
-	  else
-	    ixb = bottomix(ix,iy)
-	    iyb = bottomiy(ix,iy)
-          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.25e0_R8*PSch*(
-     &     cddi(rightix(ix,iy),rightiy(ix,iy),0,is)*
-     &      (na(rightix(ix,iy),rightiy(ix,iy),is)*
-     &       ti(rightix(ix,iy),rightiy(ix,iy))**2
-     &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
-     &     cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
-     &                -na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                 ti(leftix(ix,iy),leftiy(ix,iy))**2)+
-     &     cddi(bottomix(ix,iy),bottomiy(ix,iy),0,is)*
-     &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &       ti(bottomix(ix,iy),bottomiy(ix,iy))**2
-     &                         -na(leftix(ixb,iyb),leftiy(ixb,iyb),is)*
-     &                          ti(leftix(ixb,iyb),leftiy(ixb,iyb))**2)+
-     &     cddi(rightix(ixb,iyb),rightiy(ixb,iyb),0,is)*
-     &      (na(rightix(ixb,iyb),rightiy(ixb,iyb),is)*
-     &       ti(rightix(ixb,iyb),rightiy(ixb,iyb))**2
-     &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
-     &                               )
-          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*          ! 0.25*2 !srv 02.01.07 {
-     &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
-          coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*          ! 0.25*2
-     &       cddi(ix,iy,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                        ti(leftix(ix,iy),leftiy(ix,iy))       !srv 02.01.07 }
-	   endif
-	  enddo
-	 enddo
-      enddo
-
-	do iy = -1, ny
-       do ix = 0, nx
-        fhiPSch(ix,iy,:) = 2.5e0_R8*fhiPSch(ix,iy,:)*facdrift(ix,iy)
-        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)          !srv 02.01.07
-	 enddo
-	enddo
-
-c  ..set null flux in guard cells  ?
-!      fhiPSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case 
-!      fhiPSch(nx, :,1)=0.0e0_R8
-!      fhiPSch( :,-1,:)=0.0e0_R8
-!      fhiPSch( :,ny,0)=0.0e0_R8
-	endif
-
+      call b2tipsch (nx, ny, ns, facdrift, vol, hx, hy, qz,
+     1  na, ti, cddi, coni, fhiPSch)
+      
       fhi_mdf = 0.0e0_R8                                              !srv 13.10.06
 
 * ..compute fluxes and linearisation
       do is = 0, ns-1
-!wdk w0 now contains contributions from drifts, while probably only parallel kinetic energy
-!wdk should be taken into account here !?!
         w0(:,:,is) = kinrgy(:,:,is)/(am(is)*mp)
       end do
 *   ..compute fhix, floix, conix
@@ -343,7 +186,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                coni0 = 4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)
                t1 = dim ( coni0,
      .          abs(floi0) *
-     .          max(0.0_R8, 
+     .          max(0.0_R8,
      .           min(w0(ix,iy,is),w0(leftix(ix,iy),leftiy(ix,iy),is)))/
      .          max(cutlo,
      .              w0(ix,iy,is)+w0(leftix(ix,iy),leftiy(ix,iy),is)) )
@@ -409,11 +252,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          t1 = t0/(1.0_R8+t0)
          dti0_mdf = dti/(1.0_R8+t0_mdf)             !srv 18.08.08 {
          t1_mdf = t0_mdf/(1.0_R8+t0_mdf)
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           fllimi(ix,iy) = 1.0_R8+t0
-	 else
+         else
           fllimi(ix,iy) = 1.0_R8+t0_mdf
-	 endif                                      !srv 18.08.08 }
+         endif                                      !srv 18.08.08 }
          if (no_hybr.eq.0) then
            fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                          +ti(ix,iy))/2.0_R8-
@@ -619,22 +462,22 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          fhit(ix,iy,0) = fhi(ix,iy,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0)+cum_flo_vaecrb)*
      &    (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           floi(ix,iy,0) = floi0-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1)**2
-	 else
+         else
           floi(ix,iy,0) = floi0_mdf-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1_mdf)**2
-	 endif
+         endif
          if (no_hybr.eq.0) then
-	  if(mdf_fhi.eq.0) then
+          if(mdf_fhi.eq.0) then
            coni(ix,iy,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)     !srv 02.01.07
-	  else
+          else
            coni(ix,iy,0,0) = abs(floi0_mdf/2.0_R8)+
      &                       coni0_mdf/(1.0_R8+t0_mdf)     !srv 02.01.07
-	  endif
+          endif
          else
            coni(ix,iy,0,0) = coni0/(1.0_R8+t0)                       !srv 02.01.07
          endif
@@ -723,12 +566,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              endif
            enddo
          endif
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           floi(ix,iy,1) = floi0+
      1     2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
-	 else
+         else
           floi(ix,iy,1) = floi0+1.5_R8*cum_flo_vaecrb
-	 endif
+         endif
          if (no_hybr.eq.0) then
            coni(ix,iy,1,0) = hybr(floi(ix,iy,1),chci(ix,iy,1))    !srv 02.01.07
            fhi(ix,iy,1) = floi(ix,iy,1)*

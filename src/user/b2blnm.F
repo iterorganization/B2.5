@@ -11,9 +11,6 @@
       use b2mod_external
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
 c
 c  version : 03.03.2001 00:37
 c
@@ -115,10 +112,10 @@ c
      +  ndiv, nd_tmp, ndv_tmp,
      +  equdiv,
      +  prsup, prstg, flmup,
-     ,     flmtg, prsnu, prsmf,
-     ,     rsfrc, rlptg, rlmup,
-     ,     rlmtg, rlfnu, rlfmf,
-     ,     rlres,
+     ,  flmtg, prsnu, prsmf,
+     ,  rsfrc, rlptg, rlmup,
+     ,  rlmtg, rlfnu, rlfmf,
+     ,  rlres,
      +  hlp_div, hlp_hdv,
      +  lun,
      +  i, j, ic, is, ix, iy, nv,
@@ -143,10 +140,12 @@ c
       hlp_fo=0.0_R8
       pr=ne*te
       do is = 0, ns-1
+        if (is_neutral(is)) cycle
         pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
      .   na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
       end do
       do is = 0, ns_ext-1
+        if (is_ext_neutral(is)) cycle
         pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
      .   na_ext(-1:nx,-1:ny,is)*ta_ext(-1:nx,-1:ny,is)
       end do
@@ -288,6 +287,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
   700   format('#   ',3i8/'#  ',a)
@@ -301,7 +305,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvm) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             go to 98
@@ -326,15 +330,15 @@ c*** It was a major change of the file format - impossible to continue
         end if
 c
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           go to 98
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         nd_tmp=nqudiv
@@ -349,16 +353,16 @@ c*** New file
      -                                                   nd_tmp*ndv_tmp
       return
 c======================================================================
- 90   write(*,*) 'b2blnm: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
- 92   write(*,*) 'b2blnm: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnm: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
 c*** Prepare the formats for the printout
- 98   write(hlp_frf,710) nqudiv
+   98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
   710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
@@ -377,21 +381,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnm: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

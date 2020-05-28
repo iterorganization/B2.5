@@ -7,16 +7,19 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
+      character*12 hlp_frm
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,
      1   y_transform
-      integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
+      integer ix,ixl,ixr,iy,is,iiso,lnblnk
+      integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
       logical iniso
+      integer len_of_digits
       intrinsic min,max,sqrt
-      external subini, subend, xertst, lnblnk
+      external subini, subend, xertst, lnblnk, len_of_digits
       dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c     the line format common
       character*10 linefmt
@@ -36,6 +39,7 @@ c      if(nidim .ne. 2) call line(2)
       call xertst(iystart.le.iyend, 'faulty parameter iyend')
       if (b2plot_debug.ge.6)
      > write(6,*) ' iystart, iyend : ', iystart, iyend
+      write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(ix),',a)'
       if (.not.map_to_midplane) then
         ixx = ix
         ixc = ix
@@ -77,6 +81,62 @@ c      if(nidim .ne. 2) call line(2)
           ixc = rightcut(1)
         end if
       endif
+      if (iystart.le.jsep) then
+        ixl=ixc
+        ixr=ixc
+      else
+        ixl=ixx
+        ixr=ixx
+      end if
+      ysepl=iystart
+      iy=iystart
+      iniso=.false.
+      do while (ixl.gt.-1 .and. .not.iniso .and.
+     &          leftix(ixl,iy).eq.ixl-1)
+        ixl=ixl-1
+        iniso=.false.
+        do iiso = 1,nniso
+          iniso = iniso .or.
+     &     (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
+     &      iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+        end do
+      end do
+      if(.not.iniso .and. ixl.ne.-1) then
+        do while (ysepl.lt.iyend .and.
+     &            leftix(ixl,ysepl).ne.ixl-1)
+          ysepl=ysepl+1
+        end do
+      end if
+      if(ysepl.eq.iystart) ysepl=iyend
+      ysepr=iystart
+      iniso=.false.
+      do while (ixr.lt.nx .and. .not.iniso .and.
+     &          rightix(ixr,iy).eq.ixr+1)
+        ixr=ixr+1
+        iniso=.false.
+        do iiso = 1,nniso
+          iniso = iniso .or.
+     &     (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
+     &      iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+        end do
+      end do
+      if(.not.iniso .and. ixr.ne.nx) then
+        do while(ysepr.lt.iyend .and.
+     &           rightix(ixr,ysepr).ne.ixr+1)
+          ysepr=ysepr+1
+        end do
+      end if
+      if(ysepr.eq.iystart) ysepr=iyend
+      if (iyref.eq.-2) then
+        ysep=min(ysepr,ysepl)
+        if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
+     &     (iystart.le.ysep.and.iyend.ge.ysep)) then
+          if (b2plot_debug.ge.6)
+     >      write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
+        endif
+      else
+        ysep=iyref
+      endif
       do is=0,ndim(3,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ix,iystart,is,iwrk)
@@ -112,10 +172,12 @@ c      if(nidim .ne. 2) call line(2)
           enddo
           if (iystart.le.jsep+1.and.iyend.ge.jsep+1) then
             iy=jsep+1
-            wrk(iy)=wrk(iy-1)+0.5_R8*dist(cr(ixc,iy-1),cz(ixc,iy-1),
-     1                                    cr(ixc,iy),  cz(ixc,iy))
-     2                       +0.5_R8*dist(cr(ixx,iy-1),cz(ixx,iy-1),
-     1                                    cr(ixx,iy),  cz(ixx,iy))
+            wrk(iy)=wrk(iy-1)+dist(cr(ixc,iy-1),cz(ixc,iy-1),
+     1                    0.5_R8*(crx(ixc,iy-1,2)+crx(ixc,iy-1,3)),
+     2                    0.5_R8*(cry(ixc,iy-1,2)+cry(ixc,iy-1,3)))
+     2                       +dist(cr(ixx,iy),cz(ixx,iy),
+     1                    0.5_R8*(crx(ixx,iy,0)+crx(ixx,iy,1)),
+     2                    0.5_R8*(cry(ixx,iy,0)+cry(ixx,iy,1)))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           end if
@@ -125,75 +187,29 @@ c      if(nidim .ne. 2) call line(2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
-          if (iyref.eq.-2) then
-            if (iystart.le.jsep) then
-              ixl=ixc
-              ixr=ixc
-            else
-              ixl=ixx
-              ixr=ixx
-            end if
-            ysepl=iystart
-            iy=iystart
-            iniso=.false.
-            do while (ixl.gt.-1 .and. .not.iniso .and.
-     &                leftix(ixl,iy).eq.ixl-1)
-              ixl=ixl-1
-              iniso=.false.
-              do iiso = 1,nniso
-                iniso = iniso .or.
-     &           (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
-     &            iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-              end do
-            end do
-            if(.not.iniso .and. ixl.ne.-1) then
-              do while (ysepl.lt.iyend .and.
-     &                  leftix(ixl,ysepl).ne.ixl-1)
-                ysepl=ysepl+1
-              end do
-            end if
-            if(ysepl.eq.iystart) ysepl=iyend
-            ysepr=iystart
-            iniso=.false.
-            do while (ixr.lt.nx .and. .not.iniso .and.
-     &                rightix(ixr,iy).eq.ixr+1)
-              ixr=ixr+1
-              iniso=.false.
-              do iiso = 1,nniso
-                iniso = iniso .or.
-     &           (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
-     &            iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-              end do
-            end do
-            if(.not.iniso .and. ixr.ne.nx) then
-              do while(ysepr.lt.iyend .and.
-     &                 rightix(ixr,ysepr).ne.ixr+1)
-                ysepr=ysepr+1
-              end do
-            end if
-            if(ysepr.eq.iystart) ysepr=iyend
+          if (iyref.ne.-2) then
             if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
-     &         (iystart.le.min(ysepr,ysepl).and.
-     &          iyend  .ge.min(ysepr,ysepl))) then
-!            dsep=0.5_R8*(wrk(min(ysepr,ysepl))+wrk(min(ysepr,ysepl)-1))
-              dsep=wrk(min(ysepr,ysepl))-
-     1         dist(
-     1          cr(ixx,min(ysepr,ysepl)),cz(ixx,min(ysepr,ysepl)),
-     1            0.5_R8*(crx(ixx,min(ysepr,ysepl),0)+
-     1                    crx(ixx,min(ysepr,ysepl),1)),
-     2            0.5_R8*(cry(ixx,min(ysepr,ysepl),0)+
-     2                    cry(ixx,min(ysepr,ysepl),1)))
-              if (b2plot_debug.ge.6)
-     >          write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
+     &         (iystart.le.ysep.and.iyend.ge.ysep)) then
+              dsep=wrk(ysep)+
+     1         dist(cr(ixx,ysep),cz(ixx,ysep),
+     1            0.5_R8*(crx(ixx,ysep,2)+crx(ixx,ysep,3)),
+     2            0.5_R8*(cry(ixx,ysep,2)+cry(ixx,ysep,3)))
             else
               dsep=0.0_R8
             endif
           else
             if (iystart.le.iyref .and. iyend.ge.iyref) then
-              dsep=wrk(iyref)-
-     1         dist(cr(ixx,iyref),cz(ixx,iyref),
-     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),
-     2            0.5_R8*(cry(ixx,iyref,0)+cry(ixx,iyref,1)))
+              if (iyref.le.jsep) then
+                dsep=wrk(iyref)+
+     1           dist(cr(ixc,iyref),cz(ixc,iyref),
+     1              0.5_R8*(crx(ixc,iyref,2)+crx(ixc,iyref,3)),
+     2              0.5_R8*(cry(ixc,iyref,2)+cry(ixc,iyref,3)))
+              else
+                dsep=wrk(iyref)+
+     1           dist(cr(ixx,iyref),cz(ixx,iyref),
+     1              0.5_R8*(crx(ixx,iyref,2)+crx(ixx,iyref,3)),
+     2              0.5_R8*(cry(ixx,iyref,2)+cry(ixx,iyref,3)))
+              endif
             else
               dsep=0.0_R8
             endif
@@ -202,17 +218,6 @@ c      if(nidim .ne. 2) call line(2)
             wrk(iy)=wrk(iy)-dsep
           enddo
         endif
-        if (.not.map_to_midplane) then
-          write(tmpstring2,'('' <ix = '',i4,''>'')') ix
-        else
-          write(tmpstring2,
-     .     '('' <ix = '',i4,''> (mapped to midplane)'')') ix
-        endif
-        tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
-        call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
           lmax=values(10)
@@ -228,6 +233,17 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
+          if (map_to_midplane) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
+     &       '(mapped to midplane)'
+          else
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
+          endif
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmin=values(11)
@@ -267,6 +283,10 @@ c      if(nidim .ne. 2) call line(2)
           elseif(dcol.lt.0) then
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             endif
           endif
 #endif
           do iy=iystart,iyend-1
@@ -293,6 +313,23 @@ c      if(nidim .ne. 2) call line(2)
 #endif
             endif
           enddo
+          if (plotting_sep.and.iystart.le.ysep.and.iyend.gt.ysep) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(ysep)+wrk(ysep+1)).gt.0.0_R8.or.linlog.le.2)
+     >        call lined_d((wrk(ysep)+wrk(ysep+1))/2.0_R8,lmin,
+     1                     (wrk(ysep)+wrk(ysep+1))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
@@ -320,16 +357,11 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
-            xmin=values(11)
+          if(values(3).ne.values(4)) then
+            xmin=values(3)
+            xmax=values(4)
           else
             xmin=min(wrk(iystart),wrk(iyend))
-          endif
-          if(values(12).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
-            xmax=values(12)
-          else
             xmax=max(wrk(iystart),wrk(iyend))
           endif
           if(xmin.eq.xmax) then
@@ -342,7 +374,12 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          write(tmpstring2,'('' <ix = '',i4,''>'')') ix
+          write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
@@ -361,9 +398,15 @@ c      if(nidim .ne. 2) call line(2)
              if(typeofplot.eq.3) dcol=dcol+1
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             endif
           endif
 #endif
           do iy=iystart,iyend-1
+            if(wrk(iy+1).lt.xmin) cycle
+            if(wrk(iy).gt.xmax) cycle
             call lined_d(
      1       wrk(iy),
      2       min(lmax,max(lmin,work(ix,iy,is,iwrk))),
@@ -387,6 +430,23 @@ c      if(nidim .ne. 2) call line(2)
 #endif
             endif
           enddo
+          if (plotting_sep.and.iystart.le.ysep.and.iyend.gt.ysep) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(ysep)+wrk(ysep+1)).gt.0.0_R8.or.linlog.le.2)
+     >        call lined_d((wrk(ysep)+wrk(ysep+1))/2.0_R8,lmin,
+     1                     (wrk(ysep)+wrk(ysep+1))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)

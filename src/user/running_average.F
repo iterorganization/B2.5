@@ -20,9 +20,8 @@
      *  na_arg(-1:nx,-1:ny,0:ns-1), ua_arg(-1:nx,-1:ny,0:ns-1),
      &  te_arg(-1:nx,-1:ny), ti_arg(-1:nx,-1:ny), po_arg(-1:nx,-1:ny)
       real (kind=R8), intent(inout) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+     *  sna0(-1:nx,-1:ny,0:ns-1), smo0(-1:nx,-1:ny,0:ns-1),
+     &  she0(-1:nx,-1:ny), shi0(-1:nx,-1:ny)
 
       character(*) :: savefile
 
@@ -35,19 +34,15 @@
      .                             e_ti(:,:), e_ua(:,:,:),
      .                             e_po(:,:)
       real (kind=R8), allocatable, save ::
-     .                             sna_mean(:,:,:,:),
-     .                             sne_mean(:,:,:),
-     .                             smo_mean(:,:,:,:),
-     .                             she_mean(:,:,:),
-     .                             shi_mean(:,:,:),
-     .                             sch_mean(:,:,:)
+     .                             sna_mean(:,:,:),
+     .                             smo_mean(:,:,:),
+     .                             she_mean(:,:),
+     .                             shi_mean(:,:)
       real (kind=R8), allocatable, save ::
-     .                             e_sna(:,:,:,:),
-     .                             e_sne(:,:,:),
-     .                             e_smo(:,:,:,:),
-     .                             e_she(:,:,:),
-     .                             e_shi(:,:,:),
-     .                             e_sch(:,:,:)
+     .                             e_sna(:,:,:),
+     .                             e_smo(:,:,:),
+     .                             e_she(:,:),
+     .                             e_shi(:,:)
 
       integer :: io, iun, n2, itp, idum(0:2), iex
       integer, save :: naver, ntotdt
@@ -73,12 +68,10 @@
       call batch_average (n2,    po, po_mean, itp, naver)
       call batch_average (n2*ns, ua, ua_mean, itp, naver)
 
-      call batch_average (n2*2*ns, sna, sna_mean, itp, naver)
-      call batch_average (n2*2,    sne, sne_mean, itp, naver)
-      call batch_average (n2*4,    she, she_mean, itp, naver)
-      call batch_average (n2*4,    shi, shi_mean, itp, naver)
-      call batch_average (n2*4,    sch, sch_mean, itp, naver)
-      call batch_average (n2*4*ns, smo, smo_mean, itp, naver)
+      call batch_average (n2*ns, sna0_eir_tot, sna_mean, itp, naver)
+      call batch_average (n2,    she0_eir_tot, she_mean, itp, naver)
+      call batch_average (n2,    shi0_eir_tot, shi_mean, itp, naver)
+      call batch_average (n2*ns, smo0_eir_tot, smo_mean, itp, naver)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (n2*ns, na, e_na, itp, naver)
@@ -87,12 +80,10 @@
       call batch_average_sq (n2,    po, e_po, itp, naver)
       call batch_average_sq (n2*ns, ua, e_ua, itp, naver)
       
-      call batch_average_sq (n2*2*ns, sna, e_sna, itp, naver)
-      call batch_average_sq (n2*2,    sne, e_sne, itp, naver)
-      call batch_average_sq (n2*4,    she, e_she, itp, naver)
-      call batch_average_sq (n2*4,    shi, e_shi, itp, naver)
-      call batch_average_sq (n2*4,    sch, e_sch, itp, naver)
-      call batch_average_sq (n2*4*ns, smo, e_smo, itp, naver)
+      call batch_average_sq (n2*ns, sna0_eir_tot, e_sna, itp, naver)
+      call batch_average_sq (n2,    she0_eir_tot, e_she, itp, naver)
+      call batch_average_sq (n2,    shi0_eir_tot, e_shi, itp, naver)
+      call batch_average_sq (n2*ns, smo0_eir_tot, e_smo, itp, naver)
 
       call subend ()
 
@@ -115,20 +106,14 @@
          allocate (e_ti(-1:nx,-1:ny))
          allocate (e_po(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only
-ctb..as the mean of the product does not equal the product of the means etc.
-         allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (sne_mean(-1:nx,-1:ny,0:1))
-         allocate (smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (she_mean(-1:nx,-1:ny,0:3))
-         allocate (shi_mean(-1:nx,-1:ny,0:3))
-         allocate (sch_mean(-1:nx,-1:ny,0:3))
-         allocate (e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (e_sne(-1:nx,-1:ny,0:1))
-         allocate (e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (e_she(-1:nx,-1:ny,0:3))
-         allocate (e_shi(-1:nx,-1:ny,0:3))
-         allocate (e_sch(-1:nx,-1:ny,0:3))
+         allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (she_mean(-1:nx,-1:ny))
+         allocate (shi_mean(-1:nx,-1:ny))
+         allocate (e_sna(-1:nx,-1:ny,0:ns-1))
+         allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_she(-1:nx,-1:ny))
+         allocate (e_shi(-1:nx,-1:ny))
 
       end if
 
@@ -149,16 +134,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       e_po = 0.0_R8
 
       sna_mean = 0.0_R8
-      sne_mean = 0.0_R8
       she_mean = 0.0_R8
       shi_mean = 0.0_R8
-      sch_mean = 0.0_R8
       smo_mean = 0.0_R8
       e_sna = 0.0_R8
-      e_sne = 0.0_R8
       e_she = 0.0_R8
       e_shi = 0.0_R8
-      e_sch = 0.0_R8
       e_smo = 0.0_R8
 
       if (iav_cont > 0) then
@@ -196,12 +177,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
               call cfrure (iun, n2,    po_mean, 'po_mean')
               call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
 
-              call cfrure (iun, n2*2*ns, sna_mean, 'sna_mean')
-              call cfrure (iun, n2*2,    sne_mean, 'sne_mean')
-              call cfrure (iun, n2*4,    she_mean, 'she_mean')
-              call cfrure (iun, n2*4,    shi_mean, 'shi_mean')
-              call cfrure (iun, n2*4,    sch_mean, 'sch_mean')
-              call cfrure (iun, n2*4*ns, smo_mean, 'smo_mean')
+              call cfrure (iun, n2*ns, sna_mean, 'sna_mean')
+              call cfrure (iun, n2,    she_mean, 'she_mean')
+              call cfrure (iun, n2,    shi_mean, 'shi_mean')
+              call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
             end if
 
 *  read 2d averaged squared plasma profiles from b2fstati_run_var
@@ -213,12 +192,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
               call cfrure (iun, n2,    e_po, 'e_po')
               call cfrure (iun, n2*ns, e_ua, 'e_ua')
 
-              call cfrure (iun, n2*2*ns, e_sna, 'e_sna')
-              call cfrure (iun, n2*2,    e_sne, 'e_sne')
-              call cfrure (iun, n2*4,    e_she, 'e_she')
-              call cfrure (iun, n2*4,    e_shi, 'e_shi')
-              call cfrure (iun, n2*4,    e_sch, 'e_sch')
-              call cfrure (iun, n2*4*ns, e_smo, 'e_smo')
+              call cfrure (iun, n2*ns, e_sna, 'e_sna')
+              call cfrure (iun, n2,    e_she, 'e_she')
+              call cfrure (iun, n2,    e_shi, 'e_shi')
+              call cfrure (iun, n2*ns, e_smo, 'e_smo')
             end if
 
          else
@@ -251,17 +228,13 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (e_ti)
       deallocate (e_po)
       deallocate (sna_mean)
-      deallocate (sne_mean)
       deallocate (smo_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
-      deallocate (sch_mean)
       deallocate (e_sna)
-      deallocate (e_sne)
       deallocate (e_smo)
       deallocate (e_she)
       deallocate (e_shi)
-      deallocate (e_sch)
 
       return
 
@@ -313,12 +286,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
          call cfwure (iun, n2, po_mean, 'po_mean')
          call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
 
-         call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
-         call cfwure (iun, n2*2, sne_mean, 'sne_mean')
-         call cfwure (iun, n2*4, she_mean, 'she_mean')
-         call cfwure (iun, n2*4, shi_mean, 'shi_mean')
-         call cfwure (iun, n2*4, sch_mean, 'sch_mean')
-         call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
+         call cfwure (iun, n2*ns, sna_mean, 'sna_mean')
+         call cfwure (iun, n2,    she_mean, 'she_mean')
+         call cfwure (iun, n2,    shi_mean, 'shi_mean')
+         call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
 
       end if
 
@@ -332,12 +303,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
          call cfwure (iun, n2,    e_po, 'e_po')
          call cfwure (iun, n2*ns, e_ua, 'e_ua')
 
-         call cfwure (iun, n2*2*ns, e_sna, 'e_sna')
-         call cfwure (iun, n2*2,    e_sne, 'e_sne')
-         call cfwure (iun, n2*4,    e_she, 'e_she')
-         call cfwure (iun, n2*4,    e_shi, 'e_shi')
-         call cfwure (iun, n2*4,    e_sch, 'e_sch')
-         call cfwure (iun, n2*4*ns, e_smo, 'e_smo')
+         call cfwure (iun, n2*ns, e_sna, 'e_sna')
+         call cfwure (iun, n2,    e_she, 'e_she')
+         call cfwure (iun, n2,    e_shi, 'e_shi')
+         call cfwure (iun, n2*ns, e_smo, 'e_smo')
 
       end if
 !
@@ -365,17 +334,14 @@ ctb..as the mean of the product does not equal the product of the means etc.
       return
 
 
-      entry run_av_get_sources (sna0, smo0, she0, shi0,
-     &                          sch0, sne0, nx, ny, ns)
+      entry run_av_get_sources (sna0, smo0, she0, shi0, nx, ny, ns)
 
       call subini ('run_av_get_sources')
 
       sna0 = sna_mean
-      sne0 = sne_mean
       smo0 = smo_mean
       she0 = she_mean
       shi0 = shi_mean
-      sch0 = sch_mean
 
       call subend ()
 

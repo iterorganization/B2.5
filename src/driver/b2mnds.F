@@ -157,6 +157,10 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
 #ifdef JET
       labgeo=lblgm
+#else
+#ifdef IMAS
+      labgeo=lblgm
+#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
@@ -175,7 +179,7 @@
 *     already read in)
       call cfruch (ninp(3), 120, lblps, 'label')
       call b2ruzd (ninp(3), b2fstati_version, ns0, 
-     & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+     &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
       do is = 0, ns0-1
        call xertst (ltst(zpdum(is,1),zamin(is)), 
      &  'faulty data for zamin')

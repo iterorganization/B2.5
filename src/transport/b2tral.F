@@ -85,9 +85,11 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
+      integer ix, iy, is, is0, n2
+      integer ncall, pot_eq, no_current, no_solve, style
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns, chns0                                          !srv 17.06.08
@@ -101,13 +103,13 @@
       character*72 message
       logical solving(4)
       save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
-     .  fch_anomalous, no_current
+     .  fch_anomalous, no_current, style
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
-     1  fch_anomalous/1.0_R8/, no_current/0/
+     1  fch_anomalous/1.0_R8/, no_current/0/, style/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -122,6 +124,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2tral_cvsa_style', style)
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
         call ipgetr ('b2tfhe_anomalous', fch_anomalous)
         if (fch_anomalous.eq.1.0_R8)
@@ -141,6 +144,8 @@
         call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -165,8 +170,9 @@
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..add to previous contributions
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
-      do is = 0, ns-1
+      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
+      if (style.eq.1) then
+       do is = 0, ns-1
         if (.not.is_neutral(is)) then
           cvsa(:,:,0,is)   = ft*cvsa_cl(:,:,0,is)   + cvsa(:,:,0,is)
           cvsa(:,:,1,is)   =    cvsa_cl(:,:,1,is)   + cvsa(:,:,1,is)
@@ -176,7 +182,11 @@
           cvsa(:,:,:,is)   =    cvsa_cl(:,:,:,is) + cvsa(:,:,:,is)
           cvsahz(:,:,:,is) =  cvsahz_cl(:,:,:,is) + cvsahz(:,:,:,is)
         end if
-      end do                                                      !srv 16.10.17 }
+       end do
+      else
+       call b2saxpy(n2*2*ns, 1.0_R8,   cvsa_cl, 1, cvsa, 1)
+       call b2saxpy(n2*2*ns, 1.0_R8, cvsahz_cl, 1, cvsahz, 1)
+      end if
       if (fch_anomalous.ne.1.0_R8) then
         csig = csig * fch_anomalous
         calf = calf * fch_anomalous
@@ -334,7 +344,8 @@
        call my_out(70,nx,ny,calf(-1,-1,1),'calfy')
       endif                                                          !srv 17.06.08 }
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0) then               !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2tral_cdnax'//chns)

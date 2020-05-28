@@ -99,10 +99,10 @@ c     filename ycd (effective square charge)
 c     filename ecd (effective ionisation potential)
       character fnpot*200
 c     filename of actual file opened
-      character actual_file*256
+      character filename*256, actual_file*256
 c     helpers for composing filenames
       integer ibundling, iquote, quote_count
-      character UIDIN*256, ZEILE*80
+      character UIDIN*256, UIDSTD*256, ZEILE*80
       character SUBDIRrec*4,SUBDIRion*4,SUBDIRcex*4
       character SUBDIRprb*4,SUBDIRplt*4,SUBDIRzav*4
       character SUBDIRza2*4,SUBDIRpot*4
@@ -129,7 +129,7 @@ c     helpers for reading in data
      &        IDMAXDzav,ITMAXDzav,
      &        IDMAXDza2,ITMAXDza2,
      &        IDMAXDpot,ITMAXDpot
-      logical lres,lstan,lptn
+      logical lres,lstan,lptn,ex
       real (kind=R8) :: dnr_ams
       character dnr_ele*12
 c     read in data
@@ -158,7 +158,7 @@ c     log10 of rate coefficients (in cm3/s)
      *   DREC(isdimd,itdimd,iddimd),DION(isdimd,itdimd,iddimd),
      &   DCEX(isdimd,itdimd,iddimd),DPLT(isdimd,itdimd,iddimd),
      &   DPRB(isdimd,itdimd,iddimd),DTMP1(itdimd,iddimd),
-     1	 DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
+     1   DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
 c     effective coefficients
       real (kind=R8) ::
      *   DZAV(isdimd,itdimd,iddimd),DZA2(isdimd,itdimd,iddimd),
@@ -201,12 +201,11 @@ c     ionisation potentials
         Ddummy(ic) = (12.0_R8+9.0_R8*(ic-1.0_R8)/(iddimd-1.0_R8))
       enddo
 
-      if(fix_recomb.ne.0) then
-         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
-      endif
-
 c     reading in filename and mass
-      call xertst(silent_open(99,'ratadas.filelist',
+      filename='ratadas.filelist'
+      uidstd=trim(solpstop()) // '/modules/adas'
+      call find_file(filename,ex)
+      call xertst(silent_open(99,filename,
      1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
       write(*,'(a/a)')
      1 'Getting ADAS file list from ',trim(actual_file)
@@ -357,14 +356,62 @@ c     ADAS file names
       call strip_spaces(fnzav)
       call strip_spaces(fnza2)
       call strip_spaces(fnpot)
-      fnrec=trim(UIDIN)//fnrec
-      fnion=trim(UIDIN)//fnion
-      fncex=trim(UIDIN)//fncex
-      fnprb=trim(UIDIN)//fnprb
-      fnplt=trim(UIDIN)//fnplt
-      fnzav=trim(UIDIN)//fnzav
-      fnza2=trim(UIDIN)//fnza2
-      fnpot=trim(UIDIN)//fnpot
+      filename=trim(UIDIN)//fnrec
+      call find_file(filename,ex)
+      if(ex) then
+        fnrec=trim(filename)
+      else
+        fnrec=trim(UIDSTD)//fnrec
+      endif
+      filename=trim(UIDIN)//fnion
+      call find_file(filename,ex)
+      if(ex) then
+        fnion=trim(filename)
+      else
+        fnion=trim(UIDSTD)//fnion
+      endif
+      filename=trim(UIDIN)//fncex
+      call find_file(filename,ex)
+      if(ex) then
+        fncex=trim(filename)
+      else
+        fncex=trim(UIDSTD)//fncex
+      endif
+      filename=trim(UIDIN)//fnprb
+      call find_file(filename,ex)
+      if(ex) then
+        fnprb=trim(filename)
+      else
+        fnprb=trim(UIDSTD)//fnprb
+      endif
+      filename=trim(UIDIN)//fnplt
+      call find_file(filename,ex)
+      if(ex) then
+        fnplt=trim(filename)
+      else
+        fnplt=trim(UIDSTD)//fnplt
+      endif
+      filename=trim(UIDIN)//fnzav
+      call find_file(filename,ex)
+      if(ex) then
+        fnzav=trim(filename)
+      else
+        fnzav=trim(UIDSTD)//fnzav
+      endif
+      filename=trim(UIDIN)//fnza2
+      call find_file(filename,ex)
+      if(ex) then
+        fnza2=trim(filename)
+      else
+        fnza2=trim(UIDSTD)//fnza2
+      endif
+      filename=trim(UIDIN)//fnpot
+      call find_file(filename,ex)
+      if(ex) then
+        fnpot=trim(filename)
+      else
+        fnpot=trim(UIDSTD)//fnpot
+      endif
 
       write(*,*) 'Using ADAS files:'
       if (SUBDIRrec.ne.'none') then
@@ -782,7 +829,7 @@ c     reading in data, ionisation potentials
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       do ic=0,ncnct-2
-	dtmp1(1:ITMAXDion,1:IDMAXDion)=
+        dtmp1(1:ITMAXDion,1:IDMAXDion)=
      .   DION(ic+1,1:ITMAXDion,1:IDMAXDion)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -798,7 +845,7 @@ c     filling rtsa(ionisation)
 c     filling rtra(recombination)
       write(*,*) 'rtra'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
+        dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
      .   DREC(ic,1:ITMAXDrec,1:IDMAXDrec)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -815,15 +862,15 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       write(*,*) 'rtqa,rtrd,rtbr'
       do ic=0,ncnct-1
         if(ic.gt.0) then
-	 dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
+         dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
      .    DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
         endif
-	if(ic.lt.ncnct-1) then
-	  dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
+         if(ic.lt.ncnct-1) then
+          dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
      .     DPLT(ic+1,1:ITMAXDplt,1:IDMAXDplt)
-	  dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+2,1:ITMAXDpot,1:IDMAXDpot)
-	endif
+        endif
         do cT=0,rtnt
           logT=log10(rtt(cT))
           do cD=0,rtnn
@@ -872,7 +919,7 @@ c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is nonzero
 c     filling rtcx(charge exchange)
       write(*,*) 'rtcx'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
+        dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
      .   DCEX(ic,1:ITMAXDcex,1:IDMAXDcex)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -888,7 +935,7 @@ c     filling rtcx(charge exchange)
 c     filling rtzz(effective charge)
       write(*,*) 'rtzz'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZAV(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -904,7 +951,7 @@ c     filling rtzz(effective charge)
 c     filling rtz2(effective square charge)
       write(*,*) 'rtz2'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZA2(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -921,7 +968,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       write(*,*) 'rtpt,rtpi'
       do ic=0,ncnct-1
         do cT=0,rtnt
-	  dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+1,1:ITMAXDpot,1:IDMAXDpot)
           logT=log10(rtt(cT))
           do cD=0,rtnn
@@ -943,7 +990,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       call subend ()
       return
 
- 990  continue
+  990 continue
       call xerrab ('Check specifications in ratadas.filelist!')
 
       end subroutine ratadas
@@ -1021,8 +1068,6 @@ c     read in data
       type (amns_set_type) :: set
       character (len=80) :: format
 #endif
-
-
 
       logical silent_open
       external silent_open
@@ -1189,7 +1234,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       if(fix_recomb.eq.0) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
-         stop 'Not yet coded'
+         call xerrab ('RATADAS: fix_recomb <> 0 : Not yet coded!')
       endif
       rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
       do ic=0,nc-1

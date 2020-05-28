@@ -21,6 +21,10 @@ c     the zoom common
       external lnblnk, streql
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -35,13 +39,28 @@ c     the zoom common
 c      call plinit()
 #else
       ncol=12
-#ifdef NCAR4      
+#ifdef NCAR4
+#ifdef NO_GETENV
+      devenv='x11 ps'
+#else
+#ifdef NAGFOR
+      call get_environment_variable('B2PLOT_DEV',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('B2PLOT_DEV',value=devenv)
+      elseif (ierror.eq.1) then
+        devenv='x11 ps '
+      endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('B2PLOT_DEV', 0, devenv, lenval, ierror)
 #else
-      call getenv ('B2PLOT_DEV', devenv)
 #ifdef WINDOWS
       devenv = 'x11 ps'                           !srv 17.12.07
+#else
+      call getenv ('B2PLOT_DEV', devenv)
+#endif
+#endif
 #endif
 #endif
       if(b2plot_debug.ge.8) write(*,*) 'devenv: ',trim(devenv)
@@ -125,6 +144,7 @@ c
       extralabel=' '
       globalheader=' '
       runtime=time
+      glsz=1.0
       lbsz=1.0
       ndec=10
       initialised_plotting=.false.
@@ -134,6 +154,7 @@ c
       color_map_loaded=.false.
       color_file=' '
       device='psc'
+      bold=.false.
       return
 
       entry set_color_map(sval)
@@ -158,6 +179,10 @@ c
       same_page=0
       noax=1
       write(*,*) 'same_page set to ',same_page
+      return
+
+      entry set_glsz(rval)
+      glsz=rval
       return
 
       entry set_lbsz(rval)
@@ -208,6 +233,10 @@ c
 
       entry set_title_color(iopt)
       gcol=iopt
+      return
+
+      entry set_frame_color(iopt)
+      fcol=iopt
       return
 
       entry set_barlabel_color(iopt)

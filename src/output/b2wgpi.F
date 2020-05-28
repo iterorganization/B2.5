@@ -48,10 +48,10 @@
      * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      1 wrk0(-1:nx,-1:ny),
      2 ni(-1:nx,-1:ny,0:1), 
-     3 ro(-1:nx,-1:ny), pr(-1:nx,-1:ny)
+     3 rz(-1:nx,-1:ny), pr(-1:nx,-1:ny), pz(-1:nx,-1:ny)
 *   ..procedures
       external subini, subend, xertst
-      external b2xpni, b2xppr, b2xpro, b2xpfe, b2xpfi, b2wgpj
+      external b2xpni, b2xppr, b2xppz, b2xpro, b2xpfe, b2xpfi, b2wgpj
 
 *-----------------------------------------------------------------------
 *.computation
@@ -66,14 +66,14 @@
 *   ..compute auxiliaries
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-      call b2xpro (nx, ny, ns, mp, am, na, ro)
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+      call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..plot state
       call b2wgpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro,
-     &  fne, fni, wrk0)
+     &  fna, fhe, fhi, fch, ne, ni, pr, pz, rz, fne, fni, wrk0)
 
 * ..return
       call subend ()

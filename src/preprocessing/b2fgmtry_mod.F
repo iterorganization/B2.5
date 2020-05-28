@@ -7,9 +7,6 @@
       use b2mod_geo2
       use b2mod_indirect
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -43,10 +40,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -84,9 +81,6 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
       external prgini, prgend, xerset, cfopen
@@ -112,16 +106,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2fgmtry_mod_mpi_child'
-      endif
-#endif
       call prgini ('b2fgmtry_mod')
 *   ..open files
       call cfopen (ninp(0),'b2fgmtry_mod.dat','old','formatted')
@@ -149,10 +133,6 @@ c     call alloc_b2mod_geo2(nx1,ny1,nncutmax)
 
 * ..end of computation
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2fgmtry_mod'
 
 *-----------------------------------------------------------------------

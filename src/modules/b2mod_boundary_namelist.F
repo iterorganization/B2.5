@@ -80,6 +80,8 @@ cank }
       character*256, save :: eni_fn(NBCD)
       character*256, save :: pot_fn(NBCD)	
 #endif
+      integer, save :: boundary_namelist
+      logical, save :: boundary_namelist_set = .false.
 csw 18feb2014 added for correct implementation of boundary conditions
       integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
       integer, allocatable, save ::
@@ -108,6 +110,20 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       contains
 
+      subroutine get_boundary_namelist
+      implicit none
+
+cxpb The default is to force usage of b2.boundary.namelist for DN cases
+      if (boundary_namelist_set) return
+      boundary_namelist=0
+      call ipgeti('b2stbc_boundary_namelist', boundary_namelist)
+      if (boundary_namelist.eq.0) then
+        if (nnreg(0).ge.8) boundary_namelist=1
+      end if
+      boundary_namelist_set = .true.
+      return
+      end subroutine get_boundary_namelist
+      
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
       integer nx ,ny, ns
@@ -122,7 +138,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      1     'increase DEF_NISO in DIMENSIONS.F')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
-         bc_elm_count=tim/boundary_time_mod
+         bc_elm_count=int(tim/boundary_time_mod)
       else
          bc_elm_count=0
       endif
@@ -190,7 +206,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      .        bc_list_y(1:bc_list_size(ib),ib),1) = 0
       enddo
 
-csw 21feb2014, setup some additional work variables for boundary conditions
+csw 21feb2014, set up some additional work variables for boundary conditions
 cxpb overwrite the defaults with the namelist data
       iffboundx=0
       iffboundy=0
@@ -239,7 +255,7 @@ cxpb overwrite the defaults with the namelist data
      3        bc_elm_count
          if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
      1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-            bc_elm_count=tim/boundary_time_mod
+            bc_elm_count=int(tim/boundary_time_mod)
             call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
             call xertst (nbc.le.nbcd,
      1           'increase DEF_NBC in DIMENSIONS.F')
@@ -408,7 +424,7 @@ cxpb Have to do this here already in case the namelist is not used
       deallocate(NYISO2)
       deallocate(NIISO)
       deallocate(LCBS)
-	  deallocate(con_fn)
+      deallocate(con_fn)
       deallocate(mom_fn)
       deallocate(ene_fn)
       deallocate(eni_fn)
@@ -924,7 +940,9 @@ c.. Test consistency with region boundaries
       end do
       return
 
- 999  call xerrab ('Error while reading BOUNDARY namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading BOUNDARY namelist!')
+#endif
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist

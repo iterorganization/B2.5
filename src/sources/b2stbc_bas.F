@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_bas (nx, ny, ns, ismain,                         !xpb
-     1  facdrift, vol, hx, hy, qz, qc, gs,                               !xpb
+      subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
+     1  facdrift, vol, hx, hy, qz, qc, gs,                              !xpb
      1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
@@ -68,9 +68,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ireg
       real (kind=R8) ::
-     *  cutll, cutlo, tpr, tro, csb, cst, vte, s0, s1, fche, fchi, t0,
+     *  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
-     2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
+     2  naf(0:ns-1), udf(0:ns-1), nef, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
@@ -178,9 +178,6 @@
        nef = (ne(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        ne(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-       nif = (ni(ix,-1,0)*hy1(topix(ix,-1),topiy(ix,-1))+
-     &        ni(topix(ix,-1),topiy(ix,-1),0)*hy1(ix,-1))/
-     &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        pof = (po(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        po(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
@@ -190,13 +187,15 @@
      &        bb(topix(ix,-1),topiy(ix,-1),2)*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
 *    ..compute cst, vte
-       tpr = 0.0_R8
-       tro = 0.0_R8
+       tpz = 0.0_R8
+       trz = 0.0_R8
        do is = 0, ns-1
-         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-         tro = tro+am(is)*mp*naf(is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+naf(is)*(zaf(is)*tef+tif)
+         trz = trz+am(is)*mp*naf(is)
        enddo
        do is = 0, ns_ext-1
+         if (is_ext_neutral(is)) cycle
          nxf = (na_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
      &          na_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      &         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
@@ -206,10 +205,10 @@
          zxf = (za_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
      &          za_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      &         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-         tpr = tpr+nxf*(zxf*tef+taf)
-         tro = tro+am_ext(is)*mp*nxf
+         tpz = tpz+nxf*(zxf*tef+taf)
+         trz = trz+am_ext(is)*mp*nxf
        enddo
-       cst = sqrt(tpr/tro)
+       cst = sqrt(tpz/trz)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
@@ -369,7 +368,7 @@
        sch0(ix,-1,0) = sch0(ix,-1,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,-1)
        sch0(ix,-1,1) = sch0(ix,-1,1)-t0
- 101   continue
+  101  continue
       enddo
 
 * ..compute conditions at north boundary
@@ -406,9 +405,6 @@
        nef = (ne(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        ne(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-       nif = (ni(ix,ny,0)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     &        ni(bottomix(ix,ny),bottomiy(ix,ny),0)*hy1(ix,ny))/
-     &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        pof = (po(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        po(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
@@ -418,13 +414,15 @@
      &        bb(bottomix(ix,ny),bottomiy(ix,ny),2)*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
 *    ..compute cst, vte
-       tpr = 0.0_R8
-       tro = 0.0_R8
+       tpz = 0.0_R8
+       trz = 0.0_R8
        do is = 0, ns-1
-         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-         tro = tro+am(is)*mp*naf(is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+naf(is)*(zaf(is)*tef+tif)
+         trz = trz+am(is)*mp*naf(is)
        enddo
        do is = 0, ns_ext-1
+         if (is_ext_neutral(is)) cycle
          nxf = (na_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
      &          na_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
      &         (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
@@ -434,10 +432,10 @@
          zxf = (za_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
      &          za_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
      &         (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
-         tpr = tpr+nxf*(zxf*tef+taf)
-         tro = tro+am_ext(is)*mp*nxf
+         tpz = tpz+nxf*(zxf*tef+taf)
+         trz = trz+am_ext(is)*mp*nxf
        enddo
-       cst = sqrt(tpr/tro)
+       cst = sqrt(tpz/trz)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
@@ -557,7 +555,7 @@
        sch0(ix,ny,0) = sch0(ix,ny,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,ny)
        sch0(ix,ny,1) = sch0(ix,ny,1)-t0
- 202   continue
+  202  continue
       enddo
 
 * ..compute conditions at west boundary
@@ -608,20 +606,19 @@ cxpb  only include ExB terms and not diamagnetic contributions
        nef = (ne(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        ne(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-       nif = (ni(-1,iy,0)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &        ni(rightix(-1,iy),rightiy(-1,iy),0)*hx(-1,iy))/
-     &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        pof = (po(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        po(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
 *    ..compute cst, vte
-       tpr = 0.0_R8
-       tro = 0.0_R8
+       tpz = 0.0_R8
+       trz = 0.0_R8
        do is = 0, ns-1
-         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-         tro = tro+am(is)*mp*naf(is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+naf(is)*(zaf(is)*tef+tif)
+         trz = trz+am(is)*mp*naf(is)
        enddo
        do is = 0, ns_ext-1
+         if (is_ext_neutral(is)) cycle
          nxf = (na_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &          na_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &         (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
@@ -631,10 +628,10 @@ cxpb  only include ExB terms and not diamagnetic contributions
          taf = (ta_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &          ta_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &         (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-         tpr = tpr+nxf*(zxf*tef+taf)
-         tro = tro+am_ext(is)*mp*nxf
+         tpz = tpz+nxf*(zxf*tef+taf)
+         trz = trz+am_ext(is)*mp*nxf
        enddo
-       cst = sqrt(tpr/tro)
+       cst = sqrt(tpz/trz)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
@@ -785,7 +782,7 @@ c         fchi=0.0_R8
        sch0(-1,iy,0) = sch0(-1,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(-1,iy)
        sch0(-1,iy,1) = sch0(-1,iy,1)-t0
- 303   continue
+  303  continue
       enddo
 
 * ..compute conditions at east boundary
@@ -836,20 +833,19 @@ cxpb  only include ExB terms and not diamagnetic contributions
        nef = (ne(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        ne(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-       nif = (ni(nx,iy,0)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &        ni(leftix(nx,iy),leftiy(nx,iy),0)*hx(nx,iy))/
-     &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        pof = (po(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        po(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
 *    ..compute cst, vte
-       tpr = 0.0_R8
-       tro = 0.0_R8
+       tpz = 0.0_R8
+       trz = 0.0_R8
        do is = 0, ns-1
-         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-         tro = tro+am(is)*mp*naf(is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+naf(is)*(zaf(is)*tef+tif)
+         trz = trz+am(is)*mp*naf(is)
        enddo
        do is = 0, ns_ext-1
+         if (is_ext_neutral(is)) cycle
          nxf = (na_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &          na_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &         (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
@@ -859,10 +855,10 @@ cxpb  only include ExB terms and not diamagnetic contributions
          taf = (ta_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &          ta_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &         (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-         tpr = tpr+nxf*(zxf*tef+taf)
-         tro = tro+am_ext(is)*mp*nxf
+         tpz = tpz+nxf*(zxf*tef+taf)
+         trz = trz+am_ext(is)*mp*nxf
        enddo
-       cst = sqrt(tpr/tro)
+       cst = sqrt(tpz/trz)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
@@ -1003,7 +999,7 @@ c         fchi=0.0_R8
        sch0(nx,iy,0) = sch0(nx,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(nx,iy)
        sch0(nx,iy,1) = sch0(nx,iy,1)-t0
- 404   continue
+  404  continue
       enddo
 
 * ..return

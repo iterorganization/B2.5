@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,         !srv 09.01.01 02.04.18
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -28,6 +28,10 @@
       use b2mod_boundary_namelist
       use b2mod_time
       use b2mod_anomalous_transport
+      use b2mod_work                                                     !srv 02.04.18 {
+     &     , only: avisper, bvisper, cvisper
+      use b2mod_plasma
+     &     , only: ne2                                                   !srv 02.04.18 }
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
@@ -134,13 +138,12 @@
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
-     7  fne(-1:nx,-1:ny,0:1),
+     7  fne(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                       !srv 02.04.18
      8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1), !srv 11.09.09
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
-     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
-     1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
+     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:),  ! IYS 06.11.2017
      &  shi0_cx(:,:,:)
       logical catch_up
@@ -226,7 +229,7 @@
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
         call alloc_b2mod_numerics(nx,ny,ns)
         if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -239,7 +242,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -254,7 +257,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.elm_count) then
             elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
             call write_b2mod_numerics_namelist
           endif
         endif
@@ -271,17 +274,17 @@
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+       call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
+       call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
+     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,   !srv 05.06.18
+     &  wedia, uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
@@ -346,7 +349,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
-     &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
+     &  po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, bb,    !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
@@ -505,7 +508,7 @@ csw 30sep2013, added cdpa in call, uadia
      &               smo0_cx(:,:,1,is)*ua(:,:,is)+
      &               smo0_cx(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &               smo0_cx(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
+          call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
         enddo
         if (allocated(shi0_cx)) then
           write(*,*) 'Deallocating arrays for cx'

@@ -57,21 +57,21 @@
 *
 *  4. references
 *
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -111,9 +111,10 @@
       integer iyear(0:nnucm-1), npart(0:nnucm-1)
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
-      integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
-     *  no_weisheit, fix_recomb, ns_pardf
-      integer kstart, kstart1, kend, kpart
+      integer i, j, k, nx, ny, ns, is, js, inuc, fix_cx,
+     *  rtnt_in, rtnn_in, no_weisheit, fix_recomb, ns_pardf
+      integer kstart, kstart1, kend
+      integer, allocatable :: is1(:)
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
@@ -129,7 +130,6 @@
      &  wrk(:,:,:)
       save fix_cx, no_weisheit, rtnt_in, rtnn_in, fix_recomb
       parameter (lnzero=-1.0e30_R8)
-      logical unread
 *   ..procedures
       intrinsic log, exp
       logical streql, is_comment
@@ -337,6 +337,7 @@
 *   ..obtain range and species data
       call b2arin (ninp(0), nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
+      b2frates_flag = flag
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
@@ -441,10 +442,15 @@
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      unread = .true.
 *   ..initialise species index
       rtns = 0
       is = 0
+      allocate(is1(0:ns_pardf-1))
+      is1 = -1
+*    ..read default physics common to obtain masses and map species data
+      call cfruch (ninp(3), 120, lblcp, 'label')
+      call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
+      call initialise_potentials(ns_pardf)
 *   ..loop over nuclear species
       do inuc = 0, nnuc-1
 *    ..compute table
@@ -452,7 +458,6 @@
         call ratadp (nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -467,7 +472,6 @@
         call ratstr (ninp(1), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -496,7 +500,6 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)
@@ -522,7 +525,6 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)
@@ -531,6 +533,14 @@ cxpb  We must account for the case when the user does not want all bundles
         rtns = rtns + kend - kstart + 1
 #endif
        endif
+*    ..get corresponding old species index
+       js = 0
+       do while (nint(zn(js)).ne.nint(rtzn(is)) .and. js.le.ns_pardf)
+         js = js + 1
+       end do
+       do k = kstart, kend
+         is1(is+k-kstart) = js+k-kstart
+       end do
 *    ..correct hydrogen data
        if (nz(inuc).eq.1) then
         if (no_weisheit.eq.0) then
@@ -697,15 +707,8 @@ cxpb  We must account for the case when the user does not want all bundles
            rtlpt(i,j,is) = rtpt(i,j,k)
            rtlpi(i,j,is) = rtpi(i,j,k)
           else
-           if (unread) then
-*        ..read default physics common to obtain masses
-             call cfruch (ninp(3), 120, lblcp, 'label')
-             call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
-             call initialise_potentials(ns_pardf)
-             unread = .false.
-           endif
-           rtlpt(i,j,is) = (potmin(is)+potmax(is))/2.0_R8
-           rtlpi(i,j,is) = (potimin(is)+potimax(is))/2.0_R8
+           rtlpt(i,j,is) = (potmin(is1(is))+potmax(is1(is)))/2.0_R8
+           rtlpi(i,j,is) = (potimin(is1(is))+potimax(is1(is)))/2.0_R8
           endif
          enddo
         enddo
@@ -744,6 +747,7 @@ cxpb  We must account for the case when the user does not want all bundles
       deallocate(rtpi)
       deallocate(rtpt)
       deallocate(wrk)
+      deallocate(is1)
 * ..return
       call subend ()
       return

@@ -173,6 +173,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)
@@ -195,11 +196,7 @@
       tallies=.true.
       movies=.true.
       overwrite_shotnumber=0
-#ifdef USE_MPI
       read(ninp(0),b2md_namelist,err=99)
-#else
-      read(ninp(0),b2md_namelist)
-#endif
       write(nout(0),b2md_namelist)
 
 #ifdef MDSPLUS

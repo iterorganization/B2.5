@@ -10,6 +10,7 @@ c=======================================================================
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
       implicit none
       integer lun
@@ -30,12 +31,16 @@ c*** Determine topology and calculate some indices
 
       call b2pwinp
 c      print *,'After b2pwinp: ntrgts,lytg,nytg,lrdlsp = ',  !###
-c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
+c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
       allocate(hlp_flx(0:ny-1,0:ns-1,ntrgsx))
 
       l=1
       u=-1
       do j=1,ntrgts !{
+        if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+          l=0
+          u=1
+        end if
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
           do is=0,ns-1 !{
@@ -49,6 +54,7 @@ c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
       do j=1,ntrgts !{
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
+        if(.not.LSN) jj=ntrgsx+1-j
         open(lun,file=ftrg(jj))
         write(fmt_peak,710) tab,ns,tab
 c        print *,trim(fmt_peak)  !###

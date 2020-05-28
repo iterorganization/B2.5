@@ -10,6 +10,7 @@
      &  corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_tallies                                                 !srv 22.05.18
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
@@ -200,7 +201,7 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+        call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
 *   ..compute provisional reshe, reshi
@@ -257,6 +258,7 @@ cdjm Jan2017 update particle source components for balance
      &                   she0(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2nph9_she')
         call my_out(70,nx,ny,reshi,'b2nph9_reshi')
+        call my_out(70,nx,ny,resht,'b2nph9_resht')
         call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
         call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
 !        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')

@@ -316,9 +316,6 @@
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy). 
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
-*     and diamagnetic directions.
 *
 *     tim - real*8.
 *     The simulation time (in seconds).
@@ -393,8 +390,7 @@
         call cfrure (nget, n2*ns, kinrgy, 'kinrgy')
       else
         do is = 0, ns-1
-          kinrgy(:,:,is)=0.5_R8*am(is)*mp*
-     .     (ua(:,:,is)**2+uadia(:,:,0,is)**2+uadia(:,:,1,is)**2)
+          kinrgy(:,:,is)=0.5_R8*am(is)*mp*ua(:,:,is)**2
         enddo
       endif
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')

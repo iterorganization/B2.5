@@ -39,7 +39,7 @@
        real (kind=R8), allocatable, save :: Vcovv_astra(:)    ! convective anomalous velocity       [m/s]
        real (kind=R8), allocatable, save :: PeNB_astra(:)     ! electron NB source                  [MW/m^3]
        real (kind=R8), allocatable, save :: PiNB_astra(:)     ! ion NB source                       [MW/m^3]
-       real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva's ions heat conduct.[s/m**2]
+       real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva ions heat conduct.  [s/m**2]
 
        real (kind=R8), allocatable, save :: bbaverage2(:)     ! 
        real (kind=R8), allocatable, save :: sheNB_astra(:,:,:)

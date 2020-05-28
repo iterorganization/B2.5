@@ -60,9 +60,9 @@
      . NPOINTS, LPOINTS, NPLOTS
       
       print*,"############## README ############"
-      print*,"Starting b2yrp. Update the input file b2yrp.dat 
-     .with the desired inlet temperature and then choose 
-     .between inner [i] our outer [o] reflector plate"
+      print*,"Starting b2yrp. Update the input file b2yrp.dat "//
+     .       "with the desired inlet temperature and then choose "//
+     .       "between inner [i] or outer [o] reflector plate"
       read (*,*) ss
       if (streql(trim(ss),trg(1))) then
          KK=1

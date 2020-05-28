@@ -16,22 +16,20 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       integer ix
-      real (kind=R8) ::
-     *   samax
-      external xertst, samax
+      external xertst
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfy')
       vrnam0 = vrname
       if(allocated(bottomiy)) then
-	do ix = -1, nx
-	  call xertst(bottomiy(ix,-1).ne.-2 .or. funy(ix,-1).eq.0,
-     &	   'b2xvfy--faulty argument y-edge '//vrnam0)
-	enddo
+        do ix = -1, nx
+          call xertst(bottomiy(ix,-1).ne.-2 .or. funy(ix,-1).eq.0,
+     &     'b2xvfy--faulty argument y-edge '//vrnam0)
+        enddo
       else
-	do ix = -1, nx
-	  call xertst(funy(ix,-1).eq.0,
-     &	   'b2xvfy--faulty argument y-edge '//vrnam0)
-	enddo
+        do ix = -1, nx
+          call xertst(funy(ix,-1).eq.0,
+     &     'b2xvfy--faulty argument y-edge '//vrnam0)
+        enddo
       endif
 *$$$  call subend ()
       return
@@ -56,9 +54,7 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       integer ix
-      real (kind=R8) ::
-     *   samax
-      external xertst, samax
+      external xertst
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfy1')
       vrnam0 = vrname

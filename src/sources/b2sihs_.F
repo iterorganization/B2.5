@@ -15,14 +15,12 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
-     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
       use b2mod_external                                              !srv 05.07.17
-      use b2mod_geo
-     , , only : hz                                                    !srv 05.07.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                      !srv 05.07.17
@@ -110,7 +108,7 @@
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
 *     be non-negative and of order unity; larger values are meant to
 *     provide more stabilization. Some or all may be set to zero and
-*     removed eventually. I've had some experience to indicate that
+*     removed eventually. I have had some experience to indicate that
 *     rf0, rf2, rf4 may have a useful function; however, later changes
 *     in the code may have made all these parameters superfluous.
 
@@ -514,7 +512,7 @@
        shefr = 0.0_R8
        do is = 0,ns-1
          if(.not. is_neutral(is)) then
-           call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,
+           call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,
      &      ue, te, ti, ni, ne, ne2,
      &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2,           !srv 05.07.17
      &      zeff, smbfrea, smbfria, smbtfea, smbtfia,                 !srv 05.07.17
@@ -641,7 +639,7 @@
          else
 *      ..contribution from friction involving neutral species
 *        (We ignore such a term, except for charge exchange friction
-*        between H0 and H1.d0 That term is calculated via the atomic
+*        between H0 and H1. That term is calculated via the atomic
 *        physics routines.)
          endif
         enddo

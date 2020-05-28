@@ -38,6 +38,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, !iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+!     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2wdat = 0
 !     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
@@ -79,6 +80,8 @@
        call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
 !       call ipgeti ('b2npc9_iout', iout_b2npc9)                    !srv 11.09.09 {
 !       call ipgeti ('b2npco_iout', iout_b2npco)
+!       call ipgeti ('b2npc7_iout', iout_b2npc7)                    !srv 02.04.18
+!       call ipgeti ('b2npc11_iout', iout_b2npc11)                  !srv 02.04.18
 !       call ipgeti ('b2npmo_iout', iout_b2npmo)
 !       call ipgeti ('b2npp7_iout', iout_b2npp7)
 !       call ipgeti ('b2nppo_iout', iout_b2nppo)
@@ -111,9 +114,6 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-           if(guard_flows.eq.2 .and.
-     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
          t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
          sna(ix,iy,0,is) =
      &     max(sna(ix,iy,0,is),(1.0_R8+rf0)*t0,-rf0*t0)
@@ -127,11 +127,11 @@
 *   ..There is some problem for 9-point stencil case.
         do iy=-1, ny, ny+1                                           !srv 27.06.08 {
          do ix = -1, nx
-	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-	   endif
-	 enddo 
-	enddo                                                        !srv 27.06.08 }
+           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+             if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
+           endif
+         enddo
+        enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }
       enddo
 *   ..modify smo
@@ -204,57 +204,58 @@ cdjm Jan2017 Store for balance
 
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
-!	  write (chns,'(i3.3)') is
-!          wrk0=smost(:,:,0,is)+              !srv 07.10.09
+!         write (chns,'(i3.3)') is
+!         wrk0=smost(:,:,0,is)+              !srv 07.10.09
 !     &        smost(:,:,1,is)*ua(:,:,is)+
 !     &        smost(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smost(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-!	  call my_out(70,nx,ny,wrk0,'b2srst_smost'//chns)
+!         call my_out(70,nx,ny,wrk0,'b2srst_smost'//chns)
 !       enddo
 !      endif
-!      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+!      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+!          iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1) then
 !       do is = 0, ns-1
-!	  write (chns,'(i3.3)') is
+!         write (chns,'(i3.3)') is
 !         wrk0=snast(:,:,0,is)+              !srv 07.10.09
 !     &        snast(:,:,1,is)*na(:,:,is)
-!	  call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
+!         call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &          then
         wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
      &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
-	call my_out(70,nx,ny,wrk0,'b2srst_shest')
+        call my_out(70,nx,ny,wrk0,'b2srst_shest')
         wrk0=shist(:,:,0)+shist(:,:,1)*ti+
      &       shist(:,:,2)*ni(:,:,0)+shist(:,:,3)*ti*ni(:,:,0)
-	call my_out(70,nx,ny,wrk0,'b2srst_shist')
+        call my_out(70,nx,ny,wrk0,'b2srst_shist')
       endif
 !      if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
 !        wrk0=schst(:,:,0)+schst(:,:,1)*po+  !srv 07.10.09
 !     &       schst(:,:,2)*ne+schst(:,:,3)*po*ne(:,:)
-!	 call my_out(70,nx,ny,wrk0,'b2srst_schst')
+!        call my_out(70,nx,ny,wrk0,'b2srst_schst')
 !      endif
 
       if (iout.eq.1) then                       !srv 11.09.09 {
         do is = 0, ns-1
-	  write (chns,'(i3.3)') is
-	  do k=0,3
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,smost(-1,-1,k,is),
+          write (chns,'(i3.3)') is
+          do k=0,3
+            write (chk,'(i1)') k
+            call my_out(70,nx,ny,smost(-1,-1,k,is),
      &                       'b2srst_smost'//chk//chns)
-	  enddo
-	  do k=0,1
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,snast(-1,-1,k,is),
+          enddo
+          do k=0,1
+            write (chk,'(i1)') k
+            call my_out(70,nx,ny,snast(-1,-1,k,is),
      &                       'b2srst_snast'//chk//chns)
-	  enddo
+          enddo
         enddo
-	do k=0,3
-	  write (chk,'(i1)') k
-	  call my_out(70,nx,ny,shest(-1,-1,k),'b2srst_shest'//chk)
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,shest(-1,-1,k),'b2srst_shest'//chk)
           call my_out(70,nx,ny,shist(-1,-1,k),'b2srst_shist'//chk)
-	  call my_out(70,nx,ny,schst(-1,-1,k),'b2srst_schst'//chk)
-	enddo
+          call my_out(70,nx,ny,schst(-1,-1,k),'b2srst_schst'//chk)
+        enddo
       endif                                                 !srv 11.09.09 }
 
 * ..return

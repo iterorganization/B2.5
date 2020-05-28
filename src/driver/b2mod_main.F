@@ -23,7 +23,6 @@
       use b2mod_astra_to_b2
       use b2mod_external
       implicit none
-#     include <git_version_B25.h>
 #ifdef USE_MPI
       include 'mpif.h'
 #else
@@ -96,10 +95,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -149,8 +148,11 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #endif
+      character*32 B25_git_version
       logical file_open
 *   ..procedures
+      character*32 get_B25_hash
+      external get_B25_hash
       external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -193,7 +195,7 @@ csw
       endif
 #else
 #ifdef USE_IMPGYRO
-      write(*,*) 'b2ig: running B25EIRENE'
+      write(*,*) 'b2ig: running B2.5-EIRENE'
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
@@ -219,9 +221,10 @@ csw
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
+      B25_git_version = get_B25_hash()
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
-     &  'Running with VERSION ',newversion,' ', git_version_B25
+     &  'Running with VERSION ',newversion,' ', trim(B25_git_version)
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb

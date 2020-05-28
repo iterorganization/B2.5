@@ -38,7 +38,7 @@
 *       B2MNDR_1 - Main driver routine.
 *       B2MNDR_2 - Main driver routine finalisation.
 *       B2MNDS - Initialisation.
-*       B2MNDT - Time-stepping.
+*       B2MNDT - Time stepping.
 *       B2MW* - Monitoring of the calculation.
 *       B2MX* - Auxiliaries for b2m*.
 *     B2N* - Driver routines for inner iteration.
@@ -358,6 +358,9 @@
 *     B2TFRN computes the particle and energy fluxes between
 *     neighbouring cells which are to be provided to Eirene
 *
+*     B2TIPSCH computes the Pfirsch-Schlueter all atom heat flux between
+*     neighboring cells, and the coefficients that specify its linearization.
+*
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.
 *
@@ -367,6 +370,9 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *
 *     B2TLMV applies a flux limit to the viscosity.
+*
+*     B2TNPSCH computes the Pfirsch-Schlueter particle fluxes of one atomic
+*     species between neighbouring cells
 *
 *     B2TQCA computes the classical contributions to the atom
 *     transport coefficients.
@@ -418,6 +424,10 @@
 *
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
+*
+*     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution
+*     from divergence of the viscosity perpendicular current by analytical
+*     manipulation with respect to main ion density using a 7-point stencil.
 *
 *     B2UPCO corrects the state of the plasma towards the solution of
 *     continuity equation for one atomic species.
@@ -834,20 +844,20 @@
 *
 *   ..2d Auxiliary routines for discretised PDEs
 *
-*     ILU5F computes the ILU factorisation of a 2d-5point matrix.
+*     ILU5F computes the ILU factorisation of a 2d 5-point matrix.
 *
-*     ILU5G computes the ILU factorisation of a 2d-5point matrix and
+*     ILU5G computes the ILU factorisation of a 2d 5-point matrix and
 *     applies the factors for one iteration of an update equation.
 *
 *     ILU5S solves an equation of the form L*U*x=r, where L and U are
-*     the factors in an ILU factorisation of a 2d-5point matrix.
+*     the factors in an ILU factorisation of a 2d 5-point matrix.
 *
 *     ILUTER performs a number of iterations of the Stone strongly
 *     implicit procedure for a system of equations of five-point form.
 *
-*     SIP5F computes the SIP-ILU factorisation of a 2d-5point matrix.
+*     SIP5F computes the SIP-ILU factorisation of a 2d 5-point matrix.
 *
-*     SIP5G computes the SIP-ILU factorisation of a 2d-5point matrix,
+*     SIP5G computes the SIP-ILU factorisation of a 2d 5-point matrix,
 *     and applies the factors for one iteration of an update equation.
 *
 *     SLV5PT solves a five-point system of equations by a direct
@@ -951,7 +961,7 @@
 *     RATWEI uses WEISHEIT data to improve tables of rate coefficients
 *     for ionisation, recombination, electron energy loss, and charge
 *     exchange; as function of temperature and density.
-*     The WEISHEIT data set is incomplete.  The call to ratwei must
+*     The WEISHEIT dataset is incomplete.  The call to ratwei must
 *     be preceded by a call to one of the comprehensive routines.
 *
 *-----------------------------------------------------------------------

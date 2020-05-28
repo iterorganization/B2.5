@@ -299,8 +299,7 @@
 
 *   ..plot state
       call b2wgpi_gnuplot (nout(0), nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch, kinrgy,
-     &  gs, qc, ni)
+     &  ti, po, fna, fhe, fhi, fch, kinrgy, gs, qc, ni)
 
 * ..return
       call dealloc_b2mod_b2cmrc

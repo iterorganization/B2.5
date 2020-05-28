@@ -7,8 +7,7 @@
      &  region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
-     &  hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
-     &  naver, ntotdt,
+     &  bundle_frac, naver, ntotdt,
      &  na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &  e_na, e_te, e_ti, e_ua, e_po,
      &  sna_mean, sne_mean, smo_mean,
@@ -30,10 +29,6 @@
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
-      real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
-      integer bottomiy1(-1:nx1,-1:ny1)
       real (kind=R8) ::
      *  bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) ::
@@ -178,8 +173,10 @@
       call b2ruzd (99, b2faveri_version, ns,
      &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
-      call cfruin (99, 1, naver, 'naver')
-      call cfruin (99, 1, ntotdt, 'ntotdt')
+      call cfruin (99, 1, idum, 'naver')
+      naver = idum(0)
+      call cfruin (99, 1, idum, 'ntotdt')
+      ntotdt = idum(0)
       call cfrure (99, n2*ns, na_mean, 'na_mean')
       call cfrure (99, n2,    te_mean, 'te_mean')
       call cfrure (99, n2,    ti_mean, 'ti_mean')

@@ -25,33 +25,29 @@
 program b2_ual_write
 
     use b2mod_main
-    use b2mod_ual
     use b2mod_grid_mapping
-    use b2mod_ual_io
-    use ids_schemas     ! IGNORE
-                        !! These are the Fortran type definitions for the
-                        !! Physics Data Model
-    use ids_routines    ! IGNORE
-                        !! These are the Access Layer routines + management of
-                        !! IDS structures
-    use ids_assert      ! IGNORE
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
+    use b2mod_ual    &
+     & , only : put_ids_edge, b25_process_ids, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
+#ifdef B25_EIRENE
+    use eirmod_comusr
+    use eirmod_extrab25
+#endif
 
 #ifdef USE_PXFGETENV
     integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
     implicit none
 
-    external ipgeti, ipgetc
+#ifndef NO_GETENV
+    character(len=24) :: device_env
+#endif
+    logical streql
+    external ipgeti, ipgetc, streql
 
     !! Local variables
     character(len=24) :: treename   !< The name of the IMAS IDS database
@@ -76,6 +72,8 @@ program b2_ual_write
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
     character*256 systemarg
+    character*16 usrnam
+    external usrnam
 
     !! Set default value for IMAS major version and IDS treename
     version = '3'
@@ -83,30 +81,43 @@ program b2_ual_write
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
+#ifdef B25_EIRENE
+    CALL EIRENE_ALLOC_COMUSR(1)
+    call eirene_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,0)
+#endif
+    ! read plasma state
+    call cfopen(56,'b2fplasma','old','unformatted')
+    call cfverr(56, b2fplasma_version)
+    call read_b2mod_geo(nx, ny, 56)
+    call read_b2mod_plasma(nx, ny, ns, 56)
+    call read_b2mod_residuals(56)
+    call read_b2mod_sources(56)
+    call read_b2mod_transport(56)
 
     call ipgeti( 'b2mndr_shot_number', shot )
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
     call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
-#ifdef NO_GETENV
-    username=' '
-#else
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('USER', 0, username, lenval, ierror)
-#else
-    call getenv ('USER', username)
-#endif
-#endif
+    username=usrnam()
     call ipgetc( 'b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
     device = 'solps-iter'
 #ifndef NO_GETENV
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+    device_env = ' '
+#ifdef NAGFOR
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device_env)
 #else
-    call getenv ('DEVICE', device)
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+    call getenv ('DEVICE', device_env)
 #endif
+#endif
+    if (.not.streql(device_env,' ')) device = device_env
 #endif
     call ipgetc( 'b2mndr_device', device )
+    call xertst( .not.streql(device,' '), 'Device not defined !')
     systemarg='imasdb '//trim(device)
 #ifdef IMAS
     call system(systemarg)
@@ -117,12 +128,13 @@ program b2_ual_write
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   treename, shot, run, idx, username, device, version )
 
 end program b2_ual_write
 

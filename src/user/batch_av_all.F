@@ -40,12 +40,9 @@
      .                             e_sch(:,:,:)
 
       integer ::  iun, n2, itp, idum(0:2)
-      integer, save :: naver, ntotdt
-      character lble*120, lbli*120
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
+      integer, save :: naver
+!     integer, save :: ntotdt
+      character lble*120
 
       n2 = (nx+2)*(ny+2)
 
@@ -199,7 +196,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
       idum(0) = naver
       call cfwuin (iun, 1, idum, 'naver')
-      idum(0) = ntotdt
+!     idum(0) = ntotdt
 !     call cfwuin (iun, 1, idum, 'ntotdt')
       
       call cfwure (iun, n2*ns, na_mean, 'na_mean')

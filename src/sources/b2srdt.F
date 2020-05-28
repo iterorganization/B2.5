@@ -48,6 +48,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
      &                 iout_b2nppo = 0, iout_b2wdat = 0
@@ -64,7 +65,7 @@
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm3/1.0_R8/,
-     1  phm4/0.0_R8/, phm5/1.0_R8/, use_eirene/0/      		     !xpb
+     1  phm4/0.0_R8/, phm5/1.0_R8/, use_eirene/0/                    !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -77,15 +78,17 @@
         call ipgetr ('b2srdt_phm0', phm0)
         call ipgetr ('b2srdt_phm1', phm1)
         call ipgetr ('b2srdt_phm3', phm3)
-        call ipgetr ('b2srdt_phm4', phm4)			     !xpb
-        call ipgetr ('b2srdt_phm5', phm5)		             !xpb
-        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1		     !xpb
+        call ipgetr ('b2srdt_phm4', phm4)                            !xpb
+        call ipgetr ('b2srdt_phm5', phm5)                            !xpb
+        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1               !xpb
      &   .and.0.0_R8.le.phm3.and.0.0_R8.le.phm4.and.0.0_R8.le.phm5,  !xpb
-     &	 'faulty internal parameter phm0, phm1, phm3, phm4, phm5')   !xpb
+     &   'faulty internal parameter phm0, phm1, phm3, phm4, phm5')   !xpb
         call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgeti ('b2srdt_iout', iout)                            !srv 30.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)
@@ -182,9 +185,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)
+     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)
               shidt(ix,iy,2) = shidt(ix,iy,2)-t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)/
+     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)/
      &         ni0(ix,iy,0)
             enddo
           endif
@@ -201,17 +204,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
-          t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)		 !xpb
-          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))	 !xpb
+          t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)              !xpb
+          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))   !xpb
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
-          schdt(ix,iy,3) = schdt(ix,iy,3)-t0				 !xpb
+          schdt(ix,iy,3) = schdt(ix,iy,3)-t0                             !xpb
        enddo
       enddo
       do iy = -1, ny
         do ix = -1, nx
           if(iftimbound(ix,iy) .ne. 0) cycle
-          t0 = (phm5/dtim)*vol(ix,iy)*time_factor(ix,iy)		 !xpb
+          t0 = (phm5/dtim)*vol(ix,iy)*time_factor(ix,iy)                 !xpb
           snedt(ix,iy,0) = snedt(ix,iy,0)+t0*ne0(ix,iy)
           snedt(ix,iy,1) = snedt(ix,iy,1)-t0
        enddo
@@ -225,7 +228,7 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_shi0to3 = shidt-shitmp
       endif
 
-      if ((iout_b2npmo.eq.1 .or. iout_b2wdat .eq. 4) .and. lout) then                                     !srv 11.09.09 {
+      if ((iout_b2npmo.eq.1 .or. iout_b2wdat .eq. 4) .and. lout) then    !srv 11.09.09 {
        do is = 0, ns-1 
          write (chns,'(i3.3)') is
          wrk0=smodt(:,:,0,is)+
@@ -235,8 +238,9 @@ cdjm Store the total change in linearised sources for balance
          call my_out(70,nx,ny,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
-      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or. iout_b2wdat.eq.4)
-     &             .and. lout) then
+      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+     &     iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 .or.         !srv 02.04.18
+     &     iout_b2wdat.eq.4) .and. lout) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           wrk0=snadt(:,:,0,is)+snadt(:,:,1,is)*na(:,:,is)

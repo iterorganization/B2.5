@@ -80,7 +80,7 @@ c     ,                     jsc,jm,jcb,xsrc,ysrc,xb,yb,ddx,ddy,udx,udy,d
 c>>>
       if(d .le. ueps) then
 c
-c*** The base is turned its back to the source - no irradiation!
+c*** The base has its back turned to the source - no irradiation!
 c
         se=0.0_R8
         sb=1.0_R8

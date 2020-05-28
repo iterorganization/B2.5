@@ -85,7 +85,7 @@
      &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           cone(ix,iy,0,0) = cone(ix,iy,0,0)+                         !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,is)*
-     &     ((rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is)-
+     &     ((rza(ix,iy,is)+1.0_R8)*rza(ix,iy,is)*na(ix,iy,is)+
      &      (rza(leftix(ix,iy),leftiy(ix,iy),is)+1.0_R8)*
      &       rza(leftix(ix,iy),leftiy(ix,iy),is)*
      &       na(leftix(ix,iy),leftiy(ix,iy),is))*

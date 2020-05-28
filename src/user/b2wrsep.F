@@ -119,14 +119,18 @@ c*** Local variables of general use
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       character*2, allocatable :: hlp_a(:)
+
+      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
+      logical :: first=.TRUE.
+
 c*** Procedures
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
-     1          'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
-     2          'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
+     1  'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
+     2  'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
       data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
@@ -135,6 +139,20 @@ c----------------------------------------------------------------------
 
       save
 c======================================================================
+
+      if(first_time_step) return
+
+      if(ank_tracing.eq.0) return
+
+      if (first) then
+
+        call ipgeti('b2tfnb_mdf',mdf_fnb)
+        call ipgeti('b2mndt_style',style_b2mndt)
+        call ipgeti('b2mndr_eirene',use_eirene)
+
+        first = .FALSE.
+
+      endif
 
 c*** Initialise the arrays
 c
@@ -186,8 +204,10 @@ c          v=vol(ix,iy)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
             kintmp =
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .      ((kinrgy(ix,iy,is)+ti(ix,iy))*
+     .        hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .       (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .        ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
             hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
           enddo
@@ -196,7 +216,6 @@ c          v=vol(ix,iy)
             do k=1,nfluids(j) !{
               is=is+1
               nisi_tmp(is)=nisi_tmp(is)+v*na(ix,iy,ions_list(is))
-              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
               nisp_tmp(j)=nisp_tmp(j)+v*na(ix,iy,ions_list(is))
               prsr_tmp(j)=prsr_tmp(j)+v*na(ix,iy,ions_list(is))*
      *            (ti(ix,iy)+rza(ix,iy,ions_list(is))*te(ix,iy))
@@ -204,7 +223,13 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+                gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              else
+                gisi_tmp(is)=gisi_tmp(is)+fna_mdf(ix,iy,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna_mdf(ix,iy,1,ions_list(is))
+              endif
               do i=0,jsep !{
                 gasp_tmp(j)=gasp_tmp(j)+
      1               sna(ix,i,0,ions_list(is))+
@@ -222,7 +247,7 @@ c          v=vol(ix,iy)
         end if !}
       end do !}
 
- 10   continue
+   10 continue
 
       do i=2,nnreg(0) !{
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
@@ -401,6 +426,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,
      ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
@@ -413,7 +443,7 @@ c*** f     :  the associated file name
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -458,15 +488,15 @@ c          end if
         end if
 
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         ng_tmp=nglb_tmp
@@ -478,6 +508,10 @@ c*** New file
         write(lun,'(2a)') '#  ',label
 
         hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
+     /          'i3,12h(1h'//tab//',a7,a2),,'              //
+     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
+
+        hlp_frf='(16h(1h#,11x,4htime,,i3,9h(1h'//tab//',a8),,'     //
      /          'i3,12h(1h'//tab//',a7,a2),,'              //
      /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
 
@@ -527,15 +561,15 @@ c      print *,hlp_frm
 c>>>
       return
 c======================================================================
- 90   write(*,*) 'b2wrsep: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
+   94 write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -552,21 +586,21 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2wrsep: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

@@ -218,9 +218,6 @@
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
-*     and diamagnetic directions.
 *
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
@@ -481,7 +478,7 @@
       read (ninp(1),*,err=92) (naini(is),is=0,ns-1)
       call b2xvsg (ns, naini, 1, 'naini', '.gt.')
 *   ..read and test ttini
-*     (ttini is provided in units of ev)
+*     (ttini is provided in units of eV)
       read (ninp(1),'(a8)',err=91) id
       call xertst (streql(id,'*ttini'),
      &  'faulty input id instead of *ttini, id='//id)
@@ -504,7 +501,7 @@
       call xertst (na_min.gt.0.0_R8,
      & 'faulty internal parameter na_min')
       do is=0,ns-1
-        call xertst (naini(is).gt.na_min,
+        call xertst (naini(is).ge.na_min,
      &   'Initial densities must be larger than na_min!')
       end do
 
@@ -553,7 +550,7 @@
        allocate(zcdum(0:idum(2)-1,0:4))
        call cfruch (ninp(3), 120, lblps, 'label')
        call b2ruzd (ninp(3), b2fstate_version, idum(2),
-     &  zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4), .false.)
+     &   zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4), .false.)
        do is = 0, min(ns,idum(2))-1
         call xertst (ltst(zcdum(is,1),zamin(is)),
      &  'faulty data for zamin')
@@ -707,6 +704,8 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)
+       call sfill (n2*2, 0.0_R8, vedia, 1)
+       call sfill (n2*2, 0.0_R8, veecrb, 1)
 *   ..initialise te, ti, po
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)

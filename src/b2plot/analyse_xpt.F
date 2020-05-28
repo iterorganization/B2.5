@@ -40,10 +40,6 @@ c=====================================================
       data hlp /'tot','rel','scl','d/dt','Sni','div','divx',
      ,  'divy','ni ','ni0','Snn','Sio','jx+','jx-','jy+','jy-'/
 c=====================================================
-c*** Local variables
-c
-      character filename*80
-c=====================================================
 c
       call ipgetr('b2mndr_dtim',dtim)
 c*** Set the indices of the cells in question
@@ -89,10 +85,10 @@ c*** Calculate the balances for each cell in question
         write(lun,'(/1x,a,i2,a,3i5,1p,3e14.6)') 'Point ',i,
      ,                ',  ix,iy,ixx,R,Z,V=',ix(i),iy(i),ixx(i),
      ,                  cr(ix(i),iy(i)),cz(ix(i),iy(i)),vol(ix(i),iy(i))
-        write(frm,'(4h(6x,,i2,8h(i8,6x)))') nspecies
+        write(frm,'(a,i2,a)') '(6x,',nspecies,'(i8,6x))'
         print *,'header format: ',frm !###
         write(lun,frm) (j,j=1,nspecies)
-        write(frm,'(10h(a5,1x,1p,,i2,6he14.6))') nspecies
+        write(frm,'(a,i2,a)') '(a5,1x,1p,',nspecies,'e14.6)'
         print *,'table format: ',frm !###
         is=0
         do j=1,nspecies !{

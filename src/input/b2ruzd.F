@@ -18,7 +18,6 @@
       parameter (amtol=1.0e-2_R8)
 
 *   ..procedures
-      intrinsic nint
       logical lnext
       external subini, subend, xertst, cfrure
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.

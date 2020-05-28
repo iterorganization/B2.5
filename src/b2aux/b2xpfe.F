@@ -18,7 +18,7 @@
       integer n2, ix, iy, is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xpfe')
+      call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
       do is = 0, ns-1
@@ -54,7 +54,7 @@
         enddo
       enddo
       call b2saxpy (n2*2, -1.0_R8/qe, fch, 1, fne, 1)
-*$$$  call subend ()
+      call subend ()
       return
 *     ------------------------------------------------------------------
       end subroutine b2xpfe

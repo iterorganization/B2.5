@@ -41,7 +41,7 @@ c the surface has been found
         end if
       end do
       shift=-1
- 20   return
+   20 return
       end subroutine b2neut_ind
 
 

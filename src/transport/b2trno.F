@@ -35,7 +35,7 @@
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),
-     1	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1)
+     1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -79,6 +79,7 @@
       integer hcimx_flag, mode
       integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,             !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns                                               !srv 17.06.08
@@ -94,7 +95,7 @@
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
      2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),              !srv 09.07.03 30.11.15
      3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 09.07.03 30.11.15
-     1	pol_anom_scale
+     1  pol_anom_scale
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
       real (kind=R8) ::
@@ -127,6 +128,8 @@
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -281,7 +284,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
             chce_stoch(ix,iy)=alpha_stoch*1.6e0_R8*csig_stoch(ix,iy)/
      &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
            endif                                                          !srv 20.09.17
-	    enddo
+          enddo
         enddo
         call b2saxpy (n2, 1.0_R8, chce_stoch, 1, chce(-1,-1,1), 1)        !srv 20.09.17 }
       endif                                                               !lk 31.01.08 } !srv 17.12.13
@@ -305,7 +308,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         chce(:,:,0) = chce(:,:,0) * pol_anom_scale
         if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then        !srv 07.12.15
           chci(:,:,0) = chci(:,:,0) * pol_anom_scale
-	endif                                                             !srv 07.12.15
+        endif                                                             !srv 07.12.15
         calf(:,:,0) = calf(:,:,0) * pol_anom_scale
         csig(:,:,0) = csig(:,:,0) * pol_anom_scale
       end if
@@ -324,7 +327,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   ..apply flux limit to neutrals contribution to chcb
        call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb,      !srv 07.12.15 {
      &              hcimx, fllim0fhi)
-     	chci = 0.0_R8
+        chci = 0.0_R8
         do is = 0, ns-1
           chci(:,:,0) = chci(:,:,0) + chcb(:,:,0,is)
           chci(:,:,1) = chci(:,:,1) + chcb(:,:,1,is)
@@ -335,10 +338,11 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0
+     &                  .or. iout_b2wdat.eq.4) then                       !srv 19.05.10 {
        do is = 0, ns-1
-	write (chns,'(i3.3)') is
+        write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
           call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
           call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2trno_cdpay'//chns)
@@ -352,7 +356,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       endif
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
-	write (chns,'(i3.3)') is
+        write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2trno_cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'b2trno_cvsay'//chns)
         call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//chns)
@@ -375,7 +379,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       endif                                                          !srv 19.05.10 }
       if(iout.ne.0) then                                             !srv 17.06.08 {
        do is = 0, ns-1
-	write (chns,'(i3.3)') is
+        write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
         call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
         call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)

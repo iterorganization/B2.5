@@ -51,9 +51,10 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, is0, k
+      integer style
       real (kind=R8) ::
      *   phm0, cutlo, cutll, rcx, t0
-      save ncall, phm0
+      save ncall, phm0, style
 *   ..procedures
       intrinsic sqrt, log, exp, max, dim
       real (kind=R8) ::
@@ -63,7 +64,7 @@
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/
+      data ncall/0/, phm0/1.0_R8/, style/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal 
@@ -81,6 +82,7 @@
       if (ncall.eq.0) then
        call ipgetr ('b2sqcx_phm0', phm0)
        call xertst (0.0_R8.le.phm0, 'faulty internal parameter phm0')
+       call ipgeti ('b2tqin_csigin_style', style)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -110,16 +112,19 @@
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
           do iy = -1, ny
            do ix = -1, nx
-            t0 = log(ti(ix,iy)/(am(is0)*ev))
-            rcx = phm0*
-     &       expu(rlcx(ix,iy,0,is,k)+rlcx(ix,iy,1,is,k)*t0)
+            if(style.eq.1) then
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
-            sigin(ix,iy,0,is,k) = (na(ix,iy,is)*am(is)*mp)      !srv 01.07.99
-     &       *(na(ix,iy,is0)*3.2e-15_R8)
-     &       *sqrt(ti(ix,iy)/ev/0.026_R8)/(2.0_R8*bb(ix,iy,3)**2)
+             sigin(ix,iy,0,is,k) = (na(ix,iy,is)*am(is)*mp)      !srv 01.07.99
+     &        *(na(ix,iy,is0)*3.2e-15_R8)
+     &        *sqrt(ti(ix,iy)/ev/0.026_R8)/(2.0_R8*bb(ix,iy,3)**2)
+            else
 ! From 5.0/5.1: Using the CX rate
-!            sigin(ix,iy,0,is,k) = (na(ix,iy,is)*am(is)*mp)
-!     &       *rcx*na(ix,iy,is0)/(2.0_R8*bb(ix,iy,3)**2)        
+             t0 = log(ti(ix,iy)/(am(is0)*ev))
+             rcx = phm0*
+     &        expu(rlcx(ix,iy,0,is,k)+rlcx(ix,iy,1,is,k)*t0)
+             sigin(ix,iy,0,is,k) = (na(ix,iy,is)*am(is)*mp)
+     &        *rcx*na(ix,iy,is0)/(2.0_R8*bb(ix,iy,3)**2)
+            endif
             sigin(ix,iy,1,is,k) = sigin(ix,iy,0,is,k)
            enddo
           enddo

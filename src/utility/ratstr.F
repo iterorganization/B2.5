@@ -78,8 +78,8 @@
 *
 *  4. references
 *
-*     /1/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET-Report R(87)08, 1987.
+*     /1/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET-Report R(87)08, 1987.
 *     /2/ K. Behringer, ... (journal article?).
 *     /3/ W. Lotz, reports IPP 1/62 (1967) and IPP 1/76 (1968).
 *     /4/ S. von Goeler et al., Nucl. Fusion 15 (1975) 301.
@@ -87,10 +87,10 @@
 *     /6/ A. Burgess, Astrophys. J. 141 (1968) 1588.
 *     /7/ A. L. Merts et al., report LA-6220-MS (1976).
 *     /8/ D. E. Post et al., At. Data Nucl. Data Tables 20 (1977) 397.
-*     /9/ R. K. Janev et al., "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nucl. Mater. 121 (1984) 10-16.
-*     /10/ Ya. B. Zeldovich and Yu. P. Raizer: "Physics of Shock Waves
-*     and High Temperature Hydrodynamic Phenomena", Academic Press, New
+*     /9/ R. K. Janev et al., Survey of Atomic Processes in Edge
+*     Plasmas, J. Nucl. Mater. 121 (1984) 10-16.
+*     /10/ Ya. B. Zeldovich and Yu. P. Raizer: Physics of Shock Waves
+*     and High Temperature Hydrodynamic Phenomena, Academic Press, New
 *     York, 1966.
 *
 *
@@ -167,7 +167,7 @@
 *     We apply a 'fudge factor' in order to represent the density
 *     dependence of the ionisation rate coefficient for hydrogen only.
 *     The fudge factor attempts to reproduce the data of Janev.
-*     These issues should be re-considered.
+*     These issues should be reconsidered.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -179,7 +179,7 @@
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
      &  zs7, zz, zzz, cxcoef, temp, dens
       real (kind=R8) ::
-     *   cutlo, cutll, t0
+     *   cutlo, cutll, t0, t1, t2
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 
@@ -259,13 +259,33 @@
         zy2 = x2(k)/rtt(i)
         zy1c = zy1+c1(k)
         zy2c = zy2+c2(k)
-        zs1 = a1(k)*z1(k)*expu(-zy1)*
-     &    (sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c)
-        zs2 = a2(k)*z2(k)*expu(-zy2)*
-     &    (sei1(zy2)/zy2-b2(k)*sei1(zy2c)/zy2c)
-        val = 6.7e-07_R8*(zs1+zs2)/rtt(i)**1.5_R8
+        t0 = sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c
+        if (a1(k)*z1(k).gt.0.0_R8) then
+          t0 = log(a1(k)*z1(k)*t0)-zy1
+          if (t0.gt.cutll) then
+            zs1 = exp(t0)
+          else
+            zs1 = 0.0_R8
+          endif
+        else
+          zs1 = 0.0_R8
+        end if
+        t0 = sei1(zy2)/zy2-b2(k)*sei1(zy2c)/zy2c
+        if (a2(k)*z2(k).gt.0.0_R8) then
+          t0 = log(a2(k)*z2(k)*t0)-zy2
+          zs2 = expu(t0)
+        else
+          zs2 = 0.0_R8
+        end if
+        t0 = zs1+zs2
+        if (t0.gt.0.0_R8) then
+          t0 = log(6.7e-7_R8)+log(t0)-1.5_R8*log(rtt(i))
+        else
+          t0 = cutll
+        end if
+        val = expu(t0)
         do j = 0, nn
-         rtsa(i,j,k) = cm3*val
+         rtsa(i,j,k) = expu(log(cm3)+t0)
         enddo
 *!!     For the case of nz.eq.1, the values rtsa(,,0) will be corrected
 *!!     at the bottom of this routine to account for the dependence on
@@ -354,8 +374,24 @@
          else
           zs7 = zs2/(1.0_R8+666.7_R8/((k+1)*zz)**2)
          endif
-         rtra(i,j,k) = rtra(i,j,k)+cm3*(zs3/sqrt(rtt(i)**3))*
-     &     (zs6*expu(-d1(k)/(rtt(i)*zzz))+zs7*expu(-d2(k)/(rtt(i)*zzz)))
+         if (zs7.gt.0.0_R8) then
+           t0 = log(zs7)-d2(k)/(rtt(i)*zzz)
+           t0 = expu(t0)
+         else
+           t0 = 0.0_R8
+         endif
+         if (zs6.gt.0.0_R8) then
+           t1 = log(zs6)-d1(k)/(rtt(i)*zzz)
+           t1 = expu(t1)
+         else
+           t1 = 0.0_R8
+         end if
+         if (t0+t1.gt.0.0_R8) then
+           t2 = log(cm3*(zs3/sqrt(rtt(i)**3)))+log(t0+t1)
+         else
+           t2 = cutll
+         end if
+         rtra(i,j,k) = rtra(i,j,k)+expu(t2)
         enddo
        enddo
       enddo
@@ -373,11 +409,16 @@
         if (k.lt.nz) then
          zs1 = f1(k)*abs(g1(k))*expu(-d1(k)/rtt(i))
          zs2 = f2(k)*abs(g2(k))*expu(-d2(k)/rtt(i))
-         val = zlradf*(zs1+zs2)/sqrt(rtt(i))+
-     &     bremsf*k**2*sqrt(rtt(i))
+         if (zs1+zs2.gt.0.0_R8) then
+           t0 = log(zlradf)+log(zs1+zs2)-0.5_R8*log(rtt(i))
+           t0 = expu(t0)
+         else
+           t0 = 0.0_R8
+         endif
+         val = t0 + bremsf*k**2*sqrt(rtt(i))
          do j = 0, nn
           rtqa(i,j,k) = x1(k)*rtsa(i,j,k)+val
-          rtrd(i,j,k) = zlradf*(zs1+zs2)/sqrt(rtt(i))
+          rtrd(i,j,k) = t0
           rtbr(i,j,k) = bremsf*k**2*sqrt(rtt(i))
          enddo
         else

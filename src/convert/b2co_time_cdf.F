@@ -1,4 +1,4 @@
-      subroutine b2co_time_cdf(nx, ny, ns, tim)
+      subroutine b2co_time_cdf(nx, ny, ns, tim, batch_only)
       use b2mod_types
       use b2mod_geo
       use b2mod_mwti
@@ -9,18 +9,24 @@
 #endif
       integer nx, ny, ns
       real (kind=R8) :: tim
-      integer :: jxi, jxa, jsep, ixtl, ixtr
-      integer :: iylstrt, iyistrt, iyastrt, iyrstrt, iytlstrt, iytrstrt,
-     1           iylend,  iyiend,  iyaend,  iyrend,  iytlend,  iytrend,
-     2           nybl, nybr, nytl, nytr, nya, nyi, nc, nbatch,
-     3           timedim, batchdim, nastep, ntstep
+      logical :: batch_only
+      integer :: jxi, jxa, jsep
+      integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
+     1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
       real (kind=R8), save :: dtim = 1.0_R8
+#ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
+      integer :: nc, batchdim, nastep, nbatch, ntstep, timedim,
+     1           ixtl, ixtr, nybl, nybr, nytl, nytr, nya, nyi,
+     2           iytlend, iytlstrt, iytrend, iytrstrt
       integer :: idim, ivar, iatt, iret, ib, it, ih,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
@@ -51,6 +57,7 @@
       call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,
      .                                        iyrstrt,iyrend,'dsr')
+#ifndef NO_CDF
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
@@ -78,17 +85,14 @@
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
-
-#ifndef NO_CDF
-c access the b2time.nc file
+c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
+      if (batch_only) filename='b2batch.nc'
       call find_file(filename,exists)
       status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
-
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)
       call check_cdf_status(status)
-
       itim=0
       ibatch=0
       nastep=0
@@ -198,9 +202,19 @@ c find the time and batch vector sizes
         end if
       end do
 
-c prepare the b2time.nc.xxxx file
+c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
 #ifdef NO_GETENV
       extension='xxxx'
+#else
+#ifdef NAGFOR
+        call get_environment_variable('PLASMASTATE',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('PLASMASTATE',value=plasmastate)
+          extension=plasmastate(lenval-3:lenval)
+        elseif (ierror.eq.1) then
+          extension='xxxx'
+        endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
@@ -209,12 +223,13 @@ c prepare the b2time.nc.xxxx file
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
-      filename='b2time.nc.'//extension
+#endif
+      filename=trim(filename)//'.'//extension
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
-     .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2,
-     .                 .false., iret)
+     .                 nya, nyi, nc, ns, write_2d, ncid2,
+     .                 batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 
