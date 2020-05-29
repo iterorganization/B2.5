@@ -1200,13 +1200,22 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit,cdf_old_format)
          write(*,*) 'Using the NetCDF 64bit format'
 #endif
+#ifndef ITM
        else if (cdf_default .eq. 3) then   ! NetCDF netcdf4
          iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4,cdf_old_format)
          write(*,*) 'Using the NetCDF netcdf4 format'
+         open(unit=99,file='.netcdf4')
+         close(99)
        else if (cdf_default .eq. 4) then   ! NetCDF netcdf4_classic
          iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4_classic,
      1    cdf_old_format)
          write(*,*) 'Using the NetCDF netcdf4_classic format'
+         open(unit=99,file='.netcdf4')
+         close(99)
+#else
+       else if (cdf_default .eq. 3 .or. cdf_default .eq. 4) then
+         call xerrab('NetCDF4 formats not supported on ITM domain!')
+#endif
        else if (cdf_default .eq. 5) then   ! NetCDF 64bit_data
 #ifdef NC_64BIT_DATA
          iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit_data,cdf_old_format)

@@ -139,7 +139,7 @@
       integer varid
       integer start(3), count(3), index(3)
 c
-      iret=nf_open(filename,NF_WRITE,ncid)
+      iret=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
       call check_cdf_status(iret)
 c
       iret=nf_inq_varid(ncid,'ntstep',varid)
@@ -344,7 +344,7 @@ c     1 lnblnk(units), units, iret)
       integer ncid, varid
       integer start(3), count(3), index(3)
 c
-      iret=nf_open(filename,NF_WRITE,ncid)
+      iret=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
       call check_cdf_status(iret)
 c
       iret=nf_inq_varid(ncid,'ntstep',varid)
