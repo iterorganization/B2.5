@@ -439,7 +439,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          enddo
         enddo                                                            !xpb
 
-       else if (drift_style .eq. 1. .or. redef_gmtry .eq. 0) then        !srv 21.06.08 {
+       else if (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then        !srv 21.06.08 {
 
         weight = 1.0e0_R8                                                !lk
 !lk       call intcor(nx,ny,vol,po,poc)
