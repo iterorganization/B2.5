@@ -204,8 +204,8 @@ c Drift terms
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      & po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,        !srv 10.10.17
-     & lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,           !srv 10.10.17
+     & ne2, lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12
      & facdrift, fchinert)

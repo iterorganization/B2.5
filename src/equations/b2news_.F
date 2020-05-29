@@ -374,8 +374,8 @@ csw 01oct2012 initialize potential if necessary
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
       call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-     &             lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
+     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -563,8 +563,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
       call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
      &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-     &             lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,           !srv 10.10.17
+     &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2

@@ -382,8 +382,8 @@
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
         call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
      &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
-     &               lnlam, te, ti, ni, chci, fchvisq)
+        call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,        !srv 10.10.17
+     &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -530,7 +530,7 @@ cxpb
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
         call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
      &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+        call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,         !srv 10.10.17
      &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance

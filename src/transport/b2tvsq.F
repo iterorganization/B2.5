@@ -1,17 +1,18 @@
-      subroutine b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,
-     &           lnlam, te, ti, ni, chci, fchvisq)
+      subroutine b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb, 
+     &           ne2, lnlam, te, ti, ni, chci, fchvisq)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_rates
       use b2mod_b2cmpa
+      use b2mod_geo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     &   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     &   fac_vis(-1:nx,-1:ny), !vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+!     &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1) 
 *   ..output arguments (unspecified on entry)
@@ -28,8 +29,9 @@
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8), save :: cqip1 = 0.5e0_R8                          !lk
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                     !iyv 06.12.13
+      integer, save :: drift_style                               !IYS 26.05.2020
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)       !lk
-     &                  , conn(-1:ny), tt2(-1:ny), tt3(-1:ny)
+     &                  , conn_(-1:ny), tt2(-1:ny), tt3(-1:ny)
      &                  , eps1(-1:ny), fac_vism                         !srv 16.10.17
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                  , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
@@ -56,6 +58,14 @@
        call ipgetr ('b2tfhe_vis_q', vis_q)                              !srv 11.07.99
        call ipgeti ('b2siav_style_qip', qstyle)                         !lk 23.05.06 05.07.07
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
+       if (redef_gmtry.eq.0) then
+          drift_style = 1
+       else
+          drift_style = 2
+       end if
+       call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
+!       write(*,*) 'redef_gmtry = ',redef_gmtry,
+!     &               ' drfit_style = ',drift_style
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -79,7 +89,7 @@
            tt1 = 0.0e0_R8
            tt2 = 0.0e0_R8                                                 
            tt3 = 0.0e0_R8
-           conn = 0.0e0_R8
+           conn_ = 0.0e0_R8
            bbaverage2 = 0.0e0_R8
            eps1 = 0.0e0_R8
 
@@ -92,7 +102,8 @@
              if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
               tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
               tt1(iy) = tt1(iy) +vol(ix,iy)
-              conn(iy) = conn(iy)+hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)) !srv 11.01.13
+              conn_(iy) = 
+     &            conn_(iy)+hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)) !srv 11.01.13
               tt2(iy) = tt2(iy) +hx(ix,iy)
               tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
              endif
@@ -215,11 +226,11 @@
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
 	       tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/              !lk 20.11.07 { !iyv 06.12.13
-     &         (1.0e0_R8+15.12e16_R8/conn(iy)*
+     &         (1.0e0_R8+15.12e16_R8/conn_(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &         /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     &         /conn(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
-              nu1(ix,iy) = conn(iy)/(tauia(ix,iy,is)
+     &         /conn_(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
+              nu1(ix,iy) = conn_(iy)/(tauia(ix,iy,is)
      &         *sqrt(ti(ix,iy)/(mp*am(is)))
      &         *2.0e0_R8*pi*eps1(iy)**1.5e0_R8) 
               alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))+
@@ -234,11 +245,12 @@
 * ..calculate the x-component of the parallel viscosity current
 *                                  connected with the heat flux 
 
-           do iy = 0,mintopcut-1                                        !lk 23.05.06 05.07.07 {
-            do ix = 0,nx
-             if(on_closed_surface(bottomix(ix,iy),
+           if (drift_style .le. 1) then                                !IYS 26.05.2020
+             do iy = 0,mintopcut-1                                        !lk 23.05.06 05.07.07 {
+               do ix = 0,nx
+                 if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
-              fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                      !srv 16.10.17
+                   fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                      !srv 16.10.17
      &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
@@ -257,18 +269,41 @@
      &         )*0.5e0_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
-             endif                                                      !lk 23.05.06 05.07.07 }
-            enddo
-           enddo
+                 endif                                                      !lk 23.05.06 05.07.07 }
+               enddo
+             enddo
+
+           elseif (drift_style .eq. 2) then                                !IYS 26.05.2020
+
+             do iy = 0,mintopcut-1                                        !lk 23.05.06 05.07.07 {
+               do ix = 0,nx
+                 if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
+                   fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                      !srv 16.10.17
+     &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
+     &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &         /hx(leftix(ix,iy),leftiy(ix,iy))**2)*0.5e0_R8
+     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
+     &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy)
+     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+                 endif                                                      !lk 23.05.06 05.07.07 }
+               enddo
+             enddo
+           endif
+
 
 * ..calculate the y-component of the parallel viscosity current
 *                                  connected with the heat flux 
-           do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
-            do ix = 0,nx
-             if(on_closed_surface(bottomix(ix,iy),
+          if (drift_style .le. 1) then                                !IYS 26.05.2020
+            do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
+              do ix = 0,nx
+                if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
-              if(rightix(ix,iy).ne.nx+1) then
-               fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                     !srv 16.10.17 
+                  if(rightix(ix,iy).ne.nx+1) then
+                    fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                     !srv 16.10.17 
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)
@@ -292,11 +327,44 @@
      &            )*0.5e0_R8
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
      &          -OnedBsqc(ix,iy))
-              endif
-             endif                                                      !lk 23.05.06 05.07.07 }
+                  endif
+                endif                                                      !lk 23.05.06 05.07.07 }
+              enddo
             enddo
-           enddo
+ 
+           elseif (drift_style .eq. 2) then                                !IYS 26.05.2020
+
+            do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
+              do ix = 0,nx
+                if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
+                  if(rightix(ix,iy).ne.nx+1) then
+                    fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                     !srv 16.10.17 
+     &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*   !srv 11.01.13 16.10.17
+     &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
+     &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &                      )*0.5e0_R8
+     &          *(qipgen(rightix(ix,iy),rightiy(ix,iy))
+     &          +qipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &          -qipgen(ix,iy)-qipgen(bottomix(ix,iy),bottomiy(ix,iy))
+     &            )*0.5e0_R8
+     &          *wbbv(ix,iy,2)/wbbv(ix,iy,3)
+     &          *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
+     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
+     &          -OnedBsqc(ix,iy))
+                  endif
+                endif                                                      !lk 23.05.06 05.07.07 }
+              enddo
+            enddo
+
+           endif
+
           endif
+
+
          enddo
       endif
 * ..return

@@ -322,7 +322,7 @@ ctmp.dpc
      &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
             call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
+            call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,       !srv 10.10.17
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
