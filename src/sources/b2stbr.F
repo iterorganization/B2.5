@@ -1062,7 +1062,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             write(6,'(a)') trim(filename)//' will be created'
             call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
           else if (ex.and.stim.lt.0.0_R8) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             status=nf_inq(ncid,ndims,nvars,natts,unlimid)
             call check_cdf_status(status)
@@ -1080,7 +1080,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
      .                                          ntstep_b2wall
           if (ntstep_b2wall.eq.0) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             write(*,*) 'Writing track_species'
             call write_cdf_char_variable(ncid,-1,
@@ -1095,7 +1095,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         endif
         if(main_call.and.mod(ncall,b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open(filename,NF_WRITE,ncid)
+          status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))

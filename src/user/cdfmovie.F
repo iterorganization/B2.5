@@ -38,7 +38,7 @@
         call ipgetr ('b2mndr_stim', stim)
         if (ex.and.stim.lt.0.0_R8) then
           write(6,'(a)') trim(filename)//' will be appended'
-          status=nf_open(filename,NF_WRITE,ncid)
+          status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(status)
           status=nf_inq(ncid,ndims,nvars,natts,unlimid)
           call check_cdf_status(status)

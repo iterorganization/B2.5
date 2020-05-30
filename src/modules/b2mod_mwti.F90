@@ -256,7 +256,7 @@ contains
             nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
             ncid, .false., iret)
           call check_cdf_status(iret)
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         else if (ex.and.stim.lt.0.0_R8) then
           rw='read'
@@ -270,7 +270,7 @@ contains
           ntstep = nint(tstepn(1))
           iret = nf_close(ncid)
           write(6,'(a)') trim(filename)//' will be appended'
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         else
           ntstep = 0
@@ -279,7 +279,7 @@ contains
             nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
             write_2d, ncid, .false., iret)
           call check_cdf_status(iret)
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         end if
         write(*,*) 'ntstep = ', ntstep
@@ -305,7 +305,7 @@ contains
               nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
               ncid, .true., iret)
             call check_cdf_status(iret)
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           else if (ex.and.stim.lt.0.0_R8) then
             rw='read'
@@ -338,7 +338,7 @@ contains
                nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
                write_2d, ncid, .true., iret)
             endif
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           else
             nastep = 0
@@ -347,7 +347,7 @@ contains
               nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
               write_2d, ncid, .true., iret)
             call check_cdf_status(iret)
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           end if
           write(*,*) 'nastep = ', nastep
@@ -949,7 +949,7 @@ contains
 !wdk only write time data if lwti is true
     if (lwti) then
       rw = 'write'
-      iret = nf_open(filename, NCWRITE, ncid)
+      iret = nf_open(filename, or(NF_WRITE,NF_SHARE), ncid)
       call check_cdf_status(iret)
       imap(1)=1
       tstepn(1) = ntstep
@@ -1287,7 +1287,7 @@ contains
 !wdk only write batch data if lwav is true
     if (lwav) then
       rw = 'write'
-      iret = nf_open(filename_av, NCWRITE, ncid)
+      iret = nf_open(filename_av, or(NF_WRITE,NF_SHARE), ncid)
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
@@ -1491,12 +1491,15 @@ contains
     ! variable shapes
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
+    ! CDF format variable
+    integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
     ! Create and enter define mode
-#ifndef ITM
-    iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
-#else
-    iret = nf_create(trim(filename), ncclob, ncid)
-#endif
+    call ipgeti ('b2mndr_cdf_default', cdf_default)
+    if (cdf_default.eq.3 .or. cdf_default.eq.4) then
+      iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+    else
+      iret = nf_create(trim(filename), ncclob, ncid)
+    end if
     call check_cdf_status(iret)
     ! define dimensions
     if (.not.batch_only) then
