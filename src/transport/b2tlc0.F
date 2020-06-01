@@ -1,5 +1,5 @@
-      subroutine b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, fcHz, na, te, 
-     &  ti, rza, cdpa0, cdpa, flc)
+      subroutine b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, na, te, 
+     &  ti, rza, cdpa0, cdpa, cdpahz, flc)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -11,11 +11,11 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  na(nCv,0:ns-1), te(nCv), ti(nCv), rza(nCv,0:ns-1), fcHz(nFc),
+     *  na(nCv,0:ns-1), te(nCv), ti(nCv), rza(nCv,0:ns-1),
      *  cdpa0(nFc,0:ns-1)
 *   ..input and output arguments
       real (kind=R8) ::
-     *  cdpa(nFc,0:1,0:ns-1)
+     *  cdpa(nFc,0:1,0:ns-1), cdpahz(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  flc(nFc,0:1,0:ns-1)
@@ -69,21 +69,23 @@
 *    ..poloidal
             dpb = abs(cdpa(iFc,0,is)*dpbf(iFc,0))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*fcHz(iFc)
+     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
             t2 = 1.0_R8/(1.0_R8 + 
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
-            cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
+            cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2
+            cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
             flc(iFc,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *    ..perpendicular
             dpb = abs(cdpa(iFc,1,is)*dpbf(iFc,1))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*fcHz(iFc)
+     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
             t2 = 1.0_R8/(1.0_R8 + 
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
-            cdpa(iFc,1,is) = cdpa(iFc,1,is)*t2
+            cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
+            cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
             flc(iFc,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
 	  enddo
@@ -104,16 +106,18 @@ cwdk    or radial contributions, since neutral transport is isotropic
 *    ..limit total gradient
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)*fcHz(iFc)
+     &        geo%fcS(iFc)
             t2 = 1.0_R8/(1.0_R8 + 
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
 *    ..poloidal
-            cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
+            cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2
+            cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
             flc(iFc,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *    ..radial
-            cdpa(iFc,1,is) = cdpa(iFc,1,is)*t2
+            cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
+            cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
             flc(iFc,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
 	  enddo

@@ -80,8 +80,8 @@
       real (kind=R8) ::
      *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
-     2  flc(nFc,0:1,0:ns-1), flchz(nFc,0:1,0:ns-1),                   !srv 09.07.03 30.11.15
-     3  flv(nFc,0:1,0:ns-1), flvhz(nFc,0:1,0:ns-1),
+     2  flc(nFc,0:1,0:ns-1),
+     3  flv(nFc,0:1,0:ns-1),
      4	pol_anom_scale,
      5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1),
      6  cvsa0(nFc,0:ns-1), cvsa0hz(nFc,0:ns-1)
@@ -292,20 +292,14 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        wrk = 1.0_R8
-        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &    pl%ti, rt%rza, cdpa0, co%cdpa, flc) !srv 09.07.03 30.11.15
-        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
-     &    pl%te, pl%ti, rt%rza, cdpa0hz, co%cdpahz, flchz) 
+        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%te, 
+     &    pl%ti, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
 
       if(flux_limit_to_vsa .ne. 0) then                                   !srv 15.06.08 {
-*   .. apply flux limit to neutrals contribution to cvsa
-        wrk = 1.0_R8
-        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na,
-     &    pl%ua, pl%te, pl%ti, rt%rza, cvsa0, co%cvsa, flv)
-        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
-     &    pl%ua, pl%te, pl%ti, rt%rza, cvsa0hz, co%cvsahz, flvhz) 
+*   .. apply flux limit to neutrals contribution to cvsa and cvsahz
+        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &    pl%te, pl%ti, rt%rza, cvsa0, co%cvsa, co%cvsahz, flv)
       endif
 
 *   ..apply flux limit to neutrals contribution to chcb
@@ -393,8 +387,8 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         endif                                                          !srv 07,12.15 }
         call my_out_us(70,nFc,1,flc(1,0,is),'b2trno_flcx'//chns)
         call my_out_us(70,nFc,1,flc(1,1,is),'b2trno_flcy'//chns)
-        call my_out_us(70,nFc,1,flchz(1,0,is),'b2trno_flchzx'//chns)
-        call my_out_us(70,nFc,1,flchz(1,1,is),'b2trno_flchzy'//chns)
+        call my_out_us(70,nFc,1,flv(1,0,is),'b2trno_flvx'//chns)
+        call my_out_us(70,nFc,1,flv(1,1,is),'b2trno_flvy'//chns)
        enddo
        call my_out_us(70,nFc,1,co%chce(1,0),'b2trno_chcex')
        call my_out_us(70,nFc,1,co%chce(1,1),'b2trno_chcey')
