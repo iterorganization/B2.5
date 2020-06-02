@@ -83,8 +83,7 @@
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
      4	pol_anom_scale,
-     5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1),
-     6  cvsa0(nFc,0:ns-1), cvsa0hz(nFc,0:ns-1)
+     5  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
       save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
@@ -200,8 +199,6 @@
      &   co%dpa0(1,is), co%cdpahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1,is), co%cdpahz(1,1,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1,is), cdpa0hz(1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
      &   co%vla0(1,0,is), co%cvlahz(1,0,is))
        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
@@ -214,8 +211,6 @@
      &   co%vsa0(1,is), co%cvsahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%vsa0(1,is), co%cvsahz(1,1,is))                            !srv 01.07.05 }
-       call b2txcc (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%vsa0(1,is), cvsa0hz(1,is))
       enddo                                                           !srv 09.01.01
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
