@@ -135,6 +135,7 @@ cpax
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
 
+
       facdriftm  = maxval(dv%facdrift)
       dv%fhiPSch = 0.0e0_R8                                                !srv 13.10.06
       dv%coni    = 0.0e0_R8                                                !srv 02.01.07
@@ -256,10 +257,11 @@ cpax
         flon0(:,0) = 0.0_R8
         flon0(:,1) = 0.0_R8
       elseif (tn_style.eq.1) then
+!! AFN_TODO when more contributions are considered (e.g. drifts), additions (floi0 = floi0 + ...) must be considered instead of overwrites (floi0 = ...)
         do is= 0,ns-1
           if (.not.is_neutral(is)) then
-            floi0(:,0) = floi0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = floi0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
+            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
           endif 
           flon0(:,0) = 0.0_R8
           flon0(:,1) = 0.0_R8
@@ -267,11 +269,11 @@ cpax
       else
         do is= 0,ns-1
           if (.not.is_neutral(is)) then
-            floi0(:,0) = floi0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = floi0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
+            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
           else
-            flon0(:,0) = flon0(:,0) + 1.5e0_R8*dv%fna_he(:,0,is)
-            flon0(:,1) = flon0(:,1) + 1.5e0_R8*dv%fna_he(:,1,is)
+            flon0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
+            flon0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
           endif
         enddo
       endif
