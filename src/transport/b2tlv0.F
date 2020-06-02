@@ -25,7 +25,8 @@
 *     ------------------------------------------------------------------
 *   ..local variables
       integer iFc, is, ncall
-      integer, save :: style = 0
+      integer, save :: style = 0, iout = 0
+      character charns*3                                      
       real (kind=R8) ::
      *  alpha, gamma, qcl, qfl, tfl, maxfluxlimit(0:1),
      *  dubf(nFc,0:1), ubv(nVx)
@@ -49,6 +50,7 @@
         call ipgetr ('b2tlv0_gamma', gamma)
         call xertst (0.lt.gamma, 'invalid input parameter gamma')
         call ipgeti ('b2tlv0_style', style)
+        call ipgeti ('b2tlv0_iout', iout)                      
       endif
 
       call sfill(nFc*2*ns, 1.0_R8, flv, 1)
@@ -115,6 +117,18 @@ cwdk    or radial contributions, since neutral transport is isotropic
       endif
 
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlv0: maxfluxlimit = ',maxfluxlimit
+
+       if (iout.ne.0) then
+         do is=0,ns-1          
+           if (is_neutral(is)) then                            
+             write (charns,'(i3.3)') is
+             call my_out_us(70,nFc,1, flv(1,0,is),
+     &               'fl_visc_x'//charns)
+             call my_out_us(70,nFc,1, flv(1,1,is),
+     &               'fl_visc_y'//charns)
+           endif
+         enddo                                            
+       endif
 
 *   ..return
       ncall = ncall + 1
