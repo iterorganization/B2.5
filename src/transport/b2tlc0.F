@@ -25,11 +25,12 @@
 *     ------------------------------------------------------------------
 *   ..local variables
       integer iFc, is, ncall
-      integer, save :: style = 0
+      integer, save :: style = 0, iout = 0
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
+      character charns*3                                      
       save ncall, alpha, gamma
 *   ..initialization
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
@@ -49,6 +50,7 @@
         call ipgetr ('b2tlc0_gamma', gamma)
         call xertst (0.lt.gamma, 'invalid input parameter gamma')
         call ipgeti ('b2tlc0_style', style)
+        call ipgeti ('b2tlc0_iout', iout)                      
       endif
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
@@ -95,11 +97,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute partial pressure
-          call b2xppb (nCv, rza(1,is), na(1,is), te, ti, pb)
+          call b2xppb (nCv, rza(1,is), na(1,is), te, ti, tn, is, pb)
 *    ..compute differences of partial pressure
           call diff (nCv, nFc, nVx, 0, geo, mpg, pb, pbv, dpbf)
           do iFc = 1, nFc
-           t0 = (ti(mpg%fcCv(iFc,1)) + ti(mpg%fcCv(iFc,2)))/2.0_R8
+           t0 = (tn(mpg%fcCv(iFc,1)) + tn(mpg%fcCv(iFc,2)))/2.0_R8
            t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *    ..limit total gradient
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
@@ -123,6 +125,18 @@ cwdk    or radial contributions, since neutral transport is isotropic
       endif
 
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlc0: maxfluxlimit = ',maxfluxlimit
+
+       if (iout.ne.0) then
+         do is=0,ns-1          
+           if (is_neutral(is)) then                            
+             write (charns,'(i3.3)') is
+             call my_out_us(70,nFc,1, flc(1,0,is),
+     &               'fl_fn_x'//charns)
+             call my_out_us(70,nFc,1, flc(1,1,is),
+     &               'fl_fn_y'//charns)
+           endif
+         enddo                                            
+       endif
 
 *   ..return
       ncall = ncall + 1
