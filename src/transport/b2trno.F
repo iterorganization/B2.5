@@ -205,7 +205,7 @@
      &   co%dpa0(1,is), co%cdpahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1,is), co%cdpahz(1,1,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+       call b2txcc (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1,is), cdpa0hz(1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
      &   co%vla0(1,0,is), co%cvlahz(1,0,is))
