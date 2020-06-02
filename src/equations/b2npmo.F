@@ -519,7 +519,11 @@ c     ..compare 9-pt stencil matrices
         ireg = mpg%cvReg(iCv)
         if (solvemo(is,ireg)) then
          if (rxf.ne.0.0_R8) then    !! when rxf is zero we would like to keep ua constant for debugging purposes
-          pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+           if (.not.is_neutral(is)) then
+             pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+           else
+             pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
+           endif
          endif
         endif
        enddo
