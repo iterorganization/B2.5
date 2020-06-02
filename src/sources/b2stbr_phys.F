@@ -257,6 +257,28 @@ c for KUL advanced fluid neutral boundary conditions
       yself_max = 0.0_R8
 #endif
 
+c pre-computations for KUL fluid neutrals
+      if (kul_recycle.ne.0) then
+        if (ns.gt.2) then
+          call xerrab('KUL recycling model not yet developed for',
+     &                    'multi-species cases')
+        endif
+          isn = 0 !! AFN_TODO generalize species index for multi-species cases? 
+                    !! For now KUL AFN models have only been developed for single species cases.
+          dumm0 = 0.0_R8
+        call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx) 
+        if (ncall.eq.0) then !! on the first call co%cvsahz_eff will still be zero...
+          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
+     &         0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
+        else
+          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
+     &         0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
+        endif
+        cvsf(:,0) = cvsf(:,0)/geo%fcHz
+        cvsf(:,1) = cvsf(:,1)/geo%fcHz
+        call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn),
+     &                  nnVx,  dnn)
+      endif
 
 
 
@@ -330,21 +352,6 @@ c for KUL advanced fluid neutral boundary conditions
 * ..recycling model at south boundary
         if (crcstra(istra).eq.'A') then
 
-
-          if (kul_recycle.ne.0) then
-            if (ns.gt.2) then
-              call xerrab('KUL recycling model not yet developed for',
-     &                    'multi-species cases')
-            endif
-            isn = 0 !! AFN_TODO generalize species index for multi-species cases? 
-                    !! For now KUL AFN models have only been developed for single species cases.
-            dumm0 = 0.0_R8
-            call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx) 
-            call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &           0.5_R8*co%cvsa(:,:,isn),cvsf,dumm0,dumm1)
-            call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn),
-     &                  nnVx,  dnn)
-          endif
 
 
 *   ..loop over boundary cells
@@ -948,7 +955,8 @@ cmb   net neutral energy source from recycling
 c         A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
 c         while B2.5 uses internal energy equations.
 
-             q_conv=
+
+               q_conv =
      &             (isign*(tnf*pl%ua(iCv,is)*geo%fcpbs(iFc)*
      &             pl%na(iCv,is)+
      &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
@@ -959,16 +967,13 @@ c         while B2.5 uses internal energy equations.
 
 
 
+
              if (tn_style.eq.0) then
-               if (add_q_conv.eq.1) then
-                 srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-               endif
+               srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
              elseif (tn_style.eq.1) then
                !! do nothing, no neutral contributions in the boundary conditions of the pure ion energy equation
              else
-               if (add_q_conv.eq.1) then
-                 srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
-               endif
+               srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
              endif
 
              if (maxw(istra).eq.0) then
