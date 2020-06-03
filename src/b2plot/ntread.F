@@ -224,47 +224,47 @@ C
 * densities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * average energies
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * X-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Y-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Z-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Volumes
 C
