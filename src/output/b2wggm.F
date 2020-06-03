@@ -23,13 +23,13 @@
 *
 *  1. purpose
 *
-*     B2WGGM produces graphical displays of the b2 geometry and
+*     B2WGGM produces graphical displays of the B2 geometry and
 *     magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine produces plots of the b2 geometry and of the
+*     This routine produces plots of the B2 geometry and of the
 *     magnetic field. Arrays crx and cry provide the coordinates
 *     of the four corners of all the cells in the mesh. Arrays fpsi
 *     and ffbz provide the flux functions at the corner locations.

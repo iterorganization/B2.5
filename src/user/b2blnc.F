@@ -194,7 +194,7 @@ c
 
 c*** Re-scale the neutral fluxes
 
-csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st eirene call)
+csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st Eirene call)
 c      do i=1,nlimps
       do i=1,nnstsi+nnlimi
         do j=1,nnatmi

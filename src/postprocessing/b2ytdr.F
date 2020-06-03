@@ -92,14 +92,14 @@ c 2002-09-11: logic revised
 *
 *  1. purpose
 *
-*     B2YTDR is a postprocessor for b2. It transfers the plasma state
+*     B2YTDR is a postprocessor for B2. It transfers the plasma state
 *     to a mesh of a different size.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, transfers the plasma state to a mesh
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, transfers the plasma state to a mesh
 *     of a different size and/or a different species bundling scheme,
 *     and writes that state to an un*formatted file. This routine does
 *     not employ any metric information other than the mesh dimensions

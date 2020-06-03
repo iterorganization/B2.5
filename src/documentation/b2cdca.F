@@ -9,7 +9,7 @@
 *
 *  1. purpose
 *
-*     B2CDCA provides some general documentation of the b2 code.
+*     B2CDCA provides some general documentation of the B2 code.
 *     No computation is performed in this routine.
 *
 *-----------------------------------------------------------------------
@@ -17,7 +17,7 @@
 *
 *  0. Introduction
 *
-*     The b2 code /1,2/ solves a system of fluid equations that models
+*     The B2 code /1,2/ solves a system of fluid equations that models
 *     a multi-species plasma in a two-dimensional geometry. Its main
 *     application is simulation of the edge plasma in tokamaks.
 *
@@ -119,7 +119,7 @@
 *     from the main calculation.
 *
 *   ..Concerning 'un*formatted' files.
-*     The programs that make up b2 communicate through external files,
+*     The programs that make up B2 communicate through external files,
 *     which could be unformatted if all programs run on the same
 *     computer system, and otherwise would be formatted. In the latter
 *     case the format is very simple, and not designed for convenience

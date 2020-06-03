@@ -14,7 +14,7 @@
 *  1. purpose
 *
 *     B2FGMTRY_MOD (main program) modifies a geometry saved in b2fgmtry
-*     and creates a new file b2fgmtry_mod for b2. 
+*     and creates a new file b2fgmtry_mod for B2.
 *
 *
 *  2. specification
@@ -28,7 +28,7 @@
 *
 *     The input units are:
 *     ninp(0): formatted; provides geometric parameters.
-*     ninp(1): un*formatted; old specification of the geomrey
+*     ninp(1): un*formatted; old specification of the geometry
 *
 *     The output units are:
 *     nout(0): formatted; provides summary printed output.

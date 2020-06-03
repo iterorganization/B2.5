@@ -26,7 +26,7 @@
 *  1. purpose
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
-*     prepared for b2.
+*     prepared for B2.
 *
 *
 *  3. description

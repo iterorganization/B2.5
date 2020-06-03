@@ -5444,7 +5444,7 @@ c     assumes that bb is OK for 1d cases
           values(33)=rstack(irstack)
           write(target_label(itwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_targetbarlabel(target_label(itwrk))
-        case('eirc')     ! add the Eirene atomic quantities to the b2 values
+        case('eirc')     ! add the Eirene atomic quantities to the B2 values
           if (eirc_done) return
           stack_req=(/0,0,0,0,0,0,0/)
           if(b2plot_debug.ge.12)

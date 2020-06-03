@@ -39,7 +39,7 @@
 *
 *  1. purpose
 *
-*     B2MOD_MAIN contains the main program for the b2 code. The code solves a
+*     B2MOD_MAIN contains the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.

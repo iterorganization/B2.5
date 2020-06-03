@@ -37,13 +37,13 @@
 *  1. purpose
 *
 *     B2WSAX writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine writes the state of the plasma to an unformatted
-*     file, in the style required for input into the 'old b2' code.
+*     file, in the style required for input into the 'old B2' code.
 *     One difference between the two codes is in the dimensioning
 *     of the arrays: (-1:nx,-1:ny) now versus (0:nx+1,0:ny+1) in the
 *     old code; and for quantities defined on cell faces, in the

@@ -109,7 +109,7 @@
 *  1. purpose
 *
 *     B2NPMO performs one iteration of a relaxation process for the
-*     solution of the b2 equations for parallel velocity.
+*     solution of the B2 equations for parallel velocity.
 *
 *  3. description (see also routine b2cdca)
 *

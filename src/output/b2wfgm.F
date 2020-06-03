@@ -23,14 +23,14 @@
 *
 *  1. purpose
 *
-*     B2WFGM writes to a formatted file a summary of the b2 geometry
+*     B2WFGM writes to a formatted file a summary of the B2 geometry
 *     and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine writes to a formatted file reduced information on
-*     the b2 geometry and magnetic field. The information includes
+*     the B2 geometry and magnetic field. The information includes
 *     cell volumes, cell diameters, and cell surface areas, all reduced
 *     to a function of one coordinate by summing over the other
 *     coordinate.

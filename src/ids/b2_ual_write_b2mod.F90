@@ -6,7 +6,7 @@
 !>      @page b2uw_b2mod b2_ual_write_b2mod
 !>      @section b2uw_b2mod_desc   Description
 !!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
-!!      (main program), which is a post-processor for b2.
+!!      (main program), which is a post-processor for B2.
 !!      The code reads the plasma grid
 !!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
@@ -154,7 +154,7 @@
 !!      For more information see also routine \b b2cdca.
 !!
 !!      The complete program performs post-processing of the
-!!      result of a b2 calculation.
+!!      result of a B2 calculation.
 !!      This program unit opens and closes the input/output units, and
 !!      may perform some other system-dependent operations.
 
@@ -334,7 +334,7 @@ program b2_ual_write_b2mod
         call exit(0)
     end if
 
-    !! Run main b2 routine to process and read the b2 data
+    !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
     call b2mn_init
     write(0,*) "b2mn_init completed"

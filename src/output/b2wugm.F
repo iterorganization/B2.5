@@ -33,7 +33,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine writes to unit (nput) the specification of a b2
+*     This routine writes to unit (nput) the specification of a B2
 *     geometry and magnetic field. Unit nput must be connected to an
 *     un*formatted file.
 *     The data consists of the coordinates of the four corners of all

@@ -857,7 +857,7 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
           end if
         end if
 
-ccc*** Substitute b2 cells only when overlapping original plot zone target elements
+ccc*** Substitute B2 cells only when overlapping original plot zone target elements
         if (istarget(il)) then !{ inside target
           k1=lwldlis_old(1)
           k2=lwldlis_old(nwldlis_old)

@@ -277,8 +277,8 @@ contains
 !> @param grid The CPO grid description
 !> @param subgridId Id of the subgrid the data is to be stored on.
 !> @param gmap The grid mapping as computed by b2ITMCreateMap
-!> @param b2CellData Cell data given on the 2d b2 data structure
-!> @param b2FaceData Face data given on the 2d b2 data structure
+!> @param b2CellData Cell data given on the 2d B2 data structure
+!> @param b2FaceData Face data given on the 2d B2 data structure
 
   function b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2CellData, b2FaceData, b2VertexData ) result( cpodata )
     real(ITM_R8), dimension(:), pointer :: cpodata

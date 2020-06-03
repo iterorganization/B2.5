@@ -8,7 +8,7 @@
       character vrname*(*)
 *     -----------------------------------------------------------------
 *     B2XVFY verifies the zero entries in the edge locations of some
-*     quantity defined on y-faces of the b2 mesh.
+*     quantity defined on y-faces of the B2 mesh.
 *     The entries funy(-1:nx,-1) must vanish or the code will halt via
 *     a call to xertst/xerrab.
 *     vrname must be the name of the program variable in the calling
@@ -46,7 +46,7 @@
       character vrname*(*)
 *     -----------------------------------------------------------------
 *     B2XVFY1 verifies the zero entries in the edge locations of some
-*     quantity defined on y-faces of the b2 coarse mesh.
+*     quantity defined on y-faces of the B2 coarse mesh.
 *     The entries funy(-1:nx,-1) must vanish or the code will halt via
 *     a call to xertst/xerrab.
 *     vrname must be the name of the program variable in the calling

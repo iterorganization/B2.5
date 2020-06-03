@@ -343,7 +343,7 @@ module b2mod_connectivity
 
 contains
 
-  !> Computes the standard b2 connectivity information
+  !> Computes the standard B2 connectivity information
   !! Code taken from b2agfs.F.
   !! @note  A note on the cut arrays:
   !!        leftcut(i) holds the left boundary index of a region which is cut

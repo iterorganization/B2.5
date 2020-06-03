@@ -178,7 +178,7 @@ c***  wnu_pk  : neutrals at total peak
      ,  sjs_w(0:ntrgsx),sptmass,sptflx(DEF_NLIM+DEF_NSTS)
 c     real (kind=R8) :: zz
 
-c*** Recap of fluxes from eirene
+c*** Recap of fluxes from Eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
 c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
 c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
@@ -748,7 +748,7 @@ c                   carlis Using values directly calculated from Eirene
      .                (2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
                   enddo
                 end if
-              end do !} loop over b2 cells
+              end do !} loop over B2 cells
               l=1-l
               u=-u
             end do !} loop over targets
@@ -847,7 +847,7 @@ c!###{
 c                  print '(1x,i2,1p,8e10.2)',iy,p/ev,h/ev,t,wo,wwo,
 c     ,              fiitrg(iy,j,is),eiitrg(iy,j,is),s(iy,j)
 c!###}
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
 c                print *,'j,is,zz=',j,is,zz  !###
                 l=1-l
                 u=-u
@@ -896,7 +896,7 @@ c                  print '(1x,i2,1p,4e10.2)',iy,
 c     ,              faitrg(iy,j,iatm),eaitrg(iy,j,iatm)/ev,
 c     ,              dab2(kk+1,iy+1,iatm,1),tab2(kk+1,iy+1,iatm,1)/ev
 c!###}
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
                 wo=0.0_R8
                 wwo=0.0_R8
                 do iy=0,ny-1 !{
@@ -926,7 +926,7 @@ c carlis            [J]=[J/s]/[1/s]
                   else !}{
                     eaitrg(iy,j,iatm)=0.0_R8
                   end if !}
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
                 l=1-l
                 u=-u
               end do !} loop over targets
@@ -968,7 +968,7 @@ c*** Molecules fluxes and energies
                     nmitrg(iy,j,imol)=0.0
                     emitrg(iy,j,imol)=0.0
                   endif
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
                 wo=0.0_R8
                 wwo=0.0_R8
                 do iy=0,ny-1 !{

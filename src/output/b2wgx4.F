@@ -29,7 +29,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a log-contour plot of some quantity on a
-*     sequence of cartesian representations of the b2 mesh.
+*     sequence of cartesian representations of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)

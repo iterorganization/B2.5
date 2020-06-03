@@ -25,7 +25,7 @@
 *  1. purpose
 *
 *     B2MWIT writes to an un*formatted file detailed monitoring output
-*     for the inner iterations of the b2 solution process.
+*     for the inner iterations of the B2 solution process.
 *
 *
 *  3. description (see also routine b2cdca)

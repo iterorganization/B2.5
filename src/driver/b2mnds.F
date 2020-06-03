@@ -25,12 +25,12 @@
 *
 *  1. purpose
 *
-*     B2MNDS performs initialisation functions for a b2 calculation.
+*     B2MNDS performs initialisation functions for a B2 calculation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine performs initialisation for a b2 calculation.  It
+*     This routine performs initialisation for a B2 calculation. It
 *     reads and checks header records from the input files, writes
 *     header records to the output files, and initialises variables in
 *     common.

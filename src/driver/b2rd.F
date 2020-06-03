@@ -19,9 +19,9 @@
 *
 *  1. purpose
 *
-*     B2RD (main program) is a postprocessor for b2. It imports an
+*     B2RD (main program) is a postprocessor for B2. It imports an
 *     archived plasma state from the MDSPlus tree and outputs the
-*     equivalent b2fstate and b2 geometry files.
+*     equivalent b2fstate and B2 geometry files.
 *
 *
 *  2. specification
@@ -32,7 +32,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2rd performs a fetch of the archived
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2rddr to control the actual computation.

@@ -17,7 +17,7 @@
 *
 *  1. purpose
 *
-*     B2YH (main program) is a postprocessor for b2. It reads and
+*     B2YH (main program) is a postprocessor for B2. It reads and
 *     displays the table of physics parameters. This program calls the
 *     driver routine b2yhdr for the actual computation.
 *
@@ -30,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yh performs postprocessing of the
-*     result of a b2 calculation. It displays in a convenient format
+*     result of a B2 calculation. It displays in a convenient format
 *     the table of physics parameters.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls

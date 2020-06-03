@@ -228,7 +228,7 @@ c
 #ifdef B25_EIRENE
 c*** Re-scale the neutral fluxes
 
-csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st eirene call)
+csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st Eirene call)
 c      do i=1,nlimps
       do i=1,nnstsi+nnlimi
         do j=1,nnatmi
@@ -566,11 +566,11 @@ c*** Flux across the core boundary
 
 c**       Here "is" is not a species index, but the index of Eirene surface,
 !!!    because
-c**       ncns - Number of 'non-default' eirene surfaces which are part of the core boundary
+c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
 c**       lcns() - index of these 'non-default' surfaces
 
             js = lcns(is) + nnlimi
-c**       js - index of the eirene surface, js > nnlimi means that this is the 'non-default' one
+c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
 
             do j = 1,nnatmi
               if (latmscl(j) .eq. ls) then

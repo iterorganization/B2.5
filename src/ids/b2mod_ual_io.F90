@@ -3979,7 +3979,7 @@ contains
                 &   b2CellData = e(:,:,:,3),                                  &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
 
-            !! write the magnetic field vector in the b2 coordinate system
+            !! write the magnetic field vector in the B2 coordinate system
             call write_cell_vector_component(                                 &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
                 &   b2CellData = bb(:,:,0:2),                                 &
@@ -5897,7 +5897,7 @@ contains
                 & e(:,:,:,i) )
         end do
 
-        !! write the magnetic field vector in the b2 coordinate system
+        !! write the magnetic field vector in the B2 coordinate system
         allocate(edgecpo%fluid%te_aniso%comps(4)%flux(1))
         call write_cell_vector( edgecpo%fluid%te_aniso%comps(4)%flux(1), &
             & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /), &

@@ -26,7 +26,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine produces a contour plot of some b2 quantity on a
+*     This routine produces a contour plot of some B2 quantity on a
 *     rectangular mesh.
 *
 *

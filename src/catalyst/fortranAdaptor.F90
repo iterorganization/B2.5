@@ -1,5 +1,5 @@
 ! Fortran part of the adaptor for paraview catalyst
-! for b2.5 simulation.
+! for B2.5 simulation.
 ! Author: Jure Bartol
 
 

@@ -36,7 +36,7 @@
 *
 *  1. purpose
 *
-*     B2NEWS_ performs one inner iteration for the b2 equations.
+*     B2NEWS_ performs one inner iteration for the B2 equations.
 *     This routine defines the core structure of the solution
 *     algorithm.
 *
@@ -46,7 +46,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     This routine performs one basic iteration for the b2 equations.
+*     This routine performs one basic iteration for the B2 equations.
 *     An outline of the procedure follows.
 *     ..test input data
 *     ..compute auxiliary quantities

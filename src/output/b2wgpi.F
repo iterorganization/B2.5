@@ -32,7 +32,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results
-*     from a b2 calculation. The routine operates as an interface
+*     from a B2 calculation. The routine operates as an interface
 *     to b2wgpj.
 *
 *

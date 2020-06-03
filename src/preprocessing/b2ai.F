@@ -15,7 +15,7 @@
 *
 *  1. purpose
 *
-*     B2AI (main program) prepares an initial plasma state for b2.
+*     B2AI (main program) prepares an initial plasma state for B2.
 *     This program calls the driver routine b2aidr for the actual
 *     computation.
 *
@@ -27,7 +27,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2ai prepares an initial state for a b2
+*     The complete program b2ai prepares an initial state for a B2
 *     calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls

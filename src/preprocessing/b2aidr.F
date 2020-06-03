@@ -24,13 +24,13 @@
 *  1. purpose
 *
 *     B2AIDR prepares and writes to an external file an initial plasma
-*     state for b2.
+*     state for B2.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine prepares and writes to an external file an initial
-*     plasma state for b2.
+*     plasma state for B2.
 *     The initial plasma state is characterised by constant densities
 *     and temperatures and vanishing flow.
 *

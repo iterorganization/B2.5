@@ -10,7 +10,7 @@
 *  1. purpose
 *
 *     B2CDCR contains a brief statement of the purpose of many of the
-*     subroutines of the b2 code. No computation is performed in this
+*     subroutines of the B2 code. No computation is performed in this
 *     routine.
 *
 *-----------------------------------------------------------------------
@@ -90,14 +90,14 @@
 *     B2Z* - Reserved for application-dependent postprocessing.
 *
 *
-*  1. Purpose of individual b2 routines.
+*  1. Purpose of individual B2 routines.
 *
 *     B2AG (main program) prepares a geometry and magnetic field for
-*     b2. This program calls the driver routine b2agdr for the actual
+*     B2. This program calls the driver routine b2agdr for the actual
 *     computation.
 *
 *     B2AGDR computes and writes to an external file the specification
-*     of a b2 geometry and magnetic field.
+*     of a B2 geometry and magnetic field.
 *
 *     B2AGBB computes the magnetic field from the flux functions.
 *
@@ -119,69 +119,69 @@
 *
 *     B2AGSP evaluates the coordinates and the flux functions at one
 *     single point on the mesh. This routine is application dependent,
-*     and defines the specific geometry and magnetic field for a b2
+*     and defines the specific geometry and magnetic field for a B2
 *     calculation.
 *
 *     B2AGX0 reads the mesh dimensions from a formatted file.
 *
-*     B2AH (main program) prepares default physics parameters for b2.
+*     B2AH (main program) prepares default physics parameters for B2.
 *     This program calls the driver routine b2ahdr for the actual
 *     computation.
 *
 *     B2AHDR prepares and writes to an external file a table of default
-*     physics parameters for b2.
+*     physics parameters for B2.
 *
 *     B2AHX0 reads the number of species from a formatted file.
 *
-*     B2AI (main program) prepares an initial plasma state for b2.
+*     B2AI (main program) prepares an initial plasma state for B2.
 *     This program calls the driver routine b2aidr for the actual
 *     computation.
 *
 *     B2AIDR prepares and writes to an external file an initial plasma
-*     state for b2.
+*     state for B2.
 *
 *     B2AIX0 reads the mesh dimensions and the number of species from a
 *     formatted file.
 *
 *     B2AR (main program) prepares a table of atomic rate coefficients
-*     for b2. This program calls the driver routine b2ardr for the
+*     for B2. This program calls the driver routine b2ardr for the
 *     actual computation.
 *
 *     B2ARDR computes and writes to an external file a table of atomic
-*     rate coefficients for b2. The coefficients are obtained using
+*     rate coefficients for B2. The coefficients are obtained using
 *     either the ADPAK or the STRAHL set of routines.
 *
 *     B2ARIN reads from a formatted file the list of nuclear species
 *     and atomic states for which the rate coefficients are to be
 *     computed.
 *
-*     B2CDCA provides some general documentation of the b2 code.
+*     B2CDCA provides some general documentation of the B2 code.
 *     No computation is performed in this routine.
 *
 *     B2CDCR contains a brief statement of the purpose of many of the
-*     subroutines of the b2 code. No computation is performed in this
+*     subroutines of the B2 code. No computation is performed in this
 *     routine.
 *
 *     B2CDCV contains a description of some of the variables used in
-*     the b2 code. No computation is performed in this routine.
+*     the B2 code. No computation is performed in this routine.
 *
-*     B2MN is the main program for the b2 code. The code solves a
+*     B2MN is the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
 *
-*     B2MNDR is the main driver routine for the b2 code.
+*     B2MNDR is the main driver routine for the B2 code.
 *
-*     B2MNDS performs initialisation functions for a b2 calculation.
+*     B2MNDS performs initialisation functions for a B2 calculation.
 *
-*     B2MNDT performs one implicit timestep for the b2 system of
+*     B2MNDT performs one implicit timestep for the B2 system of
 *     equations.
 *
 *     B2MWMV writes to an un*formatted file a selection of data
 *     describing the state of the plasma.
 *
 *     B2MWIT writes to an un*formatted file detailed monitoring output
-*     for the inner iterations of the b2 solution process.
+*     for the inner iterations of the B2 solution process.
 *
 *     B2MWQ0 writes a header for the output from b2mwqt.
 *
@@ -198,7 +198,7 @@
 *     B2MXZR sets the residuals to zero along the boundaries of the
 *     mesh and on the special regions.
 *
-*     B2NEWS performs one inner iteration for the b2 equations.
+*     B2NEWS performs one inner iteration for the B2 equations.
 *     This routine defines the core structure of the solution
 *     algorithm.
 *
@@ -209,7 +209,7 @@
 *     solution of the equations for internal electron and atom energy.
 *
 *     B2NPMO performs one iteration of a relaxation process for the
-*     solution of the b2 equations for parallel velocity.
+*     solution of the B2 equations for parallel velocity.
 *
 *     B2NPPO performs one iteration of a relaxation process for the
 *     solution of the charge conservation equation, which governs the
@@ -251,7 +251,7 @@
 *     physics common blocks.
 *
 *     B2RFLB reads from a formatted file a label for one run of one
-*     of the programs that make up b2.
+*     of the programs that make up B2.
 *
 *     B2RUCP reads from an un*formatted file the parameters in the
 *     physics common blocks.
@@ -468,7 +468,7 @@
 *     B2WFCP writes to a formatted file the parameters in the physics
 *     common blocks.
 *
-*     B2WFGM writes to a formatted file a summary of the b2 geometry
+*     B2WFGM writes to a formatted file a summary of the B2 geometry
 *     and magnetic field.
 *
 *     B2WFPI writes a summary of the plasma state to a formatted file.
@@ -489,14 +489,14 @@
 *     the STRAHL atomic physics rate coefficients.
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for b2.
+*     coefficients that has been prepared for B2.
 *
 *     B2WGCR provides graphical output of the residuals and the
 *     corrections.
 *
 *     B2WGDT provides graphical output of the change in the state.
 *
-*     B2WGGM produces graphical displays of the b2 geometry and
+*     B2WGGM produces graphical displays of the B2 geometry and
 *     magnetic field.
 *
 *     B2WGPI provides graphical output of the plasma state on a uniform
@@ -511,11 +511,11 @@
 *     B2WGST provides graphical output of the plasma state.
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
-*     prepared for b2.
+*     prepared for B2.
 *
-*     B2WGX0 displays the b2 mesh in a cartesian representation.
+*     B2WGX0 displays the B2 mesh in a cartesian representation.
 *
-*     B2WGX1 displays the b2 mesh on the physical plane.
+*     B2WGX1 displays the B2 mesh on the physical plane.
 *
 *     B2WGX2 produces contour plots on a sequence of cartesian domains.
 *
@@ -526,7 +526,7 @@
 *
 *     B2WGX5 produces log-contour plots on the physical domain.
 *
-*     B2WGXB plots an outline of the b2 mesh on the physical domain.
+*     B2WGXB plots an outline of the B2 mesh on the physical domain.
 *
 *     B2WGXP produces contour plots on a cartesian domain.
 *
@@ -539,11 +539,11 @@
 *     plot.
 *
 *     B2WSAV writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *     The routine operates as an interface to b2wsax.
 *
 *     B2WSAX writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *
 *     B2WSCP provides special purpose printed output of data in the
 *     physics common blocks.
@@ -624,18 +624,18 @@
 *     blocks.
 *
 *     B2XVFF verifies the zero entries in the edge locations of some
-*     quantity defined on faces of the b2 mesh. This routine is an
+*     quantity defined on faces of the B2 mesh. This routine is an
 *     interface to b2xvfx and b2xvfy.
 *
 *     B2XVFV verifies the zero entries in the edge locations of some
 *     quantity that is defined in the manner of a viscosity on the
-*     cells and corners of the b2 mesh (not used anymore).
+*     cells and corners of the B2 mesh (not used anymore).
 *
 *     B2XVFX verifies the zero entries in the edge locations of some
-*     quantity defined on x-faces of the b2 mesh.
+*     quantity defined on x-faces of the B2 mesh.
 *
 *     B2XVFY verifies the zero entries in the edge locations of some
-*     quantity defined on y-faces of the b2 mesh.
+*     quantity defined on y-faces of the B2 mesh.
 *
 *     B2XVGM tests the validity of the geometric parameters.
 *
@@ -644,12 +644,12 @@
 *     B2XVSG verifies the sign of some vector quantity.
 *
 *     B2XXGS sets a mesh function to a constant value on the singular
-*     regions of the b2 geometry.
+*     regions of the B2 geometry.
 *
-*     B2XXID returns an identification of the current version of b2.
+*     B2XXID returns an identification of the current version of B2.
 *
 *     B2XXMM computes the locations of the minimum and maximum entries
-*     of a quantity defined on the b2 mesh.
+*     of a quantity defined on the B2 mesh.
 *
 *     B2XZEF computes zeff:
 *       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
@@ -658,69 +658,69 @@
 *       zmff(,) = (sum over is /= ismain :: rz2(,,is)*na(,,is))/
 *                  na(,,ismain)*rz2(,,ismain)
 *
-*     B2YE (main program) is a postprocessor for b2. It calculates
+*     B2YE (main program) is a postprocessor for B2. It calculates
 *     statistical errors based on averaged quantities collected during
-*     the averaging phase of a b2 calculation.
+*     the averaging phase of a B2 calculation.
 *
-*     B2YG (main program) is a postprocessor for b2. It reads and
+*     B2YG (main program) is a postprocessor for B2. It reads and
 *     displays the geometry and magnetic field. This program calls the
 *     driver routine b2ygdr for the actual computation.
 *
-*     B2YGDR is a postprocessor for b2. It reads and displays the
+*     B2YGDR is a postprocessor for B2. It reads and displays the
 *     geometry and magnetic field.
 *
-*     B2YH (main program) is a postprocessor for b2. It reads and
+*     B2YH (main program) is a postprocessor for B2. It reads and
 *     displays the table of physics parameters. This program calls the
 *     driver routine b2yhdr for the actual computation.
 *
-*     B2YHDR is a postprocessor for b2. It reads and displays the table
+*     B2YHDR is a postprocessor for B2. It reads and displays the table
 *     of physics parameters.
 *
-*     B2YI (main program) is a postprocessor for b2. It reads and
+*     B2YI (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2yidr for the actual computation.
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
-*     B2YM (main program) is a postprocessor for b2. It is meant to
+*     B2YM (main program) is a postprocessor for B2. It is meant to
 *     produce movie output. This program calls the driver routine b2ymdr
 *     for the actual computation.
 *
-*     B2YMDR is a postprocessor for b2. It is meant to produce movie
+*     B2YMDR is a postprocessor for B2. It is meant to produce movie
 *     output.
 *
-*     B2YN (main program) is a postprocessor for b2. It displays the
+*     B2YN (main program) is a postprocessor for B2. It displays the
 *     progress of the inner iterations. This program calls the driver
 *     routine b2yndr for the actual computation.
 *
-*     B2YNDR is a postprocessor for b2. It displays the progress of
+*     B2YNDR is a postprocessor for B2. It displays the progress of
 *     the inner iterations.
 *
-*     B2YP (main program) is a postprocessor for b2. It displays the
+*     B2YP (main program) is a postprocessor for B2. It displays the
 *     plasma state. This program calls the driver routine b2ypdr for
 *     the actual computation.
 *
-*     B2YPDR is a postprocessor for b2. It displays the plasma state,
+*     B2YPDR is a postprocessor for B2. It displays the plasma state,
 *     making use also of the geometric information.
 *
-*     B2YQ (main program) is a postprocessor for b2. It provides a
+*     B2YQ (main program) is a postprocessor for B2. It provides a
 *     quick display of the evolution data. This program calls the driver
 *     routine b2yqdr for the actual computation.
 *
-*     B2YQDR is a postprocessor for b2. It provides a quick display of
+*     B2YQDR is a postprocessor for B2. It provides a quick display of
 *     the evolution data.
 *
-*     B2YR (main program) is a postprocessor for b2. It reads and
+*     B2YR (main program) is a postprocessor for B2. It reads and
 *     displays a table of atomic rate coefficients. This program calls
 *     the driver routine b2yrdr for the actual computation.
 *
-*     B2YRDR is a postprocessor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for B2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *
-*  2. Purpose of some additional routines employed with b2.
+*  2. Purpose of some additional routines employed with B2.
 *
 *   ..2a program management and error handling
 *

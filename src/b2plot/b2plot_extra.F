@@ -514,13 +514,13 @@ c           write(*,*) 'Do not yet know about ',h123
 c
 C  input
 C    filnam: read a&m data from file filnam, e.g. AMJUEL
-c    ir    : store data on eirene array creac(...,...,ir)
+c    ir    : store data on Eirene array creac(...,...,ir)
 c    H123  : identifier for reaction in filnam, e.g. H2
 c    REAC  : number of reaction in filnam, e.g. 2.2.5
 c    crc   : type of data process e.g. EI, CX, OT, etc
 C  output
-c    iswr  : eirene flag for type of process  (1,2,...7)
-c    creac : eirene storage array for a&m data CREAC(9,0:9,IR)
+c    iswr  : Eirene flag for type of process  (1,2,...7)
+c    creac : Eirene storage array for a&m data CREAC(9,0:9,IR)
 c    modcol: see below
 C    IFTFLG=IFTFLG(IH): flag for type of fitting expression ("fit-flag=...")
 C    IH  internally derived from ISW, for different types of data:

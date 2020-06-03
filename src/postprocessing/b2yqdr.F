@@ -15,14 +15,14 @@
 *
 *  1. purpose
 *
-*     B2YQDR is a postprocessor for b2. It provides a quick display of
+*     B2YQDR is a postprocessor for B2. It provides a quick display of
 *     the evolution data.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This subroutine provides a quick display of the evolution of
-*     a b2 calculation.
+*     a B2 calculation.
 *
 *     ...
 *

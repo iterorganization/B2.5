@@ -18,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2YRDR is a postprocessor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for B2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *
@@ -26,7 +26,7 @@
 *
 *     This routine displays a table of atomic rate coefficients for the
 *     processes of ionisation, recombination, heat loss, and charge
-*     exchange. The table is in the form required for use by the b2
+*     exchange. The table is in the form required for use by the B2
 *     code /1,2/. It is read from unit ninp(1) and is stored in the
 *     common block /b2cmrc/.
 *
@@ -124,9 +124,9 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
@@ -138,7 +138,7 @@
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
 *     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are

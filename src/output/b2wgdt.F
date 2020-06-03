@@ -27,7 +27,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the change in the plasma state
-*     computed in the course of a b2 calculation.
+*     computed in the course of a B2 calculation.
 *
 *
 *  5. parameters (see also routine b2cdcv)

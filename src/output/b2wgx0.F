@@ -18,12 +18,12 @@
 *
 *  1. purpose
 *
-*     B2WGX0 displays the b2 mesh in a cartesian representation.
+*     B2WGX0 displays the B2 mesh in a cartesian representation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine displays the b2 mesh in a sequence of cartesian
+*     This routine displays the B2 mesh in a sequence of cartesian
 *     representations.
 *
 *

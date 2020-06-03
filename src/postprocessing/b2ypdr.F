@@ -30,14 +30,14 @@
 *
 *  1. purpose
 *
-*     B2YPDR is a postprocessor for b2. It displays the plasma state,
+*     B2YPDR is a postprocessor for B2. It displays the plasma state,
 *     making use also of the geometric information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. Special purpose output may also be produced.
 *
 *

@@ -1,7 +1,7 @@
 
-*     B2YE is a post-processor for b2. It calculates statistical errors
+*     B2YE is a post-processor for B2. It calculates statistical errors
 *     based on averaged quantities collected during the averaging phase
-*     of a b2 calculation.
+*     of a B2 calculation.
 
       program b2ye
 

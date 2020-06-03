@@ -39,8 +39,8 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results from
-*     a b2 calculation. The input data are the basic data employed by
-*     the b2 main program. Arrays crx and cry provide the coordinates
+*     a B2 calculation. The input data are the basic data employed by
+*     the B2 main program. Arrays crx and cry provide the coordinates
 *     of four corners of all the cells in the mesh. Arrays na, ua, te,
 *     ti, and po provide the state of the plasma. Arrays fna, fhe, fhi,
 *     and fch provide the particle flux, electron heat flux, atom heat

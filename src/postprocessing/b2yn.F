@@ -31,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yn displays the progress of the inner
-*     b2 iterations.
+*     B2 iterations.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2yndr to control the actual computation.

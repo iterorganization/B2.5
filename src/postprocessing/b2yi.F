@@ -17,7 +17,7 @@
 *
 *  1. purpose
 *
-*     B2YI (main program) is a postprocessor for b2. It reads and
+*     B2YI (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2yidr for the actual computation.
 *
@@ -30,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yi performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2yidr to control the actual computation.

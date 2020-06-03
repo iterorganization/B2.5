@@ -41,7 +41,7 @@
 *
 *  1. purpose
 *
-*     B2MNDT performs one implicit timestep for the b2 system of
+*     B2MNDT performs one implicit timestep for the B2 system of
 *     equations.
 *
 *
@@ -50,7 +50,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     This routine performs one timestep for the b2 equations.
+*     This routine performs one timestep for the B2 equations.
 *     An outline of the procedure follows.
 *     ..test input arguments
 *     ..compute auxiliary quantities

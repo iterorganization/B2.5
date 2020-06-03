@@ -41,7 +41,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The routine is set up as an interface to b2wsst.
 *
 *

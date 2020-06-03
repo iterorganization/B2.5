@@ -34,7 +34,7 @@
 *
 *     This routine computes the residual of the parallel momentum
 *     balance equation for one species, integrated over the cells of
-*     the b2 mesh. The equation has the form
+*     the B2 mesh. The equation has the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
 *       resmb = rhs-div(flux) .

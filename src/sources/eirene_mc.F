@@ -510,7 +510,7 @@ c   same Eirene stratum
           call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
 
-csw 08feb2011 l_ddt definition moved down after eirene call when it is
+csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
 c c*** "time layer"
 c          l_ddt=0
@@ -847,13 +847,13 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
 
-csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after eirene call
+csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
       if(ank_mods.ne.0 .or. ionising_core.eq.1) then
 c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
           l_ddt=nnlimi+nnstsi
-csw 2011 in case of no time layer in eirene
+csw 2011 in case of no time layer in Eirene
           if(.not.my_ltime) then
 csw 2011
 c           l_ddt=l_ddt+1

@@ -17,7 +17,7 @@
 *
 *  1. purpose
 *
-*     B2YR (main program) is a postprocessor for b2. It reads and
+*     B2YR (main program) is a postprocessor for B2. It reads and
 *     displays a table of atomic rate coefficients. This program calls
 *     the driver routine b2yrdr for the actual computation.
 *
@@ -30,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This program displays a table of atomic rate coefficients that
-*     has been prepared for the b2 code.
+*     has been prepared for the B2 code.
 *
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls

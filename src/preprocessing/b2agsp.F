@@ -29,7 +29,7 @@
 *
 *     B2AGSP evaluates the coordinates and the flux functions at one
 *     single point on the mesh. This routine is application dependent,
-*     and defines the specific geometry and magnetic field for a b2
+*     and defines the specific geometry and magnetic field for a B2
 *     calculation.
 *
 *
@@ -37,8 +37,8 @@
 *
 *!!   The content of this routine is problem dependent.
 *     This routine defines the geometry and the magnetic field for a
-*     specific b2 calculation.
-*     The b2 mesh is specified by way of a smooth function that maps
+*     specific B2 calculation.
+*     The B2 mesh is specified by way of a smooth function that maps
 *     the unit square to the physical plane; the mesh in the physical
 *     plane is the result of applying that function to a uniform mesh
 *     on the unit square (boundary cells are handled differently, see

@@ -182,7 +182,7 @@
 	<module name="b2mn.dat">
 		<routine name="b2cdci">
 			<purpose>
-				B2CDCI provides information about internal parameters of the b2 code. No computation is performed in this routine.
+				B2CDCI provides information about internal parameters of the B2 code. No computation is performed in this routine.
 			</purpose>
 			<introduction title="Overview and naming conventions.">
 				Here we list the switches in alphabetical order. By convention, a switch name starts with the name of the routine in which it is used. Unless noted otherwise, the desired switches are to be declared at the end of the b2mn.dat input file.
@@ -2359,7 +2359,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If &gt; 0 then repeats the first call to eirene in eirene_mc so many times.
+					If &gt; 0 then repeats the first call to Eirene in eirene_mc so many times.
 					Useful if a density feedback gas puff is being used because the flux passed to Eirene on its first call is ignored (instead the value in the Eirene input file is used).
 				</description>
 			</switch>
@@ -2398,9 +2398,7 @@
 				<type>integer</type>
 				<description>
 					If eirene_sheath_pot.eq.1, the sheath potential drop as computed by B2.5 (i.e. including effects of parallel currents, secondary electron emission, etc.) is passed to EIRENE to compute ion acceleration in the sheath.
-					If eirene_sheath_pot.eq.0, the sheath potential drop is
-					recomputed by EIRENE, usually assuming zero current and secondary
-					electron emission.
+					If eirene_sheath_pot.eq.0, the sheath potential drop is	recomputed by EIRENE, usually assuming zero current and secondary electron emission.
 				</description>
 			</switch>
 			<switch>
@@ -4214,7 +4212,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Specifies the frequency (in units of full b2 timesteps) at which an externally coupled code providing additional source (for instance a kinetic treatment of trace impurity ions such as IMPGYRO) should be called.
+					Specifies the frequency (in units of full B2 timesteps) at which an externally coupled code providing additional source (for instance a kinetic treatment of trace impurity ions such as IMPGYRO) should be called.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4503,7 +4501,7 @@
 	<module name="b2.parameters" type="namelist">
 		<routine name="b2cdcn">
 			<purpose>
-				B2CDCN provides information about namelists of the b2 code.
+				B2CDCN provides information about namelists of the B2 code.
 				No computation is performed in this routine.
 
 				The namelists are listed in no particular order. Each description will begin with the file from which the code expects to read the namelist and its general purpose. Then, each namelist variable will be listed with its use and size.

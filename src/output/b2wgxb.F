@@ -18,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2WGXB plots an outline of the b2 mesh on the physical domain.
+*     B2WGXB plots an outline of the B2 mesh on the physical domain.
 *
 *
 *  5. parameters (see also routine b2cdcv)

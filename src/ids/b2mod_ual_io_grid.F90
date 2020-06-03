@@ -689,7 +689,7 @@ contains
 
         !! x-aligned faces
         do iFc = 1, gmap%nFcx
-            !! get position of this face in the b2 grid
+            !! get position of this face in the B2 grid
             ix = gmap%mapFcix( iFc )
             iy = gmap%mapFciy( iFc )
             !! get index of start vertex
@@ -776,7 +776,7 @@ contains
 
         !! y-aligned faces
         do iFc = gmap%nFcx + 1, gmap % nFcx + gmap % nFcy
-            !! get position of this face in the b2 grid
+            !! get position of this face in the B2 grid
             ix = gmap % mapFcix( iFc )
             iy = gmap % mapFciy( iFc )
 !!$            if (gmap%mapCvI(ix, iy) == B2_GRID_UNDEFINED) then
@@ -2492,7 +2492,7 @@ contains
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour = GRID_UNDEFINED
       !! x-aligned faces
       do iFc = 1, gmap % nFcx
-          !! get position of this face in the b2 grid
+          !! get position of this face in the B2 grid
           ix = gmap % mapFcix( iFc )
           iy = gmap % mapFciy( iFc )
           !! get index of start vertex
@@ -2544,7 +2544,7 @@ contains
 
       !! y-aligned faces
       do iFc = gmap % nFcx + 1, gmap % nFcx + gmap % nFcy
-          !! get position of this face in the b2 grid
+          !! get position of this face in the B2 grid
           ix = gmap % mapFcix( iFc )
           iy = gmap % mapFciy( iFc )
 !!$          if (gmap%mapCvI(ix, iy) == GRID_UNDEFINED) then

@@ -73,7 +73,7 @@ c                                 corrected b2stbc_bas and b2stbc_phys
 c                        11.03.09 corrected boundary conditions bceni=15 in b2stbc_phys
 c    Version 01.001.028  05.05.09 corrected boundary conditions bcene=15 in b2stbc_phys
 c    Version 01.001.029  07.05.09 modified boundary conditions bcmom=13 in b2stbc_phys
-c                                 and sings of coefficients in b2.transport.parameters
+c                                 and signs of coefficients in b2.transport.parameters
 c                                 for bcmom=13
 c    Version 01.001.030  08.05.09 corrected boundary conditions bcene=3 in b2stbc_phys
 c    Version 01.001.031  11.05.09 introduced subroutine b2tinnt for calculating

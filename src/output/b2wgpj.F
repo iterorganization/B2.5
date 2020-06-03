@@ -36,7 +36,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results from
-*     a b2 calculation. Arrays na, ua, te, ti, and po provide the state
+*     a B2 calculation. Arrays na, ua, te, ti, and po provide the state
 *     of the plasma. Arrays fna, fhe, fhi, and fch provide the particle
 *     flux, electron heat flux, atom heat flux, and the electric
 *     current. This routine does not require any metric information.

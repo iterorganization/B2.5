@@ -7,7 +7,7 @@
       character vrname*(*)
 *     -----------------------------------------------------------------
 *     B2XVFX verifies the zero entries in the edge locations of some
-*     quantity defined on x-faces of the b2 mesh.
+*     quantity defined on x-faces of the B2 mesh.
 *     The entries funx(-1,-1:ny) must vanish or the code will halt via
 *     a call to xertst/xerrab.
 *     vrname must be the name of the program variable in the calling

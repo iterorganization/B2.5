@@ -288,7 +288,7 @@ contains
         logical :: vertexfileExists
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
-            &   //int2str(nx)//", ny="//int2str(ny)//" b2 grid" )
+            &   //int2str(nx)//", ny="//int2str(ny)//" B2 grid" )
 
         Cvi = GRID_UNDEFINED
         Fcxi = GRID_UNDEFINED

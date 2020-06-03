@@ -521,14 +521,14 @@ cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
-     1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * ti(ix,iy) / (pi * am(is) * mp))
             Pflx = Pflx + na(ix,iy,is)*vbar*alpha *
-     1           neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+cbrec(0,is,ireg)*t0
          itrack=track_index(is0)

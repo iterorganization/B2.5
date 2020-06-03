@@ -33,7 +33,7 @@
 *  1. purpose
 *
 *     B2WSAV writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *     The routine operates as an interface to b2wsax.
 *
 *

@@ -23,12 +23,12 @@
 *  1. purpose
 *
 *     B2AGDR computes and writes to an external file the specification
-*     of a b2 geometry and magnetic field.
+*     of a B2 geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine computes and writes out a specification of a b2
+*     This subroutine computes and writes out a specification of a B2
 *     geometry and magnetic field. Summary information will be written
 *     to unit nout(0), which must be connected to a formatted file.
 *     A complete specification of the geometry and the magnetic field

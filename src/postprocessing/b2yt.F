@@ -19,7 +19,7 @@
 *
 *  1. purpose
 *
-*     B2YT (main program) is a postprocessor for b2. It transfers
+*     B2YT (main program) is a postprocessor for B2. It transfers
 *     the plasma state to a mesh of different size and/or a different
 *     species bundling. It also attempts
 *     to re-write a new set of input files consistent with the new
@@ -34,7 +34,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2yt transfers the result of a b2
+*     The complete program b2yt transfers the result of a B2
 *     calculation to a mesh of different size.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls

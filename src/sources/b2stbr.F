@@ -805,8 +805,8 @@ c   --> better solution wanted here..
 
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 
-*       compute total eirene sources for averaging
-cwdk only total eirene source are averaged!
+*       compute total Eirene sources for averaging
+cwdk only total Eirene source are averaged!
 cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
 cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
@@ -826,7 +826,7 @@ cwdk       down in this routine
 *       get averaged sources
         if (ird_aver > 0) then
 
-cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!),
+cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
 cwdk i.e. fully replaced by the averaged values from b2faveri
           sna0_eir = 0.0_R8
           smo0_eir = 0.0_R8
@@ -838,7 +838,7 @@ cwdk get the averaged sources
      &                            she0_eir_tot, shi0_eir_tot,
      &                            nx, ny, ns)
 
-cwdk note: only total eirene source are averaged!
+cwdk note: only total Eirene source are averaged!
 cwdk these are now put back into the constant part of the sources (0-component)
           do is = 0,ns-1
             sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)

@@ -22,13 +22,13 @@
 *.documentation
 *
 *  1. purpose
-*     
-*     This subroutine is an interface between the b2 code and 
-*     the -average- subroutine.  It receives data from b2 code and 
+*
+*     This subroutine is an interface between the B2 code and
+*     the -average- subroutine. It receives data from the B2 code and
 *     returns the average value over the emission angle
 *     of the ratio mu = g/g0, where g0 is the secondary electron emission
 *     coefficient for a given surface.
-*     
+*
 *     Input parameters:
 *     tef      - Electron temperature.
 *     tif      - Ion temperature.
@@ -44,10 +44,10 @@
 *     ns       - number of species
 *     ismain   - index of main plasma ion species
 *     diagno   - output flag
-*     
+*
 *     Output parameters:
 *     sec - effective secondary electron emission coefficient.
-*     
+*
 *     Internal variables
 *     nmat - maximum number of considered materials - 1
 *     imat - material index
@@ -57,13 +57,13 @@
 *     w0   - work function for selected material
 *     u0   - reference energy for selected material
 *     s0   - reference ESEEC for selected material
-*     
+*
 *     Follows a table of the possible materials now considered.
-*     
+*
 *     Number   |  Name
 *     -----------------
 *        0     |  Graphite
-*     
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -80,32 +80,32 @@
       external subini, subend, xertst, average
 *   ..initialisation
       data ncall/0/
-*     
+*
 *     Assign table of work functions. Negative values for empty entries.
-*     
-      data     wrkf(0),      wrkf(1),      wrkf(2),      wrkf(3),  
-     &         wrkf(4),      wrkf(5),      wrkf(6),      wrkf(7),  
-     &         wrkf(8),      wrkf(9)       
+*
+      data     wrkf(0),      wrkf(1),      wrkf(2),      wrkf(3),
+     &         wrkf(4),      wrkf(5),      wrkf(6),      wrkf(7),
+     &         wrkf(8),      wrkf(9)
      &
      &    /8.01e-19_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
      &         -1.0_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
-     &         -1.0_R8,      -1.0_R8/  
-*     
+     &         -1.0_R8,      -1.0_R8/
+*
 *     Assign table of reference energies. Negative values for empty entries.
-*     
-      data     eref(0),      eref(1),      eref(2),      eref(3),  
-     &         eref(4),      eref(5),      eref(6),      eref(7),  
-     &         eref(8),      eref(9)       
+*
+      data     eref(0),      eref(1),      eref(2),      eref(3),
+     &         eref(4),      eref(5),      eref(6),      eref(7),
+     &         eref(8),      eref(9)
      &
      &    /4.81e-17_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
      &         -1.0_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
      &         -1.0_R8,      -1.0_R8/
-*     
+*
 *     Assign table of reference ESEEC. Negative values for empty entries.
-*     
-      data     ggmm(0),      ggmm(1),      ggmm(2),      ggmm(3),  
-     &         ggmm(4),      ggmm(5),      ggmm(6),      ggmm(7),  
-     &         ggmm(8),      ggmm(9)       
+*
+      data     ggmm(0),      ggmm(1),      ggmm(2),      ggmm(3),
+     &         ggmm(4),      ggmm(5),      ggmm(6),      ggmm(7),
+     &         ggmm(8),      ggmm(9)
      &
      &         /1.0_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
      &         -1.0_R8,      -1.0_R8,      -1.0_R8,      -1.0_R8,
@@ -125,20 +125,20 @@
      & 'faulty argument ismain')
       call xertst (.not.is_neutral(ismain),
      & 'invalid main plasma species ismain; must not be neutral')
-      call xertst (0.le.material.and.material.le.nmat, 
+      call xertst (0.le.material.and.material.le.nmat,
      & 'faulty argument material')
       call xertst (0.lt.tef, 'faulty argument tef')
       call xertst (0.lt.tif, 'faulty argument tif')
       call xertst (0.lt.nef, 'faulty argument nef')
       call xertst (0.lt.bbf, 'faulty argument bbf')
-*     
+*
 *     Test spatial position
-*     
+*
       call xertst (leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1,
      & 'eseec0 called for non-target plate point')
-*     
+*
 *     Check material. Exit if not found.
-*     
+*
       imat = material
       call xertst (0.le.imat.and.imat.le.0,
      & 'Wall material index not supported')
@@ -146,11 +146,11 @@
       w0 = wrkf(imat)
       u0 = eref(imat)
       s0 = ggmm(imat)
-*     
-*     Compute angle between the magnetic field and the surface 
+*
+*     Compute angle between the magnetic field and the surface
 *     (i.e. the complementary to the incidence angle)
 *      and the magnetic field
-*     
+*
       r0 = crx(ix,iy,0)
       z0 = cry(ix,iy,0)
       r1 = crx(ix,iy,1)
@@ -185,19 +185,19 @@ cxpb Eastern edge
       ef = pof/(3.0_R8*debye)*
      &   (1.0_R8-(log(sin(phi*pi/180.0_R8)))/
      &    log(sphic))
-*     
+*
 *     Compute ESEEC not averaged over distribution
-*     
+*
       g0 = s0*(2.0_R8*tef/u0)*
      *     exp(2.0_R8*(1.0_R8-sqrt(2.0_R8*tef/u0)))       !Tentative formula.
       g0 = 2.0_R8 * g0
-*     
+*
 *     Compute electric field and averaged ratio gg/gg0
-*     
+*
       call average (ef,bbf,w0,phi,mu)
-*     
+*
 *     Assign ESEEC
-*      
+*
       sec = mu * g0
 *
 *     Output

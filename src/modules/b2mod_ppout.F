@@ -243,7 +243,7 @@ c   ..first row intersecting core (on outer side)
 c   ..first row intersecting core (on inner side)
       jplft = nxpp - leftcut(1) + 1
 
-c   ..number of edge2d mesh points (periodic points in core)
+c   ..number of EDGE2D mesh points (periodic points in core)
       np = ( ( nxpp + 2 ) * ( nypp + 2 ) ) + ( iopen - 1 )
 
 c   ..dominant ion in plasma and its neutral
@@ -544,7 +544,7 @@ c   ..Pitch angle
          enddo
       enddo
 
-c   ..neutral molecular density (currently awaiting eirene module)
+c   ..neutral molecular density (currently awaiting Eirene module)
       do ix = -1 , nxpp
          do iy = -1 , nypp
             dm(ix,iy) = 0.0_R8
@@ -1907,10 +1907,10 @@ c   ..initialise
       allocate( nj(1:nc) )
       allocate( kory(1:nc,1:nrow) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
+c   ..convert B2 mesh to EDGE2D mesh (necessary for postprocessor)
       call ppre_conv_grid( rdat , rconv , iextrp , nj , kory )
 
-c   ..stagger edge2d mesh (if required)
+c   ..stagger EDGE2D mesh (if required)
       if( istag.ne.0 ) then
           call ppre_stag_grid( rconv, rconv , nj , kory )
       endif
@@ -1950,7 +1950,7 @@ c   ..locals
 c   ..initialise
       allocate( iconv(1:np) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
+c   ..convert B2 mesh to EDGE2D mesh (necessary for postprocessor)
       call ppin_conv_grid( idat , iconv )
 
 c   ..process
