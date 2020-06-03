@@ -6,7 +6,7 @@
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      logical :: want_transpose
+      logical :: want_transpose, found_time
       real (kind=R8) :: ds(2048), da(2048,7:10)
       integer :: status, len_da(7:10)
       integer :: i, il
@@ -92,6 +92,7 @@ c access the b2time.nc file
 
 c loop over all variables in the file
       do ivar=1,nvars
+        found_time = .false.
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
@@ -104,6 +105,7 @@ c loop over all variables in the file
           dimsize(idim)=len
           write(*,'(a,a,a,i6)')
      .     '    dimension: ',trim(dimname),' of length ',len
+          found_time = found_time .or. (trim(dimname) .eq. 'time')
         enddo
         units=''
         scale=1
@@ -134,6 +136,12 @@ c loop over all variables in the file
         enddo
         write(*,*) '  units = ',trim(units)
         write(*,*) '  scale = ',scale
+
+        if(.not. found_time) then
+          write(*,*) 'This variable did not have a ', 
+     &               'time dimension --- it has been skipped'
+          cycle
+        endif
 
 c first deal with the time vector
         if(varname.eq.'timesa') then
