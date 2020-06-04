@@ -118,13 +118,22 @@ c*** ... and produce the output file
      .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
      .      2*natmi+2*nmoli,
      .      '(3x,a4,a4,1x),4(5x,a4,3x))'
-      write(lun,hlp_frm)
+      if (nmoli.gt.0) then
+        write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
      ,      'net_','ersn','grs_','ersn'
+      else
+        write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,      'net_','ersn','grs_','ersn'
+      end if
 c<<<
 c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
 c      do il=1,nwldprt

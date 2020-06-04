@@ -1031,9 +1031,12 @@ c
       else
         open(unit=44,file=filename)
         call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
+        if (natmi.gt.0)
+     .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        if (nmoli.gt.0)
+     .   textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        if (nioni.gt.0)
+     .   textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
         nsw=ns+natmi+nmoli+nioni
       endif
 
@@ -1043,52 +1046,72 @@ c
       if(ex.and.use_eirene.ne.0) then
         open(unit=46,file=filename)
         call ntread
-        allocate(emach(max(natmi,nmoli,nioni),ntrii))
+        allocate(emach(max(1,natmi,nmoli,nioni),ntrii))
         DO I = 1, ntrii
-          DO IS = 1, NATMI
-            IF (pdena(IS,I).gt.0.0_R8) then
-              vxa(IS,I) = vxdena(IS,I)/pdena(IS,I)/
-     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
-              vya(IS,I) = vydena(IS,I)/pdena(IS,I)/
-     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
-              vza(IS,I) = vzdena(IS,I)/pdena(IS,I)/
-     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
-            ELSE
-              vxa(IS,I) = 0.0_R8
-              vya(IS,I) = 0.0_R8
-              vza(IS,I) = 0.0_R8
-            ENDIF
-            earrowx(I,IS-1) = vxa(IS,I)
-            earrowy(I,IS-1) = vya(IS,I)
-          END DO
-          DO IS = 1, NMOLI
-            IF (pdenm(IS,I).gt.0.0_R8) then
-              vxm(IS,I) = vxdenm(IS,I)/pdenm(IS,I)/
-     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
-              vym(IS,I) = vydenm(IS,I)/pdenm(IS,I)/
-     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
-              vzm(IS,I) = vzdenm(IS,I)/pdenm(IS,I)/
-     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
-            ELSE
-              vxm(IS,I) = 0.0_R8
-              vym(IS,I) = 0.0_R8
-              vzm(IS,I) = 0.0_R8
-            ENDIF
-          END DO
-          DO IS = 1, NIONI
-            IF (pdeni(IS,I).gt.0.0_R8) then
-              vxi(IS,I) = vxdeni(IS,I)/pdeni(IS,I)/
-     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
-              vyi(IS,I) = vydeni(IS,I)/pdeni(IS,I)/
-     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
-              vzi(IS,I) = vzdeni(IS,I)/pdeni(IS,I)/
-     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
-            ELSE
-              vxi(IS,I) = 0.0_R8
-              vyi(IS,I) = 0.0_R8
-              vzi(IS,I) = 0.0_R8
-            ENDIF
-          END DO
+          IF (NATMI.gt.0) THEN
+            DO IS = 1, NATMI
+              IF (pdena(IS,I).gt.0.0_R8) then
+                vxa(IS,I) = vxdena(IS,I)/pdena(IS,I)/
+     .                      (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+                vya(IS,I) = vydena(IS,I)/pdena(IS,I)/
+     .                      (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+                vza(IS,I) = vzdena(IS,I)/pdena(IS,I)/
+     .                      (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+              ELSE
+                vxa(IS,I) = 0.0_R8
+                vya(IS,I) = 0.0_R8
+                vza(IS,I) = 0.0_R8
+              ENDIF
+              earrowx(I,IS-1) = vxa(IS,I)
+              earrowy(I,IS-1) = vya(IS,I)
+            END DO
+          ELSE
+            vxa(1,I) = 0.0_R8
+            vya(1,I) = 0.0_R8
+            vza(1,I) = 0.0_R8
+            earrowx(I,0) = 0.0_R8
+            earrowy(I,0) = 0.0_R8
+          END IF
+          IF (NMOLI.GT.0) THEN
+            DO IS = 1, NMOLI
+              IF (pdenm(IS,I).gt.0.0_R8) then
+                vxm(IS,I) = vxdenm(IS,I)/pdenm(IS,I)/
+     .                      (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+                vym(IS,I) = vydenm(IS,I)/pdenm(IS,I)/
+     .                      (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+                vzm(IS,I) = vzdenm(IS,I)/pdenm(IS,I)/
+     .                      (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+              ELSE
+                vxm(IS,I) = 0.0_R8
+                vym(IS,I) = 0.0_R8
+                vzm(IS,I) = 0.0_R8
+              ENDIF
+            END DO
+          ELSE
+            vxm(1,I) = 0.0_R8
+            vym(1,I) = 0.0_R8
+            vzm(1,I) = 0.0_R8
+          END IF
+          IF (NIONI.GT.0) THEN
+            DO IS = 1, NIONI
+              IF (pdeni(IS,I).gt.0.0_R8) then
+                vxi(IS,I) = vxdeni(IS,I)/pdeni(IS,I)/
+     .                      (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+                vyi(IS,I) = vydeni(IS,I)/pdeni(IS,I)/
+     .                      (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+                vzi(IS,I) = vzdeni(IS,I)/pdeni(IS,I)/
+     .                      (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+              ELSE
+                vxi(IS,I) = 0.0_R8
+                vyi(IS,I) = 0.0_R8
+                vzi(IS,I) = 0.0_R8
+              ENDIF
+            END DO
+          ELSE
+            vxi(1,I) = 0.0_R8
+            vyi(1,I) = 0.0_R8
+            vzi(1,I) = 0.0_R8
+          END IF
         END DO
       end if
 #else
@@ -2027,14 +2050,26 @@ c
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'
-          nz=natmi
-          mach(:,:,0:nz-1)=dab2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=dab2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case('dmb2')
           description='Molecular density (m^{-3})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=dmb2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=dmb2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case('ahal')
           description=
      1     'Atomic H-\Ga\R emissivity (photons.m^{-3}.s^{-1})'
@@ -2049,29 +2084,59 @@ c
           call copy(mach,1.0_R8,nz,textbl)
         case ('srcml')
           description='Molecule dissociation rate (#.s^{-1})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,-1.0_R8/qe,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,-1.0_R8/qe,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('edissml')
           description='Power to atoms due to molecule dissociation (W)'
-          nz=nmoli
-          mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
-          call copy(mach,-1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('neutrad')
           description='Power loss due to atom radiation (W)'
-          nz=natmi
-          mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
-          call copy(mach,-1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('molrad')
           description='Power loss due to molecule radiation (W)'
-          nz=nmoli
-          mach(:,:,0:nz-1)=emolrad(0:nx+1,0:ny+1,1:nz,0)
-          call copy(mach,-1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=emolrad(0:nx+1,0:ny+1,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('ionrad')
           description='Power loss due to molecular ion radiation (W)'
-          nz=nioni
-          mach(:,:,0:nz-1)=eionrad(0:nx+1,0:ny+1,1:nz,0)
-          call copy(mach,-1.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            mach(:,:,0:nz-1)=eionrad(0:nx+1,0:ny+1,1:nz,0)
+            call copy(mach,-1.0_R8,nz,textin)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('rqae')
           description='Electron cooling rate (W) [rqahe]'
           nz=ns
@@ -2155,55 +2220,115 @@ c
           call copy(fety,1.0_R8,nz,textbl)
         case ('tab2')
           description='Neutral atom temperature (eV)'
-          nz=natmi
-          mach(:,:,0:nz-1)=tab2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8/ev,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=tab2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8/ev,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('tmb2')
           description='Neutral molecule temperature (eV)'
-          nz=nmoli
-          mach(:,:,0:nz-1)=tmb2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8/ev,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=tmb2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8/ev,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('rfla')
           description='Radial atomic flux (s^{-1}.m^{-2})'
-          nz=natmi
-          mach(:,:,0:nz-1)=rfluxa(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=rfluxa(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('rflm')
           description='Radial molecular flux (s^{-1}.m^{-2})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=rfluxm(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=rfluxm(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('refa')
           description='Radial atomic energy flux (W.m^{-2})'
-          nz=natmi
-          mach(:,:,0:nz-1)=refluxa(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=refluxa(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('refm')
           description='Radial molecular energy flux (W.m^{-2})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=refluxm(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=refluxm(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('pfla')
           description='Poloidal atomic flux (s^{-1}.m^{-2})'
-          nz=natmi
-          mach(:,:,0:nz-1)=pfluxa(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=pfluxa(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('pflm')
           description='Poloidal molecular flux (s^{-1}.m^{-2})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=pfluxm(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=pfluxm(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('pefa')
           description='Poloidal atomic energy flux (W.m^{-2})'
-          nz=natmi
-          mach(:,:,0:nz-1)=pefluxa(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            mach(:,:,0:nz-1)=pefluxa(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textan)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('pefm')
           description=
      1             'Poloidal molecular energy flux (W.m^{-2})'
-          nz=nmoli
-          mach(:,:,0:nz-1)=pefluxm(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            mach(:,:,0:nz-1)=pefluxm(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textmn)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          end if
         case ('mch2')
           description='Normalised parallel velocity'
           nz=ns
@@ -3830,14 +3955,26 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textbl)
         case ('dib2')
           description='Test ion density (m^{-3})'
-          nz=nioni
-          mach(:,:,0:nz-1)=dib2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            mach(:,:,0:nz-1)=dib2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8,nz,textin)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('tib2')
           description='Test ion temperature (eV)'
-          nz=nioni
-          mach(:,:,0:nz-1)=tib2(0:nx+1,0:ny+1,1:nz,1)
-          call copy(mach,1.0_R8/ev,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            mach(:,:,0:nz-1)=tib2(0:nx+1,0:ny+1,1:nz,1)
+            call copy(mach,1.0_R8/ev,nz,textin)
+          else
+            nz=1
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textbl)
+          endif
         case ('brna')
           description='Recycling particle source (#.s^{-1})'
           nz=ns
@@ -6599,136 +6736,274 @@ cdpc still in testing phase
       EVALUE: select case(cval)
         case('pdena')
           description='Atoms particle density (m^{-3})'
-          nz=natmi
-          call eirene_copy(pdena,1.0e6_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(pdena,1.0e6_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(pdena,1.0_R8,nz,textbl)
+          end if
         case('pdenm')
           description='Molecules particle density (m^{-3})'
-          nz=nmoli
-          call eirene_copy(pdenm,1.0e6_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(pdenm,1.0e6_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(pdenm,1.0_R8,nz,textbl)
+          end if
         case('pdeni')
           description='Test ions particle density (m^{-3})'
-          nz=nioni
-          call eirene_copy(pdeni,1.0e6_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(pdeni,1.0e6_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(pdeni,1.0_R8,nz,textbl)
+          end if
         case('edena')
           description='Atoms energy density (eV.m^{-3})'
-          nz=natmi
-          call eirene_copy(edena,1.0e6_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(edena,1.0e6_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(edena,1.0_R8,nz,textbl)
+          endif
         case('edenm')
           description='Molecules energy density (eV.m^{-3})'
-          nz=nmoli
-          call eirene_copy(edenm,1.0e6_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(edenm,1.0e6_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(edenm,1.0_R8,nz,textbl)
+          end if
         case('edeni')
           description='Test ions energy density (eV.m^{-3})'
-          nz=nioni
-          call eirene_copy(edeni,1.0e6_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(edeni,1.0e6_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(edeni,1.0_R8,nz,textbl)
+          end if
         case('massa')
           description='Atom mass (kg)'
-          nz=natmi
-          do is = 1, nz
-            do i = 1, ntrii
-              emach(is,i) = nmassa(is)*mp
+          if (natmi.gt.0) then
+            nz=natmi
+            do is = 1, nz
+              do i = 1, ntrii
+                emach(is,i) = nmassa(is)*mp
+              end do
             end do
-          end do
-          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textan)
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textan)
+          else
+            nz=1
+            emach(1,1:ntrii) = 0.0_R8
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
+          end if
         case('massm')
           description='Molecule mass (kg)'
-          nz=nmoli
-          do is = 1, nz
-            do i = 1, ntrii
-              emach(is,i) = nmassm(is)*mp
+          if (nmoli.gt.0) then
+            nz=nmoli
+            do is = 1, nz
+              do i = 1, ntrii
+                emach(is,i) = nmassm(is)*mp
+              end do
             end do
-          end do
-          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textmn)
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textmn)
+          else
+            nz=1
+            emach(1,1:ntrii) = 0.0_R8
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
+          end if
         case('massi')
           description='Molecular ion mass (kg)'
-          nz=nioni
-          do is = 1, nz
-            do i = 1, ntrii
-              emach(is,i) = nmassi(is)*mp
+          if (nioni.gt.0) then
+            nz=nioni
+            do is = 1, nz
+              do i = 1, ntrii
+                emach(is,i) = nmassi(is)*mp
+              end do
             end do
-          end do
-          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textin)
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textin)
+          else
+            nz=1
+            emach(1,1:ntrii) = 0.0_R8
+            call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
+          end if
         case('vxa')
           description='Atoms X-directed velocity (m.s^{-1})'
-          nz=natmi
-          call eirene_copy(vxa,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vxa,1.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vxa,1.0_R8,nz,textbl)
+          end if
         case('vxm')
           description='Molecules X-directed velocity (m.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vxm,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vxm,1.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vxm,1.0_R8,nz,textbl)
+          end if
         case('vxi')
           description='Test ions X-directed velocity (m.s^{-1})'
-          nz=nioni
-          call eirene_copy(vxi,1.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vxi,1.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vxi,1.0_R8,nz,textbl)
+          end if
         case('vya')
           description='Atoms Y-directed velocity (m.s^{-1})'
-          nz=natmi
-          call eirene_copy(vya,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vya,1.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vya,1.0_R8,nz,textbl)
+          end if
         case('vym')
           description='Molecules Y-directed velocity (m.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vym,1.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vym,1.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vym,1.0_R8,nz,textbl)
+          end if
         case('vyi')
           description='Test ions Y-directed velocity (m.s^{-1})'
-          nz=nioni
-          call eirene_copy(vyi,1.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vyi,1.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vyi,1.0_R8,nz,textbl)
+          end if
         case('vza')
           description='Atoms Z-directed velocity (m.s^{-1})'
-          nz=natmi
-          call eirene_copy(vza,1.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vza,1.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vza,1.0_R8,nz,textbl)
+          end if
         case('vzm')
           description='Molecules Z-directed velocity (m.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vzm,10.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vzm,1.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vzm,1.0_R8,nz,textbl)
+          end if
         case('vzi')
           description='Test ions Z-directed velocity (m.s^{-1})'
-          nz=nioni
-          call eirene_copy(vzi,1.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vzi,1.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vzi,1.0_R8,nz,textbl)
+          end if
         case('vxdena')
           description=
      .     'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=natmi
-          call eirene_copy(vxdena,10.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vxdena,10.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vxdena,1.0_R8,nz,textbl)
+          end if
         case('vxdenm')
           description=
      .     'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vxdenm,10.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vxdenm,10.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vxdenm,1.0_R8,nz,textbl)
+          end if
         case('vxdeni')
           description=
      .     'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nioni
-          call eirene_copy(vxdeni,10.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vxdeni,10.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vxdeni,1.0_R8,nz,textbl)
+          end if
         case('vydena')
           description=
      .     'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=natmi
-          call eirene_copy(vydena,10.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vydena,10.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vydena,1.0_R8,nz,textbl)
+          end if
         case('vydenm')
           description=
      .     'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vydenm,10.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vydenm,10.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vydenm,1.0_R8,nz,textbl)
+          end if
         case('vydeni')
           description=
      .     'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nioni
-          call eirene_copy(vydeni,10.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vydeni,10.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vydeni,1.0_R8,nz,textbl)
+          end if
         case('vzdena')
           description=
      .     'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=natmi
-          call eirene_copy(vzdena,10.0_R8,nz,textan)
+          if (natmi.gt.0) then
+            nz=natmi
+            call eirene_copy(vzdena,10.0_R8,nz,textan)
+          else
+            nz=1
+            call eirene_copy(vzdena,1.0_R8,nz,textbl)
+          end if
         case('vzdenm')
           description=
      .     'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nmoli
-          call eirene_copy(vzdenm,10.0_R8,nz,textmn)
+          if (nmoli.gt.0) then
+            nz=nmoli
+            call eirene_copy(vzdenm,10.0_R8,nz,textmn)
+          else
+            nz=1
+            call eirene_copy(vzdenm,1.0_R8,nz,textbl)
+          end if
         case('vzdeni')
           description=
      .     'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})'
-          nz=nioni
-          call eirene_copy(vzdeni,10.0_R8,nz,textin)
+          if (nioni.gt.0) then
+            nz=nioni
+            call eirene_copy(vzdeni,10.0_R8,nz,textin)
+          else
+            nz=1
+            call eirene_copy(vzdeni,1.0_R8,nz,textbl)
+          end if
         case('triarea')
           description='Triangle area (m^{2})'
           nz=1

@@ -30,9 +30,13 @@
       call check_cdf_status(iret)
       if(natm.gt.0) then
         iret = nf_def_dim(ncid, 'natm', natm, natmdim)
+      else
+        iret = nf_def_dim(ncid, 'natm', 1, natmdim)
       endif
       if(nmol.gt.0) then
         iret = nf_def_dim(ncid, 'nmol', nmol, nmoldim)
+      else
+        iret = nf_def_dim(ncid, 'nmol', 1, nmoldim)
       endif
       iret = nf_def_dim(ncid, 'time', NF_UNLIMITED, timedim)
       call check_cdf_status(iret)

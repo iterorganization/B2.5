@@ -467,7 +467,7 @@ c carlis evaluate number of sputtered atoms and molecules
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do imol=1,nmol
+        do imol=1,nmoli
           match_found=.false.
           j=1
           do j=1,nlimps

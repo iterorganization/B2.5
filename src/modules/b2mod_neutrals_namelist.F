@@ -261,8 +261,8 @@ csw 21feb2012
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
       allocate(textan(0:natm_in-1))
-      allocate(textmn(0:nmol_in-1))
-      allocate(textin(0:nion_in-1))
+      if (nmol_in.gt.0) allocate(textmn(0:nmol_in-1))
+      if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
@@ -472,8 +472,8 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(ksns)
       deallocate(msns)
       deallocate(textan)
-      deallocate(textmn)
-      deallocate(textin)
+      if (allocated(textmn)) deallocate(textmn)
+      if (allocated(textin)) deallocate(textin)
 #ifndef NO_B2_CHEM_SPUT
       deallocate(chemical_sputter_yield)
 #endif

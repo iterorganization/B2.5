@@ -189,28 +189,32 @@ C
       do 12 IS = 1, NMOLI
         READ (44,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
-      allocate(textmn1(0:nmol1-1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
-      end do
-      do is = 1, nmol1
-        WRITE(45,'(A8)') TEXTMN1(IS-1)
-      end do
-      deallocate(textmn1)
+      if (nmol1.gt.0) then
+        allocate(textmn1(0:nmol1-1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
+        end do
+        do is = 1, nmol1
+          WRITE(45,'(A8)') TEXTMN1(IS-1)
+        end do
+        deallocate(textmn1)
+      end if
 C
 * test ions
 C
       do 13 IS = 1, NIONI
         READ (44,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
-      allocate(textin1(0:nion1-1))
-      do is = 1, nioni
-        if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
-      end do
-      do is = 1, nion1
-        WRITE(45,'(A8)') TEXTIN1(IS-1)
-      end do
-      deallocate(textin1)
+      if (nion1.gt.0) then
+        allocate(textin1(0:nion1-1))
+        do is = 1, nioni
+          if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
+        end do
+        do is = 1, nion1
+          WRITE(45,'(A8)') TEXTIN1(IS-1)
+        end do
+        deallocate(textin1)
+      end if
 C
 * data
 * neutral atoms

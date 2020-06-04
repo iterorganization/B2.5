@@ -177,7 +177,8 @@ c
       else if(ig.eq.-3) then
 c-----------------------------------------------------------------------
         allocate(hlp_pi(nspecies),hlp_po(nspecies))
-        allocate(hlp_at(natmi),hlp_ml(nmoli))
+        allocate(hlp_at(natmi))
+        if (nmoli.gt.0) allocate(hlp_ml(nmoli))
         do k=1,nspecies
           hlp_pi(k)=0.0_R8
           hlp_po(k)=0.0_R8
@@ -197,10 +198,16 @@ c-----------------------------------------------------------------------
         write(lun,'(2a)') '#',label
         write(frm,720) n,tab
   720   format('(2h# ,',i3,'(1h',a1,',a8))')
-        write(lun, frm) (textsp(i),i=0,nspecies-1),
+        if (nmoli.gt.0) then
+          write(lun, frm) (textsp(i),i=0,nspecies-1),
      ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
      ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
      ,                  'sput.'
+        else
+          write(lun, frm) (textsp(i),i=0,nspecies-1),
+     ,                  (textan(i),i=0,natmi-1),(textan(i),i=0,natmi-1),
+     ,                  'sput.'
+        end if
         write(frm,730) n,tab
   730   format('((1p,1x,a5,',i3,'(1h',a1,',e11.4)))')
         do i=1,natmi
@@ -211,11 +218,18 @@ c-----------------------------------------------------------------------
         end do
         trg_lbl = 'inner'
         if (.not.LSN) trg_lbl = 'outer'
-        write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
-     ,    (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
-     ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,    wldspt(nlim+ltns(1),0)
+        if (nmoli.gt.0) then
+          write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
+     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
+     ,      wldspt(nlim+ltns(1),0)
+        else
+          write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (hlp_at(i),i=1,natmi),
+     ,      wldspt(nlim+ltns(1),0)
+        end if
         if (ltns(2).ne.0) then
          do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
@@ -225,14 +239,22 @@ c-----------------------------------------------------------------------
          end do
          trg_lbl = 'outer'
          if (.not.LSN) trg_lbl = 'inner'
-         write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
-     ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
-     ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,    wldspt(nlim+ltns(2),0)
+         if (nmoli.gt.0) then
+           write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
+     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
+     ,      wldspt(nlim+ltns(2),0)
+         else
+           write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (hlp_at(i),i=1,natmi),
+     ,      wldspt(nlim+ltns(2),0)
+         end if
         end if
         deallocate(hlp_pi,hlp_po)
-        deallocate(hlp_at,hlp_ml)
+        deallocate(hlp_at)
+        if (nmoli.gt.0) deallocate(hlp_ml)
 c-----------------------------------------------------------------------
       else if(ig.eq.-4) then
         call b2pplentd(lun)

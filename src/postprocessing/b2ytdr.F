@@ -6022,8 +6022,8 @@ cxpb Must now convert the bulk ion data according to the new bundling
             END SELECT
           END IF
         END DO
-        textmn(0:nmoli-1) = textm(1:nmoli)
-        textin(0:nioni-1) = texti(1:nioni)
+        if (nmoli.gt.0) textmn(0:nmoli-1) = textm(1:nmoli)
+        if (nioni.gt.0) textin(0:nioni-1) = texti(1:nioni)
         call map_ion_components
         iss = 0
         do jion = 1, nioni

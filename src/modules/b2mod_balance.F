@@ -1329,15 +1329,33 @@ cdjm Jan2017 Eirene arrays for particle balance:
       allocate(eirene_mc_pmpl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(eirene_mc_pipl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(eirene_mc_pppl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_paat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(eirene_mc_pmat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(eirene_mc_piat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(eirene_mc_paml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(eirene_mc_pmml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(eirene_mc_piml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(eirene_mc_paio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
-      allocate(eirene_mc_pmio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
-      allocate(eirene_mc_piio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+      if (natmd.gt.0) then
+        allocate(eirene_mc_paat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+        allocate(eirene_mc_pmat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+        allocate(eirene_mc_piat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+      else
+        allocate(eirene_mc_paat_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmat_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piat_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
+      if (nmold.gt.0) then
+        allocate(eirene_mc_paml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+        allocate(eirene_mc_pmml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+        allocate(eirene_mc_piml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+      else
+        allocate(eirene_mc_paml_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmml_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piml_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
+      if (niond.gt.0) then
+        allocate(eirene_mc_paio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+        allocate(eirene_mc_pmio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+        allocate(eirene_mc_piio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+      else
+        allocate(eirene_mc_paio_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmio_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piio_sna_bal(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
       allocate(eirene_mc_core_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
       eirene_mc_pael_sne0to1=0.0_R8
       eirene_mc_papl_sna0to1=0.0_R8
@@ -1373,24 +1391,42 @@ cdjm Jun2017 Time-averaged arrays for particle balance:
      & eirene_mc_pipl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(
      & eirene_mc_pppl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(
-     & eirene_mc_paat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(
-     & eirene_mc_pmat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(
-     & eirene_mc_piat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
-      allocate(
-     & eirene_mc_paml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(
-     & eirene_mc_pmml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(
-     & eirene_mc_piml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
-      allocate(
-     & eirene_mc_paio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
-      allocate(
-     & eirene_mc_pmio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
-      allocate(
-     & eirene_mc_piio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+      if (natmd.gt.0) then
+        allocate(
+     &   eirene_mc_paat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+        allocate(
+     &   eirene_mc_pmat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+        allocate(
+     &   eirene_mc_piat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+      else
+        allocate(eirene_mc_paat_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmat_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piat_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
+      if (nmold.gt.0) then
+        allocate(
+     &   eirene_mc_paml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+        allocate(
+     &   eirene_mc_pmml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+        allocate(
+     &   eirene_mc_piml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+      else
+        allocate(eirene_mc_paml_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmml_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piml_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
+      if (niond.gt.0) then
+        allocate(
+     &   eirene_mc_paio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+        allocate(
+     &   eirene_mc_pmio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+        allocate(
+     &   eirene_mc_piio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+      else
+        allocate(eirene_mc_paio_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_pmio_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+        allocate(eirene_mc_piio_sna_bal_av(-1:nxd,-1:nyd,1,1:nstrad))
+      end if
       allocate(
      & eirene_mc_core_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1))
 cdjm Jan2017 Eirene arrays for momentum balance:

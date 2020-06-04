@@ -585,9 +585,12 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       else
         open(unit=44,file=filename)
         call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
+        if (natmi.gt.0)
+     .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        if (nmoli.gt.0)
+     .   textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        if (nioni.gt.0)
+     .   textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
       endif
 
 !XXX
@@ -795,15 +798,21 @@ c
       do is=1,ns-1
         textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
       enddo
-      do is=ns,ns+natmi-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
-      do is=ns+natmi,ns+natmi+nmoli-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
-      do is=ns+natmi+nmoli,ns+natmi+nmoli+nioni-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
+      if (natmi.gt.0) then
+        do is=ns,ns+natmi-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
+      if (nmoli.gt.0) then
+        do is=ns+natmi,ns+natmi+nmoli-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
+      if (nioni.gt.0) then
+        do is=ns+natmi+nmoli,ns+natmi+nmoli+nioni-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTWL',
      1 ns+natmi+nmoli+nioni,textwl)
       call mds_put_string('\TOP.IDENT:WALL_SPECIES',textwl_cat)

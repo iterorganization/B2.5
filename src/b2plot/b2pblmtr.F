@@ -42,8 +42,8 @@ c*** The plasma data at the cell centers
 c
       call ipgeti ('b2mndr_eirene', use_eirene)
       allocate(hlp_al(nspecies),hlp_rad(nspecies))
-      allocate(hlp_mn(0:nmoli-1))
-      allocate(hlp_in(0:nioni-1))
+      if (nmoli.gt.0) allocate(hlp_mn(0:nmoli-1))
+      if (nioni.gt.0) allocate(hlp_in(0:nioni-1))
       allocate(hlp_ni(0:ns-1))
       allocate(hlp_is(0:ns-1))
       do j=1,nspecies !{
@@ -60,12 +60,16 @@ c
         call species(is,species_name,.false.)
         hlp_is(is)='n_'//species_name(2:9)
       enddo !}
-      do is=0,nmoli-1 !{
-        hlp_mn(is)='n_'//textmn(is)(2:8)
-      enddo !}
-      do is=0,nioni-1 !{
-        hlp_in(is)='n_'//textin(is)(2:8)
-      enddo !}
+      if (nmoli.gt.0) then !{
+        do is=0,nmoli-1 !{
+          hlp_mn(is)='n_'//textmn(is)(2:8)
+        enddo !}
+      endif !}
+      if (nioni.gt.0) then !{
+        do is=0,nioni-1 !{
+          hlp_in(is)='n_'//textin(is)(2:8)
+        enddo !}
+      end if !}
 
       open(lun,file='radsources.dat')
       write (lun,'(2a)') '# ix, iy  : poloidal and radial indices in ',
@@ -82,14 +86,40 @@ c
       write (lun,'(a)') '# rad_brm : bremsstrahlung [MW/m^3];'
       write (lun,'(a)')
 
-      write(hlp_frmr,'(a,i3,a,i2,a,i2,a,i3,a)')
-     , '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
-     .  ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),',
-     ,  nioni,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
-      write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
-     , (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
-     , (hlp_in(i),i=0,nioni-1),
-     , 'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
+      if (nmoli.gt.0 .and. nioni.gt.0) then
+        write(hlp_frmr,'(a,i3,a,i2,a,i2,a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
+     .    ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),',
+     ,    nioni,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
+        write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
+     ,   (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
+     ,   (hlp_in(i),i=0,nioni-1),
+     ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
+      else if (nmoli.gt.0 .and. nioni.eq.0) then
+        write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
+     .    ns,'(1x,a10,1x),',
+     ,    nmoli,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
+        write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
+     ,   (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
+     ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
+      else if (nmoli.eq.0 .and. nioni.gt.0) then
+        write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
+     .    ns,'(1x,a10,1x),',
+     ,    nioni,'(1x,a9,2x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
+        write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
+     ,   (hlp_is(i),i=0,ns-1),
+     ,   (hlp_in(i),i=0,nioni-1),
+     ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
+      else if (nmoli.eq.0 .and. nioni.eq.0) then
+        write(hlp_frmr,'(a,i3,a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
+     .    ns,'(1x,a10,1x),a7,2x,',nspecies,'(4x,a6,2x),3x,a7)'
+        write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
+     ,   (hlp_is(i),i=0,ns-1),
+     ,   'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
+      end if
       write(hlp_frmr,'(a,i3,a)')
      , '(1x,1p,2i4,',7+ns+nmoli+nioni+nspecies,'e12.4)'
 
@@ -126,17 +156,43 @@ c
           do i=1,nspecies !{
             hlp=hlp+hlp_rad(i)
           end do !}
-          write (lun,hlp_frmr) ix,iy,
+          if (nmoli.gt.0 .and. nioni.gt.0) then !{
+            write (lun,hlp_frmr) ix,iy,
      ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy),
      ,      (hlp_ni(is),is=0,ns-1),(dmb2(ix+1,iy+1,is,1),is=1,nmoli),
      ,      (dib2(ix+1,iy+1,is,1),is=1,nioni),
      ,       1.0e-6_R8*hlp/vol(ix,iy),
      ,      (1.0e-6_R8*hlp_rad(i)/vol(ix,iy),i=1,nspecies),
      ,       1.0e-6_R8*hlp_brm/vol(ix,iy)
+          else if (nmoli.gt.0 .and. nioni.eq.0) then !}{
+            write (lun,hlp_frmr) ix,iy,
+     ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy),
+     ,      (hlp_ni(is),is=0,ns-1),(dmb2(ix+1,iy+1,is,1),is=1,nmoli),
+     ,       1.0e-6_R8*hlp/vol(ix,iy),
+     ,      (1.0e-6_R8*hlp_rad(i)/vol(ix,iy),i=1,nspecies),
+     ,       1.0e-6_R8*hlp_brm/vol(ix,iy)
+          else if (nmoli.eq.0 .and. nioni.gt.0) then !}{
+            write (lun,hlp_frmr) ix,iy,
+     ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy),
+     ,      (hlp_ni(is),is=0,ns-1),
+     ,      (dib2(ix+1,iy+1,is,1),is=1,nioni),
+     ,       1.0e-6_R8*hlp/vol(ix,iy),
+     ,      (1.0e-6_R8*hlp_rad(i)/vol(ix,iy),i=1,nspecies),
+     ,       1.0e-6_R8*hlp_brm/vol(ix,iy)
+          else if (nmoli.eq.0 .and. nioni.eq.0) then !}{
+            write (lun,hlp_frmr) ix,iy,
+     ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy),
+     ,      (hlp_ni(is),is=0,ns-1),
+     ,       1.0e-6_R8*hlp/vol(ix,iy),
+     ,      (1.0e-6_R8*hlp_rad(i)/vol(ix,iy),i=1,nspecies),
+     ,       1.0e-6_R8*hlp_brm/vol(ix,iy)
+          end if !}
         end do !}
       end do !}
       close (lun)
-      deallocate(hlp_al,hlp_rad,hlp_ni,hlp_is,hlp_mn,hlp_in)
+      deallocate(hlp_al,hlp_rad,hlp_ni,hlp_is)
+      if (nmoli.gt.0) deallocate(hlp_mn)
+      if (nioni.gt.0) deallocate(hlp_in)
       return
 c=======================================================================
       end
