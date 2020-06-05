@@ -4,9 +4,9 @@
       subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, !srv 29.01.20 {
      &  pl, dv, co, rt)                                                 
       use b2mod_types
-      use b2mod_boundary_namelist
+!      use b2mod_boundary_namelist
       use b2mod_constants
-      use b2mod_b2cmfs
+!      use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_map
