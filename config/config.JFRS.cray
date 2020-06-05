@@ -1,18 +1,19 @@
 # Test whether necessary variables are set
-LD_MSCL   ?= -l${SOLPSLIB} -lmscl
+MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
+LD_MSCL     ?= -l${SOLPSLIB} -lmscl
 ifdef USE_MPI
-LD_NETCDF ?= `pkg-config netcdf-parallel-fortran --libs`
+LD_NETCDF   ?= `pkg-config netcdf-parallel-fortran --libs`
 ifdef USE_OPENMP
-LD_NAG    ?= `pkg-config sci_mpi_mp --libs`
+LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
 else
-LD_NAG    ?= `pkg-config sci_mpi --libs`
+LD_NAG      ?= `pkg-config sci_mpi --libs`
 endif
 else
-LD_NETCDF ?= `pkg-config netcdf-fortran --libs`
+LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
 ifdef USE_OPENMP
-LD_NAG    ?= `pkg-config sci_mp --libs`
+LD_NAG      ?= `pkg-config sci_mp --libs`
 else
-LD_NAG    ?= `pkg-config sci --libs`
+LD_NAG      ?= `pkg-config sci --libs`
 endif
 endif
 
