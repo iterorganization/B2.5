@@ -3,7 +3,7 @@
 
       subroutine b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
      &  rxg, ne, ni, te, ti,
-     &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
+     &  floe, cone, floi, coni, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa)
       use b2mod_types
       use b2mod_numerics_namelist
@@ -17,8 +17,7 @@
       real (kind=R8) ::
      *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv),
      &  floe(nFc,0:1), floi(nFc,0:1),
-     &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),         !srv 02.01.07
-     &  pccm1(nCv)
+     &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2)
       real (kind=R8) ::
      *  she(nCv,0:3), shi(nCv,0:3), ceqp(nCv), 
      &  resht(nCv), reshe(nCv), reshi(nCv)

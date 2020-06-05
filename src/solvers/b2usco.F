@@ -3,7 +3,7 @@
 
       subroutine b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
      &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
-     &   pccb1, rescb, corpb, aa, name)                              !srv 18.05.02
+     &   rescb, corpb, aa, name)                              !srv 18.05.02
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -15,7 +15,7 @@
       logical solvereg(0:nregionv)      
       real (kind=R8) ::
      *   rxg, nb(nCv), pb(nCv), snbv(nCv), flob(nFc,0:1),
-     &   conb(nFc,0:1,0:4), pccb1(nCv), rescb(nCv)
+     &   conb(nFc,0:1,0:4), rescb(nCv)
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -100,19 +100,10 @@
        call b2xvsg (nCv, snbv, 1, 'snbv', '.le.')
       endif
 
+*   ..initialize matrix
       aa = 0.0e0_R8
 
-*   ..compute wrk0
-      do iFc = 1, nFc
-*!!     Maybe use volume weighting or inverse-volume weighting here.
-cwdk need calccoeff here...
-        wrk0(iFc) = 0.5_R8*geo%fcPbs(iFc)*
-     &    (pccb1(mpg%fcCv(iFc,1))*nb(mpg%fcCv(iFc,1)) +
-     &     pccb1(mpg%fcCv(iFc,2))*nb(mpg%fcCv(iFc,2)))
-      enddo
-!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
-
-* ..compute the matrix
+*   ..compute the matrix
       do iCv = 1, nCv
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then

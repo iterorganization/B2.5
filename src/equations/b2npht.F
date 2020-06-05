@@ -255,7 +255,7 @@ cdjm Jan2017 update particle source components for balance
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
      &  rxg, dv%ne, dv%ni, pl%te, pl%ti,
-     &  dv%floe, dv%cone, dv%floi, dv%coni, dv%pccm(1,1), she0, shi0, 
+     &  dv%floe, dv%cone, dv%floi, dv%coni, she0, shi0, 
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%cortt, dv%corte, 
      &  dv%corti, wrkf, wrkc, aa)
 *   ..apply correction
