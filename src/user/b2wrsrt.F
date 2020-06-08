@@ -36,7 +36,8 @@ c
       integer lv
 c      parameter (lv=970522)
 c#ifndef SCL_IMP_RCI
-      parameter (lv=20171020)
+      parameter (lv=20200605)
+c      parameter (lv=20171020)
 c#else
 c      parameter (lv=20010716)
 c#endif
@@ -47,6 +48,10 @@ c***
 c***..........................................................(regions)
 c***     totenre_  tesum      total plasma energy \int 3/2 n_e T_e dV plus
 c***                          \int 3/2 n_i T_i dV plus \int 1/2 m_a n_a u_{a||}^2 dV
+c***
+c***..........................................................(regions)
+c***     totamom_  ang_mom_sum   total angular momentum 
+c***                            \int m_a n_a u_a h_z dV 
 c***
 c***..........................................................(species)
 c***     SSNItot_  ssni_tmp   neutral-related source of ions
@@ -68,11 +73,11 @@ c-----------------------------------------------------------------------
 c
 c*** Values by regions
       integer nrgn_tmp, nrg_tmp, nr_tmp
-      parameter (nrgn_tmp=1) ! Number of quantities computed in each region
-      real (kind=R8) :: tesum(NNREGMAX)
+      parameter (nrgn_tmp=2) ! Number of quantities computed in each region
+      real (kind=R8) :: tesum(NNREGMAX), ang_mom_sum(NNREGMAX)
 
       real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
-      equivalence (equr_tmp(1,1), tesum)
+      equivalence (equr_tmp(1,1), tesum), (equr_tmp(1,2), ang_mom_sum)
       character hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
@@ -88,8 +93,10 @@ c*** Values by species and regions
       parameter (nsar_tmp=2)
       real (kind=R8) :: equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX) ! IYS 29.09.2017 added total number of neutrals
-      equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum) ! IYS 29.09.2017
+     *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)  ! IYS 29.09.2017 added total number of neutrals
+!     &       , amomsum(DEF_NATM,NNREGMAX)
+      equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
+!     *    ,(equa_tmp(1,1,3), amomsum)
       character hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
@@ -109,9 +116,9 @@ c*** Local variables of general use
 #endif
 c-----------------------------------------------------------------------
 c*** Column headers:
-      data hlp_hr / 'totenre_' /
+      data hlp_hr / 'totenre_','totamom_' /
       data hlp_hs / 'N_a_tot_' /
-      data hlp_ha / 'N_i_reg_', 'N_a_reg_' /
+      data hlp_ha / 'N_i_reg_', 'N_a_reg_' /!,'mom_reg_' /
 
 c-----------------------------------------------------------------------
 c
@@ -173,6 +180,11 @@ csw 20sep2013 added
 ! the whole B2.5 domain
               Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
      .                                na(ix,iy,is)*vol(ix,iy)
+            else
+              ang_mom_sum(ir) = ang_mom_sum(ir) +
+     &  hz(ix,iy)*vol(ix,iy)*mp*am(is)*na(ix,iy,is)*ua(ix,iy,is)
+!              amomsum(b2espcr(is),ir) = amomsum(b2espcr(is),ir) +
+!     &  hz(ix,iy)*vol(ix,iy)*mp*am(is)*na(ix,iy,is)*ua(ix,iy,is)
             endif
           end do
 #ifdef B25_EIRENE
