@@ -1825,118 +1825,6 @@ c.. Test consistency with physical edges within the computational domain
 ***********************************************************************
 
 
-      subroutine calc_mapping_rc (nx, ny, ns, m)
-      use b2mod_indirect
-      implicit none
-      integer :: nx, ny, ns, istra, istrac, instra, iout, ian, ien, i
-      integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
-      type (mapping), intent (inout) :: m
-
-      m%nRc   = nstrai  ! number of recycling boundaries
-      m%mxnRc = 0       ! number of cells with imposed recycling
-      do istra = 1, nstrai
-        rcs(istra) = rcstart(istra)
-        rce(istra) = rcend(istra)
-        ! exclude corner cells if present
-        if (crcstra(istra).eq.'N' .or. crcstra(istra).eq.'S') then
-          if (leftix (rcstart(istra),rcpos(istra)) .eq. -2)  
-     >      rcs(istra) = rcs(istra) + 1
-          if (rightix(rcend(istra),  rcpos(istra)) .eq. nx+1) 
-     >      rce(istra) = rce(istra) - 1
-          rcl(istra) = rce(istra) - rcs(istra) + 1
-          m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'E' .or. crcstra(istra).eq.'W') then
-          if (bottomiy(rcpos(istra),rcstart(istra)) .eq. -2)
-     >      rcs(istra) = rcs(istra) + 1
-          if (topiy   (rcpos(istra),rcend(istra)  ) .eq. ny+1)
-     >      rce(istra) = rce(istra) - 1
-          rcl(istra) = rce(istra) - rcs(istra) + 1
-          m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T' .or.
-     >          crcstra(istra).eq.'C') then
-          rcl(istra) = 0
-        else
-          call xerrab ('Wrong CRCSTRA or not yet available for WG')
-        endif
-      enddo
-
-      call alloc_mapping_rc (m)
-
-      instra = 0 ! index in rcCv
-      do istra = 1, nstrai
-        m%rcCvP(istra,1) = instra + 1
-        m%rcCvP(istra,2) = rcl(istra)
-        if (crcstra(istra).eq.'S') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = 
-     >        m%imapCv(rcs(istra)+istrac-1,rcpos(istra))      ! number of the guard cell
-            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
-     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),1),
-     >        m%fcCv(m%cvFc(
-     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),2))
-            m%rcFcOr(instra) = -1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'N') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = 
-     >        m%imapCv(rcs(istra)+istrac-1,rcpos(istra))      ! number of the guard cell
-            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
-     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),1),
-     >        m%fcCv(m%cvFc(
-     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),2))
-            m%rcFcOr(instra) = 1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'W') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-           m%rcCv(instra,1) = 
-     >        m%imapCv(rcpos(istra),rcs(istra)+istrac-1)      ! number of the guard cell
-            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
-     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),1),
-     >        m%fcCv(m%cvFc(
-     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),2))
-            m%rcFcOr(instra) = -1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'E') then 
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = 
-     >        m%imapCv(rcpos(istra),rcs(istra)+istrac-1)      ! number of the guard cell
-            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
-     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),1),
-     >        m%fcCv(m%cvFc(
-     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),2))
-            m%rcFcOr(instra) = 1.0_R8
-          enddo
-        endif
-      enddo 
-
-      open (newunit=iout,file='mapping_rc.testout')
-      write (iout,*) 'nstrai =',m%nRc
-      write (iout,'(a,/(10i6))') 'rcCvP(1) ',
-     .      (m%rcCvP(istra,1),istra=1,m%nRc)
-      write (iout,'(a,/(10i6))') 'rcCvP(2) ',
-     .      (m%rcCvP(istra,2),istra=1,m%nRc)
-      do istra = 1, m%nRc
-        ian = m%rcCvP(istra,1)
-        ien = m%rcCvP(istra,1) + m%rcCvP(istra,2) - 1
-        write (iout,*) 'istra = ',istra
-        write (iout,'(a,/(10i6))') 'rcCv(1) ',(m%rcCv(i,1),i=ian,ien)
-        write (iout,'(a,/(10i6))') 'rcCv(2) ',(m%rcCv(i,2),i=ian,ien)
-        write (iout,'(a,/(10f6.2))') 'rcFcOr  ',(m%rcFcOr(i),i=ian,ien)
-      end do
-      close (iout)
-    
-      return
-      end subroutine calc_mapping_rc
-
-
-
-***********************************************************************
-
-
       subroutine conv_rcparms (nx, ny, ns, m, g)
       use b2mod_indirect
       implicit none
@@ -1963,17 +1851,39 @@ cwdk also need to correct for degenerate faces?
           m%mxnRc = m%nCg
         else
         ! exclude corner cells if present
-        if (crcstra(istra).eq.'N' .or. crcstra(istra).eq.'S') then
-          if (leftix (rcstart(istra),rcpos(istra)) .eq. -2)  
+        if (crcstra(istra).eq.'N') then
+          if (m%imapCv(bottomix(rcstart(istra),rcpos(istra)),
+     >                 bottomiy(rcstart(istra),rcpos(istra))).gt.m%nCi)
      >      rcs(istra) = rcs(istra) + 1
-          if (rightix(rcend(istra),  rcpos(istra)) .eq. nx+1) 
+          if (m%imapCv(bottomix(rcend(istra),rcpos(istra)),
+     >                 bottomiy(rcend(istra),rcpos(istra))) .gt. m%nCi)
      >      rce(istra) = rce(istra) - 1
           rcl(istra) = rce(istra) - rcs(istra) + 1
           m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'E' .or. crcstra(istra).eq.'W') then
-          if (bottomiy(rcpos(istra),rcstart(istra)) .eq. -2)
+        elseif (crcstra(istra).eq.'S') then
+          if (m%imapCv(topix(rcstart(istra),rcpos(istra)),
+     >                 topiy(rcstart(istra),rcpos(istra))) .gt. m%nCi)
      >      rcs(istra) = rcs(istra) + 1
-          if (topiy   (rcpos(istra),rcend(istra)  ) .eq. ny+1)
+          if (m%imapCv(topix(rcend(istra),rcpos(istra)),
+     >                 topiy(rcend(istra),rcpos(istra))) .gt. m%nCi)
+     >      rce(istra) = rce(istra) - 1
+          rcl(istra) = rce(istra) - rcs(istra) + 1
+          m%mxnRc = m%mxnRc + rcl(istra)
+        elseif (crcstra(istra).eq.'E') then
+          if (m%imapCv(leftix(rcpos(istra),rcstart(istra)),
+     >                 leftiy(rcpos(istra),rcstart(istra))) .gt. m%nCi)
+     >      rcs(istra) = rcs(istra) + 1
+          if (m%imapCv(leftix(rcpos(istra),rcend(istra)),
+     >                 leftiy(rcpos(istra),rcend(istra))) .gt. m%nCi)
+     >      rce(istra) = rce(istra) - 1
+          rcl(istra) = rce(istra) - rcs(istra) + 1
+          m%mxnRc = m%mxnRc + rcl(istra)
+        elseif (crcstra(istra).eq.'W') then
+          if (m%imapCv(rightix(rcpos(istra),rcstart(istra)),
+     >                 rightiy(rcpos(istra),rcstart(istra))) .gt. m%nCi)
+     >      rcs(istra) = rcs(istra) + 1
+          if (m%imapCv(rightix(rcpos(istra),rcend(istra)),
+     >                 rightiy(rcpos(istra),rcend(istra))) .gt. m%nCi)
      >      rce(istra) = rce(istra) - 1
           rcl(istra) = rce(istra) - rcs(istra) + 1
           m%mxnRc = m%mxnRc + rcl(istra)

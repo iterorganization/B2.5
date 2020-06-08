@@ -1590,15 +1590,33 @@ cwdk also need to correct for degenerate faces?
      >                    (cflags(:,:,2:5) <= bcend(ib)))
         else
         ! exclude corner cells if present
-        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
-          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
+        if (bcchar(ib).eq.'N') then
+          if (m%imapCv(bottomix(bcstart(ib),bcpos(ib)),
+     >                 bottomiy(bcstart(ib),bcpos(ib))) .gt. m%nCi)
      >      bcs(ib) = bcs(ib) + 1
-          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
+          if (m%imapCv(bottomix(bcend(ib),bcpos(ib)),
+     >                 bottomiy(bcend(ib),bcpos(ib))) .gt. m%nCi)
      >      bce(ib) = bce(ib) - 1
-        elseif (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
-          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
+        elseif (bcchar(ib).eq.'S') then
+          if (m%imapCv(topix(bcstart(ib),bcpos(ib)),
+     >                 topiy(bcstart(ib),bcpos(ib))) .gt. m%nCi)
      >      bcs(ib) = bcs(ib) + 1
-          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
+          if (m%imapCv(topix(bcend(ib),bcpos(ib)),
+     >                 topiy(bcend(ib),bcpos(ib))) .gt. m%nCi)
+     >      bce(ib) = bce(ib) - 1
+        elseif (bcchar(ib).eq.'E') then
+          if (m%imapCv(leftix(bcpos(ib),bcstart(ib)),
+     >                 leftiy(bcpos(ib),bcstart(ib))) .gt. m%nCi)
+     >      bcs(ib) = bcs(ib) + 1
+          if (m%imapCv(leftix(bcpos(ib),bcend(ib)),
+     >                 leftiy(bcpos(ib),bcend(ib))) .gt. m%nCi)
+     >      bce(ib) = bce(ib) - 1
+        elseif (bcchar(ib).eq.'W') then
+          if (m%imapCv(rightix(bcpos(ib),bcstart(ib)),
+     >                 rightiy(bcpos(ib),bcstart(ib))) .gt. m%nCi)
+     >      bcs(ib) = bcs(ib) + 1
+          if (m%imapCv(rightix(bcpos(ib),bcend(ib)),
+     >                 rightiy(bcpos(ib),bcend(ib))) .gt. m%nCi)
      >      bce(ib) = bce(ib) - 1
         else
           call xerrab ('bcchar not yet available for WG')
@@ -1689,6 +1707,7 @@ cwdk also need to correct for degenerate faces?
       abcend(1:nbc) = maxlbl(1:nbc)
 
       if (inbc .ne. m%nCg ) then
+        write (*,*) 'inbc, nCg ',inbc,m%nCg
 ! try to find missing or doubled faces
         allocate (ifchit(m%nFC))
         ifchit = 0
@@ -1869,114 +1888,5 @@ cwdk also need to correct for degenerate faces?
 
       end subroutine bc_to_struct
 
-***********************************************************************
-
-      subroutine calc_mapping_bc (nx, ny, ns, m)
-      implicit none
-      integer :: nx, ny, ns, ib, ibc, is, inbc
-      integer :: bcs(nbc), bce(nbc), bcl(nbc)
-      integer :: iout, ian, ien, i
-      type (mapping), intent (inout) :: m
-
-      m%nBc   = nbc     ! number of boundary conditions
-      m%mxnBc = 0       ! number of cells with imposed BC
-      do ib = 1, nbc
-        bcs(ib) = bcstart(ib)
-        bce(ib) = bcend(ib)
-        ! exclude corner cells if present
-        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
-          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
-     >      bcs(ib) = bcs(ib) + 1
-          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
-     >      bce(ib) = bce(ib) - 1
-        elseif (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
-          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
-     >      bcs(ib) = bcs(ib) + 1
-          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
-     >      bce(ib) = bce(ib) - 1
-        else
-          call xerrab ('bchar not yet available for WG')
-        endif
-        bcl(ib) = bce(ib) - bcs(ib) + 1
-        m%mxnBc = m%mxnBc + bcl(ib)
-      enddo
-      if (m%mxnBc .ne. m%nCg ) 
-     >  call xerrab ('calc_mapping_bc -- wrong mxnBc')
-
-
-      call alloc_mapping_bc (m)
-
-      inbc = 0 ! index in bcCv
-      do ib = 1, nbc
-        m%bcCvP(ib,1) = inbc + 1
-        m%bcCvP(ib,2) = bcl(ib)
-        if (bcchar(ib).eq.'S') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = 
-     >         m%imapCv(bcs(ib)+ibc-1,bcpos(ib))      ! number of the corresponding guard cell
-            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
-     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),1),
-     >         m%fcCv(m%cvFc(
-     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),2))
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'N') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = 
-     >         m%imapCv(bcs(ib)+ibc-1,bcpos(ib))      ! number of the corresponding guard cell
-            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
-     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),1),
-     >         m%fcCv(m%cvFc(
-     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),2))
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'W') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = 
-     >         m%imapCv(bcpos(ib),bcs(ib)+ibc-1)      ! number of the corresponding guard cell
-            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
-     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),1),
-     >         m%fcCv(m%cvFc(
-     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),2))
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'E') then 
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = 
-     >         m%imapCv(bcpos(ib),bcs(ib)+ibc-1)      ! number of the corresponding guard cell
-            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
-     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),1),
-     >         m%fcCv(m%cvFc(
-     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),2))
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        else
-          call xerrab ('calc_mapping_bc -- wrong BCCHAR')
-        endif
-      enddo     
-
-      if (inbc .ne. m%nCg ) 
-     >  call xerrab ('calc_mapping_bc -- problem setting up bc arrays')
-
-      open (newunit=iout,file='mapping_bc.testout')
-      write (iout,*) 'nbc =',m%nBc
-      write (iout,'(a,/(10i6))') 'bcCvP(1) ',(m%bcCvP(ib,1),ib=1,m%nBc)
-      write (iout,'(a,/(10i6))') 'bcCvP(2) ',(m%bcCvP(ib,2),ib=1,m%nBc)
-      do ib = 1, m%nBc
-        ian = m%bcCvP(ib,1)
-        ien = m%bcCvP(ib,1) + m%bcCvP(ib,2) - 1
-        write (iout,*) 'ib = ',ib
-        write (iout,'(a,/(10i6))') 'bcCv(1) ',(m%bcCv(i,1),i=ian,ien)
-        write (iout,'(a,/(10i6))') 'bcCv(2) ',(m%bcCv(i,2),i=ian,ien)
-        write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
-      end do
-      close (iout)
-
-      return
-      end subroutine calc_mapping_bc
 
       end module b2mod_boundary_namelist
