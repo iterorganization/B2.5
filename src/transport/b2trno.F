@@ -236,7 +236,7 @@
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%alf0, co%calf(1,1))
 
-*   .. set csigx = 0 and calfx = 0
+*   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
         call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
@@ -281,12 +281,12 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         co%calf(:,0) = co%calf(:,0) * pol_anom_scale
         co%csig(:,0) = co%csig(:,0) * pol_anom_scale
       end if
-*   .. save the anomalous transport coefficients
+*   ..save the anomalous transport coefficients
       co%csig_an = co%csig
       co%calf_an = co%calf
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
-*   .. apply flux limit to neutrals contribution to cdpa
+*   .. apply flux limit to neutrals contribution to cdpa and cdpahz
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%te, 
      &    pl%ti, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
@@ -305,7 +305,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
       enddo 
 
-*    ..test sign of chce, chci
+*   ..test sign of chce, chci
       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0), 1, 'chce', '.ge.')
       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1), 1, 'chce', '.ge.')
       call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0), 1, 'chci', '.ge.')
