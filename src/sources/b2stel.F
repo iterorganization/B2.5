@@ -223,8 +223,12 @@
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
            rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
            elseif (tn_style.eq.1) then
-               !! AFN_TODO
-               call xerrab('pure ion energy equation not yet available')
+	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
+     &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
+             t1i = t0*pl%na(iCv,is)*(1.5_R8*pl%tn(iCv) + tkin)
+             shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
+             shi0_ion(iCv,3) = shi0_ion(iCv,3)-
+     &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
            else
 	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
      &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
@@ -342,8 +346,12 @@
            shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
            elseif (tn_style.eq.1) then !! pure ion
-              !! AFN_TODO
-               call xerrab('pure ion energy equation not yet available')
+	     tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
+     &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
+             t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))
+	     shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
+             shi0_rec(iCv,3) = shi0_rec(iCv,3)-
+     *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
            else !! separate ion-neutral
 	     tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
      &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
