@@ -51,6 +51,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_prep
+      use b2mod_running_average
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -1421,20 +1422,22 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
-#ifdef WG_TODO
+
 *   initialize 2d batch averages
-      if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
+      if (ibatch_av_all > 0) call batch_av_all_init (nCv, ns)
 
 *   initialize and/or read running averages 
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+        call run_av_init (iav_cont, nCv, ns,.true.,lrer) 
       end if
 
 *   get averaged plasma profiles
       if (ird_aver > 0)
-     &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
-#endif
+     &  call run_av_get_plasma (state%pl%na, state%pl%te, 
+     &             state%pl%ti, state%pl%ua, state%pl%po, 
+     &       nCv, ns)
+
       write (*,*) 'Starting conversion to unstructured format...'
 
 !WG_TODO: move this back to original location...
@@ -2424,13 +2427,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
+
+#endif
+
       if (iav_run > 0) then
-        call run_av_save ('b2favere',nx,ny,ns,.true.,.true.)
+        call run_av_save ('b2favere',nCv,ns,.true.,.true.)
         call run_av_fin
       end if
 
       if (ibatch_av_all > 0) call batch_av_all_fin
-#endif
+
 *  .. finalize tracing routines
       call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 
