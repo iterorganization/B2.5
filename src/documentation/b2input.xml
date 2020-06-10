@@ -2368,7 +2368,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If &gt; 0 use recyceir (non species dependent) to specify the recycling* coefficients, else if 0 use recyc (species dependent).
+					If &gt; 0 use recyceir (non species dependent) to specify the recycling coefficients, else if 0 use recyc (species dependent).
 				</description>
 			</switch>
 			<switch>

@@ -84,7 +84,7 @@ ifdef USE_EIRENE
 endif
 ifdef SOLPSTOP
 NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
-NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
+NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 ifdef LD_NETCDF
   NC2TXT = $(shell echo `which nc2text`)
 endif
@@ -853,6 +853,8 @@ ifdef LD_NETCDF
 ifeq (,$(findstring nc2text,${NC2TXT}))
 	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 endif
+else
+	$(warning NETCDF library not present!)
 endif
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
