@@ -987,6 +987,15 @@
 				<type>real</type>
 				<description>
 					Multiplier of all densities on the first timestep.
+					If set to a negative value, the rescaling (by |density_rescale|) will only be applied to species with zn.eq.zn_rescale.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_zn_rescale</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Nuclear charge number of the species to be rescaled if density_rescale is set to a negative value.
 				</description>
 			</switch>
 			<switch>

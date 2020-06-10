@@ -97,6 +97,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: zn_rescale = 0
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -1002,10 +1003,11 @@
        call xertst (0.le.b2time,
      &   'faulty internal parameter b2time')
        call ipgetr ('b2mndr_density_rescale', density_rescale)
-csw dec2013 allow for negative values; this is tweak to scale a specific density, e.g. Helium,
-c   see below --> we need a better solution for this
-c       call xertst (0.0_R8.lt.density_rescale,
-c     &   'faulty internal parameter density_rescale')
+       call ipgeti ('b2mndr_zn_rescale', zn_rescale)
+csw dec2013 allow for negative values; this is tweak to scale a specific species density
+       call xertst (0.0_R8.lt.density_rescale.or.
+     &             (0.0_R8.gt.density_rescale.and.zn_rescale.gt.0),
+     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_tally', tally)
        call xertst (0.le.tally,
      &   'faulty internal parameter tally')
@@ -1570,13 +1572,14 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       endif
 *   ..rescale densities and associated fluxes
       if (density_rescale.ne.1.0_R8) then
-csw 03oct2013 (this just quick and dirty for rescaling Helium
-c   --> better way doing this is necessary)
-        if(density_rescale < 0.d0) then
+csw 03oct2013 rescaling impurity species specified by zn_rescale
+        if(density_rescale.lt.0.0_R8) then
           do is=0,ns-1
-           if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
+           if (nint(zn(is)).ne.zn_rescale) cycle
+           if (use_eirene.ne.0.and.is_neutral(is)) cycle
            na(:,:,is) = na(:,:,is)*(-density_rescale)
-           ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
+           ne(:,:)=ne(:,:)+
+     .             na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0_R8)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
            fna_fcor(:,:,0:1,is) =
@@ -1588,7 +1591,6 @@ c   --> better way doing this is necessary)
            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
-           kinrgy(:,:,is) = kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
