@@ -1199,6 +1199,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           wrk3(ix,iy) = 0.0_R8
           wrk4(ix,iy) = 0.0_R8
           wrk5(ix,iy) = 0.0_R8
+          wrk6(ix,iy) = 0.0_R8
           wrk7(ix,iy) = 0.0_R8
           wrk8(ix,iy) = 0.0_R8                                          !iys 17.04.2012
          else
