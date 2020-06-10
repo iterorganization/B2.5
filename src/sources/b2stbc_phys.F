@@ -8452,6 +8452,12 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
+          else
+           do ibc = 1, mpg%bcCvP(ib,2)
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            call xertst(mpg%cvOnClosedSurface(iCv1),
+     .       'BCPOT=12 intended for core boundaries only!')
+           enddo
           endif
         endif
         if(maxval(dv%facdrift) .ne. 0.0_R8) then
@@ -8459,8 +8465,6 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            call xertst(mpg%cvOnClosedSurface(iCv1),
-     .       'BCPOT=12 intended for core boundaries only!')
             !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
             fchy_dia = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
@@ -8496,16 +8500,16 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
-     .                                         bc_list_y(1,ib)),
+           do ibc = 1, mpg%bcCvP(ib,2)
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            call xertst(.not.mpg%cvOnClosedSurface(iCv1),
      .       'BCPOT=13 not intended for core boundaries!')
+           enddo
           endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          call xertst(mpg%cvOnClosedSurface(iCv1),
-     .     'BCPOT=13 not intended for core boundaries!')
           srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - 
      &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &     (dv%fchdia(iFc,0)    + dv%fchdia(iFc,1)    +
