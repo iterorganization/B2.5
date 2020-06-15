@@ -5,6 +5,7 @@
       use b2us_map
       use b2us_geo
       use carre_constants
+      implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
@@ -1822,7 +1823,7 @@ cwdk also need to correct for degenerate faces?
 
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
-      integer :: ib
+      integer :: ib, inbc, ibc, ifc, ic1, ic2
       integer :: iout, ian, ien, i
 
       m%nBc = nbc

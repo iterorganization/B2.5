@@ -45,18 +45,14 @@
 *   ..local variables
       integer ncall, iCv, is
       real (kind=R8) ::
-     *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
+     *   phm0, phm1, phm2, art_rad, tnorm
       real (kind=R8) ::
-     *  wrk0(1:nCv)
+     *  wrk0(1:nCv), expu
       save ncall, phm0, phm1, phm2, art_rad
       integer, save :: use_eirene=0
 *   ..procedures
       intrinsic log, exp, min, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
-      external subini, subend, xertst, ipgetr, machsfr
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
+      external subini, subend, xertst, ipgetr, expu
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/,
      1 art_rad/0.0_R8/
@@ -86,9 +82,6 @@
       if (ncall.lt.3) then
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..compute wrk0()=log(te()/ev)
       wrk0 = log(te/ev)
 
