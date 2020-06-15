@@ -58,7 +58,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
       real (kind=R8) ::
-     *   t1, t2, t3, t11, t22, wrk0(nFc)
+     *   t1, t2, t3, t11, t22, wrk0(nFc), tr
       character chns*3
       logical lnonzero
       save ncall
@@ -68,8 +68,8 @@
      *   rscal
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                  !srv 02.01.07
-!      rscal(t1) = t1
-      rscal(t1) = 1.0e0_R8                                             !srv 13.10.06
+!      rscal(tr) = tr
+      rscal(tr) = 1.0e0_R8                                             !srv 13.10.06
 *   ..initialization
       data ncall/0/
 

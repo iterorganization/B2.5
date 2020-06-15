@@ -1,8 +1,8 @@
-      function erf_d (x, xd, res)
+      function myerf_d (x, xd, res)
       use b2mod_types
       use b2mod_constants
       implicit none
-      real (kind=R8) :: erf_d, x, xd, res
+      real (kind=R8) :: myerf_d, x, xd, res
  
 *     ------------------------------------------------------------------
 *      Forward differentiation of intrinsic function erf which is  
@@ -12,7 +12,7 @@
 
       res = erf(x)
 
-      erf_d = xd*2.0_R8/sqrt(pi)*exp(-(x**2))
+      myerf_d = xd*2.0_R8/sqrt(pi)*exp(-(x**2))
  
       return
 *     ------------------------------------------------------------------

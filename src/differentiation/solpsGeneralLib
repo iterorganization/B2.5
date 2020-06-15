@@ -888,11 +888,6 @@ subroutine cfverw:
  shape:(param 1, param 2)
  deps: (id, id)
 
-subroutine my_out_us:
- external:
- shape:(param 1, param 2, param 3, param 4, param 5)
- deps: (id, id, id, id, id)
-
 subroutine ipsetc:
  external:
  shape:(param 1, param 2)
@@ -997,4 +992,10 @@ subroutine nf_put_var_double:
  external:
  shape:(param 1, param 2, param 3)
  deps: (id, id, id)
+
+function myerf:
+  external:
+  shape: (param 1, result)
+  type: (float(), float())
+
 

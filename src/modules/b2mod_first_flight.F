@@ -184,8 +184,8 @@
      *     work(-1:nx,-1:ny,0:1),wrk2(-1:nx,-1:ny),wrk3(-1:nx,-1:ny),
      *     pfrpuff,mainpuff,corepuff
       real (kind=R8) ::
-     *   machsfr, expu, cutlo, cutll, t0
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
+     *   machsfr, expu, cutlo, cutll
+      external expu
 *     (expu is the exponential function with underflow set to 0)
 *   ..set cutll, cutlo
       cutll = log(machsfr())

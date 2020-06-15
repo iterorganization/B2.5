@@ -32,11 +32,6 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:)        !nh 21.02.2020
 
-      real (kind = R8),save ::     
-     &  cutlo, cutll
-
-
-
       contains
 
       subroutine read_recycle_fnn(nsd,nbnd)
@@ -220,9 +215,6 @@ c         Use standard recycling model for this species/wall combination
         enddo 
       enddo
 c     Other initializations
-*     ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 
       recycle_initialised=.true.
       call subend ()
@@ -267,12 +259,11 @@ c     Internal variables
       real (kind=R8):: dnndyc,dnndyv,vcx,vion,
      2    vtot,fnni_nodrifts,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
-     5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi
+     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,
+     5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi, expu
       integer :: ic,ix2
 *   ..statement functions
-      external subini, subend
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend, expu
 
       call subini ('CalcIncidentFluxes')
 c     Initialize/calculate some variables
@@ -573,11 +564,11 @@ c     Internal variables
      &     pit,pit2,mn,nnf,ux,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
-     &    fmoxc,fmoyc,fmozc,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
+     &    fmoxc,fmoyc,fmozc,fmomrecp,fmomrect,pnc,fenec,expu,fdni,
      &    intp_2dtable,intp_2dtable0,tifev,upf
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
-      external subini, subend,intp_2dtable,intp_2dtable0
+      external subini, subend,intp_2dtable,intp_2dtable0, expu
 
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
@@ -730,13 +721,12 @@ c     Internal variables
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &   dnndy,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
+     &   dnndy,expu,intp_2dtable,intp_2dtable0,tifev,t_av,
      &   upf, nif
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2
-      external subini, subend,intp_2dtable,intp_2dtable0
-*   ..statement functions
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend,intp_2dtable,intp_2dtable0, expu
+
 
       call subini ('CalcReflectedFluxes')
 c     Initialize/calculate some variables
@@ -1122,9 +1112,9 @@ c m = mass of a particle
      &    int5l,int5r,int6l,int6r 
       real (kind=R8):: vth,arg
 c      real (kind=R8):: S15AEC
-      external subini, subend
+      external subini, subend, myerf
 c      external S15AEC !mb NAG erf function
-      intrinsic erf
+      real(kind=R8) :: myerf
       call subini('CalcMomentsMaxwellian')
       
       if (uold.eq.u.and.Told.eq.t.and.mold.eq.m) then
@@ -1149,65 +1139,65 @@ c      external S15AEC !mb NAG erf function
       vth = sqrt(2.0_R8*T/m)
       arg = -(u/vth)
 c     int0l = int_{-inf}^{0} M(v) dv
-      int0l = 0.5_R8*(1.0_R8+erf(arg)) 
+      int0l = 0.5_R8*(1.0_R8+myerf(arg)) 
 
 c     int0r = int_{0}^{inf} M(v) dv
-      int0r = 0.5_R8*(1.0_R8-erf(arg))
+      int0r = 0.5_R8*(1.0_R8-myerf(arg))
 
 c     int1l = int_{-inf}^{0} v M(v) dv
-      int1l = 0.5_R8*u*(1.0_R8+erf(arg))- 
+      int1l = 0.5_R8*u*(1.0_R8+myerf(arg))- 
      2   0.5_R8/sqrt(pi)*vth*exp(arg**2)
 
 c     int1r = int_{0}^{inf} v M(v) dv
-      int1r = 0.5_R8*u*(1.0_R8-erf(arg))+ 
+      int1r = 0.5_R8*u*(1.0_R8-myerf(arg))+ 
      2   0.5_R8/sqrt(pi)*vth*exp(arg**2)
 
 c     int2l = int_{-inf}^{0} v^{2} M(v) dv
-      int2l = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8+erf(arg))-
+      int2l = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8+myerf(arg))-
      2   0.5_R8/sqrt(pi)*vth*u*exp(arg**2)
 
 c     int2r = int_{0}^{inf} v^{2} M(v) dv
-      int2r = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8-erf(arg))+
+      int2r = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8-myerf(arg))+
      2   0.5_R8/sqrt(pi)*vth*u*exp(arg**2) 
 
 c Implementation as optional arguments gave segmentation errors...
 c     int3l = int_{-inf}^{0} v^{3} M(v) dv
-       int3l = (1.5_R8*T/m*u+0.5_R8*u**3)*(1.0_R8+erf(arg)) - 
+       int3l = (1.5_R8*T/m*u+0.5_R8*u**3)*(1.0_R8+myerf(arg)) - 
      2   1.0_R8/sqrt(pi)*(0.5_R8*vth**3+0.5_R8*vth*u**2)*exp(arg**2) 
 
 c     int3r = int_{0}^{inf} v^{3} M(v) dv
-       int3r = (1.5_R8*T/m*u+0.5_R8*u**3)*(1-erf(arg)) + 
+       int3r = (1.5_R8*T/m*u+0.5_R8*u**3)*(1-myerf(arg)) + 
      2   1.0_R8/sqrt(pi)*(0.5_R8*vth**3+0.5_R8*vth*u**2)*exp(arg**2) 
 
 c     int4l = int_{-inf}^{0} v^{4} M(v) dv
        int4l = (1.5_R8*(T/m)**2+3.0_R8*T/m*u**2+u**4/2.0_R8)*(1.0_R8+
-     2    erf(arg)) - 1.0_R8/sqrt(pi)*
+     2    myerf(arg)) - 1.0_R8/sqrt(pi)*
      3    (1.25_R8*vth**3*u+0.5_R8*vth*u**3)*exp(arg**2) 
 
 c     int4r = int_{0}^{inf} v^{4} M(v) dv
        int4r = (1.5_R8*(T/m)**2+3.0_R8*T/m*u**2+u**4/2.0_R8)*(1.0_R8-
-     2    erf(arg)) + 1.0_R8/sqrt(pi)*
+     2    myerf(arg)) + 1.0_R8/sqrt(pi)*
      3    (1.25_R8*vth**3*u+0.5_R8*vth*u**3)*exp(arg**2)
 
 c     int5l = int_{-inf}^{0} v^{5} M(v) dv
        int5l = (7.5_R8*(T/m)**2*u+5.0_R8*T/m*u**3+u**5/2.0_R8)*(1.0_R8+
-     2    erf(arg)) -1.0_R8/sqrt(pi)*
+     2    myerf(arg)) -1.0_R8/sqrt(pi)*
      3    (vth**5+2.25_R8*vth**3*u**2+0.5_R8*vth*u**4)*exp(arg**2) 
 
 c     int5r = int_{0}^{inf} v^{5} M(v) dv
        int5r = (7.5_R8*(T/m)**2*u+5.0_R8*T/m*u**3+u**5/2.0_R8)*(1.0_R8-
-     2    erf(arg)) +1.0_R8/sqrt(pi)*
+     2    myerf(arg)) +1.0_R8/sqrt(pi)*
      3    (vth**5+2.25_R8*vth**3*u**2+0.5_R8*vth*u**4)*exp(arg**2)
 
 c     int6l = int_{-inf}^{0} v^{6} M(v) dv
        int6l = (7.5_R8*(T/m)**3+22.5_R8*(T/m)**2*u**2+7.5_R8*T/m*u**4+
-     2    0.5_R8*u**6)*(1.0_R8+erf(arg))-
+     2    0.5_R8*u**6)*(1.0_R8+myerf(arg))-
      3    1.0_R8/sqrt(pi)*(4.125_R8*vth**5*u+3.5_R8*vth**3*u**3 + 
      4    0.5_R8*vth*u**5)*exp(arg**2) 
 
 c     int6r = int_{0}^{inf} v^{6} M(v) dv
        int6r = (7.5_R8*(T/m)**3+22.5_R8*(T/m)**2*u**2+7.5_R8*T/m*u**4+
-     2    0.5_R8*u**6)*(1.0_R8-erf(arg))+
+     2    0.5_R8*u**6)*(1.0_R8-myerf(arg))+
      3    1.0_R8/sqrt(pi)*(4.125_R8*vth**5*u+3.5_R8*vth**3*u**3 + 
      4    0.5_R8*vth*u**5)*exp(arg**2) 
         i0l = int0l
