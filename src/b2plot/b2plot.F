@@ -771,7 +771,9 @@ c
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
+#ifdef WG_TODO
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+#endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)

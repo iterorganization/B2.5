@@ -1731,6 +1731,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
+      call alloc_b2mod_user(mpg,ns,nlim,nmol,nsts)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -1869,18 +1870,28 @@ cwdk  set some integers
 #endif
 
 *    ..guess the next state
-        call b2mxnp(nCv*ns, state%psnl%na, state%psnc%na, state%pl%na)
-        call b2mxnu(nCv*ns, state%psnl%ua, state%psnc%ua, state%pl%ua)
-        call b2mxnp(nCv, state%psnl%ne, state%psnc%ne, state%dv%ne)
-        call b2mxnp(nCv, state%psnl%te, state%psnc%te, state%pl%te)
-        call b2mxnp(nCv, state%psnl%ti, state%psnc%ti, state%pl%ti)
-        call b2mxnp(nCv, state%psnl%kinrgy, state%psnc%kinrgy, 
-     .    state%dv%kinrgy)
-        call b2mxnu(nCv, state%psnl%po, state%psnc%po, state%pl%po)
-        call b2mxnu(nFc*2*ns,state%psnl%fna,state%psnc%fna,state%dv%fna)
-        call b2mxnu(nFc*2, state%psnl%fhe, state%psnc%fhe, state%dv%fhe)
-        call b2mxnu(nFc*2, state%psnl%fhi, state%psnc%fhi, state%dv%fhi)
-        call b2mxnu(nFc*2, state%psnl%fch, state%psnc%fch, state%dv%fch)
+        state%psnl%na = state%psnc%na
+        state%psnc%na = state%pl%na
+        state%psnl%ua = state%psnc%ua
+        state%psnc%ua = state%pl%ua
+        state%psnl%ne = state%psnc%ne
+        state%psnc%ne = state%dv%ne
+        state%psnl%te = state%psnc%te
+        state%psnc%te = state%pl%te
+        state%psnl%ti = state%psnc%ti
+        state%psnc%ti = state%pl%ti
+        state%psnl%kinrgy = state%psnc%kinrgy
+        state%psnc%kinrgy = state%dv%kinrgy
+        state%psnl%po = state%psnc%po
+        state%psnc%po = state%pl%po
+        state%psnl%fna = state%psnc%fna
+        state%psnc%fna = state%dv%fna
+        state%psnl%fhe = state%psnc%fhe
+        state%psnc%fhe = state%dv%fhe
+        state%psnl%fhi = state%psnc%fhi
+        state%psnc%fhi = state%dv%fhi
+        state%psnl%fch = state%psnc%fch
+        state%psnc%fch = state%dv%fch
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
@@ -2456,6 +2467,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
+      call dealloc_b2mod_user
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
