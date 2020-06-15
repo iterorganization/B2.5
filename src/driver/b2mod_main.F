@@ -289,12 +289,9 @@ csw
       use b2mod_types
       implicit none
       real(kind=R8) :: J
-      integer iCv
 
-      J = 0.0_R8
-      do iCv = 1, mpg%nCv
-       J = max(J,state%pl%te(iCv))
-      enddo
+      call b2usr_cost_function(mpg, state, J)
+
       write(*,*) "Cost function value: ",J
 
       return

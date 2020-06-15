@@ -1,9 +1,11 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
+      use b2us_map
+      implicit none
 #     include "DIMENSIONS.F"
-      integer npfrgrpd, nntrgrpd
-      parameter (npfrgrpd=6, nntrgrpd=16)
+      integer npfrgrpd, nntrgrpd, nncf
+      parameter (npfrgrpd=6, nntrgrpd=16, nncf=4)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -18,7 +20,8 @@
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
-     ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
+     ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
+     ,  ncf,cfstart(nncf),cfend(nncf)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -35,7 +38,7 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename
+     ,  filedata,user_filename,ncf,cfstart,cfend
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -69,9 +72,10 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(m,ns,nlim,nmol,ntns)
       implicit none
-      integer nx, ns, nlim, nmol, ntns
+      integer, intent(in) :: ns, nlim, nmol, ntns
+      type(mapping), intent(inout) :: m
 
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
@@ -107,7 +111,10 @@ c***  Standard setup:
       scale_He=.false.
       print_isat=.false.
       user_filename='b2.user.parameters'
-      call read_b2mod_user_namelist(nx,ns)
+      ncf = 0
+      cfstart = 0
+      cfend = 0
+      call read_b2mod_user_namelist(ns,ntns,m)
       user_initialised = .true.
 
       return
@@ -123,10 +130,13 @@ c***  Standard setup:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(nx,ns)
+      subroutine read_b2mod_user_namelist(ns,ntns,m)
       use b2mod_b2cmpa
       implicit none
-      integer nx, ns
+      integer, intent(in) :: ns,ntns
+      type(mapping), intent(inout) :: m
+      integer ic, noss, iss, indss,
+     >        ncffc, incf, idb
 
       logical :: file_ok
       character*260 filename
@@ -155,6 +165,40 @@ c***  Standard setup:
         user_namelist_used = .false.
         filedata(ntrc_usr) = .false.
       endif
+
+      if (ncf > 0) then
+
+        m%nCf = ncf
+        m%mxnCf = count(m%fcLbl /= 0)
+        call alloc_mapping_cf (m)
+        m%cfFcP = 0
+
+        open (newunit=idb,file='debug_user.out')        
+        incf = 0
+        do ic = 1, ncf
+          if (cfstart(ic) /= 0 .and. cfend(ic) /= 0) then
+            ncffc = 0
+            m%cfFcP(ic,1) = incf +1 
+            noss = cfend(ic) - cfstart(ic) + 1
+            do iss = 1, noss
+              indss = cfstart(ic)+iss-1
+              write (*,*) ' Defining cost function ',ic
+              write (*,*) ' surface index ',indss
+! find all faces belonging to surface structure INDSS
+              call find_faces (indss, incf, ncffc, 
+     >             m%mxncf,m%cfFc, m%cfFcOr, m, idb)
+            end do              ! iss	 
+            m%cfFcP(ic,2) = ncffc
+          else
+            call xerrab ('cfstart/cfend = 0 ')
+          endif
+        end do
+        close(idb)
+      end if
+
+      call cf_to_struct(m)
+
+#ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
       old_style = maxval(j_h_at).eq.0
       if (j_h_at(1).ne.0.and.j_h_at(2).eq.0.and.j_h_at(3).eq.0) then
@@ -279,6 +323,8 @@ c*** Set default values according to current species list
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
+#endif
+      call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
 
       call subend ()
       return
@@ -294,5 +340,37 @@ c*** Set default values according to current species list
       written = .true.
       return
       end subroutine write_b2mod_user_namelist
+
+***********************************************************************
+
+      subroutine cf_to_struct (m)
+      type(mapping), intent(inout) :: m
+      integer :: ic, icf, ic1, incf, ifc
+
+      m%nCf = ncf
+      m%mxnCf = count(m%fcLbl /= 0)
+      
+      call alloc_mapping_cf(m)
+
+      incf = 0 ! index in cfCv
+      do ic = 1,m%nCf
+        m%cfCvP(ic,1) = incf + 1
+        m%cfCvP(ic,2) = m%cfFcP(ic,2)
+        do icf = 1, m%cfFcP(ic,2)
+          incf = incf + 1
+          ifc = m%cfFc(m%cfFcP(ic,1)+icf-1)
+          ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
+          if (ic1 <= m%nCi) then
+            m%cfCv(incf) = ic1
+          else
+            call xerrab('cf_to_struct -- problem with boundary face') 
+          end if
+        end do
+      end do
+
+
+      end subroutine cf_to_struct
+
+***********************************************************************
 
       end module b2mod_user_namelist
