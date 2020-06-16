@@ -16,7 +16,7 @@
      . , only : label
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:5), nout(0:5), nCv, nFc, ns, ns0
+      integer ninp(0:5), nout(0:9), nCv, nFc, ns, ns0
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -55,6 +55,7 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
+*     nout(9): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *
 *     nCv, nFc - integer, input.
 *     nCv and nFc specify the number of cells and faces in the
@@ -141,7 +142,8 @@
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
      &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
      &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
+     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5).and.
+     &             1.le.nout(9),
      &    'faulty argument ninp, nout')
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -269,7 +271,12 @@
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
       call b2mwq0 (nout(4), ns)
-
+! csc UNCOMMENT WITH AD
+!   ..write header to nout(9)
+!  idum(0) = ns
+!  CALL CFWUIN(nout(9), 1, idum, 'ns')
+!  CALL CFWUCH(nout(9), 120, lblmn, 'label')
+!  CALL B2MWQ0(nout(9), ns)
 * ..return
       call subend ()
       return

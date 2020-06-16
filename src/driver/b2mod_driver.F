@@ -223,9 +223,9 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:5), nout(0:9)
+      integer ninp(0:5), nout(0:10)
 #else
-      integer ninp(0:5), nout(0:8)
+      integer ninp(0:5), nout(0:9)
 #endif
       integer nCv, nFc, nVx, ns, ns0
       type(mapping), intent (inout)    :: mpg
@@ -306,6 +306,7 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
+*     nout(9): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -1424,6 +1425,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
+! csc UNCOMMENT WITH AD
+!    CALL CREATEB2DIAGNOSTIC(ncv, ns, mpg%nnreg, stated%diag)
 !WG_TODO      call init_state(mpg, geo, state)
 
 #ifdef WG_TODO
@@ -1792,9 +1795,9 @@ c new CDF movie option (1st frame at t=0)
      &  state_ext, J)
       implicit none
 #ifdef JET
-      integer nout(0:9), nx, ny, ns
+      integer nout(0:10), nx, ny, ns
 #else
-      integer nout(0:8), nx, ny, ns
+      integer nout(0:9), nx, ny, ns
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -2387,10 +2390,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(9),tran_file_name,'new','unformatted')
+          call cfopen (nout(10),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(9))
-          close(nout(9))
+          call write_b2mod_ppout(nout(10))
+          close(nout(10))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
