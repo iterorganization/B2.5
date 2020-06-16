@@ -83,7 +83,8 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(10): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -129,9 +130,9 @@
 
 *   ..local variables
 #ifdef JET
-      integer ninp(0:5), nout(0:9), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:5), nout(0:10), nCv, nFc, nVx, ns, ns0
 #else
-      integer ninp(0:5), nout(0:8), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:5), nout(0:9), nCv, nFc, nVx, ns, ns0
 #endif
 c**********************************************************
 !WG_TODO tmp: store main data-types here; put in module b2us_data?
@@ -157,9 +158,9 @@ c**********************************************************
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68,69/
+      data nout/60,61,62,63,64,65,66,67,68,69,70/
 #else
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69/
 #endif
 
       contains
@@ -268,6 +269,9 @@ csw
      .  mpg%nVmxCv)
       call createB2State (mpg%nCv, mpg%nFc, ns, state)
       call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
+! csc UNCOMMENT WITH AD
+!      call cfopen (nout(9),'b2ftraced','new','un*formatted')
+
 *   ..call principal driver routine
       call alloc_b2mod_ppout(1,1,ns)
 !WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
@@ -300,10 +304,10 @@ csw
       close(nout(7))
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(9),'tran','new','unformatted')
+      call cfopen (nout(10),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(9))
-      close (nout(9))
+      call write_b2mod_ppout(nout(10))
+      close (nout(10))
 #endif
 *   ..close files
       do io=0,size(ninp)-1
