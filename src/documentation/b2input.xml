@@ -3298,9 +3298,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
-					If guard_flows.eq.1, flows between neighbouring guard cells are kept.
-					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equations and the incorrect corner values are replaced by interpolated values. It is recommended 2.
+					Prohibited switch. As of v3.2.0, there are no faces between guard cells anymore.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3408,7 +3406,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0, b2news is called (SOLPS5.0/1) If 1, b2news_ is called (SOLPS5.2)
+					Prohibited switch as of v3.2.0. Model now corresponds to b2mndt_style=1 option (SOLPS5.2).
 				</description>
 			</switch>
 			<switch>
