@@ -278,25 +278,15 @@ csw
       end subroutine b2mn_init
 
       subroutine b2mn_step
-      implicit none
-
-
-      call b2mndr_1 (nout, ns, geo, mpg, state, state_ext)
-
-      end subroutine b2mn_step
-
-      subroutine b2mn_pp(J)
       use b2mod_types
+      use b2mod_b2cmpt
+      use b2mod_boundary_namelist
       implicit none
       real(kind=R8) :: J
 
-      call b2usr_cost_function(mpg, state, J)
+      call b2mndr_1 (nout, ns, geo, mpg, state, state_ext, J)
 
-      write(*,*) "Cost function value: ",J
-
-      return
-      end subroutine b2mn_pp
-
+      end subroutine b2mn_step
 
       subroutine b2mn_fin ()
       implicit none

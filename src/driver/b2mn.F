@@ -3,7 +3,6 @@
 
       program b2mn
       use b2mod_main
-      use b2mod_types
       implicit none
 
 *-----------------------------------------------------------------------
@@ -103,12 +102,10 @@
 *  8. further comments
 *
 *-----------------------------------------------------------------------
-      real(kind=R8)::J
-*-----------------------------------------------------------------------
 *.computation
 
       call b2mn_init
-      call b2mn_call_main(J)
+      call b2mn_step
       call b2mn_fin
 
       stop 'b2mn'

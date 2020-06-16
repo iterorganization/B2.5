@@ -1789,7 +1789,7 @@ c new CDF movie option (1st frame at t=0)
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, ns, geo, mpg, state, 
-     &  state_ext)
+     &  state_ext, J)
       implicit none
 #ifdef JET
       integer nout(0:9), nx, ny, ns
@@ -1803,6 +1803,7 @@ c new CDF movie option (1st frame at t=0)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      real(kind=R8) :: J
       integer nCv, nFc, nVx
       integer i, is, js
       character*256 filename, fort31name
@@ -1823,7 +1824,6 @@ c new CDF movie option (1st frame at t=0)
       ne_wanted_next_time=tim
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
-
 cwdk  set some integers
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -1924,6 +1924,9 @@ csw 09oct2012 set default potential already at this point (BCs)
             ok=ierr.eq.0
           endif
         enddo
+*    ..call cost function
+        call b2usr_cost_function(mpg, state, J)
+        write(*,*) "Cost function value: ",J
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
