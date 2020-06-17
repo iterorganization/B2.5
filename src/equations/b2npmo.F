@@ -121,7 +121,7 @@
      &  b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
-     &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
+     &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfc, b2nxst,
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
@@ -301,7 +301,6 @@
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(1,0,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
-!       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, geo, mpg, co%cvsahz_cl(1,0,is), 
      &   flubv)
