@@ -371,7 +371,7 @@
           rza(-1:nx,-1:ny,is) = (zamin(is)+zamax(is))/2.0_R8
           rz2(-1:nx,-1:ny,is) = ((zamin(is)+zamax(is))/2.0_R8)**2
         end do
-        call b2xpne_old (nx, ny, ns, rza, na, zero, ne)
+        call b2xpne_st (nx, ny, ns, rza, na, zero, ne)
       endif
       call cfrure (nget, n2*ns, ua, 'ua')
       if(b2fstat_version.ge.'03.001.000') then
@@ -656,13 +656,13 @@
         fna_32(:,:,:,:,1)=0.0_R8
         fna_52(:,:,:,:,0)=0.0_R8
         fna_52(:,:,:,:,1)=fna(:,:,:,:,1)
-        call b2xpfi_old (nx, ny, ns, fna_32, fni_32)
-        call b2xpfi_old (nx, ny, ns, fna_52, fni_52)
-        call b2xpfe_old (nx, ny, ns, 0, qe,
+        call b2xpfi_st (nx, ny, ns, fna_32, fni_32)
+        call b2xpfi_st (nx, ny, ns, fna_52, fni_52)
+        call b2xpfe_st (nx, ny, ns, 0, qe,
      1     rza, zero, fna_32, zero, fch_32, fne_32)
-        call b2xpfe_old (nx, ny, ns, 0, qe,
+        call b2xpfe_st (nx, ny, ns, 0, qe,
      1     rza, zero, fna_52, zero, fch_52, fne_52)
-        call b2xpfe_old (nx, ny, ns, 0, qe,
+        call b2xpfe_st (nx, ny, ns, 0, qe,
      1     rza, zero, fna_eir, zero, fch, fne_eir)
         fchdia = 0.0_R8
         fchin = 0.0_R8

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xvps_old (nx, ny, ns, ne, na, ua, te, ti, po,     !srv 27.11.18
+      subroutine b2xvps_st (nx, ny, ns, ne, na, ua, te, ti, po,     !srv 27.11.18
      &  fna, fhe, fhi, fch)
       use b2mod_types
       implicit none
@@ -22,7 +22,8 @@
 *
 *  1. purpose
 *
-*     B2XVPS tests the validity of the state of the plasma.
+*     B2XVPS_ST tests the validity of the state of the plasma.
+*     The routines only works on structured grids.
 *
 *
 *  3. description (see also routine b2cdca)
@@ -53,7 +54,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2xvps_old')                                  !srv 27.11.18
+      call subini ('b2xvps_st')                                  !srv 27.11.18
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
