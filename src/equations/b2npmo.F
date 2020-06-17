@@ -512,11 +512,7 @@ c     ..compare 9-pt stencil matrices
        do iCv = mpg%nCi+1, nCv ! guard cells
         ireg = mpg%cvReg(iCv)
         if (solvemo(is,ireg)) then
-         if (is_neutral(is)) then
           pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
-         else
-          pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
-         endif
         endif
        enddo
       enddo
