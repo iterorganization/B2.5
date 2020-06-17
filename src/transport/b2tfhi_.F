@@ -110,6 +110,7 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
+       call ipgeti ('b2tfhi_discr_meth', meth)
        call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
       endif                                                             !srv
 *   ..test nCv, nFc

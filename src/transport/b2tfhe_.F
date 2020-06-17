@@ -127,6 +127,7 @@ csw 10oct2012
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
+       call ipgeti ('b2tfhe_discr_meth', meth)
        call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
        endif                                                             !srv
 *   ..test nCv, nFc
