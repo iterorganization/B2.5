@@ -1929,7 +1929,9 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..call cost function
         call b2usr_cost_function(mpg, state, J)
-        write(*,*) "Cost function value: ",J
+        write(*,*) 'Cost function value: ',J
+! csc UNCOMMENT WITH AD
+!      WRITE(*, *) 'Cost function gradient: ', jd
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
