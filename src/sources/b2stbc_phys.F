@@ -91,6 +91,7 @@
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: Qalfmin = 1.0e-3_R8
+      real (kind=R8) , save :: delpo = 3.1e0_R8
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
@@ -216,6 +217,7 @@
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
         call ipgetr ('b2stbc_Qalfmin', Qalfmin)
+        call ipgetr ('b2stbc_delpo', delpo)
         call ipgetr ('b2mndr_na_min', na_min)
         call ipgetr ('b2mndr_na_new', na_new)
         call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
@@ -4804,8 +4806,8 @@ cghgh
      &           qe*pl%po(iCv1)*(t0 + t1)                             !srv 07.11.12
             else                                                      !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0 -     !srv 19.04.13
-     &          (enepar(ib,2) + 3.1_R8)*t1                            !wdk to check: correct for gammae?
+     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+delpo)*t0 -      !srv 19.04.13
+     &          (enepar(ib,2) + delpo)*t1                             !wdk to check: correct for gammae?
             endif                                                     !srv 27.02.13 }
             if(mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4865,7 +4867,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
@@ -4910,7 +4912,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
