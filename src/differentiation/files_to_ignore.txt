@@ -48,4 +48,8 @@
   myerf_b
   myerf_d
   myerf
+  ilutern_us_solps
+  b2uxus
+  b2uxus_d
+  b2mod_ma28_for_us
 
