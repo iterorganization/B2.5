@@ -432,13 +432,6 @@ ctmp.dpc
 #endif
            else                                                          !srv 01.07.08 {
 
-             if (ncall.eq.0) then
-c dummy call with rxf = 0 for smooth restart
-               call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
-     &          nscxmax, ismain, ismain0, dtim, 0.0_R8, geo, mpg, st%pl,
-     &          st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
-     &          st%psnc, ier0)
-             endif
              call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
      &         st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
