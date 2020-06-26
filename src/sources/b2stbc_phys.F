@@ -8614,15 +8614,15 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
-     .                                         bc_list_y(1,ib)),
-     .       'BCPOT=13 not intended for core boundaries!')
+!!            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
+!!     .                                         bc_list_y(1,ib)),
+!!     .       'BCPOT=13 not intended for core boundaries!')
           endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          call xertst(mpg%cvOnClosedSurface(iCv1),
+          call xertst(.not.mpg%cvOnClosedSurface(iCv1),
      .     'BCPOT=13 not intended for core boundaries!')
           srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - 
      &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
