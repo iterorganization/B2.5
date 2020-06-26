@@ -77,7 +77,8 @@
      * iwall, itargsp, zbulk
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0,
+     &                 style_visc = 0
       character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
@@ -160,7 +161,7 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2stbr_print_output', print_output)    
        call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
-       call ipgeti ('b2stbr_add_q_conv', add_q_conv)    
+       call ipgeti ('b2sihs_style_visc', style_visc)
 
 
       endif                                                         !srv 22.08.08 }
@@ -267,12 +268,12 @@ c pre-computations for KUL fluid neutrals
                     !! For now KUL AFN models have only been developed for single species cases.
           dumm0 = 0.0_R8
         call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx) 
-        if (ncall.eq.0) then !! on the first call co%cvsahz_eff will still be zero...
-          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &         0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
-        else
+        if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
           call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
      &         0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
+        else
+          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
+     &         0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
         endif
         cvsf(:,0) = cvsf(:,0)/geo%fcHz
         cvsf(:,1) = cvsf(:,1)/geo%fcHz
