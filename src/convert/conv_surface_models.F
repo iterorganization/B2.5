@@ -25,6 +25,7 @@
      .                        istart_eir(:), iend_eir(:), idtrg(:)
       logical :: found,lhelp(60)
       integer :: artificial_slab=0
+      intrinsic pack
 
       call ipgeti ('artificial_slab', artificial_slab)	
 

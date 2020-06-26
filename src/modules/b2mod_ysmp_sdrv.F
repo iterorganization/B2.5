@@ -19,6 +19,7 @@
      * jasave(:)
 
       integer nnd_sdrv, nsp, n_nz_sdrv, esp
+      logical, save :: lfirst_ill7 = .true.
 
       contains
 
@@ -63,5 +64,12 @@
       deallocate(jasave)
 
       end subroutine dealloc_b2mod_ysmp_sdrv
+
+      subroutine restart_sdrv_for_7
+      implicit none                            
+      lfirst_ill7=.true.
+      write(*,*) ' Restarting sdrv'
+      return
+      end subroutine restart_sdrv_for_7
 
       end module b2mod_ysmp_sdrv                                 !sv 29.05.02

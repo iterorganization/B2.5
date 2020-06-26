@@ -55,7 +55,7 @@ c=======================================================================
       logical lopn
       character*3 cfrm,cseq
       logical streql
-      intrinsic trim,len_trim,adjustl
+      intrinsic trim,len_trim,adjustl,huge
       external streql
 c=======================================================================
 

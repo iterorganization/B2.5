@@ -9,6 +9,8 @@
       implicit none
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+      intrinsic get_environment_variable
 #endif
       character*256 solpstop, save_solpstop
       logical first
@@ -22,7 +24,7 @@
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('SOLPSTOP', 0, save_solpstop, lenval, ierror)
 #else
-        call getenv ('SOLPSTOP', save_solpstop)
+        call get_environment_variable ('SOLPSTOP', save_solpstop)
 #endif
 #endif
         write(*,*) 'SOLPSTOP = : ',trim(save_solpstop)
