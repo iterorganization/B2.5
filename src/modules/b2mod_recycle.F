@@ -271,8 +271,8 @@ c     Internal variables
      5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi
       integer :: ic,ix2
 *   ..statement functions
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
       external subini, subend
+      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
 
       call subini ('CalcIncidentFluxes')
 c     Initialize/calculate some variables
@@ -734,9 +734,9 @@ c     Internal variables
      &   upf, nif
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2
+      external subini, subend,intp_2dtable,intp_2dtable0
 *   ..statement functions
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
-      external subini, subend,intp_2dtable,intp_2dtable0
 
       call subini ('CalcReflectedFluxes')
 c     Initialize/calculate some variables
@@ -1124,6 +1124,7 @@ c m = mass of a particle
 c      real (kind=R8):: S15AEC
       external subini, subend
 c      external S15AEC !mb NAG erf function
+      intrinsic erf
       call subini('CalcMomentsMaxwellian')
       
       if (uold.eq.u.and.Told.eq.t.and.mold.eq.m) then

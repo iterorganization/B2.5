@@ -37,17 +37,16 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
+      INTRINSIC MOD, cpu_time
       real (kind=R8) ::
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02
       integer, save :: kwrite_bnr = -1                                !srv 18.05.02
-      save lfirst, ncall, nwrite
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      save ncall, nwrite
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -133,7 +132,7 @@ cdpc
         endif
       endif
 cdpc
-      if(lfirst) then
+      if(lfirst_ilu_us) then
         write(*,*) 'ilutern_us: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
       endif
@@ -144,7 +143,7 @@ cdpc
         a1h_save(i)=a1h(i)
       enddo
 
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu_us) then
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
@@ -159,7 +158,7 @@ cdpc
         endif
       endif
 
-      if(lfirst.or.iflag.lt.0) then
+      if(lfirst_ilu_us.or.iflag.lt.0) then
         call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
@@ -170,7 +169,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false. 
+        lfirst_ilu_us=.false. 
       endif
 
       call ma28idcopy
@@ -218,13 +217,8 @@ cdpc
       call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
-
-      entry restart_ma28_for_us
-      lfirst=.true.
-      write(*,*) 'Restarting ma28_for_us'
-      return
-
 *=======================================================================
 *//END ILUTERN_US//                                                    !srv 13.10.06
 
       END
+

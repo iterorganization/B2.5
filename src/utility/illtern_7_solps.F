@@ -22,18 +22,17 @@ C
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
+      INTRINSIC MOD, cpu_time
       real (kind=R8) ::
      *   b2sasum
       EXTERNAL XERRAB, b2sasum
 
-      logical lfirst
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
       integer       ::  path                                          !sv 29.05.02
       integer, save ::  nltrsol                                       !sv 29.05.02
 !      real (kind=R8) :: time_begin, time_end                          !sv 29.05.02
-      save lfirst, ncall, nwrite_fmt, nwrite_bnr                      !sv 29.05.02
-      data lfirst /.true./, ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/ !sv 29.05.02
+      save ncall, nwrite_fmt, nwrite_bnr                      !sv 29.05.02
+      data ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/ !sv 29.05.02
 
 *=======================================================================
 *//COMPUTATION//
@@ -120,7 +119,7 @@ cdpc
         endif
       endif
 
-      if(lfirst) then
+      if(lfirst_ill7) then
 C
         PATH = 2
 !          call cpu_time(time_begin)
@@ -155,10 +154,10 @@ C
         if(nltrsol.gt.0)                                                !sv 09.07.02
      *   write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
-          lfirst=.false.
+          lfirst_ill7=.false.
         endif
 C
-       if(.not.lfirst) then
+       if(.not.lfirst_ill7) then
 C
         PATH = 3
 !          call cpu_time(time_begin)
@@ -219,13 +218,8 @@ C
       call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
-
-      entry restart_sdrv_for_7                            
-      lfirst=.true.
-      write(*,*) ' Restarting sdrv'
-      return
-
 *=======================================================================
 *//END ILLTERN//
 
-      END                                                          !sv 29.05.02 }
+      END subroutine                                                         !sv 29.05.02 }
+

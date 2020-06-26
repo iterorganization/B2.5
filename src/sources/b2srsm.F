@@ -58,13 +58,12 @@
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
 *   ..procedures
       real (kind=R8) :: roxa
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
       save ncall, diagno, enable
       data ncall/0/, diagno/0/, enable/0/
-
+      roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *-----------------------------------------------------------------------
 *.computation
 
