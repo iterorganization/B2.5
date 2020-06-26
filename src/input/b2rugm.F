@@ -193,6 +193,9 @@
       intrinsic min, max, sqrt
       real (kind=R8) ::
      *   trim1, norm, cosang, sinang, dist
+      external subini, subend, xertst, cfrure, cfruin
+      external intfaceh1, intfacer1, intfacev1
+      external b2xgbs, b2xvsg, b2xvgm
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       sinang(p0x,p0y,p1x,p1y) = trim1(
@@ -201,10 +204,6 @@
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       dist(ix,iy,i,j) = norm (
      &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      external subini, subend, xertst, cfrure, cfruin
-      external intfaceh1, intfacer1, intfacev1
-      external b2xgbs, b2xvsg, b2xvgm
-
 *-----------------------------------------------------------------------
 *.computation
 
