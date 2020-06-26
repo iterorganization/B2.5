@@ -63,10 +63,13 @@
 
       subroutine alloc_b2mod_numerics(nCv,nsd,nnreg)
       implicit none
-      integer nCv,nsd,nnreg(0:1)
+      integer nCv,nsd,nnreg(0:1), kul_recycle
 
       if (b2mod_numerics_allocated) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
+
+      kul_recycle = 0    
+      call ipgeti ('b2stbr_kul_recycle', kul_recycle)
 
       allocate(time_factor(nCv))
 #ifdef ALLOCATE_AND_NAMELIST
@@ -100,7 +103,11 @@
       core_dt_factor=1.0_R8
       solveco=.true.
       solvemo=.true.
-      solvemt=.true.
+      if (kul_recycle.ne.1) then !! default, use total momentum equation
+        solvemt=.true.
+      else
+        solvemt=.false.          !! in case of KUL fluid neutrals, don't use total momentum equation
+      endif
       solvepo=.true.
       solveee=.true.
       solveei=.true.
