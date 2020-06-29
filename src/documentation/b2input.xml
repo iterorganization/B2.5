@@ -2744,7 +2744,7 @@
 			<switchgroup>
 				<name>b2news_potit*</name>
 				<description>
-					Maximum and minimum number of iterations in the potential equation. It must hold that potitmin &lt; potit.
+					Obsolete. Removed from code.
 				</description>
 				<switch>
 					<name>b2news_potit</name>
@@ -2762,7 +2762,7 @@
 				<default>1.0e-2</default>
 				<type>real</type>
 				<description>
-					Target residual for the potential equation.
+					Obsolete. Removed from code.
 				</description>
 			</switch>
 			<switch>
@@ -2948,10 +2948,8 @@
 				<default>3</default>
 				<type>integer</type>
 				<description>
-					When area_fix.eq.0, recovers old SOLPS5.0 behaviour.
-					If area_fix.ge.1, then certain computations of poloidal velocities are done by dividing flows by the area normal to the flux tube as opposed to the area of contact.
-					If area_fix.ge.2, then additionally this treatment is used for the parallel contact area used in determining plasma flux limiters.
-					If area_fix.ge.3, then additionally this treatment is used for all parallel contact areas.
+					Obsolete. Removed from code. 
+					New implementation superseeds treatment of area_fix=3.
 				</description>
 			</switch>
 			<switch>

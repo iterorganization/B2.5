@@ -75,7 +75,7 @@
 *.declarations
 
 *   ..local variables
-      integer potit, nsmin, nsmax, no_current
+      integer nsmin, nsmax, no_current
       integer, save :: style = 3, pot_eq = 1                             !srv 29.05.02 13.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: no_solve = 0                                      !srv 02.07.08
@@ -88,8 +88,6 @@
      &                 iout_b2nppo = 0, iout_b2wdat = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
-      real (kind=R8) ::
-     *   potok
       real (kind=R8), save :: cutlo = 1.0e-60_R8
       integer ncall, is, ier0, i, iCv, ireg
       character charns*3                                                 !srv 30.06.03
@@ -113,8 +111,8 @@
      &  respo0(nCv), corpo0(nCv)
       logical solving(4), solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
       logical inverted_ua, new_matrix
-      save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
-     &     , vis_per, solving, no_current                      !srv 06.07.00
+      save ncall, xfm0, xfm1, xfm2, xfm3                                 !srv 09.07.99
+     &     , vis_per, solving, no_current                                !srv 06.07.00
      &     , nsmin, nsmax
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
@@ -132,7 +130,7 @@
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/                     !srv 09.07.99 09.03.09
+     1   xfm3/1.0e0_R8/,
      2   vis_per/0.0e0_R8/, no_current/0/                              !srv 06.07.00
 !     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
 !     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
@@ -179,12 +177,6 @@
 !       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
 !       facdrift=facdrift_start                                          !srv 09.07.99
-       call ipgeti ('b2news_potit', potit)
-       call xertst (0.lt.potit,
-     &   'faulty internal parameter potit')
-       call ipgetr ('b2news_potok', potok)
-       call xertst (0.0_R8.lt.potok,
-     &   'faulty internal parameter potok')
        call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 06.07.00
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 13.07.05
        call ipgeti ('b2tfhe_no_current', no_current)
