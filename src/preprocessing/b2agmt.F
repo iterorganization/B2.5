@@ -133,7 +133,7 @@
       real (kind=R8) ::
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
      *   isx(0:1), isy(0:1)
-      integer, save :: qc_style = 1
+      integer, save :: style = 0
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -173,7 +173,7 @@
 *   ..read input data
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
-      call ipgeti ('b2agmt_qc_style', qc_style)
+      call ipgeti ('b2agmt_style', style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..test nx, ny, isymm
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -254,6 +254,7 @@
             ! Assumptions: - internal cells have N and S faces aligned
             !              - for classical grids, the above is true for all cells
             ! Set ebc equal to ecc for numerical accuary
+            ! TODO: extend this treatment for boundary cells with both N/S faces aligned
             ebc(ix,iy,0) = ecc(ix,iy,0,0)*bb(ix,iy,0)/abs(bb(ix,iy,0))
             ebc(ix,iy,1) = ecc(ix,iy,0,1)*bb(ix,iy,0)/abs(bb(ix,iy,0))
           else
@@ -430,7 +431,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &                       cry(leftix(ix,iy),leftiy(ix,iy),:) )
 
         ! unit vectors at left faces (not re-normalized)
-        if (classical) then 
+        if (classical.and.(style.eq.0)) then 
           
           ! Inverse distance interpolation
           ! Backwards compatible
@@ -632,7 +633,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &                       cry(bottomix(ix,iy),bottomiy(ix,iy),:) )
 
         ! unit vectors at bottom faces (not re-normalized)
-        if (classical) then
+        if (classical.and.(style.eq.0)) then
 
           ! Backwards compatibility option.
           ! Standard treatment for magnetically rectangular cells
