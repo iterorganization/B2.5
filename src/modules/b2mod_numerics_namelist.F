@@ -29,6 +29,7 @@
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtee(0:CVREGMAX)
       real (kind=R8), save :: dtei(0:CVREGMAX)
+      real (kind=R8), save :: dten(0:CVREGMAX)
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -51,7 +52,7 @@
 
       private :: numerics
       logical, save :: write_nml_num = .true.
-      namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
+      namelist /numerics/ dtco,dtmo,dtee,dtei,dten,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,
@@ -73,6 +74,7 @@
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
+      allocate(dten(0:nnreg(0)))
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -92,6 +94,7 @@
       dtmo=1.0_R8
       dtee=1.0_R8
       dtei=1.0_R8
+      dten=1.0_R8
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -125,6 +128,7 @@
       deallocate(dtmo)
       deallocate(dtee)
       deallocate(dtei)
+      deallocate(dten)
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -198,6 +202,8 @@
      & 'faulty parameter dtee')
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
+      call xertst (0.0_R8.lt.minval(dten),
+     & 'faulty parameter dten')
 
 c additional time-modification factor
       ttf=core_dt_suppression

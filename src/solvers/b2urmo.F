@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2urmo (nCv, nFc, nVx, geo, mpg,  isb, ub, rob, 
-     .  smb, flub, cvsb, resmb, fmb)                                                     !srv 02.06.11
+     .  smb, flub, cvsb, resmb, fmb, cvsb_eff)                                  !srv 02.06.11
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -17,7 +17,7 @@
      *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1), cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   resmb(nCv), fmb(nFc,0:1)
+     *   resmb(nCv), fmb(nFc,0:1), cvsb_eff(nFc,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -61,7 +61,9 @@
       character chns*3                                                  !srv 02.06.11
       save ncall
       real (kind=R8) ::
-     *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx)
+     *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
+     *   wrkf(nFc,0:1), wrkv(nVx)
+      real (kind=R8), save :: eps = 1.0e-60_R8
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
@@ -99,6 +101,9 @@
 cwdk note: compared to original code, flv is now based on "effective" 
 cwdk       viscosity, and will be zero if cvsb is zero
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,ub,flub,cvsb,fmb,flf,flv)
+cwdk store effective viscosity, for use in viscous heating
+      call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
+      cvsb_eff  = -flv/(wrkf + eps)
 
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        fmo_cvsa(:,:,isb)=flv
