@@ -123,16 +123,18 @@ cwdk   subsequently (use same work arrays nw, dnw, nwf, flo, con, flo0, con0)
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(1,0),nwif)
 
       do iFc = 1, nFc
-        cone(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+        cone(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
-     &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )
-        coni(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+     &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+        coni(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ni(mpg%fcCv(iFc,1),0)*pl%ti(mpg%fcCv(iFc,1))  +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
-     &    dv%ni(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )
+     &    dv%ni(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
       enddo
 
 *   ..compute poloidal/radial coefficients for pressure diffusion term
