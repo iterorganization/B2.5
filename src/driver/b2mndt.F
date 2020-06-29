@@ -26,12 +26,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_running_average
+      use b2mod_batch_average
+     & , only : batch_av_all
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:9), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
-      integer, save :: iav_run = 0
       integer, save :: ibatch_av_all = 0
       integer, save :: use_eirene = 0
       real (kind=R8) ::
@@ -210,7 +212,6 @@
        elseif(nsmax.lt.0) then
          nsmax=0
        endif
-       call ipgeti ('b2mndt_av', iav_run)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (boundary_namelist.ge.1) then
@@ -435,10 +436,19 @@ ctmp.dpc
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
 #endif
            else                                                          !srv 01.07.08 {
-            call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
-     &       nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
-     &       st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
-     &       st%psnc, ier0)
+
+             if (ncall.eq.0) then
+c dummy call with rxf = 0 for smooth restart
+               call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+     &          nscxmax, ismain, ismain0, dtim, 0.0_R8, geo, mpg, st%pl,
+     &          st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
+     &          st%psnc, ier0)
+             endif
+             call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+     &         nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
+     &         st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
+     &         st%psnc, ier0)
+
            endif                                                         !srv 01.07.08 )
            flush(6)
            if(ier0.eq.10) then
@@ -618,8 +628,8 @@ ctmp.dpc
        goto 1
       endif
 
-!WG_TODO      if (iav_run > 0) call running_average (nx,ny,ns)
-!WG_TODO      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nx,ny,ns)
+
+      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return
 99999 continue

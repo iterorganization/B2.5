@@ -259,8 +259,8 @@ c     Internal variables
       real (kind=R8):: dnndyc,dnndyv,vcx,vion,
      2    vtot,fnni_nodrifts,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,
-     5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi, expu
+     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
+     5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi
       integer :: ic,ix2
 *   ..statement functions
       external subini, subend, expu
@@ -564,7 +564,7 @@ c     Internal variables
      &     pit,pit2,mn,nnf,ux,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
-     &    fmoxc,fmoyc,fmozc,fmomrecp,fmomrect,pnc,fenec,expu,fdni,
+     &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
      &    intp_2dtable,intp_2dtable0,tifev,upf
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
@@ -649,13 +649,13 @@ c     once all thermal particles are pumped.
 
 
 c     Recycled momentum flux densities
-      fmoxc = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)
+      fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)
 
-      fmoyc = 0.0_R8
+      fmoy = 0.0_R8
 
-      fmozc = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)
+      fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)
     
-      fmozc = fmozc + 2.0_R8/3.0_R8*mn*pt*fdni*vt
+      fmoz = fmoz + 2.0_R8/3.0_R8*mn*pt*fdni*vt
 c       Pressure of recycled neutrals 
       pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)
 
@@ -672,9 +672,9 @@ c     recycled total energy flux density of neutrals
 
 
 c     Calculate recycled poloidal momentum flux of neutrals
-      fmomrecp = -isign*(fmozc*cosa + fmoyc*sina)*
+      fmomrecp = -isign*(fmoz*cosa + fmoy*sina)*
      2              area +isign*pnc*area*cosa
-      fmomrect = fmoxc*area
+      fmomrect = fmox*area
       fmomrec = pit*fmomrecp + pit2*fmomrect         
 c     Convert energy flux densities in energy fluxes
       fenerec = fenec*area
@@ -721,7 +721,7 @@ c     Internal variables
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &   dnndy,expu,intp_2dtable,intp_2dtable0,tifev,t_av,
+     &   dnndy,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
      &   upf, nif
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2

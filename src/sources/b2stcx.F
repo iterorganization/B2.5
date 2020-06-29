@@ -173,8 +173,11 @@ ctmp.dpc
      &        (1.0_R8-BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
           elseif (tn_style.eq.1) then
-            !! AFN_TODO
-            call xerrab('pure ion energy equation not yet available')
+            tkin = (mp/4.0_R8)*
+     &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
+            t1i = t0*na(iCv,is0)*na(iCv,is)*tkin
+            shi0(iCv,0) = shi0(iCv,0)+t1i
           else
             tkin = (mp/4.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+

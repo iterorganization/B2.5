@@ -73,6 +73,7 @@
       integer, save :: get_residuals = 0                                !srv 22.05.18
       integer, save :: tn_style = 0                               
       character chns*3                                                  !srv 17.07.05
+      character chncall*5                                          
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -149,6 +150,12 @@
       endif
 
 * ..main computation
+
+c make sure fhn is zero when not solving a separate neutral energy equation
+      if (tn_style.ne.2) then
+        dv%fhn = 0.0_R8
+      endif
+
 *   ..compute final heat sources
       if(style.eq.0) then
        call xerrab('b2npht -- style 0 not available for WG')
@@ -161,12 +168,14 @@
       else
        call b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn, 
-     &  pl%po, dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa, 
-     &  co%cvsahz, co%cvsahz_cl, she0, shi0, shn0)
+     &  pl%po, dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa,
+     &  co%cvsahz_eff, she0, shi0, shn0)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
+
+
 #ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -191,7 +200,7 @@ cdjm Jan2017 update particle source components for balance
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &     get_residuals.eq.1) then    !srv 22.05.18
-       if (mdf_fhi.eq.0) then
+        if (mdf_fhi.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi, 
      &     dv%reshi)
         else
@@ -201,10 +210,10 @@ cdjm Jan2017 update particle source components for balance
       endif                                                             !srv 22.05.18
 
 
-c residuals for seperate neutral energy equation
+c residuals for separate neutral energy equation
       if (tn_style.eq.2) then   !! separate neutral energy equation
                                 !! AFN_TODO add solven in b2mod_numerics
-        if (mdf_fhe.eq.0) then
+        if (mdf_fhi.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shn0, dv%fhn,
      &     dv%reshn)
         else
@@ -216,7 +225,6 @@ c residuals for seperate neutral energy equation
       endif
 
 
-      
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
@@ -275,7 +283,10 @@ c residuals for seperate neutral energy equation
         wrk0=shi0(:,0)+shi0(:,1)*pl%ti+
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2npht_shi')
-      endif                                                             !srv 17.07.05 01.11.10 }
+      endif            
+
+
+                                                 !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
@@ -285,6 +296,8 @@ c residuals for seperate neutral energy equation
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn,
      &  dv%cortt, dv%corte, 
      &  dv%corti, dv%cortn, wrkf, wrkc, aa)
+
+
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
@@ -317,6 +330,7 @@ c residuals for seperate neutral energy equation
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
       end if
+
 
 * ..return
       ncall = ncall+1

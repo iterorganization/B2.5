@@ -51,7 +51,11 @@
       use b2us_geo
       use b2us_plasma
       use b2us_prep
-
+      use b2mod_running_average
+     & , only : run_av_init, run_av_get_plasma, run_av_save,
+     & run_av_fin
+      use b2mod_batch_average
+     & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
@@ -98,8 +102,6 @@
       integer, save :: ird_aver = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
-      integer, save :: use_9pt_stencil = 1
-      integer, save :: use_unstructured_grid = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -1232,9 +1234,6 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
-       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
-       call ipgeti ('b2mndr_use_unstructured_grid',
-     &               use_unstructured_grid)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1429,20 +1428,22 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !    CALL CREATEB2DIAGNOSTIC(ncv, ns, mpg%nnreg, stated%diag)
 !WG_TODO      call init_state(mpg, geo, state)
 
-#ifdef WG_TODO
+
 *   initialize 2d batch averages
-      if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
+      if (ibatch_av_all > 0) call batch_av_all_init (nCv, ns)
 
 *   initialize and/or read running averages 
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+        call run_av_init (iav_cont, nCv, ns,.true.,lrer) 
       end if
 
 *   get averaged plasma profiles
       if (ird_aver > 0)
-     &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
-#endif
+     &  call run_av_get_plasma (state%pl%na, state%pl%te, 
+     &             state%pl%ti, state%pl%ua, state%pl%po, 
+     &       nCv, ns)
+
       write (*,*) 'Starting conversion to unstructured format...'
 
 !WG_TODO: move this back to original location...
@@ -2079,7 +2080,7 @@ c new CDF movie option
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)') 
      .           'batch_av/batch_av.',edition_batch
-          call batch_av_all_save (batch_name,nx,ny,ns)
+          call batch_av_all_save (batch_name,nCv,ns)
           write(*,*) 'Saved ',batch_name
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
@@ -2448,13 +2449,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
+
+#endif
+
       if (iav_run > 0) then
-        call run_av_save ('b2favere',nx,ny,ns,.true.,.true.)
+        call run_av_save ('b2favere',nCv,ns,.true.,.true.)
         call run_av_fin
       end if
 
       if (ibatch_av_all > 0) call batch_av_all_fin
-#endif
+
 *  .. finalize tracing routines
       call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 

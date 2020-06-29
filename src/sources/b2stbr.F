@@ -30,6 +30,8 @@
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_running_average
+     & , only : running_average, run_av_get_sources
 #ifndef NO_CDF
       use b2mod_tallies
 #endif
@@ -89,6 +91,7 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
       integer, save :: ird_aver=0                                    !pb 30.09.16
+      integer, save :: iav_run = 0
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
@@ -327,6 +330,7 @@
         call ipgeti ('b2stbr_potential_at_guard_cell',
      &                potential_at_guard_cell)
         call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
+        call ipgeti ('b2mndt_av', iav_run)
         allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
@@ -652,17 +656,33 @@ c   --> better solution wanted here..
           endif
          enddo
         endif
+
+*   add eirene sources to running average when averaging
+        if (iav_run > 0) call running_average (nCv,ns,pl,dv,
+     &      sna0_eir, smo0_eir, she0_eir, shi0_eir)
+
+*   get averaged sources
+        if (ird_aver > 0) then
+c only the total sources are averaged, not the linearised components.
+c when calling the averaged sources the linearisation must be overwritten (everything in the "0" part)
+          call run_av_get_sources(sna0_eir(:,0,:), smo0_eir(:,0,:), 
+     &                            she0_eir(:,0), shi0_eir(:,0), 
+     &                            nCv, ns)
+
+          sna0_eir(:,1,:)   = 0.0_R8
+          smo0_eir(:,1:3,:) = 0.0_R8
+          she0_eir(:,1:3)   = 0.0_R8
+          shi0_eir(:,1:3)   = 0.0_R8
+          
+        endif
+
         srw%sna0 = srw%sna0 + sna0_eir
         srw%smo0 = srw%smo0 + smo0_eir
         srw%she0 = srw%she0 + she0_eir
         srw%shi0 = srw%shi0 + shi0_eir
 
-*   get averaged sources
-#ifdef WG_TODO
-        if (ird_aver > 0) 
-     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
-     &                            nx, ny, ns)
-#endif
+
+
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
