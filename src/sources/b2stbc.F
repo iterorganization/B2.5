@@ -172,6 +172,7 @@
       call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
       call sfill (nCv*4, 0.0_R8, srw%she0, 1)
       call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
       call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
 
 * ..compute standard form volume sources

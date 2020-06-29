@@ -6,6 +6,7 @@
      & bb, wbbl, wbbr, wbbv, region, leftix, leftiy,
      & bottomix, bottomiy, rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
+      use b2mod_constants
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
@@ -85,10 +86,15 @@
 *   ..local variables
       integer ix, iy, i, j
       real (kind=R8) ::
-     *  t0, p0x, p0y
+     *  t0, p0x, p0y, width, bb0, babs
+      real (kind=R8) :: hzl(-1:nx,-1:ny),    ! hz at the left cell face
+     *                  hzr(-1:nx,-1:ny),    ! hz at the right cell face
+     *                  hzb(-1:nx,-1:ny)     ! hz at the bottom cell face
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst
+      data width /1.0_R8/
+      save width
 
 *-----------------------------------------------------------------------
 *.computation
@@ -96,14 +102,98 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2agbf')
+      call ipgetr ('b2agmt_1d_width', width)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 
+*   ..initialize
+      wbbl = 0.0_R8
+      wbbr = 0.0_R8
+      wbbv = 0.0_R8
+
 *    ..interpolate magnetic field to cell faces
-cwdk  could try to be more precise here in case we know full fpsi/ffbz
-      call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
-      call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
-      call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
+      if (maxval(abs(fpsi)).eq.0.0_R8 .or.
+     &    maxval(abs(ffbz)).eq.0.0_R8 ) then
+        !wdk 'standard' treatment: inverse volume weighting
+        call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
+        call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
+        call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
+      else
+        !wdk try to be more precise in case we know full fpsi/ffbz:
+        !wdk direct computation by averaging from vertext values 
+*     ..preparatory quantities
+        hzl = INVALID_DOUBLE
+        hzr = INVALID_DOUBLE
+        hzb = INVALID_DOUBLE
+        do iy = -1, ny
+         do ix = -1, nx
+          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+          if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+           if (isymm.eq.0) then
+             hzl(ix,iy) = width
+           else if (isymm.eq.1 .or. isymm.eq.2) then
+             hzl(ix,iy) = pi * ( crx(ix,iy,0) + crx(ix,iy,2) )
+           else if (isymm.eq.3 .or. isymm.eq.4) then
+             hzl(ix,iy) = pi * ( cry(ix,iy,0) + cry(ix,iy,2) )
+           end if
+          endif
+          if(isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
+           if (isymm.eq.0) then
+             hzr(ix,iy) = width
+           else if (isymm.eq.1 .or. isymm.eq.2) then
+             hzr(ix,iy) = pi * ( crx(ix,iy,1) + crx(ix,iy,3) )
+           else if (isymm.eq.3 .or. isymm.eq.4) then
+             hzr(ix,iy) = pi * ( cry(ix,iy,1) + cry(ix,iy,3) )
+           end if
+          endif
+          if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+           if (isymm.eq.0) then
+             hzb(ix,iy) = width
+           else if (isymm.eq.1 .or. isymm.eq.2) then
+             hzb(ix,iy) = pi * ( crx(ix,iy,0) + crx(ix,iy,1) )
+           else if (isymm.eq.3 .or. isymm.eq.4) then
+             hzb(ix,iy) = pi * ( cry(ix,iy,0) + cry(ix,iy,1) )
+           end if
+          endif
+         enddo
+        enddo
+*     ..computation of magnetic field components
+        do iy = -1, ny
+         do ix = -1, nx
+          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+          bb0 = (fpsi(ix,iy,2,0) - fpsi(ix,iy,0,0) + 
+     .     fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
+          if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+           babs = 0.5_R8*(
+     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) + 
+     .       sqrt(fpsi(ix,iy,2,1)**2+fpsi(ix,iy,2,2)**2) )/hzl(ix,iy)
+           wbbl(ix,iy,0) = sign(babs,bb0)
+           wbbl(ix,iy,1) = 0.0_R8
+           wbbl(ix,iy,2) = (ffbz(ix,iy,0) + ffbz(ix,iy,2)) /
+     .      (2.0_R8 * hzl(ix,iy))
+          endif
+          if(isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
+           babs = 0.5_R8*(
+     .       sqrt(fpsi(ix,iy,1,1)**2+fpsi(ix,iy,1,2)**2) + 
+     .       sqrt(fpsi(ix,iy,3,1)**2+fpsi(ix,iy,3,2)**2) )/hzr(ix,iy)
+           wbbr(ix,iy,0) = sign(babs,bb0)
+           wbbr(ix,iy,1) = 0.0_R8
+           wbbr(ix,iy,2) = (ffbz(ix,iy,1) + ffbz(ix,iy,3)) /
+     .      (2.0_R8 * hzr(ix,iy))
+          endif
+          if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+           babs = 0.5_R8*(
+     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) + 
+     .       sqrt(fpsi(ix,iy,1,1)**2+fpsi(ix,iy,1,2)**2) )/hzb(ix,iy)
+           wbbv(ix,iy,0) = sign(babs,bb0)
+           wbbv(ix,iy,1) = 0.0_R8
+           wbbv(ix,iy,2) = (ffbz(ix,iy,0) + ffbz(ix,iy,1)) /
+     .      (2.0_R8 * hzb(ix,iy))
+          endif
+         enddo
+        enddo
+      endif
+
 *    ..extrapolate magnetic field to edges
       write (*,*) 'b2agfs -- not computing edges; not needed for US?'
 #ifdef WG_TODO

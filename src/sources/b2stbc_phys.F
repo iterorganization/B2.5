@@ -93,6 +93,7 @@
       real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
+      real (kind=R8) , save :: Qalfmin = 1.0e-3_R8
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
@@ -116,7 +117,7 @@
      *  wdia(nCv), wrk0(nCv),
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
-     *  pz(nCv), hzf(nFc), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
+     *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
      *  dOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)                             !srv 23.09.08
       real (kind=R8), save ::                                           !srv 16.02.12
@@ -217,6 +218,7 @@
         call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
+        call ipgetr ('b2stbc_Qalfmin', Qalfmin)
         call ipgetr ('b2mndr_na_min', na_min)
         call ipgetr ('b2mndr_na_new', na_new)
         call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
@@ -309,9 +311,6 @@
       PBIG=UP00
 
       sna0_no_mdf = 0.0_R8
-
-*  .. interpolate hz to faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 
@@ -921,15 +920,10 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
               !wdk Correction now involves vadia instead of ExB velocity
               !wdk This makes implementation equivalent to mdf_fnb = 0 option
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          (
-     &            (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
-     &           (
-     &            geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
-     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is) 
-     &            )*
-     &           0.5_R8*
-     &         (pl%na(iCv1,is)+pl%na(iCv2,is))
-     &           )
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
               srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
      &          max(0.0_R8,t0)
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
@@ -2837,9 +2831,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*hzf(iFc)
+     .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*
+     .         geo%fcHz(iFc)
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
 
@@ -2858,11 +2853,11 @@ cwdk      Tmp: in "connector" direction - ok for orthogonal grids
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)*
+     .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
      .          pl%ua(iCv2,is))
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
 
@@ -3086,46 +3081,24 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=5 -- PRESCRIBE THE PARALLEL MOMENTUM FLUX PER UNIT AREA
 
           case (5)
-          call xerrab ('b2stbc_phys -- BCMOM = 5 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum flux per unit area ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*
-     1         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     1         MOMPAR(IS,IB,1)*SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*
-     1         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCMOM=5, OPTION NOT AVAILABLE')
-          ENDIF
-#endif
+cwdk      Possible backwards-compatibility issue: 
+cwdk      In the unstructured solver, we impose flux per unit area normal
+cwdk      to the surface/boundary. 
+cwdk      In the original code, the flux per unit area in the poloidal
+cwdk      direction was imposed at E/W boundaries (and normal to the 
+cwdk      radial direction at N/S - unchanged for aligned grids)
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            srw%smo0(iCv1,0,is) = mompar(is,iB,1)*geo%fcS(iFc)*
+     .        geo%fcHz(iFc)
+            srw%smo0(iCv1,1,is) = 0.0_R8
+          enddo  
 * -- BCMOM=6 -- PRESCRIBE THE TOTAL PARALLEL MOMENTUM FLUX FOR A
 *                 CONSTANT PARALLEL VELOCITY
 
@@ -3143,9 +3116,10 @@ cxpb  and max(,,) statement for stability
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*NE00*am(is)*bv_ua(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     .         VBIG*NE00*am(is)*bv_ua(iCv1,is)*geo%fcS(iFc)*
+     .         geo%fcHz(iFc)
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
 * -- BCMOM=8 -- SPECIAL : LIMITED SHEAR
@@ -3442,7 +3416,7 @@ cxpb  and max(,,) statement for stability
             vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) - 
      &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &        sign(1.0_R8,geo%fcQalf(iFc,0))*hzf(iFc)*geo%fcS(iFc)
+     &        sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*geo%fcS(iFc)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
@@ -3450,13 +3424,14 @@ cxpb  and max(,,) statement for stability
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
-            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
+            if (abs(geo%fcQalf(iFc,0)).lt.Qalfmin) then
               srw%smo0(iCv1,0,is) = 0.0_R8
               srw%smo0(iCv1,1,is) = 0.0_R8
               if (conpar(is,ib,2).gt.0.0_R8) then
                 srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &            mompar(is,ib,2)/conpar(is,ib,2)*am(is)*mp*
-     &            co%dna0(iCv1,is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     &            co%dna0(iCv1,is)*pl%na(iCv1,is)*geo%fcS(iFc)*
+     &            geo%fcHz(iFc)
               endif
             endif
           enddo                                                        !srv 01.02.09 }
@@ -3477,7 +3452,8 @@ cxpb  and max(,,) statement for stability
             srw%smo0(iCv1,1,IS) = 0.0_R8
             srw%smo0(iCv1,2,IS) = 0.0_R8
             srw%smo0(iCv1,3,IS) = srw%smo0(iCv1,3,IS) + 
-     &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*hzf(iFc) + MOMPAR(IS,IB,1)*
+     &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*geo%fcHz(iFc) +
+     &         MOMPAR(IS,IB,1)*
      &         max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &         dv%fna_fcor(iFc,1,is))/pl%na(iCv1,is)
           enddo
@@ -6382,10 +6358,6 @@ cghgh
           endif
           if (mdf_fhi.ne.0) then
             call xerrab('BCENI = 9 not yet imlemented for mdf')
-          endif
-          if (tn_style.ne.0) then
-            call xerrab('BCENI = 9 not yet imlemented for non-default',
-     &                   'energy equations')
           endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)
