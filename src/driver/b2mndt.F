@@ -31,7 +31,7 @@
      & , only : batch_av_all
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:9), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
+      integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -503,9 +503,9 @@ c dummy call with rxf = 0 for smooth restart
      &        geo, st%pl, st%dv, st%diag)
              flush(nout(4))
 ! csc UNCOMMENT WITH AD
-!              CALL B2MWQT_DIFF(nout(9), ncv, ns, itim, itcnt, boris, &
+!              CALL B2MWQT_DIFF(nout(10), ncv, ns, itim, itcnt, boris, &
 !&                          geo, std%pl, std%dv, std%diag)
-!              FLUSH(nout(9)) 
+!              FLUSH(nout(10)) 
             endif
            endif
 #ifdef WG_TODO
