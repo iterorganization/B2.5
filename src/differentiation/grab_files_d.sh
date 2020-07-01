@@ -64,6 +64,8 @@ cp $SOLPSTOP/modules/B2.5/src/differentiation/b2mwqt_diff.F .
 cp $SOLPSTOP/modules/B2.5/src/differentiation/b2mxar_diff.F .
 cp $SOLPSTOP/modules/B2.5/src/differentiation/b2mxac_diff.F .
 cp $SOLPSTOP/modules/B2.5/src/differentiation/b2uxus_d.F .
+cp $SOLPSTOP/modules/B2.5/src/differentiation/read_plasma_state_diff.F .
+cp $SOLPSTOP/modules/B2.5/src/differentiation/write_plasma_state_diff.F .
 #cp $SOLPSTOP/modules/B2.5/src/differentiation/invert_a_d.F .
 #cp $SOLPSTOP/modules/B2.5/src/differentiation/slv5pt_d.F .
 #cp $SOLPSTOP/modules/B2.5/src/differentiation/b2rups_diff.F .

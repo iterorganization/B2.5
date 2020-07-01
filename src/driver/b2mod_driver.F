@@ -225,9 +225,9 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:5), nout(0:10)
+      integer ninp(0:6), nout(0:11)
 #else
-      integer ninp(0:5), nout(0:9)
+      integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
       type(mapping), intent (inout)    :: mpg
@@ -299,6 +299,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     nout - (0:5) integer array, input.
 *     nout specifies the output unit numbers, as follows.
@@ -308,7 +309,8 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
-*     nout(9): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -1425,7 +1427,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
-!    CALL CREATEB2DIAGNOSTIC(ncv, ns, mpg%nnreg, stated%diag)
+!    call read_plasma_state_diff (ninp(6), ns, mpg%nCv, mpg%nFc, stated)
+!    call createB2Diagnostic ( nCv, ns, mpg%nnreg, stated % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 
@@ -1796,9 +1799,9 @@ c new CDF movie option (1st frame at t=0)
      &  state_ext, J)
       implicit none
 #ifdef JET
-      integer nout(0:10), nx, ny, ns
+      integer nout(0:11), nx, ny, ns
 #else
-      integer nout(0:9), nx, ny, ns
+      integer nout(0:10), nx, ny, ns
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -2275,9 +2278,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       subroutine b2mndr_2(nout, ns, geo, mpg, state, state_ext)
       implicit none
 #ifdef JET
-      integer nout(0:9), nx, ny, ns
+      integer nout(0:11), nx, ny, ns
 #else
-      integer nout(0:8), nx, ny, ns
+      integer nout(0:10), nx, ny, ns
 #endif
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -2342,6 +2345,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
 *   ..save final state
       call write_plasma_state (nout(2), ns, nCv, nFc, state)
+! csc UNCOMMENT WITH AD
+!    call write_plasma_state_diff (nout(9), ns, nCv, nFc, stated)
 *   ..conversion to structured format and output
       if (mpg%isClassicalGrid.eq.1) then
         call to_struct_plasma (ns,mpg,state)
