@@ -230,12 +230,12 @@ c     Other initializations
       end subroutine read_recycle_fnn
 
 
-      subroutine CalcIncidentFluxes(iCv,iCn,iFc,isign,
+      subroutine CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            print_output,split_fluxes,
+     &            split_fluxes,
      &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
@@ -253,7 +253,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
-      integer,intent(in)::print_output, split_fluxes  
+      integer,intent(in):: split_fluxes  
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
       real (kind=R8) :: dnndz
@@ -268,13 +268,13 @@ c     Internal variables
      2    vtot,fnni_nodrifts,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
-     5    dnndy,t_av,mfp,c_th,upf, v_theta, v_r, v_phi
+     5    dnndy,t_av,mfp,c_th,upf
       integer :: ic,ix2
 *   ..statement functions
       external subini, subend
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
 
-      call subini ('CalcIncidentFluxes')
+      call subini ('CalcIncidentFluxesDiffusion')
 c     Initialize/calculate some variables
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
@@ -285,17 +285,6 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit 
-
-      if (print_output.ne.0) then
-        write(*,*) '-------------------------------------------'
-        write(*,*) 'iCv = ', iCv
-        write(*,*) 'iCn = ', iCn
-        write(*,*) 'pit = ', pit
-        write(*,*) 'ux = ', ux
-        write(*,*) 'uy = ', uy
-        write(*,*) 'uz = ', uz
-        write(*,*) '-------------------------------------------'
-      endif
 
       dnndyc = isign*dnndy2
       dnndyv = 0
@@ -415,12 +404,8 @@ c     calculate parallel momentum boundary flux
 c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
 
-c     If flux has incorrect sign, resort to Maxwellian distribution for BC's
+c     zero out if flux has wrong sign
       if (fnni.le.0.0_R8) then
-!!        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-!!     &            area,pl,tif,geo,1,
-!!     &            fnnic,fnniv,fmomni,
-!!     &            nni,nnwwni,feneni)
         fnnic  = 0.0_R8
         fnniv  = 0.0_R8
         fnni   = 0.0_R8 
@@ -432,7 +417,7 @@ c     If flux has incorrect sign, resort to Maxwellian distribution for BC's
 
       call subend ()
       return
-      end subroutine CalcIncidentFluxes
+      end subroutine CalcIncidentFluxesDiffusion
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tf,geo,isrc, cosa, sina,
@@ -691,8 +676,8 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcRecycledFluxes
 
-      subroutine CalcReflectedFluxes(iCv,iCn,nCi,iFc,isign,
-     &            isn,iscx0,istra,iwall,
+      subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,rt,dnndy2,
      &            dnndz,
@@ -738,7 +723,7 @@ c     Internal variables
 *   ..statement functions
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
 
-      call subini ('CalcReflectedFluxes')
+      call subini ('CalcReflectedFluxesDiffusion')
 c     Initialize/calculate some variables
       nif = pl%na(iCv,isn+1) !! AFN_TODO species index
       nnf = pl%na(iCv,isn)
@@ -910,12 +895,8 @@ c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el =  fene_el*area
 
-!!    resort to maxwellian distribution of incident flux has wrong sign
+!!    zero out if incident flux has wrong sign
       if (fnni.le.0.0_R8) then
-!!        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-!!     &            isn,istra,iwall,area,recyc0,pl,tif,                          
-!!     &            geo,sign_cosa, sign_sina, use_uy_uz,
-!!     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
              fmomrefl = 0.0_R8
              nnrefl = 0.0_R8
              nnwwnrefl = 0.0_R8
@@ -923,7 +904,7 @@ c     Convert energy flux densities in energy fluxes
       endif
       call subend ()
       return
-      end subroutine CalcReflectedFluxes
+      end subroutine CalcReflectedFluxesDiffusion
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,pl,tf,                         

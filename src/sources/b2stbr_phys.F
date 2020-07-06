@@ -98,7 +98,7 @@
 c for KUL advanced fluid neutral boundary conditions
       integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
      &  kul_recycle = 0, 
-     &  tn_style = 0, print_output = 0, split_fluxes = 1,
+     &  tn_style = 0, split_fluxes = 1,
      &  remove_FC_el = 0, add_q_conv = 1
       integer :: isn 
       real (kind=R8) :: wrkv(nVx),
@@ -158,7 +158,6 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
        call ipgeti ('b2mn_tn_style', tn_style)         
-       call ipgeti ('b2stbr_print_output', print_output)    
        call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
        call ipgeti ('b2sihs_style_visc', style_visc)
@@ -978,13 +977,13 @@ c         while B2.5 uses internal energy equations.
              endif
 
              if (maxw(istra).eq.0) then
-               call CalcIncidentFluxes(iCv,iCn,iFc,isign,
+               call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &              is0,is2,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
      &              use_uy_uz_0,use_uy_uz_1, 
-     &              print_output,split_fluxes,
+     &              split_fluxes,
      &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
@@ -1007,8 +1006,8 @@ c         while B2.5 uses internal energy equations.
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
                if (maxw(istra).eq.0) then
-                 call CalcReflectedFluxes(iCv,iCn,mpg%nCi, iFc,isign,
-     &              is0,is2,istra,iwall,
+                 call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
+     &              iFc,isign,is0,is2,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,rt,dnndy2,dnndz2,
