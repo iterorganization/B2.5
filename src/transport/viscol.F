@@ -45,9 +45,9 @@ c--------------------------------------------------------------------
      *       ntau(0:nsdecl,0:nsdecl), m(0:nsdecl), t(0:nsdecl), 
      &       xi(0:nsdecl,0:nzdecl-1), x, nud, nue,
      &       den(0:nsdecl,0:nzdecl-1)
-      real(kind=R8) :: myerf
       real (kind=R8) ::
      *       ph, g, pi, xab
+      intrinsic erf
 
       pi = 4.*atan(1.)
 
@@ -60,7 +60,7 @@ c     the loop over species
 c       calculate xab = vthb / vtha
         xab = sqrt(m(is)*t(i)/(m(i)*t(is)))
 
-        ph = myerf(x/xab)
+        ph = erf(x/xab)
         g  = (ph - 2*x*exp(-(x/xab)**2)/(xab*sqrt(pi)))
      +       /(2*(x/xab)**2)
 

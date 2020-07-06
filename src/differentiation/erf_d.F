@@ -1,8 +1,8 @@
-      function myerf_d (x, xd, res)
+      subroutine erf_d (x, xd, res, resd)
       use b2mod_types
       use b2mod_constants
       implicit none
-      real (kind=R8) :: myerf_d, x, xd, res
+      real (kind=R8) :: x, xd, res, resd
  
 *     ------------------------------------------------------------------
 *      Forward differentiation of intrinsic function erf which is  
@@ -12,9 +12,9 @@
 
       res = erf(x)
 
-      myerf_d = xd*2.0_R8/sqrt(pi)*exp(-(x**2))
+      resd = xd*2.0_R8/sqrt(pi)*exp(-(x**2))
  
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine erf_d
 

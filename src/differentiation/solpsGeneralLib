@@ -992,10 +992,3 @@ subroutine nf_put_var_double:
  external:
  shape:(param 1, param 2, param 3)
  deps: (id, id, id)
-
-function myerf:
-  external:
-  shape: (param 1, result)
-  type: (float(), float())
-
-
