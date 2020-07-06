@@ -45,9 +45,6 @@
   pagend
   pagdef
   b2mod_b2_to_astra
-  myerf_b
-  myerf_d
-  myerf
   ilutern_us_solps
   b2uxus
   b2uxus_d

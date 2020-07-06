@@ -1112,9 +1112,9 @@ c m = mass of a particle
      &    int5l,int5r,int6l,int6r 
       real (kind=R8):: vth,arg
 c      real (kind=R8):: S15AEC
-      external subini, subend, myerf
+      intrinsic erf
+      external subini, subend
 c      external S15AEC !mb NAG erf function
-      real(kind=R8) :: myerf
       call subini('CalcMomentsMaxwellian')
       
       if (uold.eq.u.and.Told.eq.t.and.mold.eq.m) then
@@ -1139,65 +1139,65 @@ c      external S15AEC !mb NAG erf function
       vth = sqrt(2.0_R8*T/m)
       arg = -(u/vth)
 c     int0l = int_{-inf}^{0} M(v) dv
-      int0l = 0.5_R8*(1.0_R8+myerf(arg)) 
+      int0l = 0.5_R8*(1.0_R8+erf(arg)) 
 
 c     int0r = int_{0}^{inf} M(v) dv
-      int0r = 0.5_R8*(1.0_R8-myerf(arg))
+      int0r = 0.5_R8*(1.0_R8-erf(arg))
 
 c     int1l = int_{-inf}^{0} v M(v) dv
-      int1l = 0.5_R8*u*(1.0_R8+myerf(arg))- 
+      int1l = 0.5_R8*u*(1.0_R8+erf(arg))- 
      2   0.5_R8/sqrt(pi)*vth*exp(arg**2)
 
 c     int1r = int_{0}^{inf} v M(v) dv
-      int1r = 0.5_R8*u*(1.0_R8-myerf(arg))+ 
+      int1r = 0.5_R8*u*(1.0_R8-erf(arg))+ 
      2   0.5_R8/sqrt(pi)*vth*exp(arg**2)
 
 c     int2l = int_{-inf}^{0} v^{2} M(v) dv
-      int2l = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8+myerf(arg))-
+      int2l = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8+erf(arg))-
      2   0.5_R8/sqrt(pi)*vth*u*exp(arg**2)
 
 c     int2r = int_{0}^{inf} v^{2} M(v) dv
-      int2r = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8-myerf(arg))+
+      int2r = (0.5_R8*T/m+0.5_R8*u**2)*(1.0_R8-erf(arg))+
      2   0.5_R8/sqrt(pi)*vth*u*exp(arg**2) 
 
 c Implementation as optional arguments gave segmentation errors...
 c     int3l = int_{-inf}^{0} v^{3} M(v) dv
-       int3l = (1.5_R8*T/m*u+0.5_R8*u**3)*(1.0_R8+myerf(arg)) - 
+       int3l = (1.5_R8*T/m*u+0.5_R8*u**3)*(1.0_R8+erf(arg)) - 
      2   1.0_R8/sqrt(pi)*(0.5_R8*vth**3+0.5_R8*vth*u**2)*exp(arg**2) 
 
 c     int3r = int_{0}^{inf} v^{3} M(v) dv
-       int3r = (1.5_R8*T/m*u+0.5_R8*u**3)*(1-myerf(arg)) + 
+       int3r = (1.5_R8*T/m*u+0.5_R8*u**3)*(1-erf(arg)) + 
      2   1.0_R8/sqrt(pi)*(0.5_R8*vth**3+0.5_R8*vth*u**2)*exp(arg**2) 
 
 c     int4l = int_{-inf}^{0} v^{4} M(v) dv
        int4l = (1.5_R8*(T/m)**2+3.0_R8*T/m*u**2+u**4/2.0_R8)*(1.0_R8+
-     2    myerf(arg)) - 1.0_R8/sqrt(pi)*
+     2    erf(arg)) - 1.0_R8/sqrt(pi)*
      3    (1.25_R8*vth**3*u+0.5_R8*vth*u**3)*exp(arg**2) 
 
 c     int4r = int_{0}^{inf} v^{4} M(v) dv
        int4r = (1.5_R8*(T/m)**2+3.0_R8*T/m*u**2+u**4/2.0_R8)*(1.0_R8-
-     2    myerf(arg)) + 1.0_R8/sqrt(pi)*
+     2    erf(arg)) + 1.0_R8/sqrt(pi)*
      3    (1.25_R8*vth**3*u+0.5_R8*vth*u**3)*exp(arg**2)
 
 c     int5l = int_{-inf}^{0} v^{5} M(v) dv
        int5l = (7.5_R8*(T/m)**2*u+5.0_R8*T/m*u**3+u**5/2.0_R8)*(1.0_R8+
-     2    myerf(arg)) -1.0_R8/sqrt(pi)*
+     2    erf(arg)) -1.0_R8/sqrt(pi)*
      3    (vth**5+2.25_R8*vth**3*u**2+0.5_R8*vth*u**4)*exp(arg**2) 
 
 c     int5r = int_{0}^{inf} v^{5} M(v) dv
        int5r = (7.5_R8*(T/m)**2*u+5.0_R8*T/m*u**3+u**5/2.0_R8)*(1.0_R8-
-     2    myerf(arg)) +1.0_R8/sqrt(pi)*
+     2    erf(arg)) +1.0_R8/sqrt(pi)*
      3    (vth**5+2.25_R8*vth**3*u**2+0.5_R8*vth*u**4)*exp(arg**2)
 
 c     int6l = int_{-inf}^{0} v^{6} M(v) dv
        int6l = (7.5_R8*(T/m)**3+22.5_R8*(T/m)**2*u**2+7.5_R8*T/m*u**4+
-     2    0.5_R8*u**6)*(1.0_R8+myerf(arg))-
+     2    0.5_R8*u**6)*(1.0_R8+erf(arg))-
      3    1.0_R8/sqrt(pi)*(4.125_R8*vth**5*u+3.5_R8*vth**3*u**3 + 
      4    0.5_R8*vth*u**5)*exp(arg**2) 
 
 c     int6r = int_{0}^{inf} v^{6} M(v) dv
        int6r = (7.5_R8*(T/m)**3+22.5_R8*(T/m)**2*u**2+7.5_R8*T/m*u**4+
-     2    0.5_R8*u**6)*(1.0_R8-myerf(arg))+
+     2    0.5_R8*u**6)*(1.0_R8-erf(arg))+
      3    1.0_R8/sqrt(pi)*(4.125_R8*vth**5*u+3.5_R8*vth**3*u**3 + 
      4    0.5_R8*vth*u**5)*exp(arg**2) 
         i0l = int0l
