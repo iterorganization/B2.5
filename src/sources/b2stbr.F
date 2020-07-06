@@ -662,17 +662,10 @@ c   --> better solution wanted here..
 
 *   get averaged sources
         if (ird_aver > 0) then
-c only the total sources are averaged, not the linearised components.
-c when calling the averaged sources the linearisation must be overwritten (everything in the "0" part)
-          call run_av_get_sources(sna0_eir(:,0,:), smo0_eir(:,0,:), 
-     &                            she0_eir(:,0), shi0_eir(:,0), 
+          call run_av_get_sources(sna0_eir, smo0_eir, 
+     &                            she0_eir, shi0_eir, 
      &                            nCv, ns)
 
-          sna0_eir(:,1,:)   = 0.0_R8
-          smo0_eir(:,1:3,:) = 0.0_R8
-          she0_eir(:,1:3)   = 0.0_R8
-          shi0_eir(:,1:3)   = 0.0_R8
-          
         endif
 
         srw%sna0 = srw%sna0 + sna0_eir
