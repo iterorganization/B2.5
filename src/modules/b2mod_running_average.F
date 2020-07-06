@@ -379,15 +379,23 @@ c local variables
       implicit none
       integer, intent(in) :: nCv, ns
       real (kind=R8), intent(out) ::
-     *  sna_out(nCv,0:ns-1), smo_out(nCv,0:ns-1),
-     &  she_out(nCv), shi_out(nCv)
+     *  sna_out(nCv,0:1,0:ns-1), smo_out(nCv,0:3,0:ns-1),
+     &  she_out(nCv,0:3), shi_out(nCv,0:3)
 
       call subini ('run_av_get_sources')
 
-      sna_out = sna_mean
-      smo_out = smo_mean
-      she_out = she_mean
-      shi_out = shi_mean
+c only the total sources are averaged, not the linearised components.
+c when calling the averaged sources the linearisation must be overwritten (everything in the "0" part)
+
+      sna_out(:,0,:) = sna_mean
+      smo_out(:,0,:) = smo_mean
+      she_out(:,0) =   she_mean
+      shi_out(:,0) =   shi_mean
+
+      sna_out(:,1,:) =   0.0_R8
+      smo_out(:,1:3,:) = 0.0_R8
+      she_out(:,1:3) =   0.0_R8
+      shi_out(:,1:3) =   0.0_R8
 
       call subend ()
 
