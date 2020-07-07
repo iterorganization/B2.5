@@ -21,7 +21,7 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
-     ,  ncf,cfstart(nncf),cfend(nncf)
+     ,  ncf,cfstart(nncf),cfend(nncf), cftype(nncf)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -29,6 +29,9 @@
       logical, save :: written = .false.
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
+      logical :: cfread(nncf)
+      integer, save :: ncfdata(nncf)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM)
 
       private :: user
       namelist /user/
@@ -38,7 +41,8 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename,ncf,cfstart,cfend
+     ,  filedata,user_filename,ncf,cfstart,cfend,
+     ,  cfread, cftype
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -114,6 +118,10 @@ c***  Standard setup:
       ncf = 0
       cfstart = 0
       cfend = 0
+      cfread = .false.
+      cftype = 0
+      cfdata = 0.0_R8
+      ncfdata = 0
       call read_b2mod_user_namelist(ns,ntns,m)
       user_initialised = .true.
 
@@ -139,8 +147,9 @@ c***  Standard setup:
      >        ncffc, incf, idb
 
       logical :: file_ok
-      character*260 filename
-      integer i, j, k, is, im
+      character*260 filename, cffile
+      character*1 str
+      integer i, j, k, is, im, ndata
       logical old_style, done
       logical, save :: hydrogen, helium, neon
       external subini, subend
@@ -167,7 +176,7 @@ c***  Standard setup:
       endif
 
       if (ncf > 0) then
-
+        write (*,*) ' Number of cost functions: ',ncf
         m%nCf = ncf
         m%mxnCf = count(m%fcLbl /= 0)
         call alloc_mapping_cf (m)
@@ -176,6 +185,32 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do ic = 1, ncf
+          if (cftype(ic).gt.3) call xerrab ('cftype>3 not coded ')
+          if (cfread(ic)) then
+            write (str,'(I1)') ic
+            cffile = 'cf'//trim(str)//'.dat'
+            call find_file(cffile,file_ok)
+            if (.not. file_ok) call xerrab 
+     &       ('Cannot find cost function file '//trim(cffile))
+            open(unit=99,file=cffile,status='old',action='read')
+            write(*,*) 'Reading cost function data from ',trim(cffile)
+            ncfdata(ic) = 0
+!csc File is of unknown length, so first count the number of lines
+ 5          read(99,*,end=15) str 
+              ncfdata(ic) = ncfdata(ic) +1
+            goto 5
+ 15         close(99)
+            call xertst (ncfdata(ic).le.DEF_NLIM,
+     &        'Cost function data limited to DEF_NLIM!')
+            open(unit=99,file=cffile,status='old',action='read')
+            do i=1,ncfdata(ic)
+!csc The data in the file are r, z, data. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension (r-z-data), third
+!    dimension (number of records/data points)
+              read(99,*) cfdata(ic,1:3,i) 
+            enddo
+            close(99)
+          endif
           if (cfstart(ic) /= 0 .and. cfend(ic) /= 0) then
             ncffc = 0
             m%cfFcP(ic,1) = incf +1 
