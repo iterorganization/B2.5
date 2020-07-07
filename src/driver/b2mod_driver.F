@@ -1797,6 +1797,8 @@ c new CDF movie option (1st frame at t=0)
 
       subroutine b2mndr_1 (nout, ns, geo, mpg, state, 
      &  state_ext, J)
+      use b2mod_user_namelist
+     , , only: nncf, ncf
       implicit none
 #ifdef JET
       integer nout(0:11), nx, ny, ns
@@ -1810,11 +1812,12 @@ c new CDF movie option (1st frame at t=0)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      real(kind=R8) :: J
+      real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
-      integer i, is, js
+      integer i, is, js, icf
       character*256 filename, fort31name
       character*256 systemarg
+      character*1 ss
       logical ok, found
 *   ..procedures
       intrinsic cpu_time
@@ -1932,10 +1935,16 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(mpg, state, J)
-        write(*,*) 'Cost function value: ',J
+        call b2usr_cost_function(mpg, state, geo, J)
+        do icf = 1, ncf
+          write (ss,'(I1)') icf
+          write(*,*) 'Cost function value '//ss//': ',J(icf)
+        end do
 ! csc UNCOMMENT WITH AD
-!      WRITE(*, *) 'Cost function gradient: ', jd
+!      DO ICF=1, NCF
+!        write (ss,'(I1)') icf
+!        write(*,*) 'Cost function gradient '//ss//': ',Jd(icf)
+!      END DO
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then

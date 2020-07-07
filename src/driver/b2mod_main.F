@@ -296,8 +296,10 @@ csw
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_boundary_namelist
+      use b2mod_user_namelist
+     , , only: nncf
       implicit none
-      real(kind=R8) :: J
+      real(kind=R8) :: J(nncf)
 
       call b2mndr_1 (nout, ns, geo, mpg, state, state_ext, J)
 
