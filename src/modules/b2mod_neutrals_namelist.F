@@ -103,6 +103,8 @@ cank }
      *   CRCSTRA(:),
      *   ARCSTRA(:),
      *   RC_LIST_CHAR(:,:)
+      character*2, allocatable, save ::
+     *   SURF_MAT(:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
@@ -149,6 +151,7 @@ cank }
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
+      character*2, save :: SURF_MAT(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
      ,  lcns(nstsid), ltns(nstsid),
@@ -189,7 +192,7 @@ cank }
      .  rcfe, rcfi,
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
      4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
-     .  rf_neut, phys_sput, chem_sput,
+     .  rf_neut, phys_sput, chem_sput, surf_mat,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
      .  itsput_chemical, issput_chemical,
@@ -275,6 +278,7 @@ csw 21feb2012
       allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
       allocate(ARCSTRA(NSTRAID))
+      allocate(SURF_MAT(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
       allocate(maxw(NSTRAID))
@@ -313,6 +317,7 @@ csw 21feb2012
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
       CRCSTRA=' '
       ARCSTRA=' '
+      SURF_MAT='C' !! default material Carbon
       SPS_ID=' '
       SPS_MTRL=' '
       NSTRAI=0
@@ -498,6 +503,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(GPDATA)
       deallocate(CRCSTRA)
       deallocate(ARCSTRA)
+      deallocate(SURF_MAT)
       deallocate(species_start)
       deallocate(species_end)
       deallocate(maxw)

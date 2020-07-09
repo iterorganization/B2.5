@@ -922,7 +922,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
-     &              pl%na(iCv,is),dv%ne(iCv),geo,t0,  
+     &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
@@ -1010,14 +1010,14 @@ cmb   net momentum sources from neutral particle reflection
      &              iFc,isign,is0,is2,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
-     &              geo,rt,dnndy2,dnndz2,
+     &              geo,mpg,rt,dnndy2,dnndz2,
      &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,recyc(is,istra),pl,tnf,
-     &              geo,cosa, sina,
+     &              geo,mpg,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else

@@ -42,11 +42,11 @@ c     Boolean to indicate whether trim data is present for species/material comb
       subroutine read_recycle_fnn(nsd,nbnd)
       use b2mod_b2cmpa
       use b2mod_elements
+      use b2mod_neutrals_namelist
       implicit none
       integer,intent(in):: nsd, nbnd
       character*256 filename
-      integer ib, isp, is, il,it,itm,ndata
-c      integer nmax, itargsp, ic, i
+      integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
       logical open_file, found
 
@@ -54,21 +54,14 @@ c      integer nmax, itargsp, ic, i
       character lblfnn*120
       character lblfnn_dummy*120              !nh 21.02.2020
       character*2 target_code(0:nbnd-1)
-cmb size cannot become bigger than nsd-1?
-c#ifndef PSR
-c      character*2 recycle_code(0:nsd-1+6)
+
       character*2 recycle_code(0:nsd-1)
-c#else
-c      character*2 recycle_code(0:100)
-c#endif
       external open_file, ipgeti
       external subini, subend, cfrure, cfruin, machsfr
       real (kind=R8) ::
      *  machsfr
       if(recycle_initialised) return
       call subini ('read_recycle_fnn')
-!!     nx1 = nxd
-!!     ny1 = nyd
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
       allocate(target_index(0:nbnd-1))
@@ -84,10 +77,6 @@ cmb   Check how many different recycled species there are
           endif
         enddo
         isp=isp+1
-c#ifdef PSR
-c        call xertst(isp.le.100, 
-c     &   'read_recycle_fnn (1): increase size of recycle_code')
-c#endif
         recycle_index(is)=isp
         recycle_code(isp)=is_codes(is)
     5   continue
@@ -100,23 +89,19 @@ cmb   Mixed materials not taken into account.
       target_index=-1
       target_code='  '
       itm=-1
-      do ib=0,nbnd-1
+      do istra=1,nstrai
         do it=0,itm
-          if(surface_material_name(ib+1).eq.target_code(it)) then !mb ibnd = iwall = ib+1 (arrays shifted)
-            target_index(ib)=it
+          if(surf_mat(istra).eq.target_code(it)) then 
+            target_index(istra)=it
             goto 6
           endif
         enddo
         itm=itm+1
-c#ifdef PSR
-c        call xertst(itm.le.20, 
-c     &   'read_recycle_fnn (1): increase size of recycle_code')
-c#endif
-        target_index(ib)=itm
-        target_code(itm)=surface_material_name(ib+1)
+        target_index(istra)=itm
+        target_code(itm)=surf_mat(istra)
     6   continue
-        write(*,'(1x,i3,1x,i3,1x,a)') ib,target_index(ib),
-     1   target_code(target_index(ib))
+        write(*,'(1x,i3,1x,i3,1x,a)') istra,target_index(istra),
+     1   target_code(target_index(istra))
       enddo
 
       nM = -1
@@ -130,7 +115,6 @@ c#endif
      1     recycle_code(is)(1:len_trim(recycle_code(is)))//
      2     target_code(it)(1:len_trim(target_code(it)))//
      3     '.fnn'
-!!          filename = 'DC.fnn'
           call lower_case(filename)
           if(open_file(96,filename,
      1      'data.local/trim.data/refl.data|' // 
@@ -528,7 +512,7 @@ c     Convert energy flux densities in net energy flux contributions
      &             isign,
      &            isn,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
-     &            geo,t0, cosa, sina, use_uy_uz_0,
+     &            geo,mpg,t0, cosa, sina, use_uy_uz_0,
      &            fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle,momentum and energy fluxes based 
@@ -537,10 +521,12 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_neutrals_namelist , only:E_fc, accel_ion
       use b2us_geo
       use b2us_plasma
+      use b2us_map
       implicit none
 c     nif = plasma density on face, isn neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
 !!      type (B2Rates), intent (in) :: rt
       integer, intent(in):: iCv, nCi, iFc,
      &     isn, iscx0, iwall,istra,
@@ -597,7 +583,7 @@ c       Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tifev = tif/eV
       is = recycle_index(isn) 
-      it = target_index(iCv-nCi-1)
+      it = target_index(istra)
 c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       shpottauj = accel_ion(istra)*qe*(pof-phi_app)/tif
 c       For now, neirest neigbour interpolation for shpottau
@@ -679,7 +665,7 @@ c     Convert energy flux densities in energy fluxes
       subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,rt,dnndy2,
+     &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
@@ -690,11 +676,12 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       use b2mod_neutrals_namelist , only:E_fc
       use b2us_geo
       use b2us_plasma
+      use b2us_map
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
-
+      type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
      &    isn, iscx0, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
@@ -780,7 +767,7 @@ c       Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tifev = tif/eV
       is = recycle_index(isn)
-      it = target_index(iCv-nCi-1)
+      it = target_index(istra)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
@@ -908,7 +895,7 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,pl,tf,                         
-     &            geo, cosa, sina,
+     &            geo, mpg,cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
@@ -917,9 +904,11 @@ c     for the incident neutrals.
       use b2mod_neutrals_namelist , only:E_fc
       use b2us_plasma
       use b2us_geo
+      use b2us_map
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
       real (kind=R8),intent(in):: area, recyc0, isign, tf, sina, cosa
 c     Output variables
@@ -962,7 +951,7 @@ c     Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tfev = tf/eV
       is = recycle_index(isn)
-      it = target_index(iCv-nCi-1)
+      it = target_index(istra)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
