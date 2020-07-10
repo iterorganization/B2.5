@@ -211,6 +211,7 @@ contains
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
         integer :: icnt   !< Boundary cell counter
+        integer :: ib     !< Boundary condition index
         integer :: ntrgts !< Number of divertor targets
         integer :: o      !< Dummy integer
         integer :: p      !< Dummy integer
@@ -259,7 +260,8 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, &
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
+            &             u, qetot, qitot, qemax, qimax, lambda, &
             &             vtor, nisep, nasum, gsum, gmid, gbot, gtop
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
@@ -936,6 +938,7 @@ contains
             allocate( summary%global_quantities%ip%value( time_sind ) )
             allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
             allocate( summary%global_quantities%b0%value( time_sind ) )
+            allocate( summary%global_quantities%q_95%value( time_sind ) )
             i = nint(b0r0_ref/b0r0)
             select case (i)
             case (1)
@@ -957,6 +960,9 @@ contains
             end select
             allocate( summary%global_quantities%ip%source(1) )
             summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
+            summary%global_quantities%q_95%value( time_sind ) = 3.0_IDS_real
+            allocate( summary%global_quantities%q_95%source(1) )
+            summary%global_quantities%q_95%source = "ITER Baseline q95=3 equilibrium"
             edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
             summary%global_quantities%r0%value = 6.2_IDS_real
           else
@@ -4882,6 +4888,188 @@ contains
         allocate( summary%gas_injection_rates%bottom%source(1) )
         summary%gas_injection_rates%bottom%source = source
 #endif
+
+        ib = 0
+        do icnt = 1, nbc
+          if (ib.ne.0) cycle
+          if (bcchar(icnt).eq.'N') then
+            if (bcstart(icnt).ne.-2 .and. &
+             &  bcstart(icnt).le.jxa .and. jxa.le.bcend(icnt)) then
+              ib = icnt
+            else if (bcstart(icnt).eq.-2) then
+              do ix = 1, bc_list_size(icnt)
+                if (bc_list_x(ix,icnt).eq.jxa) ib = icnt
+              end do
+            end if
+          end if
+        end do
+        if (ib.ne.0) then
+          if (bcene(ib).eq.9.or.bcene(ib).eq.19) then
+            allocate( summary%scrape_off_layer%t_e_decay_length%value( time_sind ) )
+            summary%scrape_off_layer%t_e_decay_length%value( time_sind ) = enepar(ib,1)
+            allocate( summary%scrape_off_layer%t_e_decay_length%source(1) )
+            summary%scrape_off_layer%t_e_decay_length%source = source
+          end if
+          if (bceni(ib).eq.9.or.bceni(ib).eq.19) then
+            allocate( summary%scrape_off_layer%t_i_average_decay_length%value( time_sind ) )
+            summary%scrape_off_layer%t_i_average_decay_length%value( time_sind ) = enipar(ib,1)
+            allocate( summary%scrape_off_layer%t_i_average_decay_length%source(1) )
+            summary%scrape_off_layer%t_i_average_decay_length%source = source
+          end if
+          nibnd = IDS_REAL_INVALID
+          match_found = .true.
+          do is = 0, ns-1
+            if (is_neutral(is).and.use_eirene.ne.0) cycle
+            if (bccon(ib,is).eq.9) then
+              if (nibnd.eq.IDS_REAL_INVALID) then
+                nibnd = conpar(is,ib,1)
+              else
+                match_found = match_found.and.nibnd.eq.conpar(is,ib,1)
+              end if
+            end if
+          end do
+          if (match_found.and.nibnd.ne.IDS_REAL_INVALID) then
+            allocate( summary%scrape_off_layer%n_e_decay_length%value( time_sind ) )
+            summary%scrape_off_layer%n_e_decay_length%value( time_sind ) = nibnd
+            allocate( summary%scrape_off_layer%n_e_decay_length%source(1) )
+            summary%scrape_off_layer%n_e_decay_length%source = source
+            allocate( summary%scrape_off_layer%n_i_total_decay_length%value( time_sind ) )
+            summary%scrape_off_layer%n_i_total_decay_length%value( time_sind ) = nibnd
+            allocate( summary%scrape_off_layer%n_i_total_decay_length%source(1) )
+            summary%scrape_off_layer%n_i_total_decay_length%source = source
+          end if
+        end if
+        u = 0.0_IDS_real
+        do ix = 0, nx-1
+          do iy = 0, ny-1
+            if (geometryType.eq.GEOMETRY_LIMITER .or. &
+             &  geometryType.eq.GEOMETRY_SN) then
+              if (region(ix,iy,0).ne.2) cycle
+            else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+              if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.5) cycle
+            else if (geometryType.eq.GEOMETRY_CDN .or. &
+                  &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+                  &  geometryType.eq.GEOMETRY_DDN_TOP) then
+              if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.6) cycle
+            else
+              cycle
+            end if
+            do is = 0, ns-1
+              u = u + rqrad(ix,iy,is) + rqbrm(ix,iy,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(ix+1,iy+1,is,0)
+            end do
+            do is = 1, nmoli
+              u = u - emolrad(ix+1,iy+1,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(ix+1,iy+1,is,0)
+            end do
+#endif
+          end do
+        end do
+        if (u.ne.0.0_IDS_real) then
+          allocate( summary%scrape_off_layer%power_radiated%value( time_sind ) )
+          summary%scrape_off_layer%power_radiated%value( time_sind ) = u
+          allocate( summary%scrape_off_layer%power_radiated%source(1) )
+          summary%scrape_off_layer%power_radiated%source(1) = source
+        end if
+        select case (geometryType)
+        case (GEOMETRY_LIMITER)
+          if (LSN) then
+            ix = nx-1
+          else
+            ix = 0
+          end if
+        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM)
+          if (LSN) then
+            ix = rightcut(1)-1
+          else
+            ix = leftcut(1)
+          end if
+        case (GEOMETRY_STELLARATORISLAND)
+          ix = jxa
+        case (GEOMETRY_DDN_TOP)
+          ix = rightcut(2)
+        case default
+          ix = -2
+        end select
+        if (ix.ne.-2) then
+          ii = ix
+          jj = ix
+          icnt = -1
+          if (.not.LSN) icnt = 1
+          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) )
+          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%value( time_sind ) )
+          qemax = 0.0_IDS_real
+          qimax = 0.0_IDS_real
+          do iy = jsep+1, ny-1
+            qemax = qemax + u*fhe(ix,iy,0)
+            qimax = qimax + u*fhi(ix,iy,0)
+          end do
+          do i = ix+icnt, jxa, icnt
+            qetot = 0.0_IDS_real
+            qitot = 0.0_IDS_real
+            do iy = jsep+1, ny-1
+              qetot = qetot + u*fhe(i,iy,0)
+              qitot = qitot + u*fhi(i,iy,0)
+            end do
+            if (qetot*qemax.ge.0.0_IDS_real) then
+              if (abs(qetot).gt.abs(qemax)) then
+                ii = i
+                qemax = qetot
+              end if
+            end if
+            if (qitot*qimax.ge.0.0_IDS_real) then
+              if (abs(qitot).gt.abs(qimax)) then
+                jj = i
+                qimax = qitot
+              end if
+            end if
+          end do
+          lambda = 0.0_IDS_real
+          tmpFace(:,:,0) = abs(fhe(:,:,0))/gs(:,:,0)/qc(:,:)
+          tmpFace(:,:,1) = abs(fhe(:,:,1))/gs(:,:,1)
+          u = maxval(tmpFace(ii,jsep+1:ny,0))/2.0_IDS_real
+          j = maxloc(tmpFace(ii,jsep+1:ny,0),dim=1)
+          i = jsep+j
+          do iy = jsep+j+1, ny
+            if (i.gt.jsep+j) cycle
+            if (tmpFace(ii,iy,0).lt.u) then
+              i = iy
+              frac = (tmpFace(ii,iy-1,0)-u)/(tmpFace(ii,iy-1,0)-tmpFace(ii,iy,0))
+              lambda = lambda + frac*hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            else
+              lambda = lambda + hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            end if
+          end do
+          lambda = lambda/log(2.0_IDS_real)
+          summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) = lambda
+          lambda = 0.0_IDS_real
+          tmpFace(:,:,0) = abs(fhi(:,:,0))/gs(:,:,0)/qc(:,:)
+          tmpFace(:,:,1) = abs(fhi(:,:,1))/gs(:,:,1)
+          u = maxval(tmpFace(jj,jsep+1:ny,0))/2.0_IDS_real
+          j = maxloc(tmpFace(jj,jsep+1:ny,0),dim=1)
+          i = jsep+j
+          do iy = jsep+j+1, ny
+            if (i.gt.jsep+j) cycle
+            if (tmpFace(jj,iy,0).lt.u) then
+              i = iy
+              frac = (tmpFace(jj,iy-1,0)-u)/(tmpFace(jj,iy-1,0)-tmpFace(jj,iy,0))
+              lambda = lambda + frac*hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            else
+              lambda = lambda + hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            end if
+          end do
+          lambda = lambda/log(2.0_IDS_real)
+          summary%scrape_off_layer%heat_flux_i_decay_length%value( time_sind ) = lambda
+          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%source(1) )
+          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%source(1) )
+          summary%scrape_off_layer%heat_flux_e_decay_length%source = source
+          summary%scrape_off_layer%heat_flux_i_decay_length%source = source
+        end if
 #endif
 
         allocate( edge_profiles%code%output_flag( time_sind ) )

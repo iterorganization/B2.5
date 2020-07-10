@@ -3603,11 +3603,35 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
+					If guard_flows.eq.0, flows between neighbouring guard cells are blocked. The blocking fully applies only if b2mndt_style.eq.0. Otherwise, use of b2news_l_fbound should be favoured.
 					If guard_flows.eq.1, flows between neighbouring guard cells are kept.
-					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equations and the incorrect corner values are replaced by interpolated values. It is recommended 2.
+					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equations and the incorrect corner values are replaced by interpolated values. Time derivative sources in guard cells are turned off. It is recommended 2.
 				</description>
 			</switch>
+			<switchgroup>
+			  <name>b2news_l_*bound</name>
+			  <description>
+				Flags to internally identify and isolate boundary cells to limit flows between neighbouring guard cells.
+				If l_fbound.ne.0, flows between boundary conditions cells are turned off.
+				If l_enebound.ne.0, remove non-boundary energy sources in guard cells.
+				If l_timbound.ne.0, time derivative sources are not added to guard cells.
+			  </description>
+			  <switch>
+				<name>b2news_l_fbound</name>
+				<default>0</default>
+				<type>integer</type>
+			  </switch>
+			  <switch>
+				<name>b2news_l_enebound</name>
+				<default>0</default>
+				<type>integer</type>
+			  </switch>
+			  <switch>
+				<name>b2news_l_timbound</name>
+				<default>0</default>
+				<type>integer</type>
+			  </switch>
+			</switchgroup>
 			<switchgroup>
 				<name>b2news_fac*</name>
 				<description>
