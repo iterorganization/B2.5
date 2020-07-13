@@ -142,10 +142,10 @@ INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml
 ifdef DIFF
-INCLUDE += -I${SRCB2}/builds/differentiation
-INCLUDE += -I${SRCDIR}/differentiation
-TAGSLIST += ${SRCB2}/builds/differentiation/*.F*
-TAGSLIST += ${SRCDIR}/differentiation/*.F
+INCLUDE += -I${SRCB2}/builds/differentiated_files
+INCLUDE += -I${SRCDIR}/differentiated_files
+TAGSLIST += ${SRCB2}/builds/differentiated_files/*.F*
+TAGSLIST += ${SRCDIR}/differentiated_files/*.F
 endif
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
@@ -186,10 +186,10 @@ FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
 DIFFPATH =
 ifdef DIFF
-DIFFPATH += ${SRCB2}/builds/differentiation
-VPATH=:${SRCB2}/builds/differentiation
-FPATH := ${SRCB2}/builds/differentiation
-FFPATH = :${SRCB2}/builds/differentiation
+DIFFPATH += ${SRCB2}/builds/differentiated_files
+VPATH=:${SRCB2}/builds/differentiated_files
+FPATH := ${SRCB2}/builds/differentiated_files
+FFPATH = :${SRCB2}/builds/differentiated_files
 endif
 
 MODLIST =
