@@ -39,19 +39,19 @@
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
         integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
         integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
-        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
         integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
         integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
         integer, allocatable :: rcFcP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcFc list, and its number of boundary faces
         integer, allocatable :: rcFc(:)                !         listing for each stratum the boundary faces
-        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
         integer, allocatable :: cfCvP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfCv list, and its number of cells
         integer, allocatable :: cfCv(:)                !         listing for each cost function the corresponding domain cells
         integer, allocatable :: cfFcP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfFc list, and its number of faces
         integer, allocatable :: cfFc(:)                !         listing for each cost function the corresponding faces
-        real (kind=R8), allocatable :: cfFcOr (:)      ! Multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: cfFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
 !        real (kind=R8), allocatable :: intfaceV(:,:)   ! volume factors for interpolation from centers to faces; currently: geo%fcVol
 !        real (kind=R8), allocatable :: intvertexV(:)   ! volume factors for interpolation from centers to vertices; currently: geo%vxVol
