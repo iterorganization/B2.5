@@ -95,6 +95,7 @@ cank }
      2   ngpdata(:),
      *   accel_ion(:),
      *   maxw(:)                                 !nh 11.07.18
+     *   maxw_eff(:)
       real (kind=R8), allocatable, save ::
      *   RCFE(:), RCFI(:), e_fc   
       logical, allocatable, save ::
@@ -148,6 +149,7 @@ cank }
       integer, save :: eb2spcr(1:natmid)
       integer, save :: accel_ion(NSTRAID)
       integer, save :: maxw(NSTRAID)
+      integer, save :: maxw_eff(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
@@ -200,7 +202,7 @@ cank }
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end,
-     .  maxw,
+     .  maxw, maxw_eff,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
      ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
@@ -282,6 +284,7 @@ csw 21feb2012
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
       allocate(maxw(NSTRAID))
+      allocate(maxw_eff(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
       allocate(eb2atcr(natm_in))
@@ -388,6 +391,7 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       species_start(:)=0
       species_end(:)=nsd-1
       maxw(:) = 0
+      maxw_eff(:) = 0
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -507,6 +511,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(species_start)
       deallocate(species_end)
       deallocate(maxw)
+      deallocate(maxw_eff)
       deallocate(b2eatcr)
       deallocate(b2espcr)
       deallocate(eb2atcr)
@@ -778,8 +783,7 @@ c
      &   species_end(istra).lt.ns, 'faulty input species_end')
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
-        call xertst ((0.eq.maxw(istra)).or.
-     &    (1.eq.maxw(istra)), 'faulty input maxw')
+        call xertst (4.gt.maxw(istra), 'faulty input maxw')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
           call xertst (0.0_R8.le.erecyc(is,istra),

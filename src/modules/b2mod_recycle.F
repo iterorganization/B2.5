@@ -253,7 +253,7 @@ c     Internal variables
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
      5    dnndy,t_av,mfp,c_th,upf
-      integer :: ic,ix2
+      integer :: ic
 *   ..statement functions
       external subini, subend
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
@@ -388,23 +388,178 @@ c     calculate parallel momentum boundary flux
 c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
 
-c     zero out if flux has wrong sign
-      if (fnni.le.0.0_R8) then
+
+c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), set all outputs to zero
+      if (fnni.lt.0) then
         fnnic  = 0.0_R8
-        fnniv  = 0.0_R8
-        fnni   = 0.0_R8 
-        fmomni = 0.0_R8
-        nni    = 0.0_R8
-        nnwwni = 0.0_R8
-        feneni = 0.0_R8
+	fnniv  = 0.0_R8
+	fnni   = 0.0_R8 
+	fmomni = 0.0_R8
+	nni    = 0.0_R8
+	nnwwni = 0.0_R8
+	feneni = 0.0_R8
       endif
 
       call subend ()
       return
       end subroutine CalcIncidentFluxesDiffusion
 
+      subroutine CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
+     &            iCv,iCn,iFc,isign,
+     &            isn,iscx0,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
+     &            rt,dnndy2, dnndz2,cosa,sina,
+     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            split_fluxes,
+     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
+c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_plasma
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2rates), intent (in) :: rt
+      integer,intent(in):: iCv,iCn, iFc,
+     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
+      integer,intent(in):: split_fluxes  
+      real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
+     &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina,
+     &    mfp_b1, mfp_b2
+      real (kind=R8) :: dnndz, t1, t_av
+c     Output variables
+      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+     &                             feneni
+c     Internal variables
+      real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th
+      integer :: ic
+      real (kind=R8):: fnnicM,fnnivM,fnniM,nnwwniM,nniM,feneniM,fmomniM
+      real (kind=R8):: fnnicD,fnnivD,fnniD,nnwwniD,nniD,feneniD,fmomniD
+*   ..statement functions
+      external subini, subend
+      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+
+      call subini ('CalcIncidentFluxesMfp')
+
+c     Calculate rate coefficients at boundary
+      mn = am(isn)*mp
+      vcx=0.0_R8
+      do ic = 0, pl%ns-1
+        t_av = (tif+tnf)/2.0_R8
+        vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,iscx0) +
+     &   rt%rlcx(iCv,1,ic,iscx0)*log(t_av/(am(isn)*ev)))
+      enddo
+      vion=expu(
+     2 rt%rlsa(iCv,0,isn)+
+     3 rt%rlsa(iCv,1,isn)*log(tef/ev))*nef
+      vtot =vion + vcx
+      c_th = sqrt(tnf/mn)
+      mfp = c_th/vtot
+
+c     if mfp is low, we use the diffusion approximation
+c     if mfp is larger, we use the drifting maxwellian approximation
+c     if the mfp is in between, we use a linear interpolation
+      if (mfp.lt.mfp_b1) then
+
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
+     &            rt,dnndy2, dnndz2,cosa,sina,
+     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            split_fluxes,
+     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+
+      elseif (mfp.gt.mfp_b2) then
+
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fnnic,fnniv,fmomni,
+     &            nni,nnwwni,feneni)
+
+      else 
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnniM,fnnicM,fnnivM,fmomniM,
+     &            nniM,nnwwniM,feneniM)
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
+     &            rt,dnndy2, dnndz2,cosa,sina,
+     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            split_fluxes,
+     &            fnniD, fnnicD,fnnivD,fmomniD,nniD,nnwwniD,feneniD)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnnicD, fnnicM,  fnnic)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnnivD, fnnivM,  fnniv)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnniD,  fnniM,   fnni)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomniD,fmomniM, fmomni)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,nniD,   nniM,    nni)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,nnwwniD,nnwwniM, nnwwni)
+        call CalcLinComb(mfp,mfp_b1,mfp_b2,feneniD,feneniM, feneni)
+      endif
+
+      call subend ()
+      return
+      end subroutine CalcIncidentFluxesMfp
+
+      subroutine CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
+     &            isn,iscx0,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
+     &            rt,dnndy2, dnndz2,cosa,sina,
+     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            split_fluxes,
+     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
+c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
+c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_neutrals_namelist , only: maxw_eff
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2rates), intent (in) :: rt
+      integer,intent(in):: iCv,iCn, iFc,
+     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1,
+     &    split_fluxes
+      real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
+     &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
+      real (kind=R8) :: dnndz, t1, t_av
+c     Output variables
+      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+     &                             feneni
+
+*   ..statement functions
+      external subini, subend
+
+      call subini ('CalcIncidentFluxesMinMfp')
+
+      if (maxw_eff(istra).eq.0) then
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
+     &            rt,dnndy2, dnndz2,cosa,sina,
+     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            split_fluxes,
+     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+      else
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fnnic,fnniv,fmomni,
+     &            nni,nnwwni,feneni)
+      endif
+
+      call subend ()
+      return
+      end subroutine CalcIncidentFluxesMinMfp
+
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-     &            area,pl,tf,geo,isrc, cosa, sina,
+     &            area,pl,tf,geo, cosa, sina,
      &            fnni,fnnic,fnniv,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
@@ -419,11 +574,9 @@ c     adapted.
       implicit none
 c     Input variables
 c     isn is the neutral species index
-c     isrc is the sign of the source needed for the hybrid delta f method
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in) :: iCv, iFc, isn, istra,
-     &    isrc
+      integer,intent(in) :: iCv, iFc, isn, istra
       real (kind=R8),intent(in) :: area, tf, isign, cosa, sina
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
@@ -457,14 +610,7 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
 
 c     Incident particle flux density
       fnnic = 0.0_R8
-      fnniv = 0.0_R8
-      if (isrc.eq.1) then
-      	fnniv = -i1l
-      elseif (isrc.eq.-1) then
-	fnniv = i1r
-      else    
-	call xerrab('Wrong value for isrc.')
-      endif
+      fnniv = -i1l
       fnni = fnnic + nnf*fnniv
 
 c     Incident momentum flux densities
@@ -703,9 +849,9 @@ c     Internal variables
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
      &   dnndy,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
-     &   upf, nif
+     &   upf, nif,mfp,c_th
       real (kind = R8):: tab(0:nM,0:nT)
-      integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2
+      integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
       external subini, subend,intp_2dtable,intp_2dtable0
 *   ..statement functions
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
@@ -740,6 +886,8 @@ c     Calculate rate coefficients at boundary
      2 rt%rlsa(iCv,0,isn)+
      3 rt%rlsa(iCv,1,isn)*log(tef/ev))*nef
       vtot =vion + vcx
+      c_th = sqrt(tnf/mn)
+      mfp = c_th/vtot
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
@@ -883,15 +1031,172 @@ c     Convert energy flux densities in energy fluxes
       fene_el =  fene_el*area
 
 !!    zero out if incident flux has wrong sign
-      if (fnni.le.0.0_R8) then
-             fmomrefl = 0.0_R8
-             nnrefl = 0.0_R8
-             nnwwnrefl = 0.0_R8
-             fenerefl = 0.0_R8
+      if (fnni.lt.0) then
+        fmomrefl = 0.0_R8
+        nnrefl = 0.0_R8
+        nnwwnrefl = 0.0_R8
+        fenerefl = 0.0_R8
+        fene_el = 0.0_R8
       endif
+
       call subend ()
       return
       end subroutine CalcReflectedFluxesDiffusion
+
+      subroutine CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
+     &             iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            nef,geo,mpg,rt,dnndy2,
+     &            dnndz,
+     &            cosa, sina, use_uy_uz_0,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
+c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
+      use b2mod_b2cmpa
+      use b2mod_rates
+      use b2us_geo
+      use b2us_plasma
+      use b2us_map
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2Rates), intent (in) :: rt
+      type (mapping), intent (in) :: mpg
+      integer,intent(in):: iCv, iCn, nCi, iFc,
+     &    isn, iscx0, iwall,istra, use_uy_uz_0
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,
+     2    pof,nef,isign,tif,tnf,tef,
+     &    sina,cosa, dnndy2, mfp_b1 , mfp_b2 
+      real (kind=R8) :: dnndz
+c     Output variables: 
+      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &                             fene_el
+c     Internal variables
+      real (kind=R8):: cs,Mj,
+     &    shpottauj,ishpottau,pf,pcorf,pt,vt,vion,vcx,vtot,
+     &     mn,expu,t1,t_av,mfp,c_th
+      integer :: ic
+      real (kind = R8):: fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM 
+      real (kind = R8):: fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD
+      external subini, subend
+*   ..statement functions
+      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+
+      call subini ('CalcReflectedFluxesMfp')
+
+c     Calculate rate coefficients at boundary
+      mn = am(isn)*mp
+      vcx=0.0_R8
+      do ic = 0, pl%ns-1
+        t_av = (tif+tnf)/2.0_R8
+        vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,iscx0) +
+     &   rt%rlcx(iCv,1,ic,iscx0)*log(t_av/(am(isn)*ev)))
+      enddo
+      vion=expu(
+     2 rt%rlsa(iCv,0,isn)+
+     3 rt%rlsa(iCv,1,isn)*log(tef/ev))*nef
+      vtot =vion + vcx
+      c_th = sqrt(tnf/mn)
+      mfp = c_th/vtot
+
+!!    zero out if incident flux has wrong sign
+      if (mfp.lt.mfp_b1) then
+        call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            nef,geo,mpg,rt,dnndy2,
+     &            dnndz,
+     &            cosa, sina, use_uy_uz_0,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+      elseif (mfp.gt.mfp_b2) then
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            geo, mpg,cosa, sina,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+      else
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            geo, mpg,cosa, sina,
+     &            fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM)
+
+        call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            nef,geo,mpg,rt,dnndy2,
+     &            dnndz,
+     &            cosa, sina, use_uy_uz_0,
+     &            fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD)
+
+          call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomreflD,fmomreflM,
+     &                     fmomrefl)
+          call CalcLinComb(mfp,mfp_b1,mfp_b2,nnreflD,nnreflM,nnrefl)
+          call CalcLinComb(mfp,mfp_b1,mfp_b2,nnwwnreflD,  nnwwnreflM,
+     &                     nnwwnrefl)
+          call CalcLinComb(mfp,mfp_b1,mfp_b2,fenereflD,fenereflM, 
+     &                     fenerefl)
+          call CalcLinComb(mfp,mfp_b1,mfp_b2,fene_elD,fene_elM,fene_el)
+      endif
+      call subend ()
+      return
+      end subroutine CalcReflectedFluxesMfp
+
+      subroutine CalcReflectedFluxesMinMfp(iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            nef,geo,mpg,rt,dnndy2,
+     &            dnndz,
+     &            cosa, sina, use_uy_uz_0,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
+c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
+c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
+      use b2mod_b2cmpa
+      use b2mod_rates
+      use b2us_geo
+      use b2us_plasma
+      use b2us_map
+      use b2mod_neutrals_namelist , only: maxw_eff
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2Rates), intent (in) :: rt
+      type (mapping), intent (in) :: mpg
+      integer,intent(in):: iCv, iCn, nCi, iFc,
+     &    isn, iscx0, iwall,istra, use_uy_uz_0
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,
+     2    pof,nef,isign,tif,tnf,tef,
+     &    sina,cosa, dnndy2
+      real (kind=R8) :: dnndz
+c     Output variables: 
+      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &                             fene_el
+      external subini, subend
+
+      call subini ('CalcReflectedFluxesMinMfp')
+
+
+!!    zero out if incident flux has wrong sign
+      if (maxw_eff(istra).eq.0) then
+        call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
+     &            isign,isn,iscx0,istra,iwall,
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            nef,geo,mpg,rt,dnndy2,
+     &            dnndz,
+     &            cosa, sina, use_uy_uz_0,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+      else
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            geo, mpg,cosa, sina,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+      endif
+      call subend ()
+      return
+      end subroutine CalcReflectedFluxesMinMfp
+
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,pl,tf,                         
@@ -1197,6 +1502,81 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       call subend ()
       return
       end subroutine CalcMomentsMaxwellian
+
+      subroutine CalcLinComb(mfp,mfp1,mfp2,F1,F2,F)
+      implicit none
+      !input variables
+      real (kind=R8),intent(in)::mfp,mfp1,mfp2,F1,F2
+      !output variables
+      real (kind=R8),intent(out)::F                       
+c                      F2
+c              F       |
+c       F1     |       |
+c       |      |       |
+c     mfp1----mfp----mfp2     
+      if (mfp.lt.mfp1.or.mfp.gt.mfp2) then
+        call xerrab('mfp should be between mfp1 and mfp2')
+      endif
+
+      F = ((mfp-mfp1)*F2+(mfp2-mfp)*F1)/(mfp2-mfp1)
+
+      return
+      end subroutine CalcLinComb
+
+      subroutine CalcMinMfp(iCv,isn,istra,
+     &            pl,dv,rt,min_mfp)
+c     This routine calculates the minimum mean free path for a certain stratum
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2us_plasma
+      use b2mod_neutrals_namelist
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2rates), intent (in) :: rt
+      integer,intent(in):: iCv, istra, isn
+c     InOut variables
+      real (kind=R8),intent(inout) :: min_mfp(nstrat)
+c     Internal variables
+      real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th,t1,t_av
+      real (kind=R8) :: tn, ti, ne, te
+      integer :: ic
+
+
+*   ..statement functions
+      external subini, subend
+      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+
+
+      call subini ('CalcMinMfp')
+
+c     Calculate rate coefficients at boundary
+      tn = pl.tn(iCv)
+      ti = pl.ti(iCv)
+      ne = dv.ne(iCv)
+      te = pl.te(iCv)
+      mn = am(isn)*mp
+      vcx=0.0_R8
+      do ic = 0, pl%ns-1
+        t_av = (ti+tn)/2.0_R8
+        vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,isn) +
+     &   rt%rlcx(iCv,1,ic,isn)*log(t_av/(am(isn)*ev)))
+      enddo
+      vion=expu(
+     2 rt%rlsa(iCv,0,isn)+
+     3 rt%rlsa(iCv,1,isn)*log(te/ev))*ne
+      vtot =vion + vcx
+      c_th = sqrt(tn/mn)
+      mfp = c_th/vtot
+
+      min_mfp(istra) = min(mfp,min_mfp(istra))
+
+
+      call subend ()
+      return
+      end subroutine CalcMinMfp
+
+
 
       subroutine dealloc_recycle_fnn
       implicit none
