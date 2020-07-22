@@ -99,11 +99,13 @@ c for KUL advanced fluid neutral boundary conditions
       integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
      &  kul_recycle = 0, 
      &  tn_style = 0, split_fluxes = 1,
-     &  remove_FC_el = 0, add_q_conv = 1
-      integer :: isn 
+     &  remove_FC_el = 0
+      real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
+      integer :: isn
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy2, dnndz2, dumm0(nFc,0:1),
-     &                  dumm1(nFc,0:1),cvsf(nFc,0:1), dnn(nFc,0:1)
+     &                  dumm1(nFc,0:1),cvsf(nFc,0:1), dnn(nFc,0:1),
+     &                  min_mfp(1:nstrat)
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, mod, exp
@@ -161,6 +163,8 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
        call ipgeti ('b2sihs_style_visc', style_visc)
+       call ipgetr ('b2stbr_mfp_b1',mfp_b1)
+       call ipgetr ('b2stbr_mfp_b2',mfp_b2)
 
 
       endif                                                         !srv 22.08.08 }
@@ -278,7 +282,28 @@ c pre-computations for KUL fluid neutrals
         cvsf(:,1) = cvsf(:,1)/geo%fcHz
         call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn),
      &                  nnVx,  dnn)
-      endif
+
+c     pre-computation of the minimal mean-free path along a boundary stratum
+        min_mfp(:) = 1.0_R8
+        do istra = 1, nstrat
+*   ..loop over boundary cells
+          do i = 1, mpg%rcCvP(istra,2)
+            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+            call CalcMinMfp(iRc1,isn,istra,
+     &          pl,dv,rt,min_mfp)
+          enddo
+
+c choose the type of neutral reflection boundary condition, based on the minimum mfp.
+          if (min_mfp(istra).lt.mfp_b1) then
+            maxw_eff(istra) = 0
+          elseif (min_mfp(istra).gt.mfp_b2) then
+            maxw_eff(istra) = 1
+          else
+c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
+          endif
+
+        enddo
+      endif !! end pre-computations KUL fluid neutrals
 
 
 
@@ -397,7 +422,8 @@ c for KUL recycling/reflection model
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
      &           Phi_app, lcore, dnndy2, dnndz2, cvsf)
-          enddo
+          enddo      ! end loop over boundary cells
+
 
         endif       ! crcstra(istra)
 
@@ -985,11 +1011,31 @@ c         while B2.5 uses internal energy equations.
      &              use_uy_uz_0,use_uy_uz_1, 
      &              split_fluxes,
      &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
-             else
+             elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
-     &            istra,farea,pl,tnf,geo,1,cosa,sina,
+     &            istra,farea,pl,tnf,geo,cosa,sina,
      &            fnni,fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
+             elseif (maxw(istra).eq.2) then
+               call CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
+     &              iCv,iCn,iFc,isign,
+     &              is0,is2,istra,
+     &              Phi_app,farea,pl,tif,tnf,tef,pof,
+     &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
+     &              dnndz,dnndzc,dnndzv,
+     &              use_uy_uz_0,use_uy_uz_1, 
+     &              split_fluxes,
+     &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+             else
+               call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
+     &              is0,is2,istra,
+     &              Phi_app,farea,pl,tif,tnf,tef,pof,
+     &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
+     &              dnndz,dnndzc,dnndzv,
+     &              use_uy_uz_0,use_uy_uz_1, 
+     &              split_fluxes,
+     &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+
              endif
 
              if (split_fluxes.ne.0) then
@@ -1013,11 +1059,28 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,rt,dnndy2,dnndz2,
      &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
-               else
+               elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,recyc(is,istra),pl,tnf,
      &              geo,mpg,cosa, sina,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+               elseif (maxw(istra).eq.2) then
+                 call CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
+     &              iCv,iCn,mpg%nCi,
+     &              iFc,isign,is0,is2,istra,iwall,
+     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
+     &              tef,pof,dv%ne(iCv),
+     &              geo,mpg,rt,dnndy2,dnndz2,
+     &              cosa, sina, use_uy_uz_0,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+               else
+                 call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
+     &              iFc,isign,is0,is2,istra,iwall,
+     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
+     &              tef,pof,dv%ne(iCv),
+     &              geo,mpg,rt,dnndy2,dnndz2,
+     &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
