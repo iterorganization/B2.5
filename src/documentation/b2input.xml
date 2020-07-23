@@ -2570,7 +2570,9 @@
 			  <type>integer</type>
 			  <description>
 				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time.
-				If negative, an single IDS will be written at the end of the run.
+				If used, an IDS time slice will be written at the end of run.
+				If negative, a single IDS will be written at the end of the run.
+				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
 			  </description>
 			</switch>
 			<switch>
@@ -2579,6 +2581,8 @@
 			  <type>real</type>
 			  <description>
 				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save.
+				If used, an IDS time slice will be written at the end of run.
+				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
 			  </description>
 			</switch>
 			<switch>
