@@ -142,8 +142,8 @@ contains
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
 #endif
-        type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
-            !< store data on edge plasma profiles  (includes the scrape-off
+        type (ids_edge_profiles) :: edge_profiles !< IDS designed to
+            !< store data on edge plasma profiles (includes the scrape-off
             !< layer and possibly part of the confined plasma)
         type (ids_edge_sources) :: edge_sources !< IDS designed to store
             !< data on edge plasma sources. Energy terms correspond to the full
@@ -211,6 +211,7 @@ contains
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
         integer :: icnt   !< Boundary cell counter
+        integer :: ib     !< Boundary condition index
         integer :: ntrgts !< Number of divertor targets
         integer :: o      !< Dummy integer
         integer :: p      !< Dummy integer
@@ -259,7 +260,8 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, &
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
+            &             u, qetot, qitot, qemax, qimax, lambda, &
             &             vtor, nisep, nasum, gsum, gmid, gbot, gtop
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
@@ -417,18 +419,12 @@ contains
 
         !! Set default time step values
         time_sind = 1
-        time_slice_value = 0.0_IDS_real
+        time_slice_value = time
         time_step = IDS_REAL_INVALID
         num_time_slices = 1
         !! If present, set time step values
         if( present( time_step_IN ) ) time_step = time_step_IN
-        if( present( time_slice_ind_IN ) ) then
-            time_sind = time_slice_ind_IN
-        !! Get time slice value
-            time_slice_value = time_sind * time_step
-        else
-            time_slice_value = time
-        end if
+        if( present( time_slice_ind_IN ) ) time_sind = time_slice_ind_IN
         if( present( num_time_slices_IN ) ) num_time_slices = num_time_slices_IN
         !! Check if num_time_slices >= time_sind
         call xertst( num_time_slices .ge. time_sind, &
@@ -445,9 +441,7 @@ contains
         edge_profiles%ids_properties%comment(1) = label
         !! 2. Allocate edge_profiles.time and set it to desired values
         allocate( edge_profiles%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_profiles%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_profiles%time(time_sind) = time
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -459,9 +453,7 @@ contains
         edge_transport%ids_properties%comment(1) = label
         !! 2. Allocate edge_transport.time and set it to desired values
         allocate( edge_transport%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_transport%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_transport%time(time_sind) = time
 
         !! Preparing edge_sources IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -473,9 +465,7 @@ contains
         edge_sources%ids_properties%comment(1) = label
         !! 2. Allocate edge_sources.time and set it to desired values
         allocate( edge_sources%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_sources%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_sources%time(time_sind) = time
 
         !! Preparing dataset_description IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -487,9 +477,7 @@ contains
         description%ids_properties%comment(1) = label
         !! 2. Allocate description.time and set it to desired values
         allocate( description%time(num_time_slices) )
-        do i = 1, num_time_slices
-          description%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        description%time(time_sind) = time
 
 #if IMAS_MINOR_VERSION > 21
         !! Preparing summary IDS for writing
@@ -502,9 +490,7 @@ contains
         summary%ids_properties%comment(1) = label
         !! 2. Allocate summary.time and set it to desired values
         allocate( summary%time(num_time_slices) )
-        do i = 1, num_time_slices
-          summary%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        summary%time(time_sind) = time
 #endif
 
 #if IMAS_MINOR_VERSION > 25
@@ -518,15 +504,13 @@ contains
         numerics%ids_properties%comment(1) = label
         !! 2. Allocate numerics.time and set it to desired values
         allocate( numerics%time(num_time_slices) )
-        do i = 1, num_time_slices
-          numerics%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        numerics%time(time_sind) = time
         allocate( numerics%time_start(num_time_slices) )
-        numerics%time_start(num_time_slices) = run_start_time_IN
+        numerics%time_start(time_sind) = run_start_time_IN
         allocate( numerics%time_step(num_time_slices) )
-        numerics%time_step(num_time_slices) = time_step
+        numerics%time_step(time_sind) = time_step
         allocate( numerics%time_end(num_time_slices) )
-        numerics%time_end(num_time_slices) = run_end_time_IN
+        numerics%time_end(time_sind) = run_end_time_IN
 #endif
 
         !! Preparing radiation IDS for writing
@@ -539,9 +523,7 @@ contains
         radiation%ids_properties%comment(1) = label
         !! 2. Allocate radiation.time and set it to desired values
         allocate( radiation%time(num_time_slices) )
-        do i = 1, num_time_slices
-          radiation%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        radiation%time(time_sind) = time
         !! 3. Allocate radiation.process
         !! Process 1: line and recombination radiation due to B2.5 species
         !! Process 2: bremsstrahlung recombination due to B2.5 species
@@ -593,14 +575,13 @@ contains
         end if
         if( ntimes .ne. num_time_slices ) then
             !! Allocate ggd for number of different time steps
-            time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
 #if IMAS_MINOR_VERSION > 14
-            allocate( edge_profiles%grid_ggd( time_sind ) )
-            allocate( edge_transport%grid_ggd( time_sind ) )
-            allocate( edge_sources%grid_ggd( time_sind ) )
+            allocate( edge_profiles%grid_ggd( num_time_slices ) )
+            allocate( edge_transport%grid_ggd( num_time_slices ) )
+            allocate( edge_sources%grid_ggd( num_time_slices ) )
 #if IMAS_MINOR_VERSION > 21
-            allocate( radiation%grid_ggd( time_sind ) )
+            allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
 #endif
             allocate( edge_transport%model(1) )
@@ -933,9 +914,10 @@ contains
         if ( b0.ne.0.0_IDS_real ) then
           if (streql(database,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
-            allocate( summary%global_quantities%ip%value( time_sind ) )
-            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-            allocate( summary%global_quantities%b0%value( time_sind ) )
+            allocate( summary%global_quantities%ip%value( num_time_slices ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
+            allocate( summary%global_quantities%b0%value( num_time_slices ) )
+            allocate( summary%global_quantities%q_95%value( num_time_slices ) )
             i = nint(b0r0_ref/b0r0)
             select case (i)
             case (1)
@@ -957,13 +939,16 @@ contains
             end select
             allocate( summary%global_quantities%ip%source(1) )
             summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
+            summary%global_quantities%q_95%value( time_sind ) = 3.0_IDS_real
+            allocate( summary%global_quantities%q_95%source(1) )
+            summary%global_quantities%q_95%source = "ITER Baseline q95=3 equilibrium"
             edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
             summary%global_quantities%r0%value = 6.2_IDS_real
           else
             edge_profiles%vacuum_toroidal_field%r0 = r0
             summary%global_quantities%r0%value = r0
-            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-            allocate( summary%global_quantities%b0%value( time_sind ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
+            allocate( summary%global_quantities%b0%value( num_time_slices ) )
             if (isymm.ne.0) then
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
               summary%global_quantities%b0%value( time_sind ) = -b0
@@ -4113,20 +4098,20 @@ contains
 #if IMAS_MINOR_VERSION > 21
 ! Summary separatrix data
         if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
-           allocate( summary%local%separatrix%position%psi( time_sind ) )
+           allocate( summary%local%separatrix%position%psi( num_time_slices ) )
            summary%local%separatrix%position%psi( time_sind ) = fpsi(jxa,jsep,2)
         end if
-        allocate( summary%local%separatrix%t_e%value( time_sind ) )
+        allocate( summary%local%separatrix%t_e%value( num_time_slices ) )
         summary%local%separatrix%t_e%value( time_sind ) = &
            &  0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
         allocate ( summary%local%separatrix%t_e%source(1) )
         summary%local%separatrix%t_e%source = source
-        allocate( summary%local%separatrix%t_i_average%value( time_sind ) )
+        allocate( summary%local%separatrix%t_i_average%value( num_time_slices ) )
         summary%local%separatrix%t_i_average%value( time_sind ) = &
            &  0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
         allocate ( summary%local%separatrix%t_i_average%source(1) )
         summary%local%separatrix%t_i_average%source = source
-        allocate( summary%local%separatrix%n_e%value( time_sind ) )
+        allocate( summary%local%separatrix%n_e%value( num_time_slices ) )
         summary%local%separatrix%n_e%value( time_sind ) = &
            &  0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep)))
         allocate ( summary%local%separatrix%n_e%source(1) )
@@ -4148,141 +4133,141 @@ contains
           if (nasum.gt.0.0_R8) vtor = vtor / nasum
           select case (is_codes(eb2spcr(is)))
           case ('H')
-            allocate( summary%local%separatrix%n_i%hydrogen%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%hydrogen%value( num_time_slices ))
             summary%local%separatrix%n_i%hydrogen%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%hydrogen%source(1) )
             summary%local%separatrix%n_i%hydrogen%source = source
-            allocate( summary%local%separatrix%velocity_tor%hydrogen%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%hydrogen%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%hydrogen%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%hydrogen%source(1) )
             summary%local%separatrix%velocity_tor%hydrogen%source = source
           case ('D')
-            allocate( summary%local%separatrix%n_i%deuterium%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%deuterium%value( num_time_slices ))
             summary%local%separatrix%n_i%deuterium%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%deuterium%source(1) )
             summary%local%separatrix%n_i%deuterium%source = source
-            allocate( summary%local%separatrix%velocity_tor%deuterium%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%deuterium%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%deuterium%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%deuterium%source(1) )
             summary%local%separatrix%velocity_tor%deuterium%source = source
           case ('T')
-            allocate( summary%local%separatrix%n_i%tritium%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%tritium%value( num_time_slices ))
             summary%local%separatrix%n_i%tritium%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%tritium%source(1) )
             summary%local%separatrix%n_i%tritium%source = source
-            allocate( summary%local%separatrix%velocity_tor%tritium%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%tritium%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%tritium%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%tritium%source(1) )
             summary%local%separatrix%velocity_tor%tritium%source = source
           case ('He')
             if (nint(am(is)).eq.3) then
-              allocate( summary%local%separatrix%n_i%helium_3%value( time_sind ))
+              allocate( summary%local%separatrix%n_i%helium_3%value( num_time_slices ))
               summary%local%separatrix%n_i%helium_3%value( time_sind ) = nisep
               allocate ( summary%local%separatrix%n_i%helium_3%source(1) )
               summary%local%separatrix%n_i%helium_3%source = source
-              allocate( summary%local%separatrix%velocity_tor%helium_3%value( time_sind ))
+              allocate( summary%local%separatrix%velocity_tor%helium_3%value( num_time_slices ))
               summary%local%separatrix%velocity_tor%helium_3%value( time_sind ) = vtor
               allocate ( summary%local%separatrix%velocity_tor%helium_3%source(1) )
               summary%local%separatrix%velocity_tor%helium_3%source = source
             else if (nint(am(is)).eq.4) then
-              allocate( summary%local%separatrix%n_i%helium_4%value( time_sind ))
+              allocate( summary%local%separatrix%n_i%helium_4%value( num_time_slices ))
               summary%local%separatrix%n_i%helium_4%value( time_sind ) = nisep
               allocate ( summary%local%separatrix%n_i%helium_4%source(1) )
               summary%local%separatrix%n_i%helium_4%source = source
-              allocate( summary%local%separatrix%velocity_tor%helium_4%value( time_sind ))
+              allocate( summary%local%separatrix%velocity_tor%helium_4%value( num_time_slices ))
               summary%local%separatrix%velocity_tor%helium_4%value( time_sind ) = vtor
               allocate ( summary%local%separatrix%velocity_tor%helium_4%source(1) )
               summary%local%separatrix%velocity_tor%helium_4%source = source
             end if
           case ('Li')
-            allocate( summary%local%separatrix%n_i%lithium%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%lithium%value( num_time_slices ))
             summary%local%separatrix%n_i%lithium%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%lithium%source(1) )
             summary%local%separatrix%n_i%lithium%source = source
-            allocate( summary%local%separatrix%velocity_tor%lithium%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%lithium%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%lithium%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%lithium%source(1) )
             summary%local%separatrix%velocity_tor%lithium%source = source
           case ('Be')
-            allocate( summary%local%separatrix%n_i%beryllium%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%beryllium%value( num_time_slices ))
             summary%local%separatrix%n_i%beryllium%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%beryllium%source(1) )
             summary%local%separatrix%n_i%beryllium%source = source
-            allocate( summary%local%separatrix%velocity_tor%beryllium%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%beryllium%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%beryllium%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%beryllium%source(1) )
             summary%local%separatrix%velocity_tor%beryllium%source = source
           case ('C')
-            allocate( summary%local%separatrix%n_i%carbon%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%carbon%value( num_time_slices ))
             summary%local%separatrix%n_i%carbon%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%carbon%source(1) )
             summary%local%separatrix%n_i%carbon%source = source
-            allocate( summary%local%separatrix%velocity_tor%carbon%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%carbon%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%carbon%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%carbon%source(1) )
             summary%local%separatrix%velocity_tor%carbon%source = source
           case ('N')
-            allocate( summary%local%separatrix%n_i%nitrogen%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%nitrogen%value( num_time_slices ))
             summary%local%separatrix%n_i%nitrogen%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%nitrogen%source(1) )
             summary%local%separatrix%n_i%nitrogen%source = source
-            allocate( summary%local%separatrix%velocity_tor%nitrogen%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%nitrogen%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%nitrogen%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%nitrogen%source(1) )
             summary%local%separatrix%velocity_tor%nitrogen%source = source
           case ('O')
-            allocate( summary%local%separatrix%n_i%oxygen%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%oxygen%value( num_time_slices ))
             summary%local%separatrix%n_i%oxygen%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%oxygen%source(1) )
             summary%local%separatrix%n_i%oxygen%source = source
-            allocate( summary%local%separatrix%velocity_tor%oxygen%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%oxygen%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%oxygen%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%oxygen%source(1) )
             summary%local%separatrix%velocity_tor%oxygen%source = source
           case ('Ne')
-            allocate( summary%local%separatrix%n_i%neon%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%neon%value( num_time_slices ))
             summary%local%separatrix%n_i%neon%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%neon%source(1) )
             summary%local%separatrix%n_i%neon%source = source
-            allocate( summary%local%separatrix%velocity_tor%neon%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%neon%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%neon%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%neon%source(1) )
             summary%local%separatrix%velocity_tor%neon%source = source
           case ('Ar')
-            allocate( summary%local%separatrix%n_i%argon%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%argon%value( num_time_slices ))
             summary%local%separatrix%n_i%argon%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%argon%source(1) )
             summary%local%separatrix%n_i%argon%source = source
-            allocate( summary%local%separatrix%velocity_tor%argon%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%argon%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%argon%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%argon%source(1) )
             summary%local%separatrix%velocity_tor%argon%source = source
           case ('Xe')
-            allocate( summary%local%separatrix%n_i%xenon%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%xenon%value( num_time_slices ))
             summary%local%separatrix%n_i%xenon%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%xenon%source(1) )
             summary%local%separatrix%n_i%xenon%source = source
-            allocate( summary%local%separatrix%velocity_tor%xenon%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%xenon%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%xenon%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%xenon%source(1) )
             summary%local%separatrix%velocity_tor%xenon%source = source
           case ('W')
-            allocate( summary%local%separatrix%n_i%tungsten%value( time_sind ))
+            allocate( summary%local%separatrix%n_i%tungsten%value( num_time_slices ))
             summary%local%separatrix%n_i%tungsten%value( time_sind ) = nisep
             allocate ( summary%local%separatrix%n_i%tungsten%source(1) )
             summary%local%separatrix%n_i%tungsten%source = source
-            allocate( summary%local%separatrix%velocity_tor%tungsten%value( time_sind ))
+            allocate( summary%local%separatrix%velocity_tor%tungsten%value( num_time_slices ))
             summary%local%separatrix%velocity_tor%tungsten%value( time_sind ) = vtor
             allocate ( summary%local%separatrix%velocity_tor%tungsten%source(1) )
             summary%local%separatrix%velocity_tor%tungsten%source = source
           end select
         end do
-        allocate( summary%local%separatrix%n_i_total%value( time_sind ))
+        allocate( summary%local%separatrix%n_i_total%value( num_time_slices ))
         summary%local%separatrix%n_i_total%value( time_sind ) = &
           & 0.5_R8 * (ni(jxa,jsep,1) + ni(topix(jxa,jsep),topiy(jxa,jsep),1))
         allocate ( summary%local%separatrix%n_i_total%source(1) )
         summary%local%separatrix%n_i_total%source = source
-        allocate( summary%local%separatrix%zeff%value( time_sind ))
+        allocate( summary%local%separatrix%zeff%value( num_time_slices ))
         summary%local%separatrix%zeff%value( time_sind ) = &
           & 0.5_R8 * (zeff(jxa,jsep) + zeff(topix(jxa,jsep),topiy(jxa,jsep)))
         allocate ( summary%local%separatrix%zeff%source(1) )
@@ -4336,23 +4321,23 @@ contains
         if (ntrgts.gt.0) then
           allocate ( summary%local%divertor_plate( ntrgts ) )
           do i = 1, ntrgts
-            allocate( summary%local%divertor_plate(i)%name%value( time_sind ) )
+            allocate( summary%local%divertor_plate(i)%name%value( num_time_slices ) )
             summary%local%divertor_plate(i)%name%value( time_sind ) = plate_name(i)
             allocate( summary%local%divertor_plate(i)%name%source(1) )
             summary%local%divertor_plate(i)%name%source(1) = source
-            allocate( summary%local%divertor_plate(i)%t_e%value( time_sind ) )
+            allocate( summary%local%divertor_plate(i)%t_e%value( num_time_slices ) )
             summary%local%divertor_plate(i)%t_e%value( time_sind ) = &
               &  0.5_R8 * (te(ixpos(i),iypos(i))+  &
               &            te(topix(ixpos(i),iypos(i)),topiy(ixpos(i),iypos(i))))/ev
             allocate( summary%local%divertor_plate(i)%t_e%source(1) )
             summary%local%divertor_plate(i)%t_e%source(1) = source
-            allocate( summary%local%divertor_plate(i)%t_i_average%value( time_sind ) )
+            allocate( summary%local%divertor_plate(i)%t_i_average%value( num_time_slices ) )
             summary%local%divertor_plate(i)%t_i_average%value( time_sind ) = &
               &  0.5_R8 * (te(ixpos(i),iypos(i))+  &
               &            te(topix(ixpos(i),iypos(i)),topiy(ixpos(i),iypos(i))))/ev
             allocate( summary%local%divertor_plate(i)%t_i_average%source(1) )
             summary%local%divertor_plate(i)%t_i_average%source(1) = source
-            allocate( summary%local%divertor_plate(i)%n_e%value( time_sind ) )
+            allocate( summary%local%divertor_plate(i)%n_e%value( num_time_slices ) )
             summary%local%divertor_plate(i)%n_e%value( time_sind ) = &
               &  0.5_R8 * (ne(ixpos(i),iypos(i))+  &
               &            ne(topix(ixpos(i),iypos(i)),topiy(ixpos(i),iypos(i))))
@@ -4370,86 +4355,86 @@ contains
               end do
               select case (is_codes(eb2spcr(is)))
               case ('H')
-                allocate( summary%local%divertor_plate(i)%n_i%hydrogen%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%hydrogen%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%hydrogen%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%hydrogen%source(1) )
                 summary%local%divertor_plate(i)%n_i%hydrogen%source = source
               case ('D')
-                allocate( summary%local%divertor_plate(i)%n_i%deuterium%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%deuterium%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%deuterium%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%deuterium%source(1) )
                 summary%local%divertor_plate(i)%n_i%deuterium%source = source
               case ('T')
-                allocate( summary%local%divertor_plate(i)%n_i%tritium%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%tritium%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%tritium%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%tritium%source(1) )
                 summary%local%divertor_plate(i)%n_i%tritium%source = source
               case ('He')
                 if (nint(am(is)).eq.3) then
-                  allocate( summary%local%divertor_plate(i)%n_i%helium_3%value( time_sind ))
+                  allocate( summary%local%divertor_plate(i)%n_i%helium_3%value( num_time_slices ))
                   summary%local%divertor_plate(i)%n_i%helium_3%value( time_sind ) = nisep
                   allocate ( summary%local%divertor_plate(i)%n_i%helium_3%source(1) )
                   summary%local%divertor_plate(i)%n_i%helium_3%source = source
                 else if (nint(am(is)).eq.4) then
-                  allocate( summary%local%divertor_plate(i)%n_i%helium_4%value( time_sind ))
+                  allocate( summary%local%divertor_plate(i)%n_i%helium_4%value( num_time_slices ))
                   summary%local%divertor_plate(i)%n_i%helium_4%value( time_sind ) = nisep
                   allocate ( summary%local%divertor_plate(i)%n_i%helium_4%source(1) )
                   summary%local%divertor_plate(i)%n_i%helium_4%source = source
                 end if
               case ('Li')
-                allocate( summary%local%divertor_plate(i)%n_i%lithium%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%lithium%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%lithium%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%lithium%source(1) )
                 summary%local%divertor_plate(i)%n_i%lithium%source = source
               case ('Be')
-                allocate( summary%local%divertor_plate(i)%n_i%beryllium%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%beryllium%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%beryllium%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%beryllium%source(1) )
                 summary%local%divertor_plate(i)%n_i%beryllium%source = source
               case ('C')
-                allocate( summary%local%divertor_plate(i)%n_i%carbon%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%carbon%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%carbon%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%carbon%source(1) )
                 summary%local%divertor_plate(i)%n_i%carbon%source = source
               case ('N')
-                allocate( summary%local%divertor_plate(i)%n_i%nitrogen%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%nitrogen%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%nitrogen%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%nitrogen%source(1) )
                 summary%local%divertor_plate(i)%n_i%nitrogen%source = source
               case ('O')
-                allocate( summary%local%divertor_plate(i)%n_i%oxygen%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%oxygen%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%oxygen%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%oxygen%source(1) )
                 summary%local%divertor_plate(i)%n_i%oxygen%source = source
               case ('Ne')
-                allocate( summary%local%divertor_plate(i)%n_i%neon%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%neon%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%neon%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%neon%source(1) )
                 summary%local%divertor_plate(i)%n_i%neon%source = source
               case ('Ar')
-                allocate( summary%local%divertor_plate(i)%n_i%argon%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%argon%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%argon%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%argon%source(1) )
                 summary%local%divertor_plate(i)%n_i%argon%source = source
               case ('Xe')
-                allocate( summary%local%divertor_plate(i)%n_i%xenon%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%xenon%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%xenon%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%xenon%source(1) )
                 summary%local%divertor_plate(i)%n_i%xenon%source = source
               case ('W')
-                allocate( summary%local%divertor_plate(i)%n_i%tungsten%value( time_sind ))
+                allocate( summary%local%divertor_plate(i)%n_i%tungsten%value( num_time_slices ))
                 summary%local%divertor_plate(i)%n_i%tungsten%value( time_sind ) = nisep
                 allocate ( summary%local%divertor_plate(i)%n_i%tungsten%source(1) )
                 summary%local%divertor_plate(i)%n_i%tungsten%source = source
               end select
             end do
-            allocate( summary%local%divertor_plate(i)%n_i_total%value( time_sind ))
+            allocate( summary%local%divertor_plate(i)%n_i_total%value( num_time_slices ))
             summary%local%divertor_plate(i)%n_i_total%value( time_sind ) = &
               & 0.5_R8 * (ni(ixpos(i),iypos(i),1) + &
               &           ni(topix(ixpos(i),iypos(i)),topiy(ixpos(i),iypos(i)),1))
             allocate ( summary%local%divertor_plate(i)%n_i_total%source(1) )
             summary%local%divertor_plate(i)%n_i_total%source = source
-            allocate( summary%local%divertor_plate(i)%zeff%value( time_sind ))
+            allocate( summary%local%divertor_plate(i)%zeff%value( num_time_slices ))
             summary%local%divertor_plate(i)%zeff%value( time_sind ) = &
               & 0.5_R8 * (zeff(ixpos(i),iypos(i)) + &
               &           zeff(topix(ixpos(i),iypos(i)),topiy(ixpos(i),iypos(i))))
@@ -4458,7 +4443,7 @@ contains
           end do
         end if
 
-        allocate( summary%boundary%type%value( time_sind ) )
+        allocate( summary%boundary%type%value( num_time_slices ) )
         select case (GeometryType)
           case( GEOMETRY_LIMITER )
             summary%boundary%type%value( time_sind ) = 0
@@ -4482,10 +4467,10 @@ contains
         end select
         allocate( summary%boundary%type%source(1) )
         summary%boundary%type%source = source
-        allocate( summary%boundary%strike_point_inner_r%value( time_sind ) )
-        allocate( summary%boundary%strike_point_inner_z%value( time_sind ) )
-        allocate( summary%boundary%strike_point_outer_r%value( time_sind ) )
-        allocate( summary%boundary%strike_point_outer_z%value( time_sind ) )
+        allocate( summary%boundary%strike_point_inner_r%value( num_time_slices ) )
+        allocate( summary%boundary%strike_point_inner_z%value( num_time_slices ) )
+        allocate( summary%boundary%strike_point_outer_r%value( num_time_slices ) )
+        allocate( summary%boundary%strike_point_outer_z%value( num_time_slices ) )
         if (LSN) then
           summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),1)
           summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),1)
@@ -4506,7 +4491,7 @@ contains
         allocate( summary%boundary%strike_point_outer_r%source(1) )
         summary%boundary%strike_point_outer_r%source = source
 
-        allocate( summary%fusion%power%value( time_sind ) )
+        allocate( summary%fusion%power%value( num_time_slices ) )
         summary%fusion%power%value( time_sind ) = fusion_power
         allocate( summary%fusion%power%source(1) )
         summary%fusion%power%source = source
@@ -4540,7 +4525,7 @@ contains
                     & summary%gas_injection_rates%hydrogen%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%hydrogen%value( time_sind ))
+                  allocate( summary%gas_injection_rates%hydrogen%value( num_time_slices ))
                   summary%gas_injection_rates%hydrogen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4552,7 +4537,7 @@ contains
                     & summary%gas_injection_rates%deuterium%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%deuterium%value( time_sind ))
+                  allocate( summary%gas_injection_rates%deuterium%value( num_time_slices ))
                   summary%gas_injection_rates%deuterium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4564,7 +4549,7 @@ contains
                     & summary%gas_injection_rates%tritium%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%tritium%value( time_sind ))
+                  allocate( summary%gas_injection_rates%tritium%value( num_time_slices ))
                   summary%gas_injection_rates%tritium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4577,7 +4562,7 @@ contains
                       & summary%gas_injection_rates%helium_3%value( time_sind ) + &
                       & tflux(istrai)*zn(eb2atcr(iatm))
                   else
-                    allocate( summary%gas_injection_rates%helium_3%value( time_sind ))
+                    allocate( summary%gas_injection_rates%helium_3%value( num_time_slices ))
                     summary%gas_injection_rates%helium_3%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                   end if
@@ -4589,7 +4574,7 @@ contains
                       & summary%gas_injection_rates%helium_4%value( time_sind ) + &
                       & tflux(istrai)*zn(eb2atcr(iatm))
                   else
-                    allocate( summary%gas_injection_rates%helium_4%value( time_sind ))
+                    allocate( summary%gas_injection_rates%helium_4%value( num_time_slices ))
                     summary%gas_injection_rates%helium_4%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                   end if
@@ -4602,7 +4587,7 @@ contains
                     & summary%gas_injection_rates%lithium%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%lithium%value( time_sind ))
+                  allocate( summary%gas_injection_rates%lithium%value( num_time_slices ))
                   summary%gas_injection_rates%lithium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4615,7 +4600,7 @@ contains
                     & summary%gas_injection_rates%beryllium%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%beryllium%value( time_sind ))
+                  allocate( summary%gas_injection_rates%beryllium%value( num_time_slices ))
                   summary%gas_injection_rates%beryllium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4628,7 +4613,7 @@ contains
                     & summary%gas_injection_rates%carbon%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%carbon%value( time_sind ))
+                  allocate( summary%gas_injection_rates%carbon%value( num_time_slices ))
                   summary%gas_injection_rates%carbon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4641,7 +4626,7 @@ contains
                     & summary%gas_injection_rates%nitrogen%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%nitrogen%value( time_sind ))
+                  allocate( summary%gas_injection_rates%nitrogen%value( num_time_slices ))
                   summary%gas_injection_rates%nitrogen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4654,7 +4639,7 @@ contains
                     & summary%gas_injection_rates%oxygen%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%oxygen%value( time_sind ))
+                  allocate( summary%gas_injection_rates%oxygen%value( num_time_slices ))
                   summary%gas_injection_rates%oxygen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4667,7 +4652,7 @@ contains
                     & summary%gas_injection_rates%neon%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%neon%value( time_sind ))
+                  allocate( summary%gas_injection_rates%neon%value( num_time_slices ))
                   summary%gas_injection_rates%neon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4680,7 +4665,7 @@ contains
                     & summary%gas_injection_rates%argon%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%argon%value( time_sind ))
+                  allocate( summary%gas_injection_rates%argon%value( num_time_slices ))
                   summary%gas_injection_rates%argon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4693,7 +4678,7 @@ contains
                     & summary%gas_injection_rates%xenon%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%xenon%value( time_sind ))
+                  allocate( summary%gas_injection_rates%xenon%value( num_time_slices ))
                   summary%gas_injection_rates%xenon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4706,7 +4691,7 @@ contains
                     & summary%gas_injection_rates%krypton%value( time_sind ) + &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 else
-                  allocate( summary%gas_injection_rates%krypton%value( time_sind ))
+                  allocate( summary%gas_injection_rates%krypton%value( num_time_slices ))
                   summary%gas_injection_rates%krypton%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
                 end if
@@ -4734,7 +4719,7 @@ contains
                         & summary%gas_injection_rates%methane%value( time_sind ) + &
                         & tflux(istrai)*10
                      else
-                       allocate( summary%gas_injection_rates%methane%value( time_sind ))
+                       allocate( summary%gas_injection_rates%methane%value( num_time_slices ))
                        summary%gas_injection_rates%methane%value( time_sind ) = &
                         & tflux(istrai)*10
                      end if
@@ -4748,7 +4733,7 @@ contains
                         & summary%gas_injection_rates%methane_carbon_13%value( time_sind ) + &
                         & tflux(istrai)*10
                      else
-                       allocate( summary%gas_injection_rates%methane_carbon_13%value( time_sind ))
+                       allocate( summary%gas_injection_rates%methane_carbon_13%value( num_time_slices ))
                        summary%gas_injection_rates%methane_carbon_13%value( time_sind ) = &
                         & tflux(istrai)*10
                      end if
@@ -4762,7 +4747,7 @@ contains
                         & summary%gas_injection_rates%methane_deuterated%value( time_sind ) + &
                         & tflux(istrai)*10
                      else
-                       allocate( summary%gas_injection_rates%methane_deuterated%value( time_sind ))
+                       allocate( summary%gas_injection_rates%methane_deuterated%value( num_time_slices ))
                        summary%gas_injection_rates%methane_deuterated%value( time_sind ) = &
                         & tflux(istrai)*10
                      end if
@@ -4776,7 +4761,7 @@ contains
                         & summary%gas_injection_rates%silane%value( time_sind ) + &
                         & tflux(istrai)*18
                      else
-                       allocate( summary%gas_injection_rates%silane%value( time_sind ))
+                       allocate( summary%gas_injection_rates%silane%value( num_time_slices ))
                        summary%gas_injection_rates%silane%value( time_sind ) = &
                         & tflux(istrai)*18
                      end if
@@ -4792,7 +4777,7 @@ contains
                         & summary%gas_injection_rates%ethylene%value( time_sind ) + &
                         & tflux(istrai)*16
                      else
-                       allocate( summary%gas_injection_rates%ethylene%value( time_sind ))
+                       allocate( summary%gas_injection_rates%ethylene%value( num_time_slices ))
                        summary%gas_injection_rates%ethylene%value( time_sind ) = &
                         & tflux(istrai)*16
                      end if
@@ -4809,7 +4794,7 @@ contains
                         & summary%gas_injection_rates%ethane%value( time_sind ) + &
                         & tflux(istrai)*18
                      else
-                       allocate( summary%gas_injection_rates%ethane%value( time_sind ))
+                       allocate( summary%gas_injection_rates%ethane%value( num_time_slices ))
                        summary%gas_injection_rates%ethane%value( time_sind ) = &
                         & tflux(istrai)*18
                      end if
@@ -4822,7 +4807,7 @@ contains
                         & summary%gas_injection_rates%propane%value( time_sind ) + &
                         & tflux(istrai)*26
                      else
-                       allocate( summary%gas_injection_rates%propane%value( time_sind ))
+                       allocate( summary%gas_injection_rates%propane%value( num_time_slices ))
                        summary%gas_injection_rates%propane%value( time_sind ) = &
                         & tflux(istrai)*26
                      end if
@@ -4837,7 +4822,7 @@ contains
                         & summary%gas_injection_rates%ammonia%value( time_sind ) + &
                         & tflux(istrai)*10
                      else
-                       allocate( summary%gas_injection_rates%ammonia%value( time_sind ))
+                       allocate( summary%gas_injection_rates%ammonia%value( num_time_slices ))
                        summary%gas_injection_rates%ammonia%value( time_sind ) = &
                         & tflux(istrai)*10
                      end if
@@ -4851,7 +4836,7 @@ contains
                         & summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) + &
                         & tflux(istrai)*10
                      else
-                       allocate( summary%gas_injection_rates%ammonia_deuterated%value( time_sind ))
+                       allocate( summary%gas_injection_rates%ammonia_deuterated%value( num_time_slices ))
                        summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) = &
                         & tflux(istrai)*10
                      end if
@@ -4865,35 +4850,217 @@ contains
           end if
         end do
         gtop = gsum - gmid - gbot
-        allocate( summary%gas_injection_rates%total%value( time_sind ) )
+        allocate( summary%gas_injection_rates%total%value( num_time_slices ) )
         summary%gas_injection_rates%total%value( time_sind ) = gsum
         allocate( summary%gas_injection_rates%total%source(1) )
         summary%gas_injection_rates%total%source = source
-        allocate( summary%gas_injection_rates%midplane%value( time_sind ) )
+        allocate( summary%gas_injection_rates%midplane%value( num_time_slices ) )
         summary%gas_injection_rates%midplane%value( time_sind ) = gmid
         allocate( summary%gas_injection_rates%midplane%source(1) )
         summary%gas_injection_rates%midplane%source = source
-        allocate( summary%gas_injection_rates%top%value( time_sind ) )
+        allocate( summary%gas_injection_rates%top%value( num_time_slices ) )
         summary%gas_injection_rates%top%value( time_sind ) = gtop
         allocate( summary%gas_injection_rates%top%source(1) )
         summary%gas_injection_rates%top%source = source
-        allocate( summary%gas_injection_rates%bottom%value( time_sind ) )
+        allocate( summary%gas_injection_rates%bottom%value( num_time_slices ) )
         summary%gas_injection_rates%bottom%value( time_sind ) = gbot
         allocate( summary%gas_injection_rates%bottom%source(1) )
         summary%gas_injection_rates%bottom%source = source
 #endif
+
+        ib = 0
+        do icnt = 1, nbc
+          if (ib.ne.0) cycle
+          if (bcchar(icnt).eq.'N') then
+            if (bcstart(icnt).ne.-2 .and. &
+             &  bcstart(icnt).le.jxa .and. jxa.le.bcend(icnt)) then
+              ib = icnt
+            else if (bcstart(icnt).eq.-2) then
+              do ix = 1, bc_list_size(icnt)
+                if (bc_list_x(ix,icnt).eq.jxa) ib = icnt
+              end do
+            end if
+          end if
+        end do
+        if (ib.ne.0) then
+          if (bcene(ib).eq.9.or.bcene(ib).eq.19) then
+            allocate( summary%scrape_off_layer%t_e_decay_length%value( num_time_slices ) )
+            summary%scrape_off_layer%t_e_decay_length%value( time_sind ) = enepar(ib,1)
+            allocate( summary%scrape_off_layer%t_e_decay_length%source(1) )
+            summary%scrape_off_layer%t_e_decay_length%source = source
+          end if
+          if (bceni(ib).eq.9.or.bceni(ib).eq.19) then
+            allocate( summary%scrape_off_layer%t_i_average_decay_length%value( num_time_slices ) )
+            summary%scrape_off_layer%t_i_average_decay_length%value( time_sind ) = enipar(ib,1)
+            allocate( summary%scrape_off_layer%t_i_average_decay_length%source(1) )
+            summary%scrape_off_layer%t_i_average_decay_length%source = source
+          end if
+          nibnd = IDS_REAL_INVALID
+          match_found = .true.
+          do is = 0, ns-1
+            if (is_neutral(is).and.use_eirene.ne.0) cycle
+            if (bccon(ib,is).eq.9) then
+              if (nibnd.eq.IDS_REAL_INVALID) then
+                nibnd = conpar(is,ib,1)
+              else
+                match_found = match_found.and.nibnd.eq.conpar(is,ib,1)
+              end if
+            end if
+          end do
+          if (match_found.and.nibnd.ne.IDS_REAL_INVALID) then
+            allocate( summary%scrape_off_layer%n_e_decay_length%value( num_time_slices ) )
+            summary%scrape_off_layer%n_e_decay_length%value( time_sind ) = nibnd
+            allocate( summary%scrape_off_layer%n_e_decay_length%source(1) )
+            summary%scrape_off_layer%n_e_decay_length%source = source
+            allocate( summary%scrape_off_layer%n_i_total_decay_length%value( num_time_slices ) )
+            summary%scrape_off_layer%n_i_total_decay_length%value( time_sind ) = nibnd
+            allocate( summary%scrape_off_layer%n_i_total_decay_length%source(1) )
+            summary%scrape_off_layer%n_i_total_decay_length%source = source
+          end if
+        end if
+        u = 0.0_IDS_real
+        do ix = 0, nx-1
+          do iy = 0, ny-1
+            if (geometryType.eq.GEOMETRY_LIMITER .or. &
+             &  geometryType.eq.GEOMETRY_SN) then
+              if (region(ix,iy,0).ne.2) cycle
+            else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+              if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.5) cycle
+            else if (geometryType.eq.GEOMETRY_CDN .or. &
+                  &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+                  &  geometryType.eq.GEOMETRY_DDN_TOP) then
+              if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.6) cycle
+            else
+              cycle
+            end if
+            do is = 0, ns-1
+              u = u + rqrad(ix,iy,is) + rqbrm(ix,iy,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(ix+1,iy+1,is,0)
+            end do
+            do is = 1, nmoli
+              u = u - emolrad(ix+1,iy+1,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(ix+1,iy+1,is,0)
+            end do
+#endif
+          end do
+        end do
+        if (u.ne.0.0_IDS_real) then
+          allocate( summary%scrape_off_layer%power_radiated%value( num_time_slices ) )
+          summary%scrape_off_layer%power_radiated%value( time_sind ) = u
+          allocate( summary%scrape_off_layer%power_radiated%source(1) )
+          summary%scrape_off_layer%power_radiated%source(1) = source
+        end if
+        select case (geometryType)
+        case (GEOMETRY_LIMITER)
+          if (LSN) then
+            ix = nx-1
+          else
+            ix = 0
+          end if
+        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM)
+          if (LSN) then
+            ix = rightcut(1)-1
+          else
+            ix = leftcut(1)
+          end if
+        case (GEOMETRY_STELLARATORISLAND)
+          ix = jxa
+        case (GEOMETRY_DDN_TOP)
+          ix = rightcut(2)
+        case default
+          ix = -2
+        end select
+        if (ix.ne.-2) then
+          ii = ix
+          jj = ix
+          icnt = -1
+          if (.not.LSN) icnt = 1
+          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%value( num_time_slices ) )
+          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%value( num_time_slices ) )
+          qemax = 0.0_IDS_real
+          qimax = 0.0_IDS_real
+          do iy = jsep+1, ny-1
+            qemax = qemax + u*fhe(ix,iy,0)
+            qimax = qimax + u*fhi(ix,iy,0)
+          end do
+          do i = ix+icnt, jxa, icnt
+            qetot = 0.0_IDS_real
+            qitot = 0.0_IDS_real
+            do iy = jsep+1, ny-1
+              qetot = qetot + u*fhe(i,iy,0)
+              qitot = qitot + u*fhi(i,iy,0)
+            end do
+            if (qetot*qemax.ge.0.0_IDS_real) then
+              if (abs(qetot).gt.abs(qemax)) then
+                ii = i
+                qemax = qetot
+              end if
+            end if
+            if (qitot*qimax.ge.0.0_IDS_real) then
+              if (abs(qitot).gt.abs(qimax)) then
+                jj = i
+                qimax = qitot
+              end if
+            end if
+          end do
+          lambda = 0.0_IDS_real
+          tmpFace(:,:,0) = abs(fhe(:,:,0))/gs(:,:,0)/qc(:,:)
+          tmpFace(:,:,1) = abs(fhe(:,:,1))/gs(:,:,1)
+          u = maxval(tmpFace(ii,jsep+1:ny,0))/2.0_IDS_real
+          j = maxloc(tmpFace(ii,jsep+1:ny,0),dim=1)
+          i = jsep+j
+          do iy = jsep+j+1, ny
+            if (i.gt.jsep+j) cycle
+            if (tmpFace(ii,iy,0).lt.u) then
+              i = iy
+              frac = (tmpFace(ii,iy-1,0)-u)/(tmpFace(ii,iy-1,0)-tmpFace(ii,iy,0))
+              lambda = lambda + frac*hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            else
+              lambda = lambda + hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            end if
+          end do
+          lambda = lambda/log(2.0_IDS_real)
+          summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) = lambda
+          lambda = 0.0_IDS_real
+          tmpFace(:,:,0) = abs(fhi(:,:,0))/gs(:,:,0)/qc(:,:)
+          tmpFace(:,:,1) = abs(fhi(:,:,1))/gs(:,:,1)
+          u = maxval(tmpFace(jj,jsep+1:ny,0))/2.0_IDS_real
+          j = maxloc(tmpFace(jj,jsep+1:ny,0),dim=1)
+          i = jsep+j
+          do iy = jsep+j+1, ny
+            if (i.gt.jsep+j) cycle
+            if (tmpFace(jj,iy,0).lt.u) then
+              i = iy
+              frac = (tmpFace(jj,iy-1,0)-u)/(tmpFace(jj,iy-1,0)-tmpFace(jj,iy,0))
+              lambda = lambda + frac*hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            else
+              lambda = lambda + hy(jxa,iy-1)*qz(jxa,iy-1,1)
+            end if
+          end do
+          lambda = lambda/log(2.0_IDS_real)
+          summary%scrape_off_layer%heat_flux_i_decay_length%value( time_sind ) = lambda
+          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%source(1) )
+          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%source(1) )
+          summary%scrape_off_layer%heat_flux_e_decay_length%source = source
+          summary%scrape_off_layer%heat_flux_i_decay_length%source = source
+        end if
 #endif
 
-        allocate( edge_profiles%code%output_flag( time_sind ) )
+        allocate( edge_profiles%code%output_flag( num_time_slices ) )
         edge_profiles%code%output_flag( time_sind ) = 0
-        allocate( edge_transport%code%output_flag( time_sind ) )
+        allocate( edge_transport%code%output_flag( num_time_slices ) )
         edge_transport%code%output_flag( time_sind ) = 0
-        allocate( edge_sources%code%output_flag( time_sind ) )
+        allocate( edge_sources%code%output_flag( num_time_slices ) )
         edge_sources%code%output_flag( time_sind ) = 0
-        allocate( radiation%code%output_flag( time_sind ) )
+        allocate( radiation%code%output_flag( num_time_slices ) )
         radiation%code%output_flag( time_sind ) = 0
 #if IMAS_MINOR_VERSION > 21
-        allocate( summary%code%output_flag( time_sind ) )
+        allocate( summary%code%output_flag( num_time_slices ) )
         summary%code%output_flag( time_sind ) = 0
 #endif
 
@@ -5572,7 +5739,7 @@ contains
             integer, intent(in), optional :: gridSubsetInd   !< Base grid subset index
             real(IDS_real), dimension(:), pointer :: idsdata !< Dummy array
                 !< for holding data field values
-            integer, intent(in) :: time_sind    !< General grid description
+            integer, intent(in) :: time_sind    !< Time slice index
 
             if ( .not. present(gridSubsetInd) ) then
                 !! Fill in vector component data

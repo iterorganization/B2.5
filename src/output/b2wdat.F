@@ -1174,7 +1174,7 @@
 
 *   ..write poloidal coordinates, Up upper separatrix
       iy = mintopcut+4                                         !srv 13.02.17 {
-      write (chns,'(i2.2)') iy
+      write (chns,'(i3.3)') iy
       open(70,file=trim(folder)//'poloidal_ua_at_'//chns//'.dat') !srv 26.09.17
       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
       do ix = -1,nx
@@ -1191,7 +1191,7 @@
 
 *   ..write poloidal coordinates, na upper separatrix
       iy = mintopcut+4
-      write (chns,'(i2.2)') iy
+      write (chns,'(i3.3)') iy
       open(70,file=trim(folder)//'poloidal_na_at_'//chns//'.dat') !srv 26.09.17
       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
       do ix = -1,nx
