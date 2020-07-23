@@ -160,8 +160,12 @@
       type(ids_radiation) :: radiation
       type(ids_dataset_description) :: description
       type(ids_dataset_description) :: old_description
+#if IMAS_MINOR_VERSION > 21
       type(ids_summary) :: summary
+#endif
+#if IMAS_MINOR_VERSION > 25
       type(ids_numerics) :: numerics
+#endif
       integer :: num_time_slices, time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
 #endif
