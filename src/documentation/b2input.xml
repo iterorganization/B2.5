@@ -2565,6 +2565,23 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2mndr_ids_save</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time.
+				If negative, an single IDS will be written at the end of the run.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2mndr_ids_time</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2wdat_iout</name>
 				<default>0</default>
 				<type>integer</type>
