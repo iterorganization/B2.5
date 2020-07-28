@@ -15,7 +15,7 @@ import sys
 if sys.version_info[0] >= 3:
     def stringify_children(node):
         parts = ([node.text] +
-                list(chain(*([tostring(c).split()[0], c.tail] for c in node.getchildren()))) +
+                list(chain(*([tostring(c).split()[0], c.tail] for c in node))) +
                 [node.tail])
         # filter removes possible Nones in texts and tails
         text = ''.join([i.decode() if type(i) == bytes else i for i in filter(None, parts)])

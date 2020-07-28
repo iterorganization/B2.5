@@ -54,7 +54,7 @@ contains
 #endif
             &   treename, shot, run, idx, username, database, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
-            !< designed to store data on edge plasma profiles  (includes the
+            !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
             !< designed to store data on edge plasma sources. Energy terms
@@ -80,10 +80,10 @@ contains
 #endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
-        integer, intent(in) :: shot !< The shot number of the database being created
-        integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(out) :: idx  !< The returned identifier to be used in the subsequent
-            !< data access operation
+        integer, intent(in) :: shot   !< The shot number of the database being created
+        integer, intent(in) :: run    !< The run number of the database being created
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
@@ -93,7 +93,7 @@ contains
         integer :: status
 
         !! Set data to edge_profiles IDS
-        write(0,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+        write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
@@ -103,41 +103,56 @@ contains
           &  "dataset_description, and radiation IDS"
 
         !! Create and modify new shot/run
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-            database, version, status )
-        call xertst( status.eq.0, 'Error opening IMAS database !')
+        if ( idx.eq.0 ) then
+          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+             & database, version, status )
+          call xertst( status.eq.0, 'Error opening IMAS database !')
 
+        !! Put data to IDS
+          call ids_put( idx, "edge_profiles", edge_profiles, status )
+          call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
+          call ids_put( idx, "edge_sources", edge_sources, status )
+          call xertst( status.eq.0, 'Error putting edge_sources IDS !')
+          call ids_put( idx, "edge_transport", edge_transport, status )
+          call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+          call ids_put( idx, "radiation", radiation, status )
+          call xertst( status.eq.0, 'Error putting radiation IDS !')
+          call ids_put( idx, "dataset_description", description, status )
+          call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+          call ids_put( idx, "summary", summary, status )
+          call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 25
+          call ids_put( idx, "numerics", numerics, status )
+          call xertst( status.eq.0, 'Error putting numerics IDS !')
+#endif
+        else
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
 
         !! Put data to IDS
-        ! call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
-        ! call ids_put_slice( idx, "edge_transport", edge_sources, status )
-        ! call ids_put_slice( idx, "edge_transport", edge_transport, status )
-        ! call ids_put_slice( idx, "radiation", radiation, status )
-        ! call ids_put_slice( idx, "dataset_description", description, status )
-        ! call ids_put_slice( idx, "summary", summary, status )
-        ! call ids_put_slice( idx, "numerics", numerics, status )
-        call ids_put( idx, "edge_profiles", edge_profiles, status )
-        call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
-        call ids_put( idx, "edge_sources", edge_sources, status )
-        call xertst( status.eq.0, 'Error putting edge_sources IDS !')
-        call ids_put( idx, "edge_transport", edge_transport, status )
-        call xertst( status.eq.0, 'Error putting edge_transport IDS !')
-        call ids_put( idx, "radiation", radiation, status )
-        call xertst( status.eq.0, 'Error putting radiation IDS !')
-        call ids_put( idx, "dataset_description", description, status )
-        call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+          call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_profiles IDS !')
+          call ids_put_slice( idx, "edge_sources", edge_sources, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_sources IDS !')
+          call ids_put_slice( idx, "edge_transport", edge_transport, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_transport IDS !')
+          call ids_put_slice( idx, "radiation", radiation, status )
+          call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+          call ids_put_slice( idx, "dataset_description", description, status )
+          call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
 #if IMAS_MINOR_VERSION > 21
-        call ids_put( idx, "summary", summary, status )
-        call xertst( status.eq.0, 'Error putting summary IDS !')
+          call ids_put_slice( idx, "summary", summary, status )
+          call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
 #if IMAS_MINOR_VERSION > 25
-        call ids_put( idx, "numerics", numerics, status )
-        call xertst( status.eq.0, 'Error putting numerics IDS !')
+          call ids_put_slice( idx, "numerics", numerics, status )
+          call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
+        end if
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
@@ -151,12 +166,11 @@ contains
 #if IMAS_MINOR_VERSION > 25
         call ids_deallocate( numerics )
 #endif
-        call imas_close( idx, status )
-        call xertst( status.eq.0, 'Error closing IMAS database !')
-
-        write(0,*) "IDS write finished"
+        write(*,*) "IDS write finished"
+        return
 
     end subroutine put_ids_edge
+
 #endif
 
     !> Routine to open UAL database.
@@ -340,7 +354,7 @@ contains
     !! closes the IDS)
     subroutine close_ual(idx)
         integer, intent(in) :: idx  !< The returned identifier to be used in the
-                                !< subsequent data access operation
+                                    !< subsequent data access operation
 #ifdef IMAS
         integer :: status
 

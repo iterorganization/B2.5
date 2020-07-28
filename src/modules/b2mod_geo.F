@@ -175,6 +175,8 @@
 c conn
       if(b2fplasma_version.ge.'01.001.063') then        !srv 15.02.11
         call cfrure (nread, size(pbs), pbs, 'pbs')
+      else if(b2fplasma_version.ge.'01.001.025') then   !xpb for 5.0 and 5.1 versions
+        call cfrure_opt (nread, size(pbs), pbs, 'pbs')
       endif
       if(b2fplasma_version.ge.'01.001.033') then
         call cfrure_opt

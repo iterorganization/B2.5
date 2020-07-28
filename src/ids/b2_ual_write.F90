@@ -20,6 +20,43 @@
 !!              documentation \b HOWTOs under section <b> 4.6 Put IDS and Get
 !!              IDS functions </b>.
 !!
+!!      Variables inherited from b2mod_main module
+!!      character(len=24) :: treename   !< The name of the IMAS IDS database
+!!        !< (i.e. "edge_profiles" (mandatory) )
+!!      character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+!!      character(len=24) :: database   !< IMAS IDS database name
+!!        !< (i. e. solps-iter, iter, aug)
+!!      character(len=24) :: version    !< Major version of the IMAS IDS database
+!!      integer :: idx    !< The returned identifier to be used in the subsequent
+!!        !< data access operation
+!!      integer :: shot   !< The shot number of the database being created
+!!      integer :: run    !< The run number of the database being created
+!!      integer :: status !< Returned status for UAL commands
+!!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
+!!        !< edge plasma profiles (includes the scrape-off layer and possibly
+!!        !< part of the confined plasma)
+!!      type (ids_edge_profiles) :: old_edge_profiles
+!!      type (ids_edge_sources) :: edge_sources !< IDS designed to store
+!!        !< data on edge plasma sources. Energy terms correspond to the full
+!!        !< kinetic energy equation (i.e. the energy flux takes into account
+!!        !< the energy transported by the particle flux)
+!!      type (ids_edge_transport) :: edge_transport !< IDS designed to store
+!!        !< data on edge plasma transport. Energy terms correspond to the
+!!        !< full kinetic energy equation (i.e. the energy flux takes into
+!!        !< account the energy transported by the particle flux)
+!!      type (ids_radiation) :: radiation !< IDS designed to store
+!!        !< data on radiation emitted by the plasma species
+!!      type (ids_dataset_description) :: description !< IDS designed to store
+!!        !< a description of the simulation
+!!      type (ids_dataset_description) :: old_description
+!!      type (ids_summary) :: summary !< IDS designed to store
+!!        !< run summary data
+!!      type (ids_numerics) :: numerics !< IDS designed to store
+!!        !< run numerics data
+!!      integer num_time_slices, time_slice_index
+!!      real(IDS_real) :: old_start_time, old_end_time, ids_end_time
+!!      logical continued
+!!
 !!-----------------------------------------------------------------------------
 
 program b2_ual_write
@@ -30,6 +67,7 @@ program b2_ual_write
      & , only : put_ids_edge, b25_process_ids, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description
+    use b2mod_ual_io
 #if IMAS_MINOR_VERSION > 21
     use b2mod_ual    &
      & , only : ids_summary
@@ -54,39 +92,6 @@ program b2_ual_write
     external ipgeti, ipgetc, streql
 
     !! Local variables
-    character(len=24) :: treename   !< The name of the IMAS IDS database
-        !< (i.e. "edge_profiles" (mandatory) )
-    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24) :: database   !< IMAS IDS database name
-        !< (i. e. solps-iter, iter, aug)
-    character(len=24) :: version    !< Major version of the IMAS IDS database
-    integer :: idx  !< The returned identifier to be used in the subsequent
-        !< data access operation
-    integer :: shot !< The shot number of the database being created
-    integer :: run  !< The run number of the database being created
-    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
-        !< edge plasma profiles  (includes the scrape-off layer and possibly
-        !< part of the confined plasma)
-    type (ids_edge_sources) :: edge_sources !< IDS designed to store
-        !< data on edge plasma sources. Energy terms correspond to the full
-        !< kinetic energy equation (i.e. the energy flux takes into account
-        !< the energy transported by the particle flux)
-    type (ids_edge_transport) :: edge_transport !< IDS designed to store
-        !< data on edge plasma transport. Energy terms correspond to the
-        !< full kinetic energy equation (i.e. the energy flux takes into
-        !< account the energy transported by the particle flux)
-    type (ids_radiation) :: radiation !< IDS designed to store
-        !< data on radiation emitted by the plasma species
-    type (ids_dataset_description) :: description !< IDS designed to store
-        !< a description of the simulation
-#if IMAS_MINOR_VERSION > 21
-    type (ids_summary) :: summary !< IDS designed to store
-        !< run summary data
-#endif
-#if IMAS_MINOR_VERSION > 25
-    type (ids_numerics) :: numerics !< IDS designed to store
-        !< run numerics data
-#endif
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: argName
@@ -95,6 +100,7 @@ program b2_ual_write
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
+    status = 0
     version = '3'
     treename = 'ids'
     write (*,*) 'Starting b2mn init'
@@ -122,7 +128,7 @@ program b2_ual_write
     device_env = ' '
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device_env)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
@@ -167,17 +173,75 @@ program b2_ual_write
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-        &  radiation, description, &
+    write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
+    call imas_open_env('treename', shot, run, idx, username, database, version, status)
+    !! If this is a time continuation run, append the new data to the IDS
+    if ( status.eq.0 .and. idx.ne.0 ) then
+      write (0,*) "Reading old IDS ", trim(database), shot, run
+      call ids_get( idx, "edge_profiles", old_edge_profiles, status)
+      if ( status.ne.0 ) then
+        write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
+        idx = 0
+      else
+        num_time_slices = size(old_edge_profiles%time)
+        if (num_time_slices.gt.0) then
+          ids_end_time = old_edge_profiles%time(num_time_slices)
+        else
+          ids_end_time = IDS_REAL_INVALID
+        end if
+        call ids_deallocate( old_edge_profiles )
+        old_start_time = 0.0_IDS_real
+        old_end_time = IDS_REAL_INVALID
+        call ids_get( idx, "dataset_description", old_description, status)
+        if ( status.ne.0 ) then
+          write (0,*) 'Error opening old dataset_description IDS !'
+#if IMAS_MINOR_VERSION > 25
+        else
+          old_start_time = old_description%simulation%time_begin
+          old_end_time = old_description%simulation%time_end
+#endif
+          call ids_deallocate( old_description )
+        end if
+        continued = run_start_time.eq.IDS_REAL_INVALID .and. &
+           &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)
+        continued = continued .or. &
+           &        run_start_time.ge.ids_end_time
+        if (continued) then
+          write (0,*) "Appending a new time slice at t = ", tim, " s."
+          num_time_slices = num_time_slices + 1
+          time_slice_index = num_time_slices
+          call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+             &  radiation, description, &
 #if IMAS_MINOR_VERSION > 21
-        &  summary, &
+             &  summary, &
 #endif
 #if IMAS_MINOR_VERSION > 25
-        &  numerics, run_start_time, run_end_time, &
+             &  numerics, old_start_time, run_end_time, &
 #endif
-        &  tim, dtim, shot, run, database, version )
+             &  tim, dtim, shot, run, database, version, &
+             &  time_slice_index, num_time_slices )
+        else
+          write (0,*) "Not a time continuation, IDS will be overwritten !"
+          idx = 0
+        end if
+      end if
+    else
+      write (0,*) "No previous IDS found, new one will be created"
+      idx = 0
+    end if
+    if ( status.ne.0 .or. idx.eq.0 ) then
+      call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+         &  radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+         &  summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+         &  numerics, run_start_time, run_end_time, &
+#endif
+         &  tim, dtim, shot, run, database, version )
+    end if
 
-    !! Create Write the set data to IDSs
+    !! Create/Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &
@@ -188,6 +252,7 @@ program b2_ual_write
         &   numerics, &
 #endif
         &   treename, shot, run, idx, username, database, version )
+    call close_ual(idx)
 
 end program b2_ual_write
 
