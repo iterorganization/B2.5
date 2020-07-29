@@ -2,7 +2,7 @@
 
       use b2mod_types
       real (kind=R8), allocatable, save ::
-     * r1(:),
+     * rr1(:),
      * s1(:),
      * a1h(:),
      * w(:),
@@ -29,6 +29,9 @@
       contains
 
       subroutine alloc_b2mod_ma28_for_us
+      implicit none
+
+      if (allocated(rr1)) return
 
       write(*,*) 'Allocating space for b2mod_ma28_for_us'
       write(*,*) 'nnd        = ',nnd
@@ -36,7 +39,7 @@
       write(*,*) 'solvdim    = ',solvdim
       write(*,*) 'solvdim1   = ',solvdim1
 
-      allocate(r1(1:nnd))
+      allocate(rr1(1:nnd))
       allocate(s1(1:nnd))
       allocate(a1h(1:solvdim))
       allocate(w(1:nnd))
@@ -60,9 +63,10 @@
       end subroutine alloc_b2mod_ma28_for_us
 
       subroutine dealloc_b2mod_ma28_for_us
+      implicit none
 
-      if (.not.allocated(r1)) return
-      deallocate(r1)
+      if (.not.allocated(rr1)) return
+      deallocate(rr1)
       deallocate(s1)
       deallocate(a1h)
       deallocate(w)

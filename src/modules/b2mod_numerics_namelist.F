@@ -48,7 +48,6 @@
       real (kind=R8), save :: numerics_time_mod
       real (kind=R8), save :: numerics_time_switch
       logical :: first_time_step
-      logical, save :: b2mod_numerics_allocated = .false.
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -65,7 +64,7 @@
       implicit none
       integer nCv,nsd,nnreg(0:1)
 
-      if (b2mod_numerics_allocated) return
+      if (allocated(time_factor)) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
       allocate(time_factor(nCv))
@@ -113,7 +112,6 @@
       numerics_time_switch=0.0_R8
       time_factor=1.0_R8
       write(*,*) 'Allocated space for b2mod_numerics'                !srv 11.11.09
-      b2mod_numerics_allocated = .true.
 
       return
       end subroutine alloc_b2mod_numerics
@@ -121,7 +119,7 @@
       subroutine dealloc_b2mod_numerics
       implicit none
 
-      if (.not.b2mod_numerics_allocated) return
+      if (.not.allocated(time_factor)) return
       deallocate(time_factor)
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(dtco)
@@ -140,7 +138,6 @@
       deallocate(last_solve_5)
       deallocate(last_solve_9)
 #endif
-      b2mod_numerics_allocated = .false.
       return
       end subroutine dealloc_b2mod_numerics
 
@@ -165,6 +162,7 @@
 #else
         read(99,numerics)
 #endif
+        close(99)
         write(*,*) 'Read namelist numerics from ',trim(filename)
 !        do ireg = 0, nnreg(0)
 !          solveet(ireg) = solveee(ireg).or.solveei(ireg)
