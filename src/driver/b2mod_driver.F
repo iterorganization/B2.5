@@ -19,6 +19,9 @@
       use b2mod_feedback
       use b2mod_sputter
       use b2mod_ysmp_sdrv
+     & , only : dealloc_b2mod_ysmp_sdrv
+      use b2mod_wall
+     & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
       use b2mod_first_flight
       use b2mod_input_profile
@@ -1941,6 +1944,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 ! csc UNCOMMENT WITH AD
+!      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
 !      DO ICF=1, NCF
 !        write (ss,'(I1)') icf
 !        write(*,*) 'Cost function gradient '//ss//': ',Jd(icf)

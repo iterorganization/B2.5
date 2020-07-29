@@ -3,7 +3,7 @@
       use b2mod_types
 	implicit none
       real (kind=R8), allocatable, save ::
-     * r1(:),
+     * rr1(:),
      * s1(:),
      * a(:),
      * rsp(:)
@@ -30,7 +30,7 @@
       write(*,*) 'nsp        = ', nsp
       write(*,*) 'n_nz_sdrv  = ', n_nz_sdrv
 
-      allocate(r1(1:nnd_sdrv))
+      allocate(rr1(1:nnd_sdrv))
       allocate(s1(1:nnd_sdrv))
       allocate(a(1:n_nz_sdrv))
       allocate(rsp(1:nsp))
@@ -49,8 +49,8 @@
 
       subroutine dealloc_b2mod_ysmp_sdrv
 
-      if (.not.allocated(r1)) return
-      deallocate(r1)
+      if (.not.allocated(rr1)) return
+      deallocate(rr1)
       deallocate(s1)
       deallocate(a)
       deallocate(rsp)

@@ -6,6 +6,7 @@
 #     include "DIMENSIONS.F"
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
+      private :: nsdmax
 
 *   ..variables
       real (kind=R8), save ::

@@ -27,7 +27,7 @@
         do icf = 1, ncf
           if (cfread(icf)) then
             ic1 = mpg%cfCvP(icf,1)
-!csc first interpolate cfdata onto B2.5 grid. 
+!csc first interpolate cfdata onto B2.5 grid.  !FIXME safety for non monotonic!!
 ! In the and ffdata will contain only the data, no information on x-y is needed anymore
             ndata1= ncfdata(icf) !number of data points read
             ndata2= mpg%cfCvP(icf,2) !number of CV in cost function
