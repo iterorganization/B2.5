@@ -167,6 +167,7 @@ c***  Standard setup:
 #else
         read(99,user)
 #endif
+        close(99)
         write(*,*) 'Read namelist user from ',trim(filename)
         user_namelist_used = .true.
       else

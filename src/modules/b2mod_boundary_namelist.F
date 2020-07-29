@@ -57,6 +57,7 @@ cank }
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
+      private :: nsdmax
       real (kind=R8), save :: CONPAR(0:nsdmax-1,NBCD,3)
       real (kind=R8), save :: MOMPAR(0:nsdmax-1,NBCD,2)
       real (kind=R8), save :: ENEPAR(NBCD,2)

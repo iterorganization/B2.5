@@ -59,7 +59,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       N = N1*N2
       DO I=1,N1
        DO J=1,N2
-        R1(I+(J-1)*N1)=RHS(I,J)
+        RR1(I+(J-1)*N1)=RHS(I,J)
         S1(I+(J-1)*N1)=0.0e0_R8
        enddo
       enddo
@@ -76,7 +76,7 @@ cdpc
           write(*,*) 'Writing 79'                              !sv 11.01.00
           write(79,*) n,' n'
           do i=1,n
-            write(79,*) r1(i)                                  !sv 11.01.00
+            write(79,*) rr1(i)                                  !sv 11.01.00
           enddo
           write(78,*) ' nz =',nz
           do k=1,n+1
@@ -102,7 +102,7 @@ cdpc
          endif
           write(*,*) 'Writing 78'                              !sv 11.01.00
           do i=1,n
-            write(79) r1(i)                                    !sv 11.01.00
+            write(79) rr1(i)                                    !sv 11.01.00
           enddo
           write(78) ' kk =',nz
           do k=1,n+1
@@ -140,7 +140,7 @@ C
 !          call cpu_time(time_begin)
 C                             Perform symbolyc LDL' factorization (SSF)
         CALL SDRV
-     *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P, IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !        call cpu_time(time_end)
@@ -171,7 +171,7 @@ C
 !          call cpu_time(time_begin)
 C                             Perform numerical LDL' factorization
          CALL SDRV
-     *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P, IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !        call cpu_time(time_end)
@@ -190,7 +190,7 @@ C
 !          call cpu_time(time_begin)
 C                                 Solve A * X = B
          CALL SDRV
-     *     (N, NZ, P,IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P,IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !        call cpu_time(time_end)
