@@ -25,7 +25,8 @@ c     Boolean to indicate whether trim data is present for species/material comb
       logical, allocatable, save :: 
      *  trimrecyc_present(:,:)
       real (kind=R8), allocatable, save ::
-     &  M(:),T(:),dM(:),dT(:),shpottau(:),rc1(:,:,:,:,:),rc2(:,:,:,:,:),
+     &  M(:),T(:),dM(:),dT(:),shpottau(:),dSh(:),
+     &  rc1(:,:,:,:,:),rc2(:,:,:,:,:),
      &  rmx1(:,:,:,:,:),rmx2(:,:,:,:,:),rmy1(:,:,:,:,:),rmy2(:,:,:,:,:),
      &  rmz1(:,:,:,:,:),rmz2(:,:,:,:,:),re1(:,:,:,:,:),re2(:,:,:,:,:),
      &  rp11(:,:,:,:,:),rp12(:,:,:,:,:),rp21(:,:,:,:,:),
@@ -134,6 +135,7 @@ c             ALLOCATE ARRAYS
               allocate(T(0:nT))
               allocate(dM(0:nM-1))
               allocate(dT(0:nT-1))
+              allocate(dSh(0:nshpottau-1))
               allocate(shpottau(0:nshpottau))
               allocate(rc1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
               allocate(rc2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
@@ -158,6 +160,8 @@ c             Read label
               call cfrure (96, nshpottau+1, shpottau, 'shpottau')
               dM(:) = 1.0_R8/(M(1:nM)-M(0:nM-1))
               dT(:) = 1.0_R8/(T(1:nT)-T(0:nT-1))
+              dSh(:) = 1.0_R8/
+     &               (shpottau(1:nshpottau)-shpottau(0:nshpottau-1))
                
             else
               call xertst((nM.eq.idum(0)-1).and.(nT.eq.idum(1)-1).and.
@@ -691,10 +695,11 @@ c     Internal variables
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
-     &    intp_2dtable,intp_2dtable0,tifev,upf
-      real (kind = R8):: tab(0:nM,0:nT)
-      integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
-      external subini, subend,intp_2dtable,intp_2dtable0
+     &    intp_3dtable,intp_3dtable0,
+     &    tifev,upf
+      real (kind = R8):: tab(0:nM,0:nT,0:nshpottau)
+      integer :: ic,is,it,ilT,ilM,ilSh,ip1,ip2,ip3
+      external subini, subend,intp_3dtable, intp_3dtable0
 
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
@@ -732,38 +737,41 @@ c       Isothermal speed of sound and Mach number
       it = target_index(istra)
 c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       shpottauj = accel_ion(istra)*qe*(pof-phi_app)/tif
-c       For now, neirest neigbour interpolation for shpottau
-      ispt2 = minloc(abs(shpottau-shpottauj)) !mb: adjust for index starting from 0
-c       Interpolate
-      ispt = ispt2(1) -1 !mb: adjust for index starting from 0
-      tab = rc1(:,:,ispt,is,it)
-      rc1i = intp_2dtable(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
-      tab = rmx1(:,:,ispt,is,it)
+      tab = rc1(:,:,:,is,it)
+      rc1i = intp_3dtable(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh,ip1,ip2,ip3)
       rc1i = max(rc1i,0.0_R8)! Make sure thy don't become negative when extrapolating
-      rmx1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = rmx1(:,:,:,is,it)
+      rmx1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rmx1i = max(rmx1i,0.0_R8)
-      tab = rmz1(:,:,ispt,is,it)
-      rmz1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = rmz1(:,:,:,is,it)
+      rmz1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rmz1i = max(rmz1i,0.0_R8)
-      tab = rp11(:,:,ispt,is,it)
-      rp11i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = rp11(:,:,:,is,it)
+      rp11i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp11i = max(rp11i,0.0_R8)
-      tab = rp21(:,:,ispt,is,it)
-      rp21i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = rp21(:,:,:,is,it)
+      rp21i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp21i = max(rp21i,0.0_R8)
-      tab = rp31(:,:,ispt,is,it)
-      rp31i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = rp31(:,:,:,is,it)
+      rp31i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp31i = max(rp31i,0.0_R8)
-      tab = re1(:,:,ispt,is,it)
-      re1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+
+      tab = re1(:,:,:,is,it)
+      re1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+     & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       re1i = max(re1i,0.0_R8)
+
 c     Calculate fast and thermal recycled parts
       pf = min(rc1i*cs/(-i1l),recyc0)+1.0E-30_R8
       pcorf = min(pf,recyc0)/pf 
@@ -842,7 +850,7 @@ c     incident neutrals.
      &                             fene_el
 c     Internal variables
       real (kind=R8):: cs,Mj,
-     &    shpottauj,ishpottau,pf,pcorf,pt,vt,vion,vcx,vtot,
+     &    pf,pcorf,pt,vt,vion,vcx,vtot,
      &     pit,pit2,mn,nnf,ux,uy,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
@@ -924,61 +932,59 @@ c       Interpolate
       rc1i = max(rc1i,0.0_R8) ! Make sure thy don't become negative when extrapolating
       tab = rc2(:,:,ispt,is,it)
       rc2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rc2i = max(rc2i,0.0_R8)
       tab = rmx1(:,:,ispt,is,it)
       rmx1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rmx1i = max(rmx1i,0.0_R8)
       tab = rmx2(:,:,ispt,is,it)
       rmx2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rmx2i = max(rmx2i,0.0_R8)
-c      rmy1i = intp_2dtable0(rmy1(:,:,ispt,is,it),M,T,dM,dT,nM,nT,
-c     & Mj,tifev,ilM,ilT,ip1,ip2)
       tab = rmy2(:,:,ispt,is,it)
       rmy2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rmy2i = max(rmy2i,0.0_R8)
       tab = rmz1(:,:,ispt,is,it)
       rmz1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rmz1i = max(rmz1i,0.0_R8)
       tab = rmz2(:,:,ispt,is,it)
       rmz2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rmz2i = max(rmz2i,0.0_R8)
       tab = rp11(:,:,ispt,is,it)
       rp11i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp11i = max(rp11i,0.0_R8)
       tab = rp21(:,:,ispt,is,it)
       rp21i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp21i = max(rp21i,0.0_R8)
       tab = rp31(:,:,ispt,is,it)
       rp31i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp31i = max(rp31i,0.0_R8)
       tab = rp12(:,:,ispt,is,it)
       rp12i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp12i = max(rp12i,0.0_R8)
       tab = rp22(:,:,ispt,is,it)
       rp22i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp22i = max(rp22i,0.0_R8)
       tab = rp32(:,:,ispt,is,it)
       rp32i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       rp32i = max(rp32i,0.0_R8)
       tab = re1(:,:,ispt,is,it)
       re1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       re1i = max(re1i,0.0_R8)
       tab = re2(:,:,ispt,is,it)
       re2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tifev,ilM,ilT,ip1,ip2)
+     & Mj,tifev,ilM,ilT)
       re2i = max(re2i,0.0_R8)
 c     Calculate incident particle flux density
       fnni_nodrifts = vcx/vtot*(-i1l*nnf+dnndz*i2l/vtot)
@@ -1074,7 +1080,7 @@ c     Output variables:
      &                             fene_el
 c     Internal variables
       real (kind=R8):: cs,Mj,
-     &    shpottauj,ishpottau,pf,pcorf,pt,vt,vion,vcx,vtot,
+     &    pf,pcorf,pt,vt,vion,vcx,vtot,
      &     mn,expu,t1,t_av,mfp,c_th
       integer :: ic
       real (kind = R8):: fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM 
@@ -1265,61 +1271,59 @@ c       Interpolate
       rc1i = max(rc1i,0.0_R8) ! Make sure they don't become negative when extrapolating
       tab = rc2(:,:,ispt,is,it)
       rc2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rc2i = max(rc2i,0.0_R8)
       tab = rmx1(:,:,ispt,is,it)
       rmx1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rmx1i = max(rmx1i,0.0_R8)
       tab = rmx2(:,:,ispt,is,it)
       rmx2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rmx2i = max(rmx2i,0.0_R8)
-c      rmy1i = intp_2dtable0(rmy1(:,:,ispt,is,it),M,T,dM,dT,nM,nT,
-c     & Mj,tfev,ilM,ilT,ip1,ip2)
       tab = rmy2(:,:,ispt,is,it)
       rmy2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rmy2i = max(rmy2i,0.0_R8)
       tab = rmz1(:,:,ispt,is,it)
       rmz1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rmz1i = max(rmz1i,0.0_R8)
       tab = rmz2(:,:,ispt,is,it)
       rmz2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rmz2i = max(rmz2i,0.0_R8)
       tab = rp11(:,:,ispt,is,it)
       rp11i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp11i = max(rp11i,0.0_R8)
       tab = rp21(:,:,ispt,is,it)
       rp21i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp21i = max(rp21i,0.0_R8)
       tab = rp31(:,:,ispt,is,it)
       rp31i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp31i = max(rp31i,0.0_R8)
       tab = rp12(:,:,ispt,is,it)
       rp12i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp12i = max(rp12i,0.0_R8)
       tab = rp22(:,:,ispt,is,it)
       rp22i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp22i = max(rp22i,0.0_R8)
       tab = rp32(:,:,ispt,is,it)
       rp32i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       rp32i = max(rp32i,0.0_R8)
       tab = re1(:,:,ispt,is,it)
       re1i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       re1i = max(re1i,0.0_R8)
       tab = re2(:,:,ispt,is,it)
       re2i = intp_2dtable0(tab,M,T,dM,dT,nM,nT,
-     & Mj,tfev,ilM,ilT,ip1,ip2)
+     & Mj,tfev,ilM,ilT)
       re2i = max(re2i,0.0_R8)
 
 
@@ -1524,7 +1528,7 @@ c     mfp1----mfp----mfp2
       end subroutine CalcLinComb
 
       subroutine CalcMinMfp(iCv,isn,istra,
-     &            pl,dv,rt,min_mfp)
+     &            pl,dv,rt,min_mfp,mfp)
 c     This routine calculates the minimum mean free path for a certain stratum
       use b2mod_rates
       use b2mod_b2cmpa
