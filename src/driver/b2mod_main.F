@@ -291,9 +291,6 @@ csw
       integer io
 
       call b2mndr_2 (nout, ns, geo, mpg, state, state_ext)
-*   ..write plasma state
-      call cfopen(nout(7),'b2fplasma','new','unformatted')
-      call cfverw(nout(7), newversion)
 
       close(nout(7))
 #ifdef JET
