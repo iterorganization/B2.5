@@ -81,7 +81,7 @@ c  fill ff: intermediate 2 by 2 matrix of tabulated values at cell vertices
       end function intp_2dtable
 
       function intp_2dtable0(tab,r1,r2,dr1,dr2,nr1,nr2,p1,p2,ir1,
-     &     ir2,ip1,ip2) result(res)
+     &     ir2) result(res)
 c  interpolates a table for which the closest indices in the table are already known from a prior application of intp_2dtable
 c  bilinear interpolation in 2 parameter table tab
 c  linear extrapolation at all 4 parameter boundaries
@@ -96,13 +96,9 @@ c  ir1,ir2:  Lowest indices of table values to be interpolated
 
 c output:
 c  res,  interpolated value at (p1,p2)
-c  ip1 = 0:  parameter p1 is in valid range of table
-c  ip1 =-1:  parameter p1 is below left boundary of tabulated range
-c  ip1 =+1:  parameter p1 is above right boundary of tabulated range
 
-c  ip2    :  same as ip1, for parameter p2.
 
- 
+
       use B2MOD_TYPES
  
       implicit none
@@ -110,7 +106,6 @@ c  ip2    :  same as ip1, for parameter p2.
       real(kind=R8), intent(in) :: tab(0:nr1,0:nr2),r1(0:nr1),r2(0:nr2),
      &   dr1(0:nr1-1),dr2(0:nr2-1)
       real(kind=R8), intent(in) :: p1,p2
-      integer, intent(in) :: ip1,ip2 
       real(kind=R8) :: res, rx, ry,ff(2,2)
 
 c  both cell indices ir1 and ir2 are found. 
