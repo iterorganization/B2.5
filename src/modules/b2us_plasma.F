@@ -1420,5 +1420,160 @@ cwdk move to dv
 
       end subroutine write_plasma_state
 
+***********************************************************************
+
+
+      subroutine write_b2fplasmf (nput, ns, nCv, nFc, st)
+      use b2mod_version
+      implicit none
+      integer, intent(in) :: nput, ns, nCv, nFc
+      type(B2State), intent(inout) :: st
+
+* local variables
+      integer io, nout, idum(0:2)
+
+
+*-----------------------------------------------------------------------
+* This subroutine writes to b2fplasmf
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('write_b2fplasmf')
+*   ..test ns
+      call xertst (1.le.ns, 'faulty argument ns')
+      
+*   ..write b2fstate_st in ubstructured format
+      open (newunit=nout,file='b2fplasmf',iostat=io)
+      if (io /= 0) then
+        write (*,*) ' File b2fplasmf not writable'
+        call xerrab ('to_unstructured plasma -- no state file ')
+      end if
+
+*   ..write file header
+      call cfverw (nout, newversion)
+      idum(0) = nCv
+      idum(1) = nFc
+      idum(2) = ns
+      call cfwuin (nout, 3, idum, 'nCv,nFc,ns')
+
+* ..save state and fluxes
+
+*   ..save plasma state
+      call cfwure (nout, nCv*ns,   st % pl % na, 'na')
+      call cfwure (nout, nCv,      st % dv % ne, 'ne')
+      call cfwure (nout, nCv*ns,   st % pl % ua, 'ua')
+      call cfwure (nout, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfwure (nout, nCv,      st % pl % te, 'te')
+      call cfwure (nout, nCv,      st % pl % ti, 'ti')
+      call cfwure (nout, nCv,      st % pl % tn, 'tn')
+      call cfwure (nout, nCv,      st % pl % po, 'po')
+
+*   ..save fluxes
+      call cfwure (nout, nFc*2*ns, st % dv % fna, 'fna')
+      call cfwure (nout, nFc*2,    st % dv % fhe, 'fhe')
+      call cfwure (nout, nFc*2,    st % dv % fhi, 'fhi')
+      call cfwure (nout, nFc*2,    st % dv % fhn, 'fhn')
+      call cfwure (nout, nFc*2,    st % dv % fch, 'fch')
+      call cfwure (nout, nFc*2,    st % dv % fch_32, 'fch_32')
+      call cfwure (nout, nFc*2,    st % dv % fch_52, 'fch_52')
+      call cfwure (nout, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+
+*   ..save parallel current
+      call cfwure (nout, nFc*2,    st % dv % fch_p, 'fch_p')
+
+*   ..saving various fluxes and velocities needed by advanced SOLPS-ITER features
+      call cfwure (nout, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
+      call cfwure (nout, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
+      call cfwure (nout, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_he, 'fna_he')
+      call cfwure (nout, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
+      call cfwure (nout, nFc*2,    st % dv % fhePSch, 'fhePSch')
+      call cfwure (nout, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
+      call cfwure (nout, nFc*2,    st % dv % fne_eir, 'fne_eir')
+      call cfwure (nout, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
+      call cfwure (nout, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_32, 'fna_32')
+      call cfwure (nout, nFc*2*ns, st % dv % fna_52, 'fna_52')
+      call cfwure (nout, nFc*2,    st % dv % fni_32, 'fni_32')
+      call cfwure (nout, nFc*2,    st % dv % fni_52, 'fni_52')
+      call cfwure (nout, nFc*2,    st % dv % fne_32, 'fne_32')
+      call cfwure (nout, nFc*2,    st % dv % fne_52, 'fne_52')
+      call cfwure (nout, nFc*2,    st % dv % fchdia, 'fchdia')
+      call cfwure (nout, nFc*2,    st % dv % fchin, 'fchin')
+      call cfwure (nout, nFc*2,    st % dv % fchvispar, 'fchvispar')
+      call cfwure (nout, nFc*2,    st % dv % fchvisper, 'fchvisper')
+      call cfwure (nout, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nout, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfwure (nout, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
+      call cfwure (nout, nFc*2*ns, st % dv % vadia, 'vadia')
+      call cfwure (nout, nFc*2*ns, st % dv % wadia, 'wadia')
+      call cfwure (nout, nFc*2,    st % dv % veecrb, 'veecrb')
+      call cfwure (nout, nFc*2,    st % dv % vedia, 'vedia')
+      call cfwure (nout, nFc*2,    st % dv % floe_noc, 'floe_noc')
+      call cfwure (nout, nFc*2,    st % dv % floi_noc, 'floi_noc')
+
+*  .. residuals
+      call cfwure (nout, nCv*ns,   st % dv % resco, 'resco')
+      call cfwure (nout, nCv,      st % dv % reshe, 'reshe')
+      call cfwure (nout, nCv,      st % dv % reshi, 'reshi')
+      call cfwure (nout, nCv,      st % dv % reshn, 'reshn')
+      call cfwure (nout, nCv*ns,   st % dv % resmo, 'resmo')
+      call cfwure (nout, nCv,      st % dv % resmt, 'resmt')
+      call cfwure (nout, nCv,      st % dv % respo, 'respo')
+
+*  .. sources
+      call cfwure (nout, nCv*ns*2,   st % sr % sna, 'sna')
+      call cfwure (nout, nCv*ns*4,   st % sr % smo, 'smo')
+      call cfwure (nout, nCv*ns*4,   st % sr % smq, 'smq')
+      call cfwure (nout, nCv*4,   st % sr % shi, 'shi')
+      call cfwure (nout, nCv*4,   st % sr % she, 'she')
+
+*  .. transport
+      call cfwure (nout, nFc*2,      st % co % calf, 'calf')
+      call cfwure (nout, nFc*2*ns,   st % co % cdna, 'cdna')
+      call cfwure (nout, nFc*2*ns,   st % co % cdpa, 'cdpa')
+      call cfwure (nout, nCv,        st % co % ceqp, 'ceqp')
+      call cfwure (nout, nFc*2,      st % co % chce, 'chce')
+      call cfwure (nout, nFc*2,      st % co % chci, 'chci')
+      call cfwure (nout, nFc*2,      st % co % chve, 'chve')
+      call cfwure (nout, nFc,        st % co % chvemx, 'chvemx')
+      call cfwure (nout, nFc*2,      st % co % chvi, 'chvi')
+      call cfwure (nout, nFc,        st % co % chvimx, 'chvimx')
+      call cfwure (nout, nFC*2,      st % co % csig, 'csig')
+      call cfwure (nout, nFc*2*ns,   st % co % cvla, 'cvla')
+      call cfwure (nout, nFc*2*ns,   st % co % cvsa, 'cvsa')
+      call cfwure (nout, nFc*2*ns,   st % co % cthe, 'cthe')
+      call cfwure (nout, nFc*2*ns,   st % co % cthi, 'cthi')
+      call cfwure (nout, nFc*2*ns*ns,st % co % csigin, 'csigin')
+      call cfwure (nout, nFc*2*ns,   st % co % cvsa_cl, 'cvsa_cl')
+      call cfwure (nout, nFc,        st % dv % fllime, 'fllime')
+      call cfwure (nout, nFc,        st % dv % fllimi, 'fllimi')
+      call cfwure (nout, nFc*2*ns,   st % co % fllim0fna, 'fllim0fna')
+      call cfwure (nout, nFc*2*ns,   st % co % fllim0fhi, 'fllim0fhi')
+      call cfwure (nout, nFc*ns,     st % co % fllimvisc, 'fllimvisc')
+      call cfwure (nout, nFc,        st % co % f_luc_ke, 'f_luc_ke')
+      call cfwure (nout, nFc,        st % co % f_luc_ki, 'f_luc_ki')
+      call cfwure (nout, nFc,        st % co % f_luc_et, 'f_luc_et')
+      call cfwure (nout, nFc,        st % co % f_luc_sg, 'f_luc_sg')
+      call cfwure (nout, nFc,        st % co % f_luc_al, 'f_luc_al')
+      call cfwure (nout, nFc,        st % co % fllim_ke, 'fllim_ke')
+      call cfwure (nout, nFc,        st % co % fllim_ki, 'fllim_ki')
+      call cfwure (nout, nFc,        st % co % fllim_al, 'fllim_al')
+      call cfwure (nout, nCv,        st % co % fllim_al_c, 'fllim_al_c')
+
+
+
+
+* ..return
+      call subend ()
+      return
+
+      end subroutine write_b2fplasmf
+
+
       end module b2us_plasma
       

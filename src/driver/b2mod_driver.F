@@ -1944,6 +1944,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call update_average_balance(itim,ntim)
         endif
 #endif
+
 *    ..increment
         itim = itim+1
         itim_plas = itim_plas + 1
@@ -2320,6 +2321,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
 *   ..save final state
       call write_plasma_state (nout(2), ns, nCv, nFc, state)
+*   ..save b2fplasmf file
+      call write_b2fplasmf (nout(7), ns, nCv, nFc, state)
+
 *   ..conversion to structured format and output
       if (mpg%isClassicalGrid.eq.1) then
         call to_struct_plasma (ns,mpg,state)
