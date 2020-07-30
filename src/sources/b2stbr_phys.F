@@ -105,7 +105,13 @@ c for KUL advanced fluid neutral boundary conditions
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy2, dnndz2, dumm0(nFc,0:1),
      &                  dumm1(nFc,0:1),cvsf(nFc,0:1), dnn(nFc,0:1),
-     &                  min_mfp(1:nstrat)
+     &                  min_mfp(1:nstrat), mfp
+c     output for analysis/debugging
+      integer, save ::  AFN_out = 0
+      real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
+     &                  fmomrec_out(nCv), feneni_out(nCv),
+     &                  fenerefl_out(nCv), fenerec_out(nCv),
+     &                  fnni_out(nCv), mfp_out(nCv)
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, mod, exp
@@ -165,6 +171,7 @@ c for KUL advanced fluid neutral boundary conditions
        call ipgeti ('b2sihs_style_visc', style_visc)
        call ipgetr ('b2stbr_mfp_b1',mfp_b1)
        call ipgetr ('b2stbr_mfp_b2',mfp_b2)
+       call ipgeti ('b2stbr_AFN_out',AFN_out)
 
 
       endif                                                         !srv 22.08.08 }
@@ -263,6 +270,17 @@ c for KUL advanced fluid neutral boundary conditions
 
 c pre-computations for KUL fluid neutrals
       if (kul_recycle.ne.0) then
+
+c     initialize debugging/analysis arrays
+        fmomrec_out  = 0.0_R8
+        fmomrefl_out = 0.0_R8
+        fmomni_out   = 0.0_R8
+        fenerec_out  = 0.0_R8
+        fenerefl_out = 0.0_R8
+        feneni_out   = 0.0_R8
+        fnni_out     = 0.0_R8
+        mfp_out      = 0.0_R8
+
         if (ns.gt.2) then
           call xerrab('KUL recycling model not yet developed for',
      &                    'multi-species cases')
@@ -290,10 +308,11 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
           do i = 1, mpg%rcCvP(istra,2)
             iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
             call CalcMinMfp(iRc1,isn,istra,
-     &          pl,dv,rt,min_mfp)
+     &          pl,dv,rt,min_mfp,mfp)
+            mfp_out(iRc1) = mfp
           enddo
 
-c choose the type of neutral reflection boundary condition, based on the minimum mfp.
+c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
           if (min_mfp(istra).lt.mfp_b1) then
             maxw_eff(istra) = 0
           elseif (min_mfp(istra).gt.mfp_b2) then
@@ -303,6 +322,9 @@ c           do nothing to prevent oscillations if minimum mfp is just around mfp
           endif
 
         enddo
+
+
+        
       endif !! end pre-computations KUL fluid neutrals
 
 
@@ -546,6 +568,17 @@ c for KUL recycling/reflection model
         write(70,hlp_frm) ' trfle=',trfle                              !srv 11.03.13 }
         close(70)
       endif                                                            !srv 11.07.05 }
+
+      if (AFN_out.ne.0) then
+        call my_out_us(70,nCv,0,fmomrec_out,'AFN_fmomrec')
+        call my_out_us(70,nCv,0,fmomni_out,'AFN_fmomni')
+        call my_out_us(70,nCv,0,fmomrefl_out,'AFN_fmomrefl')
+        call my_out_us(70,nCv,0,fenerec_out,'AFN_fenerec')
+        call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
+        call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
+        call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
+        call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
+      endif
 
 #ifdef WG_TODO
       if(reflection_max.gt.1.0_R8 .or. 
@@ -915,8 +948,6 @@ c                dnndzv = (dnndthetav - dnndyv.*sin(alpha))./cos(alpha);
            dnndzv = dnndthetav
            dnndz = dnndzc + dnndzv * pl%na(iCv,is0)
 
-
-
 !! end of preliminary calculations
            if(erecyc(is,istra)>0.0_R8.or.
      2      mrecyc(is,istra)>0.0_R8)
@@ -973,6 +1004,11 @@ cmb   net neutral energy source from recycling
              else 
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
+             endif
+
+             if (AFN_out.ne.0) then
+               fmomrec_out(iCv)   = fmomrec
+               fenerec_out(iCv)   = fenerec
              endif
 
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
@@ -1089,6 +1125,14 @@ cmb   net momentum sources from neutral particle reflection
              nnwwnrefl = 0
              fenerefl = 0
              fene_el = 0
+             endif
+
+             if (AFN_out.ne.0) then
+               fmomni_out(iCv)   = fmomni
+               fmomrefl_out(iCv) = fmomrefl
+               feneni_out(iCv)   = feneni
+               fenerefl_out(iCv) = fenerefl
+               fnni_out(iCv)     = fnni
              endif
 
              smon = (fmomni+fmomrefl)*geo%cvhz(iCv)*
