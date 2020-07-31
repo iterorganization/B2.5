@@ -116,7 +116,6 @@
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
-      character username*24, database*24, treename*24, version*24
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
       integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
@@ -168,6 +167,8 @@
 #endif
       integer :: num_time_slices, time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
+      character username*24, database*24, treename*24, version*24
+      character old_imas_version*8, imas_version*8, systemarg*256
 #endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -1311,11 +1312,18 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .                                           length=lenval)
          if (ierror.eq.0) call get_environment_variable('DEVICE',
      .                                           value=device_env)
+         call get_environment_variable('IMAS_VERSION', status=ierror,
+     .                                           length=lenval)
+         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',
+     .                                           value=imas_version)
 #else
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+         CALL PXFGETENV ('IMAS_VERSION', 0,
+     .                              imas_version, lenval, ierror)
 #else
          call getenv ('DEVICE', device_env)
+         call getenv ('IMAS_VERSION', imas_version)
 #endif
 #endif
          if (.not.streql(device_env,' ')) database = device_env
@@ -1967,6 +1975,10 @@ c new CDF movie option (1st frame at t=0)
 *   ..procedures
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
+#ifdef IMAS
+      logical streql
+      external streql
+#endif
 
       call subini ('b2mndr_1')
 *   ..no error so far
@@ -2425,6 +2437,7 @@ c new CDF movie option
                 call ids_get( idx, "dataset_description",
      .                                  old_description, status)
                 if ( status.ne.0 ) then
+                  old_imas_version = 'x.xx.x'
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
 #if IMAS_MINOR_VERSION > 25
@@ -2432,6 +2445,7 @@ c new CDF movie option
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
+                  old_imas_version = old_description%dd_version(1)
                   call ids_deallocate( old_description )
                 end if
                 continued = continued .and.
@@ -2541,6 +2555,10 @@ c new CDF movie option
 #endif
       character*256 filename
       logical found, ids_done
+#ifdef IMAS
+      logical streql
+      external streql
+#endif
 
       call subini ('b2mndr_2')
       if(quitexist)
@@ -2714,6 +2732,7 @@ c new CDF movie option
               write(*,*) 'Error opening old edge_profiles IDS ! '//
      .                   'Will create a new one.'
               idx = 0
+              continued = .false.
             else
               num_time_slices = size(old_edge_profiles%time)
               if (num_time_slices.gt.0) then
@@ -2727,12 +2746,14 @@ c new CDF movie option
               call ids_get( idx, "dataset_description",
      .                                old_description, status)
               if ( status.ne.0 ) then
+                old_imas_version = 'x.xx.x'
                 write(*,*) 'Error opening old dataset_description IDS !'
 #if IMAS_MINOR_VERSION > 25
               else
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
+                old_imas_version = old_description%dd_version(1)
                 call ids_deallocate( old_description )
               end if
               continued = continued .and.

@@ -80,15 +80,15 @@
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(fllime(-1:nxd,-1:nyd))
-      fllime=0.0_R8
+      fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
-      fllimi=0.0_R8
+      fllimi=1.0_R8
       allocate(fllim0fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      fllim0fna=0.0_R8
+      fllim0fna=1.0_R8
       allocate(fllim0fhi(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      fllim0fhi=0.0_R8
+      fllim0fhi=1.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
-      fllimvisc=0.0_R8
+      fllimvisc=1.0_R8
       allocate(fllim_ki(-1:nxd,-1:nyd))                               !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
@@ -187,20 +187,20 @@
         call cfrure (nread, size(fllime), fllime, 'fllime')
         call cfrure (nread, size(fllimi), fllimi, 'fllimi')
       else
-        fllime=0.0_R8
-        fllimi=0.0_R8
+        fllime=1.0_R8
+        fllimi=1.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.017') then
         call cfrure (nread, size(fllim0fna), fllim0fna, 'fllim0fna')
         call cfrure (nread, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
       else
-        fllim0fna=0.0_R8
-        fllim0fhi=0.0_R8
+        fllim0fna=1.0_R8
+        fllim0fhi=1.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.020') then
         call cfrure (nread, size(fllimvisc), fllimvisc, 'fllimvisc')
       else
-        fllimvisc=0.0_R8
+        fllimvisc=1.0_R8
       endif
       if(b2fplasma_version.ge.'03.000.006') then
         call cfrure (nread, size(f_luc_ke), f_luc_ke, 'f_luc_ke')
@@ -213,15 +213,15 @@
         call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
         call cfrure (nread, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       else
-        f_luc_ke=0.0_R8
-        f_luc_ki=0.0_R8
-        f_luc_et=0.0_R8
-        f_luc_sg=0.0_R8
-        f_luc_al=0.0_R8
-        fllim_ke=0.0_R8
-        fllim_ki=0.0_R8
-        fllim_al=0.0_R8
-        fllim_al_c=0.0_R8
+        f_luc_ke=1.0_R8
+        f_luc_ki=1.0_R8
+        f_luc_et=1.0_R8
+        f_luc_sg=1.0_R8
+        f_luc_al=1.0_R8
+        fllim_ke=1.0_R8
+        fllim_ki=1.0_R8
+        fllim_al=1.0_R8
+        fllim_al_c=1.0_R8
       endif
 
       return

@@ -118,7 +118,7 @@
      1  plasmastate_version)
 
 ! Display tim      
-      write(0,'(3a,1p,1e12.5,a)') 'The plasmastate file ',trim(arg),
+      write(0,'(3a,1p,1e15.8,a)') 'The plasmastate file ',trim(arg),
      & ' corresponds to plasma time ',tim,' seconds.'
 
 * ..end of computation

@@ -18,11 +18,17 @@ C ===================================================================
       external lnblnk, subini, subend, xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
+#ifdef NAGFOR
+      integer status, ierror
+#endif
 #ifdef USE_PXFGETENV
-      integer lenval, ierror
+      integer lenval
+#ifndef NAGFOR
+      integer ierror
+#endif
 #else
 #ifdef NAGFOR
-      integer lenval, ierror
+      integer lenval
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -208,11 +214,20 @@ C ===================================================================
       call xertst(iend.lt.elength.or.locallabel(iend:iend).eq.'`',
      1 'You did not close `')
       systemarg='echo `'//locallabel(icpos:iend-1)//'` > /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
       call system(systemarg)
+#endif
       open(99,file='/tmp/tmp.xxx')
       read(99,'(a)') envvar
       close(99)
-      call system('/bin/rm /tmp/tmp.xxx')
+      systemarg='/bin/rm /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
+      call system(systemarg)
+#endif
       tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
       jcpos=jcpos+lnblnk(envvar)
       icpos=iend+1

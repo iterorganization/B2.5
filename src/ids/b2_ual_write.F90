@@ -129,11 +129,15 @@ program b2_ual_write
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
     call getenv ('DEVICE', device_env)
+    call getenv ('IMAS_VERSION', imas_version)
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
@@ -182,6 +186,7 @@ program b2_ual_write
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
         idx = 0
+        continued = .false.
       else
         num_time_slices = size(old_edge_profiles%time)
         if (num_time_slices.gt.0) then
@@ -194,12 +199,14 @@ program b2_ual_write
         old_end_time = IDS_REAL_INVALID
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
+          old_imas_version = 'x.xx.x'
           write (0,*) 'Error opening old dataset_description IDS !'
 #if IMAS_MINOR_VERSION > 25
         else
           old_start_time = old_description%simulation%time_begin
           old_end_time = old_description%simulation%time_end
 #endif
+          old_imas_version = old_description%dd_version(1)
           call ids_deallocate( old_description )
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &

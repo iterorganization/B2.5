@@ -191,8 +191,9 @@
 !!                    data access operation
 !!      @param  run - The run number of the database being created
 !!      @param  shot - The shot number of the database being created
-!!      @param  treename - the name of the IMAS IDS database,
-!!              (i.e. "edge_profiles" (mandatory) )
+!!      @param  treename - the name of the IMAS IDS database
+!!              (local $DEVICE environment variable by default if defined,
+!!               otherwise "solps-iter" if argument is not provided)
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
@@ -264,6 +265,16 @@ program b2_ual_write_b2mod
 #endif
 
     implicit none
+#ifdef USE_PXFGETENV
+    integer lenval, ierror
+#else
+#ifdef NAGFOR
+    integer lenval, ierror
+#endif
+#endif
+#ifndef NO_GETENV
+    character(len=24) :: device_env
+#endif
 
     !! Local variables
     integer :: i      !< Iterator
@@ -277,6 +288,11 @@ program b2_ual_write_b2mod
     character(len=24) :: num_step_string
     character(len=24) :: argName
 
+    !! Procedures
+    character*16 usrnam
+    logical streql
+    external usrnam, streql
+
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
     call checkFileAndDelete( "b2mn.prt" )
@@ -285,9 +301,31 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
 
-    !! Set default value for number of steps
+    !! Set default value for IMAS major version and number of steps
     num_step = -1
+    status = 0
     version = "3"
+    treename = 'ids'
+    username = usrnam()
+    database = 'solps-iter'
+#ifndef NO_GETENV
+    device_env = ' '
+#ifdef NAGFOR
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
+#else
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+#else
+    call getenv ('DEVICE', device_env)
+    call getenv ('IMAS_VERSION', imas_version)
+#endif
+#endif
+    if (.not.streql(device_env,' ')) database = device_env
+#endif
 
     !! Check if arguments are found
     narg = command_argument_count()
@@ -319,7 +357,7 @@ program b2_ual_write_b2mod
         end do
     !! If not at least shot, run, username, and database were defined, display
     !! the error message and and a full command example
-    else if( narg .lt. 8 ) then
+    else if( narg .lt. 4 ) then
         write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
@@ -337,6 +375,11 @@ program b2_ual_write_b2mod
         call exit(0)
     end if
 
+    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
+    call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    call xertst( .not.streql(database,' '), 'Database not defined !')
+
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
     call b2mn_init
@@ -351,9 +394,6 @@ program b2_ual_write_b2mod
         write(0,*) "b2mn_step() completed"
     end if
 
-    status = 0
-    treename = 'ids'
-
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
@@ -366,6 +406,7 @@ program b2_ual_write_b2mod
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
         idx = 0
+        continued = .false.
       else
         num_time_slices = size(edge_profiles%time)
         if (num_time_slices.gt.0) then
@@ -378,12 +419,14 @@ program b2_ual_write_b2mod
         old_end_time = IDS_REAL_INVALID
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
+          old_imas_version = 'x.xx.x'
           write (0,*) 'Error opening old dataset_description IDS !'
 #if IMAS_MINOR_VERSION > 25
         else
           old_start_time = description%simulation%time_begin
           old_end_time = description%simulation%time_end
 #endif
+          old_imas_version = old_description%dd_version(1)
           call ids_deallocate( old_description )
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &

@@ -102,6 +102,8 @@ module b2mod_ual_io_grid
         !< If periodic, the last node is connected to the first by an edge.
         !< If not periodic, an additional node at 2 pi is added
 
+    integer :: jxi, jxa !< B2.5 Inner and Outer midplane default locations
+
     !! Object class tuples (ITM class definition)
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_NODE =        &
         &   (/ 0, 0 /)  !< Object class tuple (ITM class definition): Node
@@ -124,7 +126,7 @@ module b2mod_ual_io_grid
     !! Primary IDS classes are:
     !!      Class 1 - nodes/vertices (0D objects)
     !!      Class 2 - edges/faces (1D objects)
-    !!      Class 2 - 2D cells (2D objects)
+    !!      Class 3 - 2D cells (2D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
     !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
@@ -155,7 +157,7 @@ module b2mod_ual_io_grid
     integer, parameter :: B2_GENERIC_GSUBSET_COUNT = 6  !< Total number of
         !< generic grid subsets
 
-    !! Generic grid subsets (all cells, all faces)
+    !! Generic grid subsets (all cells, all edges)
     !! Note: special grid subsets (given by region ids) do not have specific
     !! constants (see also b2mod_connectivity.f90)
 
@@ -165,30 +167,30 @@ module b2mod_ual_io_grid
     !! IMAS GGD grid subset identifier definitions
     integer, parameter :: GRID_SUBSET_TYPES = 106
 
-    !> x-aligned faces defining part of active separatrix separating core and SOL
+    !> x-aligned edges defining part of active separatrix separating core and SOL
     integer, parameter :: GRID_SUBSET_ACTIVE_SEPARATRIX = 26
     !> main_chamber_wall + outer_baffle(s) + inner_baffle(s)
     integer, parameter :: GRID_SUBSET_MAIN_WALL = 27
     !> outer_PFR_wall(s) + inner_PFR_wall(s)
     integer, parameter :: GRID_SUBSET_PFR_WALL = 28
-    !> y-aligned faces inside the separatrix connecting to the non-active x-point
+    !> y-aligned edges inside the separatrix connecting to the non-active x-point
     integer, parameter :: GRID_SUBSET_CORE_CUT_INACTIVE = 29
-    !> y-aligned faces in the private flux region connecting to the non-active x-point
+    !> y-aligned edges in the private flux region connecting to the non-active x-point
     integer, parameter :: GRID_SUBSET_PFR_CUT_INACTIVE = 30
-    !> y-aligned faces in the outer SOL connecting to the non-active x-point
+    !> y-aligned edges in the outer SOL connecting to the non-active x-point
     integer, parameter :: GRID_SUBSET_OUTER_THROAT_INACTIVE = 31
-    !> y-aligned faces in the inner SOL connecting to the non-active x-point
+    !> y-aligned edges in the inner SOL connecting to the non-active x-point
     integer, parameter :: GRID_SUBSET_INNER_THROAT_INACTIVE = 32
-    !> x-aligned faces defining the non-active separatrix
+    !> x-aligned edges defining the non-active separatrix
     integer, parameter :: GRID_SUBSET_SECOND_SEPARATRIX = 33
-    !> x-aligned faces defining the chamber wall of the outer non-active divertor region
+    !> x-aligned edges defining the chamber wall of the outer non-active divertor region
     integer, parameter :: GRID_SUBSET_OUTER_BAFFLE_INACTIVE = 34
-    !> x-aligned faces defining the chamber wall of the inner non-active divertor region
+    !> x-aligned edges defining the chamber wall of the inner non-active divertor region
     integer, parameter :: GRID_SUBSET_INNER_BAFFLE_INACTIVE = 35
-    !> x-aligned faces defining the private flux region wall of the outer non-active
+    !> x-aligned edges defining the private flux region wall of the outer non-active
     !> divertor region
     integer, parameter :: GRID_SUBSET_OUTER_PFR_WALL_INACTIVE = 36
-    !> x-aligned faces defining the private flux region wall of the inner non-active
+    !> x-aligned edges defining the private flux region wall of the inner non-active
     !> divertor region
     integer, parameter :: GRID_SUBSET_INNER_PFR_WALL_INACTIVE = 37
     !> Cells between the two separatrices
@@ -197,13 +199,13 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_DIVERTOR_INACTIVE = 39
     !> Cells defining the inner inactive divertor region
     integer, parameter :: GRID_SUBSET_INNER_DIVERTOR_INACTIVE = 40
-    !> y-aligned faces defining the outer inactive target
+    !> y-aligned edges defining the outer inactive target
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
-    !> y-aligned faces defining the inner inactive target
+    !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
-    !> Point on active separatrix at outer mid-plane
+    !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
-    !> Point on active separatrix at inner mid-plane
+    !> Point on active separatrix at inner midplane
     integer, parameter :: GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX = 102
     !> Point on active separatrix at outer active target
     integer, parameter :: GRID_SUBSET_OUTER_STRIKEPOINT = 103
@@ -221,9 +223,9 @@ module b2mod_ual_io_grid
        &  (/   &
        &    'UNSPECIFIED               ' , &
        &    'NODES                     ' , &
-       &    'FACES                     ' , &
-       &    'X_ALIGNED_FACES           ' , &
-       &    'Y_ALIGNED_FACES           ' , &
+       &    'EDGES                     ' , &
+       &    'X_ALIGNED_EDGES           ' , &
+       &    'Y_ALIGNED_EDGES           ' , &
        &    'CELLS                     ' , &
        &    'X_POINTS                  ' , &
        &    'CORE_CUT                  ' , &
@@ -283,55 +285,55 @@ module b2mod_ual_io_grid
        &  (/   &
        &    'Unspecified grid subset                                                                      ' , &
        &    'All nodes (0D objects)                                                                       ' , &
-       &    'All faces (1D objects)                                                                       ' , &
-       &    'All x-aligned (poloidally) aligned faces                                                     ' , &
-       &    'All y-aligned (radially) aligned faces                                                       ' , &
-       &    'All cells                                                                                    ' , &
+       &    'All edges (1D objects)                                                                       ' , &
+       &    'All x-aligned (poloidally) aligned edges                                                     ' , &
+       &    'All y-aligned (radially) aligned edges                                                       ' , &
+       &    'All cells (2D objects)                                                                       ' , &
        &    'X-points                                                                                     ' , &
-       &    'y-aligned faces inside the separatrix connecting to the x-point                              ' , &
-       &    'y-aligned faces in the private flux region connecting to the x-point                         ' , &
-       &    'y-aligned faces in the outer SOL connecting to the x-point                                   ' , &
-       &    'y-aligned faces in the inner SOL connecting to the x-point                                   ' , &
-       &    'y-aligned faces connecting to the node closest to outer midplane on the separatrix           ' , &
-       &    'y-aligned faces connecting to the node closest to inner midplane on the separatrix           ' , &
-       &    'y-aligned faces defining the outer target                                                    ' , &
-       &    'y-aligned faces defining the inner target                                                    ' , &
-       &    'Innermost x-aligned faces                                                                    ' , &
-       &    'x-aligned faces defining the separatrix                                                      ' , &
-       &    'x-aligned faces defining main chamber wall outside of the divertor regions                   ' , &
-       &    'x-aligned faces defining the chamber wall of the outer divertor region                       ' , &
-       &    'x-aligned faces defining the chamber wall of the inner divertor region                       ' , &
-       &    'x-aligned faces defining the private flux region wall of the outer divertor region           ' , &
-       &    'x-aligned faces defining the private flux region wall of the inner divertor region           ' , &
+       &    'y-aligned edges inside the separatrix connecting to the x-point                              ' , &
+       &    'y-aligned edges in the private flux region connecting to the x-point                         ' , &
+       &    'y-aligned edges in the outer SOL connecting to the x-point                                   ' , &
+       &    'y-aligned edges in the inner SOL connecting to the x-point                                   ' , &
+       &    'y-aligned edges connecting to the node closest to outer midplane on the separatrix           ' , &
+       &    'y-aligned edges connecting to the node closest to inner midplane on the separatrix           ' , &
+       &    'y-aligned edges defining the outer target                                                    ' , &
+       &    'y-aligned edges defining the inner target                                                    ' , &
+       &    'Innermost x-aligned edges                                                                    ' , &
+       &    'x-aligned edges defining the separatrix                                                      ' , &
+       &    'x-aligned edges defining main chamber wall outside of the divertor regions                   ' , &
+       &    'x-aligned edges defining the chamber wall of the outer divertor region                       ' , &
+       &    'x-aligned edges defining the chamber wall of the inner divertor region                       ' , &
+       &    'x-aligned edges defining the private flux region wall of the outer divertor region           ' , &
+       &    'x-aligned edges defining the private flux region wall of the inner divertor region           ' , &
        &    'Cells inside the separatrix                                                                  ' , &
        &    'Cells defining the main SOL outside of the divertor regions                                  ' , &
        &    'Cells defining the outer divertor region                                                     ' , &
        &    'Cells defining the inner divertor region                                                     ' , &
-       &    'x-aligned faces defining part of active separatrix separating core and SOL                   ' , &
+       &    'x-aligned edges defining part of active separatrix separating core and SOL                   ' , &
        &    'main_chamber_wall + outer_baffle(s) + inner_baffle(s)                                        ' , &
        &    'outer_PFR_wall(s) + inner_PFR_wall(s)                                                        ' , &
-       &    'y-aligned faces inside the separatrix connecting to the non-active x-point                   ' , &
-       &    'y-aligned faces in the private flux region connecting to the non-active x-point              ' , &
-       &    'y-aligned faces in the outer SOL connecting to the non-active x-point                        ' , &
-       &    'y-aligned faces in the inner SOL connecting to the non-active x-point                        ' , &
-       &    'x-aligned faces defining the non-active separatrix                                           ' , &
-       &    'x-aligned faces defining the chamber wall of the outer non-active divertor region            ' , &
-       &    'x-aligned faces defining the chamber wall of the inner non-active divertor region            ' , &
-       &    'x-aligned faces defining the private flux region wall of the outer non-active divertor region' , &
-       &    'x-aligned faces defining the private flux region wall of the inner non-active divertor region' , &
+       &    'y-aligned edges inside the separatrix connecting to the non-active x-point                   ' , &
+       &    'y-aligned edges in the private flux region connecting to the non-active x-point              ' , &
+       &    'y-aligned edges in the outer SOL connecting to the non-active x-point                        ' , &
+       &    'y-aligned edges in the inner SOL connecting to the non-active x-point                        ' , &
+       &    'x-aligned edges defining the non-active separatrix                                           ' , &
+       &    'x-aligned edges defining the chamber wall of the outer non-active divertor region            ' , &
+       &    'x-aligned edges defining the chamber wall of the inner non-active divertor region            ' , &
+       &    'x-aligned edges defining the private flux region wall of the outer non-active divertor region' , &
+       &    'x-aligned edges defining the private flux region wall of the inner non-active divertor region' , &
        &    'Cells between the two separatrices                                                           ' , &
        &    'Cells defining the outer inactive divertor region                                            ' , &
        &    'Cells defining the inner inactive divertor region                                            ' , &
-       &    'y-aligned faces defining the outer inactive target                                           ' , &
-       &    'y-aligned faces defining the inner inactive target                                           ' , &
+       &    'y-aligned edges defining the outer inactive target                                           ' , &
+       &    'y-aligned edges defining the inner inactive target                                           ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US,                                                                  &
-       &    'Point on active separatrix at outer mid-plane                                                ' , &
-       &    'Point on active separatrix at inner mid-plane                                                ' , &
+       &    'Point on active separatrix at outer midplane                                                 ' , &
+       &    'Point on active separatrix at inner midplane                                                 ' , &
        &    'Point on active separatrix at outer active target                                            ' , &
        &    'Point on active separatrix at inner active target                                            ' , &
        &    'Point on non-active separatrix at outer active target                                        ' , &
@@ -659,7 +661,7 @@ contains
             &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
         !! Each 1D object has two boundaries and two neighbours, in positive
         !! and negative coordinate direction, one on each side (for x-aligned
-        !! faces: along flux surface, for y-aligned faces: orthogonal to flux
+        !! edges: along flux surface, for y-aligned edges: orthogonal to flux
         !! surface)
         do iFc = 1, nFc
             !! Allocate and set all boundary & connectivity information to
@@ -687,13 +689,13 @@ contains
             end do
         end do
 
-        !! x-aligned faces
+        !! x-aligned edges
         do iFc = 1, gmap%nFcx
             !! get position of this face in the B2 grid
             ix = gmap%mapFcix( iFc )
             iy = gmap%mapFciy( iFc )
             !! get index of start vertex
-            !! objdef dims: index of face, 1=start node, 1=one-dimensional
+            !! objdef dims: index of edge, 1=start node, 1=one-dimensional
             !! object
             select case ( gmap%mapFcIFace( iFc ) )
             case( BOTTOM )
@@ -705,7 +707,7 @@ contains
                     &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
                 if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at (" &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
                         &   ") has no start node")
                 end if
@@ -717,7 +719,7 @@ contains
                     &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
                 if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at (" &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
                         &   ") has no end node")
                 end if
@@ -730,7 +732,7 @@ contains
                     &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
                 if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at ("    &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
                         &   ") has no start node")
                 end if
@@ -742,14 +744,14 @@ contains
                     &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
                 if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at ("    &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
                         &   ") has no end node")
                 end if
             end select
 
-            !! Neighbour faces of this face
-            !! Left neighbour: face continuing to the left of this face
+            !! Neighbour edges of this edge
+            !! Left neighbour: edge continuing to the left of this edge
             nix = leftix( ix, iy )
             niy = leftiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -757,7 +759,7 @@ contains
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
-            !! Right neighbour: face continuing to the right of this face
+            !! Right neighbour: edge continuing to the right of this edge
             nix = rightix( ix, iy )
             niy = rightiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -774,14 +776,14 @@ contains
             end if
         end do
 
-        !! y-aligned faces
+        !! y-aligned edges
         do iFc = gmap%nFcx + 1, gmap % nFcx + gmap % nFcy
             !! get position of this face in the B2 grid
             ix = gmap % mapFcix( iFc )
             iy = gmap % mapFciy( iFc )
 !!$            if (gmap%mapCvI(ix, iy) == B2_GRID_UNDEFINED) then
 !!$                call logmsg(LOGWARNING,
-!!$                "b2IMASFillGD: writing out faces for unused cell ("//
+!!$                "b2IMASFillGD: writing out edges for unused cell ("//
 !!$                idsint2str(ix)//","//idsint2str(iy)//")")
 !!$            end if
 
@@ -795,7 +797,7 @@ contains
                     &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
                 if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at ("   &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
                         &   //idsint2str(ix)//","//idsint2str(iy)//          &
                         &   ") has no start node")
                 end if
@@ -807,7 +809,7 @@ contains
                     &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
                 if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at ("   &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
                         &   //idsint2str(ix)//","//idsint2str(iy)//          &
                         &   ") has no end node")
                 end if
@@ -821,7 +823,7 @@ contains
                     &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
                 if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at ("  &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
                         &   //idsint2str(ix)//","//idsint2str(iy)//          &
                         &   ") has no start node")
                 end if
@@ -833,14 +835,14 @@ contains
                     &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
                 if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
                     &    B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at ("  &
+                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
                         &   //idsint2str(ix)//","//idsint2str(iy)//          &
                         &   ") has no end node")
                 end if
             end select
 
-            !! Neighbour faces of this face
-            !! Bottom neighbour: face continuing to the bottom of this face
+            !! Neighbour edges of this edge
+            !! Bottom neighbour: edge continuing to the bottom of this edge
             nix = bottomix( ix, iy )
             niy = bottomiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -848,7 +850,7 @@ contains
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
-            !! Top neighbour: face continuing to the top of this face
+            !! Top neighbour: edge continuing to the top of this edge
             nix = topix( ix, iy )
             niy = topiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -919,17 +921,17 @@ contains
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(2) = iy
 
-            !! Set faces composing the quadrilateral in the list:
-            !! left face (y-aligned)
+            !! Set edges composing the quadrilateral in the list:
+            !! left edge (y-aligned)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(1)%index = gmap%mapFcI( ix, iy, LEFT )
-            !! bottom face (x-aligned
+            !! bottom edge (x-aligned)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
-            !! right face (y-aligned)
+            !! right edge (y-aligned)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
-            !! top face (x-aligned)
+            !! top edge (x-aligned)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
@@ -1129,7 +1131,7 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer :: jxi, jxa, jsep, nxtl, nxtr
+        integer :: jsep, nxtl, nxtr
 
         geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
         call get_jsep( nx, ny, jxi, jxa, jsep )
@@ -1238,7 +1240,7 @@ contains
         call createGridSubsetForClass( grid_ggd,                &
             &   grid_ggd%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
-            &   "All faces (1D objects) in the domain."  )
+            &   "All edges (1D objects) in the domain."  )
 
         !! Grid subset of all x-points
         !! (in one poloidal plane at toroidal index 1)
@@ -1250,21 +1252,21 @@ contains
         call createEmptyGridSubset(                                     &
             &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),           &
             &   GRID_SUBSET_X_POINTS, 'x-points' )
-        !! Initialize explicit object list for faces (class (/1/) )
+        !! Initialize explicit object list for edges (class (/1/) )
         !! TODO: xpoints(:, 1 ) -> taking values for first space only. Set for
         !! all spaces.
         call createExplicitObjectListSingleSpace( grid_ggd,         &
                 &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),   &
                 &   IDS_CLASS_NODE , xpoints(:, 1), IDS_CLASS_NODE, 1)
 
-        !! Set up specific grid subset by collection faces for regions
+        !! Set up specific grid subset by collecting edges for regions
 
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
 #if GGD_MINOR_VERSION > 8
         iPrivateB2 = 0
-        !! Cell + face grid subset
+        !! Cell + edge grid subset
         !! These are the "private" B2 regions, so will be given negative
         !! grid subset identifiers
         do iType = REGIONTYPE_CELL, REGIONTYPE_YFACE
@@ -1690,7 +1692,6 @@ contains
             !! subroutine collectIndexListForRegionSubroutine
             !! (function collectIndexListForRegion transferred to subroutine,
             !! as array of certain dimension is required as an output)
-            ind = 0
             select case ( iType )
             case ( REGIONTYPE_CELL )
                 allocate( indextmp2d ( gmap%nCv , SPACE_COUNT ) )
@@ -1705,7 +1706,7 @@ contains
                 if (RegionsinSubset(ireg) == 0) cycle
                 call collectIndexListForRegionSubroutine( gmap, cflag, region,   &
                    &   iType, RegionsinSubset( ireg ), indexPart2d )
-                indextmp2d( ind+1 : ind+size(indexPart2d,1),:) = indexPart2d(:,:)
+                indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do
             allocate( indexList2d ( isize, SPACE_COUNT ) )
@@ -2092,7 +2093,7 @@ contains
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
-            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( jxa, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( xOut, jsep, VX_UPPERLEFT )
 
             !! Initialize explicit object list for grid subset
             !! TODO: Currently taking object indices only from space 1
@@ -2119,7 +2120,7 @@ contains
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
-            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( jxi, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( xIn, jsep, VX_UPPERLEFT )
 
             !! Initialize explicit object list for grid subset
             !! TODO: Currently taking object indices only from space 1
@@ -2214,7 +2215,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_INNER_STRIKEPOINT,  &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ) )
 
             nInd = 1
@@ -2255,7 +2256,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,  &
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1
@@ -2296,7 +2297,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1
@@ -2358,10 +2359,10 @@ contains
         xIn = huge(xIn)
         xOut = huge(xOut)
 
-        !! Loop over all faces in core boundary grid subset
+        !! Loop over all edges in core boundary grid subset
         do iObj = 1, getGridSubsetSize(GridSubset)
             obj = getGridSubsetObject(GridSubset, iObj)
-            !! Expect a face
+            !! Expect an edge
             call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE ), &
                 & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
@@ -2385,10 +2386,19 @@ contains
             end if
         end do
 
-        call xertst( xIn /= huge( xIn ),    &
-            &   "find_Midplane_Cells: did not find inner midplane position")
-        call xertst( xOut /= huge( xOut ),  &
-            &   "find_Midplane_Cells: did not find outer midplane position")
+        if ( xIn == huge( xIn ) ) then
+          call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
+              &   //"did not find inner midplane position. " &
+              &   //"Assigning it to jxi index." )
+          xIn = jxi
+        end if
+        if ( xOut == huge( xOut ) ) then
+          call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
+              &   //"did not find outer midplane position. " &
+              &   //"Assigning it to jxa index." )
+          xOut = jxa
+        end if
+
     end subroutine find_Midplane_Cells
 
 #endif
@@ -2479,58 +2489,58 @@ contains
 
       !! Fill in object definitions (i.e. what objects compose an object)
 
-      !! 1d objects: faces
+      !! 1d objects: edges
       !! ...have two boundaries
       allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( gmap%nFcx + gmap%nFcy, 2) )
       !! ...have two neighbours, in positive and negative coordinate direction, one on each side
-      !! (for x-aligned faces: along flux surface, for y-aligned faces: orthogonal to flux surface)
+      !! (for x-aligned edges: along flux surface, for y-aligned edges: orthogonal to flux surface)
       allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour(gmap%nFcx + gmap%nFcy, 2, 1) )
       !! 1d object measure: face area
       if (present(gs)) allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( gmap % nFcx + gmap % nFcy, 1 ) )
       !! first set all boundary & connectivity information to undefined
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary = GRID_UNDEFINED
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour = GRID_UNDEFINED
-      !! x-aligned faces
+      !! x-aligned edges
       do iFc = 1, gmap % nFcx
           !! get position of this face in the B2 grid
           ix = gmap % mapFcix( iFc )
           iy = gmap % mapFciy( iFc )
           !! get index of start vertex
-          !! objdef dims: index of face, 1=start node, 1=one-dimensional object
+          !! objdef dims: index of edge, 1=start node, 1=one-dimensional object
           select case ( gmap % mapFcIFace( iFc ) )
           case( BOTTOM )
              !! start index: 1=start node
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
              if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
-                call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM face at ("//int2str(ix)//","//int2str(iy)//") has no start node")
+                call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
              end if
              !! end vertex: 2=end node
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
              if (gmap % mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
-                call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM face at ("//int2str(ix)//","//int2str(iy)//") has no end node")
+                call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
              end if
           case( TOP )
              !! start index: 1=start node
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
              if (gmap % mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
-                call logmsg(LOGWARNING, "b2ITMFillGD: TOP face at ("//int2str(ix)//","//int2str(iy)//") has no start node")
+                call logmsg(LOGWARNING, "b2ITMFillGD: TOP edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
              end if
              !! end vertex: 2=end node
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
              if (gmap % mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
-                call logmsg(LOGWARNING, "b2ITMFillGD: TOP face at ("//int2str(ix)//","//int2str(iy)//") has no end node")
+                call logmsg(LOGWARNING, "b2ITMFillGD: TOP edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
              end if
           end select
 
-          !! Neighbour faces of this face
-          !! Left neighbour: face continuing to the left of this face
+          !! Neighbour edges of this edge
+          !! Left neighbour: edge continuing to the left of this edge
           nix = leftix( ix, iy )
           niy = leftiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 1, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
-          !! Right neighbour: face continuing to the right of this face
+          !! Right neighbour: edge continuing to the right of this edge
           nix = rightix( ix, iy )
           niy = rightiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -2542,13 +2552,13 @@ contains
           if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( iFc, 1 ) = gs(ix, iy, ALIGNX)
       end do
 
-      !! y-aligned faces
+      !! y-aligned edges
       do iFc = gmap % nFcx + 1, gmap % nFcx + gmap % nFcy
           !! get position of this face in the B2 grid
           ix = gmap % mapFcix( iFc )
           iy = gmap % mapFciy( iFc )
 !!$          if (gmap%mapCvI(ix, iy) == GRID_UNDEFINED) then
-!!$                  call logmsg(LOGWARNING, "b2ITMFillGD: writing out faces for unused cell ("//int2str(ix)//","//int2str(iy)//")")
+!!$                  call logmsg(LOGWARNING, "b2ITMFillGD: writing out edges for unused cell ("//int2str(ix)//","//int2str(iy)//")")
 !!$          end if
 
           select case ( gmap % mapFcIFace( iFc ) )
@@ -2556,12 +2566,12 @@ contains
               !! start index: 1=start node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
               if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2ITMFillGD: LEFT face at ("//int2str(ix)//","//int2str(iy)//") has no start node")
+                  call logmsg(LOGWARNING, "b2ITMFillGD: LEFT edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
               end if
           !! end vertex: 2=end node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
               if (gmap % mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2ITMFillGD: LEFT face at ("//int2str(ix)//","//int2str(iy)//") has no end node")
+                  call logmsg(LOGWARNING, "b2ITMFillGD: LEFT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
           end if
               !if (itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 )
 
@@ -2570,25 +2580,25 @@ contains
               !! start index: 1=start node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
               if (gmap % mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT face at ("//int2str(ix)//","//int2str(iy)//") has no start node")
+                  call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
           end if
               !! end vertex: 2=end node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
               if (gmap % mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT face at ("//int2str(ix)//","//int2str(iy)//") has no end node")
+                  call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
               end if
           end select
 
 
-          !! Neighbour faces of this face
-          !! Bottom neighbour: face continuing to the bottom of this face
+          !! Neighbour edges of this edge
+          !! Bottom neighbour: edge continuing to the bottom of this edge
           nix = bottomix( ix, iy )
           niy = bottomiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 1, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
-          !! Top neighbour: face continuing to the top of this face
+          !! Top neighbour: edge continuing to the top of this edge
           nix = topix( ix, iy )
           niy = topiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
@@ -2618,13 +2628,13 @@ contains
           !! Set position in computational space
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(iCv, 1, 1, 1) = ix
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(iCv, 2, 1, 1) = iy
-          !! put faces composing the quadrilateral in the list: left face (y-aligned)
+          !! put edges composing the quadrilateral in the list: left edge (y-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 1 ) = gmap % mapFcI( ix, iy, LEFT )
-          !! bottom face (x-aligned
+          !! bottom edge (x-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 2 ) = gmap % mapFcI( ix, iy, BOTTOM )
-          !! right face (y-aligned)
+          !! right edge (y-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 3 ) = gmap % mapFcI( ix, iy, RIGHT )
-          !! top face (x-aligned)
+          !! top edge (x-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 4 ) = gmap % mapFcI( ix, iy, TOP )
       end do
 
@@ -2745,7 +2755,7 @@ contains
       call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
 
-      !! Set up specific subgrids by collection faces for regions
+      !! Set up specific subgrids by collecting edges for regions
 
       !! Start counting from end of generic subgrids
       subgridCount = B2_GENERIC_SUBGRID_COUNT
@@ -2832,7 +2842,7 @@ contains
     xIn = huge(xIn)
     xOut = huge(xOut)
 
-    !! Loop over all faces in core boundary subgrid
+    !! Loop over all edges in core boundary subgrid
     do iObj = 1, gridSubGridSize(coreBndSubgrid)
         obj = subGridGetObject(coreBndSubgrid, iObj)
         !! Expect a face
@@ -2841,7 +2851,7 @@ contains
 
         !! ...which is aligned along the x-direction
         call xertst( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM, &
-        &   "Assert error 2 (bottom face) in find_Midplane_Cells" )
+        &   "Assert error 2 (bottom edge) in find_Midplane_Cells" )
         ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
         iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
 
@@ -3068,7 +3078,7 @@ contains
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )
-        !! will not do, because we have to account for removed objects (ghost cells/faces).
+        !! will not do, because we have to account for removed objects (ghost cells/edges).
 
         !! search the relevant objects and count them
         nInd = 0
@@ -3160,7 +3170,7 @@ contains
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )
         !! will not do, because we have to account for removed objects
-        !! (ghost cells/faces).
+        !! (ghost cells/edges).
 
         !! search the relevant objects and count them
         nInd = 0
