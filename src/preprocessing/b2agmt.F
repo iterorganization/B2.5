@@ -460,104 +460,97 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &       (cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.         ! 1) between 2 internal cells
      &        cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
      &        GRID_INTERNAL) .or.
-     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_QUAD .and.          ! 2.a) between 2 quads with aligned N/S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_QUAD .and.          ! 2) between 2 quads with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
-     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_QUAD .and.          ! 2.b) between 2 quads with aligned N/S faces, special case of core boundary
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == -21 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
-     &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == -21 .and.
-     &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOTOP .and.    ! 3) between quad and tria with aligned N/S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOBOT .and.
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOTOP .and. cgeon == CGEO_QUAD .and.    ! 4) between tria and quad with aligned N/S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOBOT .and. cgeon == CGEO_QUAD .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOLEFT .and.   ! 5) between quad and tria with aligned N/S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOLEFT .and.
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and. cgeon == CGEO_QUAD .and.  ! 6) between tria and quad with aligned N/S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and. cgeon == CGEO_QUAD .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and.
      &        cgeon == CGEO_TRIA_NOLEFT .and.                           ! 7) between 2 trias with aligned S faces
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and.
      &        cgeon == CGEO_TRIA_NOTOP .and.
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOTOP .and.
      &        cgeon == CGEO_TRIA_NOLEFT .and.
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOTOP .and.
      &        cgeon == CGEO_TRIA_NOTOP .and.
-     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_BOTTOMFACE) == 0) .or.
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and.
      &        cgeon == CGEO_TRIA_NOLEFT .and.                           ! 8) between 2 trias with aligned N faces
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NORIGHT .and.
      &        cgeon == CGEO_TRIA_NOBOT .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOBOT .and.
      &        cgeon == CGEO_TRIA_NOLEFT .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) .or.
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
      &       (cgeo == CGEO_TRIA_NOBOT .and.
      &        cgeon == CGEO_TRIA_NOBOT .and.
-     &        cflag(ix,iy,CELLFLAG_TOPFACE) == 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
      &        cflag(leftix(ix,iy),leftiy(ix,iy),
-     &        CELLFLAG_TOPFACE) == 0) ) then
+     &        CELLFLAG_TOPFACE) .le. 0) ) then
           ! Faces between "regular" internal cells, assumed to 
           ! be quads with N/S faces aligned to magnetic field.
           ! Also: 
@@ -669,26 +662,25 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &          cflag(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) ==
      &          GRID_INTERNAL .or.
      &          (cgeo  == CGEO_QUAD .and. 
-     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0) .or.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &          (cgeon == CGEO_QUAD .and. 
      &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
-     &           CELLFLAG_TOPFACE) == 0) .or.
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
      &          (cgeo  == CGEO_TRIA_NOLEFT  .and.
-     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0) .or.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &          (cgeo  == CGEO_TRIA_NORIGHT .and.
-     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0) .or.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &          (cgeo  == CGEO_TRIA_NOTOP   .and.
-     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) == 0) .or.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
      &          (cgeon == CGEO_TRIA_NOLEFT  .and.
      &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
-     &           CELLFLAG_TOPFACE) == 0) .or.
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
      &          (cgeon == CGEO_TRIA_NORIGHT .and.
      &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
-     &           CELLFLAG_TOPFACE) == 0) .or.
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
      &          (cgeon == CGEO_TRIA_NOBOT   .and.
      &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
-     &           CELLFLAG_TOPFACE) == 0) .or.
-     &          cflag(ix,iy,CELLFLAG_BOTTOMFACE) == -21) then 
+     &           CELLFLAG_TOPFACE) .le. 0)) then 
 
           ! Treatment for aligned faces
 
