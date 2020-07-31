@@ -12,7 +12,8 @@
      &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
-     3  potential_at_guard_cell, recycled_neutrals_contr)
+     3  temperature_at_guard_cell, potential_at_guard_cell,
+     4  recycled_neutrals_contr)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -31,7 +32,8 @@
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
       integer sput_src, sput_chem_model, boundary_namelist, 
      *     reflection_on, sputter_energy_on, output, 
-     *     sput_frac_flag, potential_at_guard_cell
+     *     sput_frac_flag, potential_at_guard_cell,
+     *     temperature_at_guard_cell
       logical main_call, new_sputter_namelist
       real (kind=R8) :: dtim, BoRiS ,
      &  f_redep(nCv,0:ns-1)
@@ -76,6 +78,7 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+      integer, save :: lin_shi0 = 0
       character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
@@ -132,6 +135,7 @@
       if (ncall.eq.0) then                                          !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
+       call ipgeti ('b2stbr_phys_lin_shi0', lin_shi0)
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
        call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -640,12 +644,17 @@ cxpb  with bulk and deposited contributions
       endif
 cdpc-end
 #endif
-      tef = (pl%te(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
-     &       pl%te(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
-     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
-      tif = (pl%ti(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
-     &       pl%ti(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
-     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+      if (temperature_at_guard_cell.eq.1) then
+        tef = pl%te(iCv)
+        tif = pl%ti(iCv)
+      else
+        tef = (pl%te(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
+     &         pl%te(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
+     &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+        tif = (pl%ti(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
+     &         pl%ti(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
+     &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+      endif
       if (potential_at_guard_cell.eq.1) then
 !        write(6,*) 'Potential taken at guard cell (phys)'
         pof = pl%po(iCv)
@@ -767,9 +776,16 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
          srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
      &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
      &    recyc(is,istra)*t0*geo%cvHz(iCv)
-         srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
+         if (lin_shi0.eq.1) then
+          srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*max(
+     &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0/
+     &      pl%ti(iCv)
+         else
+          srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
+     &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
+         endif
          if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
      &        recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
