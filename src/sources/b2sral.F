@@ -153,14 +153,6 @@
      &  rt%rza, st_ext%za, dv%fna, st_ext%fa, dv%fch, dv%fne)
       call b2xpfi (nFc, ns, dv%fna, dv%fni)
 
-      if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_a'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_a'//chk)
-        enddo
-      endif
-
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
@@ -238,14 +230,6 @@
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
 
-      if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_b'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_b'//chk)
-        enddo
-      endif
-
 
 #ifdef WG_TODO
       elseif(style.eq.1) then
@@ -319,14 +303,6 @@
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 
 
-      if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_c'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_c'//chk)
-        enddo
-      endif
-
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
@@ -375,13 +351,7 @@
         call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
       endif
 #endif
-       if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_d'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_d'//chk)
-        enddo
-      endif
+
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
@@ -407,13 +377,7 @@
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
 
-      if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_e'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_e'//chk)
-        enddo
-      endif
+
 !WG_TODO      rcxna=0.0_R8
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
@@ -459,15 +423,6 @@
           call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, shi0_cx, 1)
         endif                         ! IYS 06.11.2017
       enddo
-
-
-      if (iout.eq.2) then
-        do k=0,3 !! AFN_TODO: remove
-          write (chk,'(i1)') k
-            call my_out_us(70,nCv,0,sr%shi(:,k),'shi_f'//chk)
-            call my_out_us(70,nCv,0,sr%shn(:,k),'shn_f'//chk)
-        enddo
-      endif
 
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
