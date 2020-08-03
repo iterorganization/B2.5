@@ -59,9 +59,17 @@ endif
 ifdef SOLPS_DEBUG
 EXT_DEBUG = .debug
 endif
+ifdef DIFF_D
+EXT_DIFF = .diff_d
+DIFF = yes
+endif
+ifdef DIFF_B
+EXT_DIFF = .diff_b
+DIFF = yes
+endif
 
 # Directory where objectcode/binaries will be created
-OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
+OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
@@ -116,6 +124,7 @@ MODLOCAL = ${SRCDIR}/modules.local
 SRCLOCAL = ${SRCB2}/src.local
 SOLPS4 = ${SOLPSTOP}/modules/solps4-5/src/solps4_B2
 EIR4 = ${SOLPSTOP}/modules/solps4-5/src/Eirene_modules
+ifndef DIFF
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 INCLUDE += -I${MODLOCAL}
 TAGSLIST += ${MODLOCAL}/*.F
@@ -128,9 +137,16 @@ ifeq ($(shell [ -d ${INCLOCAL} ] && echo yes || echo no ),yes)
 INCLUDE += -I${INCLOCAL}
 TAGSLIST += ${INCLOCAL}/*.*
 endif
+endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml
+ifdef DIFF
+INCLUDE += -I${SRCB2}/builds/differentiated_files
+INCLUDE += -I${SRCDIR}/differentiated_files
+TAGSLIST += ${SRCB2}/builds/differentiated_files/*.F*
+TAGSLIST += ${SRCDIR}/differentiated_files/*.F
+endif
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
@@ -168,10 +184,18 @@ FPATH:=${VPATH}
 VPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
+DIFFPATH =
+ifdef DIFF
+DIFFPATH += ${SRCB2}/builds/differentiated_files
+VPATH=:${SRCB2}/builds/differentiated_files
+FPATH := ${SRCB2}/builds/differentiated_files
+FFPATH = :${SRCB2}/builds/differentiated_files
+endif
 
 MODLIST =
 MODLISTF =
 MODLISTF90 =
+ifndef DIFF
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 MODLISTF += ${MODLOCAL}/*.F
@@ -183,6 +207,13 @@ endif
 MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 MODLISTF += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
+else
+MODLIST += ${DIFFPATH}/b2mod_*.F ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90
+MODLIST += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+MODLISTF += ${DIFFPATH}/b2mod_*.F
+MODLISTF90 += ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90 
+MODLISTF90 += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+endif
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
@@ -211,10 +242,22 @@ PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
+PROG_MND = b2mn_d.exe
+PROG_MNB = b2mn_b.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID}}
+EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
+ifdef DIFF_D
+EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
+endif
+ifdef DIFF_B
+EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_MNB}}
+endif
+ADEXTRA =${CONTEXTAD}
+ifdef AD_DEBUG
+ADEXTRA =${DBGAD} ${STACKAD}
+endif
 
 GEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GE}}
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
@@ -226,12 +269,19 @@ OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 OQEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OQ}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
+MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
+MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
+CONTEXTAD = ${OBJDIR}/adContext.o
+STACKAD = ${OBJDIR}/adStack.o
+DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force
+.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B clean depend listobj tags echo local force
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${OEEXE} ${OTEXE}
+DIFF_D: VERSION ${MNDEXE}
+DIFF_B: VERSION ${MNBEXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
@@ -758,6 +808,21 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+
+${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA} ${STACKAD}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${STACKAD} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+
+${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
+	cc -c $< -o $@
+
+${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
+	cc -c $< -o $@
+
+${DBGAD}: ${DIFFPATH}/adDebug.c
+	cc -c $< -o $@
+
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
 
@@ -829,6 +894,7 @@ ifneq (${MOD},o)
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
+ifndef DIFF
 depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
@@ -855,6 +921,34 @@ ifdef MODLISTF90
 	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("\\.f90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5b' >> ${OBJDIR}/dependencies
 endif
+endif
+
+else
+
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXDIFFLIST:.o=.F90}
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
+	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
+        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies
+	@echo '# 1' >> ${OBJDIR}/dependencies
+ifneq (${MOD},o)
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${MODLIST} -o.${MOD} | \
+	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
+        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
+	@echo '# 2' >> ${OBJDIR}/dependencies
+endif
+	@egrep -aiH '^ {0,}use ' ${DIFFPATH}/*.F | awk '{sub(/,.*/,""); print}' | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 3' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${DIFFPATH}/*.F90 | awk '{sub(/,.*/,""); print}' | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 4' >> ${OBJDIR}/dependencies
+ifneq (${MOD},o)
+	@egrep -aiH '^ {6,}use ' ${MODLISTF} | awk '{sub(/,.*/,""); print}' | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5a' >> ${OBJDIR}/dependencies
+ifdef MODLISTF90
+	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | awk '{sub(/,.*/,""); print}' | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("\\.f90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5b' >> ${OBJDIR}/dependencies
+endif
+endif
+
 endif
 
 tags:
@@ -884,7 +978,7 @@ else
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
 	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
-		E="$$E -e 's/ $$f//'"; \
+		E="$$E -e 's/ $$f//I'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
@@ -893,7 +987,7 @@ endif
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
 	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
-		E="$$E -e 's/ $$f//'"; \
+		E="$$E -e 's/ $$f//I'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 	@l="B2F90OBJS ="; \
@@ -901,7 +995,7 @@ endif
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
 	E="-e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
-		E="$$E -e 's/ $$f//'"; \
+		E="$$E -e 's/ $$f//I'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
@@ -918,7 +1012,7 @@ ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
 	touch ${OBJDIR}/dependencies
-	#${MAKE} tags
+	${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} local
 	${MAKE} listobj
@@ -980,11 +1074,17 @@ echo:
 	@echo EXCLUDELIST=${EXCLUDELIST}
 	@echo EXELIST=${EXELIST}
 	@echo EX90LIST=${EX90LIST}
+	@echo EXDIFFLIST=${EXDIFFLIST}
 	@echo GREXE=${GREXE}
 	@echo MNEXE=${MNEXE}
 	@echo XDEXE=${XDEXE}
 	@echo OTEXE=${OTEXE}
 	@echo IDEXE=${IDEXE}
+	@echo MNDEXE=${MNDEXE}
+	@echo MNBEXE=${MNBEXE}
+	@echo DIFFPATH=${DIFFPATH}
+	@echo EXCLUDEDIFF=${EXCLUDEDIFF}
+	@echo ADEXTRA=${ADEXTRA}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 

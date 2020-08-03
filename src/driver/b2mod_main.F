@@ -72,6 +72,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
@@ -83,7 +84,9 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -129,9 +132,9 @@
 
 *   ..local variables
 #ifdef JET
-      integer ninp(0:5), nout(0:9), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:6), nout(0:11), nCv, nFc, nVx, ns, ns0
 #else
-      integer ninp(0:5), nout(0:8), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:6), nout(0:10), nCv, nFc, nVx, ns, ns0
 #endif
 c**********************************************************
 !WG_TODO tmp: store main data-types here; put in module b2us_data?
@@ -155,11 +158,11 @@ c**********************************************************
 *   ..procedures
       external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
-      data ninp/50,51,52,53,54,55/
+      data ninp/50,51,52,53,54,55,56/
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68,69/
+      data nout/60,61,62,63,64,65,66,67,68,69,70,71/
 #else
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69,70/
 #endif
 
       contains
@@ -227,6 +230,9 @@ csw
       call cfverr (ninp(1), b2fgmtry_version)        !xpb
       call cfverr (ninp(2), b2fparam_version)        !xpb
       call cfverr (ninp(3), b2fstati_version)        !xpb
+! csc UNCOMMENT WITH AD
+!    CALL CFOPEN(ninp(6), 'b2fdiffi', 'old', 'un*formatted')
+!    CALL CFVERR(ninp(6), b2fdiffi_version)
       if (b2fgmtry_version .lt. '03.002.000'  .or.
      &    b2fstati_version .lt. '03.002.000') then
         call xerrab('Using old input format. Run b2us first.')
@@ -262,6 +268,15 @@ csw
      &  'faulty input nCv, nFc from plasma state file')
       call xertst (1.le.ns0.and.ns0.le.ns,
      &  'faulty input ns from plasma state file')
+! csc UNCOMMENT WITH AD
+!!   ..obtain plasma differentiated state from file
+!    CALL CFRUIN(ninp(6), 3, idum, 'nCv,nFc,ns')
+!    CALL XERTST(idum(0) .EQ. mpg%ncv .AND. idum(1) .EQ. mpg%nfc, &
+!&         'faulty input nCv, nFc from plasma differentiated state file')
+!    CALL XERTST(1 .LE. idum(2) .AND. idum(2) .LE. ns, &
+!&         'faulty input ns from plasma differentiated state file')
+!    CALL CFOPEN(nout(9), 'b2fdiffe', 'new', 'un*formatted')
+!    call cfopen (nout(10),'b2ftraced','new','un*formatted')
 *   ..obtain external state
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
@@ -277,13 +292,17 @@ csw
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step (add_init)
+      subroutine b2mn_step
+      use b2mod_types
+      use b2mod_b2cmpt
+      use b2mod_boundary_namelist
+      use b2mod_user_namelist
+     , , only: nncf
       implicit none
-      integer add_init
+      real(kind=R8) :: J(nncf)
 
-      call b2mndr_1 (nout, ns, add_init, geo, mpg, state, state_ext)
+      call b2mndr_1 (nout, ns, geo, mpg, state, state_ext, J)
 
-      return
       end subroutine b2mn_step
 
       subroutine b2mn_fin ()
@@ -295,10 +314,10 @@ csw
       close(nout(7))
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(9),'tran','new','unformatted')
+      call cfopen (nout(10),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(9))
-      close (nout(9))
+      call write_b2mod_ppout(nout(10))
+      close (nout(10))
 #endif
 *   ..close files
       do io=0,size(ninp)-1

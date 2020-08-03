@@ -178,8 +178,6 @@
      *  cm3, rydbrg, zlradf, bremsf, zexp1, zexp2, zexp3,
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
      &  zs7, zz, zzz, cxcoef, temp, dens
-      real (kind=R8) ::
-     *   cutlo, cutll, t0
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 
@@ -194,13 +192,12 @@
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
       intrinsic real, sqrt, log, exp, min, dim, max
-      external subini, subend, xertst, xerrab
+      external subini, subend, xertst, xerrab, expu
       real (kind=R8) ::
-     *  sei1, hydfud, expu, machsfr
+     *  sei1, hydfud, expu
       sei1(zz) = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
 *     (sei1(z) is an approximation to the scaled exponential integral
 *     exp(z)*E1(z))
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
       hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
      1 temp**(-0.60_R8))
 *!!   (hydfud is the fudge factor for the density dependence in the
@@ -212,9 +209,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('ratstr')
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..test nz, nt, nn
       call xertst (0.lt.nz.and.nz.le.nzm, 'ratstr--faulty argument nz')
       call xertst (0.le.nt.and.0.le.nn,

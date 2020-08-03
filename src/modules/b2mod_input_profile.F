@@ -928,7 +928,7 @@ c*** Clear data to forget previous profiles
       implicit none
       integer :: i,nx,ny,ifa
       integer :: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: x(1:ndat),pr(-1:nxx-2)
+      real(kind=R8) :: x(1:ndat),pr(-1:nxx)
       real(kind=R8) :: l_conn(-1:nx), l_total, l_ref
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref

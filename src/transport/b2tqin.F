@@ -53,16 +53,12 @@
 *   ..local variables
       integer ncall, iCv, is, is0, k
       real (kind=R8) ::
-     *   phm0, cutlo, cutll, rcx, t0
+     *   phm0, rcx, expu, t0
       save ncall, phm0
 *   ..procedures
       intrinsic sqrt, log, exp, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
-      external subini, subend, xertst, sfill, ipgetr, machsfr
+      external subini, subend, xertst, sfill, ipgetr, expu
       external b2xvsg
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/
 
@@ -83,9 +79,6 @@
        call ipgetr ('b2sqcx_phm0', phm0)
        call xertst (0.0_R8.le.phm0, 'faulty internal parameter phm0')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')

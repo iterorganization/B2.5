@@ -43,18 +43,14 @@
 *   ..local variables
       integer ncall, styl0, n2, iCv, is
       real (kind=R8) ::
-     *   phm0, cutlo, cutll, t0, t_av
+     *   phm0, t_av
       real (kind=R8) ::
-     *   wrk0(nCv)
+     *   wrk0(nCv), expu
       save ncall, styl0, phm0
 *   ..procedures
       intrinsic log, exp, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
-      external subini, subend, xertst, ipgeti, ipgetr, machsfr
+      external subini, subend, xertst, ipgeti, ipgetr, expu
       external b2xvsg
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
       data ncall/0/, styl0/0/, phm0/1.0_R8/
 
@@ -83,9 +79,6 @@
 *    ..test th0
        call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iCv = 1, nCv
         t_av = 0.5_R8*(th0(iCv)+thn0(iCv))
