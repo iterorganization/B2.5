@@ -695,11 +695,12 @@ c     Internal variables
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
-     &    intp_3dtable,intp_3dtable0,
+     &    intp_3dtable,intp_3dtable0,intp_3dtable00,
      &    tifev,upf
-      real (kind = R8):: tab(0:nM,0:nT,0:nshpottau)
+      real (kind = R8):: tab(0:nM,0:nT,0:nshpottau),ff(0:1,0:1,0:1)
       integer :: ic,is,it,ilT,ilM,ilSh,ip1,ip2,ip3
-      external subini, subend,intp_3dtable, intp_3dtable0
+      external subini, subend,intp_3dtable, intp_3dtable0, 
+     &         intp_3dtable00
 
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
@@ -742,33 +743,33 @@ c       Shpottau value: sheath_potential devided by tau (Ti/Te)
      & Mj,tifev,shpottauj,ilM,ilT,ilSh,ip1,ip2,ip3)
       rc1i = max(rc1i,0.0_R8)! Make sure thy don't become negative when extrapolating
 
-      tab = rmx1(:,:,:,is,it)
-      rmx1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = rmx1(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      rmx1i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rmx1i = max(rmx1i,0.0_R8)
 
-      tab = rmz1(:,:,:,is,it)
-      rmz1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = rmz1(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      rmz1i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rmz1i = max(rmz1i,0.0_R8)
 
-      tab = rp11(:,:,:,is,it)
-      rp11i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = rp11(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      rp11i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp11i = max(rp11i,0.0_R8)
 
-      tab = rp21(:,:,:,is,it)
-      rp21i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = rp21(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      rp21i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp21i = max(rp21i,0.0_R8)
 
-      tab = rp31(:,:,:,is,it)
-      rp31i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = rp31(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      rp31i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       rp31i = max(rp31i,0.0_R8)
 
-      tab = re1(:,:,:,is,it)
-      re1i = intp_3dtable0(tab,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
+      ff = re1(ilM:ilM+1,ilT:ilT+1,ilSh:ilSh+1,is,it)
+      re1i = intp_3dtable00(ff,M,T,shpottau,dM,dT,dSh,nM,nT,nshpottau,
      & Mj,tifev,shpottauj,ilM,ilT,ilSh)
       re1i = max(re1i,0.0_R8)
 
