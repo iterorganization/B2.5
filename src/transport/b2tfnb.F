@@ -91,7 +91,7 @@
      *   nbzb(nCv), nbzbc(nVx),                          !srv 13.05.16
      *   dnb(nFc,0:1), dpb(nFc,0:1), dpbc(nCv), dpbm(nFc),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
-     *   nbf(nFc), pbf(nFc),
+     *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
@@ -185,7 +185,6 @@
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
-      call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,isb),pbf)
 
 *   ..precompute kmpr and its differences
       kmpr = pl % na(:,isb) / dv % pa(:,isb)
@@ -612,7 +611,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
-      call calccoef(nCv,nFc,nVx,2,geo,mpg,dumm0,cdpb,flob0,conb0)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cdpb,flob0,conb0)
       dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
       dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?

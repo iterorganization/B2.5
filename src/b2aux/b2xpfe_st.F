@@ -1,4 +1,4 @@
-      subroutine b2xpfe_old (nx, ny, ns, ns_ext, qe, 
+      subroutine b2xpfe_st (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       use b2mod_types
       use b2mod_geo
@@ -11,14 +11,15 @@
      *  fa_ext(-1:nx,-1:ny,0:1,0:max(ns_ext,1)-1),
      &  fch(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2XPFE computes the electron particle flux, fne:
+*     B2XPFE_ST computes the electron particle flux, fne:
 *       fne(,,) = (sum is :: rza(,,is)*fna(,,,is))-(1/qe)*fch(,,) .
 *     A contribution from external species can also be included.
+*     The routines only works on structured grids.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xpfe')
+*$$$  call subini ('b2xpfe_st')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
       do is = 0, ns-1
@@ -57,4 +58,4 @@
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
-      end subroutine b2xpfe_old
+      end subroutine b2xpfe_st

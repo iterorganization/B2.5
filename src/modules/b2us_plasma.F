@@ -323,6 +323,12 @@ cwdk move to dv
       plasma % ti = 0._R8
       plasma % tn = plasma % ti
 
+      plasma % na = 0._R8
+      plasma % ua = 0._R8
+      plasma % po = 0._R8
+      plasma % te = 0._R8
+      plasma % ti = 0._R8
+
       return      
       end subroutine createB2Plasma
 
@@ -1423,10 +1429,10 @@ cwdk move to dv
 ***********************************************************************
 
 
-      subroutine write_b2fplasmf (nput, ns, nCv, nFc, st)
+      subroutine write_b2fplasmf (ns, nCv, nFc, st)
       use b2mod_version
       implicit none
-      integer, intent(in) :: nput, ns, nCv, nFc
+      integer, intent(in) :: ns, nCv, nFc
       type(B2State), intent(inout) :: st
 
 * local variables
@@ -1565,7 +1571,7 @@ cwdk move to dv
       call cfwure (nout, nFc,        st % co % fllim_al, 'fllim_al')
       call cfwure (nout, nCv,        st % co % fllim_al_c, 'fllim_al_c')
 
-
+      close (nout)
 
 
 * ..return

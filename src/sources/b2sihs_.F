@@ -393,7 +393,6 @@
                shn0(iCv,3) = shn0(iCv,3) + shivc3 + shiva3
              endif
            endif
-             
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo

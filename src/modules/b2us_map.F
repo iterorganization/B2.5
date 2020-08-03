@@ -128,15 +128,17 @@
         allocate (imapVx(-1:m%nx,-1:m%ny))
 #endif
       else
-        allocate (m%imapCv(1,1))
-        allocate (m%imapFcx(1,1))
-        allocate (m%imapFcy(1,1))
-        allocate (m%imapVx(1,1))
-        allocate (m%icornVx(1))
-        allocate (imapCv(1,1))
-        allocate (imapFcx(1,1))
-        allocate (imapFcy(1,1))
-        allocate (imapVx(1,1))
+        allocate (m%imapCv(0,0))
+        allocate (m%imapFcx(0,0))
+        allocate (m%imapFcy(0,0))
+        allocate (m%imapVx(0,0))
+        allocate (m%icornVx(0))
+#ifdef WG_DEBUG
+        allocate (imapCv(0,0))
+        allocate (imapFcx(0,0))
+        allocate (imapFcy(0,0))
+        allocate (imapVx(0,0))
+#endif
       endif
 
       allocate (m%fcLbl(m%nFc))

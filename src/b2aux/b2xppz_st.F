@@ -1,4 +1,4 @@
-      subroutine b2xppz_old (nx, ny, ns, ne, na, te, ti, pz)     !sv 18.01.02 {
+      subroutine b2xppz_st (nx, ny, ns, ne, na, te, ti, pz)     !sv 18.01.02 {
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_external
@@ -8,13 +8,14 @@
      *  ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), pz(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
-*     B2XPPZ computes pressure of charged particles, pz:
+*     B2XPPZ_ST computes pressure of charged particles, pz:
 *       pz(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,) for za(is).ne.0)
+*     The routines only works on structured grids.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, is
       external sfill
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xppz')
+*$$$  call subini ('b2xppz_st')
       n2 = (nx+2)*(ny+2)
       call sfill (n2, 0.0_R8, pz, 1)
       pz = ne*te

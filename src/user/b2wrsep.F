@@ -161,7 +161,7 @@ c
 c
 c*** Compute the data
 c
-      call b2xzef_old(nx,ny,ns,rz2,na,ne,zeff)
+      call b2xzef_st(nx,ny,ns,rz2,na,ne,zeff)
       iy=jsep+1
       do ix=0,nx-1 !{
         if(on_closed_surface(ix,jsep)) then !{

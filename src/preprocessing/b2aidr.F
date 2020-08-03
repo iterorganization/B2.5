@@ -606,7 +606,7 @@
        close(ninp(3))
        write(*,*) ' Closed b2fstate'
 *   ..test plasma state and fluxes
-       call b2xvps_old (idum(0), idum(1), idum(2),                     !srv 20.12.18
+       call b2xvps_st (idum(0), idum(1), idum(2),                     !srv 20.12.18
      &  ne1, na1, ua1, te1, ti1, po1, fna1, fhe1, fhi1, fch1)
        call b2xvsg (n2*idum(2), kinrgy1, 1, 'kinrgy', '.ge.')
 *   ..initialise na, ua, kinrgy, uadia, ne
@@ -631,7 +631,7 @@
        do is = 0, ns-1
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
-       call b2xpne_old (nx, ny, ns, rza, na, zero, ne)                     !srv 20.12.18
+       call b2xpne_st (nx, ny, ns, rza, na, zero, ne)                     !srv 20.12.18
 *   ..initialise te, ti, po
        te = te1
        ti = ti1
@@ -706,7 +706,7 @@
         call sfill (n2*4, 0.0_R8, vaecrb(-1,-1,0,0,is), 1)
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
-       call b2xpne_old (nx, ny, ns, rza, na, zero, ne)             !srv 20.12.18
+       call b2xpne_st (nx, ny, ns, rza, na, zero, ne)             !srv 20.12.18
        call sfill (n2*4, 0.0_R8, veecrb, 1)                        !srv 20.12.18
        call sfill (n2*4, 0.0_R8, vedia, 1)                         !srv 20.12.18
 *   ..initialise te, ti, po
@@ -769,7 +769,7 @@
       write (nout(0),'(7x,a3,2x,1pe11.2)') 'ti:', ttini
       write (nout(0),'(7x,a3,2x,1pe11.2)') 'po:', 3.1_R8*ttini
 *   ..test plasma state
-      call b2xvps_old (nx, ny, ns,                                             !srv 20.12.18
+      call b2xvps_st (nx, ny, ns,                                             !srv 20.12.18
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save dimensions

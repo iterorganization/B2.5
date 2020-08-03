@@ -75,7 +75,25 @@
 
       elseif (meth .eq. 1) then ! UPWIND scheme
 
-        call xerrab('calccoef -- meth 1 to be implemented')      
+       do iFc = 1,nFc
+*    ..geometric factors for cell and vertex contributions
+*      to differences of cell faces (consistent with diff_p, diff_r)
+        t00 = geo%fcQalf(iFc,0)
+        t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     &         geo%fcQbet(iFc,1)
+        t10 = geo%fcQalf(iFc,1) 
+        t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     &         geo%fcQbet(iFc,0)
+*    ..convective contributions to flob0, conb0
+        flo0(iFc,0) = flo(iFc,0) + flo(iFc,1)
+        flo0(iFc,1) = 0.0_R8
+!        flo0(iFc,0) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
+!        flo0(iFc,1) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
+*    ..conductive contributions to flob0, conb0
+        con0(iFc,0) = con(iFc,0)*t00 + con(iFc,1)*t10 +
+     &    0.5_R8*(abs(flo(iFc,0)) + abs(flo(iFc,1)))
+        con0(iFc,1) = con(iFc,0)*t01 + con(iFc,1)*t11
+       enddo
 
       elseif (meth .eq. 2) then ! SOLPS5 hybrid scheme
 

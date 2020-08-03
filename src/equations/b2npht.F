@@ -292,12 +292,10 @@ c residuals for separate neutral energy equation
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
      &  rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn,
      &  dv%floe, dv%cone, dv%floi, dv%coni, dv%flon, dv%conn,
-     &  dv%pccm(1,1), she0, shi0, shn0,
+     &  she0, shi0, shn0,
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn,
      &  dv%cortt, dv%corte, 
      &  dv%corti, dv%cortn, wrkf, wrkc, aa)
-
-
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
