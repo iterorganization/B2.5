@@ -31,6 +31,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_running_average
+     & , only : running_average, run_av_get_sources
 #ifndef NO_CDF
       use b2mod_tallies
 #endif

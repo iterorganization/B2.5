@@ -19,6 +19,9 @@
       use b2mod_feedback
       use b2mod_sputter
       use b2mod_ysmp_sdrv
+     & , only : dealloc_b2mod_ysmp_sdrv
+      use b2mod_wall
+     & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
       use b2mod_first_flight
       use b2mod_input_profile
@@ -52,7 +55,10 @@
       use b2us_plasma
       use b2us_prep
       use b2mod_running_average
-
+     & , only : run_av_init, run_av_get_plasma, run_av_save,
+     & run_av_fin
+      use b2mod_batch_average
+     & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
@@ -222,9 +228,9 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:5), nout(0:9)
+      integer ninp(0:6), nout(0:11)
 #else
-      integer ninp(0:5), nout(0:8)
+      integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
       type(mapping), intent (inout)    :: mpg
@@ -296,6 +302,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     nout - (0:5) integer array, input.
 *     nout specifies the output unit numbers, as follows.
@@ -305,6 +312,8 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -1420,6 +1429,9 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
+! csc UNCOMMENT WITH AD
+!    call read_plasma_state_diff (ninp(6), ns, mpg%nCv, mpg%nFc, stated)
+!    call createB2Diagnostic ( nCv, ns, mpg%nnreg, stated % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 
@@ -1729,6 +1741,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
+      call alloc_b2mod_user(mpg,ns,nlim,nmol,nsts)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -1785,13 +1798,15 @@ c new CDF movie option (1st frame at t=0)
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, add_ntim, geo, mpg, state, 
-     &  state_ext)
+      subroutine b2mndr_1 (nout, ns, geo, mpg, state, 
+     &  state_ext, J)
+      use b2mod_user_namelist
+     , , only: nncf, ncf
       implicit none
 #ifdef JET
-      integer nout(0:9), nx, ny, ns, add_ntim
+      integer nout(0:11), nx, ny, ns
 #else
-      integer nout(0:8), nx, ny, ns, add_ntim
+      integer nout(0:10), nx, ny, ns
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -1800,12 +1815,15 @@ c new CDF movie option (1st frame at t=0)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
+      real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
-      integer i, is, js
+      integer i, is, js, icf
       character*256 filename, fort31name
       character*256 systemarg
+      character*1 ss
       logical ok, found
 *   ..procedures
+      intrinsic cpu_time
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
 
@@ -1816,11 +1834,9 @@ c new CDF movie option (1st frame at t=0)
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11
       quit_residual=.false.                                         !jwk
-      ntim = ntim + add_ntim
       ne_wanted_next_time=tim
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
-
 cwdk  set some integers
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -1867,18 +1883,28 @@ cwdk  set some integers
 #endif
 
 *    ..guess the next state
-        call b2mxnp(nCv*ns, state%psnl%na, state%psnc%na, state%pl%na)
-        call b2mxnu(nCv*ns, state%psnl%ua, state%psnc%ua, state%pl%ua)
-        call b2mxnp(nCv, state%psnl%ne, state%psnc%ne, state%dv%ne)
-        call b2mxnp(nCv, state%psnl%te, state%psnc%te, state%pl%te)
-        call b2mxnp(nCv, state%psnl%ti, state%psnc%ti, state%pl%ti)
-        call b2mxnp(nCv, state%psnl%kinrgy, state%psnc%kinrgy, 
-     .    state%dv%kinrgy)
-        call b2mxnu(nCv, state%psnl%po, state%psnc%po, state%pl%po)
-        call b2mxnu(nFc*2*ns,state%psnl%fna,state%psnc%fna,state%dv%fna)
-        call b2mxnu(nFc*2, state%psnl%fhe, state%psnc%fhe, state%dv%fhe)
-        call b2mxnu(nFc*2, state%psnl%fhi, state%psnc%fhi, state%dv%fhi)
-        call b2mxnu(nFc*2, state%psnl%fch, state%psnc%fch, state%dv%fch)
+        state%psnl%na = state%psnc%na
+        state%psnc%na = state%pl%na
+        state%psnl%ua = state%psnc%ua
+        state%psnc%ua = state%pl%ua
+        state%psnl%ne = state%psnc%ne
+        state%psnc%ne = state%dv%ne
+        state%psnl%te = state%psnc%te
+        state%psnc%te = state%pl%te
+        state%psnl%ti = state%psnc%ti
+        state%psnc%ti = state%pl%ti
+        state%psnl%kinrgy = state%psnc%kinrgy
+        state%psnc%kinrgy = state%dv%kinrgy
+        state%psnl%po = state%psnc%po
+        state%psnc%po = state%pl%po
+        state%psnl%fna = state%psnc%fna
+        state%psnc%fna = state%dv%fna
+        state%psnl%fhe = state%psnc%fhe
+        state%psnc%fhe = state%dv%fhe
+        state%psnl%fhi = state%psnc%fhi
+        state%psnc%fhi = state%dv%fhi
+        state%psnl%fch = state%psnc%fch
+        state%psnc%fch = state%dv%fch
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
@@ -1911,6 +1937,18 @@ csw 09oct2012 set default potential already at this point (BCs)
             ok=ierr.eq.0
           endif
         enddo
+*    ..call cost function
+        call b2usr_cost_function(mpg, state, geo, J)
+        do icf = 1, ncf
+          write (ss,'(I1)') icf
+          write(*,*) 'Cost function value '//ss//': ',J(icf)
+        end do
+! csc UNCOMMENT WITH AD
+!      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
+!      DO ICF=1, NCF
+!        write (ss,'(I1)') icf
+!        write(*,*) 'Cost function gradient '//ss//': ',Jd(icf)
+!      END DO
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
@@ -2059,7 +2097,7 @@ c new CDF movie option
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)') 
      .           'batch_av/batch_av.',edition_batch
-          call batch_av_all_save (batch_name,nx,ny,ns)
+          call batch_av_all_save (batch_name,nCv,ns)
           write(*,*) 'Saved ',batch_name
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
@@ -2254,9 +2292,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       subroutine b2mndr_2(nout, ns, geo, mpg, state, state_ext)
       implicit none
 #ifdef JET
-      integer nout(0:9), nx, ny, ns
+      integer nout(0:11), nx, ny, ns
 #else
-      integer nout(0:8), nx, ny, ns
+      integer nout(0:10), nx, ny, ns
 #endif
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -2324,6 +2362,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..save b2fplasmf file
       call write_b2fplasmf (nout(7), ns, nCv, nFc, state)
 
+! csc UNCOMMENT WITH AD
+!    call write_plasma_state_diff (nout(9), ns, nCv, nFc, stated)
 *   ..conversion to structured format and output
       if (mpg%isClassicalGrid.eq.1) then
         call to_struct_plasma (ns,mpg,state)
@@ -2375,10 +2415,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(9),tran_file_name,'new','unformatted')
+          call cfopen (nout(10),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(9))
-          close(nout(9))
+          call write_b2mod_ppout(nout(10))
+          close(nout(10))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
@@ -2461,6 +2501,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
+      call dealloc_b2mod_user
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv

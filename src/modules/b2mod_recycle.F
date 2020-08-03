@@ -33,11 +33,6 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:)        !nh 21.02.2020
 
-      real (kind = R8),save ::     
-     &  cutlo, cutll
-
-
-
       contains
 
       subroutine read_recycle_fnn(nsd,nbnd)
@@ -208,9 +203,6 @@ c         Use standard recycling model for this species/wall combination
         enddo 
       enddo
 c     Other initializations
-*     ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 
       recycle_initialised=.true.
       call subend ()
@@ -259,8 +251,7 @@ c     Internal variables
      5    dnndy,t_av,mfp,c_th,upf
       integer :: ic
 *   ..statement functions
-      external subini, subend
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend, expu
 
       call subini ('CalcIncidentFluxesDiffusion')
 c     Initialize/calculate some variables
@@ -442,8 +433,7 @@ c     Internal variables
       real (kind=R8):: fnnicM,fnnivM,fnniM,nnwwniM,nniM,feneniM,fmomniM
       real (kind=R8):: fnnicD,fnnivD,fnniD,nnwwniD,nniD,feneniD,fmomniD
 *   ..statement functions
-      external subini, subend
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend, expu
 
       call subini ('CalcIncidentFluxesMfp')
 
@@ -700,7 +690,7 @@ c     Internal variables
       real (kind = R8):: tab(0:nM,0:nT,0:nshpottau),ff(0:1,0:1,0:1)
       integer :: ic,is,it,ilT,ilM,ilSh,ip1,ip2,ip3
       external subini, subend,intp_3dtable, intp_3dtable0, 
-     &         intp_3dtable00
+     &         intp_3dtable00, expu
 
       call subini ('CalcRecycledFluxes')
 c     Initialize/calculate some variables
@@ -861,9 +851,7 @@ c     Internal variables
      &   upf, nif,mfp,c_th
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
-      external subini, subend,intp_2dtable,intp_2dtable0
-*   ..statement functions
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend,intp_2dtable,intp_2dtable0, expu
 
       call subini ('CalcReflectedFluxesDiffusion')
 c     Initialize/calculate some variables
@@ -1086,9 +1074,7 @@ c     Internal variables
       integer :: ic
       real (kind = R8):: fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM 
       real (kind = R8):: fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD
-      external subini, subend
-*   ..statement functions
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend, expu
 
       call subini ('CalcReflectedFluxesMfp')
 
@@ -1402,9 +1388,9 @@ c m = mass of a particle
      &    int5l,int5r,int6l,int6r 
       real (kind=R8):: vth,arg
 c      real (kind=R8):: S15AEC
+      intrinsic erf
       external subini, subend
 c      external S15AEC !mb NAG erf function
-      intrinsic erf
       call subini('CalcMomentsMaxwellian')
       
       if (uold.eq.u.and.Told.eq.t.and.mold.eq.m) then
@@ -1549,8 +1535,7 @@ c     Internal variables
 
 
 *   ..statement functions
-      external subini, subend
-      expu(t1) = dim(exp(max(t1,cutll)),cutlo)
+      external subini, subend, expu
 
 
       call subini ('CalcMinMfp')
