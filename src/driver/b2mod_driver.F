@@ -2360,7 +2360,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..save final state
       call write_plasma_state (nout(2), ns, nCv, nFc, state)
 *   ..save b2fplasmf file
-      call write_b2fplasmf (nout(7), ns, nCv, nFc, state)
+      call write_b2fplasmf (ns, nCv, nFc, state)
 
 ! csc UNCOMMENT WITH AD
 !    call write_plasma_state_diff (nout(9), ns, nCv, nFc, stated)

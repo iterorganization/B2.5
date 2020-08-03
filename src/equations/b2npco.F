@@ -136,7 +136,7 @@ cdjm Jan2017 update particle source components for balance
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
      &   solvcreg, itcnt, rxg, pl%na(1,isb), dv%pa(1,isb), 
-     &   sr%sna(1,1,isb), dv%flob, dv%conb, dv%pcca(1,1,isb), 
+     &   sr%sna(1,1,isb), dv%flob, dv%conb,
      &   dv%resco(1,isb), dv%corpa(1,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
         call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,

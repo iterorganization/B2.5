@@ -42,7 +42,7 @@
 *   ..local variables
       integer iFc
       real (kind=R8) ::
-     *  funf(nFc), dfun(nFc,0:1), funv(nVx), fl, df, t0, t1
+     *  dfun(nFc,0:1), funv(nVx), fl, df, t0, t1
       real (kind=R8), save :: eps = 1.0e-60_R8
 
 *   ..procedures
@@ -58,11 +58,39 @@
 
       if (meth .eq. 0) then ! CENTRAL scheme
 
-        call xerrab('calcflow -- meth 0 to be implemented')      
+*    ..differences of fun at cell faces
+       call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
+
+*    ..convective piece
+       do iFc = 1,nFc
+*    ..poloidal
+        flowf(iFc,0) =
+     &    0.5_R8*flo(iFc,0)*(fun(mpg%fcCv(iFc,1))+fun(mpg%fcCv(iFc,2)))
+*    ..radial
+        flowf(iFc,1) =
+     &    0.5_R8*flo(iFc,1)*(fun(mpg%fcCv(iFc,1))+fun(mpg%fcCv(iFc,2)))
+       enddo
+
+*    ..add conductive piece
+       flow = flowf - con*dfun
 
       elseif (meth .eq. 1) then ! UPWIND scheme
 
-        call xerrab('calcflow -- meth 1 to be implemented')      
+*    ..differences of fun at cell faces
+       call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
+
+*    ..convective piece
+       do iFc = 1,nFc
+*    ..poloidal
+        flowf(iFc,0) =
+     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
+*    ..radial
+        flowf(iFc,1) = 
+     &    upwind(flo(iFc,1),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
+       enddo
+
+*    ..add conductive piece
+       flow = flowf - con*dfun
 
       elseif (meth .eq. 2) then ! SOLPS5 hybrid scheme
 
@@ -70,8 +98,6 @@
        call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
 
        do iFc = 1,nFc
-*    ..interpolate fun to cell faces
-        funf(iFc) = 0.5_R8*(fun(mpg%fcCv(iFc,1)) + fun(mpg%fcCv(iFc,2)))
 
 *    ..poloidal flow
         t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 

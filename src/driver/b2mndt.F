@@ -86,7 +86,6 @@
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
      *  ramp_slow, ier0, no_solve, iCv, boundary_namelist,
      *  nsmin, nsmax
-      integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0, tn_style = 0                             !iyv 06.02.14
@@ -146,8 +145,6 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
-       call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
-       call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
          call ipgeti ('b2mndt_nstg1', nstg(1))
@@ -354,15 +351,13 @@ ctmp.dpc
      .      st%co%chvemx, st%co%chvimx)
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
      1      geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
-!WG_TODO          newneo=.true.
-          if(style.ne.0) then                                            !srv 18.06.08 {
-            call b2tanml (nCv, nFc, ns, geo, mpg, st%co%csig_an,
+!WG_TODO         newneo=.true.
+           call b2tanml (nCv, nFc, ns, geo, mpg, st%co%csig_an,
      &                    st%pl%po, st%dv%fchanml)
-           call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, st%pl%ua,
+          call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, st%pl%ua,
      &       st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-           call b2tiner (nCv, nFc, nVx, ns, geo, mpg, st%pl%na,
+          call b2tiner (nCv, nFc, nVx, ns, geo, mpg, st%pl%na,
      &       st%pl%ua, st%dv%facdrift, st%dv%fchinert)
-          endif                                                          !srv 18.06.08 }
 #ifdef WG_TODO
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -427,22 +422,13 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
-           if(style.eq.0) then                                           !srv 01.07.08
-             call xerrab( 'b2mndt_style 0 not yet for WG')
 #ifdef WG_TODO
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
-            call b2news (nx, ny, ns, nxtl, nxtr,
-     &       nscx, iscx, ismain, ismain0,
-     &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
+           ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
-           else                                                          !srv 01.07.08 {
-
-             call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
-     &         nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
-     &         st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
-     &         st%psnc, ier0)
-
-           endif                                                         !srv 01.07.08 )
+           call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+     &       nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
+     &       st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
+     &       st%psnc, ier0)
            flush(6)
            if(ier0.eq.10) then
              ierr=ier0

@@ -1246,7 +1246,7 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_dod=0.0_R8
       hlp_isat=0.0_R8
       mgl3_tmp=0
-      call b2xppz_old(nx,ny,ns,ne,na,te,ti,pz)
+      call b2xppz_st(nx,ny,ns,ne,na,te,ti,pz)
 c      print *,'### print_isat=',print_isat    !###
       do k=1,4 !{
         if(itg_tmp(k).ne.-2) then !{

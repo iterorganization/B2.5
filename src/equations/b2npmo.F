@@ -123,7 +123,7 @@
      &  b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
-     &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
+     &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfc, b2nxst,
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
@@ -309,7 +309,6 @@
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(1,0,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
-!       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, geo, mpg, co%cvsahz_cl(1,0,is), 
      &   flubv)
@@ -504,10 +503,11 @@ c     ..compare 9-pt stencil matrices
       endif                                                            !srv 06.07.10
 
 *   ..apply correction
-      do is = 0, ns-1
-       do iCv = 1, mpg%nCi ! internal cells
-        ireg = mpg%cvReg(iCv)
-        if (solvemo(is,ireg)) then
+      if (rxf.ne.0.0_R8) then
+       do is = 0, ns-1
+        do iCv = 1, mpg%nCi ! internal cells
+         ireg = mpg%cvReg(iCv)
+         if (solvemo(is,ireg)) then
           if(solvemt(ireg)) then                                   !srv 22.05.18
             pl%ua(iCv,is) = pl%ua(iCv,is)+
      &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
@@ -515,21 +515,20 @@ c     ..compare 9-pt stencil matrices
           else                                                     !srv 22.05.18  {
             pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
           endif                                                    !srv 22.05.18  }
-        endif
-       enddo
-       do iCv = mpg%nCi+1, nCv ! guard cells
-        ireg = mpg%cvReg(iCv)
-        if (solvemo(is,ireg)) then
-         if (rxf.ne.0.0_R8) then    !! when rxf is zero we would like to keep ua constant for debugging purposes
-           if (.not.is_neutral(is)) then
-             pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
-           else
-             pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
-           endif
          endif
-        endif
+        enddo
+        do iCv = mpg%nCi+1, nCv ! guard cells
+         ireg = mpg%cvReg(iCv)
+         if (solvemo(is,ireg)) then
+          if (.not.is_neutral(is)) then
+            pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+          else
+            pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
+          endif
+         endif
+        enddo
        enddo
-      enddo
+      endif
 
 #ifdef WG_TODO
       vcount = 0

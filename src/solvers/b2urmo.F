@@ -85,6 +85,7 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                              !iys 17.04.17
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
         call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
+        call ipgeti ('b2npmo_discr_meth', meth)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

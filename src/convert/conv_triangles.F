@@ -67,7 +67,6 @@
       else
         ntrfrm = 0
       endif
-      
      
 !  read coordinates from fort.33
       open (unit=33,access='SEQUENTIAL',form='FORMATTED')
@@ -85,7 +84,6 @@
       if (overwrite_ntrfrm.eq.1) then
         ntrfrm = 1
       endif
-
       if (ntrfrm == 0) then
         read (33,*) (xc_old(i),i=1,nco_old)
         read (33,*) (yc_old(i),i=1,nco_old)

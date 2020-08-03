@@ -1,5 +1,5 @@
-      subroutine b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, fcHz, na, ua, te, 
-     &  tn, rza, cvsa0, cvsa, flv)
+      subroutine b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, na, ua, te, 
+     &  tn, rza, cvsa0, cvsa, cvsahz, flv)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -12,10 +12,10 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1), te(nCv), tn(nCv), 
-     *  rza(nCv,0:ns-1), fcHz(nFc), cvsa0(nFc,0:ns-1)
+     *  rza(nCv,0:ns-1), cvsa0(nFc,0:ns-1)
 *   ..input and output arguments
       real (kind=R8) ::
-     *  cvsa(nFc,0:1,0:ns-1)
+     *  cvsa(nFc,0:1,0:ns-1), cvsahz(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  flv(nFc,0:1,0:ns-1)
@@ -66,22 +66,24 @@
           do iFc = 1, nFc
 *    ..poloidal
            qcl = abs(cvsa(iFc,0,is)*dubf(iFc,0))
-           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*fcHz(iFc)*
+           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
-            cvsa(iFc,0,is) = cvsa(iFc,0,is)*tfl
+            cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl
+            cvsahz(iFc,0,is) = cvsahz(iFc,0,is)*tfl
             flv(iFc,0,is) = tfl
             maxfluxlimit(0)=max(maxfluxlimit(0),tfl)
 *    ..perpendicular
            qcl = abs(cvsa(iFc,1,is)*dubf(iFc,1))
-           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*fcHz(iFc)*
+           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
-            cvsa(iFc,1,is) = cvsa(iFc,1,is)*tfl
+            cvsa(iFc,1,is)   = cvsa(iFc,1,is)*tfl
+            cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
 	  enddo
@@ -97,17 +99,19 @@ cwdk    or radial contributions, since neutral transport is isotropic
           do iFc = 1, nFc
 *    ..limit total gradient
            qcl = cvsa0(iFc,is)*sqrt(dubf(iFc,0)**2 + dubf(iFc,1)**2)
-           qfl = alpha*geo%fcS(iFc)*fcHz(iFc)*
+           qfl = alpha*geo%fcS(iFc)*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
 *    ..poloidal
-            cvsa(iFc,0,is) = cvsa(iFc,0,is)*tfl
+            cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl
+            cvsahz(iFc,0,is) = cvsahz(iFc,0,is)*tfl
             flv(iFc,0,is) = tfl
             maxfluxlimit(0)=max(maxfluxlimit(0),tfl)
 *    ..radial
-            cvsa(iFc,1,is) = cvsa(iFc,1,is)*tfl
+            cvsa(iFc,1,is)   = cvsa(iFc,1,is)*tfl
+            cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
 	  enddo
@@ -118,17 +122,17 @@ cwdk    or radial contributions, since neutral transport is isotropic
 
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlv0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
-         do is=0,ns-1          
-           if (is_neutral(is)) then                            
-             write (charns,'(i3.3)') is
-             call my_out_us(70,nFc,1, flv(1,0,is),
-     &               'fl_visc_x'//charns)
-             call my_out_us(70,nFc,1, flv(1,1,is),
-     &               'fl_visc_y'//charns)
-           endif
-         enddo                                            
-       endif
+      if (iout.ne.0) then
+        do is=0,ns-1          
+          if (is_neutral(is)) then                            
+            write (charns,'(i3.3)') is
+            call my_out_us(70,nFc,1, flv(1,0,is),
+     &              'fl_visc_x'//charns)
+            call my_out_us(70,nFc,1, flv(1,1,is),
+     &              'fl_visc_y'//charns)
+          endif
+        enddo                                            
+      endif
 
 *   ..return
       ncall = ncall + 1

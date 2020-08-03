@@ -82,11 +82,10 @@
       real (kind=R8) ::
      *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
-     2  flc(nFc,0:1,0:ns-1), flchz(nFc,0:1,0:ns-1),                   !srv 09.07.03 30.11.15
-     3  flv(nFc,0:1,0:ns-1), flvhz(nFc,0:1,0:ns-1),
+     2  flc(nFc,0:1,0:ns-1),
+     3  flv(nFc,0:1,0:ns-1),
      4	pol_anom_scale,
-     5  cdpa0(nFc,0:ns-1), cdpa0hz(nFc,0:ns-1), chcib(nFc,0:ns-1),
-     6  cvsa0(nFc,0:ns-1), cvsa0hz(nFc,0:ns-1)
+     5  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
       save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
@@ -205,8 +204,6 @@
      &   co%dpa0(1,is), co%cdpahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1,is), co%cdpahz(1,1,is))
-       call b2txcc (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1,is), cdpa0hz(1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
      &   co%vla0(1,0,is), co%cvlahz(1,0,is))
        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
@@ -219,8 +216,6 @@
      &   co%vsa0(1,is), co%cvsahz(1,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%vsa0(1,is), co%cvsahz(1,1,is))                            !srv 01.07.05 }
-       call b2txcc (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%vsa0(1,is), cvsa0hz(1,is))
       enddo                                                           !srv 09.01.01
 
 
@@ -263,7 +258,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%alf0, co%calf(1,1))
 
-*   .. set csigx = 0 and calfx = 0
+*   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
         call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
@@ -308,26 +303,20 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         co%calf(:,0) = co%calf(:,0) * pol_anom_scale
         co%csig(:,0) = co%csig(:,0) * pol_anom_scale
       end if
-*   .. save the anomalous transport coefficients
+*   ..save the anomalous transport coefficients
       co%csig_an = co%csig
       co%calf_an = co%calf
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
-*   .. apply flux limit to neutrals contribution to cdpa
-        wrk = 1.0_R8
-        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, flc) !srv 09.07.03 30.11.15
-        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
-     &    pl%te, pl%ti, pl%tn, rt%rza, cdpa0hz, co%cdpahz, flchz) 
+*   .. apply flux limit to neutrals contribution to cdpa and cdpahz
+        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%te, 
+     &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
 
       if(flux_limit_to_vsa .ne. 0) then                                   !srv 15.06.08 {
-*   .. apply flux limit to neutrals contribution to cvsa
-        wrk = 1.0_R8
-        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na,
-     &    pl%ua, pl%te, pl%tn, rt%rza, cvsa0, co%cvsa, flv)
-        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, geo%fcHz, pl%na,
-     &    pl%ua, pl%te, pl%tn, rt%rza, cvsa0hz, co%cvsahz, flvhz) 
+*   .. apply flux limit to neutrals contribution to cvsa and cvsahz
+        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &    pl%te, pl%tn, rt%rza, cvsa0, co%cvsa, co%cvsahz, flv)
       endif
 
 *   ..apply flux limit to neutrals contribution to chcb
@@ -350,7 +339,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
         endif
       enddo 
 
-*    ..test sign of chce, chci
+*   ..test sign of chce, chci
       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0), 1, 'chce', '.ge.')
       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1), 1, 'chce', '.ge.')
       call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0), 1, 'chci', '.ge.')
@@ -429,8 +418,8 @@ c the logic statements below could be simplfied but for now we go for readabilit
         endif                                                          !srv 07,12.15 }
         call my_out_us(70,nFc,1,flc(1,0,is),'b2trno_flcx'//chns)
         call my_out_us(70,nFc,1,flc(1,1,is),'b2trno_flcy'//chns)
-        call my_out_us(70,nFc,1,flchz(1,0,is),'b2trno_flchzx'//chns)
-        call my_out_us(70,nFc,1,flchz(1,1,is),'b2trno_flchzy'//chns)
+        call my_out_us(70,nFc,1,flv(1,0,is),'b2trno_flvx'//chns)
+        call my_out_us(70,nFc,1,flv(1,1,is),'b2trno_flvy'//chns)
        enddo
        call my_out_us(70,nFc,1,co%chce(1,0),'b2trno_chcex')
        call my_out_us(70,nFc,1,co%chce(1,1),'b2trno_chcey')

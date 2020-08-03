@@ -94,6 +94,7 @@
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: Qalfmin = 1.0e-3_R8
+      real (kind=R8) , save :: delpo = 3.1e0_R8
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
@@ -219,6 +220,7 @@
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
         call ipgetr ('b2stbc_Qalfmin', Qalfmin)
+        call ipgetr ('b2stbc_delpo', delpo)
         call ipgetr ('b2mndr_na_min', na_min)
         call ipgetr ('b2mndr_na_new', na_new)
         call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
@@ -327,7 +329,6 @@
           enddo
         endif
       enddo
-
       pzsum     = 0.0_R8
       naua2sum  = 0.0e0_R8
       volsum    = 0.0_R8
@@ -3099,6 +3100,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .        geo%fcHz(iFc)
             srw%smo0(iCv1,1,is) = 0.0_R8
           enddo  
+
 * -- BCMOM=6 -- PRESCRIBE THE TOTAL PARALLEL MOMENTUM FLUX FOR A
 *                 CONSTANT PARALLEL VELOCITY
 
@@ -4832,8 +4834,8 @@ cghgh
      &           qe*pl%po(iCv1)*(t0 + t1)                             !srv 07.11.12
             else                                                      !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0 -     !srv 19.04.13
-     &          (enepar(ib,2) + 3.1_R8)*t1                            !wdk to check: correct for gammae?
+     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+delpo)*t0 -      !srv 19.04.13
+     &          (enepar(ib,2) + delpo)*t1                             !wdk to check: correct for gammae?
             endif                                                     !srv 27.02.13 }
             if(mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4893,7 +4895,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
@@ -4938,7 +4940,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*delpo)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
@@ -8450,6 +8452,12 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
+          else
+           do ibc = 1, mpg%bcCvP(ib,2)
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            call xertst(mpg%cvOnClosedSurface(iCv1),
+     .       'BCPOT=12 intended for core boundaries only!')
+           enddo
           endif
         endif
         if(maxval(dv%facdrift) .ne. 0.0_R8) then
@@ -8457,8 +8465,6 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            call xertst(mpg%cvOnClosedSurface(iCv1),
-     .       'BCPOT=12 intended for core boundaries only!')
             !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
             fchy_dia = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
@@ -8493,16 +8499,16 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-!!            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
-!!     .                                         bc_list_y(1,ib)),
-!!     .       'BCPOT=13 not intended for core boundaries!')
+           do ibc = 1, mpg%bcCvP(ib,2)
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            call xertst(.not.mpg%cvOnClosedSurface(iCv1),
+     .       'BCPOT=13 not intended for core boundaries!')
+           enddo
           endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          call xertst(.not.mpg%cvOnClosedSurface(iCv1),
-     .     'BCPOT=13 not intended for core boundaries!')
           srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - 
      &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &     (dv%fchdia(iFc,0)    + dv%fchdia(iFc,1)    +

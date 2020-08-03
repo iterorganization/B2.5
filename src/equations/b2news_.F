@@ -77,10 +77,11 @@
 *.declarations
 
 *   ..local variables
-      integer potit, nsmin, nsmax, no_current
+      integer nsmin, nsmax, no_current
       integer, save :: style = 3, pot_eq = 1                             !srv 29.05.02 13.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: no_solve = 0                                      !srv 02.07.08
+      integer, save :: get_residuals = 0                                 !srv 22.05.18
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,                 !srv 11.09.09 {
@@ -89,8 +90,6 @@
      &                 iout_b2nppo = 0, iout_b2wdat = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
-      real (kind=R8) ::
-     *   potok
       real (kind=R8), save :: cutlo = 1.0e-60_R8
       integer ncall, is, ier0, i, iCv, ireg
       character charns*3                                                 !srv 30.06.03
@@ -107,15 +106,15 @@
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     &  ue(nCv), lnlam(nCv), zeff(nCv),                                  !srv 05.07.17
+     &  ue(nCv), lnlam(nCv), zeff(nCv), ehx(nFc),                        !srv 05.07.17 29.01.20
      &  rz(nCv), cssb(nFc,0:1),                                          !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  respo0(nCv), corpo0(nCv)
       logical solving(4), solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
       logical inverted_ua, new_matrix
-      save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
-     &     , vis_per, solving, no_current                      !srv 06.07.00
+      save ncall, xfm0, xfm1, xfm2, xfm3                                 !srv 09.07.99
+     &     , vis_per, solving, no_current                                !srv 06.07.00
      &     , nsmin, nsmax
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
@@ -133,7 +132,7 @@
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/                     !srv 09.07.99 09.03.09
+     1   xfm3/1.0e0_R8/,
      2   vis_per/0.0e0_R8/, no_current/0/                              !srv 06.07.00
 !     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
 !     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
@@ -180,12 +179,6 @@
 !       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
 !       facdrift=facdrift_start                                          !srv 09.07.99
-       call ipgeti ('b2news_potit', potit)
-       call xertst (0.lt.potit,
-     &   'faulty internal parameter potit')
-       call ipgetr ('b2news_potok', potok)
-       call xertst (0.0_R8.lt.potok,
-     &   'faulty internal parameter potok')
        call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 06.07.00
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 13.07.05
        call ipgeti ('b2tfhe_no_current', no_current)
@@ -208,6 +201,48 @@
        call ipgeti ('b2news_no_solve', no_solve)                         !srv 02.07.08 {
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
+*    ..the table below shows which combination of equations will be solved
+*      depending on the value of switch 'b2news_no_solve'
+*----------------------------------------------------
+*        | value |  co  |  mo  |  he  |  hi  |  po  |
+*----------------------------------------------------
+*        |   0   |  +   |  +   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        |   1   |  -   |  -   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -1   |  -   |  +   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -2   |  +   |  -   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -3   |  +   |  +   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -4   |  -   |  -   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -5   |  -   |  +   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -6   |  +   |  -   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -7   |  +   |  +   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -8   |  -   |  -   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        |  -9   |  -   |  +   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -10   |  +   |  -   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -11   |  +   |  +   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -12   |  -   |  -   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        | -13   |  -   |  +   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        | -14   |  +   |  -   |  +   |  +   |  +   |
+*----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the 
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
+* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -256,6 +291,7 @@ csw 26feb2014 some extra variables
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
+       call ipgeti ('get_residuals', get_residuals)                      !srv 22.05.18
       endif                                                              !srv 02.07.08
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFv')
@@ -445,7 +481,6 @@ c   extra call at this place within internal iteration)
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
-
 c Necessary for smooth restart with Rhie-Chow:
 c The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
 c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to 
@@ -463,7 +498,6 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &      dv, co, rt, .true.)
         enddo 
       endif
- 
       call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
      &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
@@ -572,24 +606,12 @@ csw 16oct2012 init ier0
             call my_out_us(70,nCv,0,pl%po,'b2nxdp_po')
           endif                                                          !srv 12.07.05 }
         endif
-*   ..iterate several times on the potential equation
-        i=0
-        t0=1.0e40_R8
-        do while(i.le.potit.and.t0.gt.potok)                             !srv 22.05.18
-*    ..compute current
-!          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, ehx, fch_p)  !!!???
-          call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
-     &      rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, 
-     &      dv%fne_he)
-          call b2tfhe_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
-     &      pl, dv, co, rt, .false.)                                                     !djm Jan2017
-          call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
-     &      dv%fhe, dv%fhi, dv%fhn, dv%kinrgy, rt%rpt, pl%te, pl%ti,
-     &      pl%tn, pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
-*    ..perform iteration
-          t0=0.0_R8
-          if (i.eq.0) then
-           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
+*   ..compute currents                                                   !srv 29.01.20 {
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
+     &     pl, dv, co, rt)
+        if (solving(3)) then
+*   ..solve the potential equation
+          if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
              new_matrix = new_matrix.or.
@@ -599,50 +621,38 @@ csw 16oct2012 init ier0
               call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solving(3),      !srv 22.05.18
      &        solvepo, ncall, rxf2, geo, mpg, pl, dv, sr, ier0)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
-           else
+          else
              call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
             call b2npp7 (nx, ny, mpg%nnreg(0), solving(3), solvepo,      !srv 27.01.00 22.05.18
      &       ncall, rxf2, ne, te, conc, avisper, bvisper, cvisper,       !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
 #endif
-           endif                                                         !srv 06.07.00
-           t0 = b2sasum(nCv,dv%respo,1)
-           if (rxf2 .eq. 0.0e0_R8) t0 = 0.0e0_R8
-          else
-           if (vis_per.eq.0.0e0_R8) then  
-cwdk work-around because respo/corpo only determined on first iteration
-cwdk of potential equation...
-            respo0 = dv%respo
-            corpo0 = dv%corpo
-            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solving(3),        !srv 22.05.18
-     &        solvepo, ncall, rxf2, geo, mpg, pl, dv, sr, ier0)
-            wrk0 = dv%respo
-            wrk1 = dv%corpo
-            dv%respo = respo0
-            dv%corpo = corpo0
-           else
-             call xerrab ('visper not yet available for WG')
-#ifdef WG_TODO
-            call b2npp7 (nx, ny, mpg%nnreg(0), solving(3), solvepo,      !srv 27.01.00 22.05.18
-     &       ncall, rxf2, ne, te, conc, avisper, bvisper, cvisper,       !srv 27.01.00
-     &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
-#endif
-           endif                                                         !srv 06.07.00
-           t0 = b2sasum(nCv,wrk0,1)
-          endif
-
+          endif                                                          !srv 06.07.00
+          t0 = b2sasum(nCv,dv%respo,1)
+          write(*,*) 'respo before solving',t0
+          call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
-          call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
-     &                      dv%fchanml)
-          call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
-     &      dv%fac_vis, dv%fchvispar)
-          call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
-     &      dv%facdrift, dv%fchinert)
-!          call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
-!     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,    !srv 10.10.17
-!     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
+          call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
+     &     pl, dv, co, rt)
+*   ..compute new residual following the tradition 
+          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+     &    wrk0)
+          t0 = b2sasum(nCv,wrk0,1)
+          write(*,*) 'respo after solving',t0
+        else
+         if(get_residuals.eq.1)
+     &    call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+     &                 dv%respo)
+        endif
+      endif           ! if pot_eq                                        !srv 13.07.05 29.01.20 }
+
+      if(iout .ne. 0) then                                               !srv 12.07.05 {
+        write (charns,'(i3.3)') i
+        call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
+        call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
+      endif                                                              !srv 12.07.05 }
+
 #ifdef WG_TODO
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
             call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -657,49 +667,17 @@ cwdk of potential equation...
 #else
           cssb = 0.0_R8
 #endif
-          do is = 0, ns-1
-*    ..compute partial pressure
-            call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
+      do is = 0, ns-1
+*   ..compute partial pressure
+        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
      &      pl%ti, pl%tn, is, dv%pa(1,is))
-*    ..re-compute particle flux
+*   ..re-compute particle flux
 #ifdef DBG
             write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
-            call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl, dv,
-     &  co, rt, .false.)
-          enddo
-*      ..compute electron drift velocities
-        call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
-
-          write(*,*) 'i,respo',i,t0
-          call xertst (ier0.eq.0, 'error return from b2nppo')
-          if(iout .ne. 0) then                                           !srv 12.07.05 {
-            write (charns,'(i3.3)') i
-            call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
-            call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
-          endif                                                          !srv 12.07.05 }
-          if(.not.solving(3).or..not.any(solvepo(0:mpg%nnreg(0)))) exit  !srv 22.05.18
-          if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
-            if (vis_per.eq.0.0e0_R8) then
-              call restart_ma28_for_us
-            else
-#ifdef WG_TODO
-              if (style.eq.2) call restart_ma28_for_9                    !srv 11.01.00 29.05.02
-              if (style.eq.3) call restart_sdrv_for_7                    !srv 29.05.02
-#endif
-            endif
-          endif                                                          !srv 06.07.00
-          i=i+1
-        enddo
-
-        if(i.gt.potit) then                                              !srv 22.05.18
-          ierr=10
-!          write(*,*) 'Potential equation not converging'                !srv 09.07.99
-!          facdrift=max(facdrift*facdrift_dec,facdrift_start)            !srv 09.07.99
-          goto 99999
-        endif
-      endif           ! if pot_eq                                        !srv 13.07.05
+        call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl, dv,
+     &   co, rt, .false.)
+      enddo
 
 *   ..compute fne_he, fni_he
 c      with diamagnetic drift part                                       !srv 13.05.99
@@ -712,9 +690,11 @@ c      with diamagnetic drift part                                       !srv 13
       call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                        !srv 13.05.99 21.01.00
       call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                      !xpb
       call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                      !xpb
-*   ..compute heat fluxes
-      call b2tfhe_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
-     &      pl, dv, co, rt, .true.)                                      !djm Jan2017
+*      ..compute electron drift velocities
+      call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
+      call b2tfhe_ (nCv, nFc, nVx, ns, geo, mpg,                         !srv 29.01.20
+     &      pl, dv, co, .true.)                                          !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,          !srv 13.10.06
      &  .true.)                                                          !djm Jan2017

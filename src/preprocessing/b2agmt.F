@@ -126,14 +126,14 @@
 *   ..local variables
       integer ix, iy, i, j
       integer i1, i2, ii
-      integer volhmk, cgeo
+      integer volhmk, cgeo, cgeon
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1, psic
       logical classical
       real (kind=R8) ::
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
      *   isx(0:1), isy(0:1)
-      integer, save :: qc_style = 1
+      integer, save :: style = 0
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -173,7 +173,7 @@
 *   ..read input data
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
-      call ipgeti ('b2agmt_qc_style', qc_style)
+      call ipgeti ('b2agmt_style', style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..test nx, ny, isymm
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -254,6 +254,7 @@
             ! Assumptions: - internal cells have N and S faces aligned
             !              - for classical grids, the above is true for all cells
             ! Set ebc equal to ecc for numerical accuary
+            ! TODO: extend this treatment for boundary cells with both N/S faces aligned
             ebc(ix,iy,0) = ecc(ix,iy,0,0)*bb(ix,iy,0)/abs(bb(ix,iy,0))
             ebc(ix,iy,1) = ecc(ix,iy,0,1)*bb(ix,iy,0)/abs(bb(ix,iy,0))
           else
@@ -425,9 +426,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (leftix(ix,iy).eq.-2 .or. 
      &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
+        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        cgeon = cellGeoType( crx(leftix(ix,iy),leftiy(ix,iy),:),
+     &                       cry(leftix(ix,iy),leftiy(ix,iy),:) )
 
         ! unit vectors at left faces (not re-normalized)
-        if (classical) then 
+        if (classical.and.(style.eq.0)) then 
           
           ! Inverse distance interpolation
           ! Backwards compatible
@@ -452,11 +456,107 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ecc(ix,iy,0,1))/
      &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
 
-        elseif (cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
-     &       cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
-     &       GRID_INTERNAL) then
+        elseif (
+     &       (cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.         ! 1) between 2 internal cells
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
+     &        GRID_INTERNAL) .or.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_QUAD .and.          ! 2) between 2 quads with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOTOP .and.    ! 3) between quad and tria with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOBOT .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOTOP .and. cgeon == CGEO_QUAD .and.    ! 4) between tria and quad with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOBOT .and. cgeon == CGEO_QUAD .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOLEFT .and.   ! 5) between quad and tria with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_QUAD .and. cgeon == CGEO_TRIA_NOLEFT .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and. cgeon == CGEO_QUAD .and.  ! 6) between tria and quad with aligned N/S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and. cgeon == CGEO_QUAD .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and.
+     &        cgeon == CGEO_TRIA_NOLEFT .and.                           ! 7) between 2 trias with aligned S faces
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and.
+     &        cgeon == CGEO_TRIA_NOTOP .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOTOP .and.
+     &        cgeon == CGEO_TRIA_NOLEFT .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOTOP .and.
+     &        cgeon == CGEO_TRIA_NOTOP .and.
+     &        cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and.
+     &        cgeon == CGEO_TRIA_NOLEFT .and.                           ! 8) between 2 trias with aligned N faces
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NORIGHT .and.
+     &        cgeon == CGEO_TRIA_NOBOT .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOBOT .and.
+     &        cgeon == CGEO_TRIA_NOLEFT .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) .or.
+     &       (cgeo == CGEO_TRIA_NOBOT .and.
+     &        cgeon == CGEO_TRIA_NOBOT .and.
+     &        cflag(ix,iy,CELLFLAG_TOPFACE) .le. 0 .and.
+     &        cflag(leftix(ix,iy),leftiy(ix,iy),
+     &        CELLFLAG_TOPFACE) .le. 0) ) then
           ! Faces between "regular" internal cells, assumed to 
           ! be quads with N/S faces aligned to magnetic field.
+          ! Also: 
+          ! * faces between any 2 quad cells where all N/S faces are aligned
+          ! * faces between a guard cell and a triangle cell with aligned N or S
+
           ! Compute local field direction at face from fpsi
           t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,2,2))
           t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,2,1))
@@ -472,7 +572,6 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           else
             ecf = -ebf
           endif
-
         else
           ! "Special" faces (not between aligned quads)
           ! Compute local field direction at face from fpsi
@@ -522,15 +621,14 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (bottomiy(ix,iy).eq.-2 .or. 
      &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
+        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        cgeon = cellGeoType( crx(bottomix(ix,iy),bottomiy(ix,iy),:),
+     &                       cry(bottomix(ix,iy),bottomiy(ix,iy),:) )
 
         ! unit vectors at bottom faces (not re-normalized)
-        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
-     &       cflag(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) == 
-     &       GRID_INTERNAL) .or.
-     &       cflag(ix,iy,CELLFLAG_BOTTOMFACE) == -21 .or.
-     &       classical ) then 
+        if (classical.and.(style.eq.0)) then
 
-          ! Implicit assumption made here: internal cells are quads
+          ! Backwards compatibility option.
           ! Standard treatment for magnetically rectangular cells
           ! First: estimate of ebf by interpolation
           ebf(0) = 
@@ -559,6 +657,109 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
      .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
           qs(ix,iy,1) = sign(sqrt(1.0_R8 - qc(ix,iy,1)**2),qs(ix,iy,1))
+
+        elseif (cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
+     &          cflag(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) ==
+     &          GRID_INTERNAL .or.
+     &          (cgeo  == CGEO_QUAD .and. 
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &          (cgeon == CGEO_QUAD .and. 
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
+     &          (cgeo  == CGEO_TRIA_NOLEFT  .and.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &          (cgeo  == CGEO_TRIA_NORIGHT .and.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &          (cgeo  == CGEO_TRIA_NOTOP   .and.
+     &           cflag(ix,iy,CELLFLAG_BOTTOMFACE) .le. 0) .or.
+     &          (cgeon == CGEO_TRIA_NOLEFT  .and.
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
+     &          (cgeon == CGEO_TRIA_NORIGHT .and.
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_TOPFACE) .le. 0) .or.
+     &          (cgeon == CGEO_TRIA_NOBOT   .and.
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_TOPFACE) .le. 0)) then 
+
+          ! Treatment for aligned faces
+
+          ! Compute local field direction at face from fpsi
+          t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2))
+          t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1))
+          ebf(0) = t0/norm(t0,t1)
+          ebf(1) = t1/norm(t0,t1)
+
+          ! Assume perfectly aligned face for qac and qas
+          qac(ix,iy,1) = 0.0_R8
+          qas(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
+          qas(ix,iy,1) = sign(1.0_R8,qas(ix,iy,1))
+
+          ! Orientation of connector line at faces
+          ecf(0) = 
+     &       (hc(ix,iy,1)*ecc(ix,iy,1,0)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*
+     &       ecc(bottomix(ix,iy),bottomiy(ix,iy),3,0))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
+          ecf(1) = 
+     &       (hc(ix,iy,1)*ecc(ix,iy,1,1)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*
+     &       ecc(bottomix(ix,iy),bottomiy(ix,iy),3,1))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
+
+          ! angles at bottom face
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+          qs(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+
+        elseif ((cgeo  == CGEO_TRIA_NOLEFT  .and.
+     &           cflag(ix,iy,CELLFLAG_TOPFACE) == 0) .or.
+     &          (cgeo  == CGEO_TRIA_NORIGHT .and.
+     &           cflag(ix,iy,CELLFLAG_TOPFACE) == 0) .or.
+     &          (cgeon == CGEO_TRIA_NOLEFT  .and.
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_BOTTOMFACE) == 0) .or.
+     &          (cgeon == CGEO_TRIA_NORIGHT .and.
+     &           cflag(bottomix(ix,iy),bottomiy(ix,iy),
+     &           CELLFLAG_BOTTOMFACE) == 0) ) then
+
+          ! Special treatment for certain triangle faces connecting to boundary
+
+          ! Compute local field direction at face from fpsi
+          t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2))
+          t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1))
+          ebf(0) = t0/norm(t0,t1)
+          ebf(1) = t1/norm(t0,t1)
+
+          ! Connector line is purely poloidal: equal to ebf,
+          ! but possibly with sign difference
+          t0 = ebf(0)*(cry(ix,iy,0) - cry(ix,iy,1)) -
+     &         ebf(1)*(crx(ix,iy,0) - crx(ix,iy,1))
+          if (t0.ge.0.0_R8) then
+            ecf = ebf
+          else
+            ecf = -ebf
+          endif
+
+          ! angles at bottom face
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+          qs(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+
+          qac(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
+          qas(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
 
         else
           ! "Special" faces (not between aligned quads)

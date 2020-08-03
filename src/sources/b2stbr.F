@@ -114,8 +114,8 @@
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
      2  sput_chem_model, boundary_namelist,
      3  reflection_on, sputter_energy_on,
-     4  b2wall_netcdf, potential_at_guard_cell,
-     5  sput_frac_flag
+     4  b2wall_netcdf, temperature_at_guard_cell,
+     5  potential_at_guard_cell, sput_frac_flag
       real (kind=R8) ::
      *  sput_phys, sput_frc, sput_chem_alpha,
      1  sput_phys_alpha, in_dl, alpha, therm_evap, sput_res,
@@ -160,7 +160,7 @@
      5     sput_chem_model, boundary_namelist,
      7     reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
-     9     potential_at_guard_cell,
+     9     temperature_at_guard_cell, potential_at_guard_cell,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4     sput_mixed_alpha, sput_mixed_beta, redep_alpha
       data ncall/0/, sput_src/1/, sput_frc/0.0_R8/,
@@ -177,7 +177,8 @@
      2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/,
      3     sput_chem_cutoff_beta/3.0_R8/,
      4     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
-     5     redep_alpha/0.0_R8/, potential_at_guard_cell/1/
+     5     redep_alpha/0.0_R8/, temperature_at_guard_cell/1/,
+     6     potential_at_guard_cell/1/
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
@@ -329,6 +330,8 @@
      1   'faulty internal parameter redep_alpha')
         call ipgeti ('b2stbr_potential_at_guard_cell',
      &                potential_at_guard_cell)
+        call ipgeti ('b2stbr_temperature_at_guard_cell',
+     &                temperature_at_guard_cell)
         call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
         call ipgeti ('b2mndt_av', iav_run)
         allocate(
@@ -461,7 +464,8 @@ c   --> better solution wanted here..
      &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
-     3  potential_at_guard_cell, recycled_neutrals_contr)
+     3  temperature_at_guard_cell, potential_at_guard_cell,
+     4  recycled_neutrals_contr)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
