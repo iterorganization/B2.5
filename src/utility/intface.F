@@ -27,8 +27,6 @@ c
      &     fcVol(iFc,2)*centre(fcCv(iFc,1)))/
      &    (fcVol(iFc,1)+fcVol(iFc,2))
       enddo
-!wdk   to be reactivated after adaptation of b2xxgs...
-!      call b2xxgs (nx, ny, 0.0_R8, face, 1)
      
       return
       end subroutine intface

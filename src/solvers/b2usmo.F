@@ -45,6 +45,7 @@
 *   ..local variables
       integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
       integer, save :: iout = 0                                       !srv 17.06.02
+      integer, save :: meth = 2
       real (kind=R8) ::
      *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
      *  t11, t22
@@ -68,6 +69,7 @@
        call ipgetr ('b2usmo_cfc0', cfc0)
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
+       call ipgeti ('b2npmo_discr_meth', meth)
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -85,7 +87,7 @@
       endif
 
 * ..apply discretization scheme
-      call calccoef(nCv,nFc,nVx,2,geo,mpg,flcb,cvsb,flcb0,cvsb0)
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flcb,cvsb,flcb0,cvsb0)
 
 * ..compute the correction
       aa = 0.0_R8

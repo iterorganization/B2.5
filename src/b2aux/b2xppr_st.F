@@ -1,4 +1,4 @@
-      subroutine b2xppr_old (nx, ny, ns, ne, na, te, ti, pr)
+      subroutine b2xppr_st (nx, ny, ns, ne, na, te, ti, pr)
       use b2mod_types
       use b2mod_external
       implicit none
@@ -7,13 +7,14 @@
      *  ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
-*     B2XPPR_old computes the total pressure, pr:
+*     B2XPPR_ST computes the total pressure, pr:
 *       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,)) .
+*     The routines only works on structured grids.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, is
       external sfill
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xppr_old')
+*$$$  call subini ('b2xppr_st')
       n2 = (nx+2)*(ny+2)
       call sfill (n2, 0.0_R8, pr, 1)
       pr = ne*te
@@ -34,4 +35,4 @@
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
-      end subroutine b2xppr_old
+      end subroutine b2xppr_st

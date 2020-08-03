@@ -130,7 +130,7 @@ C    ZUWEISUNG
          IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
          IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !srv 26.01.00
 c       IF (A1HN.EQ.0.0e0_R8) THEN
-         if(
+         if(A1HN.EQ.0.0e0_R8.or.                                   !srv 29.01.20
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.

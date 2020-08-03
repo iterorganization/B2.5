@@ -73,16 +73,8 @@
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)
 
+* ..correct floe, cone
 
-* ..correct floe, cone, floi, coni, flon, conn
-
-
-
-cwdk   Note: could reduce memory by doing ion and electron contributions
-cwdk   subsequently (use same work arrays nw, dnw, nwf, flo, con, flo0, con0)
-
-
-c electrons: nw = nwe, dnw = dnwe, nwf = nwef, flo = floe, con = cone, flo0 = floe0, con0 = cone0
       do is = 0, ns-1
 
 *    ..pre-compute radial differences
@@ -104,6 +96,7 @@ c electrons: nw = nwe, dnw = dnwe, nwf = nwef, flo = floe, con = cone, flo0 = fl
 *    ..add to previous contributions
        dv%floe        = dv%floe        + flo0
        dv%cone(:,:,0) = dv%cone(:,:,0) + con0
+
       enddo !! end loop over species
 
 *  ..add contributions from Rhie-Chow term
@@ -115,11 +108,12 @@ c electrons: nw = nwe, dnw = dnwe, nwf = nwef, flo = floe, con = cone, flo0 = fl
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwf)
 
       do iFc = 1, nFc
-        con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+        con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
-     &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )
+     &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
       enddo
 
 *   ..compute poloidal/radial coefficients for pressure diffusion term
@@ -136,20 +130,15 @@ c electrons: nw = nwe, dnw = dnwe, nwf = nwef, flo = floe, con = cone, flo0 = fl
       dv%floe        = dv%floe        + flo0
       dv%cone(:,:,0) = dv%cone(:,:,0) + con0
 
-
-
-c ions/neutrals
-
+* ..correct floi, coni, flon, conn
       do is = 0, ns-1
 
 *    ..pre-compute radial differences
        nw = pl%na(:,is)*(rt%rza(:,is) + 1.0_R8)
        call diff(nCv, nFc, nVx, 0, geo, mpg, nw, wrkVx, dnw)
 
-
 *    ..interpolate nwe to cell faces
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
-
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
        if (.not.is_neutral(is)) then
@@ -167,7 +156,6 @@ c ions/neutrals
 *    ..compute coefficients for stencil
        call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
 
-
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
        if (tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
@@ -190,44 +178,43 @@ c the logic statements could be simplified but for now this is not done to impro
          call xerrab('invalid tn_style switch number')
        endif
 
-
 *  ..add contributions from Rhie-Chow term
 
-*   ..pre-compute radial differences
-      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(1,is), wrkVx, dnw)
+*    ..pre-compute radial differences
+       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(1,is), wrkVx, dnw)
 
 *    ..interpolate nwe to cell faces
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
-      if (.not.is_neutral(is)) then
+       if (.not.is_neutral(is)) then
         do iFc = 1, nFc
-          con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+          con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),is)*pl%ti(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
-     &      pl%na(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )
+     &      pl%na(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )/
+     &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
         enddo
-      else
+       else
         do iFc = 1, nFc
-          con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+          con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),0)*pl%tn(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
-     &      pl%na(mpg%fcCv(iFc,2),0)*pl%tn(mpg%fcCv(iFc,2)) )
+     &      pl%na(mpg%fcCv(iFc,2),0)*pl%tn(mpg%fcCv(iFc,2)) )/
+     &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
         enddo
-      endif
+       endif
 
-*   ..compute poloidal/radial coefficients for pressure diffusion term
-      flo(:,0) = -con(:,0)*dnw(:,0)
-      con(:,0) =  con(:,0)*nwf
+*    ..compute poloidal/radial coefficients for pressure diffusion term
+       flo(:,0) = -con(:,0)*dnw(:,0)
+       con(:,0) =  con(:,0)*nwf
 
-      flo(:,1) = 0.0_R8
-      con(:,1) = 0.0_R8
+       flo(:,1) = 0.0_R8
+       con(:,1) = 0.0_R8
 
-*   ..compute coefficients for stencil
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
-
-
+*    ..compute coefficients for stencil
+       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
@@ -251,10 +238,7 @@ c the logic statements could be simplified but for now this is not done to impro
          call xerrab('invalid tn_style switch number')
        endif
 
-
-
       enddo
-
 
 * ..return
       ncall = ncall+1

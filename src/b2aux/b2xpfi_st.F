@@ -1,4 +1,4 @@
-      subroutine b2xpfi_old (nx, ny, ns, fna, fni)
+      subroutine b2xpfi_st (nx, ny, ns, fna, fni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -7,13 +7,14 @@
       real (kind=R8) ::
      *   fna(-1:nx,-1:ny,0:1,0:ns-1), fni(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2XPFI computes the total atom particle flux, fni:
+*     B2XPFI_ST computes the total atom particle flux, fni:
 *       fni(,,) = (sum is :: fna(,,,is)) .
+*     The routines only works on structured grids.
 *     ------------------------------------------------------------------
       integer n2, is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xpfi')
+*$$$  call subini ('b2xpfi_st')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fni, 1)
       do is = 0, ns-1

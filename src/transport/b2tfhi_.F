@@ -112,6 +112,7 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
+       call ipgeti ('b2tfhi_discr_meth', meth)
        call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
        call ipgeti ('b2mn_tn_style', tn_style)
       endif                                                             !srv
@@ -230,7 +231,6 @@ cpax
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%ni(:,1),nnf)
       endif
-
 
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
