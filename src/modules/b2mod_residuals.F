@@ -15,6 +15,9 @@
      *  areshe,
      *  areshi,
      *  arespo
+! csc UNCOMMENT WITH AD
+!  REAL(kind=r8), ALLOCATABLE, SAVE :: arescod(:), aresmod(:)
+!  REAL(kind=r8), SAVE :: aresmtd, areshed, areshid, arespod
 
       contains
 
@@ -31,6 +34,12 @@
       allocate(respo(-1:nxd,-1:nyd))
       allocate(aresco(0:nsd-1))
       allocate(aresmo(0:nsd-1))
+
+! csc UNCOMMENT WITH AD
+!    ALLOCATE(arescod(0:nsd-1))
+!    ALLOCATE(aresmod(0:nsd-1))
+!    arescod = 0.0_R8
+!    aresmod = 0.0_R8
 
       resco=0.0_R8
       reshe=0.0_R8
@@ -57,6 +66,10 @@
       deallocate(respo)
       deallocate(aresco)
       deallocate(aresmo)
+
+! csc UNCOMMENT WITH AD
+!      deallocate(arescod)
+!      deallocate(aresmod)
 
       return
       end subroutine dealloc_b2mod_residuals

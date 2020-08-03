@@ -18,8 +18,8 @@ c     File names will be appended with "*_st.dat".
       real (kind=R8) :: fun_us(1:nel)
       character *(*) first_name
 
-!pb      character *64 filename
-      character(len=:), allocatable :: filename, finame
+      character *64 filename, finame
+!      character(len=*), allocatable :: filename, finame
       character(24) hlp_frm
       integer ic, ix, iy
       integer, save :: ncall = 0

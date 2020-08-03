@@ -16,7 +16,7 @@
      . , only : label
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:5), nout(0:5), nCv, nFc, ns, ns0
+      integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -46,6 +46,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     nout - (0:5) integer array, input.
 *     nout specifies the output unit numbers, as follows.
@@ -55,6 +56,8 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *
 *     nCv, nFc - integer, input.
 *     nCv and nFc specify the number of cells and faces in the
@@ -89,7 +92,7 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80, line*80
+     &  lblmn*120, cnamip*80, cvalip*80, line*80, lblpsd*120
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4), t0, t1
 *   ..procedures
@@ -101,7 +104,8 @@
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
-
+! csc UNCOMMENT WITH AD
+!      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -140,8 +144,9 @@
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
      &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
-     &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
+     &             1.le.ninp(6).and.1.le.nout(0).and.1.le.nout(1).and.
+     &             1.le.nout(2).and.1.le.nout(3).and.1.le.nout(4).and.
+     &             1.le.nout(5).and.1.le.nout(9).and.1.le.nout(10),
      &    'faulty argument ninp, nout')
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -183,6 +188,21 @@
        call xertst (ltst(zpdum(is,3),zn(is)), 'faulty data for zn')
        call xertst (ltst(zpdum(is,4),am(is)), 'faulty data for am')
       enddo
+! csc UNCOMMENT WITH AD
+!*   ..read header for initial differentiated state
+!*     (zamin, zamax, zn, am from ninp(6) will be checked against the data
+!*     already read in)
+!      call cfruch (ninp(6), 120, lblpsd, 'label')
+!      call b2ruzd_nodiff (ninp(6), b2fstati_version, ns0, &
+!     &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+!      do is = 0, ns0-1
+!       call xertst (ltst(zpdum(is,1),zamin(is)), &
+!     &  'faulty data for zamin')
+!       call xertst (ltst(zpdum(is,2),zamax(is)), &
+!     &  'faulty data for zamax')
+!       call xertst (ltst(zpdum(is,3),zn(is)), 'faulty data for zn')
+!       call xertst (ltst(zpdum(is,4),am(is)), 'faulty data for am')
+!      enddo
 *   ..read atomic rate data
       call cfverr (ninp(4), b2frates_version)
       call cfruch (ninp(4), 120, lblrc, 'label')
@@ -221,6 +241,9 @@
      &  lblsr(1:60), lblsr(61:120)
       write (nout(0),'(2x,a/4x,a/4x,a)') 'lblmn:',
      &  lblmn(1:60), lblmn(61:120)
+! csc UNCOMMENT WITH AD
+!      write (nout(0),'(2x,a/4x,a/4x,a)') 'lblpsd:', &
+!     &  lblpsd(1:60), lblpsd(61:120)
       label = lblmn
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
@@ -264,12 +287,22 @@
       call cfwuin (nout(5), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)
+! csc UNCOMMENT WITH AD
+!  call cfverw (nout(9), newversion)
+!  call cfwuin (nout(9), 3, idum, 'nCv,nFc,ns')
+!  call cfwuch (nout(9), 120, lblmn, 'label')
+!  call b2wuzd (nout(9), newversion, ns, zamin, zamax, zn, am)
 *   ..write header to nout(4)
       idum(0) = ns
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
       call b2mwq0 (nout(4), ns)
-
+! csc UNCOMMENT WITH AD
+!!   ..write header to nout(10)
+!  idum(0) = ns
+!  call cfwuin(nout(10), 1, idum, 'ns')
+!  call cfwuch(nout(10), 120, lblmn, 'label')
+!  call b2mwq0(nout(10), ns)
 * ..return
       call subend ()
       return

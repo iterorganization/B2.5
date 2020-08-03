@@ -7,12 +7,14 @@
       public :: alloc_mapping, dealloc_mapping,
      .          alloc_mapping_bc, dealloc_mapping_bc,
      .          alloc_mapping_rc, dealloc_mapping_rc,
+     .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
      .          init_mapping, get_version
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
-     &             nVmxFc, nFs, nBc, mxnBc, nRc, mxnRc, nCmxNv
+     &             nVmxFc, nFs, nBc, mxnBc, nRc, mxnRc, nCmxNv, nCf,
+     &             mxnCf
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -37,13 +39,19 @@
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
         integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
         integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
-        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
         integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
         integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
         integer, allocatable :: rcFcP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcFc list, and its number of boundary faces
         integer, allocatable :: rcFc(:)                !         listing for each stratum the boundary faces
-        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+
+        integer, allocatable :: cfCvP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfCv list, and its number of cells
+        integer, allocatable :: cfCv(:)                !         listing for each cost function the corresponding domain cells
+        integer, allocatable :: cfFcP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfFc list, and its number of faces
+        integer, allocatable :: cfFc(:)                !         listing for each cost function the corresponding faces
+        real (kind=R8), allocatable :: cfFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
 !        real (kind=R8), allocatable :: intfaceV(:,:)   ! volume factors for interpolation from centers to faces; currently: geo%fcVol
 !        real (kind=R8), allocatable :: intvertexV(:)   ! volume factors for interpolation from centers to vertices; currently: geo%vxVol
@@ -52,6 +60,7 @@
 
         integer, allocatable :: cvNvP(:,:)             !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
         integer, allocatable :: cvNv(:)                !         listing for each cell the numbers of the cells in its stencil
+
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
@@ -215,6 +224,7 @@
 
       call dealloc_mapping_bc(m)
       call dealloc_mapping_rc(m)
+      call dealloc_mapping_cf(m)
 
       if (.not.allocated(m%cvFcP)) return
 
@@ -349,7 +359,49 @@
       return      
       end subroutine dealloc_mapping_rc 
 
-***********************************************************************
+**********************************************************************
+
+      subroutine alloc_mapping_cf (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      if (allocated(m%cfCvP)) return
+
+      allocate (m%cfCvP  ( m % nCf,   2 ) )
+      allocate (m%cfCv   ( m % mxnCf    ) )
+      allocate (m%cfFcP  ( m % nCf,   2 ) )
+      allocate (m%cfFc   ( m % mxnCf    ) )
+      allocate (m%cfFcOr ( m % mxnCf    ) )
+
+      m%cfCvP = 0
+      m%cfCv = 0
+      m%cfFcP = 0
+      m%cfFc = 0
+      m%cfFcOr = 0._R8
+
+      return
+      end subroutine alloc_mapping_cf 
+
+**********************************************************************
+
+      subroutine dealloc_mapping_cf (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      if (.not.allocated(m%cfCvP)) return
+
+      deallocate ( m % cfCvP  )
+      deallocate ( m % cfCv   )
+      deallocate ( m % cfFcP  )
+      deallocate ( m % cfFc   )
+      deallocate ( m % cfFcOr   )
+      
+      return
+      end subroutine dealloc_mapping_cf
+
+**********************************************************************
 
 
       subroutine read_mapping (iun, mpg)

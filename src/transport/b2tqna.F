@@ -111,7 +111,7 @@
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
      1  dcx, dion, vcx, lcx, lion, din, dnn,
-     1  cutlo, cutll, poloidal_scale_factor
+     1  poloidal_scale_factor
       real (kind=R8) ::
      *  t0, t1, min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp
@@ -123,10 +123,8 @@
      3  neutral_sources_rescale
       logical catch_up
 *   ..procedures
-      intrinsic sqrt
-      external subini, subend, xertst, sfill, machsfr, ipgeti, ipgetr
-      real (kind=R8) ::
-     *  expu, addup, machsfr
+      intrinsic sqrt, dim, max, exp
+      external subini, subend, xertst, sfill, ipgeti, ipgetr, expu
 *   ..initialisation
       data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
      1  user_transport/0/, transport_inputfile/0/,
@@ -135,8 +133,9 @@
      4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
      5  neutral_sources_rescale/1.0_R8/
 *   ..statement functions
+      real (kind=R8) ::
+     *  expu, addup
       addup(t0,t1)=t0+t1
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -229,9 +228,7 @@
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, dv%ne2, 1, 'ne2', '.gt.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
 
@@ -475,7 +472,7 @@ c lvn1
         !! the default transport model calculated above is used. Nothing to do.
       elseif (user_transport.eq.10) then                              !mb 24.04.2017
         call set_transport_kul(nCv, nFc,
-     &   nVx, ns, nscx, iscx, cutlo, cutll, tn_style, geo, 
+     &   nVx, ns, nscx, iscx, tn_style, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       else
@@ -3527,7 +3524,7 @@ c*******************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
       subroutine set_transport_kul(nCv, nFc,
-     &            nVx, ns, nscx, iscx, cutlo, cutll, tn_style, geo, 
+     &            nVx, ns, nscx, iscx, tn_style, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       use b2mod_types
@@ -3550,8 +3547,7 @@ c*******************************************************************************
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) :: cutlo, cutll, t0, t_av
-      real (kind=R8) :: expu
+      real (kind=R8) :: t0, t_av
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3564,8 +3560,10 @@ c*******************************************************************************
       real (kind=R8) ::
      *  wrk0(nCv), dcx, vcx, dion
       integer is, k, ic, iCv, tn_style
+      intrinsic dim, max, exp
+      external expu
 *   ..statement functions
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
+      real (kind=R8) :: expu
 
 *   ..subprogram start-up calls
       call subini ('set_transport_kul')
@@ -3649,4 +3647,3 @@ c          do nothing
       call subend ()
       return
       end subroutine set_transport_kul
-

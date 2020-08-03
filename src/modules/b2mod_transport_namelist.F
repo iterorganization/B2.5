@@ -27,6 +27,7 @@
 #     include "DIMENSIONS.F"
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
+      private :: nsdmax
       real (kind=R8), save :: parm_dna(0:NSDMAX-1)
       real (kind=R8), save :: parm_dpa(0:NSDMAX-1)
       real (kind=R8), save :: parm_vla(0:NSDMAX-1)
@@ -131,6 +132,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 #else
         read(99,transport)
 #endif
+        close(99)
         write(*,*) 'Read namelist transport from ',trim(filename)
         cflim(0)=cflme
         cflim(1)=cflmi

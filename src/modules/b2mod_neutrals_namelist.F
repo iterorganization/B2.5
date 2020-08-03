@@ -58,6 +58,7 @@ cank }
 #endif
       integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
+      private :: nsdmax
       parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nionid=DEF_NION)
       parameter (nstsid=DEF_NSTS)
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)

@@ -27,9 +27,11 @@
       use b2us_map
       use b2us_plasma
       use b2mod_running_average
+      use b2mod_batch_average
+     & , only : batch_av_all
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:5), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
+      integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -106,6 +108,9 @@
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
      &  pz(nCv), rz(nCv), cssb(nCv,0:1)         !iyv 06.02.14
+! csc UNCOMMENT WITH AD
+!  REAL(kind=r8) :: acorpad(0:ns-1), acoruad(0:ns-1), acorutd, acorted, &
+!& acortid, acorpod
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -469,6 +474,12 @@ ctmp.dpc
      &       .or.nstg_aresco.eq.0.0_R8)
 *      ..compute norms of the corrections
            call b2mxac (nCv, ns, st%dv, st%diag)
+! csc UNCOMMENT WITH AD
+!!*      ..compute norms of the differentiated residuals
+!          CALL B2MXAR_DIFF(ncv, ns, nnreg(0), boris, geo, mpg, std%pl, &
+!&                      std%dv, std%diag)
+!!*      ..compute norms of the differentiated corrections
+!          CALL B2MXAC_DIFF(ncv, ns, std%dv, std%diag)
 *      ..decide what output
            domoqt = 0.le.moqtlv.and.
      &      (1.le.moqtlv.or.istg(0).eq.0).and.
@@ -484,6 +495,10 @@ ctmp.dpc
              call b2mwqt (nout(4), nCv, ns, itim, itcnt, BoRiS, 
      &        geo, st%pl, st%dv, st%diag)
              flush(nout(4))
+! csc UNCOMMENT WITH AD
+!              CALL B2MWQT_DIFF(nout(10), ncv, ns, itim, itcnt, boris, &
+!&                          geo, std%pl, std%dv, std%diag)
+!              FLUSH(nout(10)) 
             endif
            endif
 #ifdef WG_TODO

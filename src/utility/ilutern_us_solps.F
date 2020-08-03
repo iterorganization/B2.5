@@ -73,7 +73,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       endif
       
       N  = NCV
-      R1 = RHS
+      RR1 = RHS
       S1 = 0.0_R8
 
       if(kwrite_bnr.eq.ncall) then                                  !srv 18.05.02 {
@@ -82,7 +82,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
      &     form='unformatted') !srv 11.03.13
          write(76) n
          do i=1,nCv
-           write(76) r1(i)
+           write(76) rr1(i)
          enddo
          close(76)
          write(*,*) 'Opening 77'
@@ -99,7 +99,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         open(76,file='b2_us_rhs_'//trim(name))
         write(76,*) n
         do i=1,n
-          write(76,*) r1(i)
+          write(76,*) rr1(i)
         enddo
         close(76)
         open(77,file='b2_us_matrix_'//trim(name))
@@ -120,7 +120,7 @@ cdpc
           write(79,*) 'Called from '//trim(name)
           write(79,*) n,' n'
           do i=1,n
-            write(79,*) r1(i)
+            write(79,*) rr1(i)
           enddo
           write(79,*) nz,' nz'
           do i=1,nz
@@ -174,7 +174,7 @@ cdpc
 
       call ma28idcopy
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,1e-10_R8,iflag)
+     1 rr1,s1,res,w,1,1e-10_R8,iflag)
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
    3  format(' ma28id for ',a13,
@@ -199,7 +199,7 @@ cdpc
 
         call ma28idcopy
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,1e-10_R8,iflag)
+     1 rr1,s1,res,w,1,1e-10_R8,iflag)
 
         if(iflag.lt.0) then
          write(*,"(a)") 'Problem with solving '//trim(name)

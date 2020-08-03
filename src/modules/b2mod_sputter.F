@@ -35,6 +35,7 @@
 #     include "DIMENSIONS.F"
       integer nxmax, nymax, nsdmax
       parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD,NSDMAX=DEF_NSD)
+      private :: nsdmax
       real (kind=R8), save ::
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2), 
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)      

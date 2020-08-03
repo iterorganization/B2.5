@@ -4,6 +4,7 @@
       character*10, save ::
      1 b2fstati_version = '00.000.000',
      2 b2fstate_version = '00.000.000',
+     2 b2fdiffi_version = '00.000.000',
      2 b2frates_version = '00.000.000',
      3 b2fmovie_version = '00.000.000',
      3 b2ftrack_version = '00.000.000',

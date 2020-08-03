@@ -5,6 +5,7 @@
       use b2us_map
       use b2us_geo
       use carre_constants
+      implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
@@ -56,6 +57,7 @@ cank }
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
+      private :: nsdmax
       real (kind=R8), save :: CONPAR(0:nsdmax-1,NBCD,3)
       real (kind=R8), save :: MOMPAR(0:nsdmax-1,NBCD,2)
       real (kind=R8), save :: ENEPAR(NBCD,2)
@@ -1822,7 +1824,7 @@ cwdk also need to correct for degenerate faces?
 
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
-      integer :: ib
+      integer :: ib, inbc, ibc, ifc, ic1, ic2
       integer :: iout, ian, ien, i
 
       m%nBc = nbc

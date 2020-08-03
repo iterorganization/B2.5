@@ -9621,6 +9621,7 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_time1)
       end if
 
+#ifdef WG_TODO
 *   ..write new b2.user.parameters, if needed
       filename='b2.user.parameters'
       call find_file(filename,todo)
@@ -9815,6 +9816,7 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         call dealloc_b2mod_user
       end if
+#endif
 
 *   ..write new b2yq.dat, if needed
       filename='b2yq.dat'
