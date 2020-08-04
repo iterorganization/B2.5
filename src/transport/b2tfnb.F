@@ -61,14 +61,13 @@
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
-      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       real (kind=R8), save ::  
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
      &   poldidr = 1.0_R8, raddidr = 1.0_R8,                             !srv 25.04.00
      &   PSch = 1.0_R8                                                   !srv 17.01.07
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
-     *   flo2dia(nFc,0:1), flo_he(nFc,0:1), 
+     *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   flux_limit_min_ti, pcm1, term(nFc), termhz(nFc),
      *   flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
@@ -156,8 +155,6 @@
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
-        call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2tfnb_discr_meth', meth)
@@ -468,6 +465,10 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
+      flo_53(:,0) = geo%fcPbs*wrk0 +
+     &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+      flo_53(:,1) =
+     &  dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo2dia(:,0) = geo%fcPbshz*wrk0 + co%cvlahz(:,0,isb) +
      &  (drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*dv%vadia(:,0,isb))*
      &  geo%fcS*geo%fcQalf(:,0)*geo%fcHz
@@ -499,17 +500,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  co%cdna(:,:,isb),fna_mdf0(:,:),dv%fna_32(:,:,isb),
      &  dv%fna_52(:,:,isb))
 
-*   ..add non-hybrid drift contribution
-      fna_mdf0(:,0) = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
-      fna_mdf0(:,1) = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
-      dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
-      dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
-
-*   ..add Rhie-Chow term
+*   ..compute Rhie-Chow term
       do iFc = 1, nFc
         cdpb(iFc,0) = pcm1*0.5_R8*geo%fcPbs(iFc)*
      &   (dv%pcca(mpg%fcCv(iFc,1),1,isb)*pl%na(mpg%fcCv(iFc,1),isb) +
@@ -526,41 +517,69 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       fna_mdf0(:,0)      = fna_mdf0(:,0) + term
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
 
+
+*   ..add non-hybrid drift contribution
+      fna_mdf0(:,0) = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
+      fna_mdf0(:,1) = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
+      dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
+      dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
+
 *   ..compute other fluxes
-      dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
-     &      (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
+     &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
 
-      dv%fna(:,1,isb)      = fna_mdf0(:,1) +  
-     &      (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
+      dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +  
+     &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
 
-      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) - 
-     &      co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
-      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) - 
-     &      co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
+      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf - 
+     &   co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
+      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf - 
+     &   co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
 
-      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz + 
-     &      (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf - 
-     &       co%cdpahz(:,0,isb)*dpb(:,0)
-      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz + 
-     &      (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf - 
-     &       co%cdpahz(:,1,isb)*dpb(:,1)
+      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz +
+     &  (1.0_R8-drift_hyb)*geo%fcHz*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf + 
+     &  (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf - 
+     &   co%cdpahz(:,0,isb)*dpb(:,0)
+      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz +
+     &  (1.0_R8-drift_hyb)*geo%fcHz*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf + 
+     &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf - 
+     &   co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) + 
-     &      (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
-     &      (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) + 
-     &      (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
-     &      (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
+      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) +
+     &  (1.0_R8-drift_hyb)*
+     &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf + 
+     &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
+     &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
+     &  (1.0_R8-drift_hyb)*
+     &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf + 
+     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
+     &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
-      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + 
-     &     (flo(:,0) - flo_mdf(:,0))*nbf
-      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) + 
-     &     (flo(:,1) - flo_mdf(:,1))*nbf
+      dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
+      dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf
+
+      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
+     &  (flo(:,0) - flo_mdf(:,0))*nbf
+      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
+     &  (flo(:,1) - flo_mdf(:,1))*nbf
 
       dv%fna_52(:,0,isb)   = dv%fna_52(:,0,isb) - 
-     &     co%cdpa(:,0,isb)*dpb(:,0)
+     &   co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna_52(:,1,isb)   = dv%fna_52(:,1,isb) - 
-     &     co%cdpa(:,1,isb)*dpb(:,1)
+     &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..apply discretization scheme for density-part of fna_nodrift
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_nodrift,
@@ -569,16 +588,16 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 
 *   ..compute _nodrift fluxes
       dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) - 
-     &      co%cdpa(:,0,isb)*dpb(:,0) + term
+     &   co%cdpa(:,0,isb)*dpb(:,0) + term
       dv%fna_nodrift(:,1,isb) = dv%fna_nodrift(:,1,isb) - 
-     &      co%cdpa(:,1,isb)*dpb(:,1)
+     &   co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_32nd(:,0,isb) = dv%fna_32nd(:,0,isb) + term
 
       dv%fna_52nd(:,0,isb) = dv%fna_52nd(:,0,isb) - 
-     &      co%cdpa(:,0,isb)*dpb(:,0)
+     &   co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna_52nd(:,1,isb) = dv%fna_52nd(:,1,isb) - 
-     &      co%cdpa(:,1,isb)*dpb(:,1)
+     &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..compute flob, conb
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,
@@ -757,29 +776,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 
 
 * ..compute kinetic energy of species
-      if((maxval(dv%facdrift).ne.0.0_R8 .or.
-     &    maxval(dv%fac_ExB) .ne.0.0_R8) .and.
-     &    minval(rt%rza(:,isb)).gt.0.0_R8) then
-*     ..computation ExB drift in cell centers
-        call intcell(nFc,nCv,mpg,mpg%intcellR,dpo(:,1),vbecrb_(:,0))
-        call intcell(nFc,nCv,mpg,mpg%intcellP,dpo(:,0),vbecrb_(:,1))
-        vbecrb_(:,0) = -vbecrb_(:,0)/geo%cvBb(:,3)
-        vbecrb_(:,1) =  vbecrb_(:,1)*geo%cvBb(:,2)/geo%cvBb(:,3)**2
-*     ..computation diamagnetic drift in cell centers
-        call grad(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
-        call intcell(nFc,nCv,mpg,mpg%intcellR,dnbti(:,1),wbdia_(:,0))
-        call intcell(nFc,nCv,mpg,mpg%intcellP,dnbti(:,0),wbdia_(:,1))
-        wbdia_(:,0) = -wbdia_(:,0)/(qe*nbzb*geo%cvBb(:,3))
-        wbdia_(:,1) =  wbdia_(:,1)*geo%cvBb(:,2)/
-     &    (qe*nbzb*geo%cvBb(:,3)**2)
-      else
-        wbdia_ = 0.0_R8
-        vbecrb_= 0.0_R8
-      endif
-
-      dv%kinrgy(:,isb) = 0.5_R8*am(isb)*mp*pl%ua(:,isb)**2 + 
-     .     (xwdia*wbdia_(:,0)+xvecrb*vbecrb_(:,0))**2+                  ! wbdia_ is a value in the cell center
-     .     (xwdia*wbdia_(:,1)+xvecrb*vbecrb_(:,1))**2                   ! vbecrb_ is a value in the cell center
+      dv%kinrgy(:,isb) = 0.5_R8*am(isb)*mp*pl%ua(:,isb)**2
 
 
 #ifdef WG_DRIFTS
