@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2urmo (nCv, nFc, nVx, geo, mpg,  isb, ub, rob, 
-     .  smb, flub, cvsb, resmb, fmb, cvsb_eff)                                  !srv 02.06.11
+     .  smb, flub, cvsb, resmb, fmb, fkb, cvsb_eff)                                  !srv 02.06.11
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -17,7 +17,7 @@
      *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1), cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   resmb(nCv), fmb(nFc,0:1), cvsb_eff(nFc,0:1)
+     *   resmb(nCv), fmb(nFc,0:1), fkb(nFc,0:1), cvsb_eff(nFc,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -62,7 +62,7 @@
       save ncall
       real (kind=R8) ::
      *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
-     *   wrkf(nFc,0:1), wrkv(nVx)
+     *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
       real (kind=R8), save :: eps = 1.0e-60_R8
 *   ..procedures
       intrinsic max, abs
@@ -115,7 +115,17 @@ cwdk store effective viscosity, for use in viscous heating
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_graduax'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_graduay'//chns)
-      endif      
+      endif  
+
+* ..compute kinetic energy flux
+      ! Note: flf and flv used as dummy arrays in this call !!
+      ! To be checked:
+      ! - consistency in case of drifts (in particular: fna_cor?)
+      ! - should contribution from flubv be in here?
+      wrk = 0.5_R8*ub**2
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,wrk,flub,cvsb,fkb,flf,flv)
+      fkb(:,0) = fkb(:,0)/geo%fcHz
+      fkb(:,1) = fkb(:,1)/geo%fcHz
 
 * ..compute residual
 

@@ -32,13 +32,14 @@
      .                           fni(:,:), fni_he(:,:)
         real(R8), allocatable :: fna(:,:,:), fna_mdf(:,:,:), 
      .                           fna_52(:,:,:), fna_32(:,:,:), 
+     .                           fna_53(:,:,:), 
      .                           fna_52nd(:,:,:), fna_32nd(:,:,:),
      .                           fna_nodrift(:,:,:), fna_he(:,:,:),
      .                           fnaPSch(:,:,:), fna_fcor(:,:,:),
      .                           fna_eir(:,:,:),
      .                           fmo(:,:,:)
         real(R8), allocatable :: fne(:,:), fne_he(:,:), fne_32(:,:), 
-     .                           fne_52(:,:), fne_eir(:,:),
+     .                           fne_52(:,:), fne_eir(:,:), fne_53(:,:),
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
      .                           fhePSch(:,:), fhe_eir(:,:)
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
@@ -534,6 +535,7 @@ cwdk move to dv
       allocate( dv % fne_he( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fne_32( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fne_52( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fne_53( nFc, 0:1 ), SOURCE=0._R8 )
       
       allocate( dv % fni( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fni_he( nFc, 0:1 ), SOURCE=0._R8 )
@@ -545,6 +547,7 @@ cwdk move to dv
       allocate( dv % fna_he( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_32( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_52( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_53( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_32nd( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_52nd( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )
@@ -662,6 +665,7 @@ cwdk move to dv
       deallocate( dv % fne_he )
       deallocate( dv % fne_32 )
       deallocate( dv % fne_52 )
+      deallocate( dv % fne_53 )
       deallocate( dv % fni )
       deallocate( dv % fni_he )
       deallocate( dv % fni_32 )
@@ -684,6 +688,7 @@ cwdk move to dv
       deallocate( dv % fna_he )
       deallocate( dv % fna_32 )
       deallocate( dv % fna_52 )
+      deallocate( dv % fna_53 )
       deallocate( dv % fna_32nd )
       deallocate( dv % fna_52nd )
       deallocate( dv % fnaPSch )
@@ -1329,6 +1334,7 @@ cwdk move to dv
       call cfrure (nput, nFc*2,    st % dv % vedia, 'vedia')
       call cfrure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
       call cfrure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+      call cfrure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
 
 * ..return
       call subend ()
@@ -1419,6 +1425,7 @@ cwdk move to dv
       call cfwure (nput, nFc*2,    st % dv % vedia, 'vedia')
       call cfwure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
       call cfwure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+      call cfwure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
 
 * ..return
       call subend ()
@@ -1514,6 +1521,11 @@ cwdk move to dv
       call cfwure (nout, nFc*2,    st % dv % fchvisper, 'fchvisper')
       call cfwure (nout, nFc*2,    st % dv % fchvisq, 'fchvisq')
       call cfwure (nout, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfwure (nout, nFc*2,    st % dv % fht, 'fht')
+      call cfwure (nout, nFc*2,    st % dv % fhj, 'fhj')
+      call cfwure (nout, nFc*2*ns, st % dv % fhm, 'fhm')
+      call cfwure (nout, nFc*2*ns, st % dv % fhp, 'fhp')
+
       call cfwure (nout, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
       call cfwure (nout, nFc*2*ns, st % dv % vadia, 'vadia')
       call cfwure (nout, nFc*2*ns, st % dv % wadia, 'wadia')

@@ -684,6 +684,8 @@ c      with diamagnetic drift part                                       !srv 13
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
      &  rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, dv%fne_he)    !srv 13.05.99 21.01.00 11.10.02
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
+     &  rt%rza, st_ext%za, dv%fna_53, st_ext%fa, dv%fch_p, dv%fne_53)
+      call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
      &  rt%rza, st_ext%za, dv%fna_32nd, st_ext%fa, dv%fch_32, dv%fne_32)
       call b2xpfe (nCv, nFc, ns, 0, geo, mpg, qe, 
      &      rt%rza, zero, dv%fna_52nd, zerof, dv%fch_52, dv%fne_52)
@@ -701,10 +703,10 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
 
+      call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fna_53, dv%fne_53, 
+     &  dv%fch, dv%fhe, dv%fhi, dv%fhn, rt%rpt, pl%te,
+     &  pl%ti, pl%tn, pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
 
-      call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
-     &  dv%fhe, dv%fhi, dv%fhn, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%tn, 
-     &  pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt)
       if(ue_style.ne.2) then
