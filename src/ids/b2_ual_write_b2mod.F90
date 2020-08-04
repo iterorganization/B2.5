@@ -434,6 +434,36 @@ program b2_ual_write_b2mod
         continued = continued .or. &
            &        run_start_time.ge.ids_end_time
         if (continued) then
+          if (.not.streql(old_imas_version,imas_version)) then
+            write(*,*) &
+             & 'Old IDS was written using IMAS version '// &
+             &  trim(old_imas_version)//'.'
+            write(*,*) &
+             & 'Recreating using IMAS version '// &
+             &  trim(imas_version)//'.'
+            call close_ual(idx)
+!xpb Do the recreate to a temporary location and then bring it back
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+             & 'recreate -si ',shot,' -ri ',run,      &
+             &         ' -so ',shot,' -ro ',run+1000, &
+             &         ' -d ',database,' -u ',username
+#ifdef NAGFOR
+            call system(systemarg, status, ierror)
+#else
+            call system(systemarg)
+#endif
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+             & 'recreate -si ',shot,' -ri ',run+1000, &
+             &         ' -so ',shot,' -ro ',run,      &
+             &         ' -d ',database,' -u ',username
+#ifdef NAGFOR
+            call system(systemarg, status, ierror)
+#else
+            call system(systemarg)
+#endif
+            call imas_open_env('treename', shot, run, idx, &
+             &                  username, database, version, status)
+          end if
           write (0,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
