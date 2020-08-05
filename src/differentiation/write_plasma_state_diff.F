@@ -17,6 +17,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
       
 * ..save state and fluxes
+
 *   ..save plasma state
       call cfwure (nput, nCv*ns,   st % pl % na, 'na')
       call cfwure (nput, nCv,      st % dv % ne, 'ne')
@@ -36,6 +37,7 @@
       call cfwure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
       call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+      call cfwure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
 
 *   ..save time
       time(1)=tim
@@ -82,4 +84,5 @@
       call subend ()
       return
 
-      end subroutine write_plasma_state_diff
+      end subroutine write_plasma_state
+

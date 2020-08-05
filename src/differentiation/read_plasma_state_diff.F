@@ -5,7 +5,6 @@
       integer, intent(in) :: nput, ns, nCv, nFc
       type(B2STATE_DIFF), intent(inout) :: st
       integer :: ix, iy, ic, ifc, nfx, idum(3)
-      integer, save :: read_tn = 0
       real (kind=R8) :: time(1)
 
 *-----------------------------------------------------------------------
@@ -18,8 +17,7 @@
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
-      call ipgeti ('read_tn', read_tn)                   
-!      call createB2State (nCv, nFc, ns, st) skipped??
+      call createB2State (nCv, nFc, ns, st)
      
 * ..read state and fluxes
 
@@ -30,29 +28,19 @@
       call cfrure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
       call cfrure (nput, nCv,      st % pl % te, 'te')
       call cfrure (nput, nCv,      st % pl % ti, 'ti')
-
-      if (read_tn.ne.0) then
-        call cfrure (nput, nCv,      st % pl % tn, 'tn')
-      else
-        st % pl % tn= st % pl % ti
-      endif
-
+      call cfrure (nput, nCv,      st % pl % tn, 'tn')
       call cfrure (nput, nCv,      st % pl % po, 'po')
 
 *   ..read fluxes
       call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
       call cfrure (nput, nFc*2,    st % dv % fhe, 'fhe')
       call cfrure (nput, nFc*2,    st % dv % fhi, 'fhi')
-
-      if (read_tn.ne.0) then
-        call cfrure (nput, nFc*2,    st % dv % fhn, 'fhn')
-      else
-        !! fhn should be zero if it is not used
-      endif
+      call cfrure (nput, nFc*2,    st % dv % fhn, 'fhn')
       call cfrure (nput, nFc*2,    st % dv % fch, 'fch')
       call cfrure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
       call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+      call cfrure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
 
 *   ..read time
       call cfrure (nput, 1, time, 'time')
@@ -99,4 +87,5 @@
       call subend ()
       return
 
-      end subroutine read_plasma_state_diff
+      end subroutine read_plasma_state
+
