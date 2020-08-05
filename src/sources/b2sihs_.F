@@ -75,6 +75,7 @@
       real (kind=R8) :: 
      *  shidu(nCv,0:3), shidd(nCv,0:3),               !srv 11.09.09 {
      *  shiva(nCv,0:3), shivc(nCv,0:3),
+     *  shivan(nCv,0:3), shivcn(nCv,0:3),
      *  shifr(nCv,0:3), shedu(nCv,0:3),
      *  shedd(nCv,0:3), shefr(nCv,0:3),
      *  shest(nCv,0:3),                          !srv 17.12.13
@@ -95,7 +96,6 @@
      *   t0, t1, ctaup, coef, czetap, czetae                            !srv 05.07.17
       real (kind=R8) ::
      *   fac_ExB_c
-      real (kind=R8) :: shivc0, shivc3, shiva0, shiva3
 *   ..procedures
       intrinsic min, max, sqrt
       external subini, subend, xertst, ipgeti, ipgetr, sfill
@@ -203,6 +203,8 @@
       call sfill (nCv*4, 0.0e0_R8, shifr, 1)
       call sfill (nCv*4, 0.0e0_R8, shiva, 1)
       call sfill (nCv*4, 0.0e0_R8, shivc, 1)                         !srv 11.09.09 }
+      call sfill (nCv*4, 0.0e0_R8, shivan, 1)
+      call sfill (nCv*4, 0.0e0_R8, shivcn, 1)                         !srv 11.09.09 }
       call sfill (nCv*4, 0.0e0_R8, shest, 1)                         !srv 17.12.13
 *   ..compute the Coulomb logarithm
       call b2tlnl (nCv, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
@@ -375,36 +377,36 @@
         do iCv = 1, mpg%nCi
            t0 = phm2*(1.0_R8-BoRiS)*visc(iCv,0)
            t1 = phm8*(1.0_R8-BoRiS)*visc(iCv,1)
-           shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
-           shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
-           shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
-           shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
-!! AFN_TODO tn_Style = 1
-           if (tn_style.eq.2) then
-             shivc0 = (max(0.0e0_R8,t0)+rf2*abs(t0))
-             shivc3 = (min(0.0e0_R8,t0)-rf2*abs(t0))/(ni(iCv,0)*ti(iCv))
-             shiva0 = (max(0.0e0_R8,t1)+rf2*abs(t1))
-             shiva3 = (min(0.0e0_R8,t1)-rf2*abs(t1))/(ni(iCv,0)*ti(iCv))
-             if (.not.is_neutral(is)) then
-               shi0(iCv,0) = shi0(iCv,0) + shivc0 + shiva0
-               shi0(iCv,3) = shi0(iCv,3) + shivc3 + shiva3
-             else
-               shn0(iCv,0) = shn0(iCv,0) + shivc0 + shiva0
-               shn0(iCv,3) = shn0(iCv,3) + shivc3 + shiva3
-             endif
+           if (.not.is_neutral(is)) then
+             shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
+             shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
+             shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
+             shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
+           else
+             shivcn(iCv,0) = shivcn(iCv,0) + (1.0e0_R8+rf2)*t0
+             shivcn(iCv,3) = shivcn(iCv,3) - rf2*t0/(ni(iCv,0)*ti(iCv))
+             shivan(iCv,0) = shivan(iCv,0) + (1.0e0_R8+rf2)*t1
+             shivan(iCv,3) = shivan(iCv,3) - rf2*t1/(ni(iCv,0)*ti(iCv))
            endif
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo
-       endif                                                          !srv 29.08.02
+       endif                                                           !srv 29.08.02
       enddo
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_visa0to3 = shivc+shiva
 !WG_TODO      endif
-   
-      if (tn_style.le.1) then
-        call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)                !srv 11.09.09
-        call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)                !srv 11.09.09
+      if (tn_style.eq.0) then
+       call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shivc, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shiva, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
+      elseif (tn_style.eq.1) then
+       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
+      elseif (tn_style.eq.2) then
+       call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shn0, 1)
       endif
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
@@ -590,6 +592,8 @@
           call my_out_us(70,nCv,0,shifr(1,k),'b2sihs__shifr'//chk)
           call my_out_us(70,nCv,0,shiva(1,k),'b2sihs__shiva'//chk)
           call my_out_us(70,nCv,0,shivc(1,k),'b2sihs__shivc'//chk)
+          call my_out_us(70,nCv,0,shivan(1,k),'b2sihs__shivan'//chk)
+          call my_out_us(70,nCv,0,shivcn(1,k),'b2sihs__shivcn'//chk)
 !         call my_out_us(70,nCv,0,shi0(1,k),'b2sihs__shi'//chk)
         enddo
       endif
@@ -629,6 +633,12 @@
         wrks=shivc(:,0)+shivc(:,1)*ti+
      &       shivc(:,2)*ni(:,0)+shivc(:,3)*ti*ni(:,0)
         call my_out_us(70,nCv,0,wrks,'b2sihs__shivc')
+        wrks=shivan(:,0)+shivan(:,1)*ti+
+     &       shivan(:,2)*ni(:,0)+shivan(:,3)*ti*ni(:,0)
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shivan')
+        wrks=shivcn(:,0)+shivcn(:,1)*ti+
+     &       shivcn(:,2)*ni(:,0)+shivcn(:,3)*ti*ni(:,0)
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shivcn')
       endif
       ncall = ncall+1
       call subend ()

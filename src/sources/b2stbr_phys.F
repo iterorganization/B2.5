@@ -945,8 +945,6 @@ c   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 c  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 c   Nuclear Fusion 57.11 (2017): 116043.
 
-
-c AFN_TODO check signs
            farea = geo%fcs(iFc) !! area of the face
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
