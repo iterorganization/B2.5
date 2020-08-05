@@ -221,7 +221,7 @@
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
-           rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
+             rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
            elseif (tn_style.eq.1) then
 	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
      &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
@@ -229,6 +229,7 @@
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
+             rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
            else
 	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
      &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
@@ -239,9 +240,9 @@
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
 	     shn0_ion(iCv,0) = shn0_ion(iCv,0)+(1.0_R8+rf0)*t1n
              shn0_ion(iCv,3) = shn0_ion(iCv,3)-
-     &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv)) 
+     &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
+             rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
            !! neutrals that ionize have energy according to Tn, but source scaling is still based on ti and ni.
-           !! AFN_TODO: what to do for rsahireg?
            endif
 
 !WG_TODO           rsahi(iCv,is) = t1
