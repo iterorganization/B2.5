@@ -211,7 +211,7 @@ c     Other initializations
 
 
       subroutine CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -231,7 +231,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
+     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
       real (kind=R8) :: dnndz
@@ -257,7 +257,7 @@ c     Initialize/calculate some variables
       pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
       pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      upf = pl%ua(iCn,isn+1) !!AFN_TODO correct species index
+      upf = pl%ua(iCn,isi)
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit 
@@ -377,7 +377,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
 
       subroutine CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
      &            iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -393,7 +393,7 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
+     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina,
      &    mfp_b1, mfp_b2
@@ -432,7 +432,7 @@ c     if the mfp is in between, we use a linear interpolation
       if (mfp.lt.mfp_b1) then
 
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -451,7 +451,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            fnniM,fmomniM,
      &            nniM,nnwwniM,feneniM)
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -468,7 +468,7 @@ c     if the mfp is in between, we use a linear interpolation
       end subroutine CalcIncidentFluxesMfp
 
       subroutine CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -488,7 +488,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
+     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
       real (kind=R8) :: dnndz, t1, t_av
@@ -503,7 +503,7 @@ c     Output variables
 
       if (maxw_eff(istra).eq.0) then
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &            isn,iscx0,istra,
+     &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
@@ -611,7 +611,7 @@ c     Convert energy flux densities in net energy flux contributions
 
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
      &             isign,
-     &            isn,iscx0,istra,iwall,
+     &            isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
      &            geo,mpg,t0, cosa, sina, use_uy_uz_0,
      &            fmomrec,nnrec,nnwwnrec,fenerec)
@@ -630,7 +630,7 @@ c     nif = plasma density on face, isn neutral species index
       type (mapping), intent (in) :: mpg
 !!      type (B2Rates), intent (in) :: rt
       integer, intent(in):: iCv, nCi, iFc,
-     &     isn, iscx0, iwall,istra,
+     &     isn, iscx0, isi,iwall,istra,
      &     use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nif,nef,t0,isign, tif, tef, cosa, sina
@@ -658,7 +658,7 @@ c     Initialize/calculate some variables
       pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
       pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      upf = pl%ua(iCv,isn+1) !! AFN_TODO species index
+      upf = pl%ua(iCv,isi)
       ux = upf*pit2
       uz = -cosa*isign*upf*pit
 c       ion particle flux density
@@ -767,7 +767,7 @@ c     Convert energy flux densities in energy fluxes
       end subroutine CalcRecycledFluxes
 
       subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
@@ -787,7 +787,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy2
@@ -813,14 +813,13 @@ c     Internal variables
 
       call subini ('CalcReflectedFluxesDiffusion')
 c     Initialize/calculate some variables
-      nif = pl%na(iCv,isn+1) !! AFN_TODO species index
+      nif = pl%na(iCv,isi)
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
       pit = abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))
       pit2 = abs(geo%cvbb(iCv,2)/geo%cvbb(iCv,3))
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      upf = pl%ua(iCn,isn+1) !! AFN_TODO species index
-                             !! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
+      upf = pl%ua(iCn,isi)!! We use iCn instead of iCv because EIRENE doesn't see the value in the guard cell and the difference can be large.
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit 
@@ -998,7 +997,7 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
      &             iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,isi,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
@@ -1017,7 +1016,7 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy2, mfp_b1 , mfp_b2 
@@ -1054,7 +1053,7 @@ c     Calculate rate coefficients at boundary
 !!    zero out if incident flux has wrong sign
       if (mfp.lt.mfp_b1) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
@@ -1072,7 +1071,7 @@ c     Calculate rate coefficients at boundary
      &            fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM)
 
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
@@ -1093,7 +1092,7 @@ c     Calculate rate coefficients at boundary
       end subroutine CalcReflectedFluxesMfp
 
       subroutine CalcReflectedFluxesMinMfp(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
@@ -1116,7 +1115,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy2
@@ -1132,7 +1131,7 @@ c     Output variables:
 !!    zero out if incident flux has wrong sign
       if (maxw_eff(istra).eq.0) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy2,
      &            dnndz,
