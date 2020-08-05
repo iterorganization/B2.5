@@ -221,7 +221,7 @@
        if (boundary_namelist.ge.1) then
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
-!!       call ipgeti ('b2mn_tn_style', tn_style) !! AFN_TODO
+       call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -267,10 +267,6 @@ cwdk    For unstructured solver, start with simple reading of start-values
 
 c checks for use of new energy equations
        if (tn_style.ne.0) then
-         call xertst(0.0_R8.eq.facExB_start,
-     &        'new energy equations not compatible with ExB drifts')
-         call xertst(0.0_R8.eq.facdrift_start,
-     &        'new energy equations not compatible with drifts')
          call xertst(ns.eq.2,
      &        'new energy equations only for single species')
        endif
