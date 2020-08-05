@@ -405,6 +405,8 @@
        call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
       elseif (tn_style.eq.2) then
+       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shn0, 1)
       endif
