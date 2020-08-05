@@ -101,7 +101,7 @@
 c for KUL advanced fluid neutral boundary conditions
       integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
      &  kul_recycle = 0, 
-     &  tn_style = 0, split_fluxes = 1,
+     &  tn_style = 0,
      &  remove_FC_el = 0
       real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
       integer :: isn
@@ -170,7 +170,6 @@ c     output for analysis/debugging
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
        call ipgeti ('b2mn_tn_style', tn_style)         
-       call ipgeti ('b2stbr_split_fluxes', split_fluxes)       
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
        call ipgeti ('b2sihs_style_visc', style_visc)
        call ipgetr ('b2stbr_mfp_b1',mfp_b1)
@@ -630,7 +629,7 @@ c dnndz2            the gradient of the main neutral species density across the 
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 c new variables for advanced fluid neutral reflection/recycling model
-      real (kind=R8) :: fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni,
+      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,
      &     fmomrefl, 
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
      &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
@@ -1060,13 +1059,11 @@ c         while B2.5 uses internal energy equations.
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
      &              use_uy_uz_0,use_uy_uz_1, 
-     &              split_fluxes,
-     &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
      &            istra,farea,pl,tnf,geo,cosa,sina,
-     &            fnni,fnnic,fnniv,
-     &            fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.2) then
                call CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
      &              iCv,iCn,iFc,isign,
@@ -1075,8 +1072,7 @@ c         while B2.5 uses internal energy equations.
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
      &              use_uy_uz_0,use_uy_uz_1, 
-     &              split_fluxes,
-     &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &              fnni,fmomni,nni,nnwwni,feneni)
              else
                call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
      &              is0,is2,istra,
@@ -1084,20 +1080,12 @@ c         while B2.5 uses internal energy equations.
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
      &              use_uy_uz_0,use_uy_uz_1, 
-     &              split_fluxes,
-     &              fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &              fnni,fmomni,nni,nnwwni,feneni)
 
              endif
 
-             if (split_fluxes.ne.0) then
-               srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
-     &             (recyc(is,istra)-1)*fnnic*neutral_sources_rescale
-               srw%sna0(iCv,1,is0) = srw%sna0(iCv,1,is0)+ 
-     &             (recyc(is,istra)-1)*fnniv*neutral_sources_rescale
-             else
-               srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
      &             (recyc(is,istra)-1)*fnni*neutral_sources_rescale
-             endif
 
 
 cmb   net momentum sources from neutral particle reflection
