@@ -9,7 +9,7 @@ SUBROUTINE DIM_D(x, xd, y, yd, res, resd)
 !     ------------------------------------------------------------------
 
   res = dim(x,y)
-  IF (res .GE. 0.0_R8) THEN
+  IF (res .GT. 0.0_R8) THEN
     resd = xd - yd
   ELSE
     resd = 0.0_R8

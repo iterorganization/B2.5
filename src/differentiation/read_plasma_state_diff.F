@@ -12,12 +12,12 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('read_plasma_state')
+      call subini ('read_plasma_state_diff')
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
-      call createB2State (nCv, nFc, ns, st)
+!csc      call createB2State (nCv, nFc, ns, st)
      
 * ..read state and fluxes
 
@@ -87,5 +87,5 @@
       call subend ()
       return
 
-      end subroutine read_plasma_state
+      end subroutine read_plasma_state_diff
 

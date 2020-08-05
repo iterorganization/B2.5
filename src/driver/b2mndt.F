@@ -211,6 +211,7 @@
        endif
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
+       call ipgeti ('b2mn_tn_style', tn_style)
        if (boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -221,7 +222,6 @@
        if (boundary_namelist.ge.1) then
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
-       call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
