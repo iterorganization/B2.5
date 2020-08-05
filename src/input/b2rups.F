@@ -341,7 +341,6 @@
 *   ..common blocks
 *   ..local variables
       integer n2, is
-      integer, save :: conv_tn = 0
       real (kind=R8) :: time(1), zero(-1:nx,-1:ny),
      &  floc(-1:nx,-1:ny,0:1), flocs(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..procedures
@@ -358,7 +357,6 @@
       n2 = (nx+2)*(ny+2)
       zero = 0.0_R8
 *   ..test nget
-      call ipgeti('b2mn_convert_tn',conv_tn)
       call xertst (1.le.nget, 'faulty argument nget')
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -389,12 +387,10 @@
       endif                                                     !xpb
       call cfrure (nget, n2, te, 'te')
       call cfrure (nget, n2, ti, 'ti')
-      
-      if (conv_tn.ne.0) then
-        call cfrure (nget, n2, tn, 'tn')
-      else
-        tn = ti
-      endif
+      ! initialize tn to ti; if it is in the b2fstate file, overwrite
+      ! with field from the file
+      tn = ti
+      call cfrure_opt (nget, n2, tn, 'tn')
       call cfrure (nget, n2, po, 'po')
 *   ..read fluxes
       if(b2fstat_version.ge.'03.001.000') then
