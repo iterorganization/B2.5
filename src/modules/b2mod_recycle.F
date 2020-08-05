@@ -663,10 +663,9 @@ c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
       if (use_uy_uz_0.eq.0) then
-      uz = 0.0_R8
+        uz = 0.0_R8
       endif
 
-c AFN_TODO uz should never be put to zero here ? 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
