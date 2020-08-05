@@ -616,7 +616,7 @@ c dnndz2            the gradient of the main neutral species density across the 
       real (kind=R8) Phi_app, pof, isign, dnndy2, dnndz2                            
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack, is0old
+      integer is0, is1, is2, is, isi, js, k, iwall, itrack, is0old
       real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
      &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
      &     eself, sput_frac_chem_sum, be_frac, 
@@ -991,7 +991,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
              if (.not.lcore) then
    
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
-     &              is0,is2,istra,iwall,
+     &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, use_uy_uz_0,     
@@ -1027,14 +1027,20 @@ cmb   net neutral energy source from recycling
 
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
 
+c          Identify corresponding ion species
+             if (lnext(is,is+1)) then
+               isi = is+1
+             else
+               call xerrab('Problem with species labeling')
+             endif
 
-c         A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
-c         while B2.5 uses internal energy equations.
+c          A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
+c          while B2.5 uses internal energy equations.
 
 
-               q_conv =
-     &             (isign*(tnf*pl%ua(iCv,is)*geo%fcpbs(iFc)*
-     &             pl%na(iCv,is)+
+             q_conv =
+     &             (isign*(tnf*pl%ua(iCv,is0)*geo%fcpbs(iFc)*
+     &             pl%na(iCv,is0)+
      &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
      &             *0.5_R8*am(is0)*mp*
      &             pl%ua(iCv,is0)**2 +
@@ -1054,7 +1060,7 @@ c         while B2.5 uses internal energy equations.
 
              if (maxw(istra).eq.0) then
                call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &              is0,is2,istra,
+     &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
@@ -1067,7 +1073,7 @@ c         while B2.5 uses internal energy equations.
              elseif (maxw(istra).eq.2) then
                call CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
      &              iCv,iCn,iFc,isign,
-     &              is0,is2,istra,
+     &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
@@ -1075,7 +1081,7 @@ c         while B2.5 uses internal energy equations.
      &              fnni,fmomni,nni,nnwwni,feneni)
              else
                call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
-     &              is0,is2,istra,
+     &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
      &              dnndz,dnndzc,dnndzv,
@@ -1092,7 +1098,7 @@ cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
-     &              iFc,isign,is0,is2,istra,iwall,
+     &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy2,dnndz2,
@@ -1107,7 +1113,7 @@ cmb   net momentum sources from neutral particle reflection
                elseif (maxw(istra).eq.2) then
                  call CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
      &              iCv,iCn,mpg%nCi,
-     &              iFc,isign,is0,is2,istra,iwall,
+     &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy2,dnndz2,
@@ -1115,7 +1121,7 @@ cmb   net momentum sources from neutral particle reflection
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
                  call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
-     &              iFc,isign,is0,is2,istra,iwall,
+     &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy2,dnndz2,
