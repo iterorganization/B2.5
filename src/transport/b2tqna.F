@@ -391,8 +391,12 @@ cxpb Corrected for dimensionality
      &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(ixref,iy))**2
 *      ..compute vsa0, hci0
             vsa0(iCv,is) = dfvsb*mp*am(is)*pl%na(iCv,is)
-            hci0(iCv) = hci0(iCv)+dfhcb*pl%na(iCv,is)
             hcib(iCv,is)=dfhcb*pl%na(iCv,is)
+            if (.not.is_neutral(is)) then
+              hci0(iCv) = hci0(iCv)+hcib(iCv,is)
+            else
+              hcn0(iCv) = hcn0(iCv)+hcib(iCv,is)
+            endif
 *      ..compute hvi0
             hvi0(iCv,0) = 0.0_R8
             hvi0(iCv,1) = 0.0_R8
@@ -400,6 +404,9 @@ cxpb Corrected for dimensionality
         write(*,'(a,i3,1p,2g14.7)') 'is,min_df0,max_df0 ',
      .   is, min_df0_tmp, max_df0_tmp
       enddo
+      if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
+        hci0 = hci0+hcn0
+      endif
 *   ..compute hce0, sig0, alf0
       do iCv = 1, nCv
 *     ..compute dfhce, dfsig, dfalf
@@ -3567,9 +3574,6 @@ c*******************************************************************************
 
 *   ..subprogram start-up calls
       call subini ('set_transport_kul')
-      hci0 = 0 !! AFN_TODO be carefull: in multi-species cases hci0 could already have plasma contributions that should not be removed.
-      hcn0 = 0 !! this now works because plasma contribution is only added afterwards?
-               !! we keep 
       	do is = 0, ns-1
 	  if (is_neutral(is).and.zn(is).eq.1.0_R8) then
             k=0
@@ -3631,17 +3635,18 @@ c*******************************************************************************
       enddo !! end loop over species
 
 c recompute hci0 and hcn0
+      hci0 = 0.0_R8
+      hcn0 = 0.0_R8
       do is =0, ns-1
-        do iCv = 1, nCv
-          if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
-            hci0(iCv) = hci0(iCv)+hcib(iCv,is)
-          elseif (tn_style.eq.1) then !! pure ion energy equation, do not add neutral contribution
-c          do nothing
-          else                        !! separate ion-neutral energy equation, add neutral contribution to new hcn0
-            hcn0(iCv) = hcn0(iCv)+hcib(iCv,is)
-          endif
-        enddo
-      enddo 
+        if (.not.is_neutral(is)) then
+          hci0 = hci0 + hcib(:,is)
+        else
+          hcn0 = hcn0 + hcib(:,is)
+        endif
+      enddo
+      if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
+        hci0 = hci0+hcn0
+      endif
 
 *   ..return
       call subend ()
