@@ -76,11 +76,8 @@
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
-      real (kind=R8) ::
-     *   scalr
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2uxus, b2uxm9                 !srv 02.01.07
-      scalr(t0) = 1.0e0_R8  ! t0                                      !srv 02.01.07
 *   ..initialization
       data ncall/0/
 
@@ -143,7 +140,7 @@
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
-* ..total heat correction equation  !! AFN_TODO switches for when to use solveen. Make compatible with branch stefano
+* ..total heat correction equation
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
       con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn(:,:,0)
@@ -152,20 +149,25 @@
 *   ..compute the nine-point matrix
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (solveee(ireg) .and. solveei(ireg). and. solveet(ireg)) then !srv 22.05.18
-          aa(mpg%cvNvP(iCv,1)) =
-     &    -she(iCv,1)-she(iCv,3)*ne(iCv)-
-     &     shi(iCv,1)-shi(iCv,3)*ni(iCv,0)-
-     &     shn(iCv,1)-shn(iCv,3)*ni(iCv,0)
-     &    +abs(resht(iCv))/(rxg*min(te(iCv),ti(iCv)))           !srv 02.01.07
-        else if (solveee(ireg) .and. .not.solveei(ireg)) then
-          aa(mpg%cvNvP(iCv,1)) =
-     &    -she(iCv,1)-she(iCv,3)*ne(iCv) !! AFN_TODO
-     &    +abs(resht(iCv))/(rxg*te(iCv))                          !srv 02.01.07
-        else if (.not.solveee(ireg) .and. solveei(ireg)) then
-          aa(mpg%cvNvP(iCv,1)) =
-     &    -shi(iCv,1)-shi(iCv,3)*ni(iCv,0) !! AFN_TODO
-     &    +abs(resht(iCv))/(rxg*ti(iCv))                          !srv 02.01.07
+        t0 = 1e60_R8
+        if (solveee(ireg)) then
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
+     &    -she(iCv,1)-she(iCv,3)*ne(iCv)
+          t0 = min(t0,te(iCv))
+        endif
+        if (solveei(ireg)) then
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
+     &    -shi(iCv,1)-shi(iCv,3)*ni(iCv,0)
+          t0 = min(t0,ti(iCv))
+        endif
+        if (solveen(ireg)) then
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
+     &    -shn(iCv,1)-shn(iCv,3)*ni(iCv,0)
+          t0 = min(t0,tn(iCv))
+        endif
+        if (solveee(ireg).or.solveei(ireg).or.solveen(ireg)) then
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
+     &      +abs(resht(iCv))/(rxg*t0)
         endif
       enddo
       do iFc = 1, nFc
@@ -476,7 +478,7 @@
           aa(mpg%cvNvP(iCv,1)) =
      &    (-shi(iCv,1)-shi(iCv,3)*ni(iCv,0)+
      &    ceqp(iCv)*ne(iCv)*ni(iCv,0)/(te(iCv)*sqrt(te(iCv)))
-     &    +abs(reshi(iCv))/(rxg*ti(iCv)))*scalr(ti(iCv))                              !srv 02.01.07
+     &    +abs(reshi(iCv))/(rxg*ti(iCv)))
         endif
       enddo
       do iFc = 1, nFc
@@ -589,7 +591,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
       do iCv = 1, nCv
-        corti(iCv) = corti(iCv)*scalr(ti(iCv))
+        corti(iCv) = corti(iCv)
       enddo
       endif                                                          !srv 22.05.18
 
@@ -633,7 +635,7 @@
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
      &    (-shn(iCv,1)-shn(iCv,3)*ni(iCv,0)+
-     &    +abs(reshn(iCv))/(rxg*tn(iCv)))*scalr(tn(iCv))                              !srv 02.01.07
+     &    +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo
       do iFc = 1, nFc
@@ -746,7 +748,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
       do iCv = 1, nCv
-        cortn(iCv) = cortn(iCv)*scalr(tn(iCv))
+        cortn(iCv) = cortn(iCv)
       enddo
       endif                                                          !srv 22.05.18
 

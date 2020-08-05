@@ -212,7 +212,8 @@ cdjm Jan2017 update particle source components for balance
 
 c residuals for separate neutral energy equation
       if (tn_style.eq.2) then   !! separate neutral energy equation
-                                !! AFN_TODO add solven in b2mod_numerics
+       if (any(solvnreg(0:nregionv)).or.get_residuals.eq.1) then
+                                !! AFN_TODO add neutral energy equation in solving switch?
         if (mdf_fhi.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shn0, dv%fhn,
      &     dv%reshn)
@@ -220,8 +221,9 @@ c residuals for separate neutral energy equation
           call xerrab('non-default energy equations not yet developed', 
      &                 'for mdf fluxes')
         endif
+       endif
       else
-        dv%reshn = 0.0_R8         !! this is needed becuase reshn is added to the total energy equation
+        dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
 
 
@@ -248,8 +250,9 @@ c residuals for separate neutral energy equation
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) dv%reshi = dv%reshi + shei
       if (solving(4).and.any(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
-     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
-     &   dv%resht = dv%reshe + dv%reshi + dv%reshn                                !srv 22.05.18 }
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)).or.
+     &   get_residuals.eq.1)
+     &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
       
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
