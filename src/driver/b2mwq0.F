@@ -36,14 +36,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, idum(0:9), nfld, k, is, iix, iiy, ll(0:1),
-     &        add_areshn       
-      save ncall, style, add_areshn
+      integer ncall, style, idum(0:9), nfld, k, is, iix, iiy, ll(0:1)
+      save ncall, style
       character chtit*60, chlab*12, id*3, idr*7
 *   ..procedures
       external subini, subend, xertst, ipgeti, cfwuin, cfwuch
 *   ..initialisation
-      data ncall/0/, style/1/, add_areshn/0/
+      data ncall/0/, style/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -63,7 +62,6 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mwqt_style', style)
-       call ipgeti ('b2mwqt_add_areshn', add_areshn)
        call xertst (0.le.style, 'faulty internal parameter style')
       endif
 *   ..test nput
@@ -84,9 +82,7 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
-      if (add_areshn.eq.1) then
-        nfld = nfld + 1
-      endif
+      nfld = nfld + 1
 *   ..set ll
 *     (silly time; ll is needed as an argument to cfwuin)
       ll(0) = 0
@@ -151,14 +147,12 @@
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')
        k = k+1
-       if (add_areshn.eq.1) then
-         chtit = 'norm of residual of the fluid neutral heat equation'
-         chlab = 'areshn'
-         call cfwuin (nput, 1, ll(1), 'linlog')
-         call cfwuch (nput, 60, chtit, 'title')
-         call cfwuch (nput, 12, chlab, 'label')
-         k = k+1
-       endif
+       chtit = 'norm of residual of the fluid neutral heat equation'
+       chlab = 'areshn'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
        chtit = 'norm of residual of electric potential equation'
        chlab = 'arespo'
        call cfwuin (nput, 1, ll(1), 'linlog')
