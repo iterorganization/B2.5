@@ -73,6 +73,7 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
+      nfld = nfld + 1
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 *   ..define region boundaries
 #ifdef WG_TODO
@@ -109,6 +110,8 @@
        z(k) = diag%areshe
        k = k+1
        z(k) = diag%areshi
+       k = k+1
+       z(k) = diag%areshn
        k = k+1
        z(k) = diag%arespo
        k = k+1

@@ -35,6 +35,7 @@
 
 *   ..local variables
       integer ncall, iCv, is
+      integer, save :: tn_style = 0                               
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, t0, t1, t2, t3
       save ncall
@@ -52,6 +53,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mxar')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then
+       call ipgeti ('b2mn_tn_style', tn_style)                
+      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -91,14 +96,27 @@
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8
+      prvn = 0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         nevi = nevi+abs(geo%cvVol(iCv)*dv%ne(1,iCv))
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(1,iCv)*pl%te(1,iCv))
-        do is = 0, ns-1
-         prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
-        enddo
+        if (tn_style.eq.0) then
+         do is = 0, ns-1
+          prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
+         enddo
+         prvn = prvi
+        else
+         do is = 0, ns-1
+          if (.not.is_neutral(is)) then
+           prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
+          else
+           prvn = prvn+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%tn(1,iCv))
+          endif
+         enddo
+        endif
       enddo
+
 *   ..compute areshe, areshi, arespo
       t0 = 0.0_R8
       t1 = 0.0_R8
@@ -113,12 +131,7 @@
       diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
       diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
       diag%arespo = abs(t2/(qe*nevi))
-      diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvi))
-
-      !! AFN_TODO split prvi into prvi and prvn
-      !! AFN_TODO add to plot routines
-
-      write(*,*) 'areshn =', diag%areshn
+      diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
 
 * ..compute regional scaled sums
       diag%rescoreg = 0.0_R8

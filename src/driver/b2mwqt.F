@@ -77,7 +77,7 @@
 *
 *     areshn - real, input.
 *     areshn specifies the scaled norm of the residual of the fluid neutral
-*     heat balance equation. Only calculated if a separate neutral energy 
+*     heat balance equation. Only non-zero if a separate neutral energy 
 *     equation is solved. In this case areshi contains only the ions.
 *
 *     arespo - real, input.
@@ -119,9 +119,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, nfldmx, style, nfld, add_areshn
+      integer ncall, nfldmx, style, nfld
       parameter (nfldmx=1000)
-      save ncall, style, add_areshn
+      save ncall, style
       integer k, icv, is, iicv, il, ix0(-1:5), iy0(-1:5)
       real (kind=R8) ::
      *   z(0:nfldmx-1), t0, t1, tv
@@ -131,7 +131,7 @@
      *   smin, b2ssum
       external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
 *   ..initialisation
-      data ncall/0/, style/1/, add_areshn/0/
+      data ncall/0/, style/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -153,7 +153,6 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mwqt_style', style)
-       call ipgeti ('b2mwqt_add_areshn', add_areshn)
        call xertst (0.le.style, 'faulty internal parameter style')
       endif
 *   ..test nput
@@ -185,9 +184,7 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
-      if (add_areshn.eq.1) then
-        nfld = nfld + 1
-      endif
+      nfld = nfld + 1
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 *   ..define region boundaries
 #ifdef WG_TODO
@@ -225,10 +222,8 @@
        k = k+1
        z(k) = diag%areshi
        k = k+1
-       if (add_areshn.eq.1) then
-         z(k) = diag%areshn
-         k = k+1
-       endif
+       z(k) = diag%areshn
+       k = k+1
        z(k) = diag%arespo
        k = k+1
 *    ..norms of corrections
