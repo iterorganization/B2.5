@@ -213,8 +213,8 @@ c     Other initializations
       subroutine CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
@@ -233,19 +233,18 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
-     2    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
-      real (kind=R8) :: dnndz
+     2    pof,nef,isign,dnndy,dnndz, cosa, sina
 c     Output variables: 
 c     fnni: incident neutral flux
 c     fmomni: momentum flux of incident neutrals.
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 c     Internal variables
-      real (kind=R8):: dnndyc,dnndyv,vcx,vion,
+      real (kind=R8):: vcx,vion,
      2    vtot,fnni_nodrifts,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
-     5    dnndy,t_av,mfp,c_th,upf
+     5    t_av,mfp,c_th,upf
       integer :: ic
 *   ..statement functions
       external subini, subend, expu
@@ -262,9 +261,6 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit 
 
-      dnndyc = isign*dnndy2
-      dnndyv = 0
-      dnndy = dnndyc
 c     Calculate rate coefficients at boundary
       vcx=0.0_R8
       do ic = 0, pl%ns-1
@@ -289,7 +285,6 @@ c     Incident particle flux density
       uz = 0.0_R8
       endif
 
-      dnndz = -isign*dnndz2
       fnni = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
      &         nnf*vcx/vtot*i1l
 
@@ -379,8 +374,8 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
@@ -395,9 +390,9 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
-     &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina,
+     &    pof,nef,isign,dnndy,dnndz,cosa, sina,
      &    mfp_b1, mfp_b2
-      real (kind=R8) :: dnndz, t1, t_av
+      real (kind=R8) :: t1, t_av
 c     Output variables
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
@@ -434,8 +429,8 @@ c     if the mfp is in between, we use a linear interpolation
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
 
       elseif (mfp.gt.mfp_b2) then
@@ -453,8 +448,8 @@ c     if the mfp is in between, we use a linear interpolation
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnniD,fmomniD,nniD,nnwwniD,feneniD)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fnniD,  fnniM,   fnni)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomniD,fmomniM, fmomni)
@@ -470,8 +465,8 @@ c     if the mfp is in between, we use a linear interpolation
       subroutine CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
@@ -490,8 +485,8 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
-     &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
-      real (kind=R8) :: dnndz, t1, t_av
+     &    pof,nef,isign,dnndy,dnndz,cosa, sina
+      real (kind=R8) :: t1, t_av
 c     Output variables
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
@@ -505,8 +500,8 @@ c     Output variables
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
-     &            rt,dnndy2, dnndz2,cosa,sina,
-     &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
       else
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
@@ -662,7 +657,6 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
       ux = upf*pit2
       uz = -cosa*isign*upf*pit
 c       ion particle flux density
-c     AFN_TODO compare both options
       fdni = t0/area
 
 c     Assume poloidal and radial drifts are zero for momentum and energy
@@ -769,8 +763,7 @@ c     Convert energy flux densities in energy fluxes
       subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
@@ -790,8 +783,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy2
-      real (kind=R8) :: dnndz
+     &    sina,cosa, dnndy, dnndz
 c     Output variables:
 c     fmomni: momentum flux of 
 c     incident neutrals.
@@ -805,8 +797,8 @@ c     Internal variables
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &   dnndy,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
-     &   upf, nif,mfp,c_th
+     &    expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
+     &    upf, nif,mfp,c_th
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
       external subini, subend,intp_2dtable,intp_2dtable0, expu
@@ -823,11 +815,6 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
       ux = upf*pit2
       uy = -sina*isign*upf*pit
       uz = -cosa*isign*upf*pit 
-
-      dnndz = -isign*dnndz
-
-c     Calculate tangental and perpendicular gradients of neutral density at boundary
-      dnndy = isign*dnndy2
 
 c     Calculate rate coefficients at boundary
       vcx=0.0_R8
@@ -999,8 +986,7 @@ c     Convert energy flux densities in energy fluxes
      &             iCv,iCn,nCi,iFc,
      &            isign,isn,isi,iscx0,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
@@ -1019,8 +1005,7 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy2, mfp_b1 , mfp_b2 
-      real (kind=R8) :: dnndz
+     &    sina,cosa, dnndy, dnndz, mfp_b1 , mfp_b2 
 c     Output variables: 
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
@@ -1055,8 +1040,7 @@ c     Calculate rate coefficients at boundary
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       elseif (mfp.gt.mfp_b2) then
@@ -1073,8 +1057,7 @@ c     Calculate rate coefficients at boundary
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD)
 
@@ -1094,8 +1077,7 @@ c     Calculate rate coefficients at boundary
       subroutine CalcReflectedFluxesMinMfp(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
@@ -1118,8 +1100,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy2
-      real (kind=R8) :: dnndz
+     &    sina,cosa, dnndy, dnndz
 c     Output variables: 
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
@@ -1133,8 +1114,7 @@ c     Output variables:
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy2,
-     &            dnndz,
+     &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       else
