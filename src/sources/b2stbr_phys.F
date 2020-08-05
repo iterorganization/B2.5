@@ -106,7 +106,7 @@ c for KUL advanced fluid neutral boundary conditions
       real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
       integer :: isn
       real (kind=R8) :: wrkv(nVx),
-     &                  nnVx(nVx), dnndy2, dnndz2, dumm0(nFc,0:1),
+     &                  nnVx(nVx), dnndy, dnndz, dumm0(nFc,0:1),
      &                  dumm1(nFc,0:1),cvsf(nFc,0:1), dnn(nFc,0:1),
      &                  min_mfp(1:nstrat), mfp
 c     output for analysis/debugging
@@ -437,14 +437,14 @@ c           do nothing to prevent oscillations if minimum mfp is just around mfp
 #endif
 
 c for KUL recycling/reflection model
-            dnndy2 =  dnn(iFc,1)
-            dnndz2 =  dnn(iFc,0)
+            dnndy =   mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1)*dnn(iFc,1)
+            dnndz =  -mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1)*dnn(iFc,0)
             
           
             call recycle(
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
-     &           Phi_app, lcore, dnndy2, dnndz2, cvsf)
+     &           Phi_app, lcore, dnndy, dnndz, cvsf)
           enddo      ! end loop over boundary cells
 
 
@@ -601,7 +601,7 @@ c for KUL recycling/reflection model
       contains
 
       subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore,
-     &                   dnndy2, dnndz2, cvsf0)
+     &                   dnndy, dnndz, cvsf0)
 c iCv             number of the guard cell
 c iCn             number of the neighbour cell
 c iFc             number of the guard cell face
@@ -609,11 +609,11 @@ c isign           multiplies fluxes to get the right sign
 c Phi_app         applied potential
 c area            area element
 c lcore           is this a core element?
-c dnndy2            the gradient of the main neutral species density along the length of the boundary face
-c dnndz2            the gradient of the main neutral species density across the boundary face
+c dnndy           the gradient of the main neutral species density along the length of the boundary face
+c dnndz           the gradient of the main neutral species density across the boundary face
       implicit none
       integer nsmin, nsmax, iCv, iCn, iFc
-      real (kind=R8) Phi_app, pof, isign, dnndy2, dnndz2                            
+      real (kind=R8) Phi_app, pof, isign, dnndy, dnndz
       logical lcore, found
 
       integer is0, is1, is2, is, isi, js, k, iwall, itrack, is0old
@@ -633,7 +633,7 @@ c new variables for advanced fluid neutral reflection/recycling model
      &     fmomrefl, 
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
      &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
-     &     dnndz,dnndzc,dnndzv, sina, cosa, dnndthetac, dnndthetav
+     &     sina, cosa
 
 
 
@@ -951,16 +951,6 @@ c AFN_TODO check signs
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
 
-!! calculate the gradient of the neutral density perpendicular to the boundary face. AFN_TODO correct for non-orthogonal case
-           dnndthetac = pl%na(iCn,is0)/geo%fcHc(iFc,2)
-           dnndthetav = -1.0_R8/geo%fcHc(iFc,2)
-c DivOpt:
-c                dnndzc = (dnndthetac - dnndyc.*sin(alpha))./cos(alpha);
-c                dnndzv = (dnndthetav - dnndyv.*sin(alpha))./cos(alpha);
-
-           dnndzc = dnndthetac
-           dnndzv = dnndthetav
-           dnndz = dnndzc + dnndzv * pl%na(iCv,is0)
 
 !! end of preliminary calculations
            if(erecyc(is,istra)>0.0_R8.or.
@@ -1062,8 +1052,7 @@ c          while B2.5 uses internal energy equations.
                call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
-     &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
-     &              dnndz,dnndzc,dnndzv,
+     &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
      &              use_uy_uz_0,use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
@@ -1075,16 +1064,14 @@ c          while B2.5 uses internal energy equations.
      &              iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
-     &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
-     &              dnndz,dnndzc,dnndzv,
+     &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
      &              use_uy_uz_0,use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              else
                call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
-     &              dv%ne(iCv),geo,rt,dnndy2,dnndz2,cosa,sina,
-     &              dnndz,dnndzc,dnndzv,
+     &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
      &              use_uy_uz_0,use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
 
@@ -1101,7 +1088,7 @@ cmb   net momentum sources from neutral particle reflection
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
-     &              geo,mpg,rt,dnndy2,dnndz2,
+     &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.1) then
@@ -1116,7 +1103,7 @@ cmb   net momentum sources from neutral particle reflection
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
-     &              geo,mpg,rt,dnndy2,dnndz2,
+     &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
@@ -1124,7 +1111,7 @@ cmb   net momentum sources from neutral particle reflection
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
-     &              geo,mpg,rt,dnndy2,dnndz2,
+     &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
