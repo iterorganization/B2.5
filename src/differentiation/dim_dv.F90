@@ -12,7 +12,7 @@ SUBROUTINE DIM_DV(x, xd, y, yd, res, resd, nbdirs)
 
   res = dim(x,y)
   DO nd = 1, nbdirs
-    IF (res .GE. 0.0_R8) THEN
+    IF (res .GT. 0.0_R8) THEN
       resd(nd) = xd(nd) - yd(nd)
     ELSE
       resd(nd) = 0.0_R8
