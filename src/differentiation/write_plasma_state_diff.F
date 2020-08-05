@@ -12,7 +12,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('write_plasma_state')
+      call subini ('write_plasma_state_diff')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
       
@@ -84,5 +84,5 @@
       call subend ()
       return
 
-      end subroutine write_plasma_state
+      end subroutine write_plasma_state_diff
 
