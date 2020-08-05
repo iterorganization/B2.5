@@ -215,8 +215,7 @@ c     Other initializations
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
 c main reference: 
@@ -233,15 +232,13 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
-      integer,intent(in):: split_fluxes  
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
       real (kind=R8) :: dnndz
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
-c     incident neutrals.
-      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+c     Output variables: 
+c     fnni: incident neutral flux
+c     fmomni: momentum flux of incident neutrals.
+      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 c     Internal variables
       real (kind=R8):: dnndyc,dnndyv,vcx,vion,
@@ -292,17 +289,9 @@ c     Incident particle flux density
       uz = 0.0_R8
       endif
 
-      if (split_fluxes.eq.1) then
-        fnnic = vcx/vtot**2*(dnndyc*uy*i1l+
-     &     dnndzc*i2l)
-        fnniv = vcx/vtot*(-i1l+
-     &     1.0_R8/vtot*(dnndyv*uy*i1l+dnndzv*i2l))
-        fnni = fnnic + fnniv * nnf
-      else
-        dnndz = -isign*dnndz2
-        fnni = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
+      dnndz = -isign*dnndz2
+      fnni = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
      &         nnf*vcx/vtot*i1l
-      endif
 
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
@@ -317,17 +306,8 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
 c     Incident particle flux density without poloidal and radial drift velocities
-c     if split_fluxes = 1 the particle flux term is split into a constant part and a part that scales with nn in the guard cell but then
-c     the gradient components dnndy and dnndz are simply the '5-point' version which may be erronous for steep targets.
-c     if split_fluxes = 0 the particle flux term is not split-up, but dnndy and dnndz are then the true tangential and normal components.
-      if (split_fluxes.eq.1) then
-        fnni_nodrifts = vcx/vtot**2*(dnndyc*uy*i1l+
-     2     dnndzc*i2l) + vcx/vtot*(-i1l+
-     3     1.0_R8/vtot*(dnndyv*uy*i1l+dnndzv*i2l)) * nnf
-      else
-        fnni_nodrifts = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
+      fnni_nodrifts = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
      &                  nnf*vcx/vtot*i1l
-      endif
 
 c     Incident momentum flux densities
       fmox= mn*vcx/vtot*(-nnf*ux*I1l + 
@@ -370,8 +350,6 @@ c     Incident total energy flux density of neutrals
 
 
 c     Convert particle flux densities in fluxes
-      fnnic = fnnic*area
-      fnniv = fnniv*area
       fnni  = fnni*area
 
 c     Calculate incident poloidal momentum flux of neutrals
@@ -386,8 +364,6 @@ c     Convert energy flux densities in net energy flux contributions
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), set all outputs to zero
       if (fnni.lt.0) then
-        fnnic  = 0.0_R8
-	fnniv  = 0.0_R8
 	fnni   = 0.0_R8 
 	fmomni = 0.0_R8
 	nni    = 0.0_R8
@@ -405,8 +381,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
       use b2mod_rates
@@ -419,19 +394,18 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
      &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
-      integer,intent(in):: split_fluxes  
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina,
      &    mfp_b1, mfp_b2
       real (kind=R8) :: dnndz, t1, t_av
 c     Output variables
-      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 c     Internal variables
       real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th
       integer :: ic
-      real (kind=R8):: fnnicM,fnnivM,fnniM,nnwwniM,nniM,feneniM,fmomniM
-      real (kind=R8):: fnnicD,fnnivD,fnniD,nnwwniD,nniD,feneniD,fmomniD
+      real (kind=R8):: fnniM,nnwwniM,nniM,feneniM,fmomniM
+      real (kind=R8):: fnniD,nnwwniD,nniD,feneniD,fmomniD
 *   ..statement functions
       external subini, subend, expu
 
@@ -462,30 +436,26 @@ c     if the mfp is in between, we use a linear interpolation
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
 
       elseif (mfp.gt.mfp_b2) then
 
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
-     &            fnni,fnnic,fnniv,fmomni,
+     &            fnni,fmomni,
      &            nni,nnwwni,feneni)
 
       else 
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
-     &            fnniM,fnnicM,fnnivM,fmomniM,
+     &            fnniM,fmomniM,
      &            nniM,nnwwniM,feneniM)
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnniD, fnnicD,fnnivD,fmomniD,nniD,nnwwniD,feneniD)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnnicD, fnnicM,  fnnic)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnnivD, fnnivM,  fnniv)
+     &            fnniD,fmomniD,nniD,nnwwniD,feneniD)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fnniD,  fnniM,   fnni)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomniD,fmomniM, fmomni)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,nniD,   nniM,    nni)
@@ -502,8 +472,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
 c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
@@ -519,13 +488,12 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1,
-     &    split_fluxes
+     &    isn,iscx0,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy2,dnndz2, dnndzc, dnndzv, cosa, sina
       real (kind=R8) :: dnndz, t1, t_av
 c     Output variables
-      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 
 *   ..statement functions
@@ -539,12 +507,11 @@ c     Output variables
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy2, dnndz2,cosa,sina,
      &            dnndz,dnndzc,dnndzv,use_uy_uz_0,use_uy_uz_1,
-     &            split_fluxes,
-     &            fnni, fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            fnni,fmomni,nni,nnwwni,feneni)
       else
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
-     &            fnni,fnnic,fnniv,fmomni,
+     &            fnni,fmomni,
      &            nni,nnwwni,feneni)
       endif
 
@@ -554,7 +521,7 @@ c     Output variables
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tf,geo, cosa, sina,
-     &            fnni,fnnic,fnniv,fmomni,
+     &            fnni,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
 c     This routine calculates the incident neutral particle fluxes based on 
@@ -572,10 +539,8 @@ c     isn is the neutral species index
       type (geometry), intent (in) :: geo
       integer,intent(in) :: iCv, iFc, isn, istra
       real (kind=R8),intent(in) :: area, tf, isign, cosa, sina
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv.
-      real (kind=R8),intent(out):: fnni, fnnic,fnniv,fmomni,nni,nnwwni,
+c     Output variables
+      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 c     Internal variables
       real (kind=R8):: pit,pit2,mn,nnf,ux,uy,uz,
@@ -603,9 +568,7 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
 c     Incident particle flux density
-      fnnic = 0.0_R8
-      fnniv = -i1l
-      fnni = fnnic + nnf*fnniv
+      fnni = -nnf*i1l
 
 c     Incident momentum flux densities
       fmox = -mn*nnf*ux*I1l 
@@ -626,8 +589,6 @@ c     Incident total energy flux density of neutrals
      2     I1l + mn/2.0_R8*I3l)
 
 c     Convert particle flux densities in fluxes
-      fnnic = fnnic*area
-      fnniv = fnniv*area
       fnni  = fnni*area
 
 c     Calculate incident poloidal momentum flux of neutrals 
@@ -673,10 +634,8 @@ c     nif = plasma density on face, isn neutral species index
      &     use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nif,nef,t0,isign, tif, tef, cosa, sina
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
-c     incident neutrals.
+c     Output variables: 
+c     fmomni: momentum flux of incident neutrals.
       real (kind=R8),intent(out):: fmomrec,nnrec,nnwwnrec,fenerec
 c     Internal variables
       real (kind=R8):: cs,Mj,
@@ -833,9 +792,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy2
       real (kind=R8) :: dnndz
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
+c     Output variables:
+c     fmomni: momentum flux of 
 c     incident neutrals.
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
