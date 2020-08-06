@@ -28,6 +28,7 @@
 #else
         read(99,transpbgr)
 #endif
+        close(99)
 	write(*,*) 'Read namelist transpbgr'
       else
 	write(*,*) 'No b2.transpbgr.parameters file found'
