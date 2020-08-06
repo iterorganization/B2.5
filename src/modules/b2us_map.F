@@ -256,21 +256,18 @@
       deallocate (m%cvNvP)
       deallocate (m%cvNv)  
     
-      if (m%isClassicalGrid.eq.1) then
-        deallocate (m%imapCv)
-        deallocate (m%imapFcx)  
-        deallocate (m%imapFcy)  
-        deallocate (m%imapVx)  
-        deallocate (m%icornVx)
-        if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
+      deallocate (m%imapCv)
+      deallocate (m%imapFcx)  
+      deallocate (m%imapFcy)  
+      deallocate (m%imapVx)  
+      deallocate (m%icornVx)
+      if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
 #ifdef WG_DEBUG
-        deallocate (imapCv)
-        deallocate (imapFcx)
-        deallocate (imapFcy)
-        deallocate (imapVx)
+      deallocate (imapCv)
+      deallocate (imapFcx)
+      deallocate (imapFcy)
+      deallocate (imapVx)
 #endif
-
-      endif
 
       deallocate (m%fcLbl)
       
