@@ -358,8 +358,8 @@ cdjm Jan2017 update momentum source components for balance
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
         call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
-     .    smb, flub, co%cvsahz(1,0,is), dv%resmo(1,is), dv%fmo(1,0,is),
-     .    dv%fhm(1,0,is), co%cvsahz_eff(1,0,is))                       !srv 04.07.08
+     .    smb, flub, flubv, co%cvsahz(1,0,is), dv%resmo(1,is),
+     .    dv%fmo(1,0,is), dv%fhm(1,0,is), co%cvsahz_eff(1,0,is))       !srv 04.07.08
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
@@ -468,7 +468,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
-     .    smb, flub, co%cvsahz(1,0,is), wrk0, wrkf, wrkff, wrkfff)
+     .    smb, flub, flubv, co%cvsahz(1,0,is), wrk0, wrkf, wrkff,
+     .    wrkfff)
 *    ..accumulate residual
         call b2saxpy (nCv, 1.0_R8, wrk0, 1, dv%resmt, 1)
 *    ..accumulate smb
