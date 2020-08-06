@@ -85,8 +85,8 @@
      &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*ub(iCv)**2          !srv 05.04.07
      &      *nb(iCv)*wrk0(iCv)
           ctcf(iCv) = phm0*phm1*geo%cvVol(iCv)*                          !srv 06.04.07 {
-     &     (geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
-     &     *nb(iCv)*wrk0(iCv)                                            !srv 06.04.07 }
+     &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
+     &      *nb(iCv)*wrk0(iCv)                                           !srv 06.04.07 }
         enddo
 
       else if (style.eq.1) then
