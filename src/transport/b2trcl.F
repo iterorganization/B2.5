@@ -540,10 +540,6 @@ csw 13mar2012
       wrk = chce(:,0)                                                   !srv 13.01.1
 
       if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
-!!        AFN_TODO to be discussed what should happen here
-!!        if (tn_style.ne.0) then
-!!          call xerrab('flux limiters not yet developed for tn_style>0')
-!!        endif
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)

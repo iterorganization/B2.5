@@ -105,7 +105,7 @@
        call b2xvsg (nCv, dv%ne2, 1, 'ne2', '.gt.')
       endif
 *   ..compute nirm (atom density weighted by 1/sqrt(am)
-      call b2xpnr (nCv, ns, am, pl%na, nirm)
+      call b2xpnr (nCv, ns, pl%na, nirm)
 
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
