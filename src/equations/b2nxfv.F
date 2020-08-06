@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nCv, nFc, nVx, isb, geo, mpg, cvsbhz_cl, flubv)            !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+      subroutine b2nxfv (nCv, nFc, nVx, isb, geo, mpg, cvsbhz_cl,       !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+     &  cvsbhz, flubv)
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
@@ -12,7 +13,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   cvsbhz_cl(nFc,0:1)               !srv 16.10.17
+     *   cvsbhz_cl(nFc,0:1), cvsbhz(nFc,0:1)                            !srv 16.10.17
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flubv(nFc,0:1)
@@ -30,9 +31,9 @@
 
 *   ..local variables
       integer ncall
-      real (kind=R8) ::  phm0 = 1.0_R8                                  !srv 06.12.18
+      real (kind=R8), save ::  phm0 = 1.0_R8, phm1 = 1.0_R8             !srv 06.12.18
       real (kind=R8) ::
-     *   ft, dloghz(nFc)                                                !srv 16.10.17
+     *   ft, dloghz(nFc,0:1)                                            !srv 16.10.17
       save ncall
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
@@ -52,6 +53,7 @@
       call subini ('b2nxfv')
       if (ncall.eq.0) then                                              !srv 06.12.18 {
        call ipgetr ('b2nxfv_phm0', phm0)
+       call ipgetr ('b2nxfv_phm1', phm1)
       endif                                                             !srv 06.12.18 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -62,11 +64,16 @@
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
-      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
+      if (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then          !srv 26.10.08
         call diff_p(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
-     .    dloghz)
-        flubv(:,0) = phm0*ft*cvsbhz_cl(:,0)*dloghz                    !srv 06.12.18
+     .    dloghz(1,0))
+        flubv(:,0) = phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)                 !srv 06.12.18
         flubv(:,1) = 0.0_R8
+      elseif (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.0) then
+        call diff(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
+     .    dloghz)
+        flubv(:,0) = phm0*phm1*cvsbhz(:,0)*dloghz(:,0)
+        flubv(:,1) = phm0*phm1*cvsbhz(:,1)*dloghz(:,1)
       else
         flubv = 0.0_R8
       endif
@@ -79,4 +86,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfv
 
-      end                                                            !srv 19.01.05 01.07.05 11.09.09 }
+      end                                                               !srv 19.01.05 01.07.05 11.09.09 }
