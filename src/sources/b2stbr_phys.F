@@ -616,7 +616,7 @@ c dnndz           the gradient of the main neutral species density across the bo
       real (kind=R8) Phi_app, pof, isign, dnndy, dnndz
       logical lcore, found
 
-      integer is0, is1, is2, is, isi, js, k, iwall, itrack, is0old
+      integer is0, is1, is2, is, isi, js, k, iwall, itrack
       real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
      &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
      &     eself, sput_frac_chem_sum, be_frac, 
@@ -855,13 +855,11 @@ cdpc-end
 
 *    ..loop over species
 cmb   Loop implicitly expects that the species are arranged per isonuclear sequence and that the neutral atom of that sequence always comes first. If not, erroneous results will be obtained. 
-cmb Variable is0old added to check when a new isonuclear sequence starts.
       is0 = 0
       is1 = 0
-      nnsum = 0
-      nnwwnsum = 0
+      nnsum = 0.0_R8
+      nnwwnsum = 0.0_R8
       do is = nsmin, nsmax
-         is0old = is0
          if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
@@ -955,18 +953,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
      2      mrecyc(is,istra)>0.0_R8)
      3     write(*,*)'kul_recycle incompatible with user-defined '//
      4     'momentum and energy recycling coefficients > 0'
-
-           if((is0.ne.is0old)) then 
-             if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
-             smon = -isign*cosa* 
-     &            am(is0)*mp/3.0_R8*nnwwnsum**2 /
-     &            nnsum*farea*
-     &            abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*geo%cvhz(iCv)
-             srw%smo0(iCv,0,is0old) = srw%smo0(iCv,0,is0old) + smon
-             nnsum = 0
-             nnwwnsum = 0
-
-           endif
 
            if (is.ne.is0) then !! ion species, recycling
 
@@ -1153,15 +1139,17 @@ c temporary switch to evaluate the effect.
              endif
 
            endif
-           if (is.eq.nsmax) then   !! see eq. 62-63 of the main reference.
+           if (zamax(is).eq.zn(is)) then   !! see eq. 62-63 of the main reference.
                if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
                smon = -isign* 
      &            cosa*am(is0)*mp/3.0_R8*nnwwnsum**2/
      &            nnsum*farea*abs(geo%cvbb(iCv,0)/geo%cvbb(iCv,3))*
      &            geo%cvhz(iCv)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon*
-     &                                    neutral_sources_rescale   
-           endif 
+     &                                    neutral_sources_rescale
+             nnsum = 0.0_R8
+             nnwwnsum = 0.0_R8
+           endif
 
        endif !! end KU Leuven advanced fluid neutral models
 #ifdef WG_TODO
