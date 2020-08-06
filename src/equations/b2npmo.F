@@ -312,7 +312,7 @@
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, geo, mpg, co%cvsahz_cl(1,0,is), 
-     &   flubv)
+     &   co%cvsahz(1,0,is), flubv)
 !WG_TODO       if (balance_netcdf.ne.0) then
 !WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
 !WG_TODO       endif
