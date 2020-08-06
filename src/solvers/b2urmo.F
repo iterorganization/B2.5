@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2urmo (nCv, nFc, nVx, geo, mpg,  isb, ub, rob, 
-     .  smb, flub, cvsb, resmb, fmb, fkb, cvsb_eff)                                  !srv 02.06.11
+     .  smb, flub, flubv, cvsb, resmb, fmb, fkb, cvsb_eff)                      !srv 02.06.11
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -14,7 +14,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1), cvsb(nFc,0:1)
+     *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1), flubv(nFc,0:1),
+     *   cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(nCv), fmb(nFc,0:1), fkb(nFc,0:1), cvsb_eff(nFc,0:1)
@@ -122,8 +123,9 @@ cwdk store effective viscosity, for use in viscous heating
       ! To be checked:
       ! - consistency in case of drifts (in particular: fna_cor?)
       ! - should contribution from flubv be in here?
-      wrk = 0.5_R8*ub**2
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,wrk,flub,cvsb,fkb,flf,flv)
+      wrk  = 0.5_R8*ub**2
+      wrkf = flub + flubv
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz
 
