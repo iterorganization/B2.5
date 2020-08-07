@@ -43,7 +43,8 @@
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
      .                           fhePSch(:,:), fhe_eir(:,:)
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
-     .                           fhiPSch(:,:), fhi_eir(:,:),
+     .                           fhiPSch(:,:), fhi_eir(:,:)
+        real(R8), allocatable :: fnn (:,:), fnn_32(:,:), fnn_52(:,:),
      .                           fhn(:,:)
         real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:), 
      .                           fht(:,:)
@@ -541,6 +542,10 @@ cwdk move to dv
       allocate( dv % fni_he( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fni_32( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fni_52( nFc, 0:1 ), SOURCE=0._R8 )
+
+      allocate( dv % fnn( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fnn_32( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fnn_52( nFc, 0:1 ), SOURCE=0._R8 )
       
       allocate( dv % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )    
@@ -670,6 +675,9 @@ cwdk move to dv
       deallocate( dv % fni_he )
       deallocate( dv % fni_32 )
       deallocate( dv % fni_52 )
+      deallocate( dv % fnn )
+      deallocate( dv % fnn_32 )
+      deallocate( dv % fnn_52 )
       deallocate( dv % fch )
       deallocate( dv % fch_32 )
       deallocate( dv % fch_52 )

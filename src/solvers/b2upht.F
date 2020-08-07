@@ -157,6 +157,10 @@
        enddo
       endif
 
+      if (tn_style.le.1) then
+        tn = ti
+      endif
+
 * ..return
       ncall = ncall+1
       call subend ()

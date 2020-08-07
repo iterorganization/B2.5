@@ -9,11 +9,12 @@
      *  fna_32(:,:,:,:,:),  fna_52(:,:,:,:,:),
      *  fni_32(:,:,:,:),    fni_52(:,:,:,:),
      *  fne_32(:,:,:,:),    fne_52(:,:,:,:),
+     *  fnn_32(:,:,:,:),    fnn_52(:,:,:,:),
      *  fhe(:,:,:,:),  fhe0(:,:,:,:),  fhep(:,:,:,:),  fhet(:,:,:,:),
      *  fhi(:,:,:,:),  fhi0(:,:,:,:),  fhip(:,:,:,:),  fhit(:,:,:,:),
      *  fhn(:,:,:,:),
      *  fna(:,:,:,:,:),  fna0(:,:,:,:,:),  fnap(:,:,:,:,:),
-     *  fne(:,:,:,:),    fni(:,:,:,:),
+     *  fne(:,:,:,:),    fni(:,:,:,:),  fnn(:,:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
      *  ni(:,:,:),  ni0(:,:,:),
@@ -62,6 +63,8 @@
       allocate(fni_52(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fne_32(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fne_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fnn_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fnn_52(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fna_32nd(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 18.06.08
       allocate(fna_52nd(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 18.06.08
       allocate(fhe(-1:nxd,-1:nyd,0:1,0:1))
@@ -102,6 +105,7 @@
       allocate(fnap(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fne(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fni(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fnn(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhm(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fhp(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fhj(-1:nxd,-1:nyd,0:1,0:1))
@@ -187,6 +191,8 @@
       deallocate(fni_52)
       deallocate(fne_32)
       deallocate(fne_52)
+      deallocate(fnn_32)
+      deallocate(fnn_52)
       deallocate(fhe)
       deallocate(fhe0)
       deallocate(fhep)
@@ -201,6 +207,7 @@
       deallocate(fnap)
       deallocate(fne)
       deallocate(fni)
+      deallocate(fnn)
       deallocate(fhm)
       deallocate(fhp)
       deallocate(fhj)
