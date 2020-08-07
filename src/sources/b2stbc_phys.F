@@ -6367,7 +6367,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
-          if (kul_recycle.ne.1) then !! default, include also contribution from fluid neutrals in hci0.
+          if (tn_style.eq.0.and.kul_recycle.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
           srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
      &                    sy
           else
@@ -6375,10 +6375,12 @@ cghgh
      &                    sy
           endif
           do is = 0, ns-1
-            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
+            if(.not.(is_neutral(is)) .or. tn_style.eq.0) then
+              srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
-            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
+              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
      &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
+            endif
           enddo !! end species loop
         enddo   !! end boundary cell loop
 #ifdef WG_TODO
