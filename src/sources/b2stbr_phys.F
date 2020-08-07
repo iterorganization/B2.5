@@ -968,7 +968,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
-     &              cosa, sina, use_uy_uz_0,     
+     &              cosa, sina, use_uy_uz_0,      
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -987,8 +987,6 @@ cmb   net neutral energy source from recycling
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
-               !! neutral energy boundary conditions are not used
              else 
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
@@ -1026,8 +1024,6 @@ c          while B2.5 uses internal energy equations.
 
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-             elseif (tn_style.eq.1) then
-               !! do nothing, no neutral contributions in the boundary conditions of the pure ion energy equation
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
              endif
@@ -1125,10 +1121,9 @@ cmb   net momentum sources from neutral particle reflection
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + (feneni + fenerefl)*
      &                                          neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
-               !! neutral energy boundary conditions are not used
              else
-               srw%shn0(iCv,0) = srw%shn0(iCv,0) + feneni + fenerefl   
+               srw%shn0(iCv,0) = srw%shn0(iCv,0) + (feneni + fenerefl)* 
+     &                                          neutral_sources_rescale 
              endif
 
 c remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary

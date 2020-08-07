@@ -49,7 +49,7 @@
      &                 iout_b2npmo =0, tn_style = 0
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
-     *  rg0, t0, t1, t2, du0, du1, tkin, t1i, t1n
+     *  rg0, t0, t1, t2, du0, du1, tkin, t1n
       real (kind=R8) :: wrk0(nCv)
       save ncall, styl0, rg0
 *   ..procedures
@@ -166,34 +166,40 @@ ctmp.dpc
 *       ..compute atom heat source
            du0 = ua(iCv,is)-ua(iCv,is-1)
            du1 = ua(iCv,is0)-ua(iCv,is0+1)
-          if (tn_style.eq.0) then
-            t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
+           if (tn_style.eq.0) then
+             t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
      &        (1.0_R8-BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
-          elseif (tn_style.eq.1) then
-            tkin = (mp/4.0_R8)*
-     &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
-     &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
-            t1i = t0*na(iCv,is0)*na(iCv,is)*tkin
-            shi0(iCv,0) = shi0(iCv,0)+t1i
-          else
-            tkin = (mp/4.0_R8)*
-     &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
-     &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
-            t1i = t0*na(iCv,is0)*na(iCv,is)*
+           elseif (tn_style.eq.1) then
+             if(zn(is).eq.1) then !only contribution from H0-->H+
+               tkin = (mp/2.0_R8)*
+     &           ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
+               t1 = t0*na(iCv,is0)*na(iCv,is)*tkin
+               shi0(iCv,0) = shi0(iCv,0)+t1 
+             else !conribution from CX with non hydrogenic species
+               call xerrab('tn_style=1 not supported for multispecies')
+             endif
+           else !tn_style=2
+             if (zn(is).eq.1) then !only contribution from H0-->H+
+               tkin = (mp/2.0_R8)*
+     &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
+               t1 = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(tn(iCv)-ti(iCv)) + tkin)
-            t1n = t0*na(iCv,is0)*na(iCv,is)*
+               tkin = (mp/2.0_R8)*
+     &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
+               t1n = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
-            shi0(iCv,0) = shi0(iCv,0)+t1i
+             else !conribution from CX with non hydrogenic species
+               call xerrab('tn_style=2 not supported for multispecies')
+             endif
+            shi0(iCv,0) = shi0(iCv,0)+t1
             shn0(iCv,0) = shn0(iCv,0)+t1n
-          endif
+           endif
 
 !WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
-
-
           endif
         enddo
 *     ..parallel momentum source

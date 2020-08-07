@@ -127,7 +127,8 @@
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
-     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
+     *  tn_style = 0, kul_recycle = 0, user_transport = 0 
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
@@ -1239,6 +1240,17 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
+       call ipgeti ('b2mn_tn_style', tn_style)
+       call xertst(tn_style.ge.0 .and. tn_style.le.2 ,
+     &   'tn_style value not supported')
+       call ipgeti ('b2stbr_kul_recycle', kul_recycle)
+       call ipgeti ('b2tqna_user_transport', user_transport)
+c       if (kul_recycle.eq.1 .XOR. user_transport.eq.10) call xerrab(
+c     &   'Must use user_transport=10 and kul_recycle=1 together')
+       if (tn_style.gt.0 .and. ns.gt.2) call xerrab(
+     &   'tn_style=1,2 not supported for multispecies plasma')
+       if (tn_style.gt.0 .and. kul_recycle.eq.0) call xerrab(
+     &   'Must use kul_recycle=1 with tn_style>0')
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
