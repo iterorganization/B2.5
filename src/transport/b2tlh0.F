@@ -74,7 +74,7 @@
            t2 = 1.0_R8/(1.0_R8 + 
      .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
            chcb(iFc,0,is) = chcb(iFc,0,is)*t2
-	   fllim0fhi(iFc,0,is) = t2
+           fllim0fhi(iFc,0,is) = t2
            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *   .. compute neutral heat conductivity flux limit in radial diretion
            dtn = abs(chcb(iFc,1,is)*dtnf(iFc,1))
@@ -83,7 +83,7 @@
            t2 = 1.0_R8/(1.0_R8 +
      .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
            chcb(iFc,1,is) = chcb(iFc,1,is)*t2
-	   fllim0fhi(iFc,1,is) = t2
+           fllim0fhi(iFc,1,is) = t2
            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
           end do
          end if
@@ -103,11 +103,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
      .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
 *   .. limit in poloidal direction
            chcb(iFc,0,is) = chcb(iFc,0,is)*t2
-	   fllim0fhi(iFc,0,is) = t2
+           fllim0fhi(iFc,0,is) = t2
            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *   .. limit in radial diretion
            chcb(iFc,1,is) = chcb(iFc,1,is)*t2
-	   fllim0fhi(iFc,1,is) = t2
+           fllim0fhi(iFc,1,is) = t2
            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
           end do
          end if
