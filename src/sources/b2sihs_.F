@@ -298,7 +298,7 @@
       elseif (tn_style.eq.1) then
         call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
       else           
-      	call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
+        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
         call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
       endif  
 

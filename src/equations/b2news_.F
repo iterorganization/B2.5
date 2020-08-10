@@ -689,9 +689,22 @@ c      with diamagnetic drift part                                       !srv 13
      &  rt%rza, st_ext%za, dv%fna_32nd, st_ext%fa, dv%fch_32, dv%fne_32)
       call b2xpfe (nCv, nFc, ns, 0, geo, mpg, qe, 
      &      rt%rza, zero, dv%fna_52nd, zerof, dv%fch_52, dv%fne_52)
-      call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                        !srv 13.05.99 21.01.00
-      call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                      !xpb
-      call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                      !xpb
+      if (tn_style.eq.0) then
+        call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                      !srv 13.05.99 21.01.00
+        call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                    !xpb
+        call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                    !xpb
+      elseif (tn_style.eq.1) then
+        call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
+        call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
+        call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
+      else
+        call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
+        call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
+        call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
+        call b2xpfn (nFc, ns, dv%fna_he, dv%fnn)
+        call b2xpfn (nFc, ns, dv%fna_32nd, dv%fnn_32)
+        call b2xpfn (nFc, ns, dv%fna_52nd, dv%fnn_52)
+      endif
 *      ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
      &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)

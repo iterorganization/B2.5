@@ -92,9 +92,9 @@
 
 * ..choose the correct temperature
       if (is_neutral(isb)) then
-	tb = tn !! tn = ti if no separate neutral energy equation is solved
+        tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
-	tb = ti
+        tb = ti
       endif
 
       if (phm0.ne.0.0_R8) then                                     !srv 26.06.18

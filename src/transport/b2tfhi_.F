@@ -272,11 +272,10 @@ cpax
           if (.not.is_neutral(is)) then
             floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
             floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          else
-            flon0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            flon0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
           endif
         enddo
+        flon0(:,0) = 1.5e0_R8*dv%fnn(:,0)
+        flon0(:,1) = 1.5e0_R8*dv%fnn(:,1)
       endif
 
 
