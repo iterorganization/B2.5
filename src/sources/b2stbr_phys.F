@@ -104,17 +104,15 @@ c for KUL advanced fluid neutral boundary conditions
      &  tn_style = 0,
      &  remove_FC_el = 0
       real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
-      integer :: isn
       real (kind=R8) :: wrkv(nVx),
-     &                  nnVx(nVx), dnndy, dnndz, dumm0(nFc,0:1),
-     &                  dumm1(nFc,0:1),cvsf(nFc,0:1), dnn(nFc,0:1),
-     &                  min_mfp(1:nstrat), mfp
+     &                  dnndy, dnndz,
+     &                  cvsf(nFc,0:1), dnn(nFc,0:1)
 c     output for analysis/debugging
       integer, save ::  AFN_out = 0
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
-     &                  fnni_out(nCv), mfp_out(nCv)
+     &                  fnni_out(nCv) 
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, mod, exp
@@ -282,52 +280,15 @@ c     initialize debugging/analysis arrays
         fenerefl_out = 0.0_R8
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
-        mfp_out      = 0.0_R8
 
         if (ns.gt.2) then
           call xerrab('KUL recycling model not yet developed for',
      &                    'multi-species cases')
         endif
-          isn = 0 !! AFN_TODO generalize species index for multi-species cases? 
-                    !! For now KUL AFN models have only been developed for single species cases.
-          dumm0 = 0.0_R8
-        call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx) 
-        if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
-          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &         0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
-        else
-          call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &         0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
-        endif
-        cvsf(:,0) = cvsf(:,0)/geo%fcHz
-        cvsf(:,1) = cvsf(:,1)/geo%fcHz
-        call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn),
-     &                  nnVx,  dnn)
-
-c     pre-computation of the minimal mean-free path along a boundary stratum
-        min_mfp(:) = 1.0_R8
-        do istra = 1, nstrat
-*   ..loop over boundary cells
-          do i = 1, mpg%rcCvP(istra,2)
-            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
-            call CalcMinMfp(iRc1,isn,istra,
-     &          pl,dv,rt,min_mfp,mfp)
-            mfp_out(iRc1) = mfp
-          enddo
-
-c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
-          if (min_mfp(istra).lt.mfp_b1) then
-            maxw_eff(istra) = 0
-          elseif (min_mfp(istra).gt.mfp_b2) then
-            maxw_eff(istra) = 1
-          else
-c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
-          endif
-
-        enddo
-
-
-        
+        cvsf = 0.0_R8
+        dnn = 0.0_R8
+        call precompute_kul_quant(nCv, nFc, nVx, geo, mpg, pl, dv,
+     &   co, rt, mfp_b1, mfp_b2, afn_out, cvsf, dnn)
       endif !! end pre-computations KUL fluid neutrals
 
 
@@ -578,7 +539,6 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
         call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
-        call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
       endif
 
 #ifdef WG_TODO
