@@ -1183,9 +1183,27 @@ c.. Test consistency with physical edges within the computational domain
       else
         call xerrab ('No '//trim(filename))
       endif
-      if (nstrai > 0) then
-        
-        m%nRc = nstrai
+      if (nstrai.gt.0) then
+cxpb  In Eirene facelift the time stratum is handled separately
+cxpb  On the B2 side, use nstrat as nstrai + the time stratum
+        if (crcstra(nstrai).eq.'T') then
+          nstrat=nstrai
+          nstrai=nstrai-1
+        elseif (crcstra(nstrai+1).eq.'T') then
+          nstrat=nstrai+1
+        else
+#ifdef B25_EIRENE
+          nstrat=nstrai+1
+          crcstra(nstrat)='T'
+          rcpos(nstrat)=0
+          rcstart(nstrat)=0
+          rcend(nstrat)=0
+#else
+          nstrat=nstrai
+#endif
+        endif
+
+        m%nRc = nstrat
         m%mxnRc = count(m%fcLbl /= 0)
         call alloc_mapping_rc (m)
         m%rcFcP = 0
@@ -1220,24 +1238,6 @@ c.. Test consistency with physical edges within the computational domain
       call rc_to_struct(m)
 
       if (nstrai.gt.0) then
-cxpb  In Eirene facelift the time stratum is handled separately
-cxpb  On the B2 side, use nstrat as nstrai + the time stratum
-        if (crcstra(nstrai).eq.'T') then
-          nstrat=nstrai
-          nstrai=nstrai-1
-        elseif (crcstra(nstrai+1).eq.'T') then
-          nstrat=nstrai+1
-        else
-#ifdef B25_EIRENE
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
-#else
-          nstrat=nstrai
-#endif
-        endif
 #ifdef WG_TODO
         allocate(old_style(nstrat))
         do is = 1, nstrat

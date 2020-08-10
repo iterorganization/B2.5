@@ -1459,7 +1459,7 @@ c     This routine calculates the minimum mean free path for a certain stratum
       use b2mod_neutrals_namelist
       implicit none
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (inout) :: dv
+      type (B2Derivatives), intent (in) :: dv
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv, istra, isn
 c     InOut variables
@@ -1517,7 +1517,77 @@ c     Calculate rate coefficients at boundary
       return
       end subroutine dealloc_recycle_fnn
 
+      subroutine precompute_kul_quant(nCv, nFc, nVx, geo, mpg, pl, dv,
+     &  co, rt, mfp_b1, mfp_b2, afn_out, cvsf, dnn)
+      use b2mod_types
+      use b2mod_neutrals_namelist
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      implicit none
+      integer, intent(in) :: nCv, nFc, nVx, afn_out
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2Coeff), intent (inout) :: co
+      type (B2Rates), intent (in) :: rt
+      real (kind=R8), intent(in) :: mfp_b1 , mfp_b2
+      real (kind=R8), intent(inout) :: cvsf(nFc,0:1), dnn(nFc,0:1)
+c     local variables
+      integer :: istra, i, iRc1, isn
+      integer, save :: ncall = 0, style_visc = 0
+      real(kind=R8) :: dumm0(nFc,0:1), dumm1(nFc,0:1), nnVx(nVx),
+     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv)
 
+      if (ncall.eq.0) then
+        call ipgeti ('b2sihs_style_visc', style_visc)
+      endif
+      isn = 0 !! AFN_TODO generalize species index for multi-speciescases? 
+              !! For now KUL AFN models have only been developed for single species cases.
+      dumm0 = 0.0_R8
+      dumm1 = 0.0_R8
+      call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
+      if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call
+co%cvsahz_eff will still be zero...
+        call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
+     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
+      else
+        call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
+     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
+      endif
+      cvsf(:,0) = cvsf(:,0)/geo%fcHz
+      cvsf(:,1) = cvsf(:,1)/geo%fcHz
+      call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
+
+      mfp_out = 0.0_R8
+c     pre-computation of the minimal mean-free path along a boundary stratum
+      min_mfp(:) = 1.0_R8
+      do istra = 1, nstrat
+        if (crcstra(istra) == 'A') then
+*   ..loop over boundary cells
+          do i = 1, mpg%rcCvP(istra,2)
+            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+            call CalcMinMfp(iRc1,isn,istra,pl,dv,rt,min_mfp,mfp)
+            mfp_out(iRc1) = mfp
+          enddo
+c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
+          if (min_mfp(istra).lt.mfp_b1) then
+            maxw_eff(istra) = 0
+          elseif (min_mfp(istra).gt.mfp_b2) then
+            maxw_eff(istra) = 1
+          else
+c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
+          endif
+        endif
+      enddo
+      if (AFN_out.ne.0) then
+        call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
+      endif
+
+      ncall = ncall + 1
+      return
+      end subroutine precompute_kul_quant
 
 
       end module b2mod_recycle
