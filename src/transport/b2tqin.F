@@ -53,7 +53,7 @@
 *   ..local variables
       integer ncall, iCv, is, is0, k
       real (kind=R8) ::
-     *   phm0, rcx, expu, t0
+     *   phm0, rcx, expu, t0, tav
       save ncall, phm0
 *   ..procedures
       intrinsic sqrt, log, exp, max, dim
@@ -101,7 +101,8 @@
         do is = 0, ns-1
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
           do iCv = 1, nCv
-            t0 = log(pl%ti(iCv)/(am(is0)*ev))
+            tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
+            t0 = log(tav/(am(is0)*ev))
             rcx = phm0*
      &       expu(rt%rlcx(iCv,0,is,k)+rt%rlcx(iCv,1,is,k)*t0)
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas

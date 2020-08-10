@@ -114,7 +114,7 @@
      1  poloidal_scale_factor
       real (kind=R8) ::
      *  t0, t1, min_df0, max_df0,
-     *  min_df0_tmp, max_df0_tmp
+     *  min_df0_tmp, max_df0_tmp, tav
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
       integer elm_count
       save ncall, new_df0, ixref, transport_namelist, user_transport,
@@ -302,11 +302,12 @@
               if(is_neutral(is)) then
                 dcx=0.0_R8
                 vcx=0.0_R8
+                tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
                 do ic = 0, ns-1
                   dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &             rt%rlcx(iCv,1,ic,k)*log(pl%ti(iCv)/(am(is)*ev)))
+     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                   vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
-     &             rt%rlcx(iCv,1,ic,k)*log(pl%ti(iCv)/(am(is)*ev)))
+     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                 enddo
                 lcx=wrk0(iCv)/sqrt(am(is))/vcx
                 dion=expu(
@@ -3574,45 +3575,39 @@ c*******************************************************************************
 
 *   ..subprogram start-up calls
       call subini ('set_transport_kul')
-      	do is = 0, ns-1
-	  if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-            k=0
-            do while (iscx(k).ne.is .and. k.lt.nscx)
-              k = k+1
+      do is = 0, ns-1
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+          k=0
+          do while (iscx(k).ne.is .and. k.lt.nscx)
+            k = k+1
+          enddo
+          call xertst (k.lt.nscx, 'CX species index not found!')
+        endif
+        do iCv = 1, nCv
+          if (is_neutral(is).and.zn(is).eq.1.0_R8) then !! only for H D T
+            dcx=0.0_R8
+            vcx=0.0_R8
+            do ic = 0, ns-1
+              t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
+              dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
+     &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
+              vcx = vcx + pl%na(iCv,ic) * 
+     &          expu(rt%rlcx(iCv,0,ic,k) +
+     &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
             enddo
-
-            call xertst (k.lt.nscx, 'CX species index not found!')
-          endif
-
-          do iCv = 1, nCv
-            if (is_neutral(is).and.zn(is).eq.1.0_R8) then !! only for H D T
-              dcx=0.0_R8
-              vcx=0.0_R8
-              do ic = 0, ns-1
-                t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
-                dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &            rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
-                vcx = vcx + pl%na(iCv,ic) * 
-     &            expu(rt%rlcx(iCv,0,ic,k) +
-     &            rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
-              enddo
-              dion=expu(
-     2         rt%rlsa(iCv,0,is)+
-     3         rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-              dpa0(iCv,is)=1.0_R8/mp/am(is)/(vcx+dion*dv%ne(iCv))
+            dion=expu(
+     2        rt%rlsa(iCv,0,is)+
+     3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+            dpa0(iCv,is)=1.0_R8/mp/am(is)/(vcx+dion*dv%ne(iCv))
 
 *    ..For now, no flux limiters imposed.
 *    ..For now, no neutral-neutral collisions inlcuded
-              vcx = vcx + dion*dv%ne(iCv)
-              vsa0(iCv,is) = pl%na(iCv,is)*pl%tn(iCv)/
-     &         (vcx) 
-              hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*pl%tn(iCv)/
-     &         (mp*am(is)*(vcx))
-              
-            endif
-          enddo !! end loop over cells
-
-
+            vcx = vcx + dion*dv%ne(iCv)
+            vsa0(iCv,is) = pl%na(iCv,is)*pl%tn(iCv)/(vcx) 
+            hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*pl%tn(iCv)/
+     &        (mp*am(is)*(vcx))
+          endif
+        enddo !! end loop over cells
 
 *   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
