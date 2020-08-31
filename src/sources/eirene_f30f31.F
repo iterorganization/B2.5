@@ -44,6 +44,7 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+      use b2mod_rates
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod

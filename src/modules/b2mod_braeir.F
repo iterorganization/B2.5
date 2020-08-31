@@ -12,7 +12,7 @@ c
      &  fnixb(:,:,:), fniyb(:,:,:),
      &  feixb(:,:), feiyb(:,:), feexb(:,:), feeyb(:,:),
      &  uudiab(:,:,:), vvdiab(:,:,:),
-     &  delta_sheathxb(:,:), delta_sheathyb(:,:), zib(:,:,)
+     &  delta_sheathxb(:,:), delta_sheathyb(:,:), zib(:,:,:)
 
       contains
 

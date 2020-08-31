@@ -20,7 +20,7 @@
 !!              documentation \b HOWTOs under section <b> 4.6 Put IDS and Get
 !!              IDS functions </b>.
 !!
-!!      Variables inherited from b2mod_main module
+!!      Variables inherited from b2mod_driver module
 !!      character(len=24) :: treename   !< The name of the IMAS IDS database
 !!        !< (i.e. "edge_profiles" (mandatory) )
 !!      character(len=24) :: username   !< Creator/owner of the IMAS IDS database
@@ -62,6 +62,7 @@
 program b2_ual_write
 
     use b2mod_main
+    use b2mod_driver
     use b2mod_grid_mapping
     use b2mod_ual    &
      & , only : put_ids_edge, b25_process_ids, &
