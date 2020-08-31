@@ -237,6 +237,7 @@ c
      1         wadiac(ix,iy,1,is)+vaecrbc(ix,iy,1,is),ua_max),ua_min)
               prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
      1         dnib(ix+1,iy+1,nflai)
+              zib(ix+1,iy+1,nflai)=rza(ix,iy,is)
 c     Velocities uub, vvb, wwb
 c     * cell centered
 c     * internal cell values used for plasma background properties in infcop
@@ -440,6 +441,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(rightix(ix,iy)+1,rightiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
               endif
@@ -447,6 +450,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(leftix(ix,iy)+1,leftiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
               endif
@@ -454,6 +459,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(topix(ix,iy)+1,topiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(topix(ix,iy)+1,topiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(topix(ix,iy)+1,topiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
               endif
@@ -461,6 +468,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
               endif
@@ -789,6 +798,8 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
+c average ion charge
+      CALL GFSUB3(31,NX,NY,NXx,NYy,NFLAI,ZIB(0,0,1))
 
       deallocate(dummy)
 

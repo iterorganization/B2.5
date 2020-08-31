@@ -7671,6 +7671,54 @@ cxpb We now rewrite the modified block 4
           READ (IUNIN,'(A80)') ZEILE ! B0,B1,B2,B3,B4,B5
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
+        IF (INDPRO(11).LE.5) THEN
+          READ (IUNIN,6664) (ZI0(I),ZI1(I),ZI2(I),ZI3(I),ZI4(I),ZI5(I),
+     .                     I=1,NPLSI)
+          IF (IABS(INDPRO(11)).EQ.1 .OR. IABS(INDPRO(11)).EQ.3) THEN
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,1)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,1)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ELSE IF (IABS(INDPRO(11)).EQ.2) THEN
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,1)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ELSE
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ENDIF
+          DO IB = 1, NPLSI1
+            WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
+     .                        P3(IB),P4(IB),P5(IB)
+          ENDDO
+        END IF
         IF (INDPRO(12).EQ.5) THEN
           READ (IUNIN,'(A80)') ZEILE ! VL0,VL1,VL2,VL3,VL4,VL5
           WRITE(IUNOT,'(A80)') ZEILE
@@ -13091,7 +13139,7 @@ C
      &      .or. itally.eq.84 .or. itally.eq.97 .or. itally.eq.98
      &      .or. itally.eq.99 .or. itally.eq.100.or. itally.eq.-2
      &      .or. itally.eq.-4 .or. itally.eq.-5 .or. itally.eq.-6
-     &      .or. itally.eq.-7 .or. itally.eq.-13) THEN ! these are NPLS volume tallies
+     &      .or. itally.eq.-7 .or. itally.eq.-13.or. itally.eq.-26) THEN ! these are NPLS volume tallies
           transform_tally = ipls1(ispc)
         ELSE
           transform_tally = ispc

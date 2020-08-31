@@ -12,7 +12,7 @@ c
      &  fnixb(:,:,:), fniyb(:,:,:),
      &  feixb(:,:), feiyb(:,:), feexb(:,:), feeyb(:,:),
      &  uudiab(:,:,:), vvdiab(:,:,:),
-     &  delta_sheathxb(:,:), delta_sheathyb(:,:)
+     &  delta_sheathxb(:,:), delta_sheathyb(:,:), zib(:,:,)
 
       contains
 
@@ -45,6 +45,7 @@ c
       allocate(vvdiab(0:nxd+1,0:nyd+1,nsd))
       allocate(delta_sheathxb(0:nxd+1,0:nyd+1))
       allocate(delta_sheathyb(0:nxd+1,0:nyd+1))
+      allocate(zib(0:nxd+1,0:nyd+1,nsd))
 
       dnib=0.0_R8
       teb=0.0_R8
@@ -71,6 +72,7 @@ c
       vvdiab=0.0_R8
       delta_sheathxb=0.0_R8
       delta_sheathyb=0.0_R8
+      zib=0.0_R8
 
       return
       end subroutine alloc_b2mod_braeir
@@ -103,6 +105,7 @@ c
       deallocate(btorb)
       deallocate(delta_sheathxb)
       deallocate(delta_sheathyb)
+      deallocate(zib)
 
       return
       end subroutine dealloc_b2mod_braeir
