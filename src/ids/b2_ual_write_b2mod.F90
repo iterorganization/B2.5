@@ -208,7 +208,7 @@
 !!                      !! dependency when compiling the code
 !!      @endcode
 !!
-!!      Variables inherited from b2mod_main module
+!!      Variables inherited from b2mod_driver module
 !!      character(len=24) :: treename   !< The name of the IMAS IDS database
 !!        !< (i.e. "edge_profiles" (mandatory) )
 !!      character(len=24) :: username   !< Creator/owner of the IMAS IDS database
@@ -250,6 +250,7 @@
 program b2_ual_write_b2mod
 
     use b2mod_main
+    use b2mod_driver
     use b2mod_ual    &
      & , only : put_ids_edge, b25_process_ids, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &

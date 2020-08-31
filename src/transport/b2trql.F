@@ -106,7 +106,7 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
       endif
-*   ..compute nirm (atom density weighted by 1/sqrt(am)
+*   ..compute nirm (atom density weighted by 1/sqrt(am))
       call b2xpnr (nx, ny, ns, am, na, nirm)
 
 * ..compute flux limit velocities
