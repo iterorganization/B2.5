@@ -1,17 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, geo, pl, dv,
-     &  diag)
+      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch, 
+     &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nCv, ns, itim, itcnt
       real (kind=R8) :: BoRiS
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
@@ -119,9 +121,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, nfldmx, style, nfld
+      integer nfldmx, nfld
       parameter (nfldmx=1000)
-      save ncall, style
       integer k, icv, is, iicv, il, ix0(-1:5), iy0(-1:5)
       real (kind=R8) ::
      *   z(0:nfldmx-1), t0, t1, tv
@@ -130,9 +131,6 @@
       real (kind=R8) ::
      *   smin, b2ssum
       external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
-*   ..initialisation
-      data ncall/0/, style/1/
-
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -150,11 +148,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mwqt')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2mwqt_style', style)
-       call xertst (0.le.style, 'faulty internal parameter style')
-      endif
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test ns
@@ -172,16 +165,16 @@
      &  0.0_R8.le.diag%acorpo,'faulty argument acorpa/te/ti/po')
 *   ..set and test nfld
       nfld = 0
-      if (1.le.style) then
+      if (1.le.switch%b2mwqt_style) then
        nfld = nfld+2+2*(2*ns+4)
       endif
-      if (2.le.style) then
+      if (2.le.switch%b2mwqt_style) then
        nfld = nfld+36*(ns+3)
       endif
-      if (3.le.style) then
+      if (3.le.switch%b2mwqt_style) then
        nfld = nfld+40*(ns+3)
       endif
-      if (4.le.style) then
+      if (4.le.switch%b2mwqt_style) then
        nfld = nfld+72*(ns+3)
       endif
       nfld = nfld + 1
@@ -201,7 +194,7 @@
 #endif
 * ..get data for output
       k = 0
-      if (1.le.style) then
+      if (1.le.switch%b2mwqt_style) then
 *    ..iteration counters
        z(k) = itim
        k = k+1
@@ -244,7 +237,7 @@
        z(k) = diag%acorpo
        k = k+1
       endif
-      if (2.le.style) then
+      if (2.le.switch%b2mwqt_style) then
 *    ..total content on regions
        call xerrab ('WG - to be done!')
 #ifdef WG_TODO
@@ -306,7 +299,7 @@
        enddo
 #endif
       endif
-      if (3.le.style) then
+      if (3.le.switch%b2mwqt_style) then
 *    ..integrated fluxes
        call xerrab ('WG - to be done!')
 #ifdef WG_TODO
@@ -386,7 +379,7 @@
        enddo
 #endif
       endif
-      if (4.le.style) then
+      if (4.le.switch%b2mwqt_style) then
 *    ..min and max on regions
        call xerrab ('WG - to be done!')
 #ifdef WG_TODO
@@ -465,7 +458,6 @@
       call cfwure (nput, nfld, z, 'data')
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

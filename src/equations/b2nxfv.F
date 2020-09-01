@@ -1,21 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nCv, nFc, nVx, isb, geo, mpg, cvsbhz_cl,       !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
-     &  cvsbhz, flubv)
+      subroutine b2nxfv (nCv, nFc, nVx, isb, switch, geo, mpg,        !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+     &  cvsbhz_cl, cvsbhz, flubv)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *   cvsbhz_cl(nFc,0:1), cvsbhz(nFc,0:1)                            !srv 16.10.17
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   flubv(nFc,0:1)
 
 *-----------------------------------------------------------------------
@@ -30,15 +32,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
-      real (kind=R8), save ::  phm0 = 1.0_R8, phm1 = 1.0_R8             !srv 06.12.18
       real (kind=R8) ::
      *   ft, dloghz(nFc,0:1)                                            !srv 16.10.17
-      save ncall
-      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
+      external subini, subend, xertst, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -51,15 +49,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
-      if (ncall.eq.0) then                                              !srv 06.12.18 {
-       call ipgetr ('b2nxfv_phm0', phm0)
-       call ipgetr ('b2nxfv_phm1', phm1)
-      endif                                                             !srv 06.12.18 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..extensive tests on first few calls
-      if (ncall.lt.3) then
-      endif
 
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
@@ -67,19 +58,20 @@
       if (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then          !srv 26.10.08
         call diff_p(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
      .    dloghz(1,0))
-        flubv(:,0) = phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)                 !srv 06.12.18
+        flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)                 !srv 06.12.18
         flubv(:,1) = 0.0_R8
       elseif (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.0) then
         call diff(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
      .    dloghz)
-        flubv(:,0) = phm0*phm1*cvsbhz(:,0)*dloghz(:,0)
-        flubv(:,1) = phm0*phm1*cvsbhz(:,1)*dloghz(:,1)
+        flubv(:,0) = switch%b2nxfv_phm0*switch%b2nxfv_phm1
+     &                                      *cvsbhz(:,0)*dloghz(:,0)
+        flubv(:,1) = switch%b2nxfv_phm0*switch%b2nxfv_phm1
+     &                                      *cvsbhz(:,1)*dloghz(:,1)
       else
         flubv = 0.0_R8
       endif
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

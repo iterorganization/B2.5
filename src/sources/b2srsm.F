@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2srsm (nCv, ns, dtim, geo, mpg, na, ua, te, ti, ne,
-     &  ni, sr, main_call)
+      subroutine b2srsm (nCv, ns, dtim, switch, geo, mpg, na, ua,
+     &   te, ti, ne, ni, sr, main_call)
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
@@ -9,6 +9,7 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -18,6 +19,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -46,10 +48,7 @@
 
 *   ..local variables
       integer is, iCv, ncall, diagno, enable
-      integer k
-      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, tn_style = 0                                
+      integer k                           
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
@@ -87,15 +86,9 @@
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
 *   ..obtain input
       if (ncall.eq.0) then
-        call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
-        call ipgeti ('b2npc9_iout', iout_b2npc9) 
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
-        call ipgeti ('b2srsm_diagno', diagno)
         call ipgeti ('b2srsm_enable', enable)
-        call ipgeti ('b2mn_tn_style', tn_style)
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgeti ('b2srsm_diagno', diagno)
         if(enable.eq.0) then
           write(*,*) 'b2srsm disabled'
         endif
@@ -242,7 +235,7 @@ c check ion energy
                 endif
               endif
 c check neutral energy
-          if (tn_style.ne.0) then
+          if (switch%tn_style.ne.0) then
             call xerrab('b2srsm not developed for tn_style.ne.0')
           endif
 c check electron energy
@@ -325,7 +318,7 @@ cdjm Store the total change in linearised sources for balance
 !WG_TODO        b2srsm_shi0to3 = sr%shi-shitmp
 !WG_TODO      endif
 
-      if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
+      if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {
 	 do is = 0, ns-1          
 	  write (chns,'(i3.3)') is
 !	  call my_out(70,nCv,sr%smo(:,:,0,is)+                        !srv 07.10.09
@@ -335,14 +328,14 @@ cdjm Store the total change in linearised sources for balance
 !     &        'b2srsm_smosm'//chns)
 	 enddo
       endif
-      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+      if (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !        call my_out(70,nCv,sr%sna(:,:,0,is)+                       !srv 07.10.09
 !     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
-      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1) then
 !	 call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
 !     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
 !	 call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+
@@ -350,7 +343,7 @@ cdjm Store the total change in linearised sources for balance
 !     &   sr%shi(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
       endif            
 
-      if (iout.eq.1) then
+      if (switch%b2srsm_iout.eq.1) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 	  do k=0,3

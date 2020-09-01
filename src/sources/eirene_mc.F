@@ -1,5 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
-     1 BoRiS, sna0, smo0, she0, shi0, main_call, geo, mpg, pl, dv, rt)
+     1 BoRiS, sna0, smo0, she0, shi0, main_call, switch, geo, mpg, 
+     & pl, dv, rt)
 
 c  version : 26.07.2002 23:39
 
@@ -45,6 +46,7 @@ c  version : 26.07.2002 23:39
       use b2mod_braeir
       use b2mod_eirbra
 #endif
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -55,6 +57,7 @@ c  version : 26.07.2002 23:39
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
      & she0(nCv,0:3), shi0(nCv,0:3)
       logical main_call                                           !dpc
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -66,7 +69,6 @@ csw 19oct2012, added save attribute!!!
       integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
-      integer, save :: iout = 0
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
@@ -149,15 +151,15 @@ c      data lis_hlp / 110, 111, 112, 49 /
       logical last, saved_volrec_used, na_feedback_on
       integer :: igpuff(NSTRAT)
 
-      integer output_style, linearisation, ank_mods, save_f31,
+      integer output_style, linearisation, ank_mods,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30, stab_corr
+     2 no_sseicorr, stab_corr
       save ncall, output_style, saved_volrec_used,
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
+     * neutral_sources_rescale, ncallfeedback, ank_mods,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
-     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
+     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol,
      3 stab_corr
 csw 26mar2013
       integer, save :: iscltst=0
@@ -224,9 +226,9 @@ csw 26feb2014
      2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
-     5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
+     5  ndes/0.0_R8/, ank_mods/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/, stab_corr/1/
+     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, stab_corr/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -359,10 +361,8 @@ c not sure this is the right place
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
-        call ipgeti ('eirene_savef30', save_f30)
-        call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
-        call ipgeti ('eirene_mc_iout', iout)
+
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
@@ -416,8 +416,8 @@ csw 26feb2013
       end if !}
 
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,mpg,geo,pl,dv,BoRiS)
-        if(ncall.eq.0.or.save_f31.ne.0) then
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS)
+        if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
       endif
@@ -709,7 +709,8 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         eircount=1
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
-           call copy_background(nCv, nFc, ns, mpg, geo, pl, dv, BoRiS)
+           call copy_background(nCv, nFc, ns, switch, mpg, 
+     &                          geo, pl, dv, BoRiS)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -2610,7 +2611,7 @@ c*** before correction (r), after correction (c), after iteration (i)
           end if !}
         end do !}  ! is
 
-        if (iout.ne.0) then
+        if (switch%eirene_mc_iout.ne.0) then
           write (chistrai,'(i1)') istrai
           call my_out_us(70,nCv,0,sei_av(:,istrai),'sei'//chistrai)
           if (istrai.eq.1) then
@@ -3320,7 +3321,8 @@ C           call xerrab ('eirene_mc: bccon <> 13')
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
-      call copy_background(nCv, nFc, ns, mpg, geo, pl, dv, BoRiS)
+      call copy_background(nCv, nFc, ns, switch, 
+     &                     mpg, geo, pl, dv, BoRiS)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011

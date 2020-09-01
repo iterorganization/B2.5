@@ -1,19 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, !srv 29.01.20 {
-     &  pl, dv, co, rt)                                                 
+      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, !srv 29.01.20 {
+     &  geo, mpg, pl, dv, co, rt)                                                 
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
 !      use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -39,35 +41,28 @@
 
 *   ..local variables
       integer ncall, is, is0
-      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0
-      integer, save :: pot_eq = 1                                        !srv 26.07.06
-      integer, save :: no_current= 0                                     !srv 27.02.13
-csw 10oct2012
-      integer, save :: b2_upwind = 0
-
       character(3) :: charns, charns0
-      real (kind=R8), save :: drift_hyb = 1.0_R8
-      real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
+      real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 
       real (kind=R8) ::
-     &    ehx(nFc), dia_cur, vis_par, vis_q, vis_per                     !srv 17.05.99 11.07.99
+     &    ehx(nFc)                                    !srv 17.05.99
       real (kind=R8) ::
-     *    fch_ion_neutral, fch_anomalous, fch_inert                      !srv 30.09.02 07.07.99
+     *    fch_anomalous                                !srv 30.09.02 07.07.99
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
-
-      save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
-     &     vis_par, vis_per, vis_q                                       !srv 17.05.99 11.07.99 22.11.99
+      save ncall, fch_anomalous                      !srv 07.07.99
+                                                     !srv 17.05.99 11.07.99 22.11.99
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
+c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
-      data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/,     !srv 07.07.99 22.03.02
-     *   fch_anomalous/1.0e0_R8/, dia_cur/1.0e0_R8/, vis_par/0.0e0_R8/,  !srv 22.03.02
-     *   vis_q/1.0e0_R8/, vis_per/0.0e0_R8/                              !srv 11.07.99 22.11.99 22.03.02
+      data ncall/0/,                                          !srv 07.07.99
+     *   fch_anomalous/1.0e0_R8/  !srv 22.03.02
+                                !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -77,33 +72,13 @@ csw 10oct2012
       call subini ('b2tfch_')
 *   ..set internal parameters on first call 
       if (ncall.eq.0) then 
-       call ipgetr ('b2tfhe_neutral', fch_ion_neutral) 
        call ipgetr ('b2tfhe_anomalous', fch_anomalous) 
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-       call ipgetr ('b2tfhe_dia_cur', dia_cur) 
-       call ipgetr ('b2tfhe_vis_par', vis_par) 
-       call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 22.11.99
-       call ipgetr ('b2tfhe_vis_q', vis_q)                               !srv 11.07.99
-       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
-       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
-       call xertst(fch_ion_neutral .ne. 0.0e0_R8 .or. 
-     *             fch_anomalous .ne. 0.0e0_R8 .or.
-     *             vis_q .ne. 0.0_R8 .or. fch_inert .ne. 0.0_R8 .or.
-     *             vis_per .ne. 0.0_R8 .or.
-     *             fch_stochastic .ne. 0.0_R8 .or.
-     *             dia_cur .ne. 0.0e0_R8 .or. vis_par .ne. 0.0_R8, 
-     *             'No radial current terms!') 
-       call ipgeti ('b2tfch_iout', iout)                                 !srv 16.09.02
-       call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
-       call ipgeti ('b2npp7_iout', iout_b2npp7)
-       call ipgeti ('b2nppo_iout', iout_b2nppo)
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
-       call ipgeti ('b2tfhe_no_current',no_current)
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2tfhe_upwind', b2_upwind)
-       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
+c       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
+c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
        endif 
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -133,15 +108,16 @@ csw 10oct2012
       fchstoch     = 0.0_R8
       csig_stoch   = 0.0_R8
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nCv, nFc, nVx, ns, geo, mpg, rt, dv%facdrift,
+      call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
+     &       dv%facdrift,
      &       dv%fac_ExB, ismain, ismain0, pl%te, pl%po, pl%ti, pl%na,
      &       dv%fna, co%csigin, dv%fchin)                                !srv 11.05.09
 *   ..compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nCv, nFc, nVx, ns, geo, mpg, dv%pz, dv%fna, dv%uadia,
-     &            dv%facdrift, dv%fchdia)
+      call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
+     &            dv%uadia, dv%facdrift, dv%fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
-     &  dv%fac_vis, dv%fchvispar)
+      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
+     &   co%vsaf_cl, dv%fac_vis, dv%fchvispar)
 #ifdef WG_TODO
 *   ..calculate the contribution of viscosity perpendicular current      !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
@@ -151,18 +127,19 @@ csw 10oct2012
      &             lnlam, te, ti, ni, chci, fchvisq)
 #endif
 *  .. calculate inertia current                                          !srv 07.07.99
-      call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
      &      dv%facdrift, dv%fchinert)
 *   ..calculate the x,y-components of anomalous current
-      call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
+      call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an,
+     &             pl%po,dv%fchanml)
 #ifdef WG_TODO
 *   ..calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
      &              fchstoch)                                            !srv 25.01.02 {
 #endif
-      call b2tcpa (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne,
-     *    co%csig, co%calf, ehx, dv%fch_p)                               !srv 13.01.17
+      call b2tcpa (nCv, nFc, nVx, switch, geo, mpg, pl%te, pl%po,
+     *     dv%ne, co%csig, co%calf, ehx, dv%fch_p)                               !srv 13.01.17
 
 *   ..compute currents
       dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
@@ -172,7 +149,7 @@ csw 10oct2012
 *   ..compute conc
       dumm0 = 0.0e0_R8
       wrk   = co%csig
-      if(fch_ion_neutral.ne.0.0e0_R8 .and.
+      if(switch%fch_ion_neutral.ne.0.0e0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
         do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
@@ -186,12 +163,14 @@ csw 10oct2012
           endif
         enddo
       endif
+#ifdef WG_TODO
       if(fch_stochastic.ne.0.0e0_R8 ) then                               !lk 31.01.08 {
         wrk(:,1) = wrk(:,1) + csig_stoch
       endif                                                              !lk 31.01.08 }
+#endif
       call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
 
-      if(iout.ne.0) then                                                 !srv 18.06.08 {
+      if(switch%b2tfch_iout.ne.0) then                                                 !srv 18.06.08 {
        call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fchx')
        call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fchy')
        call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchinx')

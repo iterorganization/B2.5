@@ -1,15 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqca (nCv, ns, geo, pl, dv, rt, st_ext, vsa, hci)
+      subroutine b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, 
+     &                   vsa, hci)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
@@ -61,25 +64,22 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, model, iCv, is, js
-      integer, save :: icase = 0                                      !srv 20.09.11
-      integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
+      integer ncall, iCv, is, js
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(nCv), tnp, phm0, w                             !srv 11.09.09
+     *  t, t0, t1, tau(nCv), tnp, w                             !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
-      save ncall, model, phm0
+      save ncall
 *   ..procedures
       intrinsic abs, sqrt, log, max
       real (kind=R8) ::
      *  pitx
-      external subini, subend, xertst, sfill, ipgetr, ipgeti
+      external subini, subend, xertst, sfill
       external b2xvsg
       pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/, model/1/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -104,20 +104,6 @@
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
-*   ..read input parameter
-      if (ncall.eq.0) then
-        call ipgeti ('b2tqca_model', model)
-        call ipgetr ('b2tqca_phm0', phm0)
-        call xertst (0.0_R8.le.phm0, 'faulty input phm0')
-        call ipgeti ('b2tqca_iout', iout)                            !srv 16.06.08                       
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)                     !srv 30.01.10
-        call ipgeti ('b2tlnl_ii', icase)
-        call xertst (0.eq.icase .or. 1.eq.icase, 
-     &               'faulty input b2tlnl_ii')
-      endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test bb
@@ -142,7 +128,8 @@
       ctaup = t0*sqrt(mp)						 !xpb
 
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nCv, icase, pl%te, pl%ti, dv%ne, dv%lnlam)               !srv 01.07.09  20.09.11
+      call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, 
+     &                                              dv%ne, dv%lnlam)      !srv 01.07.09  20.09.11
 * ..compute vsa, hci
 *   ..compute vsax, hcix
 *     (initialise hcix to 0)
@@ -157,15 +144,16 @@
           tau(iCv) = (ctaup/dv%lnlam(iCv))*sqrt(am(is))*t0*sqrt(t0)/          !xpb !srv 01.07.09
      &      (rt%rz2(iCv,is)*dv%ne2(iCv))
           tnp = tau(iCv)*pl%na(iCv,is)*pitx(iCv)**2
-          if (model.eq.1) then  ! SOLPS5.0 model : Balescu 29-moment result
+          if (switch%b2tqca_model.eq.1) then  ! SOLPS5.0 model : Balescu 29-moment result
             hci(iCv,0) = hci(iCv,0)+
      &       2.5_R8*(pl%ti(iCv)/(mp*am(is)))*fki*tnp
 c DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
 c WDK/SRV 21.07.2016 factor 4/3 removed from vsa, but added explicitly to cvsahz (not cvsa),
 c         according to old model.eq.3 treatment
             vsa(iCv,0,is) = 
-     &       phm0*eta*sqrt(2.0_R8)*pl%ti(iCv)*tnp
-          else if (model.eq.2) then ! old SOLPS4.0 model : Braginskii
+     &       switch%b2tqca_phm0*
+     &       eta*sqrt(2.0_R8)*pl%ti(iCv)*tnp
+          else if (switch%b2tqca_model.eq.2) then ! old SOLPS4.0 model : Braginskii
             w = 0.0_R8
             t = 0.0_R8
             do js = 0, ns-1
@@ -188,14 +176,15 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(iCv,is)  ! lower precision 
      &       pitx(iCv)**2*(pl%ti(iCv)**2*sqrt(pl%ti(iCv)))
 cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
             vsa(iCv,0,is) = 
-     &       phm0*eta*ctaui/(ev*sqrt(ev))*(pl%na(iCv,is)/t)*
+     &       switch%b2tqca_phm0*
+     &       eta*ctaui/(ev*sqrt(ev))*(pl%na(iCv,is)/t)*
      &       pitx(iCv)**2*(pl%ti(iCv)**2*sqrt(pl%ti(iCv)))
           else
             call xerrab ('b2tqca--invalid value b2tqca_model > 2. ')
           endif
         enddo
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &     .or. iout.ne.0  .or. iout_b2wdat.eq.4) then
+        if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &     .or.switch%b2tqca_iout.ne.0.or.switch%iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out_us(70,nCv,0,tau,'b2tqca_taua'//chns)
 	endif
@@ -208,7 +197,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
       enddo
       call sfill (nCv, 0.0_R8, hci(1,1), 1)
 
-      if(iout.ne.0 .or. iout_b2npmo.ne.0) then                         !srv 16.06.08 30.01.10 {
+      if(switch%b2tqca_iout.ne.0 .or. switch%b2npmo_iout.ne.0) then       !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsax'//chns)
@@ -223,11 +212,12 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 !        call my_out_us(70,nCv,0,geo%cvBb(1,3),'b2tqca_BB')
       endif                                                          !srv 16.06.08 }
 
-      if(iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 16.06.08 30.01.10 {
+      if(switch%b2tqca_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then  !srv 16.06.08 30.01.10 {
         call my_out_us(70,nCv,0,dv%lnlam,'b2tqca_lnlam')
       endif
 
-      if(iout.ne.0 .or. iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(switch%b2tqca_iout.ne.0 .or. switch%b2nph9_iout.ne.0 
+     &                            .or. switch%b2npht_iout.ne.0) then
         call my_out_us(70,nCv,0,hci(1,0),'b2tqca_hcix')
         call my_out_us(70,nCv,0,hci(1,1),'b2tqca_hciy')
       endif                                                          !srv 16.06.08 30.01.10 }

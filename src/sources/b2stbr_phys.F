@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, BoRiS, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  neutral_sources_rescale, core_sources_rescale,  
@@ -24,6 +24,7 @@
 !WG_TODO      use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -45,6 +46,7 @@
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -77,11 +79,6 @@
 *   ..local variables
       integer i, iRc1, iRc2, iFc, is, ib, istra, ncall, k,
      * iwall, itargsp, zbulk
-      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 style_visc = 0
-      integer, save :: lin_shi0 = 0
       character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
@@ -99,17 +96,11 @@
 
 
 c for KUL advanced fluid neutral boundary conditions
-      integer, save :: use_uy_uz_0 = 0, use_uy_uz_1 = 0,
-     &  kul_recycle = 0, 
-     &  tn_style = 0,
-     &  remove_FC_el = 0
-      real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
       integer :: isn
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy, dnndz, dnn(nFc,0:1),
      &                  min_mfp(1:nstrat), mfp
 c     output for analysis/debugging
-      integer, save ::  AFN_out = 0
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
@@ -156,25 +147,6 @@ c     output for analysis/debugging
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                          !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
-       call ipgeti ('b2stbr_kul_recycle', kul_recycle)
-       call ipgeti ('b2stbr_use_uy_uz_0', use_uy_uz_0)
-       call ipgeti ('b2stbr_use_uy_uz_1', use_uy_uz_1)
-       call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
-       call ipgeti ('b2stbr_phys_lin_shi0', lin_shi0)
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
-       call ipgeti ('b2npco_iout', iout_b2npco)
-       call ipgeti ('b2npmo_iout', iout_b2npmo)
-       call ipgeti ('b2npp7_iout', iout_b2npp7)
-       call ipgeti ('b2nppo_iout', iout_b2nppo)
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
-       call ipgeti ('b2mn_tn_style', tn_style)         
-       call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
-       call ipgetr ('b2stbr_mfp_b1',mfp_b1)
-       call ipgetr ('b2stbr_mfp_b2',mfp_b2)
-       call ipgeti ('b2stbr_AFN_out',AFN_out)
-
-
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -270,7 +242,7 @@ c     output for analysis/debugging
 #endif
 
 c pre-computations for KUL fluid neutrals
-      if (kul_recycle.ne.0) then
+      if (switch%kul_recycle.ne.0) then
 
 c     initialize debugging/analysis arrays
         fmomrec_out  = 0.0_R8
@@ -304,9 +276,9 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
           enddo
 
 c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
-          if (min_mfp(istra).lt.mfp_b1) then
+          if (min_mfp(istra).lt.switch%mfp_b1) then
             maxw_eff(istra) = 0
-          elseif (min_mfp(istra).gt.mfp_b2) then
+          elseif (min_mfp(istra).gt.switch%mfp_b2) then
             maxw_eff(istra) = 1
           else
 c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
@@ -496,7 +468,7 @@ c for KUL recycling/reflection model
         enddo
       endif
 #endif
-      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
+      if (switch%b2stbr_phys_iout.eq.1.or.switch%b2npmo_iout.eq.1) then                   !srv 11.07.05 11.09.09 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
 !	  do k=0,3
@@ -511,7 +483,8 @@ c for KUL recycling/reflection model
 	call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (switch%b2stbr_phys_iout.eq.1 .or. 
+     &   (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1)) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !	  do k=0,1
@@ -523,7 +496,8 @@ c for KUL recycling/reflection model
 	call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sna'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+      if (switch%b2stbr_phys_iout.eq.1 .or. 
+     &   (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1)) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)
@@ -537,12 +511,13 @@ c for KUL recycling/reflection model
      &        srw%shi0(:,2)*dv%ni(:,0)+srw%shi0(:,3)*pl%ti*dv%ni(:,0)
 	 call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_shi')
       endif
-      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+      if (switch%b2stbr_phys_iout.eq.1 .or. 
+     &   (switch%b2npp7_iout.eq.1 .or. switch%b2nppo_iout.eq.1)) then
          wrk0=srw%sch0(:,0)+srw%sch0(:,1)*pl%po+
      &        srw%sch0(:,2)*dv%ne+srw%sch0(:,3)*pl%po*dv%ne
 	 call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sch')
       endif
-      if(iout.eq.1) then
+      if(switch%b2stbr_phys_iout.eq.1) then
         open(70,file='t_files.dat')
         write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'               !srv 11.03.13 {
         write(70,hlp_frm) ' tchem=',tchem
@@ -558,7 +533,7 @@ c for KUL recycling/reflection model
         close(70)
       endif                                                            !srv 11.07.05 }
 
-      if (AFN_out.ne.0) then
+      if (switch%AFN_out.ne.0) then
         call my_out_us(70,nCv,0,fmomrec_out,'AFN_fmomrec')
         call my_out_us(70,nCv,0,fmomni_out,'AFN_fmomni')
         call my_out_us(70,nCv,0,fmomrefl_out,'AFN_fmomrefl')
@@ -885,7 +860,7 @@ cdpc
          endif
 
 
-         if (kul_recycle.eq.0) then !! default neutral recycling/reflection model
+         if (switch%kul_recycle.eq.0) then !! default neutral recycling/reflection model
          srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+recyc(is,istra)*t0
 #ifdef WG_TODO
          itrack=track_index(is0)
@@ -902,7 +877,7 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
          srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
      &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
      &    recyc(is,istra)*t0*geo%cvHz(iCv)
-         if (lin_shi0.eq.1) then
+         if (switch%lin_shi0.eq.1) then
           srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*max(
      &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &      (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0/
@@ -955,7 +930,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
-     &              cosa, sina, use_uy_uz_0,     
+     &              cosa, sina, switch%use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -971,17 +946,17 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
              nnwwnsum = nnwwnsum + nnwwnrec
 cmb   net neutral energy source from recycling
 
-             if (tn_style.eq.0) then
+             if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
+             elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else 
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
              endif
 
-             if (AFN_out.ne.0) then
+             if (switch%AFN_out.ne.0) then
                fmomrec_out(iCv)   = fmomrec
                fenerec_out(iCv)   = fenerec
              endif
@@ -1007,9 +982,9 @@ c          while B2.5 uses internal energy equations.
      &             neutral_sources_rescale
 
 
-             if (tn_style.eq.0) then
+             if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-             elseif (tn_style.eq.1) then
+             elseif (switch%tn_style.eq.1) then
                !! do nothing, no neutral contributions in the boundary conditions of the pure ion energy equation
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
@@ -1020,26 +995,27 @@ c          while B2.5 uses internal energy equations.
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              use_uy_uz_0,use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
      &            istra,farea,pl,tnf,geo,cosa,sina,
      &            fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.2) then
-               call CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
+               call CalcIncidentFluxesMfp(switch%mfp_b1,
+     &              switch%mfp_b2,
      &              iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              use_uy_uz_0,use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              else
                call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              use_uy_uz_0,use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
      &              fnni,fmomni,nni,nnwwni,feneni)
 
              endif
@@ -1056,7 +1032,7 @@ cmb   net momentum sources from neutral particle reflection
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
@@ -1065,13 +1041,14 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.2) then
-                 call CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
+                 call CalcReflectedFluxesMfp(switch%mfp_b1,
+     &              switch%mfp_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
                  call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
@@ -1079,7 +1056,7 @@ cmb   net momentum sources from neutral particle reflection
      &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
@@ -1090,7 +1067,7 @@ cmb   net momentum sources from neutral particle reflection
              fene_el = 0
              endif
 
-             if (AFN_out.ne.0) then
+             if (switch%AFN_out.ne.0) then
                fmomni_out(iCv)   = fmomni
                fmomrefl_out(iCv) = fmomrefl
                feneni_out(iCv)   = feneni
@@ -1105,10 +1082,10 @@ cmb   net momentum sources from neutral particle reflection
              nnsum = nnsum + nni + nnrefl
              nnwwnsum = nnwwnsum + nnwwni + nnwwnrefl
 
-             if (tn_style.eq.0) then
+             if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + (feneni + fenerefl)*
      &                                          neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
+             elseif (switch%tn_style.eq.1) then
                !! neutral energy boundary conditions are not used
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + feneni + fenerefl   
@@ -1116,7 +1093,7 @@ cmb   net momentum sources from neutral particle reflection
 
 c remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary
 c temporary switch to evaluate the effect.
-             if (remove_FC_el.eq.1) then
+             if (switch%remove_FC_el.eq.1) then
                srw%she0(iCv,0) = srw%she0(iCv,0) + (fene_el)*
      &                                          neutral_sources_rescale 
              endif
