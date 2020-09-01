@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, geo, mpg,  !srv 09.01.01
-     &  na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, switch, geo,   !srv 09.01.01
+     &  mpg, na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
       use b2mod_types
       use b2mod_constants
 !      use b2mod_tallies
@@ -14,11 +14,13 @@
 !      use b2mod_balance !djm Jan2017
 !     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
 !     &          balance_netcdf
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, is0, ismain
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -42,29 +44,25 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, iCv, is, js, k
-      integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, tn_style = 0
+      integer ncall, iCv, is, js, k
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
-      save ncall, styl0, rg0
+      save ncall
 *   ..procedures
       intrinsic abs
       logical lnext
       real (kind=R8) ::
      *  samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+      external subini, subend, xertst, samax, sfill
       external b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
-      data ncall/0/, styl0/0/, rg0/1.0_R8/
-*!!   (rg0 for numerical stabilisation; needs experiments.)
+      data ncall/0/
+
 
 *-----------------------------------------------------------------------
 *.computation
@@ -72,22 +70,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stcx')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2stcx_rg0', rg0)
-       call xertst (0.0_R8.le.rg0, 'faulty internal parameter rg0')
-       call ipgeti ('b2stcx_styl0', styl0)
-       call xertst (0.le.styl0.and.styl0.lt.4,
-     &   'faulty internal parameter styl0')
-       call ipgeti ('b2stcx_iout', iout)                              !srv 11.09.09 {
-       call ipgeti ('b2npc9_iout', iout_b2npc9)
-       call ipgeti ('b2npco_iout', iout_b2npco)
-       call ipgeti ('b2npmo_iout', iout_b2npmo)
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-       call ipgeti ('b2mn_tn_style', tn_style)                       
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
-      endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -166,13 +148,13 @@ ctmp.dpc
 *       ..compute atom heat source
            du0 = ua(iCv,is)-ua(iCv,is-1)
            du1 = ua(iCv,is0)-ua(iCv,is0+1)
-          if (tn_style.eq.0) then
+          if (switch%tn_style.eq.0) then
             t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
      &        (1.0_R8-BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
-          elseif (tn_style.eq.1) then
+          elseif (switch%tn_style.eq.1) then
             tkin = (mp/4.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
@@ -197,6 +179,8 @@ ctmp.dpc
           endif
         enddo
 *     ..parallel momentum source
+        rg0 = switch%b2stcx_rg0
+!!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
         do iCv = 1,mpg%nCi
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
@@ -204,7 +188,7 @@ ctmp.dpc
      &           *geo%cvHz(iCv)                                          !srv 09.01.01
             t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
             t2 = ((am(is0)+am(is0+1))/2.0_R8)*mp*t0
-            if (styl0.eq.0) then
+            if (switch%b2stcx_styl0.eq.0) then
 *       ..compute parallel momentum source
               smq0(iCv,0,is) = smq0(iCv,0,is)+
      &         rg0*t1*ua(iCv,is)
@@ -222,7 +206,7 @@ ctmp.dpc
      &         rg0*t2*ua(iCv,is0)
               smq0(iCv,1,is0) = smq0(iCv,1,is0)-
      &         (1.0_R8+rg0)*t2
-            else if (styl0.eq.1) then
+            else if (switch%b2stcx_styl0.eq.1) then
 *       ..compute parallel momentum source
               smq0(iCv,2,is) = smq0(iCv,2,is)+
      &         rg0*t1*ua(iCv,is)/roxa(iCv,is)
@@ -240,7 +224,7 @@ ctmp.dpc
      &         rg0*t2*ua(iCv,is0)/roxa(iCv,is0)
               smq0(iCv,3,is0) = smq0(iCv,3,is0)-
      &         (1.0_R8+rg0)*t2/roxa(iCv,is0)
-            else if (styl0.eq.2) then
+            else if (switch%b2stcx_styl0.eq.2) then
 *       ..compute parallel momentum source
               smq0(iCv,0,is) = smq0(iCv,0,is)+
      &         rg0*t1*ua(iCv,is)
@@ -258,7 +242,7 @@ ctmp.dpc
      &         rg0*t2*ua(iCv,is0)
               smq0(iCv,3,is0) = smq0(iCv,3,is0)-
      &         (1.0_R8+rg0)*t2/roxa(iCv,is0)
-            else if (styl0.eq.3) then
+            else if (switch%b2stcx_styl0.eq.3) then
 *       ..compute parallel momentum source
               smq0(iCv,2,is) = smq0(iCv,2,is)+
      &         rg0*t1*ua(iCv,is)/roxa(iCv,is)
@@ -343,7 +327,7 @@ ctmp.dpc
 !!        call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)
 !!        call my_out(70,nx,ny,wrk0,'b2stcx_shi')
 !      endif
-      if (iout.gt.0) then
+      if (switch%b2stcx_iout.gt.0) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           do k=0,1

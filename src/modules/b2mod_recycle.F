@@ -52,7 +52,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       character*2 target_code(0:nbnd-1)
 
       character*2 recycle_code(0:nsd-1)
-      external open_file, ipgeti
+      external open_file
       external subini, subend, cfrure, cfruin, machsfr
       real (kind=R8) ::
      *  machsfr

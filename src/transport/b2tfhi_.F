@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2tfhi_ (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,  !srv 13.10.06
-     &  balance)                                                        !djm Jan2017
+      subroutine b2tfhi_ (nCv, nFc, nVx, ns, switch, geo, mpg, pl,   !srv 13.10.06
+     &  dv, co, rt, balance)                                         !djm Jan2017
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -16,6 +17,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -44,22 +46,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, ib, ixl, iyl, ixb, iyb
-      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
-     &                 iout_b2nph9 = 0, iout_b2npht = 0
-      integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
-      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-      integer, save :: b2kin=0, b2vis=0
-      integer, save :: meth = 2, tn_style = 0
-      real (kind=R8), save :: drift_hyb = 1.0_R8
-      real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
-      real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
-      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      integer ncall, iCv, iFc, is, ib, meth
       real (kind=R8) ::
-     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), vdia_par,     !srv 17.05.99
+     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1),
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1)
@@ -76,13 +65,20 @@ cpax
       real (kind=R8) :: upfac, hybfac, scur(nFc,0:1) !djm Jan2017
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
-      save ncall, vdia_par                                              !srv 17.05.99
+      save ncall                                          
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
+c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
+c      integer, save :: b2kin=0, b2vis=0
+c      real (kind=R8), save :: drift_hyb = 1.0_R8
+c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
+c      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff
 *   ..initialization
-      data ncall/0/, vdia_par/1.0e0_R8/                                 !srv 17.05.99
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -92,29 +88,17 @@ cpax
       call subini ('b2tfhi_')
 *   ..set internal parameters on first call                             !srv 17.05.99
       if (ncall.eq.0) then                                              !srv
-       call ipgetr ('b2tfhi_vdia_par', vdia_par)                        !srv 17.05.99
-       call ipgeti ('b2tfhi_iout', iout)                                !srv 16.09.02
-       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
-       call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
-       call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
-       call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
-       call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
-       call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
-       call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)
-       call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
-       call ipgeti ('b2tfhi_upwind', b2_upwind)
-       call ipgeti ('b2tfhi_hybr2', b2tfhi_hybr2)
-       call ipgeti ('b2tfhi_flo53', flo53)
-       call ipgeti ('b2tfhi_b2kin', b2kin)
-       call ipgeti ('b2tfhi_b2vis', b2vis)
-       call ipgeti ('b2tfhi_discr_meth', meth)
-       call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
-       call ipgeti ('b2mn_tn_style', tn_style)
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
+c       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
+c       call ipgeti ('b2tfhi_flo53', flo53)
+c       call ipgeti ('b2tfhi_upwind', b2_upwind)
+c       call ipgeti ('b2tfhi_hybr2', b2tfhi_hybr2)
+c       call ipgeti ('b2tfhi_b2kin', b2kin)
+c       call ipgeti ('b2tfhi_b2vis', b2vis)
+c       call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
+c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
+c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -126,11 +110,9 @@ cpax
        call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
 
-       if (tn_style.ne.0.and.mdf_fhi.eq.1) then
-         call xerrab('mdf_fhi not yet available for',
-     &               'non-default energy equation')
-       endif
       endif
+
+      meth = switch%b2tfhi_discr_meth
 
 *   ..set dummy arrays
       dumm0 = 0.0_R8
@@ -153,13 +135,13 @@ cpax
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
 
 *   ..compute P.Sch heat flux
-         dv%fhiPSch(:,0) =  2.5_R8*PSch*dv%facdrift*co%cddi(:,0,is)*
-     &    dnati2(:,1)
-         dv%fhiPSch(:,1) = -2.5_R8*PSch*dv%facdrift*co%cddi(:,1,is)*
-     &    dnati2(:,0)
+         dv%fhiPSch(:,0) =  2.5_R8*switch%fhiPSch*
+     &                       dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
+         dv%fhiPSch(:,1) = -2.5_R8*switch%fhiPSch*
+     &                       dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
 *     ..linearization coefficients for P.Sch flows
-         cddi(:,0) = -5.0_R8*PSch*dv%facdrift*co%cddi(:,1,is)
-         cddi(:,1) =  5.0_R8*PSch*dv%facdrift*co%cddi(:,0,is)
+         cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
+         cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
          call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi,floi0,coni0)
          do iFc = 1, nFc
           dv%floi(iFc,0)   = dv%floi(iFc,0) + 
@@ -200,9 +182,9 @@ cpax
 *      ..interpolate na(:,is) to cell faces
          call intface(nCv,nFc,mpg%fcCv,wght,pl%na(:,is),nif)
 *      ..compute flidia
-         flidia(:,0) = flidia(:,0) + 2.5e0_R8*vdia_par*
+         flidia(:,0) = flidia(:,0) + 2.5e0_R8*switch%fhi_vdia_par*
      &     nif*dv%vadia(:,0,is)*geo%fcS*geo%fcQalf(:,0)
-         flidia(:,1) = flidia(:,1) + 2.5e0_R8*vdia_par*
+         flidia(:,1) = flidia(:,1) + 2.5e0_R8*switch%fhi_vdia_par*
      &     nif*dv%vadia(:,1,is)*geo%fcS*geo%fcQalf(:,1)
         endif
        enddo                                                            !srv 25.01.02 }
@@ -225,7 +207,7 @@ cpax
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)        !! in case of default energy equation, tn will be equal to ti
 
-      if (tn_style.eq.0) then                              !! default combined ion-neutral energy equation
+      if (switch%tn_style.eq.0) then                       !! default combined ion-neutral energy equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
       else                                                 !! pure ion and separate ion-neutral energy equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
@@ -234,12 +216,13 @@ cpax
 
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
-     &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*xcur
+     &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*
+     &                                                   switch%xcur
       scur(:,1) = 1.5e0_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
-     &  dv%fchanml(:,1) + vis_per*dv%fchvisper(:,1) + 
-     &  vis_q*dv%fchvisq(:,1))*ycur
+     &  dv%fchanml(:,1) + switch%fnb_vis_per*dv%fchvisper(:,1) + 
+     &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur
 
-      if (iout.eq.2) then
+      if (switch%b2tfhi_iout.eq.2) then
         call my_out_us(70,nFc,1,co%chcn(:,0),'chcn0')
         call my_out_us(70,nFc,1,co%chci(:,0),'chci0')
         call my_out_us(70,nFc,1,co%chcn(:,1),'chcn1')
@@ -248,7 +231,7 @@ cpax
 
 
 *   ..convective coefficients
-      if (tn_style.eq.0) then
+      if (switch%tn_style.eq.0) then
         floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
      &    flidia(:,0) + scur(:,0)
         floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
@@ -256,7 +239,7 @@ cpax
 
         flon0(:,0) = 0.0_R8
         flon0(:,1) = 0.0_R8
-      elseif (tn_style.eq.1) then
+      elseif (switch%tn_style.eq.1) then
 !! AFN_TODO when more contributions are considered (e.g. drifts), or multi-species cases, 
 !! additions (floi0 = floi0 + ...) must be considered instead of overwrites (floi0 = ...)
         do is= 0,ns-1
@@ -280,7 +263,7 @@ cpax
       endif
 
 
-      if (tn_style.eq.0) then !! default combined ion-neutral energy equation
+      if (switch%tn_style.eq.0) then !! default combined ion-neutral energy equation
       
         floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
      &    scur(:,0)
@@ -308,8 +291,8 @@ cpax
         dv%floi = dv%floi + floi0
         dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
-      elseif (tn_style.eq.1) then
-        if(mdf_fhi.eq.1) then
+      elseif (switch%tn_style.eq.1) then
+        if(switch%mdf_fhi.eq.1) then
           call xerrab('non-default energy eqs not yet for mdf')
         endif
 *   ..apply discretization scheme
@@ -319,7 +302,7 @@ cpax
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
      &    dv%floi,dv%coni)
       else
-        if(mdf_fhi.eq.1) then
+        if(switch%mdf_fhi.eq.1) then
           call xerrab('non-default energy eqs not yet for mdf')
         endif
 
@@ -808,7 +791,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
       endif
 #endif
 
-      if(iout.ne.0) then                                                !srv 18.06.08 {
+      if(switch%b2tfhi_iout.ne.0) then                                                !srv 18.06.08 {
        call my_out_us(70,nFc,1,dv%floi(1,0),'b2tfhi__floix')
        call my_out_us(70,nFc,1,dv%floi(1,1),'b2tfhi__floiy')
        call my_out_us(70,nFc,1,dv%coni(1,0,0),'b2tfhi__conix0')

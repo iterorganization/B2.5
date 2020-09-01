@@ -1,13 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqel (nCv, ns, ismain, ev, te, rt, rtw)
+      subroutine b2sqel (nCv, ns, ismain, switch, ev, te, rt, rtw)
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_plasma
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, ismain
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      *  ev, te(1:nCv)
       type (B2Rates), intent (inout) :: rt
@@ -44,18 +46,14 @@
 
 *   ..local variables
       integer ncall, iCv, is
-      real (kind=R8) ::
-     *   phm0, phm1, phm2, art_rad, tnorm
-      real (kind=R8) ::
-     *  wrk0(1:nCv), expu
-      save ncall, phm0, phm1, phm2, art_rad
-      integer, save :: use_eirene=0
+      real (kind=R8) :: tnorm, art_rad
+      real (kind=R8) :: wrk0(1:nCv), expu
+      save ncall
 *   ..procedures
       intrinsic log, exp, min, max, dim
-      external subini, subend, xertst, ipgetr, expu
+      external subini, subend, xertst, expu
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/,
-     1 art_rad/0.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -63,16 +61,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sqel')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2sqel_phm0', phm0)
-       call ipgetr ('b2sqel_phm1', phm1)
-       call ipgetr ('b2sqel_phm2', phm2)
-       call xertst (0.0_R8.le.min(phm0,phm1,phm2),
-     &  'faulty internal parameter phm0, phm1, phm2')
-       call ipgetr ('b2sqel_artificial_radiation', art_rad)
-       call ipgeti ('b2mndr_eirene', use_eirene)
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -90,21 +78,21 @@
       do is = 0, ns-1
        do iCv = 1, nCv
 *      ..compute ionisation rate coefficient
-         rtw%rsa(iCv,is) = phm0*
+         rtw%rsa(iCv,is) = switch%b2sqel_phm0*
      &     expu(rt%rlsa(iCv,0,is)+rt%rlsa(iCv,1,is)*wrk0(iCv))
 *      ..compute recombination rate coefficient
-         rtw%rra(iCv,is) = phm1*
+         rtw%rra(iCv,is) = switch%b2sqel_phm1*
      &     expu(rt%rlra(iCv,0,is)+rt%rlra(iCv,1,is)*wrk0(iCv))
 *      ..compute heat loss rate coefficient
-         rtw%rqa(iCv,is) = phm2*
+         rtw%rqa(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlqa(iCv,0,is)+rt%rlqa(iCv,1,is)*wrk0(iCv))
-         rtw%rqa_ra(iCv,is) = phm2*
+         rtw%rqa_ra(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlqa_ra(iCv,0,is)+rt%rlqa_ra(iCv,1,is)*wrk0(iCv))
 *      ..compute line radiation rate coefficient
-         rtw%rrd(iCv,is) = phm2*
+         rtw%rrd(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlrd(iCv,0,is)+rt%rlrd(iCv,1,is)*wrk0(iCv))
 *      ..compute bremsstrahlung radiation rate coefficient
-         rtw%rbr(iCv,is) = phm2*
+         rtw%rbr(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlbr(iCv,0,is)+rt%rlbr(iCv,1,is)*wrk0(iCv))
 *      ..compute effective charge state
          rt%rza(iCv,is) = max(zamin(is),min(zamax(is), 
@@ -122,11 +110,12 @@
       enddo
 
 * ..artificial radiation                DPC 2000.08.25
+      art_rad = switch%art_rad
       if(art_rad.ne.0.0_R8) then
         if(ncall.eq.0) then
           art_rad=abs(art_rad)
           write(*,*)
-     1     'Artificial radiation model active, art_rad = ',art_rad
+     1    'Artificial radiation model active, art_rad =',switch%art_rad
         endif
         is=ismain    ! XPB 2007.11.02 was ns-1
         do iCv = 1, nCv

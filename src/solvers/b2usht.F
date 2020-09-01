@@ -1,14 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, ne, ni, te, ti, tn, 
+      subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
+     &  itcnt, rxg, ne, ni, te, ti, tn, 
      &  floe, cone, floi, coni, flon, conn,
      &  she, shi, shn, ceqp,
      &  resht, reshe, reshi, reshn,
      &  cortt, corte, corti, cortn, flo0, con0, aa)
       use b2mod_types
       use b2mod_numerics_namelist
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2mod_ma28_for_us
@@ -16,6 +17,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -62,12 +64,10 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: iadd_9 = 1                                      !srv 02.01.07
+c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
+c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
+c      integer, save :: iadd_9 = 1                                      !srv 02.01.07
       integer, save :: last_ion
-      integer, save :: iout = 0
-      integer, save :: tn_style = 0
       integer ireg
       logical lnonzero
       save ncall
@@ -88,13 +88,11 @@
 *   ..subprogram start-up calls
       call subini ('b2usht')
       if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
-       call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.01.07
-       call ipgeti ('b2usht_iout', iout)
-       call ipgeti ('b2mn_tn_style', tn_style)
+c       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
+c       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
+c       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
+c       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
+c       call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.01.07
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -125,8 +123,8 @@
        call b2xvsg (nCv, ceqp, 1, 'ceqp', '.ge.')
       endif
 
-      if (tn_style.le.1) then !! in case we solve a combined ion-neutral energy equation (default) or pure ion energy equation we make sure
-         conn = 0.0_R8       !! the neutral fluxes and sources are zero.
+      if (switch%tn_style.le.1) then !! in case we solve a combined ion-neutral energy equation (default) or pure ion energy equation we make sure
+         conn = 0.0_R8               !! the neutral fluxes and sources are zero.
          flon = 0.0_R8
          shn = 0.0_R8
       endif
@@ -284,7 +282,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
       endif                                                              !srv 22.05.18
       
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_total_aam5')
@@ -438,7 +436,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
       endif                                                              !srv 22.05.18
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_he_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_he_aam5')
@@ -596,7 +594,7 @@
       endif                                                          !srv 22.05.18
 
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hi_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hi_aam5')
@@ -753,7 +751,7 @@
       endif                                                          !srv 22.05.18
 
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hn_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hn_aam5')

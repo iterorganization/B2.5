@@ -1,18 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
+      subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
      &  solvpreg, solvmreg, rxf, pcm0, cortt, corte, corti, cortn,
      &  pccm0, na, ua, te, ti, tn, po, ne, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -40,21 +42,20 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, stylec, pot_eq, iCv, is, ireg
-      integer, save :: tn_style = 0
+      integer ncall, iCv, is, ireg
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), t0, t1, t2,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
-      save ncall, stylec, pot_eq
+      save ncall
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
      *  med
-      external subini, subend, xertst, ipgeti, b2xvsg, xerrab
+      external subini, subend, xertst, b2xvsg, xerrab
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/, stylec/0/, pot_eq/1/
-*!!   (stylec is a numerical switch, needs experiments)
+      data ncall/0/
+
 
 *-----------------------------------------------------------------------
 *.computation
@@ -62,13 +63,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2upht')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2upht_stylec', stylec)
-       call xertst (0.le.stylec, 'faulty internal parameter stylec')
-       call ipgeti ('b2news_poteq', pot_eq)
-       call ipgeti ('b2mn_tn_style', tn_style)
-      endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -87,16 +81,12 @@
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif 
 
-      if (tn_style.ne.0.and.stylec.ne.0) then
-        call xerrab('b2upht stylec =/= 0 not yet available for',
-     &                  'non-default energy equation')
-      endif
-
 * ..apply the correction
 *   ..adjust te, ti, po
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (stylec.eq.0) then
+*!!   (stylec is a numerical switch, needs experiments)
+        if (switch%stylec.eq.0) then
          if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
           dte(iCv) = rxf*max(-te(iCv),(corte(iCv)+cortt(iCv))/2.0_R8)
           dti(iCv) = rxf*max(-ti(iCv),(corti(iCv)+cortt(iCv))/2.0_R8)
@@ -111,7 +101,7 @@
          else 
           dtn(iCv) = 0.0_R8
          endif
-        else if (stylec.eq.1) then
+        else if (switch%stylec.eq.1) then
 
          if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
           ctt = cortt(iCv) - med(corte(iCv),cortt(iCv),corti(iCv))
@@ -121,24 +111,24 @@
           dte(iCv) = rxf*max(-te(iCv),corte(iCv))
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
          endif
-        else if (stylec.eq.2) then
+        else if (switch%stylec.eq.2) then
 *        !! This for testing purposes only
          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
          dti(iCv) = 0.0_R8
-        else if (stylec.eq.3) then
+        else if (switch%stylec.eq.3) then
 *        !! This for testing purposes only
          dte(iCv) = 0.0_R8
          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
-        else if (stylec.eq.4) then
+        else if (switch%stylec.eq.4) then
 *        !! This for testing purposes only
          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         endif
         if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))	 !xpb
-        if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
+        if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi) then
           po(iCv) = po(iCv)+dte(iCv)/qe
-        else if (pot_eq.eq.2) then
+        else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb

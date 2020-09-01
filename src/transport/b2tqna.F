@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0)
+      subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, switch,
+     &   geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, 
+     &   hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0)
       use b2mod_types
       use b2mod_transport_namelist
 !      use b2mod_input_profile
@@ -17,6 +17,7 @@
 !      use b2mod_neoclassical
 !      use b2mod_geo_corner
 !     &                    , only : lengthy, nmdpl                 !srv 26.11.04
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -26,6 +27,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -100,10 +102,8 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, is, ic, k, new_df0, ixref, diagno,
-     1  transport_namelist, user_transport, transport_inputfile,
+     1  transport_inputfile,
      2  jsep, jxi, jxa
-      integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0,   !srv 02.12.04
-     *                 tn_style = 0
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
@@ -117,7 +117,7 @@
      *  min_df0_tmp, max_df0_tmp
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
       integer elm_count
-      save ncall, new_df0, ixref, transport_namelist, user_transport,
+      save ncall, new_df0, ixref,
      1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
      2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
      3  neutral_sources_rescale
@@ -126,8 +126,8 @@
       intrinsic sqrt, dim, max, exp
       external subini, subend, xertst, sfill, ipgeti, ipgetr, expu
 *   ..initialisation
-      data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
-     1  user_transport/0/, transport_inputfile/0/,
+      data ncall/0/, new_df0/0/, diagno/0/,
+     1  transport_inputfile/0/,
      2  ballooning/0.0_R8/, bb_ref/0.0_R8/, ballooning_rescale/1.0_R8/,
      3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
      4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
@@ -155,13 +155,12 @@
      *   'Invalid range for b2tqna_min_df0 and/or b2tqna_max_df0')
         call ipgetr ('b2mndr_rescale_neutrals_sources',
      1                neutral_sources_rescale)
-        call ipgeti ('b2tqna_user_transport', user_transport)
         call ipgeti ('b2tqna_inputfile', transport_inputfile)
         call ipgeti ('b2tqna_ixref', ixref)
 !WG_TODO        call xertst (-1.le.ixref.and.ixref.le.nx,
 !WG_TODO     1   'faulty argument b2tqna_ixref')
-        call ipgeti ('b2tqna_transport_namelist', transport_namelist)
-        if(transport_namelist.eq.1) then
+
+        if(switch%b2tqna_transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
           call write_b2mod_transport_namelist
@@ -196,12 +195,8 @@
         call xertst (divsol_rescale.gt.0.0_R8,
      1   'faulty input divsol_rescale')
         call ipgetr ('b2tqna_cfvma', cfvma)                       !srv 15.12.05
-        call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
-        call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
-        call ipgeti ('b2mn_tn_style', tn_style)                  
       else
-        if(transport_namelist.eq.1.and.
+        if(switch%b2tqna_transport_namelist.eq.1.and.
      1   transport_time_mod.gt.0.0_R8) then
           write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
@@ -232,7 +227,7 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
 
-      if(transport_namelist.eq.1) then
+      if(switch%b2tqna_transport_namelist.eq.1) then
         do is=0,ns-1
           if(.not.is_neutral(is)) then
 * dna
@@ -404,7 +399,7 @@ cxpb Corrected for dimensionality
         write(*,'(a,i3,1p,2g14.7)') 'is,min_df0,max_df0 ',
      .   is, min_df0_tmp, max_df0_tmp
       enddo
-      if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
+      if (switch%tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
         hci0 = hci0+hcn0
       endif
 *   ..compute hce0, sig0, alf0
@@ -428,7 +423,7 @@ cxpb Corrected for dimensionality
      &    dfalf=dfalf!WG_TODO*cfalf(7)*(hy1(iCv)/hy1(ixref,iy))**2
 *     ..compute hce0, sig0, alf0
          hce0(iCv) = dfhce*dv%ne(iCv)
-         if(model_sig.eq.0) then                !srv 02.12.04 {
+         if(switch%model_sig.eq.0) then                !srv 02.12.04 {
            sig0(iCv) = dfsig*qe*dv%ne(iCv)
          else
 !          sig0(iCv) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
@@ -451,7 +446,7 @@ cxpb Corrected for dimensionality
         enddo
       endif
 #endif
-      if(iout.ne.0) then                                            !srv 10.11.09 {
+      if(switch%b2tqna_iout.ne.0) then                               !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
@@ -475,11 +470,11 @@ cxpb Corrected for dimensionality
 
 c lvn1
 
-      if (user_transport.eq.0) then
+      if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
-      elseif (user_transport.eq.10) then                              !mb 24.04.2017
+      elseif (switch%user_transport.eq.10) then                              !mb 24.04.2017
         call set_transport_kul(nCv, nFc,
-     &   nVx, ns, nscx, iscx, tn_style, geo, 
+     &   nVx, ns, nscx, iscx, switch%tn_style, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       else
@@ -531,7 +526,7 @@ c ank added blobby transport
       elseif(user_transport.eq.9) then
         call set_transport_blob(nx, ny, ns, jsep, jxa, vla0)
       else
-        write(*,*) 'user_transport = ',user_transport,' not coded'
+        write(*,*) 'user_transport =',switch%user_transport,' not coded'
         call xerrab ('user_transport value not coded')
       endif
 #endif
@@ -613,7 +608,7 @@ cdpc
         enddo
       endif
 #endif
-      if(iout_b2wdat.eq.4) then                                            !srv 10.11.09 {
+      if(switch%iout_b2wdat.eq.4) then                                 !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_dna0'//chns)
