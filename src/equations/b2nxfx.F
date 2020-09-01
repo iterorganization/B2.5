@@ -1,14 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfx (nCv, nFc, nVx, geo, mpg, qe, ne, te, po, ehxp,
-     &     wrk0, wrk1)
+      subroutine b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, ne, te, 
+     &     po, ehxp, wrk0, wrk1)
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -16,7 +18,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   ehxp(nCv)
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -51,37 +52,23 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv
-      integer, save :: style = 1, iout = 0                            !srv 26.10.08
-      integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
+      integer iCv
       real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx)
-      save ncall
 *   ..procedures
-      external subini, subend, xertst, ipgeti
+      external subini, subend, xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
 
 *   ..subprogram start-up calls
       call subini ('b2nxfx')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti('b2nxfx_style', style)                            !srv 26.10.08
-       call ipgeti('b2nxfx_iout', iout)
-       call ipgeti('b2news_poteq', pot_eq)                               !srv 16.07.12
-       call xertst(0.le.pot_eq.and.pot_eq.le.2,'faulty argument pot_eq') !srv 16.07.12 27.02.13
-       call ipgeti ('b2tfhe_no_current', no_current)
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-      if(pot_eq.eq.0 .or. pot_eq.eq.2) then                           !srv 16.07.12 27.02.13
+      if(switch%pot_eq.eq.0 .or. switch%pot_eq.eq.2) then             !srv 16.07.12 27.02.13
        ehxp = 0.0_R8
-      elseif(pot_eq.eq.1) then
-       if(style.eq.0) then                                             !srv 26.10.08
+      elseif(switch%pot_eq.eq.1) then
+       if(switch%b2nxfx_style.eq.0) then                               !srv 26.10.08
        call xerrab ('b2nxfx -- style 0 not supported for WG')
 #ifdef WG_TODO
 *   ..compute wrk0 and wrk1
@@ -138,12 +125,11 @@
 
       endif                                               !srv 16.07.12
 
-      if (iout.eq.1) then                                 !srv 11.09.09
+      if (switch%b2nxfx_iout.eq.1) then                    !srv 11.09.09
         call my_out_us(70,nFc,1,ehxp,'b2nxfx_ehxp')
       endif
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

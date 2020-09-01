@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
@@ -18,6 +18,7 @@
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -27,6 +28,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, itcnt                                !srv 13.01.17
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Coeff), intent (in) :: co
@@ -75,17 +77,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, diagno, ireg, nsmin, nsmax, k
-      integer, save :: iout = 0, b2sifr_ver = 1, iout_b2wdat = 0       !srv 04.07.08 26.10.08
-      integer, save :: icase = 0                                       !srv 13.01.17
-      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
-      integer, save :: vlct_diagno = 1
-      integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer ncall, iCv, iFc, is, ireg, k
+c      integer, save :: b2sifr_ver = 1                                  !srv 04.07.08 26.10.08
+c      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer :: vcount(0:ns-1)
-      integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, t2, czetap, czetae                                !srv 13.01.17
+     *  t0, t1, t2, czetap, czetae                                !srv 13.01.17
       real (kind=R8) ::
      *  smbch(nCv,0:3), smbtf(nCv,0:3),                !srv 11.09.09
      *  smbgp(nCv,0:3),
@@ -115,7 +113,7 @@
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)             !srv 13.01.17 05.07.17
       logical new_matrix, solvedum(0:CVREGMAX), main_lightest
-      save ncall, rxg, diagno, solvedum, nsmin, nsmax
+      save ncall, solvedum
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -128,7 +126,7 @@
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/, rxg/1.0e6_R8/, diagno/0/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -138,42 +136,18 @@
       call subini ('b2npmo')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        nsmin=0
-        nsmax=ns
-        call ipgetr ('b2npmo_rxg', rxg)
-        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
-        call ipgeti ('b2npmo_diagno', diagno)
-        call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
-        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
-        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
-        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
-        call ipgeti ('b2news_nsmin', nsmin)
-        if(nsmin.gt.ns) then
-           nsmin=ns
-        elseif(nsmin.lt.0) then
-           nsmin=0
-        endif
-        call ipgeti ('b2news_nsmax', nsmax)
-        if(nsmax.gt.ns) then
-           nsmax=ns
-        elseif(nsmax.lt.0) then
-           nsmax=0
-        endif
-        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-        call ipgeti ('b2sigp_style', style)                            !srv 08.10.14
+c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
+c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
+        write(*,*) 'nsmin, nsmax = ', switch%nsmin, switch%nsmax
         main_lightest = .true.
         do is = 0, ns-1
           main_lightest = main_lightest .and.
      .     nint(am(is)).ge.nint(am(ismain))
         end do
-        if (.not.main_lightest .and. style.eq.2) then
+        if (.not.main_lightest .and. switch%b2sigp_style.eq.2) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for plasmas where the main species is not the lightest one!'
         endif
-        call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
-        call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 
-        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -225,7 +199,8 @@
         cimp2(iCv)=fce2(zmff(iCv))
       enddo                                                            !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nCv, icase, pl%te, pl%ti, dv%ne, dv%lnlam)
+      call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, 
+     &             dv%ne, dv%lnlam)
 *   ..compute zetap and zetae
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
@@ -238,13 +213,13 @@
       call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%tn, wrkv, gtn)
       call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gte)
 *   ..compute ehxp
-      if(style.ne.2) then 
-        call b2nxfx (nCv, nFc, nVx, geo, mpg, qe, dv%ne, pl%te, pl%po,
-     &     ehxp, wrkf0, wrkf1)
+      if(switch%b2sigp_style.ne.2) then 
+        call b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, dv%ne, 
+     &     pl%te, pl%po, ehxp, wrkf0, wrkf1)
       endif                                                            !srv 13.01.17 }
 *   ..compute smqdu
       call b2nxdu (nCv, ns, pl%na, pl%ua, sr%smq, smqdu, wrk0, wrk1)
-      if (iout.ne.0) then
+      if (switch%b2npmo_iout.ne.0) then
        call my_out_us(70,nCv,0,smqdu,'b2npmo_smqdu')
       endif
 *   ..initialise
@@ -257,7 +232,7 @@
 * ..main computation
 *   ..compute individual species corrections
 !      do is = 0, ns-1
-      do is = nsmin, nsmax-1
+      do is = switch%nsmin, switch%nsmax-1
 *    ..compute rob, pb
        call b2scopy (nCv, pl%na(1,is), 1, rob, 1)
        call b2sscal (nCv, am(is)*mp, rob, 1)
@@ -304,22 +279,22 @@
        endif
 #endif
 *    ..compute pressure gradient term
-       call b2sigp (nCv, nFc, nVx, is, geo, mpg, rt%rza(1,is),
+       call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(1,is),
      &   pl%na(1,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0, 
      &   wrk1, wrk2)
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(1,0,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nCv, nFc, nVx, is, geo, mpg, co%cvsahz_cl(1,0,is), 
-     &   co%cvsahz(1,0,is), flubv)
+       call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,  
+     &   co%cvsahz_cl(1,0,is), co%cvsahz(1,0,is), flubv)
 !WG_TODO       if (balance_netcdf.ne.0) then
 !WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
 !WG_TODO       endif
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
-       call b2nxfc (nCv, nFc, nVx, is, geo, mpg, rob, pl%ua(1,is), flub,
-     &  co%cvsahz(1,0,is), flcb, cvcb, wrkf0)
+       call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob, 
+     &  pl%ua(1,is), flub, co%cvsahz(1,0,is), flcb, cvcb, wrkf0)
 
 *    ..compute additional viscosity term
        call b2siav (nCv, nFc, nVx, ns, is, geo, mpg, am(is)*mp,
@@ -328,10 +303,10 @@
      &   co%cvsa(1,0,is), co%cvsa_cl(1,0,is),  co%cvsahz(1,0,is),
      &   co%cvsahz_cl(1,0,is), smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)
 *    ..compute centrifugal force term                                  !srv 09.07.01
-       call b2sicf (nCv, nFc, nVx, is, am(is)*mp, geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
+       call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,   !srv 09.07.01 28.01.02 22.07.05
      *   pl%na(1,is), pl%ua(1,is), smbcf, smcf(1,is), ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nCv, nFc, is, geo, mpg, dv%fchanml, smban)
+       call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
 *    ..compute total parallel momentum source
        call b2scopy (nCv*4, sr%smo(1,0,is), 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, sr%smq(1,0,is), 1, smb, 1)
@@ -345,7 +320,7 @@
        call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
-       call b2nxdv (nCv, is, mpg, rob, sr%smq(1,0,is), smqdu, smb)             !srv ???
+       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(1,0,is),smqdu,smb)             !srv ???
 *    ..save final source for species (is)                              !srv 10.11.02
 !WG_TODO       smof(:,:,is) = smb                                              !srv 10.11.02
 
@@ -356,15 +331,15 @@ cdjm Jan2017 update momentum source components for balance
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
-     &            .or.get_residuals.eq.1) then                         !srv 22.05.18
-        call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
-     .    smb, flub, flubv, co%cvsahz(1,0,is), dv%resmo(1,is),
+     &            .or.switch%get_residuals.eq.1) then                  !srv 22.05.18
+        call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(1,is),
+     .    rob, smb, flub, flubv, co%cvsahz(1,0,is), dv%resmo(1,is),
      .    dv%fmo(1,0,is), dv%fhm(1,0,is), co%cvsahz_eff(1,0,is))       !srv 04.07.08
       endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
-       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
+       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
          call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
         call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmox'//chns)
         call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmoy'//chns)
@@ -407,7 +382,7 @@ cdjm Jan2017 update momentum source components for balance
          call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)               !srv 25.09.17
        endif                                                           !srv 05.07.17
 
-       if (iout .ne. 0) then
+       if (switch%b2npmo_iout .ne. 0) then
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
@@ -437,8 +412,9 @@ c     ..compare matrices
          end do
          if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-         call b2usmo (nCv, nFc, nVx, is, geo, mpg, mpg%nnreg(0),
-     &     solvedum, itcnt, rxg, rob, rob, pb, pb, pl%ua(1,is), smb,
+         call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
+     &     solvedum, itcnt, switch%b2npmo_rxg, rob, rob, pb, pb,
+     &     pl%ua(1,is), smb,
      &     flcb, cvcb, dv%resmo(1,is),  ctcfb, dv%corua(1,is),
      &     dv%pcca(1,0,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
@@ -455,7 +431,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
      &   .and.any(solvemt(0:mpg%nnreg(0))))) then !srv 22.05.18 resmt is non-zero when all equations are solved
 !     &   .and.all(solvemt(0:mpg%nnreg(0)))).or.get_residuals.eq.1) then !srv 22.05.18
         call b2scopy (nCv*4, sr%smo(1,0,is), 1, smb, 1)
-        if(style.eq.2) then                                             !srv 13.01.17 {
+        if(switch%b2sigp_style.eq.2) then                                             !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
          call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                 !srv 08.10.14
          call b2saxpy (nCv*4, 1.0_R8, smbch, 1, smb, 1)
@@ -467,8 +443,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
         call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
-        call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
-     .    smb, flub, flubv, co%cvsahz(1,0,is), wrk0, wrkf, wrkff,
+        call b2urmo (nCv, nFc, nVx, switch, geo, mpg,  is, pl%ua(1,is),
+     .     rob, smb, flub, flubv, co%cvsahz(1,0,is), wrk0, wrkf, wrkff,
      .    wrkfff)
 *    ..accumulate residual
         call b2saxpy (nCv, 1.0_R8, wrk0, 1, dv%resmt, 1)
@@ -494,8 +470,9 @@ c     ..compare 9-pt stencil matrices
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-        call b2usmo (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), 
-     &    solvemt, itcnt, rxg, ro, rz, pr, pz, wrk0, smt, flct, cvct,
+        call b2usmo (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0), 
+     &    solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, wrk0,
+     &    smt, flct, cvct,
      &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
         last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
       else
@@ -544,7 +521,7 @@ c     ..compare 9-pt stencil matrices
 !     *                                              ( am(is)*mp ))
                 if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then
                   vcount(is) = vcount(is) + 1
-                  if (vlct_diagno.ge.2) then
+                  if (switch%vlct_diagno.ge.2) then
                     write(6,'(a,a,i3,a,i4,a,i4,a)')
      .               'Parallel velocity restriction applied ',
      .               'to species ',is,' in cell (',ix,',',iy,'):'
@@ -557,7 +534,7 @@ c     ..compare 9-pt stencil matrices
             enddo
           enddo
         enddo
-        if (vlct_diagno.ge.1) then
+        if (switch%vlct_diagno.ge.1) then
           do is = 0, ns-1
             if (vcount(is).gt.1) then
               write(6,'(a,a,i5,a,i3)')
@@ -576,13 +553,13 @@ c     ..compare 9-pt stencil matrices
 #endif
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
-      if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                      !srv 12.07.02 {
+      if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then !srv 12.07.02 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
        enddo
       endif                                                            !srv 12.07.02 }
-      if (iout.ne.0) then
+      if (switch%b2npmo_iout.ne.0) then
        call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccmx')            !srv 11.01.13
        call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccmy')            !srv 11.01.13
       endif                                                            !srv 12.07.02 }

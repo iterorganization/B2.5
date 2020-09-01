@@ -1,14 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nCv, nFc, nVx, ns, geo, mpg, rt, facdrift,
-     &       fac_ExB, ismain, ismain0, te, po, ti, na, fna, csigin,
-     &       fchin)                                                     !srv 08.03.99 16.06.09
+      subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
+     &       facdrift, fac_ExB, ismain, ismain0, te, po, ti, na, fna, 
+     &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -22,6 +23,7 @@
      & facdrift(nFc), fac_ExB(nFc), te(nCv), po(nCv), ti(nCv),
      & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1), 
      & csigin(nFc,0:1,0:ns-1,0:ns-1)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Rates), intent (in) :: rt
@@ -40,18 +42,12 @@
 *.declarations
      
 *   ..local variables
-      integer, save :: pot_eq = 1                                         !srv 26.07.06
-      integer, save :: mode = 1
-      integer, save :: iout = 0
-      integer, save :: use_eirene
-      integer, save :: fchin_in_core = 0                                  !srv 16.11.17
       integer is, is0, iamain
 #ifdef B25_EIRENE
       integer ia, im
       character chns*3
 #endif
       integer, save :: ncall = 0, style = 1
-      real (kind=R8), save :: fch_ion_neutral = 0.0_R8
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *   fnac(nCv,0:1,0:ns-1), vntrc(nCv,0:1),                            !srv 08.07.09
@@ -63,9 +59,12 @@
      &   sec(nCv), sigia(nCv), 
      &   csigia(nFc,0:1),                                                 !srv 15.02.11
      &   sigi(nCv), facdriftm, fac_ExBm                                   !srv 20.10.17
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c      integer, save :: mode = 1
+c      integer, save :: iout = 0
+c      integer, save :: fchin_in_core = 0                                  !srv 16.11.17
 *   ..procedures
 *   ..initialisation
-      data use_eirene/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -74,22 +73,21 @@
       call subini ('b2tinnt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call ipgeti ('b2tinnt_iout', iout)
-        call ipgeti ('b2tinnt_style', style)
-        call ipgeti ('b2tral_mode', mode)
-        call ipgeti ('b2mndr_eirene', use_eirene)
-        call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
-        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
-        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgeti ('b2tinnt_iout', iout)
+c        call ipgeti ('b2tinnt_style', style)
+c        call ipgeti ('b2tral_mode', mode)
+c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       fchin     = 0.0e0_R8                                                !srv 09.07.99
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
-      if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
-     .               .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
-        if (use_eirene.ne.0) then
+      if(switch%pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or.
+     . fac_ExBm.gt.0.0_R8)  
+     .            .and. switch%fch_ion_neutral .ne. 0.0e0_R8) then         !srv 26.07.06 01.07.99
+        if (switch%use_eirene.ne.0) then
           call xerrab ('b2tinnt not yet available for WG + EIRENE')
 #ifdef WG_TODO
 *   ..calculate section

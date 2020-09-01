@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sicf (nCv, nFc, nVx, isb, mb, geo, mpg, nb, ub,    !srv 09.07.01 28.01.02 22.07.05
-     *                  smbcf, smbcb, ctcf, wrk0)                     !srv 06.04.07
+      subroutine b2sicf (nCv, nFc, nVx, isb, mb, switch, geo, mpg,     !srv 09.07.01 28.01.02 22.07.05
+     *                  nb, ub, smbcf, smbcb, ctcf, wrk0)              !srv 06.04.07
       use b2mod_types
       use b2mod_constants
+      use b2mod_switches
       use b2us_geo
       use b2us_map
 !WG_TODO      use b2mod_balance !djm Jan2017
@@ -12,6 +13,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb                                      !srv 28.01.02
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -34,18 +36,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, iCv, iFc, k
-      integer, save :: iout = 0                                       !srv 17.06.02
+      integer ncall, iCv, iFc, k
       character chns*3, chark*1                                       !srv 17.06.02
-      real (kind=R8) ::
-     *    phm0, phm1
       real (kind=R8) :: wrkf(nFc), wrkv(nVx), wrks(nCv)
-      save ncall, style, phm0, phm1
+      save ncall
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr
+      external subini, subend, xertst
       external b2xvff, b2xvsg
-*   ..initialization
-      data ncall/0/, style/0/, phm0/1.0e0_R8/, phm1/1.0e0_R8/         !srv 18.01.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -54,14 +51,6 @@
 *   ..subprogram start-up calls
       call subini ('b2sicf')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2sicf_style', style)
-       call ipgetr ('b2sicf_phm0', phm0)
-       call ipgetr ('b2sicf_phm1', phm1)
-       call xertst (0.le.style.and.style.lt.2,
-     &   'faulty internal parameter style')
-       call ipgeti ('b2sicf_iout', iout)
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test mb
@@ -75,21 +64,22 @@
 * ..compute centrifugal force
       smbcf = 0.0e0_R8
       ctcf = 0.0e0_R8                                                    !srv 06.04.07
-      if (style.eq.0) then
+      if (switch%b2sicf_style.eq.0) then
         call grad_p(nCv,nFc,nVx,1,geo,mpg,geo%cvHz,geo%vxHz,wrkf)
         call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
 
 *   .. compute smbcf
         do iCv = 1, mpg%nCi
-          smbcf(iCv,0) = phm0*geo%cvVol(iCv)*                            !srv factor hz/hz=1
+          smbcf(iCv,0) = switch%b2sicf_phm0*geo%cvVol(iCv)*              !srv factor hz/hz=1
      &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*ub(iCv)**2          !srv 05.04.07
      &      *nb(iCv)*wrk0(iCv)
-          ctcf(iCv) = phm0*phm1*geo%cvVol(iCv)*                          !srv 06.04.07 {
+          ctcf(iCv) = switch%b2sicf_phm0*switch%b2sicf_phm1*
+     &                                        geo%cvVol(iCv)*            !srv 06.04.07 {
      &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
      &      *nb(iCv)*wrk0(iCv)                                           !srv 06.04.07 }
         enddo
 
-      else if (style.eq.1) then
+      else if (switch%b2sicf_style.eq.1) then
         call xerrab ('b2sicf -- style 1 not for WG')
 #ifdef WG_TODO
         do iy = 0, ny-1
@@ -136,7 +126,7 @@ cdjm Store linearised source for balance
 !WG_TODO        b2sicf_smo0to3(-1:nx,-1:ny,0:3,isb)=smbcf
 !WG_TODO      endif
 
-      if (iout.ne.0) then                                                !srv 17.06.02 {
+      if (switch%b2sicf_iout.ne.0) then                                                !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k

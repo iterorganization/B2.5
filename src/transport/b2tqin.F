@@ -1,16 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqin (nCv, ns, nscx, iscx, geo, pl, rt, sigin)
+      subroutine b2tqin (nCv, ns, nscx, iscx, switch, geo, 
+     &                   pl, rt, sigin)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nscx
       integer iscx(0:nscx-1)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
       type (B2Rates), intent (in) :: rt
@@ -53,14 +56,14 @@
 *   ..local variables
       integer ncall, iCv, is, is0, k
       real (kind=R8) ::
-     *   phm0, rcx, expu, t0
-      save ncall, phm0
+     *   rcx, expu, t0
+      save ncall
 *   ..procedures
       intrinsic sqrt, log, exp, max, dim
-      external subini, subend, xertst, sfill, ipgetr, expu
+      external subini, subend, xertst, sfill, expu
       external b2xvsg
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal 
@@ -74,11 +77,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tqin')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2sqcx_phm0', phm0)
-       call xertst (0.0_R8.le.phm0, 'faulty internal parameter phm0')
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -102,7 +100,7 @@
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
           do iCv = 1, nCv
             t0 = log(pl%ti(iCv)/(am(is0)*ev))
-            rcx = phm0*
+            rcx = switch%b2sqcx_phm0*
      &       expu(rt%rlcx(iCv,0,is,k)+rt%rlcx(iCv,1,is,k)*t0)
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
             sigin(iCv,0,is,k) = (pl%na(iCv,is)*am(is)*mp)      !srv 01.07.99
