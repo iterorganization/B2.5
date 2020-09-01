@@ -95,6 +95,11 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
+#if GGD_MINOR_VERSION < 10
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+     &          GRID_SUBSET_EDGES
+#endif
     use ids_routines       ! IGNORE
     use ids_schemas        ! IGNORE
 #if IMAS_MINOR_VERSION > 14
@@ -6126,8 +6131,8 @@ contains
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
                       & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
                      ndim = 1
-                  case( GRID_SUBSET_FACES, &
-                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                  case( GRID_SUBSET_EDGES, &
+                      & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
                       & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
                       & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
@@ -6245,10 +6250,10 @@ contains
 #if IMAS_MINOR_VERSION < 15
                select case (iSubset)
                   case (1)
-                    iSubsetID = GRID_SUBSET_X_ALIGNED_FACES
+                    iSubsetID = GRID_SUBSET_X_ALIGNED_EDGES
                     ndim = 2
                   case (2)
-                    iSubsetID = GRID_SUBSET_Y_ALIGNED_FACES
+                    iSubsetID = GRID_SUBSET_Y_ALIGNED_EDGES
                     ndim = 2
                   case default
                     iSubsetID = iSubset
@@ -6263,8 +6268,8 @@ contains
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
                       & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
                      ndim = 1
-                  case( GRID_SUBSET_FACES, &
-                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                  case( GRID_SUBSET_EDGES, &
+                      & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
                       & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
                       & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
@@ -6334,8 +6339,8 @@ contains
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
                       & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
                      ndim = 1
-                  case( GRID_SUBSET_FACES, &
-                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                  case( GRID_SUBSET_EDGES, &
+                      & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
                       & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
                       & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
@@ -6435,8 +6440,8 @@ contains
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
                       & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
                      ndim = 1
-                  case( GRID_SUBSET_FACES, &
-                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                  case( GRID_SUBSET_EDGES, &
+                      & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
                       & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
                       & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
@@ -6711,31 +6716,31 @@ contains
 #if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( time_sind )%grid,    &
-                    &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
+                    &   GRID_SUBSET_Y_ALIGNED_EDGES, gmap, b2FaceData)
 #else
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%grid_ggd( time_sind ),    &
-                    &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
+                    &   GRID_SUBSET_Y_ALIGNED_EDGES, gmap, b2FaceData)
 #endif
 #if GGD_MINOR_VERSION > 8
-                call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
+                call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
-                call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
+                call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
                 deallocate(idsdata)
 #if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( time_sind )%grid,    &
-                    &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
+                    &   GRID_SUBSET_X_ALIGNED_EDGES, gmap, b2FaceData)
 #else
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%grid_ggd( time_sind ),    &
-                    &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
+                    &   GRID_SUBSET_X_ALIGNED_EDGES, gmap, b2FaceData)
 #endif
 #if GGD_MINOR_VERSION > 8
-                call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
+                call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
-                call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
+                call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #endif
                 deallocate(idsdata)
             else
@@ -7147,11 +7152,11 @@ contains
 !!$          vector%alignid(2) = VEC_ALIGN_RADIAL_ID
 !!$
 !!$          ! Fill in vector component data
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_FACES_Y, gmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), B2_SUBGRID_FACES_Y, cpodata )
+!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_Y, gmap, b2FaceData)
+!!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_FACES_X, gmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(2), B2_SUBGRID_FACES_X, cpodata )
+!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_X, gmap, b2FaceData)
+!!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
 !!$          allocate(vector%comp(1))

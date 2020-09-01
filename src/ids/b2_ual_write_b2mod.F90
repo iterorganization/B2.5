@@ -39,8 +39,8 @@
 !!      CLASS_NODE = (/ 0, 0 /)                 | IDS_CLASS_NODE = 1
 !!      CLASS_RZ_EDGE = (/ 1, 0 /)              | IDS_CLASS_RZ_EDGE = 2
 !!      CLASS_PHI_EDGE = (/ 0,10 /)             | IDS_CLASS_PHI_EDGE = 2
-!!      CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_FACE = 2
-!!      CLASS_TOROIDAL_FACE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_FACE = 2
+!!      CLASS_POLOIDALRADIAL_EDGE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_EDGE = 2
+!!      CLASS_TOROIDAL_EDGE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_EDGE = 2
 !!      CLASS_CELL = (/ 2, 1 /)                 | IDS_CLASS_CELL = 3
 !!
 !!      <b> Grid subset IDs </b>:

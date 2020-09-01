@@ -34,7 +34,7 @@ module b2mod_ual_io_data
      & , only : IDS_real, GridObject, &
      &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
      &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
-     &          IDS_CLASS_POLOIDALRADIAL_FACE
+     &          IDS_CLASS_POLOIDALRADIAL_EDGE
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize
 
@@ -193,7 +193,7 @@ contains
                 !! Face data case
                 !! check that it is a face
                 call xertst( all( curObj%cls ==             &
-                    &   IDS_CLASS_POLOIDALRADIAL_FACE ),    &
+                    &   IDS_CLASS_POLOIDALRADIAL_EDGE ),    &
                     &   "Assert error 2 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
                 !! get the subobject index for the face in the 2d poloidal
                 !! plane space
@@ -320,7 +320,7 @@ contains
         else if (present(b2FaceData)) then
             !! Face data case
             !! check that it is a face
-            call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ), &
+            call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_EDGE(1:SPACE_COUNT) ), &
                 "Assert error 2 (face test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
             iFc = curObj%ind(SPACE_POLOIDALPLANE)
