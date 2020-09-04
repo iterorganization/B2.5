@@ -1444,6 +1444,29 @@ c 2002-09-11: logic revised
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in DIMENSIONS.F')
+        ib1 = 0
+        nstrai1 = 0
+        nstrat1 = 0
+        allocate(istra1(nstrat))
+        do ib = 1, nstrat
+         is =
+     .      is1beginrange(species_start(ib),species_end(ib),ns,ns1,is1)
+         js = is1endrange(species_start(ib),species_end(ib),ns,ns1,is1)
+         savestratum(ib) = 0.le.is .and. is.lt.ns1 .and.
+     .                     0.le.js .and. js.lt.ns1
+         if (savestratum(ib) .or. crcstra(ib).eq.'T') then
+          if (ib1.eq.0) then ! doing this to avoid an optimization error
+           ib1 = 1
+          else
+           ib1 = ib1 + 1
+          endif
+          istra1(ib) = ib1
+          nstrat1 = nstrat1 + 1
+          if (crcstra(ib).ne.'T') nstrai1 = nstrai1 + 1
+         else
+          istra1(ib) = 0
+         end if
+        end do
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
       endif
 *   ..modify b2mn.dat parameters
@@ -10121,24 +10144,6 @@ cxpb  Convert fort.46 file if needed
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo)
      & .and..not.found)
-        ib1 = 0
-        nstrai1 = 0
-        nstrat1 = 0
-        allocate(istra1(nstrat))
-        do ib = 1, nstrat
-         if (savestratum(ib) .or. crcstra(ib).eq.'T') then
-          if (ib1.eq.0) then ! doing this to avoid an optimization error
-           ib1 = 1
-          else
-           ib1 = ib1 + 1
-          endif
-          istra1(ib) = ib1
-          nstrat1 = nstrat1 + 1
-          if (crcstra(ib).ne.'T') nstrai1 = nstrai1 + 1
-         else
-          istra1(ib) = 0
-         end if
-        end do
         allocate(recyc1(0:ns1-1,nstrat1))
         allocate(mrecyc1(0:ns1-1,nstrat1))
         allocate(erecyc1(0:ns1-1,nstrat1))
@@ -10786,8 +10791,37 @@ cxpb as they no longer necessarily point to the same species
      .     '(1x,a,',n_spcsrf,'('''''''',a8,'''''''','',''))'
           write(99, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
         endif
+        if (debug_flags(92).gt.0)
+     .   debug_flags(92)=istra1(debug_flags(92))
+        if (debug_flags(93).gt.0)
+     .   debug_flags(93)=istra1(debug_flags(93))
+        if (debug_flags(94).gt.0)
+     .   debug_flags(94)=istra1(debug_flags(94))
+        if (debug_flags(95).gt.0)
+     .   debug_flags(95)=istra1(debug_flags(95))
         do ib = 1, 100
-          if (debug_flags(ib).ne.0) write(99,'(1x,a,i3,a,i3,a)')
+          non_default = ib.eq.90 .and. debug_flags(ib).ne.-1
+          non_default = non_default .or.
+     .    (ib.eq.91 .and. debug_flags(ib).ne.nnstsi-1
+     .              .and. debug_flags(ib).ne.0)
+          non_default = non_default .or.
+     .    (ib.eq.92 .and. debug_flags(ib).ne.1
+     .              .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.93 .and. debug_flags(ib).ne.nstrat1
+     .              .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.94 .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.95 .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.lt.90 .and. debug_flags(ib).ne.0) .or.
+     .    (ib.gt.95 .and. debug_flags(ib).ne.0)
+          if (non_default) write(99,'(1x,a,i3,a,i3,a)')
      .     'DEBUG_FLAGS(',ib,')=',debug_flags(ib),','
         end do
         if (dbg_eir_mc.ne.0) write(99,'(1x,a,i3,a)')

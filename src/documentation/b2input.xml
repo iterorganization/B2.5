@@ -4959,6 +4959,9 @@
 				<type>integer array of size (100)</type>
 				<description>
 					Non-zero elements yield additional print-out data for debugging B2-Eirene coupling. See code for specific uses. Many slots still available for user-specific needs.
+					If debug_flags(81).gt.0, will print out target fluxes in files 'targb2.datv', 'targb2n.datv' and 'targb2pl.datv'.
+					If debug_flags(90).gt.0, will print output about Eirene non-standard surfaces [debug_flags(90):debug_flags(91)] and strata [debug_flags(92):debug_flags(93)] (0 means sum over all strata). Additional output can be obtained for strata [debug_flags(94):debug_flags(95)].
+					If only debug_flags(90) is specified, the output will include all individual Eirene strata, for all non-standard surfaces, starting from debug_flags(90).
 				</description>
 			</switch>
 			<switch>
