@@ -7671,14 +7671,14 @@ cxpb We now rewrite the modified block 4
           READ (IUNIN,'(A80)') ZEILE ! B0,B1,B2,B3,B4,B5
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
-        IF (INDPRO(11).LE.5) THEN
+        IF (INDPRO(11).NE.0.AND.INDPRO(11).LE.5) THEN
           READ (IUNIN,6664) (ZI0(I),ZI1(I),ZI2(I),ZI3(I),ZI4(I),ZI5(I),
      .                     I=1,NPLSI)
           IF (IABS(INDPRO(11)).EQ.1 .OR. IABS(INDPRO(11)).EQ.3) THEN
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,1)
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,2)
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,1)
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,2)
             call e_bundle_transmit_r
      .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
             call e_bundle_transmit_r
@@ -7689,7 +7689,7 @@ cxpb We now rewrite the modified block 4
      .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
           ELSE IF (IABS(INDPRO(11)).EQ.2) THEN
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,1)
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,PO,2)
             call e_bundle_transmit_r
      .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,3)
             call e_bundle_transmit_r
