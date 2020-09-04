@@ -406,6 +406,7 @@ c 2002-09-11: logic revised
      .                        ISCLA(:)
       integer, allocatable :: ILBEG(:), ILEND(:)
       integer, allocatable :: NTGPR1(:)
+      integer :: INDPR1(12)
       real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
       real (kind=R8) :: ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
@@ -529,7 +530,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac, keep_contr,
-     .        no_sputtering, cpath_written, new_path
+     .        no_sputtering, cpath_written, new_path, bundled
 #endif
       logical todo, wait, same_bundling, same_atoms, non_default
       logical averaging, hydrogen
@@ -4460,6 +4461,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         IREAC1 = -1
         NREAC1 = 0
         ILINE = 0
+        bundled = .false.
   411   READ (IUNIN,'(A96)') REACZEILE
         IF (REACZEILE(1:1).NE.'*') THEN
           skip_reac = .false.
@@ -4671,6 +4673,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
           ENDIF
           IF (INDEX(REACZEILE,'ADAS') .NE. 0) THEN
             READ (IUNIN,'(4X,A2,1X,I3,2X,A60)') ELNAME,idum(0),BUNDLING
+            bundled = bundled .or. .not.streql(BUNDLING,' ')
             if (.not.skip_reac) then
               ILINE = ILINE+1
               if (same_bundling) then
@@ -7370,9 +7373,15 @@ cxpb We now rewrite the modified block 4
         IREAD = 0
 *5B.   PLASMA BACKGROUND DATA
   520   READ (IUNIN,'(A72)') ZEILE
-        WRITE(IUNOT,'(A72)') ZEILE
-        IF (ZEILE(1:1) .EQ. '*') GOTO 520
-        READ (ZEILE,6666) (INDPRO(J),J=1,12)
+        IF (ZEILE(1:1) .EQ. '*') THEN
+          WRITE(IUNOT,'(A72)') ZEILE
+          GOTO 520
+        ELSE
+          READ (ZEILE,6666) (INDPRO(J),J=1,12)
+          INDPR1(1:12) = INDPRO(1:12)
+          IF (bundled) INDPR1(11) = 6
+          WRITE(IUNOT,6666) (INDPR1(J),J=1,12)
+        END IF
         indpro(2)=indpro2_save
         DO J=1,12
           IF (ABS(INDPRO(J)) > 100) INDPRO(J) = MOD(INDPRO(J),100)
