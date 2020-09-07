@@ -264,10 +264,6 @@ c      do i=1,nlimps
 c<<<
       hlp_pls = 0.0_R8
       hlpit_lp = 0.0_R8
-      debug_flags(90) = 1
-      debug_flags(91) = 6
-      debug_flags(92) = 1
-      debug_flags(93) = nstrat
  
       if(debug_flags(90).gt.0.and.use_eirene.ne.0) then
         print *
