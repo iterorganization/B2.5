@@ -521,8 +521,9 @@ c>>>
               m=msns(2,ic)
               hlp=0.0_R8
 c<<<
-              if(hlp_tt) print *,'%%# ls,ic,crcstra,l,m,kks : ',
-     ,                                ls,ic,' ',crcstra(ic),' ',l,m,kks
+              if(hlp_tt) write(*,'(1x,a,2i5,1x,a1,1x,3i5)')
+     ,                           '%%# ls,ic,crcstra,l,m,kks : ',
+     ,                                ls,ic,crcstra(ic),l,m,kks
 c>>>
               do i=l,l+m-1
                 k=lsns(i)
@@ -543,7 +544,8 @@ c>>>
                     if (latmscl(j).eq.ls) then
                       hlp=hlp+wldpa(k,j,ic)*sclstra(j,ic)
 c<<<
-                      if(hlp_tt) print *,
+                      if(hlp_tt)
+     ,                 print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                 '%%% wldpa(',k,',',j,',',ic,') =',
      ,                      wldpa(k,j,ic)*sclstra(j,ic)
 c>>>
@@ -557,7 +559,8 @@ c<<<
                         if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
      ,                       '%%# j,mlcmp,wldpm,sclstra= ',
      ,                       j,mlcmp(ii,j),wldpm(k,j,ic),sclstra(ii,ic)
-                        if(hlp_tt .and. mlcmp(ii,j).gt.0) print *,
+                        if(hlp_tt .and. mlcmp(ii,j).gt.0)
+     ,                   print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                       '%%% wldpm(',k,',',j,',',ic,') =',
      ,                            wldpm(k,j,ic)*sclstra(ii,ic)
 c>>>
