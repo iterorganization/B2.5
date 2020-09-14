@@ -187,7 +187,7 @@ cwdk move to dv
   ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
       type B2PlasmaSnapshot
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
-        real(R8), dimension(:), allocatable :: po, te, ti
+        real(R8), dimension(:), allocatable :: po, te, ti, tn
         real(R8), allocatable :: ne(:), ni(:,:)
         real(R8), allocatable :: fch(:,:), fna(:,:,:), 
      .                           fhi(:,:), fhe(:,:), fhn(:,:)
@@ -997,7 +997,8 @@ cwdk move to dv
       allocate( snap % po( nCv ), SOURCE=0._R8 )
       allocate( snap % te( nCv ), SOURCE=0._R8 )
       allocate( snap % ti( nCv ), SOURCE=0._R8 )
-      
+      allocate( snap % tn( nCv ), SOURCE=0._R8 )     
+ 
       allocate( snap % ne( nCv ), SOURCE=0._R8 ) 
       allocate( snap % ni( nCv, 0:1 ), SOURCE=0._R8 )    
       
@@ -1020,6 +1021,7 @@ cwdk move to dv
       deallocate( snap % po )   
       deallocate( snap % te )   
       deallocate( snap % ti )   
+      deallocate( snap % tn )
       deallocate( snap % ne )
       deallocate( snap % ni )
       deallocate( snap % fch )
@@ -1212,6 +1214,7 @@ cwdk move to dv
         snap % po = pl % po
         snap % te = pl % te
         snap % ti = pl % ti
+        snap % tn = pl % tn
         snap % ne = dv % ne
         snap % ni = dv % ni
         snap % fna = dv % fna
@@ -1233,6 +1236,7 @@ cwdk move to dv
         pl % po = snap % po
         pl % te = snap % te
         pl % ti = snap % ti
+        pl % tn = snap % tn
         dv % ne = snap % ne
         dv % ni = snap % ni
         dv % fna = snap % fna
