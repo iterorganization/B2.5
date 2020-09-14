@@ -213,7 +213,7 @@
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 
-      call ipgeti ('use_eirene', use_eirene)	
+      call ipgeti ('b2mndr_eirene', use_eirene)	
       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
