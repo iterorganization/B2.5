@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, po,   !srv 01.07.08
+      subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, tn, po,   !srv 01.07.08
      &  ne, ni, sr)
       use b2mod_types
       use b2mod_constants
@@ -19,7 +19,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
-     &  te(nCv), ti(nCv), po(nCv),
+     &  te(nCv), ti(nCv), tn(nCv), po(nCv),
      &  ne(nCv), ni(nCv,0:1)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
@@ -153,15 +153,15 @@
      &    min(sr%shi(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 
 *     ..modify shn(,,0:1)
-        t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*ti(iCv)
+        t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*tn(iCv)
         sr%shn(iCv,0) = max(sr%shn(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
-        sr%shn(iCv,1) = (1.0_R8/ti(iCv))*
-     &    min(sr%shn(iCv,1)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+        sr%shn(iCv,1) = (1.0_R8/tn(iCv))*
+     &    min(sr%shn(iCv,1)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 *     ..modify shn(,,2:3)
-        t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*ti(iCv)
+        t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*tn(iCv)
         sr%shn(iCv,2) = max(sr%shn(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
-        sr%shn(iCv,3) = (1.0_R8/ti(iCv))*
-     &    min(sr%shn(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+        sr%shn(iCv,3) = (1.0_R8/tn(iCv))*
+     &    min(sr%shn(iCv,3)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 
 *     ..make sch(,,1) negative
         sr%sch(iCv,0) = sr%sch(iCv,0)+max(0.0_R8,sr%sch(iCv,1))*po(iCv)

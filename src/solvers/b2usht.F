@@ -160,7 +160,7 @@ c       call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.0
         endif
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
-     &    -shn(iCv,1)-shn(iCv,3)*ni(iCv,0)
+     &    -shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))
           t0 = min(t0,tn(iCv))
         endif
         if (solveee(ireg).or.solveei(ireg).or.solveen(ireg)) then
@@ -632,7 +632,7 @@ c       call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.0
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
-     &    (-shn(iCv,1)-shn(iCv,3)*ni(iCv,0)+
+     &    (-shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))+
      &    +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo

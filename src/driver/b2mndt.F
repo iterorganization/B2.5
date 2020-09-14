@@ -383,6 +383,7 @@ ctmp.dpc
 *     ..include contributions due to timestep
           call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
+     &    st%psnc%tn,
      &    st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
      &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%dv%ne, 
      &    st%dv%ni, st%dv%kinrgy,  st%sr, .false.)
@@ -412,7 +413,8 @@ ctmp.dpc
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
      &     call b2srst (nCv, ns, switch, mpg, st%pl%na, st%pl%ua,    !srv 01.07.08
-     &      st%pl%te, st%pl%ti, st%pl%po, st%dv%ne, st%dv%ni, st%sr)
+     &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
+     &      st%sr)
 *       (smq is inherently stable.)
 *     ..inner iteration
           istg(2) = 0

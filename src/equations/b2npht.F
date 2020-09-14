@@ -66,7 +66,8 @@
      1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                            !srv 18.09.09
-     4 shef(nCv,0:3), shif(nCv,0:3)                     !srv 10.11.02
+     4 shef(nCv,0:3), shif(nCv,0:3),                    !srv 10.11.02
+     5 deni(nCv), denn(nCv)
       character chns*3                                                  !srv 17.07.05
       character chncall*5                                          
       save ncall
@@ -155,6 +156,11 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
 
 
+      deni = dv%ni(:,0)
+      denn = dv%ni(:,0) - dv%ni(:,1)
+
+
+
 #ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -180,10 +186,10 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi, 
+          call b2ursd (nCv, nFc, geo, mpg, deni, pl%ti, shi0, dv%fhi, 
      &     dv%reshi)
         else
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0,
+          call b2ursd (nCv, nFc, geo, mpg, deni, pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
@@ -194,7 +200,7 @@ c residuals for separate neutral energy equation
        if (any(solvnreg(0:nregionv)).or.switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
         if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shn0, dv%fhn,
+          call b2ursd (nCv, nFc, geo, mpg, denn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
         else
           call xerrab('non-default energy equations not yet developed', 

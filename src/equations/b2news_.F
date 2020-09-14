@@ -375,11 +375,11 @@ c   extra call at this place within internal iteration)
         call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
      &    psnc%na, psnc%ua, psnc%te, psnc%ti, 
      &    psnc%ne, psnc%ni, psnc%kinrgy,
-     &    pl%na, pl%ua, pl%te, pl%ti, dv%ne, 
+     &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
      &    dv%ni, dv%kinrgy,  sr, .false.)
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
-     &    pl%ti, pl%po, dv%ne, dv%ni, sr)
+     &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, sr)
       endif
       if (switch%b2sigp_style.eq.2 .or. switch%b2news_iout.ne.0)
 *   ..compute ue, electron parallel velocity

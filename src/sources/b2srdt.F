@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
-     &  na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
+     &  na0, ua0, te0, ti0, tn0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
       use b2mod_types 
@@ -25,7 +25,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  dtim, BoRiS, na0(nCv,0:ns-1),
-     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv),
+     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
      &  ne0(nCv), ni0(nCv,0:1),
      &  kinrgy0(nCv,0:ns-1),
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1),              !srv 16.07.10
@@ -78,6 +78,7 @@
        call b2xvsg (nCv*ns, na0, 1, 'na0', '.gt.')
        call b2xvsg (nCv, te0, 1, 'te0', '.gt.')
        call b2xvsg (nCv, ti0, 1, 'ti0', '.gt.')
+       call b2xvsg (nCv, tn0, 1, 'tn0', '.gt.')
        call b2xvsg (nCv, ne0, 1, 'ne0', '.gt.')
        call b2xvsg (2*nCv, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
@@ -143,30 +144,54 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
-          sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-          sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
 
-          if (BoRiS.eq.1.0_R8) then
-            if (switch%tn_style.ne.0) then
+          if (BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
               call xerrab('BoRiS only with default energy eq.')
-            endif
-            do is = 0, ns-1
-              sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
-     &         kinrgy0(iCv,is)*na0(iCv,is)
-              sr%shi(iCv,2) = sr%shi(iCv,2)-t0*
-     &         kinrgy0(iCv,is)*na0(iCv,is)/
-     &         ni0(iCv,0)
-            enddo
           endif
-*         shidt(iCv,1) = (unchanged)
-*         shidt(iCv,2) = (otherwise unchanged)
-          sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
 
-*         shndt(iCv,1) = (unchanged)
-*         shndt(iCv,2) = (otherwise unchanged)
-          sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
+          if (switch%tn_style.eq.0) then
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+
+            if (BoRiS.eq.1.0_R8) then
+              do is = 0, ns-1
+                sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
+     &           kinrgy0(iCv,is)*na0(iCv,is)
+                sr%shi(iCv,2) = sr%shi(iCv,2)-t0*
+     &           kinrgy0(iCv,is)*na0(iCv,is)/
+     &           ni0(iCv,0)
+              enddo
+            endif
+
+*           shidt(iCv,1) = (unchanged)
+*           shidt(iCv,2) = (otherwise unchanged)
+            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
+
+          elseif (switch%tn_style.eq.1) then
+
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+
+*           shidt(iCv,1) = (unchanged)
+*           shidt(iCv,2) = (otherwise unchanged)
+            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
+
+          else
+
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+*           shidt(iCv,1) = (unchanged)
+*           shidt(iCv,2) = (otherwise unchanged)
+            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
+
+            sr%shn(iCv,0) = sr%shn(iCv,0)+
+     &       1.5_R8*t0*(ni0(iCv,0)-ni0(iCv,1))*tn0(iCv)
+*           shndt(iCv,1) = (unchanged)
+*           shndt(iCv,2) = (otherwise unchanged)
+            sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
+          endif
+
+
       enddo
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)

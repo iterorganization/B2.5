@@ -132,9 +132,10 @@
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
-     3  dt_min, dt_max, max_delta
+     1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, sput_frc, 
+     2  sput_phys,
+     3  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     4  dt_min, dt_max, max_delta
 #ifndef NO_CDF
       integer ncid
 #endif
@@ -173,7 +174,7 @@
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
      4  BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max,
      7  te_hot, ne_hot_frac, external_species,
@@ -199,6 +200,7 @@
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
+     4     tn_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
      6     ua_eps/1.0e+4_R8/,
      7     delta_min/0.0_R8/,
@@ -1049,6 +1051,8 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.te_eps,'faulty internal parameter te_eps')
        call ipgetr ('b2mndr_ti_eps',ti_eps)
        call xertst (0.0_R8.lt.ti_eps,'faulty internal parameter ti_eps')
+       call ipgetr ('b2mndr_tn_eps',tn_eps)
+       call xertst (0.0_R8.lt.tn_eps,'faulty internal parameter tn_eps')
        call ipgetr ('b2mndr_po_eps',po_eps)
        call xertst (0.0_R8.lt.po_eps,'faulty internal parameter po_eps')
        call ipgetr ('b2mndr_ua_eps',ua_eps)
@@ -1885,6 +1889,8 @@ cwdk  set some integers
         state%psnc%te = state%pl%te
         state%psnl%ti = state%psnc%ti
         state%psnc%ti = state%pl%ti
+        state%psnl%tn = state%psnc%tn
+        state%psnc%tn = state%pl%tn
         state%psnl%kinrgy = state%psnc%kinrgy
         state%psnc%kinrgy = state%dv%kinrgy
         state%psnl%po = state%psnc%po
@@ -1989,6 +1995,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%te+te_eps*ev)))
         write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
+        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+     &    (state%pl%tn+tn_eps*ev)))
         write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps)))
         write(*,*) 'delta ua ',
@@ -2003,6 +2011,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%te+te_eps*ev))),
      &     maxval(abs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
+     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &    (state%pl%tn+tn_eps*ev))),
      &     maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
      &     maxval(abs((state%pl%na*state%pl%ua-
