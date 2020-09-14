@@ -245,6 +245,7 @@
       call b2xvsg (nCv*ns, st%psnc%na, 1, 'na0', '.gt.')
       call b2xvsg (nCv, st%psnc%te, 1, 'te0', '.gt.')
       call b2xvsg (nCv, st%psnc%ti, 1, 'ti0', '.gt.')
+      call b2xvsg (nCv, st%psnc%tn, 1, 'tn0', '.gt.')
 *   ..test present state
       call b2xvps (nCv, nFc, ns, st%pl, st%dv)
 *   ..test facdrift and fac_ExB (not on first call)                      !xpb
@@ -383,9 +384,9 @@ ctmp.dpc
 *     ..include contributions due to timestep
           call b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
-     &    st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
-     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%dv%ne, 
-     &    st%dv%ni, st%dv%kinrgy,  st%sr, .false.)
+     &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
+     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn,
+     $    st%dv%ne, st%dv%ni, st%dv%kinrgy,  st%sr, .false.)
 *   ..add to previous contributions
 !WG_TODO This is already done in b2srdt
 !WG_TODO Still need *dt-arrays for output?

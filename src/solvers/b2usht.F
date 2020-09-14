@@ -133,6 +133,7 @@
 
       if (any(solveee(0:mpg%nnreg(0))).and.
      &    any(solveei(0:mpg%nnreg(0))).and.
+     &    any(solveen(0:mpg%nnreg(0))).and.
      &    any(solveet(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
@@ -160,12 +161,13 @@
      &    -shi(iCv,1)-shi(iCv,3)*ni(iCv,0)
           t0 = min(t0,ti(iCv))
         endif
-        if (solveen(ireg)) then
+        if (solveen(ireg).and.tn_style.eq.2) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
      &    -shn(iCv,1)-shn(iCv,3)*ni(iCv,0)
           t0 = min(t0,tn(iCv))
         endif
-        if (solveee(ireg).or.solveei(ireg).or.solveen(ireg)) then
+        if (solveee(ireg).or.solveei(ireg).or.
+     &      (solveen(ireg).and.tn_style.eq.2)) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &      +abs(resht(iCv))/(rxg*t0)
         endif
@@ -176,7 +178,8 @@
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
-        if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1))) then
+        if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
+     &      (solveen(ireg).and.tn_style.eq.2)) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
@@ -185,7 +188,8 @@
      &     t2
          end where
         endif
-        if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2))) then
+        if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2)).or.
+     &      (solveen(ireg).and.tn_style.eq.2)) then
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
@@ -208,7 +212,8 @@
           t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
-        if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1))) then
+        if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
+     &      (solveen(ireg).and.tn_style.eq.2)) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
@@ -233,7 +238,8 @@
          enddo
         endif
         ! contribution to equation of iCv2
-        if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2))) then
+        if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2)).or.
+     &      (solveen(ireg).and.tn_style.eq.2)) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
@@ -267,6 +273,11 @@
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
      &  aa, 'b2usht_totali')                                         !srv 02.01.07
+      endif
+      if(iadd_9 .eq. 1 .and. tn_style.eq.2) then
+       call b2uxm9 (nx, ny, nregionv, itcnt, solveen, conn(-1,-1,0,0,1),
+     &  aa, 'b2usht_totaln')
+!srv 02.01.07
       endif
 #endif
       do iCv = 1, nCv
@@ -616,6 +627,7 @@
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
 
+      if (tn_style.eq.2) then
 * ..neutral atom temperature correction equation
       if (any(solveen(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
@@ -751,7 +763,7 @@
         cortn(iCv) = cortn(iCv)
       enddo
       endif                                                          !srv 22.05.18
-
+      endif
 
       if (iout.ne.0) then
 #ifdef WG_TODO
