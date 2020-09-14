@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
-     &  na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
+     &  na0, ua0, te0, ti0, tn0, ne0, ni0, kinrgy0,
+     &  na, ua, te, ti, tn, ne, ni, kinrgy,                           !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
       use b2mod_types 
       use b2mod_numerics_namelist 
@@ -23,11 +23,11 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  dtim, BoRiS, na0(nCv,0:ns-1),
-     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv),
+     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
      &  ne0(nCv), ni0(nCv,0:1),
      &  kinrgy0(nCv,0:ns-1),
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1),              !srv 16.07.10
-     &  te(nCv), ti(nCv), ne(nCv),
+     &  te(nCv), ti(nCv), tn(nCv), ne(nCv),
      &  ni(nCv,0:1), kinrgy(nCv,0:ns-1)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
@@ -170,11 +170,18 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (phm3/ttim)*geo%cvVol(iCv)
-          sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-          sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-
+          if (tn_style.eq.0) then
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          elseif (tn_style.eq.1) then
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+          else
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+            sr%shn(iCv,0) = sr%shn(iCv,0)+
+     &       1.5_R8*t0*(ni0(iCv,0)-ni0(iCv,1))*tn0(iCv)
+          endif
           if (BoRiS.eq.1.0_R8) then
             if (tn_style.ne.0) then
               call xerrab('BoRiS only with default energy eq.')

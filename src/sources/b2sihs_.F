@@ -270,7 +270,7 @@
         call div0(nCv, nFc, mpg, wrkf(1,0), wrkc)
         do iCv = 1, mpg%nCi
           t0 = -phm1*(na(iCv,is)/ni(iCv,0))*(1.0_R8-BoRiS)*wrkc(iCv)  !srv 21.07.05 {
-          if (.not.is_neutral(is)) then
+          if (.not.is_neutral(is).or.tn_style.eq.0) then
             shidu(iCv,0) = shidu(iCv,0)+
      &        (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
             shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
@@ -292,16 +292,17 @@
 !WG_TODO        b2sihs_divua0to3 = shidu
 !WG_TODO      endif
 
-      if (tn_style.eq.0) then
-        call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shidu, 1)                !srv 11.09.09
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
-      elseif (tn_style.eq.1) then
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
-      else           
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
-        call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
+      if (.not.use_eirene) then
+        if (tn_style.eq.0) then
+          call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shidu, 1)           !srv 11.09.09
+          call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
+        else           
+          call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
+          call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
+        endif
+      else
+        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)
       endif  
-
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
@@ -377,16 +378,28 @@
         do iCv = 1, mpg%nCi
            t0 = phm2*(1.0_R8-BoRiS)*visc(iCv,0)
            t1 = phm8*(1.0_R8-BoRiS)*visc(iCv,1)
-           if (.not.is_neutral(is)) then
+           if (tn_style.eq.0) then
+             shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
+             shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
+             shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
+             shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
+           elseif (tn_style.eq.1 .and. .not.is_neutral(is)) then
              shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
              shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
              shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
              shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
            else
-             shivcn(iCv,0) = shivcn(iCv,0) + (1.0e0_R8+rf2)*t0
-             shivcn(iCv,3) = shivcn(iCv,3) - rf2*t0/(ni(iCv,0)*ti(iCv))
-             shivan(iCv,0) = shivan(iCv,0) + (1.0e0_R8+rf2)*t1
-             shivan(iCv,3) = shivan(iCv,3) - rf2*t1/(ni(iCv,0)*ti(iCv))
+             if (.not.is_neutral(is)) then
+               shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
+               shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
+               shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
+               shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
+             else
+               shivcn(iCv,0) = shivcn(iCv,0)+(1.0e0_R8+rf2)*t0
+               shivcn(iCv,3) = shivcn(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
+               shivan(iCv,0) = shivan(iCv,0)+(1.0e0_R8+rf2)*t1
+               shivan(iCv,3) = shivan(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
+             endif
            endif
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
@@ -396,20 +409,10 @@
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_visa0to3 = shivc+shiva
 !WG_TODO      endif
-      if (tn_style.eq.0) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shivc, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shiva, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
-      elseif (tn_style.eq.1) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
-      elseif (tn_style.eq.2) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shn0, 1)
-      endif
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2

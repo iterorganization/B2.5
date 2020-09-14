@@ -259,23 +259,19 @@ cpax
       elseif (tn_style.eq.1) then
 !! AFN_TODO when more contributions are considered (e.g. drifts), or multi-species cases, 
 !! additions (floi0 = floi0 + ...) must be considered instead of overwrites (floi0 = ...)
-        do is= 0,ns-1
-          if (.not.is_neutral(is)) then
-            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          endif 
-          flon0(:,0) = 0.0_R8
-          flon0(:,1) = 0.0_R8
-        enddo
+        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+     &    flidia(:,0) + scur(:,0)
+        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+     &    flidia(:,1) + scur(:,1)
+        flon0(:,0) = 0.0_R8
+        flon0(:,1) = 0.0_R8
       else
-        do is= 0,ns-1
-          if (.not.is_neutral(is)) then
-            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          endif
-        enddo
-        flon0(:,0) = 1.5e0_R8*dv%fnn(:,0)
-        flon0(:,1) = 1.5e0_R8*dv%fnn(:,1)
+        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+     &    flidia(:,0) + scur(:,0)
+        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+     &    flidia(:,1) + scur(:,1)
+        flon0(:,0) = 1.5e0_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
+        flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
 
 
