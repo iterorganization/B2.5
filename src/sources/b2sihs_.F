@@ -261,7 +261,8 @@
         call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
       elseif (switch%tn_style.eq.1) then
         call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
-      else           
+      else         
+        shidun(:,3) = shidun(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
       	call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
         call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
       endif  
@@ -369,6 +370,8 @@
        call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
       elseif (switch%tn_style.eq.2) then
+       shivcn(:,3) = shivcn(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
+       shivan(:,3) = shivan(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
        call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
@@ -579,7 +582,6 @@
         wrks=shefr(:,0)+shefr(:,1)*te+
      &  shefr(:,2)*ne + shefr(:,3)*te*ne
         call my_out_us(70,nCv,0,wrks,'b2sihs__shefr')
-
         wrks=shi0(:,0)+shi0(:,1)*ti+
      &       shi0(:,2)*ni(:,0)+shi0(:,3)*ti*ni(:,0)
         call my_out_us(70,nCv,0,wrks,'b2sihs__shi')
@@ -592,18 +594,35 @@
         wrks=shifr(:,0)+shifr(:,1)*ti+
      &       shifr(:,2)*ni(:,0)+shifr(:,3)*ti*ni(:,0)
         call my_out_us(70,nCv,0,wrks,'b2sihs__shifr')
-        wrks=shiva(:,0)+shiva(:,1)*ti+
-     &       shiva(:,2)*ni(:,0)+shiva(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,0,wrks,'b2sihs__shiva')
-        wrks=shivc(:,0)+shivc(:,1)*ti+
-     &       shivc(:,2)*ni(:,0)+shivc(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,0,wrks,'b2sihs__shivc')
-        wrks=shivan(:,0)+shivan(:,1)*ti+
-     &       shivan(:,2)*ni(:,0)+shivan(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,0,wrks,'b2sihs__shivan')
-        wrks=shivcn(:,0)+shivcn(:,1)*ti+
-     &       shivcn(:,2)*ni(:,0)+shivcn(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,0,wrks,'b2sihs__shivcn')
+        if (switch%tn_style.le.1) then
+          wrks=shiva(:,0)+shiva(:,1)*ti+
+     &         shiva(:,2)*ni(:,0)+shiva(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shiva')
+          wrks=shivc(:,0)+shivc(:,1)*ti+
+     &         shivc(:,2)*ni(:,0)+shivc(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivc')
+          wrks=shivan(:,0)+shivan(:,1)*ti+
+     &         shivan(:,2)*ni(:,0)+shivan(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivan')
+          wrks=shivcn(:,0)+shivcn(:,1)*ti+
+     &         shivcn(:,2)*ni(:,0)+shivcn(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivcn')
+        else
+          wrks=shiva(:,0)+shiva(:,1)*ti+
+     &         shiva(:,2)*ni(:,0)+shiva(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shiva')
+          wrks=shivc(:,0)+shivc(:,1)*ti+
+     &         shivc(:,2)*ni(:,0)+shivc(:,3)*ti*ni(:,0)
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivc')
+          wrks=shivan(:,0)+shivan(:,1)*tn+
+     &         shivan(:,2)*(ni(:,0)-ni(:,1))+
+     &         shivan(:,3)*tn*(ni(:,0)-ni(:,1))
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivan')
+          wrks=shivcn(:,0)+shivcn(:,1)*tn+
+     &         shivcn(:,2)*(ni(:,0)-ni(:,1))+
+     &         shivcn(:,3)*tn*(ni(:,0)-ni(:,1))
+          call my_out_us(70,nCv,0,wrks,'b2sihs__shivcn')
+        endif
       endif
       ncall = ncall+1
       call subend ()
