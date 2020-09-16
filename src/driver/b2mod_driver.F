@@ -2173,9 +2173,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         end if
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
-     &        (areshe*min_areshe).le.(min_areshe*min_areshe).and.        !jwk
-     &        (areshi*min_areshi).le.(min_areshi*min_areshi).and.        !jwk
-     &        (aresco(ismain)*min_aresco).le.(min_aresco*min_aresco)     !jwk
+     &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
+     &        .and.(state%diag%areshi*min_areshi).le.(min_areshi*        !jwk
+     &        min_areshi).and.(state%diag%aresco(ismain)*min_aresco)     !jwk
+     &        .le.(min_aresco*min_aresco)                                !jwk
         endif                                                            !jwk
         quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
