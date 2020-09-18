@@ -13,8 +13,8 @@
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
-     &             nVmxFc, nFs, nBc, mxnBc, nRc, mxnRc, nCmxNv, nCf,
-     &             mxnCf
+     &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
+     &             nCf, mxnCf
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -27,12 +27,15 @@
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
         integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
-        integer, allocatable :: fsCvP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsCv list and its number of cells
-        integer, allocatable :: fsCv(:)                !         listing for every flux surface the corresponding cell numbers
+        integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the fsCv list and its number of cells
+        integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
+        integer, allocatable :: ftFcP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftFc list and its number of cell faces
+        integer, allocatable :: ftFc(:)                !         listing for every flux tube the corresponding cell face numbers
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces 
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
+        integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
 
         integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
@@ -73,6 +76,8 @@
         integer, allocatable :: ictcntrl(:)            ! indices of central cuts; to be used in converting triangle information
 
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
+        integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
+        integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
         end type mapping
 
       contains
@@ -99,12 +104,15 @@
       allocate (m%vxFc(m%nVmxFc))
       allocate (m%vxCvP(m%nVx,2))  
       allocate (m%vxCv(m%nVmxCv)) 
-      allocate (m%fsCv(m%nCv))
-      allocate (m%fsCvP(m%nFs,2))
+      allocate (m%ftCv(m%nCv))
+      allocate (m%ftCvP(m%nFt,2))
+      allocate (m%ftFc(m%nFc))
+      allocate (m%ftFcP(m%nFt,2))
       allocate (m%fsFc(m%nFc))
       allocate (m%fsFcP(m%nFs,2))
       allocate (m%fcReg(m%nFC))
       allocate (m%cvReg(m%nCv))
+      allocate (m%ftReg(m%nFt))
       allocate (m%cvOnClosedSurface(m%nCv))
       
 !      allocate (m%intfaceV(m%nFc,2))
@@ -142,13 +150,16 @@
       endif
 
       allocate (m%fcLbl(m%nFc))
+      allocate (m%ftLbl(m%nFt))
+      allocate (m%cvLbl(m%nCv))
 
       call initialize_mapping (m)
 
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
-      write (*,*) 'nFc, nVx, nFs', m%nFc, m%nVx, m%nFs
+      write (*,*) 'nFc, nVx, nFt', m%nFc, m%nVx, m%nFt
+      write (*,*) 'nFs'          , m%nFs
       write (*,*) 'nCmxVx, nCmxFc', m%nCmxVx, m%nCmxFc
       write (*,*) 'nVmxCv, nVmxFc', m%nVmxCv, m%nVmxFc
       write (*,*) '=================================='
@@ -175,12 +186,13 @@
       m%vxFc = 0
       m%vxCvP = 0  
       m%vxCv = 0 
-      m%fsCv = 0
-      m%fsCvP = 0
-      m%fsFc = 0
-      m%fsFcP = 0
+      m%ftCv = 0
+      m%ftCvP = 0
+      m%ftFc = 0
+      m%ftFcP = 0
       m%fcReg = 0
       m%cvReg = 0
+      m%ftReg = 0
       m%cvOnClosedSurface = .false.
       
 !      m%intfaceV = 0._R8
@@ -206,6 +218,8 @@
       endif
 
       m%fcLbl = 0
+      m%ftLbl = 0
+      m%cvLbl = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -240,12 +254,13 @@
       deallocate (m%vxFc) 
       deallocate (m%vxCvP)  
       deallocate (m%vxCv) 
-      deallocate (m%fsCv)
-      deallocate (m%fsCvP)
-      deallocate (m%fsFc)
-      deallocate (m%fsFcP)
+      deallocate (m%ftCv)
+      deallocate (m%ftCvP)
+      deallocate (m%ftFc)
+      deallocate (m%ftFcP)
       deallocate (m%fcReg)
       deallocate (m%cvReg)
+      deallocate (m%ftReg)
       deallocate (m%cvOnClosedSurface)
 
 !      deallocate (m%intfaceV) 
@@ -270,6 +285,8 @@
 #endif
 
       deallocate (m%fcLbl)
+      deallocate (m%ftLbl)
+      deallocate (m%cvLbl)
       
       return
       end subroutine dealloc_mapping 
@@ -431,12 +448,15 @@
       call cfruin (iun, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
       call cfruin (iun, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
       call cfruin (iun, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-      call cfruin (iun, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
-      call cfruin (iun, mpg%nCv,     mpg%fsCv,  'fsCv')
+      call cfruin (iun, mpg%nFt*2,   mpg%ftCvP, 'ftCvP')
+      call cfruin (iun, mpg%nCv,     mpg%ftCv,  'ftCv')
+      call cfruin (iun, mpg%nFt*2,   mpg%ftFcP, 'ftFcP')
+      call cfruin (iun, mpg%nFc,     mpg%ftFc,  'ftFc')
       call cfruin (iun, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
       call cfruin (iun, mpg%nFc,     mpg%fsFc,  'fsFc')
       call cfruin (iun, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfruin (iun, mpg%nCv,     mpg%cvReg, 'cvReg')
+      call cfruin (iun, mpg%nFt,     mpg%ftReg, 'ftReg')
       call cfrure (iun, mpg%nCmxFc,  mpg%intcellP,'intcellP')
       call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
@@ -451,6 +471,8 @@
       call cfruin (iun, nx, mpg%icornVX, 'icornVx')
 
       call cfruin (iun, mpg%nFc, mpg%fcLbl,'fcLbl')
+      call cfruin (iun, mpg%nCv, mpg%cvLbl,'cvLbl')
+      call cfruin (iun, mpg%nFt, mpg%ftLbl,'ftLbl')
 
 #ifdef WG_DEBUG
       imapCv  = mpg%imapCv
@@ -483,12 +505,15 @@
       call cfwuin (nout, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
       call cfwuin (nout, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
       call cfwuin (nout, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-      call cfwuin (nout, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
-      call cfwuin (nout, mpg%nCv,     mpg%fsCv,  'fsCv')
+      call cfwuin (nout, mpg%nFt*2,   mpg%ftCvP, 'ftCvP')
+      call cfwuin (nout, mpg%nCv,     mpg%ftCv,  'ftCv')
+      call cfwuin (nout, mpg%nFt*2,   mpg%ftFcP, 'ftFcP')
+      call cfwuin (nout, mpg%nFc,     mpg%ftFc,  'ftFc')
       call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
-      call cfwuin (nout, mpg%nFc,     mpg%fsFc,  'fsFc')
+      call cfwuin (nout, mpg%nFc,     mpg%fSFc,  'fsFc')
       call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
       call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
+      call cfwuin (nout, mpg%nFt,     mpg%ftReg, 'ftReg')
       call cfwure (nout, mpg%nCmxFc,  mpg%intcellP,'intcellP')
       call cfwure (nout, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
@@ -507,6 +532,8 @@
       endif      
 
       call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
+      call cfwuin (nout, mpg%nCv,  mpg%cvLbl,'cvLbl')
+      call cfwuin (nout, mpg%nFt,  mpg%ftLbl,'ftLbl')
 
       return
       end subroutine write_mapping
