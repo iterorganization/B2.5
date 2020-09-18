@@ -51,7 +51,7 @@
 
       call read_mapping (ninp, mpg)
       call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nVmxCv, gm)
+     .  mpg%nFt, mpg%nVmxCv, gm)
       
       end subroutine read_map_geo
 
@@ -71,7 +71,7 @@
 
       call write_mapping (nout, mpg)
       call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nVmxCv, gm)
+     .  mpg%nFt, mpg%nVmxCv, gm)
       
       end subroutine write_map_geo
 
@@ -87,12 +87,12 @@
       integer, intent(in) :: nx, ny
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
+     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, istart, ifs,
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o, iy2o,
-     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
+     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
-     .           lbix, lbiy,
+     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, ifccy,
+     .           lbix, lbiy, nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
@@ -105,8 +105,9 @@
 !     .           locbottomix(:,:), locbottomiy(:,:),
      .           loctopix(:,:), loctopiy(:,:),
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
-     .           ixvxe(:), iyvxe(:)
-
+     .           ixvxe(:), iyvxe(:), ftFcP(:,:), ftCvP(:,:), fsFcP(:,:), 
+     .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), 
+     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:)
       real(R8) :: xco(4), yco(4), babs
       logical lfound, swapped, classical, bound, lkeep, cellError
       intrinsic pack
@@ -1028,6 +1029,7 @@
 
 ! no. of flux surfaces (conservative estimate)
       m%nFs = max(1,(1 + 2*nncut)*ny)
+      m%nFt = m%nFs
 
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg
@@ -1057,7 +1059,7 @@
       write (*,*) 'Mapping defined, with'
       write (*,*) 'nCv, nCi, nCg  = ', m%nCv, m%nCi, m%nCg
       write (*,*) 'nFc, nVx       = ', m%nFc, m%nVx
-      write (*,*) 'nFs            = ', m%nFs
+      write (*,*) 'nFs, nFt       = ', m%nFs, m%nFt
       write (*,*) 'nCmxFc, nCmxVx = ', m%nCmxFc, m%nCmxVx
       write (*,*) 'nVmxFc, nVmxCv = ', m%nVmxFc, m%nVmxCv
       write (*,*) 'nCmxNv         = ', m%nCmxNv
@@ -1769,61 +1771,212 @@
 
       mxReg = maxval(m%cvReg(1:m%nCv))
 
-! identify the various flux surfaces
-      m%fsCv = 0 ! init to 0
+! identify the various flux tubes and surfaces
+      m%ftCv = 0 ! init to 0
+      m%ftFc = 0 ! init to 0
       m%fsFc = 0 ! init to 0
-      m%fsCvP = 0
+      m%ftCvP = 0
+      m%ftFcP = 0
       m%fsFcP = 0
-#ifdef WG_TODO
-      ifs = 0
-      icv = 0
-      ifcc = 0
-      do ireg= 1, mxReg
-    	do iy = 1, ny
+      if (m%isClassicalGrid.eq.1) then
+! csc these arrays are needed because otherwise the nFt with which the mapping is written
+!     is different wrt the nFt with which they have been allocated
+        allocate (ftCvP(m%nFt,2))
+        allocate (ftFcP(m%nFt,2))
+        allocate (fsFcP(m%nFs,2))
+        allocate (ftReg(m%nFt))
+        ftCvP = 0
+        ftFcP = 0
+        fsFcP = 0
+        ftReg = 0
+        ift = 0
+        ifs = 0
+        icv = 0
+        ifcc = 0
+        ifccy = 0
+        if (nncut.le.1) then
+          nyreg = 2
+          allocate(nxreg(nyreg),reg(2,nyreg),nseg(2,nyreg))
+          allocate(ixstart(2,nyreg,2),ixend(2,nyreg,2))
+          allocate(iystart(nyreg),iyend(nyreg))
+          iystart(1) = 1
+          iyend(1) = topcut(1)
+          iystart(2) = topcut(1)+1
+          iyend(2) = ny
+          nxreg(1) = 2
+          nxreg(2) = 1
+          nseg(1,1) = 2 !segments for pfr
+          nseg(2,1) = 1 !segments for core
+          nseg(1,2) = 1 !segments for SOL
+          ixstart(1,1,1) = 1 
+          ixend  (1,1,1) = leftcut(1)
+          ixstart(1,1,2) = rightcut(1) + 1 
+          ixend  (1,1,2) = nx
+          ixstart(2,1,1) = leftcut(1)+1
+          ixend  (2,1,1) = rightcut(1)
+          ixstart(1,2,1) = 1
+          ixend  (1,2,1) = nx
+          reg(1,1) = 3
+          reg(2,1) = 1
+          reg(1,2) = 2
+        else
+          nyreg = 3
+          call get_nxt(nx, nxtl, nxtr)
+          allocate(nxreg(nyreg),reg(3,nyreg),nseg(3,nyreg))
+          allocate(ixstart(3,nyreg,2),ixend(3,nyreg,2))
+          allocate(iystart(nyreg),iyend(nyreg))
+          nxreg(1) = 3
+          nxreg(2) = 2 !both DDN & DDNU
+          nxreg(3) = 2
+          iystart(1) = 1
+          iyend(1) = topcut(2)
+          iystart(2) = topcut(2)+1
+          iyend(2) = topcut(1)
+          iystart(3) = topcut(1)+1
+          iyend(3) = ny
+          nseg(:,1) = 2 !segments for pfr1/core/pfr2
+          nseg(:,2) = 2 !segments for sol1/pfr2
+          nseg(:,3) = 1 !segments for sol2/sol3
+          ! pfr1
+          ixstart(1,1,1) = 1 
+          ixend  (1,1,1) = leftcut(1)
+          ixstart(1,1,2) = rightcut(1) + 1 
+          ixend  (1,1,2) = nx
+          reg(1,1) = 3
+          ! core
+          ixstart(2,1,1) = leftcut(1)+1
+          ixend  (2,1,1) = leftcut(2) 
+          ixstart(2,1,2) = rightcut(2)+1
+          ixend  (2,1,2) = rightcut(1) 
+          reg(2,1) = 1
+          ! pfr2
+          ixstart(3,1,1) = nxtr 
+          ixend  (3,1,1) = rightcut(2)
+          ixstart(3,1,2) = leftcut(2)+1
+          ixend  (3,1,2) = nxtl
+          reg(3,1) = 3
+          if (topcut(1).gt.topcut(2)) then !DDNU
+            ix = 1
+            reg(1,2) = 2
+            reg(2,2) = 3
+          elseif (topcut(1).lt.topcut(2)) then !DDND
+            ix = 2
+            reg(1,2) = 3
+            reg(2,2) = 2
+          else
+            ix = 1
+            nxreg(2) = 0 !CDN
+          endif
+          ! sol1(ddnu)/pfr2(ddnd)
+          ixstart(1,2,1) = nxtr 
+          ixend  (1,2,1) = rightcut(ix)
+          ixstart(1,2,2) = leftcut(ix) + 1 
+          ixend  (1,2,2) = nxtl
+          ! pfr2(ddnu)/sol1(ddnd)
+          ixstart(2,2,1) = 1
+          ixend  (2,2,1) = leftcut(ix)
+          ixstart(2,2,2) = rightcut(ix)+1 
+          ixend  (2,2,2) = nx
+          ! sol2
+          ixstart(1,3,1) = 1 
+          ixend  (1,3,1) = nxtl
+          reg(1,3) = 2
+          ! sol3
+          ixstart(2,3,1) = nxtr 
+          ixend  (2,3,1) = nx
+          reg(2,3) = 2
+        endif
+        do iyreg = 1, nyreg
+    	  do iy = iystart(iyreg), iyend(iyreg)
+            do ixreg = 1, nxreg(iyreg)
+              istart = -1
+              do is = 1, nseg(ixreg,iyreg)
+                do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
+                  if((m%imapCv(ix-1,iy-1)/=0) .and. 
+     &             (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
+                    ic = m%imapCv(ix-1,iy-1)
+                    ifc = m%imapFcx(ix-1,iy-1)
+                    ifcy = m%imapFcy(ix-1,iy-1)
+                    if (istart == -1) then
+                      ift = ift + 1
+                      ifs = ifs + 1
+                      icv = icv + 1
+                      ifcc = ifcc + 1
+                      ifccy = ifccy + 1
+                      m%ftCv(icv) = ic
+                      ftCvP(ift,1) = icv
+                      m%ftFc(ifcc) = ifc
+                      ftFcP(ift,1) = ifcc
+                      m%fsFc(ifccy) = ifcy
+                      fsFcP(ifs,1) = ifccy
+                      ftReg(ift) = reg(ixreg,iyreg)
+                      istart = 1
+                    else
+                      icv = icv + 1
+                      ifcc = ifcc + 1
+                      ifccy = ifccy + 1
+                      m%ftCv(icv) = ic
+     	              m%ftFc(ifcc) = ifc
+     	              m%fsFc(ifccy) = ifcy
+                      ftCvP(ift,2) = icv - ftCvP(ift,1) + 1
+                      ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
+                      fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                      if (m%imapCv(rightix(ix-1,iy-1),
+     &                      rightiy(ix-1,iy-1)).gt.m%nCi) then
+                        ifcc = ifcc + 1
+                        ifc = m%imapFcx(rightix(ix-1,iy-1),
+     &                                  rightiy(ix-1,iy-1))
+                        m%ftFc(ifcc) = ifc
+                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
+                      endif
+                    end if
+                  end if
+                end do !ix
+              end do !is
+            end do !ixreg
+          end do !iy
+        end do !iyreg
+! csc last flux surface needs ny + 1
+        do ixreg = 1, nxreg(nyreg)
           istart = -1
-          do ix = 1, nx
-            if((m%imapCv(ix-1,iy-1)/=0) .and. 
-     &         (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-              ic = m%imapCv(ix-1,iy-1)
-              ifc = m%imapFcx(ix-1,iy-1)
-!	do iy = 0, ny-1
-!	  istart = -1
-!	  do ix = 0, nx-1
-!            ic = (ix+1) + iy*nx
-!            ifc = ix+1 + iy*(nx+1)
-              if (m%cvReg(ic) == ireg) then
+          do is = 1, nseg(ixreg,nyreg)
+            do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
+              if((m%imapCv(ix-1,ny)/=0) .and. 
+     &         (m%imapCv(ix-1,ny-1) .le. m%nCi)) then
+                ifcy = m%imapFcy(ix-1,ny)
                 if (istart == -1) then
                   ifs = ifs + 1
-                  icv = icv + 1
-                  ifcc = ifcc + 1
-                  m%fsCv(icv) = ic
-                  m%fsCvP(ifs,1) = icv
-                  m%fsFc(ifcc) = ifc
-                  m%fsFcP(ifs,1) = ifcc
-     	          istart = 1
+                  ifccy = ifccy + 1
+                  m%fsFc(ifccy) = ifcy
+                  fsFcP(ifs,1) = ifccy
+                  istart = 1
                 else
-     	          icv = icv + 1
-                  ifcc = ifcc + 1
-                  m%fsCv(icv) = ic
-     	          m%fsFc(ifcc) = ifc
-                  m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
-                  m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-                  if (m%imapCv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
-     &              .gt.m%nCi) then
-                    ifcc = ifcc + 1
-                    ifc = 
-     &                m%imapFcx(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
-                    m%fsFc(ifcc) = ifc
-                    m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-                  end if
-                end if
-              end if
-            end if 
-          end do
-        end do	
-      end do
-      m%nFs = ifs
-#endif
+                   ifccy = ifccy + 1
+     	           m%fsFc(ifccy) = ifcy
+                   fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                endif
+              endif
+            enddo !ix
+          enddo !is
+        enddo !ixreg
+        m%nFt = ift
+        m%nFs = ifs
+! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
+        deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg)
+        allocate (m%ftFcP(m%nFt,2))
+        allocate (m%ftCvP(m%nFt,2))
+        allocate (m%fsFcP(m%nFs,2))
+        allocate (m%ftReg(m%nFt))
+        m%ftFcP = ftFcP(1:m%nFt,:)
+        m%ftCvP = ftCvP(1:m%nFt,:)
+        m%fsFcP = fsFcP(1:m%nFs,:)
+        m%ftReg = ftReg(1:m%nFt)
+        deallocate(ftFcP,ftCvP,fsFcP,ftReg)
+        deallocate(ixstart, ixend, iystart, iyend, reg, nxreg, nseg)
+      else
+        write (*,*) 'WARNING flux surfaces not yet available'//
+     .              ' for non-classical grids'
+      endif
 
       deallocate (icorner)
       deallocate (ighostcv)
@@ -1854,13 +2007,15 @@
 
 ***********************************************************************
 
-      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv,
-     .  gm, mpg)
+      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nFt, 
+     .  nVmxCv, gm, mpg)
 
       implicit none
-      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2
-      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
+      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
+     .                       nVmxCv
+      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2, icv,
+     .           ift
+      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy, wrk(nFC), Lr, Ll
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 
@@ -1868,7 +2023,7 @@
 
       nfx = (nx+1)*ny
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
 ! cell volumes 
       do iy = -1, ny
@@ -2022,9 +2177,43 @@
       end do
       close (idb)
 #endif      
- 
+! Psi for each flux surface
+      deallocate(gm%fsPsi)
+      allocate (gm%fsPsi(mpg%nFs))
+      gm%fsPsi = 0.0_R8
+      do ift = 1, nFs
+        ifc = mpg%fsFc(mpg%fsFcP(ift,1))
+        gm%fsPsi(ift) = gm%vxFpsi(mpg%fcVx(ifc,1))
+      end do
 ! connection length for core region
-      gm%fsConn = 0.0_R8
+      gm%ftConn = 0.0_R8
+      wrk = 0.0_R8
+      do icv = 1,nCv
+        wrk(icv) = gm%cvHx(icv)*gm%cvBb(icv,3)/abs(gm%cvBb(icv,0))
+      end do
+      do ift = 1, nFt 
+        ic = mpg%ftCv(mpg%ftCvP(ift,1))
+        if (mpg%cvOnClosedSurface(ic)) then !core  
+          do j=mpg%ftCvP(ift,1), mpg%ftCvP(ift,1)+mpg%ftCvP(ift,2)-1
+            gm%ftConn(ic) = gm%ftConn(ic) + wrk(mpg%ftCv(j))
+          enddo
+          gm%ftConn(mpg%ftCv(mpg%ftCvP(ift,1):mpg%ftCvP(ift,1)+
+     &                        mpg%ftCvP(ift,2)-1)) = gm%ftConn(ic)
+        else
+          do ic = mpg%ftCvP(ift,1),mpg%ftCvP(ift,1)+mpg%ftCvP(ift,2)-1
+            icv = mpg%ftCv(ic)
+            Lr = 0.5_R8*wrk(icv)
+            do j = ic+1, mpg%ftCvP(ift,1) + mpg%ftCvP(ift,2)-1
+              Lr = Lr + wrk(mpg%ftCv(j))
+            end do
+            Ll = 0.5_R8*wrk(icv)
+            do j = mpg%ftCvP(ift,1), ic-1
+              Ll = Ll + wrk(mpg%ftCv(j))
+            end do          
+            gm%ftConn(icv) = Lr*Ll/(Lr+Ll)
+          end do
+        endif
+      end do      
 #ifdef WG_TODO
       do i = 1, nFs 
        ic = mpg%fsCv(mpg%fsCvP(i,1))

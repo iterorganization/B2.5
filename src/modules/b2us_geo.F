@@ -48,7 +48,8 @@
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
 
 !  flux surface quantities
-        real (kind=R8), allocatable  :: fsConn(:)      ! Connection length
+        real (kind=R8), allocatable  :: ftConn(:)      ! (nCv) Connection length for each CV
+        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
 
       end type geometry
 
@@ -56,10 +57,10 @@
 
 ***********************************************************************
 
-      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs, nVmxCv)
+      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
       implicit none
-      integer, intent(in) :: nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: nCv, nFc, nVx, nFs, nFt, nVmxCv
       type(geometry), intent(in out) :: g
 
       if (allocated(g%cvBb)) return
@@ -102,7 +103,8 @@
       allocate (g%vxOnedBsq(nVx))
 
 !  flux surface quantites
-      allocate (g%fsConn(nFs))
+      allocate (g%ftConn(nCv))
+      allocate (g%fsPsi(nFs))
 
       call initialize_geometry(g)
       
@@ -154,7 +156,8 @@
       g%vxOnedBsq = 0._R8
 
 !  flux surface quantites
-      g%fsConn = 0._R8
+      g%ftConn = 0._R8
+      g%fsPsi = 0._R8
       
       return
       end subroutine initialize_geometry
@@ -206,7 +209,8 @@
       deallocate (g%vxOnedBsq)
 
 !  flux surface quantites
-      deallocate (g%fsConn)
+      deallocate (g%ftConn)
+      deallocate (g%fsPsi)
       
       return
       end subroutine dealloc_geometry
@@ -214,14 +218,15 @@
 ***********************************************************************
 
 
-      subroutine read_geometry (iun, nCv, nFc, nVx, nFs, nVmxCv, gm)
+      subroutine read_geometry (iun, nCv, nFc, nVx, nFs, nFt, nVmxCv,
+     .  gm)
 
       implicit none
-      integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       integer :: idum(0:9)
       type (geometry), intent (inout) :: gm
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
 ! cell volumes 
       call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
@@ -252,17 +257,19 @@
       call cfrure (iun, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
+      call cfrure (iun, nCv,   gm%ftConn, 'ftConn')
+      call cfrure (iun, nFs,   gm%fsPsi, 'fsPsi')
 
       return
       end subroutine read_geometry
 
 ***********************************************************************
 
-      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nVmxCv, gm)
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt, 
+     .                           nVmxCv, gm)
 
       implicit none
-      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
       integer :: idum(0:9)
       type (geometry), intent (in) :: gm
 
@@ -295,7 +302,8 @@
       call cfwure (nout, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
+      call cfwure (nout, nCv,   gm%ftConn, 'ftConn')
+      call cfwure (nout, nFs,   gm%fsPsi, 'fsPsi')
 
       return
       end subroutine write_geometry
