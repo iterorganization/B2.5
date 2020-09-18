@@ -252,8 +252,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       write (*,*) 'Mapping created'
       
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nVmxCv,
-     .        gm, mpg)
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
+     .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
       
 
@@ -278,7 +278,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       idum(3) = mpg%nFc
       idum(4) = mpg%nVx
       idum(5) = mpg%nFs
-      call cfwuin (nout(1),6,idum,'nCi,nCg,nCv,nFc,nVx,nFs')
+      idum(6) = mpg%nFt
+      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       idum(0) = mpg%nCmxVx
       idum(1) = mpg%nCmxFc
       idum(2) = mpg%nVmxCv
