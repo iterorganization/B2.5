@@ -47,7 +47,7 @@
       integer ia, im
       character chns*3
 #endif
-      integer, save :: ncall = 0, style = 1
+      integer, save :: ncall = 0
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *   fnac(nCv,0:1,0:ns-1), vntrc(nCv,0:1),                            !srv 08.07.09
@@ -75,7 +75,6 @@ c      integer, save :: fchin_in_core = 0                                  !srv 
       if (ncall.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tinnt_iout', iout)
-c        call ipgeti ('b2tinnt_style', style)
 c        call ipgeti ('b2tral_mode', mode)
 c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
       endif
@@ -328,7 +327,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               enddo
             enddo
           endif
-          if(style.eq.0) then
+          if(switch%b2tinnt_style.eq.0) then
 *   ..interpolate ti to cell faces
             call intface(nCv, nFc, mpg%fcCv, geo%fcVol, ti, tif)
 *   ..pre-computation of differences
@@ -374,7 +373,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                 if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then       !srv 20.10.17
                   wrk  = qe*rt%rza(:,is)
                   call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk2)
-                  if(style.eq.0) then
+                  if(switch%b2tinnt_style.eq.0) then
                     fchin(:,0) = fchin(:,0) + csigin(:,0,is,is0)*(
      &                (-dpo(:,0) - (wrk1(:,0) + tif*wrk0(:,0,is))/wrk2)*
      &                (geo%fcBb(:,2)/geo%fcBb(:,3))**2 + 
