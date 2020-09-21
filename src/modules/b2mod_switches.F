@@ -187,6 +187,7 @@ c style  switches
       integer :: b2tlv0_style
       integer :: b2tlh0_style
       integer :: b2tlc0_style
+      integer :: b2tinnt_style
       integer :: model_sig
       integer :: b2mwqt_style
       integer :: b2npht_style
@@ -498,6 +499,7 @@ c Eirene coupling
       s % b2tlv0_style = 0
       s % b2tlh0_style = 0
       s % b2tlc0_style = 0
+      s % b2tinnt_style = 1
       s % model_sig = 0
       s % b2mwqt_style = 1
       s % b2npht_style = 1
@@ -674,7 +676,6 @@ c eirene coupling
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
-
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)    
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
       call ipgetr ('b2tvspa_vis_par', s % vspa_vis_par)     
@@ -810,6 +811,7 @@ c style/mode switches
       call ipgeti ('b2tlv0_style', s % b2tlv0_style)
       call ipgeti ('b2tlh0_style', s % b2tlh0_style)
       call ipgeti ('b2tlc0_style', s % b2tlc0_style)
+      call ipgeti ('b2tinnt_style', s % b2tinnt_style)
       call ipgeti ('b2tqna_model_sig', s % model_sig)               !srv 02.12.04
       call ipgeti ('b2mwqt_style', s % b2mwqt_style)
       call ipgeti ('b2npht_style', s % b2npht_style)                              !srv 09.07.08
