@@ -87,13 +87,14 @@
       integer, intent(in) :: nx, ny
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, istart, ifs,
+     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, ifs,
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o, iy2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, ifccy,
      .           lbix, lbiy, nyreg, ixreg, iyreg, is, nxtl, nxtr,
-     .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg
+     .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
+     .           istrtc, istrtfc, istrtfy
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -1775,6 +1776,7 @@
       m%ftCv = 0 ! init to 0
       m%ftFc = 0 ! init to 0
       m%fsFc = 0 ! init to 0
+      m%cvFt = 0 ! init to 0
       m%ftCvP = 0
       m%ftFcP = 0
       m%fsFcP = 0
@@ -1799,22 +1801,22 @@
           allocate(nxreg(nyreg),reg(2,nyreg),nseg(2,nyreg))
           allocate(ixstart(2,nyreg,2),ixend(2,nyreg,2))
           allocate(iystart(nyreg),iyend(nyreg))
-          iystart(1) = 1
-          iyend(1) = topcut(1)
-          iystart(2) = topcut(1)+1
+          iystart(1) = -1
+          iyend(1) = topcut(1)-1
+          iystart(2) = topcut(1)
           iyend(2) = ny
           nxreg(1) = 2
           nxreg(2) = 1
           nseg(1,1) = 2 !segments for pfr
           nseg(2,1) = 1 !segments for core
           nseg(1,2) = 1 !segments for SOL
-          ixstart(1,1,1) = 1 
-          ixend  (1,1,1) = leftcut(1)
-          ixstart(1,1,2) = rightcut(1) + 1 
+          ixstart(1,1,1) = -1 
+          ixend  (1,1,1) = leftcut(1)-1
+          ixstart(1,1,2) = rightcut(1) 
           ixend  (1,1,2) = nx
-          ixstart(2,1,1) = leftcut(1)+1
-          ixend  (2,1,1) = rightcut(1)
-          ixstart(1,2,1) = 1
+          ixstart(2,1,1) = leftcut(1)
+          ixend  (2,1,1) = rightcut(1)-1
+          ixstart(1,2,1) = -1
           ixend  (1,2,1) = nx
           reg(1,1) = 3
           reg(2,1) = 1
@@ -1828,32 +1830,32 @@
           nxreg(1) = 3
           nxreg(2) = 2 !both DDN & DDNU
           nxreg(3) = 2
-          iystart(1) = 1
-          iyend(1) = topcut(2)
-          iystart(2) = topcut(2)+1
-          iyend(2) = topcut(1)
-          iystart(3) = topcut(1)+1
+          iystart(1) = -1
+          iyend(1) = topcut(2)-1
+          iystart(2) = topcut(2)
+          iyend(2) = topcut(1)-1
+          iystart(3) = topcut(1)
           iyend(3) = ny
           nseg(:,1) = 2 !segments for pfr1/core/pfr2
           nseg(:,2) = 2 !segments for sol1/pfr2
           nseg(:,3) = 1 !segments for sol2/sol3
           ! pfr1
-          ixstart(1,1,1) = 1 
-          ixend  (1,1,1) = leftcut(1)
-          ixstart(1,1,2) = rightcut(1) + 1 
+          ixstart(1,1,1) = -1 
+          ixend  (1,1,1) = leftcut(1)-1
+          ixstart(1,1,2) = rightcut(1) 
           ixend  (1,1,2) = nx
           reg(1,1) = 3
           ! core
-          ixstart(2,1,1) = leftcut(1)+1
-          ixend  (2,1,1) = leftcut(2) 
-          ixstart(2,1,2) = rightcut(2)+1
-          ixend  (2,1,2) = rightcut(1) 
+          ixstart(2,1,1) = leftcut(1)
+          ixend  (2,1,1) = leftcut(2)-1 
+          ixstart(2,1,2) = rightcut(2)
+          ixend  (2,1,2) = rightcut(1)-1 
           reg(2,1) = 1
           ! pfr2
-          ixstart(3,1,1) = nxtr 
-          ixend  (3,1,1) = rightcut(2)
-          ixstart(3,1,2) = leftcut(2)+1
-          ixend  (3,1,2) = nxtl
+          ixstart(3,1,1) = nxtr -1
+          ixend  (3,1,1) = rightcut(2)-1
+          ixstart(3,1,2) = leftcut(2)
+          ixend  (3,1,2) = nxtl -1
           reg(3,1) = 3
           if (topcut(1).gt.topcut(2)) then !DDNU
             ix = 1
@@ -1868,68 +1870,75 @@
             nxreg(2) = 0 !CDN
           endif
           ! sol1(ddnu)/pfr2(ddnd)
-          ixstart(1,2,1) = nxtr 
-          ixend  (1,2,1) = rightcut(ix)
-          ixstart(1,2,2) = leftcut(ix) + 1 
-          ixend  (1,2,2) = nxtl
+          ixstart(1,2,1) = nxtr-1
+          ixend  (1,2,1) = rightcut(ix)-1
+          ixstart(1,2,2) = leftcut(ix) 
+          ixend  (1,2,2) = nxtl-1
           ! pfr2(ddnu)/sol1(ddnd)
-          ixstart(2,2,1) = 1
-          ixend  (2,2,1) = leftcut(ix)
-          ixstart(2,2,2) = rightcut(ix)+1 
+          ixstart(2,2,1) = -1
+          ixend  (2,2,1) = leftcut(ix)-1
+          ixstart(2,2,2) = rightcut(ix) 
           ixend  (2,2,2) = nx
           ! sol2
-          ixstart(1,3,1) = 1 
-          ixend  (1,3,1) = nxtl
+          ixstart(1,3,1) = -1 
+          ixend  (1,3,1) = nxtl-1
           reg(1,3) = 2
           ! sol3
-          ixstart(2,3,1) = nxtr 
+          ixstart(2,3,1) = nxtr-1
           ixend  (2,3,1) = nx
           reg(2,3) = 2
         endif
         do iyreg = 1, nyreg
     	  do iy = iystart(iyreg), iyend(iyreg)
             do ixreg = 1, nxreg(iyreg)
-              istart = -1
+              istrtc = -1
+              istrtfc = -1
+              istrtfy = -1
               do is = 1, nseg(ixreg,iyreg)
                 do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
-                  if((m%imapCv(ix-1,iy-1)/=0) .and. 
-     &             (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-                    ic = m%imapCv(ix-1,iy-1)
-                    ifc = m%imapFcx(ix-1,iy-1)
-                    ifcy = m%imapFcy(ix-1,iy-1)
-                    if (istart == -1) then
+                  if((m%imapCv(ix,iy)/=0)) then
+                    ic = m%imapCv(ix,iy)
+                    ifc = m%imapFcx(ix,iy)
+                    ifcy = m%imapFcy(ix,iy)
+                    if (istrtc.eq.-1) then
                       ift = ift + 1
-                      ifs = ifs + 1
                       icv = icv + 1
-                      ifcc = ifcc + 1
-                      ifccy = ifccy + 1
                       m%ftCv(icv) = ic
                       ftCvP(ift,1) = icv
-                      m%ftFc(ifcc) = ifc
-                      ftFcP(ift,1) = ifcc
-                      m%fsFc(ifccy) = ifcy
-                      fsFcP(ifs,1) = ifccy
+                      m%cvFt(ic) = ift
                       ftReg(ift) = reg(ixreg,iyreg)
-                      istart = 1
+                      istrtc = 1
                     else
                       icv = icv + 1
-                      ifcc = ifcc + 1
-                      ifccy = ifccy + 1
                       m%ftCv(icv) = ic
-     	              m%ftFc(ifcc) = ifc
-     	              m%fsFc(ifccy) = ifcy
+                      m%cvFt(ic) = ift
                       ftCvP(ift,2) = icv - ftCvP(ift,1) + 1
-                      ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
-                      fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
-                      if (m%imapCv(rightix(ix-1,iy-1),
-     &                      rightiy(ix-1,iy-1)).gt.m%nCi) then
-                        ifcc = ifcc + 1
-                        ifc = m%imapFcx(rightix(ix-1,iy-1),
-     &                                  rightiy(ix-1,iy-1))
-                        m%ftFc(ifcc) = ifc
-                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
-                      endif
                     end if
+                    if (ifc.ne.0) then
+                      if (istrtfc.eq.-1) then
+                        ifcc = ifcc + 1
+                        m%ftFc(ifcc) = ifc
+                        ftFcP(ift,1) = ifcc
+                        istrtfc = 1
+                      else
+                        ifcc = ifcc + 1
+     	                m%ftFc(ifcc) = ifc
+                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
+                      end if
+                    endif
+                    if (ifcy.ne.0) then
+                      if (istrtfy.eq.-1) then
+                        ifs = ifs + 1
+                        ifccy = ifccy + 1
+                        m%fsFc(ifccy) = ifcy
+                        fsFcP(ifs,1) = ifccy
+                        istrtfy = 1
+                      else
+                        ifccy = ifccy + 1
+     	                m%fsFc(ifccy) = ifcy
+                        fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                      end if
+                    endif
                   end if
                 end do !ix
               end do !is
@@ -1938,22 +1947,23 @@
         end do !iyreg
 ! csc last flux surface needs ny + 1
         do ixreg = 1, nxreg(nyreg)
-          istart = -1
+          istrtfy = -1
           do is = 1, nseg(ixreg,nyreg)
             do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
-              if((m%imapCv(ix-1,ny)/=0) .and. 
-     &         (m%imapCv(ix-1,ny-1) .le. m%nCi)) then
-                ifcy = m%imapFcy(ix-1,ny)
-                if (istart == -1) then
-                  ifs = ifs + 1
-                  ifccy = ifccy + 1
-                  m%fsFc(ifccy) = ifcy
-                  fsFcP(ifs,1) = ifccy
-                  istart = 1
-                else
-                   ifccy = ifccy + 1
-     	           m%fsFc(ifccy) = ifcy
-                   fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+              if((m%imapCv(ix,ny)/=0)) then
+                ifcy = m%imapFcy(ix,ny)
+                if (ifcy.ne.0) then
+                  if (istrtfy == -1) then
+                    ifs = ifs + 1
+                    ifccy = ifccy + 1
+                    m%fsFc(ifccy) = ifcy
+                    fsFcP(ifs,1) = ifccy
+                    istrtfy = 1
+                  else
+                    ifccy = ifccy + 1
+     	            m%fsFc(ifccy) = ifcy
+                    fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                  endif
                 endif
               endif
             enddo !ix

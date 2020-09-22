@@ -27,10 +27,11 @@
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
         integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
-        integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the fsCv list and its number of cells
+        integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
         integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
         integer, allocatable :: ftFcP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftFc list and its number of cell faces
         integer, allocatable :: ftFc(:)                !         listing for every flux tube the corresponding cell face numbers
+        integer, allocatable :: cvFt(:)                !         listing for every cell the corresponding flux tube
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces 
@@ -108,6 +109,7 @@
       allocate (m%ftCvP(m%nFt,2))
       allocate (m%ftFc(m%nFc))
       allocate (m%ftFcP(m%nFt,2))
+      allocate (m%cvFt(m%nCv))
       allocate (m%fsFc(m%nFc))
       allocate (m%fsFcP(m%nFs,2))
       allocate (m%fcReg(m%nFC))
@@ -190,6 +192,7 @@
       m%ftCvP = 0
       m%ftFc = 0
       m%ftFcP = 0
+      m%cvFt = 0
       m%fcReg = 0
       m%cvReg = 0
       m%ftReg = 0
@@ -258,6 +261,7 @@
       deallocate (m%ftCvP)
       deallocate (m%ftFc)
       deallocate (m%ftFcP)
+      deallocate (m%cvFt)
       deallocate (m%fcReg)
       deallocate (m%cvReg)
       deallocate (m%ftReg)
@@ -452,6 +456,7 @@
       call cfruin (iun, mpg%nCv,     mpg%ftCv,  'ftCv')
       call cfruin (iun, mpg%nFt*2,   mpg%ftFcP, 'ftFcP')
       call cfruin (iun, mpg%nFc,     mpg%ftFc,  'ftFc')
+      call cfruin (iun, mpg%nCv,     mpg%cvFt,  'cvFt')
       call cfruin (iun, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
       call cfruin (iun, mpg%nFc,     mpg%fsFc,  'fsFc')
       call cfruin (iun, mpg%nFc,     mpg%fcReg, 'fcReg')
@@ -509,6 +514,7 @@
       call cfwuin (nout, mpg%nCv,     mpg%ftCv,  'ftCv')
       call cfwuin (nout, mpg%nFt*2,   mpg%ftFcP, 'ftFcP')
       call cfwuin (nout, mpg%nFc,     mpg%ftFc,  'ftFc')
+      call cfwuin (nout, mpg%nCv,     mpg%cvFt,  'cvFt')
       call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
       call cfwuin (nout, mpg%nFc,     mpg%fSFc,  'fsFc')
       call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
