@@ -434,8 +434,6 @@ contains
         call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
         call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
 !   ..compute flux limit coefficients
-        call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, &
-            &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
         call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,                     &
             &        bb, conn, vol, gs, hx, hy, hz, qz, qc,                       &
             &        pbs, crx, cry, bzb, lnlam,                                   &

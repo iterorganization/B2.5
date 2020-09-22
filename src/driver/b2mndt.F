@@ -301,9 +301,7 @@ ctmp.dpc
           call b2xpni (nx, ny, ns, na, ni)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
           call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
-     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
+* ..compute transport coefficients
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09

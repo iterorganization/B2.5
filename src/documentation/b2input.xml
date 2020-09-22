@@ -349,7 +349,7 @@
 			<switchgroup>
 				<name>b2stbc_coreregn*</name>
 				<description>
-					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno need be set to 0, depending on the actual geometry details.
+					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno needs to be set to 0, depending on the actual geometry details.
 					coreregn2 is the boundary index of the second core boundary in case of a double-null geometry, and is not used otherwise.
 				</description>
 				<switch>
@@ -1280,7 +1280,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Width of the stochastic current layer (in meters), measured from the separatrix inward, along the poloidal index ixref (given by b2tqna_ixref).
+					Width of the stochastic current layer (in metres), measured from the separatrix inward, along the poloidal index ixref (given by b2tqna_ixref).
 					If b2tfhe_stochastic.ne.0, then b2tstch_delta must be greater than zero.
 				</description>
 			</switch>
@@ -1555,7 +1555,7 @@
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used.
 					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for
 					  0 15 30 45 55 65 75 80 85
-					degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate.
+					degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in metres. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate.
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation.
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used).
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate.
@@ -3537,7 +3537,7 @@
 				<default>0.001</default>
 				<type>real</type>
 				<description>
-					Step length (in meters) for computing the first flight model chords.
+					Step length (in metres) for computing the first flight model chords.
 				</description>
 			</switch>
 			<switch>
@@ -5323,7 +5323,7 @@
 				<default>b2stbr_plate_thick</default>
 				<type>real*8 array of size (NWALL)</type>
 				<description>
-					Contains the thickness (in meters) of wall element (iwall).
+					Contains the thickness (in metres) of wall element (iwall).
 				</description>
 			</switch>
 			<switch>
@@ -5331,7 +5331,7 @@
 				<default>0</default>
 				<type>real*8 array of size (NWALL)</type>
 				<description>
-					Contains the thickness (in meters) of the eventual coating on wall element (iwall).
+					Contains the thickness (in metres) of the eventual coating on wall element (iwall).
 				</description>
 			</switch>
 			<switch>
@@ -5426,7 +5426,7 @@
 				<name>PLATE_AREA</name>
 				<type>real*8 array of size (NWALL)</type>
 				<description>
-					Indicates the wall area (in square meters) for wall element (iwall). Defaults to the area computed from the B2 grid information.
+					Indicates the wall area (in square metres) for wall element (iwall). Defaults to the area computed from the B2 grid information.
 				</description>
 			</switch>
 			<switch>
@@ -6774,7 +6774,7 @@
 				<description>
 					Allows user to choose between different anomalous transport models.
 					Read if 'b2tqna_transport_namelist' is set to 1.
-					Overwrite data from b2ah.dat and b2mn.dat.
+					Overwrites data from b2ah.dat and b2mn.dat.
 					Does not apply to fluid neutral species.
 				</description>
 			</introduction>
@@ -6929,35 +6929,36 @@
 			<switchgroup>
 				<name>CFL*</name>
 				<description>
-					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter.
+				  For the electron, ion, and viscous heat flux limit coefficients, if the main multiplier is not specified but CFLM*_CORE and CFLM*_SOL are set to equal non-zero values, their value will be used. If CFLM*_CORE and CFLM*_SOL are different and non-zero, then a radial tanh profile, centered at radial OMP position CFLM*_TANH_A (in metres) and of width CFLM*_TANH_B is applied. The flux limit coefficients in the PFR are set to a constant value equal to that at the separatrix. The OMP is located at the poloidal index provided by 'b2news_fac_ref', or, if not specified, 'b2mwti_jxa'.
+					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter. Otherwise, the multipliers must be positive.
 				</description>
 				<switch>
 					<name>CFLME</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the electron heat flux limit.
+						Main multiplier to the electron heat flux limit.
 					</description>
 				</switch>
 				<switch>
 					<name>CFLMI</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the ion heat flux limit.
+						Main multiplier to the ion heat flux limit.
 					</description>
 				</switch>
 				<switch>
 					<name>CFLMV</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the viscous heat flux limit.
+						Main multiplier to the viscous heat flux limit.
 					</description>
 				</switch>
 				<switch>
 					<name>CFLAL</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
 						Multiplier to the thermo-electric coefficient flux limit.
@@ -6965,11 +6966,107 @@
 				</switch>
 				<switch>
 					<name>CFLAB</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
 						Multiplier to the friction force flux limit.
 					</description>
+				</switch>
+				<switch>
+				  <name>CFLME_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the electron heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the electron heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the electron heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the electron heat flux limit. Must be positive.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the ion heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the ion heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the ion heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the ion heat flux limit. Must be positive.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the viscous heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the viscous heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the viscous heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the viscous heat flux limit. Must be positive.
+				  </description>
 				</switch>
 				</switchgroup>
 			<switch>

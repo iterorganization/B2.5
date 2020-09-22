@@ -1,4 +1,4 @@
-      subroutine b2tlmv (nx, ny, isb, cflmv, pbsx, qc, nb, tb, ub,
+      subroutine b2tlmv (nx, ny, isb, cfl, pbsx, qc, nb, tb, ub,
      &   cvsbx, cvsbxhz, fl)                                         !srv 09.01.01
       use b2mod_types
       use b2mod_indirect
@@ -6,7 +6,7 @@
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
-     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), 
+     *  cfl(-1:nx,-1:ny), pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny),
      &  nb(-1:nx,-1:ny), tb(-1:nx,-1:ny),
      &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),   !srv 09.01.01
      &  fl(-1:nx,-1:ny)
@@ -31,7 +31,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test cflmv
-      call xertst (0.0_R8.le.cflmv, 'faulty argument cflmv')
+      call b2xvsg (n2, cfl, 1, 'cflmv', '.ge.')
 *   ..read switches
       if (ncall.eq.0) then
         call ipgeti ('b2news_area_fix', area_fix)
@@ -51,12 +51,12 @@
          if(leftix(ix,iy).ne.-2) then
           qcl = -cvsbx(ix,iy)*
      &          (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-          qfl = cflmv*abs(pbsx(ix,iy))*                              !srv 11.01.13
+          qfl = cfl(ix,iy)*abs(pbsx(ix,iy))*                         !srv 11.01.13
      &     (nb(leftix(ix,iy),leftiy(ix,iy))*
      &      tb(leftix(ix,iy),leftiy(ix,iy))+
-     &      nb(ix,iy)*tb(ix,iy))/2.0_R8  
-          if (area_fix.eq.2) qfl = qfl*qc(ix,iy) 
-          if (qfl.gt.0.0_R8) then 
+     &      nb(ix,iy)*tb(ix,iy))/2.0_R8
+          if (area_fix.eq.2) qfl = qfl*qc(ix,iy)
+          if (qfl.gt.0.0_R8) then
             tfl = 1.0_R8 + abs(qcl/qfl)
           else
             tfl = 1.0_R8
@@ -71,22 +71,22 @@
        enddo
 csw 18sep2014 TESTING only (SOLPS4 discr), i.e. switch off mom.flux
 c             limit
-c      else if(style.eq.2) then                                    
-c       fl(ix,iy)=1.0d0 
+c      else if(style.eq.2) then
+c       fl(ix,iy)=1.0d0
       else                                                           !srv 30.05.08
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
-          if(.not.(.not.is_neutral(isb) .and. 
+          if(.not.(.not.is_neutral(isb) .and.
      &              on_closed_surface(ix,iy))) then                  !srv 12.04.08
            qcl = -cvsbx(ix,iy)*
      &          (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-           qfl = cflmv*abs(pbsx(ix,iy))*                             !srv 11.01.13
+           qfl = cfl(ix,iy)*abs(pbsx(ix,iy))*                        !srv 11.01.13
      &          (nb(leftix(ix,iy),leftiy(ix,iy))*
      &           tb(leftix(ix,iy),leftiy(ix,iy))+
-     &           nb(ix,iy)*tb(ix,iy))/2.0_R8  
-           if (area_fix.eq.2) qfl = qfl*qc(ix,iy) 
-           if (qfl.gt.0.0_R8) then 
+     &           nb(ix,iy)*tb(ix,iy))/2.0_R8
+           if (area_fix.eq.2) qfl = qfl*qc(ix,iy)
+           if (qfl.gt.0.0_R8) then
              tfl = 1.0_R8 + abs(qcl/qfl)
            else
              tfl = 1.0_R8
@@ -105,7 +105,7 @@ c       fl(ix,iy)=1.0d0
       endif                                                          !srv 30.05.08
 
       if(iout.ne.0) then                                             !srv 12.04.04 {
-       write (charns,'(i3.3)') isb  
+       write (charns,'(i3.3)') isb
        call my_out(70,nx,ny,fl,'cflmv-1'//charns)
       endif                                                          !srv 12.04.04 }
 

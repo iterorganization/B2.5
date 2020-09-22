@@ -136,7 +136,7 @@ c
       end if
 c
 c*** Convert the input wall coordinates into double precision
-c*** and scale them to meters.
+c*** and scale them to metres.
 c*** We have now two sets of the wall segments, one saved by Eirene
 c*** and (another) one read from DG file. Only the segments which are
 c*** identical in both sets are to be used for neutral loading, the rest

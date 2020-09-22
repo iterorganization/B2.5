@@ -8,11 +8,12 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_transport_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), 
+     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -44,7 +45,7 @@
       integer ncall, n2
       save ncall
       real (kind=R8) ::
-     *   cflme, cflmi
+     *   cfl(-1:nx,-1:ny)
       real (kind=R8) ::
      *   nirm(-1:nx,-1:ny)
 *   ..procedures
@@ -92,13 +93,13 @@
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test range of qz, qc
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &   'faulty argument range qz(,,0)')
        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &   'faulty argument range qz(,,1)')
        call xertst (0.0_R8.lt.smin(n2,qc,1).and.
-     &   smax(n2,qc,1).le.1.0_R8, 
+     &   smax(n2,qc,1).le.1.0_R8,
      &   'faulty argument range qc')
 *    ..test sign of na, te, ti, ne2
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
@@ -111,12 +112,14 @@
 
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
-      cflme = cflim(0)
-      call b2tlhe (nx, ny, me, cflme, bb, gs, pbs(-1,-1,0), qc, ne, te, 
+      call cfl_tanh_profile(nx, ny, cflim(0),
+     .  cflme_core, cflme_sol, cflme_tanh_a, cflme_tanh_b, cfl)
+      call b2tlhe (nx, ny, me, cfl, bb, gs, pbs(-1,-1,0), qc, ne, te,
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
-      cflmi = cflim(1)
-      call b2tlhi (nx, ny, mp, cflmi, bb, gs, pbs(-1,-1,0), qc, ni,
+      call cfl_tanh_profile(nx, ny, cflim(1),
+     .  cflmi_core, cflmi_sol, cflmi_tanh_a, cflmi_tanh_b, cfl)
+      call b2tlhi (nx, ny, mp, cfl, bb, gs, pbs(-1,-1,0), qc, ni,
      &  nirm, ti, chvimx)
 
 * ..return

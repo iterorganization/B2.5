@@ -209,7 +209,8 @@ for category in categories:
                 if default:
                     text += get_default(switch.findtext('default'))
                 if counter == N and element.findtext('description'):
-                    text += dedent_without_wraping(stringify_children(element.find('description')))
+                    text += '\n'
+                    text += dedent_without_wraping(stringify_children(element.find('description')))[:-1]
 
                 add_to_fort(text)
 

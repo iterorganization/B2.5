@@ -105,7 +105,7 @@
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
+     &  b2xpnm, b2tral, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
      &  b2tfch, b2xpen, b2xppz
 *   ..initialisation
@@ -323,9 +323,6 @@
 *   ..compute ceqp
         call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
         call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)     !xpb !srv 01.07.09 20.09.11
-*   ..compute flux limit coefficients
-        call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
-     &   na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)                !srv 16.06.08
 *   ..compute transport coefficients
         call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,            !srv 23.11.10
      1   bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry,

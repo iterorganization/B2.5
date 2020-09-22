@@ -18,6 +18,7 @@
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
      &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
+      use b2mod_transport_namelist
 #ifdef ASTRA
       use b2mod_geo_corner
      &                    , only : nmdpl
@@ -93,7 +94,7 @@
       integer mintopcut                                               !lk 19.09.07  
       integer mode
       real (kind=R8) ::
-     *  cflmv, cthiv, cthev, vis_par, jemax                           !srv 13.01.17
+     *  cthiv, cthev, vis_par, jemax                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte, dti, flomx
       real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),  !lk 19.09.07
@@ -105,7 +106,7 @@
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  wrk(-1:nx,-1:ny)                                              !srv 01.07.99 09.01.01
+     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                            !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
@@ -517,7 +518,7 @@ csw 13mar2012
 
       if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
 *   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
-       if(cflim(0).ne.0.0e0_R8) then
+       if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
@@ -538,7 +539,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
         enddo
        endif
 *   .. apply the conductive limit of parallel ion heat flux
-       if(cflim(1).ne.0.0e0_R8) then
+       if(cflim(1).ne.0.0e0_R8.or.cflmi_core.ne.cflmi_sol) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
@@ -561,7 +562,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to calf                                            !srv 13.01.17 {
       if(style.eq.1) then
-       if(cflim(0).ne.0.0e0_R8) then
+       if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
          do ix = -1, nx
            if(leftix(ix,iy).ne.-2) then
@@ -629,9 +630,10 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        endif
       endif
 *   ..apply flux limit to cvsa
-      cflmv = cflim(2)
+      call cfl_tanh_profile(nx, ny, cflim(2),
+     .  cflmv_core, cflmv_sol, cflmv_tanh_a, cflmv_tanh_b, cfl)
       do is = 0, ns-1
-       call b2tlmv (nx, ny, is, cflmv, pbs(-1,-1,0), qc, na(-1,-1,is),    !srv 12.04.08
+       call b2tlmv (nx, ny, is, cfl, pbs(-1,-1,0), qc, na(-1,-1,is),      !srv 12.04.08
      &   ti, ua(-1,-1,is), cvsa(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   fllimvisc(-1,-1,is))
       enddo

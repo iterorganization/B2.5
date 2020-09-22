@@ -2451,6 +2451,30 @@ c 2002-09-11: logic revised
      .     'CFLMI=',cflmi,','
           if(cflmv.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMV=',cflmv,','
+          if(cflme_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_CORE=',cflme_core,','
+          if(cflme_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_SOL=',cflme_sol,','
+          if(cflme_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_A=',cflme_tanh_a,','
+          if(cflme_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_B=',cflme_tanh_b,','
+          if(cflmi_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_CORE=',cflmi_core,','
+          if(cflmi_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_SOL=',cflmi_sol,','
+          if(cflmi_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_A=',cflmi_tanh_a,','
+          if(cflmi_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_B=',cflmi_tanh_b,','
+          if(cflmv_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_CORE=',cflmv_core,','
+          if(cflmv_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_SOL=',cflmv_sol,','
+          if(cflmv_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_A=',cflmv_tanh_a,','
+          if(cflmv_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_B=',cflmv_tanh_b,','
           if(b2fstate_version.ge.'03.000.006') then
             if(cflal.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .       'CFLAL=',cflal,','

@@ -12,7 +12,9 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_input_profile
+      use b2mod_transport_namelist
       use b2mod_anomalous_transport
+      use b2mod_time
       use b2mod_rates
      , , only : rza
       use b2mod_b2cmpa
@@ -30,8 +32,7 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
      &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),           !srv 10.06.08
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                        !srv 03.06.03
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)                      !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -49,7 +50,8 @@
      1	cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      1	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1), 
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
-     3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
+     3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
+     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -86,7 +88,8 @@
 
 *   ..local variables
       integer ix, iy, is, is0, n2
-      integer ncall, pot_eq, no_current, no_solve, style
+      integer ncall, pot_eq, no_current, no_solve, style, elm_count
+      integer, save :: transport_namelist = 0
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -101,12 +104,12 @@
      1	pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
-      logical solving(4)
+      logical solving(4), catch_up
       save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
-     .  fch_anomalous, no_current, style
+     .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
-      external b2trcl, b2trno
+      external b2trcl, b2trql, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
      1  fch_anomalous/1.0_R8/, no_current/0/, style/1/
@@ -152,9 +155,47 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(nx,ny,ns)
+        call ipgeti ('b2tqna_transport_namelist', transport_namelist)
+        if(transport_namelist.eq.1) then
+          call alloc_transport_namelist(ns)
+          call read_b2mod_transport_namelist
+          call write_b2mod_transport_namelist
+          if(transport_time_mod.gt.0.0_R8) then
+            elm_count=tim/transport_time_mod
+          else
+            elm_count=0
+          endif
+          catch_up=transport_time_mod.gt.0.0_R8
+          do while(catch_up)
+            if(mod(tim,transport_time_mod).gt.transport_time_switch)
+     1       then
+              write(*,*) 'b2tqna: catching up ...'
+              call read_b2mod_transport_namelist
+              call write_b2mod_transport_namelist
+              catch_up=transport_time_mod.gt.0.0_R8
+            else
+              catch_up=.false.
+            endif
+          enddo
+        endif
+      else
+        if(transport_namelist.eq.1.and.
+     1   transport_time_mod.gt.0.0_R8) then
+          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+     1     transport_time_switch,int(tim/transport_time_mod),elm_count
+          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
+     1     int(tim/transport_time_mod).gt.elm_count) then
+            elm_count=tim/transport_time_mod
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+          endif
+        endif
       end if
 
 * ..compute transport coefficients
+*   ..compute flux limit coefficients
+      call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+     &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx, 
      &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
