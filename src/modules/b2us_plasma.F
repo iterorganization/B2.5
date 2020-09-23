@@ -1582,6 +1582,16 @@ cwdk move to dv
       call cfwure (nout, nFc,        st % co % fllim_al, 'fllim_al')
       call cfwure (nout, nCv,        st % co % fllim_al_c, 'fllim_al_c')
 
+      call cfwure (nout, nCv,      st % co % sig0, 'sig0')
+      call cfwure (nout, nCv,      st % co % hce0, 'hce0')
+      call cfwure (nout, nCv,      st % co % alf0, 'alf0')
+      call cfwure (nout, nCv,      st % co % hci0, 'hci0')
+      call cfwure (nout, nCv*ns,   st % co % hcib, 'hcib')
+      call cfwure (nout, nCv*ns,   st % co % dpa0, 'dpa0')
+      call cfwure (nout, nCv*ns,   st % co % dna0, 'dna0')
+      call cfwure (nout, nCv*ns,   st % co % vsa0, 'vsa0')
+      call cfwure (nout, nCv*2*ns, st % co % vla0, 'vla0')
+
       close (nout)
 
 

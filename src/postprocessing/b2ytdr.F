@@ -971,7 +971,7 @@ c 2002-09-11: logic revised
       nsm=max(ns,ns1)
       nxm=max(nx,nx1)
       nym=max(ny,ny1)
-      call alloc_input_profile(nxm,nym,nsm)
+!WG_TODO      call alloc_input_profile(nxm,nym,nsm)
       allocate(am1(0:ns1-1))
       allocate(zn1(0:ns1-1))
       allocate(zamin1(0:ns1-1))
@@ -10005,7 +10005,7 @@ cxpb as they no longer necessarily point to the same species
       call dealloc_b2mod_b2cmrc
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
-      call dealloc_input_profile
+!WG_TODO      call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals

@@ -10,7 +10,7 @@
       use b2mod_tallies
 !      use b2mod_sources
 !     &     , only: rcxna, rcxhi, rcxmo
-!      use b2mod_input_profile
+      use b2mod_input_profile
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
       use b2mod_time
@@ -115,7 +115,7 @@
 *   ..inputfile for profile sources
       if (ncall.eq.0) then
         call ipgeti ('b2sral_inputfile', sources_inputfile)
-!WG_TODO        call alloc_input_profile(nx,ny,ns)
+        call alloc_input_profile(nCv,ns)
         call ipgeti ('b2sral_style', style)                              !srv 28.07.08
         call ipgeti ('b2sral_iout', iout)                                !srv 30.06.08
         call ipgeti ('b2mndr_astra', use_astra)

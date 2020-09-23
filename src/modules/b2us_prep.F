@@ -94,7 +94,7 @@
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, ifccy,
      .           lbix, lbiy, nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
-     .           istrtc, istrtfc, istrtfy
+     .           istrtc, istrtfc, istrtfy, ilbl
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -107,8 +107,8 @@
      .           loctopix(:,:), loctopiy(:,:),
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
      .           ixvxe(:), iyvxe(:), ftFcP(:,:), ftCvP(:,:), fsFcP(:,:), 
-     .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), 
-     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:)
+     .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), ftLbl(:), 
+     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:) 
       real(R8) :: xco(4), yco(4), babs
       logical lfound, swapped, classical, bound, lkeep, cellError
       intrinsic pack
@@ -1780,6 +1780,7 @@
       m%ftCvP = 0
       m%ftFcP = 0
       m%fsFcP = 0
+      m%ftLbl = 0
       if (m%isClassicalGrid.eq.1) then
 ! csc these arrays are needed because otherwise the nFt with which the mapping is written
 !     is different wrt the nFt with which they have been allocated
@@ -1787,15 +1788,18 @@
         allocate (ftFcP(m%nFt,2))
         allocate (fsFcP(m%nFs,2))
         allocate (ftReg(m%nFt))
+        allocate (ftLbl(m%nFt))
         ftCvP = 0
         ftFcP = 0
         fsFcP = 0
         ftReg = 0
+        ftLbl = 0
         ift = 0
         ifs = 0
         icv = 0
         ifcc = 0
         ifccy = 0
+        ilbl = 0
         if (nncut.le.1) then
           nyreg = 2
           allocate(nxreg(nyreg),reg(2,nyreg),nseg(2,nyreg))
@@ -1890,6 +1894,7 @@
         endif
         do iyreg = 1, nyreg
     	  do iy = iystart(iyreg), iyend(iyreg)
+            ilbl = ilbl + 1
             do ixreg = 1, nxreg(iyreg)
               istrtc = -1
               istrtfc = -1
@@ -1907,6 +1912,7 @@
                       ftCvP(ift,1) = icv
                       m%cvFt(ic) = ift
                       ftReg(ift) = reg(ixreg,iyreg)
+                      ftLbl(ift) = ilbl
                       istrtc = 1
                     else
                       icv = icv + 1
@@ -1972,16 +1978,18 @@
         m%nFt = ift
         m%nFs = ifs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
-        deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg)
+        deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg,m%ftLbl)
         allocate (m%ftFcP(m%nFt,2))
         allocate (m%ftCvP(m%nFt,2))
         allocate (m%fsFcP(m%nFs,2))
         allocate (m%ftReg(m%nFt))
+        allocate (m%ftLbl(m%nFt))
         m%ftFcP = ftFcP(1:m%nFt,:)
         m%ftCvP = ftCvP(1:m%nFt,:)
         m%fsFcP = fsFcP(1:m%nFs,:)
         m%ftReg = ftReg(1:m%nFt)
-        deallocate(ftFcP,ftCvP,fsFcP,ftReg)
+        m%ftLbl = ftLbl(1:m%nFt)
+        deallocate(ftFcP,ftCvP,fsFcP,ftReg,ftLbl)
         deallocate(ixstart, ixend, iystart, iyend, reg, nxreg, nseg)
       else
         write (*,*) 'WARNING flux surfaces not yet available'//
