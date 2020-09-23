@@ -239,7 +239,7 @@
      &        (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
             shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
           else
-            t0 = t0*tn(iCv)/ti(iCv) !!! neutral pressure using tn instead of ti, but source scaling still based on ti!
+            t0 = t0*tn(iCv)/ti(iCv) 
             shidun(iCv,0) = shidun(iCv,0)+
      &        (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
             shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
