@@ -16,7 +16,7 @@
       integer l_h_mol(DEF_NMOL,3)
 #endif
       real (kind=R8) ::
-     ,  fusion_power, Spmp_He_to_D, Spmp_nom
+     ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
@@ -42,7 +42,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype
+     ,  cfread, cftype, rzomp
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -122,6 +122,7 @@ c***  Standard setup:
       cftype = 0
       cfdata = 0.0_R8
       ncfdata = 0
+      rzomp = 0.0_R8
       call read_b2mod_user_namelist(ns,ntns,m)
       user_initialised = .true.
 
@@ -152,6 +153,7 @@ c***  Standard setup:
       integer i, j, k, is, im, ndata
       logical old_style, done
       logical, save :: hydrogen, helium, neon
+      real(kind=r8) :: dum(2)
       external subini, subend
 
       call subini ('readuser')
@@ -361,6 +363,13 @@ c*** Set default values according to current species list
      . 'faulty input j_ne_at')
 #endif
       call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
+      if (rzomp(1,1).gt.rzomp(1,2)) then
+        dum(:) = rzomp(:,1)
+        rzomp(:,1) = rzomp(:,2)
+        rzomp(:,2) = dum(:) 
+        write(*,*) ' Inverted rzomp coordinates'
+        write(*,*) ' rzomp:', rzomp
+      endif
 
       call subend ()
       return
@@ -406,6 +415,7 @@ c*** Set default values according to current species list
 
 
       end subroutine cf_to_struct
+
 
 ***********************************************************************
 

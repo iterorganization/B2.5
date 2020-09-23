@@ -5,7 +5,7 @@
      1 geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
       use b2mod_constants
-!WG_TBD      use b2mod_input_profile
+      use b2mod_input_profile
       use b2mod_b2cmpa
 !WG_TBD      use b2mod_neoclassical
       use b2us_geo
@@ -116,7 +116,7 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
-!WG_TBD        call alloc_input_profile(nx,ny,ns)
+        call alloc_input_profile(nCV,ns)
       end if
 
 * ..compute transport coefficients

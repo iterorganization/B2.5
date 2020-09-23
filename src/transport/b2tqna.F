@@ -6,7 +6,7 @@
      &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0)
       use b2mod_types
       use b2mod_transport_namelist
-!      use b2mod_input_profile
+      use b2mod_input_profile
       use b2mod_constants
       use b2mod_time
 !      use b2mod_diag
@@ -438,20 +438,17 @@ cxpb Corrected for dimensionality
          alf0(iCv) = dfalf*dv%ne(iCv)*sqrt(qe/pl%te(iCv))
       enddo
 
-#ifdef WG_TODO
       if(transport_inputfile.eq.1) then
-        call transport_input(nx, ny, ns, rza, na, ne, te, ti, hcib,
+        call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
      &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
-        do ix=-1,nx
-          do iy=-1,ny
-            hci0(iCv)=0.0_R8
-            do is=0,ns-1
-              hci0(iCv)=hci0(iCv)+hcib(iCv,is)
-            enddo
+        do iCv = 1, nCv
+          hci0(iCv)=0.0_R8
+          do is=0,ns-1
+            hci0(iCv)=hci0(iCv)+hcib(iCv,is)
           enddo
         enddo
       endif
-#endif
+
       if(iout.ne.0) then                                            !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
