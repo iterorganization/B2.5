@@ -17,7 +17,6 @@ c      use b2mod_types
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
       integer, save :: csig_an_style=1
-      integer, save :: nomp = 0
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable, save :: nsdata(:,:,:)
       integer, allocatable, save :: nxdata(:,:,:)
@@ -26,7 +25,6 @@ c      use b2mod_types
       integer, allocatable, save  :: ndata(:,:,:)
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
-      integer, allocatable, save :: omp(:)
 #else
 #     include "DIMENSIONS.F"
       parameter(nrr = DEF_NYD+2, nxx = DEF_NXD+2, nss = DEF_NSD)
@@ -37,7 +35,6 @@ c      use b2mod_types
       integer, save :: ndata(nkind_data,nkind_coeff,0:nss)
       real(kind=R8), save :: tdata(3,nrr,nkind_coeff,0:nss)
       integer, save :: addspec(nss,nkind_coeff,0:nss)
-      integer, save :: omp(nrr)
 #endif
 
       contains
@@ -59,7 +56,6 @@ c      use b2mod_types
         allocate(ndata(nkind_data,nkind_coeff,0:nss))
         allocate(tdata(3,nrr,nkind_coeff,0:nss))
         allocate(addspec(nss,nkind_coeff,0:nss))
-        allocate(omp(nrr))
       endif
 #else
 !      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
@@ -81,7 +77,6 @@ c      use b2mod_types
         deallocate(ndata)
         deallocate(tdata)
         deallocate(addspec)
-        deallocate(omp)
       endif
 #endif
 
@@ -437,7 +432,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_user_namelist
-     , , only : rzomp
+     , , only : nomp, omp, icsep
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -454,7 +449,7 @@ cdjm Jan2017 Keep linearised sources for balance
      *  hce0(nCv), sig0(nCv), alf0(nCv)
       integer :: iy,i,ifail,spec,nspec,iiy,iir,ift,icv,
      &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
-     &      kind_coeff,kind_data,isc,ic,jsep,lbl
+     &      kind_coeff,kind_data,isc,ic,lbl
       integer :: ixwidth(nscale), ixmean(nscale)
        
       real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
@@ -512,16 +507,11 @@ cdjm Jan2017 Keep linearised sources for balance
             catch_up=.false.
           endif
         enddo
-        nomp = 0
-        omp = 0
-        call cv_intersections (nCv, geo, mpg, rzomp, omp, nomp)
-        if (nomp.eq.0) then
-          write(*,*) ' ERROR define correct midplane coordinates'
-          write(*,*) ' using rzomp in b2.user.parameters'
-          call xerrab('No CVs in midplane list')
-        endif
+        call xertst(nomp.gt.0,
+     &    'No CVs in omp list, check rzomp in b2.user.parameters')
+        call xertst(icsep.gt.0,
+     &    'Invalid icsep value, check rzomp in b2.user.parameters')
         nlbl = max(1,maxval(mpg%ftLbl))
-csc eliminate from OMP Cvs that are not in nCi
         if (any(poloidal_scaling)) 
      .    call xerrab('Poloidal scaling not yet coded for WG')
       else
@@ -594,17 +584,8 @@ csc eliminate from OMP Cvs that are not in nCi
 #endif
 ! csc for now identify pr with r-coordinate of midplane CVs
             pr = 0.0_R8
-            jsep = 0
-            ic = 1
-            found = .false.
-            do while (ic.le.nomp .and..not.found)
-              if (mpg%cvReg(omp(ic)).ne.mpg%cvReg(omp(ic+1))) then
-                found = .true.
-                jsep = ic
-              endif
-              ic = ic + 1 
-            end do
-            rsep = (geo%cvX(omp(jsep))+geo%cvX(omp(jsep+1)))/2.0_R8 ! FIXME should use distance of face center to neighbouring CV center?
+            rsep = 0.5_R8*(geo%cvX(omp(icsep)) + 
+     &             geo%cvX(omp(icsep+1))) ! FIXME should use distance of face center to neighbouring CV center?
             do ic=1, nomp
               pr(ic) = geo%cvX(omp(ic)) - rsep
             end do

@@ -3,7 +3,8 @@
 
       subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0)
+     &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0, dna_ExB, 
+     &   hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_transport_namelist
       use b2mod_input_profile
@@ -40,7 +41,8 @@
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv),
-     &  hvi0(nCv,0:1), hve0(nCv,0:1)
+     &  hvi0(nCv,0:1), hve0(nCv,0:1), dkt0(nCv), dna_ExB(nCv),
+     &  hce_ExB(nCv), hci_ExB(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv)
@@ -116,11 +118,11 @@
      *  t0, t1, min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp, tav
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
-      integer elm_count
+      integer elm_count, transport_keps
       save ncall, new_df0, ixref, transport_namelist, user_transport,
      1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
      2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
-     3  neutral_sources_rescale
+     3  neutral_sources_rescale, transport_keps
       logical catch_up
 *   ..procedures
       intrinsic sqrt, dim, max, exp
@@ -131,7 +133,7 @@
      2  ballooning/0.0_R8/, bb_ref/0.0_R8/, ballooning_rescale/1.0_R8/,
      3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
      4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
-     5  neutral_sources_rescale/1.0_R8/
+     5  neutral_sources_rescale/1.0_R8/, transport_keps/0/
 *   ..statement functions
       real (kind=R8) ::
      *  expu, addup
@@ -157,6 +159,7 @@
      1                neutral_sources_rescale)
         call ipgeti ('b2tqna_user_transport', user_transport)
         call ipgeti ('b2tqna_inputfile', transport_inputfile)
+        call ipgeti ('b2tqna_transport_keps', transport_keps)
         call ipgeti ('b2tqna_ixref', ixref)
 !WG_TODO        call xertst (-1.le.ixref.and.ixref.le.nx,
 !WG_TODO     1   'faulty argument b2tqna_ixref')
@@ -276,6 +279,10 @@
       call sfill (nCv, 0.0_R8, alf0, 1)
       call sfill (nCv*2, 0.0_R8, hvi0, 1)
       call sfill (nCv*2, 0.0_R8, hve0, 1)
+      call sfill (nCv, 0.0_R8, dkt0, 1)
+      call sfill (nCv, 0.0_R8, dna_ExB, 1)
+      call sfill (nCv, 0.0_R8, hce_ExB, 1)
+      call sfill (nCv, 0.0_R8, hci_ExB, 1)
       do is = 0, ns-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
@@ -533,6 +540,14 @@ c ank added blobby transport
         call xerrab ('user_transport value not coded')
       endif
 #endif
+c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
+      if(transport_keps.ne.0) then
+!     allocate transport? FIXME
+        call set_transport_keps(transport_keps, nCv, ns, geo, mpg, pl,
+     &    dv, rt, st_ext, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB, 
+     &    hce_ExB, hci_ExB)
+      endif
+
 cdpc
       if(ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
@@ -3644,3 +3659,142 @@ c recompute hci0 and hcn0
       call subend ()
       return
       end subroutine set_transport_kul
+
+      subroutine set_transport_keps(transport_keps, nCv, ns, geo, 
+     &     mpg, pl, dv, rt, st_ext, dna0, vsa0, hce0, hci0, hcib, 
+     &     dkt0, dna_ExB, hce_ExB, hci_ExB)
+      use b2mod_types
+      use b2mod_constants
+      use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2mod_user_namelist
+     , , only : nomp, omp, icsep
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer transport_keps, nCv, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
+*   ..input/output arguments
+      real (kind=R8) :: dna0(nCv,0:ns-1),
+     &   vsa0(nCv,0:ns-1),
+     &   hci0(nCv), hcib(nCv,0:ns-1),
+     &   hce0(nCv), dkt0(nCv),
+     &   dna_ExB(nCv), hce_ExB(nCv),
+     &   hci_ExB(nCv)
+*   ..local variables
+      integer :: ic, is, ncall, keps_local
+      real(kind=R8) :: pr(nCv), ro(nCv),
+     1   cst(nCv), rhol, keps_cd, keps_heat,
+     2   cs, dna_min, keps_heat_i, keps_visc,
+     3   keps_dkt, keps_inc, keps_fac
+      integer, save :: solve_keps = 0
+      save ncall, keps_cd, keps_heat,
+     1     keps_heat_i, keps_visc, keps_dkt, dna_min
+      save keps_local, keps_inc, keps_fac
+      data ncall/0/, keps_cd/1.0_R8/,
+     2     keps_heat/2.0_R8/, keps_local/0/,
+     3     keps_heat_i/2.0_R8/, keps_visc/0.2_R8/, keps_dkt/0.01_R8/
+     4     dna_min/1.0e-2_R8/, keps_inc/1.0_R8/, keps_fac/1.0_R8/
+
+*   ..subprogram start-up calls
+      call subini ('set_transport_keps')
+      if(ncall.eq.0) then
+        call ipgetr ('b2tqna_keps_cd', keps_cd)
+        call ipgetr ('b2tqna_keps_visc', keps_visc)
+        call ipgetr ('b2tqna_keps_dkt', keps_dkt)
+        call ipgetr ('b2tqna_keps_heat', keps_heat)
+        call ipgetr ('b2tqna_keps_heat_i', keps_heat_i)
+        call ipgeti ('b2tqna_keps_local', keps_local)
+        call ipgetr ('b2tqna_keps_dna_min', dna_min)
+        call ipgeti ('b2mndr_solve_keps', solve_keps)
+        call ipgetr ('b2tqna_keps_inc', keps_inc)
+        call ipgetr ('b2tqna_keps_init', keps_fac)
+      endif
+*   ..compute local sound speed
+      call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
+      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pl%tn, pr, 
+     &             st_ext)
+      cst(:)=sqrt(pr(:)/ro(:))
+      do ic = 1, nCv
+*   ..use tokamak major radius
+        do is=0,ns-1
+          rhol = 0.0_R8
+          if(.not.is_neutral(is)) then
+            if(keps_local.eq.1) then
+*   ..compute local larmor radius
+              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(ic)/am(is)/mp)/
+     &         abs(rt%rza(ic,is)*qe*geo%cvBb(ic,3))
+              cs = cst(ic)
+            else
+              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(omp(icsep+1))/
+     &               am(is)/mp)/abs(rt%rza(omp(icsep+1),is)*qe*
+     &               geo%cvBb(omp(icsep+1),3))
+              cs = cst(omp(icsep+1))
+            endif
+            if(transport_keps.eq.1) then
+              if (solve_keps.eq.0) then
+                write(*,*) 'b2mndr_solve_keps = ',
+     &            solve_keps,' and b2tqna_transport_keps =',
+     &            transport_keps,' not compatible'
+                call xerrab
+     &           ('Incompatible switches for k-epsilon transport')
+              else
+*   ..compute D according to KUL, using kt
+                dna_ExB(ic)= keps_cd*rhol*sqrt(pl%kt(ic)/am(is)/mp)
+                dna0(ic,is)= (dna_ExB(ic) + dna_min)*keps_fac
+     &            +(1.0_R8-keps_fac)*dna0(ic,is)
+              endif
+            else
+              write(*,*) 'b2tqna_transport_keps = ',
+     &          transport_keps,' not coded'
+              call xerrab ('b2tqna_transport_keps value not coded')
+            endif
+            if (keps_visc.gt.0.0_R8) then
+              vsa0(ic,is) = keps_visc*am(is)*mp*pl%na(ic,is)*
+     &          dna0(ic,is)*keps_fac +
+     &          (1.0_R8-keps_fac)*vsa0(ic,is)
+            endif
+            if (keps_heat.gt.0.0_R8) then
+              hce_ExB(ic) = keps_heat*dna_ExB(ic)*dv%ne(ic)
+              hce0(ic)=keps_heat*dna0(ic,is)*dv%ne(ic)*keps_fac
+     &          + (1.0_R8-keps_fac)*hce0(ic)
+            endif
+            if (keps_heat_i.gt.0.0_R8) then
+              !wdk to be generalized for multiple ion species!
+              hci_ExB(ic) = keps_heat_i*dna_ExB(ic)*pl%na(ic,is)
+              hcib(ic,is)=keps_heat_i*dna0(ic,is)*pl%na(ic,is)*
+     &          keps_fac+ (1.0_R8-keps_fac)*hcib(ic,is)
+            endif
+            if (keps_dkt.le.0.0) then
+              write(*,*) 'b2tqna_keps_dkt = ',
+     &          keps_dkt,' not implemented/possible' 
+             call xerrab
+     &           ('k diffusion coefficient .le. 0.0')
+            else
+              dkt0(ic) = keps_dkt*dna0(ic,1)*pl%na(ic,1)
+            endif
+          endif
+        enddo
+      enddo
+      hci0 = 0.0_R8
+      do is = 0, ns-1
+        hci0 = hci0 + hcib(:,is)
+      enddo 
+*   ..increase percentage of coefficients from k-eps
+      keps_fac = min(keps_fac*keps_inc,1.0_R8)
+      if (keps_inc.gt.1.0_R8) 
+     > write(*,*) 'b2tqna_keps_fac = ',keps_fac
+
+*   ..return
+      ncall = ncall +1
+      call subend ()
+      return
+
+      end subroutine set_transport_keps
+
