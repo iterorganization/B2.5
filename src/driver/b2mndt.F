@@ -105,7 +105,7 @@
       integer istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum, 
+     &  acorte, acorti, acorpo, acorkt, nasum, na0sum, 
      &  pz(nCv), rz(nCv), cssb(nCv,0:1)         !iyv 06.02.14
 ! csc UNCOMMENT WITH AD
 !  REAL(kind=r8) :: acorpad(0:ns-1), acoruad(0:ns-1), acorutd, acorted, &
@@ -385,8 +385,9 @@ ctmp.dpc
           call b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
      &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
-     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn,
-     $    st%dv%ne, st%dv%ni, st%dv%kinrgy,  st%sr, .false.)
+     &    st%psnc%kt, st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, 
+     &    st%pl%tn, st%dv%ne, st%dv%ni, st%dv%kinrgy, st%pl%kt,
+     &    st%sr, .false.)
 *   ..add to previous contributions
 !WG_TODO This is already done in b2srdt
 !WG_TODO Still need *dt-arrays for output?
@@ -413,7 +414,7 @@ ctmp.dpc
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
      &     call b2srst (nCv, ns, mpg, st%pl%na, st%pl%ua, st%pl%te,   !srv 01.07.08
-     &      st%pl%ti, st%pl%po, st%dv%ne, st%dv%ni, st%sr)
+     &      st%pl%ti, st%pl%po, st%dv%ne, st%dv%ni, st%pl%kt, st%sr)
 *       (smq is inherently stable.)
 *     ..inner iteration
           istg(2) = 0
@@ -443,7 +444,8 @@ ctmp.dpc
 *      ..zero out residuals on special regions
 *        (this in order to avoid their contribution to the norms)
            call b2mxzr (nCv, ns, mpg, st%dv%resco, st%dv%resmo, 
-     &      st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%respo)
+     &      st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn, 
+     &      st%dv%respo, st%dv%reskt)
 *      ..compute norms of the residuals
            call b2mxar (nCv, ns, nnreg(0), BoRiS, geo, mpg, st%pl, 
      &      st%dv, st%diag)
