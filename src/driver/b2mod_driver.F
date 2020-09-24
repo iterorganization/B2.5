@@ -128,14 +128,15 @@
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
-     *  tn_style = 0, kul_recycle = 0, user_transport = 0 
+     *  tn_style = 0, kul_recycle = 0, user_transport = 0,
+     *  solve_keps = 0 
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps, sput_frc, 
+     2  sput_phys, delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
@@ -176,7 +177,7 @@
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
      4  use_astra, BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     .  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
      7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
@@ -203,6 +204,7 @@
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
+     5     kt_eps/1.0e-2_R8/,
      6     ua_eps/1.0e+4_R8/,
      7     delta_min/0.0_R8/,
      8     dt_change_inc/1.0_R8/,
@@ -260,8 +262,8 @@
      & rescale_rd, rescale_br
 *   ..procedures
       logical lnext
-      real (kind=R8) :: rratio
-      external rratio
+      real (kind=R8) :: rratio, smax
+      external rratio, smax
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
@@ -1030,6 +1032,7 @@
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_ntim_run', ntim_run)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
+       call ipgeti ('b2mndr_solve_keps', solve_keps)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1054,6 +1057,8 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.po_eps,'faulty internal parameter po_eps')
        call ipgetr ('b2mndr_ua_eps',ua_eps)
        call xertst (0.0_R8.lt.ua_eps,'faulty internal parameter ua_eps')
+       call ipgetr ('b2mndr_kt_eps',kt_eps)
+       call xertst (0.0_R8.lt.kt_eps,'faulty internal parameter kt_eps')
        call ipgetr ('b2mndr_delta_min',delta_min)
        call xertst (0.0_R8.le.delta_min,
      1  'faulty internal parameter delta_min')
@@ -1440,6 +1445,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 #endif
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
+      if (solve_keps.gt.0 .and. .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
+     .  state%pl%kt = state%pl%ti*0.1_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
 !    call read_plasma_state_diff (ninp(6), ns, mpg%nCv, mpg%nFc, stated)
@@ -1753,7 +1760,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
-      call alloc_b2mod_user(mpg,ns,nlim,nmol,nsts)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -2011,6 +2018,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%ti+ti_eps*ev)))
         write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
+     &    (abs(state%pl%kt)+kt_eps*ev)))
         write(*,*) 'delta ua ',
      *   maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
@@ -2025,6 +2034,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%ti+ti_eps*ev))),
      &     maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
+     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &    (state%pl%kt+kt_eps*ev))),
      &     maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))

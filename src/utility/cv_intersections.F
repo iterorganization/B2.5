@@ -1,16 +1,17 @@
-      subroutine cv_intersections (nCv, geo, m, segm, list, nncv)
+      subroutine cv_intersections (nCv, geo, m, segm, list, nncv, 
+     &  nmax, ifail)
       use b2mod_types
       use b2us_geo
       use b2us_map
       implicit none
-      integer nCv
+      integer nCv, nmax
       type (geometry), intent (in) :: geo
       type(mapping), intent(in) :: m
       real(kind=r8) :: segm(2,2)
       integer :: list(nCv), nncv
       integer :: ic, ifc, ii, kk
       real(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
-      logical found, intersects
+      logical found, intersects, ifail
       external intersects, xertst
 
 
@@ -22,6 +23,7 @@
 ***
       nncv = 1 !number of CVs in the list
       list = 0
+      ifail = .false.
       p1=segm(:,1)
       q1=segm(:,2)
       do ifc = 1, m%nFc
@@ -39,6 +41,10 @@
               kk = kk + 1
             enddo
             if (.not.found) then
+              if (nncv.gt.nmax) then
+                ifail = .true.
+                return
+              endif
               list(nncv) = ic
               nncv = nncv + 1
             endif

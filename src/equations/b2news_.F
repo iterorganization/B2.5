@@ -711,8 +711,8 @@ c      with diamagnetic drift part                                       !srv 13
       call b2tfhe_ (nCv, nFc, nVx, ns, geo, mpg,                         !srv 29.01.20
      &      pl, dv, co, .true.)                                          !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-      call b2tfhi_(nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,          !srv 13.10.06
-     &  .true.)                                                          !djm Jan2017
+      call b2tfhi_(nCv, nFc, nVx, ns, ismain, geo, mpg, pl, dv,          !srv 13.10.06
+     &  co, rt,.true.)                                                   !djm Jan2017
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
 

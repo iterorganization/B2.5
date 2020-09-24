@@ -1,6 +1,7 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
+      use b2us_geo
       use b2us_map
       implicit none
 #     include "DIMENSIONS.F"
@@ -15,6 +16,8 @@
       integer lhetrgts(nhetrgtx),lpfrgrp(DEF_NLIM),lntrgrp(DEF_NLIM)
       integer l_h_mol(DEF_NMOL,3)
 #endif
+      integer, parameter :: nromp=DEF_NYD*4
+      integer, save :: omp(nromp), icsep, nomp
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -76,9 +79,10 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(m,ns,nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol,ntns)
       implicit none
       integer, intent(in) :: ns, nlim, nmol, ntns
+      type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
 
       if (user_initialised) return
@@ -123,7 +127,7 @@ c***  Standard setup:
       cfdata = 0.0_R8
       ncfdata = 0
       rzomp = 0.0_R8
-      call read_b2mod_user_namelist(ns,ntns,m)
+      call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
       return
@@ -139,10 +143,11 @@ c***  Standard setup:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(ns,ntns,m)
+      subroutine read_b2mod_user_namelist(ns,ntns,geo,m)
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: ns,ntns
+      type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb
@@ -151,7 +156,7 @@ c***  Standard setup:
       character*260 filename, cffile
       character*1 str
       integer i, j, k, is, im, ndata
-      logical old_style, done
+      logical old_style, done, ifail, found
       logical, save :: hydrogen, helium, neon
       real(kind=r8) :: dum(2)
       external subini, subend
@@ -370,6 +375,21 @@ c*** Set default values according to current species list
         write(*,*) ' Inverted rzomp coordinates'
         write(*,*) ' rzomp:', rzomp
       endif
+      nomp = 0
+      omp = 0
+      call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
+     & ifail)
+      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      icsep = 0
+      ic = 1
+      found = .false.
+      do while (ic.le.nomp .and..not.found)
+        if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
+          found = .true.
+          icsep = ic
+        endif
+      ic = ic + 1 
+      end do
 
       call subend ()
       return

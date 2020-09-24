@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2srst (nCv, ns, mpg, na, ua, te, ti, po,   !srv 01.07.08
-     &  ne, ni, sr)
+     &  ne, ni, kt, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -18,7 +18,7 @@
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), po(nCv),
-     &  ne(nCv), ni(nCv,0:1)
+     &  ne(nCv), ni(nCv,0:1), kt(nCv)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
 *   ..common blocks
@@ -44,10 +44,11 @@
      *  snast(nCv,0:1,0:ns-1), smost(nCv,0:3,0:ns-1), 
      &  shest(nCv,0:3), shist(nCv,0:3),
      &  schst(nCv,0:3), snest(nCv,0:1),
-     &  wrk0(nCv)
+     &  sktst(nCv,0:3), wrk0(nCv)
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
+      real (kind=R8), save :: kt_eps = 1.0e-60_R8
       save ncall, rf0, rf1, rf2, rf3, use_eirene
 *   ..procedures
       intrinsic min, max
@@ -93,6 +94,7 @@
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, te, 1, 'te', '.gt.')
         call b2xvsg (nCv, ti, 1, 'ti', '.gt.') 
+        call b2xvsg (nCv, kt, 1, 'kt', '.gt.') 
       endif
 
 *  .. save sources
@@ -102,6 +104,7 @@
       shist = sr%shi
       schst = sr%sch
       snest = sr%sne
+      sktst = sr%skt
 
 *  ..stabilise
 *   ..modify sna
@@ -142,7 +145,7 @@
          sr%smo(iCv,3,is) = min(sr%smo(iCv,3,is),0.0_R8)
        enddo
       enddo
-*   ..modify she, shi, sch
+*   ..modify she, shi, sch, skt
       do iCv = 1, nCv
 *     ..modify she(,,0:1)
         t0 = sr%she(iCv,0)+sr%she(iCv,1)*te(iCv)
@@ -176,6 +179,17 @@
         sr%shn(iCv,3) = (1.0_R8/ti(iCv))*
      &    min(sr%shn(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 
+*     ..modify skt(,,0:1)
+c        t0 = sr%skt(iCv,0)+sr%skt(iCv,1)*kt(iCv)
+c        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
+c        sr%skt(iCv,1) = (1.0_R8/(kt(iCv)+kt_eps))*
+c     &    min(sr%skt(iCv,1)*kt(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+*     ..modify skt(,,2:3)
+c        t0 = sr%skt(iCv,2)+sr%skt(iCv,3)*kt(iCv)
+c        sr%skt(iCv,2) = max(sr%skt(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
+c        sr%skt(iCv,3) = (1.0_R8/(kt(iCv)+kt_eps))*
+c     &    min(sr%skt(iCv,3)*kt(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+
 *     ..make sch(,,1) negative
         sr%sch(iCv,0) = sr%sch(iCv,0)+max(0.0_R8,sr%sch(iCv,1))*po(iCv)
         sr%sch(iCv,1) = min(sr%sch(iCv,1),0.0_R8)
@@ -196,6 +210,7 @@
       shist = sr%shi - shist
       schst = sr%sch - schst
       snest = sr%sne - snest
+      sktst = sr%skt - sktst
 
 cdjm Jan2017 Store for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
