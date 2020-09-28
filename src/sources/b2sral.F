@@ -227,6 +227,7 @@
        sr%shn = srw%shn0
        sr%sch = srw%sch0
        sr%sne = srw%sne0
+       sr%skt = srw%skt0
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
 
