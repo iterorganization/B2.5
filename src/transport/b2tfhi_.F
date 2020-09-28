@@ -127,7 +127,7 @@ cpax
 *    ..test sign of ni, ti, chci
        call b2xvsg (nCv, dv%ni, 1, 'ni', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
-       call b2xvsg (nCv, pl%kt, 1, 'kt', '.gt.')
+       call b2xvsg (nCv, pl%kt, 1, 'kt', '.ge.')
        call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
        call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')

@@ -3711,10 +3711,21 @@ c recompute hci0 and hcn0
         call ipgetr ('b2tqna_keps_heat', keps_heat)
         call ipgetr ('b2tqna_keps_heat_i', keps_heat_i)
         call ipgeti ('b2tqna_keps_local', keps_local)
+        if (keps_local.ne.1) then
+         call xertst(nomp.gt.0,
+     &    'No CVs in omp list, check rzomp in b2.user.parameters')
+         call xertst(icsep.gt.0,
+     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+        endif
         call ipgetr ('b2tqna_keps_dna_min', dna_min)
         call ipgeti ('b2mndr_solve_keps', solve_keps)
         call ipgetr ('b2tqna_keps_inc', keps_inc)
         call ipgetr ('b2tqna_keps_init', keps_fac)
+        if (solve_keps.eq.0 .and. transport_keps.gt.0) then
+          write(*,*) 'WARNING! b2mndr_solve_keps = ',
+     &      solve_keps,' and b2tqna_transport_keps =',
+     &      transport_keps,' should go together'
+        endif
       endif
 *   ..compute local sound speed
       call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
@@ -3738,18 +3749,10 @@ c recompute hci0 and hcn0
               cs = cst(omp(icsep+1))
             endif
             if(transport_keps.eq.1) then
-              if (solve_keps.eq.0) then
-                write(*,*) 'b2mndr_solve_keps = ',
-     &            solve_keps,' and b2tqna_transport_keps =',
-     &            transport_keps,' not compatible'
-                call xerrab
-     &           ('Incompatible switches for k-epsilon transport')
-              else
 *   ..compute D according to KUL, using kt
-                dna_ExB(ic)= keps_cd*rhol*sqrt(pl%kt(ic)/am(is)/mp)
-                dna0(ic,is)= (dna_ExB(ic) + dna_min)*keps_fac
-     &            +(1.0_R8-keps_fac)*dna0(ic,is)
-              endif
+              dna_ExB(ic)= keps_cd*rhol*sqrt(pl%kt(ic)/am(is)/mp)
+              dna0(ic,is)= (dna_ExB(ic) + dna_min)*keps_fac
+     &          +(1.0_R8-keps_fac)*dna0(ic,is)
             else
               write(*,*) 'b2tqna_transport_keps = ',
      &          transport_keps,' not coded'

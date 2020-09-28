@@ -3,7 +3,8 @@
 
       subroutine b2npht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt, !srv 05.07.17
      &  ismain, solving, solvereg, solvireg, solvnreg, solvtreg,        !srv 22.05.18
-     &  solvpreg, solvmreg, rxf, BoRiS, pl, dv, co, sr, ierr)
+     &  solvpreg, solvmreg, rxf, BoRiS, pl, dv, co, rt, sr, st_ext,
+     &  ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -29,6 +30,8 @@
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
+      type (B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
       integer ierr
 *   ..common blocks
@@ -62,16 +65,19 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
-     1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                   !srv 02.01.07
+     1 wrkc(nFc,0:1,0:2), cortt(nCv),                                   !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
-     3 wrk0(nCv), shei(nCv),                            !srv 18.09.09
-     4 shef(nCv,0:3), shif(nCv,0:3)                     !srv 10.11.02
+     3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
+     4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
+     5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3),
+     6 skt_prod(nCv), skt_diss(nCv)
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: mdf_fhe = 0, mdf_fhi = 0
       integer, save :: style = 1                                        !srv 09.07.08
       integer, save :: get_residuals = 0                                !srv 22.05.18
-      integer, save :: tn_style = 0                               
+      integer, save :: tn_style = 0  
+      integer, save :: solve_keps = 0                             
       character chns*3                                                  !srv 17.07.05
       character chncall*5                                          
       save ncall, rxg, pcm0, pcm1
@@ -120,7 +126,8 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-       call ipgeti ('b2mn_tn_style', tn_style)                
+       call ipgeti ('b2mn_tn_style', tn_style)      
+       call ipgeti ('b2mndr_solve_keps', solve_keps)          
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -147,6 +154,7 @@
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
+       call b2xvsg (nCv, pl%kt, 1, 'kt', '.ge.')
       endif
 
 * ..main computation
@@ -174,7 +182,18 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
-
+*   ..sources due to k-eps model
+      call b2sikt (nCv, nFc, nVx, ns, ismain, geo, mpg, pl, 
+     &  dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, skt_diss)
+      if (solve_keps.eq.1) then
+        call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
+        call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
+        call b2saxpy (nCv*4, 1.0e0_R8, sr%skt, 1, skt0, 1)
+      endif
+      sr%skt_prod = 0.0_R8
+      sr%skt_diss = 0.0_R8
+      call b2saxpy (nCv, 1.0e0_R8, skt_prod, 1, sr%skt_prod, 1)
+      call b2saxpy (nCv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
 
 #ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
@@ -208,7 +227,8 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
-
+      call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0, dv%fkt,
+     &   dv%reskt)
 
 c residuals for separate neutral energy equation
       if (tn_style.eq.2) then   !! separate neutral energy equation
@@ -286,6 +306,9 @@ c residuals for separate neutral energy equation
         wrk0=shi0(:,0)+shi0(:,1)*pl%ti+
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2npht_shi')
+        wrk0=skt0(:,0)+skt0(:,1)*pl%kt+
+     &       skt0(:,2)*dv%ni(:,1)+skt0(:,3)*pl%kt*dv%ni(:,1)
+        call my_out_us(70,nCv,0,wrk0,'b2npht_skt')
       endif            
 
 
@@ -293,19 +316,20 @@ c residuals for separate neutral energy equation
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn,
+     &  rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn, pl%kt,
      &  dv%floe, dv%cone, dv%floi, dv%coni, dv%flon, dv%conn,
-     &  she0, shi0, shn0,
-     &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn,
+     &  dv%flokt, dv%conkt,
+     &  she0, shi0, shn0, skt0,
+     &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn, dv%reskt,
      &  dv%cortt, dv%corte, 
-     &  dv%corti, dv%cortn, wrkf, wrkc, aa)
+     &  dv%corti, dv%cortn, dv%corkt, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
      &  solvpreg,
      &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti, dv%cortn,
-     &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%po, 
-     &  dv%ne, dv%ni)
+     &  dv%corkt, dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, 
+     &  pl%kt, pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)

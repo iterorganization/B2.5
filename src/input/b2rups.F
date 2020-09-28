@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2rups (nget, nx, ny, ns,
-     &  ne, na, ua, uadia, te, ti, tn, po,
+     &  ne, na, ua, uadia, te, ti, tn, po, kt,
      &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -24,7 +24,7 @@
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny),
+     &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
@@ -392,6 +392,8 @@
       tn = ti
       call cfrure_opt (nget, n2, tn, 'tn')
       call cfrure (nget, n2, po, 'po')
+      kt = 0.0_R8
+      call cfrure_opt (nget, n2, kt, 'kt')
 *   ..read fluxes
       if(b2fstat_version.ge.'03.001.000') then
         call cfrure (nget, n2*4*ns, fna,    'fna')
@@ -683,6 +685,8 @@
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
+      kt = 0.0_R8
+      call cfrure_opt (nget, n2, kt, 'kt') ! FIXME to be removed
 * ..return
       call subend ()
       return

@@ -4,7 +4,7 @@
       subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
      &  solvpreg, solvmreg, rxf, pcm0, cortt, corte, corti, cortn,
-     &  pccm0, na, ua, te, ti, tn, po, ne, ni)
+     &  corkt, pccm0, na, ua, te, ti, tn, kt, po, ne, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -17,7 +17,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf, pcm0, cortt(nCv), corte(nCv),
-     &  corti(nCv), cortn(nCv), pccm0(nCv)
+     &  corti(nCv), cortn(nCv), corkt(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
      &  solvnreg(0:nregionv), solvtreg(0:nregionv),                             !srv 22.05.18
@@ -26,7 +26,7 @@
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), tn(nCv), po(nCv),
-     &  ne(nCv), ni(nCv,0:1)
+     &  ne(nCv), ni(nCv,0:1), kt(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -42,8 +42,9 @@
 *   ..local variables
       integer ncall, stylec, pot_eq, iCv, is, ireg
       integer, save :: tn_style = 0
+      integer, save :: solve_keps = 0
       real (kind=R8) ::
-     *  ctt, dte(nCv), dti(nCv), dtn(nCv), t0, t1, t2,
+     *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), t0, t1, t2,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
       save ncall, stylec, pot_eq
 *   ..procedures
@@ -68,6 +69,7 @@
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2mn_tn_style', tn_style)
+       call ipgeti ('b2mndr_solve_keps', solve_keps)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -85,6 +87,7 @@
         call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
         call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+        call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
       endif 
 
       if (tn_style.ne.0.and.stylec.ne.0) then
@@ -134,6 +137,7 @@
          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         endif
+        dkt(iCv) = rxf*max(-kt(iCv),corkt(iCv))
         if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi) then
@@ -142,7 +146,12 @@
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb
-        if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))	 
+        if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
+        if (solve_keps.gt.0) then
+          kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))   !xpb
+        else
+          kt(iCv) = kt(iCv)
+        endif
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti

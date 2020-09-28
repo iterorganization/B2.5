@@ -94,7 +94,7 @@
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, te, 1, 'te', '.gt.')
         call b2xvsg (nCv, ti, 1, 'ti', '.gt.') 
-        call b2xvsg (nCv, kt, 1, 'kt', '.gt.') 
+        call b2xvsg (nCv, kt, 1, 'kt', '.ge.') 
       endif
 
 *  .. save sources

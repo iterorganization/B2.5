@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sikt (nCv, nFc, nVx, ns, ismain, geo, mpg, pl, 
-     &  dv, rt, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
+     &  dv, rza, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
       use b2mod_types
 !      use b2mod_indirect
 !      use b2mod_geo_corner
@@ -29,9 +29,9 @@ c      use b2mod_keps
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
-      type (B2Rates), intent (in) :: rt
       type (B2Coeff), intent (in) :: co
       type (B2StateExt), intent (in) :: st_ext
+      real (kind=R8) :: rza(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(nCv,0:3), shi0(nCv,0:3), 
@@ -59,7 +59,8 @@ c      use b2mod_keps
       real (kind=R8), save :: delta_om = 0.0e-1_R8,
      &  fac_theta = 1.0e0_R8, fac_gamma_diss = 0.00e0_R8, 
      &  delta_om_core = 0.0-1_R8, fac_gamma_diss_core = 0.00e0_R8,
-     &  fac_sheath_rest=1.0_r8, fac_sheath_core=1.0_r8
+     &  fac_sheath_rest=1.0_r8, fac_sheath_core=0.0_r8,
+     &  fac_aniso=0.0_R8
       character chk*1
       save ncall
 *   ..procedures
@@ -86,10 +87,17 @@ c      use b2mod_keps
        call ipgetr ('b2sikt_delta_om', delta_om)
        call ipgetr ('b2sikt_delta_om_core', delta_om_core)
        call ipgeti ('b2sikt_keps_local', keps_local)
+       if (keps_local.ne.1) then
+        call xertst(nomp.gt.0,
+     &    'No CVs in omp list, check rzomp in b2.user.parameters')
+        call xertst(icsep.gt.0,
+     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+       endif
        call ipgeti ('b2mndr_solve_keps', solve_keps)
        call ipgetr ('b2sikt_fac_sheath', fac_sheath_rest)
        call ipgetr ('b2sikt_fac_sheath_core', fac_sheath_core)
        call ipgeti ('b2sikt_fac_sheath_local', fac_sheath_local)
+       call ipgetr ('b2sikt_anisothermal', fac_aniso)
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv')
@@ -112,8 +120,9 @@ c      use b2mod_keps
       call sfill (nCv*4, 0.0e0_R8, she0, 1)
       call sfill (nCv*4, 0.0e0_R8, shi0, 1)
       call sfill (nCv*4, 0.0e0_R8, skt0, 1)
-      if (solve_keps.ne.0) then 
-       if (model.eq.1) then
+      call sfill (nCv, 0.0e0_R8, skt_prod, 1)
+      call sfill (nCv, 0.0e0_R8, skt_diss, 1)
+      if (model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB particle flux
 cwdk  sink   : add hoc term, k^2 scaling, controled by delta_om
@@ -126,13 +135,16 @@ cwdk           with factor fac_gamma_diss (~97%)
         cs  = sqrt(pr/ro)
 *   ..compute wrk arrays
 *     ..logarithm of magnetic field in cell center
-        wrks(:) = log(geo%cvBb(:,3))
-
+        wrks(:) = log(geo%cvBb(:,3)**2)
 *     ..gradients na and log(bb) in poloidal and radial direction
 csc FIXME   if(leftix(ix,iy).eq.-2) then
 c            wrk2(ix,iy) = 0.0_R8
 c            wrk3(ix,iy) = 0.0_R8
 c           else
+        dnac = 0.0_R8
+        dlbc = 0.0_R8
+        dtec = 0.0_R8
+        dtic = 0.0_R8
         call gradc(nCv, nFc, nVx, 0, geo, mpg, 
      &     pl%na(:,ismain), wrkv, dnac)
         call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
@@ -140,7 +152,7 @@ c           else
         call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dtic)
 
 *     ..sources
-        do ic = 1, nCv
+        do ic = 1, mpg%nCi
 csc FIXME  if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
 c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
          if (mod(mpg%cvReg(ic),4) .eq. 1) then
@@ -154,11 +166,11 @@ c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
          endif
          if (keps_local.eq.1) then
           rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(ic)/(am(ismain)*mp))/
-     &       abs(rt%rza(ic,ismain)*qe*geo%cvBb(ic,3))
+     &       abs(rza(ic,ismain)*qe*geo%cvBb(ic,3))
           css = cs(ic)
          else
           rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep+1))/
-     &       (am(ismain)*mp))/abs(rt%rza(omp(icsep+1),ismain)*
+     &       (am(ismain)*mp))/abs(rza(omp(icsep+1),ismain)*
      &       qe*geo%cvBb(omp(icsep+1),3))
           css = cs(omp(icsep+1))
          endif
@@ -173,22 +185,21 @@ c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
          t0 = geo%cvVol(ic)*(
      &     (pl%ti(ic)+pl%te(ic))*co%dna_ExB(ic)*
      &     (dnac(ic,0)*dlbc(ic,0) + dnac(ic,1)*dlbc(ic,1)) +
-     &      co%hce_ExB(ic)*
+     &      co%hce_ExB(ic)*fac_aniso*
      &     (dtec(ic,0)*dlbc(ic,0) + dtec(ic,1)*dlbc(ic,1)) +
-     &      co%hci_ExB(ic)*
+     &      co%hci_ExB(ic)*fac_aniso*
      &     (dtic(ic,0)*dlbc(ic,0) + dtic(ic,1)*dlbc(ic,1)))
          t1 = delta*geo%cvVol(ic)*dv%ni(ic,1)*pl%kt(ic)**2/
      &       (mp*am(ismain)*css*rhol) + fac_sheath*dv%ni(ic,1)*
      &       pl%kt(ic)*geo%cvVol(ic)*csfs/connfs
          she0(ic,0)   =  fac_diss*t0 + t1
          shi0(ic,0)   = -t0
-         skt0(ic,0)   =  (1 - fac_diss)*t0 - t1
-         skt_prod(ic) =  (1 - fac_diss)*t0
+         skt0(ic,0)   =  (1.0_R8 - fac_diss)*t0 - t1
+         skt_prod(ic) =  (1.0_R8 - fac_diss)*t0
          skt_diss(ic) =  t1
         enddo
-       else
+      else
         call xerrab('wrong value of b2sikt_model')
-       endif
       endif
 
 * ..output
@@ -201,9 +212,9 @@ c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
         call my_out(70,nCv,0,wrks,'b2sikt_shi')
         wrks=skt0(:,0)+skt0(:,1)*pl%kt+
      &       skt0(:,2)*dv%ni(:,1)+skt0(:,3)*pl%kt*dv%ni(:,1)
-        call my_out_us(70,nCv,0,wrks,'b2sikt_skt')
-        call my_out_us(70,nCv,0,skt_prod,'b2sikt_skt_prod')
-        call my_out_us(70,nCv,0,skt_diss,'b2sikt_skt_diss')
+        call my_out(70,nCv,0,wrks,'b2sikt_skt')
+        call my_out(70,nCv,0,skt_prod,'b2sikt_skt_prod')
+        call my_out(70,nCv,0,skt_diss,'b2sikt_skt_diss')
       endif
 
 * ..return

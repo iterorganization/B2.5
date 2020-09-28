@@ -256,6 +256,8 @@ cwdk combined check for poloidal or radial diffusion
        call my_out_us(70,nFc,1,co%csig(1,1),'csigy')
        call my_out_us(70,nFc,1,co%calf(1,0),'calfx')
        call my_out_us(70,nFc,1,co%calf(1,1),'calfy')
+       call my_out_us(70,nFc,1,co%cdkt(1,0),'cdktx')
+       call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkty')
       endif                                                          !srv 17.06.08 }
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {
