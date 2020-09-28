@@ -209,16 +209,12 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      .                                'faulty parameter parm_dna')
       call xertst(0.0_R8.le.minval(parm_dpa),
      .                                'faulty parameter parm_dpa')
-      call xertst(0.0_R8.le.minval(parm_vla),
-     .                                'faulty parameter parm_vla')
       call xertst(0.0_R8.le.minval(parm_vsa),
      .                                'faulty parameter parm_vsa')
       call xertst(0.0_R8.le.minval(parm_hci),
      .                                'faulty parameter parm_hci')
       call xertst(0.0_R8.le.transport_time_mod,
      .                      'faulty parameter transport_time_mod')
-      call xertst(0.0_R8.le.transport_time_switch,
-     .                      'faulty parameter transport_time_switch')
       call xertst(0.0_R8.le.cflme, 'faulty parameter cflme')
       call xertst(0.0_R8.le.cflmi, 'faulty parameter cflmi')
       call xertst(0.0_R8.le.cflmv, 'faulty parameter cflmv')
@@ -226,22 +222,22 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       call xertst(0.0_R8.le.cflab, 'faulty parameter cflab')
       call xertst(0.0_R8.le.cflme_core, 'faulty parameter cflme_core')
       call xertst(0.0_R8.le.cflme_sol , 'faulty parameter cflme_sol')
-      if (cflme_core.gt.0.0_R8)
-     . call xertst(cflme_sol.gt.0.0_R8,
+      if (cflme_core.gt.0.0_R8.or.cflme_sol.gt.0.0_R8)
+     . call xertst(cflme_core.gt.0.0_R8.and.cflme_sol.gt.0.0_R8,
      .  'cflme_core and _sol must both be positive')
       call xertst(0.0_R8.le.cflme_tanh_b,
      .                                 'faulty parameter cflme_tanh_b')
       call xertst(0.0_R8.le.cflmi_core, 'faulty parameter cflmi_core')
       call xertst(0.0_R8.le.cflmi_sol , 'faulty parameter cflmi_sol')
-      if (cflmi_core.gt.0.0_R8)
-     . call xertst(cflmi_sol.gt.0.0_R8,
+      if (cflmi_core.gt.0.0_R8.or.cflmi_sol.gt.0.0_R8)
+     . call xertst(cflmi_core.gt.0.0_R8.and.cflmi_sol.gt.0.0_R8,
      .  'cflmi_core and _sol must both be positive')
       call xertst(0.0_R8.le.cflmi_tanh_b,
      .                                 'faulty parameter cflmi_tanh_b')
       call xertst(0.0_R8.le.cflmv_core, 'faulty parameter cflmv_core')
       call xertst(0.0_R8.le.cflmv_sol , 'faulty parameter cflmv_sol')
-      if (cflmv_core.gt.0.0_R8)
-     . call xertst(cflmv_sol.gt.0.0_R8,
+      if (cflmv_core.gt.0.0_R8.or.cflmv_sol.gt.0.0_R8)
+     . call xertst(cflmv_core.gt.0.0_R8.and.cflmv_sol.gt.0.0_R8,
      .  'cflmv_core and _sol must both be positive')
       call xertst(0.0_R8.le.cflmv_tanh_b,
      .                                 'faulty parameter cflmv_tanh_b')

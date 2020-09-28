@@ -240,7 +240,7 @@ c
      1         dnib(ix+1,iy+1,nflai)
               zib(ix+1,iy+1,nflai)=rza(ix,iy,is)
 c     Velocities uub, vvb, wwb
-c     * cell centered
+c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
               if(eirene_uub_style.eq.0) then
