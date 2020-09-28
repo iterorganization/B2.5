@@ -158,7 +158,7 @@ cwdk move to dv
 
       type B2SourceWork
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0,
-     .                                           shn0
+     .                                           shn0, skt0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0         
         real(R8), dimension(:), allocatable :: 
      .            b2stbm_sch, b2stbm_she, b2stbm_shi, b2stbm_sne
@@ -889,6 +889,7 @@ cwdk move to dv
       allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shn0( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( srw % skt0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % smo0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % smq0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -912,6 +913,7 @@ cwdk move to dv
       deallocate( srw % she0 )
       deallocate( srw % shi0 )
       deallocate( srw % shn0 )
+      deallocate( srw % skt0 )
       deallocate( srw % smo0 )
       deallocate( srw % smq0 )
       deallocate( srw % sna0 )

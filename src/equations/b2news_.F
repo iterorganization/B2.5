@@ -445,12 +445,12 @@ c   extra call at this place within internal iteration)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
      &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
-     &    psnc%ne, psnc%ni, psnc%kinrgy,
+     &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt,
      &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
-     &    dv%ni, dv%kinrgy,  sr, .false.)
+     &    dv%ni, dv%kinrgy, pl%kt, sr, .false.)
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
-     &    pl%ti, pl%po, dv%ne, dv%ni, sr)
+     &    pl%ti, pl%po, dv%ne, dv%ni, pl%kt, sr)
       endif
       if (ue_style.eq.2 .or. iout.ne.0)
 *   ..compute ue, electron parallel velocity
@@ -740,7 +740,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), ncall,
      &  ismain, solving, solveee, solveei, solveen, solveet, solvepo,       !srv 22.05.18
-     &  solvemo, rxf3, BoRiS, pl, dv, co, sr, ier0)
+     &  solvemo, rxf3, BoRiS, pl, dv, co, rt, sr, st_ext, ier0)
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) pl%po=0.0_R8                                          !srv 13.07.05

@@ -18,7 +18,7 @@
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
      *  ni(:,:,:),  ni0(:,:,:),
-     *  pb(:,:),
+     *  pb(:,:), kt(:,:),
      *  po(:,:),  po0(:,:),  pop(:,:),
      *  te(:,:),  te0(:,:),  tep(:,:),
      *  ti(:,:),  ti0(:,:),  tip(:,:), tn(:,:), 
@@ -120,6 +120,7 @@
       allocate(ni(-1:nxd,-1:nyd,0:1))
       allocate(ni0(-1:nxd,-1:nyd,0:1))
       allocate(pb(-1:nxd,-1:nyd))
+      allocate(kt(-1:nxd,-1:nyd))
       allocate(po(-1:nxd,-1:nyd))
       allocate(po0(-1:nxd,-1:nyd))
       allocate(pop(-1:nxd,-1:nyd))
@@ -222,6 +223,7 @@
       deallocate(ni)
       deallocate(ni0)
       deallocate(pb)
+      deallocate(kt)
       deallocate(po)
       deallocate(po0)
       deallocate(pop)
