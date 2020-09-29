@@ -542,9 +542,8 @@ c ank added blobby transport
 #endif
 c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(transport_keps.ne.0) then
-!     allocate transport? FIXME
         call set_transport_keps(transport_keps, nCv, ns, geo, mpg, pl,
-     &    dv, rt, st_ext, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB, 
+     &    dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB, 
      &    hce_ExB, hci_ExB)
       endif
 
@@ -3661,7 +3660,7 @@ c recompute hci0 and hcn0
       end subroutine set_transport_kul
 
       subroutine set_transport_keps(transport_keps, nCv, ns, geo, 
-     &     mpg, pl, dv, rt, st_ext, dna0, vsa0, hce0, hci0, hcib, 
+     &     mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
      &     dkt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_constants
@@ -3679,7 +3678,6 @@ c recompute hci0 and hcn0
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       real (kind=R8) :: dna0(nCv,0:ns-1),
      &   vsa0(nCv,0:ns-1),
@@ -3689,9 +3687,9 @@ c recompute hci0 and hcn0
      &   hci_ExB(nCv)
 *   ..local variables
       integer :: ic, is, ncall, keps_local
-      real(kind=R8) :: pr(nCv), ro(nCv),
-     1   cst(nCv), rhol, keps_cd, keps_heat,
-     2   cs, dna_min, keps_heat_i, keps_visc,
+      real(kind=R8) ::
+     1   rhol, keps_cd, keps_heat,
+     2   dna_min, keps_heat_i, keps_visc,
      3   keps_dkt, keps_inc, keps_fac
       integer, save :: solve_keps = 0
       save ncall, keps_cd, keps_heat,
@@ -3727,13 +3725,7 @@ c recompute hci0 and hcn0
      &      transport_keps,' should go together'
         endif
       endif
-*   ..compute local sound speed
-      call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
-      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pl%tn, pr, 
-     &             st_ext)
-      cst(:)=sqrt(pr(:)/ro(:))
       do ic = 1, nCv
-*   ..use tokamak major radius
         do is=0,ns-1
           rhol = 0.0_R8
           if(.not.is_neutral(is)) then
@@ -3741,12 +3733,10 @@ c recompute hci0 and hcn0
 *   ..compute local larmor radius
               rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(ic)/am(is)/mp)/
      &         abs(rt%rza(ic,is)*qe*geo%cvBb(ic,3))
-              cs = cst(ic)
             else
               rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(omp(icsep+1))/
      &               am(is)/mp)/abs(rt%rza(omp(icsep+1),is)*qe*
      &               geo%cvBb(omp(icsep+1),3))
-              cs = cst(omp(icsep+1))
             endif
             if(transport_keps.eq.1) then
 *   ..compute D according to KUL, using kt

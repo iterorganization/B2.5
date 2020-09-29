@@ -2297,6 +2297,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % co % hce0(ic) = hce0(ix,iy)
             st % co % sig0(ic) = sig0(ix,iy)
             st % co % alf0(ic) = alf0(ix,iy)
+            st % co % dkt0(ic) = dkt0(ix,iy)
+            st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+            st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+            st % co % hci_ExB(ic) = hci_ExB(ix,iy)
       
 ! kinetic energy
             st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2315,6 +2319,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % dv % reshi(ic) = reshi(ix,iy)
 !          st % dv % resht(ic) = resht(ix,iy)
             st % dv % resmt(ic) = resmt(ix,iy)
+            st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
             st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2386,6 +2391,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2404,6 +2413,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2471,6 +2481,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2489,6 +2503,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2560,6 +2575,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2578,6 +2597,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2646,6 +2666,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2664,6 +2688,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2718,6 +2743,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
             st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
             st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
+            st % co % cdkt(ifc,0:1) = cdkt(ix,iy,0,0:1)
 
             st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
             st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
@@ -2792,6 +2818,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
             st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fkt(ifc,0:1) = fkt(ix,iy,0,0:1)
             st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
             st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
             st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
@@ -2860,6 +2887,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           st % co % csig_an(ifc,0:1) = csig_an(ix,iy,1,0:1)
           st % co % calf(ifc,0:1) = calf(ix,iy,1,0:1)
+          st % co % cdkt(ifc,0:1) = cdkt(ix,iy,1,0:1)
         
           st % co % csig(ifc,0:1) = csig(ix,iy,1,0:1)
           st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
@@ -2932,6 +2960,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
         
           st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fkt(ifc,0:1) = fkt(ix,iy,1,0:1)
           st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
           st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
           st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
@@ -3071,6 +3100,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           hce0(ix,iy)            = st % co % hce0(ic) 
           sig0(ix,iy)            = st % co % sig0(ic)
           alf0(ix,iy)            = st % co % alf0(ic)
+          dkt0(ix,iy)            = st % co % dkt0(ic) 
+          dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+          hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+          hci_ExB(ix,iy)         = st % co % hci_ExB(ic) 
       
 ! kinetic energy
           kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3090,6 +3123,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           reshn(ix,iy)        = st % dv % reshn(ic)
 !         resht(ix,iy)        = st % dv % resht(ic)
           resmt(ix,iy)        = st % dv % resmt(ic)
+          reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
           corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3112,6 +3146,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           she(ix,iy,0:3)        = st % sr % she(ic,0:3)
           shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
           shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+          skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+          skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+          skt_diss(ix,iy)       = st % sr % skt_diss(ic)
           smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
           smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3165,6 +3202,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3184,6 +3225,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3206,6 +3248,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3255,6 +3300,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3274,6 +3323,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3296,6 +3346,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3348,6 +3401,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3367,6 +3424,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3389,6 +3447,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3438,6 +3499,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3457,6 +3522,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3479,6 +3545,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3635,6 +3704,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           csig_an(ix,iy,0,0:1) = st % co % csig_an(ifc,0:1)
           calf(ix,iy,0,0:1)    = st % co % calf(ifc,0:1)
+          cdkt(ix,iy,0,0:1)    = st % co % cdkt(ifc,0:1)
 
           csig(ix,iy,0,0:1) = st % co % csig(ifc,0:1)
           csigin(ix,iy,0,0:1,0:ns-1,0:ns-1) = 
@@ -3711,6 +3781,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(ifc,0:1,0:ns-1)
 
           fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
+          fkt(ix,iy,0,0:1)     = st % dv % fkt(ifc,0:1)
           fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,0,0:1) = st % dv % fhePSch(ifc,0:1)
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
@@ -3769,6 +3840,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           csig_an(ix,iy,1,0:1) = st % co % csig_an(ifc,0:1)
           calf(ix,iy,1,0:1)    = st % co % calf(ifc,0:1)
+          cdkt(ix,iy,1,0:1)    = st % co % cdkt(ifc,0:1)
         
           csig(ix,iy,1,0:1) = st % co % csig(ifc,0:1)
           csigin(ix,iy,1,0:1,0:ns-1,0:ns-1) =
@@ -3843,6 +3915,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(ifc,0:1,0:ns-1)
 
           fhe(ix,iy,1,0:1)     = st % dv % fhe(ifc,0:1)
+          fkt(ix,iy,1,0:1)     = st % dv % fkt(ifc,0:1)
           fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(ifc,0:1)
           fhet(ix,iy,1,0:1)    = st % dv % fhet(ifc,0:1)

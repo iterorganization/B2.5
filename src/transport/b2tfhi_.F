@@ -70,7 +70,7 @@ cpax
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
-     *   dnati2(nFc,0:1), cddi(nFc,0:1)
+     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -339,12 +339,13 @@ cpax
      &    dv%flon,dv%conn)
 
       endif
-! FIXME conkt0 = hybr(flokt0,(1.0_R8 + fconkt)*cdkt(ix,iy,0))
+      cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
+      cdkt0(:,1) = co%cdkt(:,1)
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
-     &  co%cdkt,dv%fkt,dumm0,dumm1)
+     &  cdkt0,dv%fkt,dumm0,dumm1)
 *   ..compute flokt, conkt
-      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,co%cdkt,
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &  dv%flokt,dv%conkt)
 
 
