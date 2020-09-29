@@ -7,6 +7,9 @@
      *  she(:,:,:),
      *  shi(:,:,:),
      *  shn(:,:,:),
+     *  skt(:,:,:),
+     *  skt_prod(:,:),
+     *  skt_diss(:,:),
      *  sne(:,:,:),
      *  smo(:,:,:,:),
      *  shef(:,:,:),                                           !srv 10.11.02                
@@ -84,6 +87,9 @@
       allocate(sne(-1:nxd,-1:nyd,0:1))
       allocate(shi(-1:nxd,-1:nyd,0:3))
       allocate(shn(-1:nxd,-1:nyd,0:3))
+      allocate(skt(-1:nxd,-1:nyd,0:3))
+      allocate(skt_prod(-1:nxd,-1:nyd))
+      allocate(skt_diss(-1:nxd,-1:nyd))
       allocate(smo(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(sna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(shef(-1:nxd,-1:nyd,0:3))                        !sv 10.11.02
@@ -203,6 +209,9 @@
       ext_she=0.0_R8
       ext_shi=0.0_R8
       ext_sch=0.0_R8
+      skt=0.0_R8
+      skt_prod=0.0_R8
+      skt_diss=0.0_R8
 
       return
       end subroutine alloc_b2mod_sources
@@ -215,6 +224,9 @@
       deallocate(sne)
       deallocate(shi)
       deallocate(shn)
+      deallocate(skt)
+      deallocate(skt_prod)
+      deallocate(skt_diss)
       deallocate(smo)
       deallocate(shef)                        !sv 10.11.02
       deallocate(shif)                        !sv 10.11.02
@@ -397,6 +409,11 @@
       endif
       if(b2fplasma_version.ge.'01.001.026')
      >  call cfrure_opt (nread, size(ext_sne), ext_sne, 'ext_sne')
+      if(b2fplasma_version.ge.'03.000.009') then
+        call cfrure (nread, size(skt), skt, 'skt')
+        call cfrure (nread, size(skt_prod), skt_prod, 'skt_prod')
+        call cfrure (nread, size(skt_diss), skt_diss, 'skt_diss')
+      endif
 
       return
       end subroutine read_b2mod_sources
@@ -519,6 +536,12 @@
       endif
       if(newversion.ge.'01.001.026')
      >  call cfwure (nwrite, size(ext_sne), ext_sne, 'ext_sne')
+      if(newversion.ge.'03.000.009') then
+        call cfwure (nwrite, size(skt), skt, 'skt')
+        call cfwure (nwrite, size(skt_prod), skt_prod, 'skt_prod')
+        call cfwure (nwrite, size(skt_diss), skt_diss, 'skt_diss')
+      endif
+
 
       return
       end subroutine write_b2mod_sources

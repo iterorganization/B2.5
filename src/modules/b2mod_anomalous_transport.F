@@ -17,7 +17,11 @@
      *   csig_an(:,:,:,:),                                                 !xpb 
      *   calf_an(:,:,:,:),                                                 !xpb 
      *   cvsa_an(:,:,:,:,:),                                               !srv 04.10.99 11.06.08
-     *   vma0(:,:,:,:)                                                   !srv 15.12.05 11.06.08
+     *   vma0(:,:,:,:),                                                    !srv 15.12.05 11.06.08
+     *   dkt0(:,:),
+     *   dna_ExB(:,:),
+     *   hce_ExB(:,:),
+     *   hci_ExB(:,:)
 
       contains
 
@@ -39,6 +43,10 @@
       deallocate(calf_an)
       deallocate(cvsa_an)                                                !srv 15.12.05 11.06.08
       deallocate(vma0)                                                   !srv 15.12.05 11.06.08
+      deallocate(dkt0)
+      deallocate(dna_ExB)
+      deallocate(hce_ExB)
+      deallocate(hci_ExB)
 
       return
       end subroutine dealloc_anomalous_transport
@@ -62,6 +70,10 @@
       allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
       allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
       allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                          !srv 15.12.05 11.06.08
+      allocate(dkt0(-1:nxd,-1:nyd))
+      allocate(dna_ExB(-1:nxd,-1:nyd))
+      allocate(hce_ExB(-1:nxd,-1:nyd))
+      allocate(hci_ExB(-1:nxd,-1:nyd))
 
       return
       end subroutine alloc_b2mod_anomalous_transport
@@ -99,6 +111,12 @@
         calf_an(:,:,0,0) = cloc(:,:,0)
         calf_an(:,:,1,1) = cloc(:,:,1)
       endif
+      if(b2fplasma_version.ge.'03.000.009') then
+        call cfrure (nread, size(dkt0), dkt0, 'dkt0')
+        call cfrure (nread, size(dna_ExB), dna_ExB, 'dna_ExB')
+        call cfrure (nread, size(hce_ExB), hce_ExB, 'hce_ExB')
+        call cfrure (nread, size(hci_ExB), hci_ExB, 'hci_ExB')
+      endif
 
       return
       end subroutine read_b2mod_anomalous_transport
@@ -122,6 +140,12 @@
       endif
       if(newversion.ge.'01.001.029') then
         call cfwure (nwrite, size(calf_an), calf_an, 'calf_an')
+      endif
+      if(newversion.ge.'03.000.009') then
+        call cfwure (nwrite, size(dkt0), dkt0, 'dkt0')
+        call cfwure (nwrite, size(dna_ExB), dna_ExB, 'dna_ExB')
+        call cfwure (nwrite, size(hce_ExB), hce_ExB, 'hce_ExB')
+        call cfwure (nwrite, size(hci_ExB), hci_ExB, 'hci_ExB')
       endif
 
       return

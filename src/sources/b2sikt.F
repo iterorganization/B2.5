@@ -52,8 +52,8 @@ c      use b2mod_keps
       integer, save :: iout = 0
       integer, save :: solve_keps = 0
       integer, save :: model = 1, keps_local = 1, fac_sheath_local=1
-      real (kind=R8) :: wrks(nCv), wrkv(nVx), ro(nCv), 
-     &  pr(nCv), cs(nCv), t0, t1,
+      real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
+     &  pz(nCv), cs(nCv), t0, t1,
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  rhol, css, fac_diss, delta, fac_sheath, csfs, connfs
       real (kind=R8), save :: delta_om = 0.0e-1_R8,
@@ -66,7 +66,6 @@ c      use b2mod_keps
 *   ..procedures
       intrinsic min, max, sqrt
       external subini, subend, xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/
 
@@ -129,18 +128,13 @@ cwdk  sink   : add hoc term, k^2 scaling, controled by delta_om
 cwdk  model adaptations based on T2D simulations: 
 cwdk           strong direct local dissipation of the source term,  
 cwdk           with factor fac_gamma_diss (~97%)
-        call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
-        call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pl%tn, pr, 
-     &             st_ext)
-        cs  = sqrt(pr/ro)
+        call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+        call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+        cs  = sqrt(pz/rz)
 *   ..compute wrk arrays
 *     ..logarithm of magnetic field in cell center
-        wrks(:) = log(geo%cvBb(:,3)**2)
+        wrks(:) = 2.0_R8*log(geo%cvBb(:,3))
 *     ..gradients na and log(bb) in poloidal and radial direction
-csc FIXME   if(leftix(ix,iy).eq.-2) then
-c            wrk2(ix,iy) = 0.0_R8
-c            wrk3(ix,iy) = 0.0_R8
-c           else
         dnac = 0.0_R8
         dlbc = 0.0_R8
         dtec = 0.0_R8
@@ -153,8 +147,6 @@ c           else
 
 *     ..sources
         do ic = 1, mpg%nCi
-csc FIXME  if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
-c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
          if (mod(mpg%cvReg(ic),4) .eq. 1) then
           fac_diss = fac_gamma_diss_core
           delta    = delta_om_core
@@ -181,7 +173,6 @@ c     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
           csfs = cs(omp(icsep+1))
           connfs = geo%ftConn(omp(icsep+1))
          endif
-! FIXME check here if it's OK, before it was (dnac(ic)+dnac(right(ic))*(...)*0.5
          t0 = geo%cvVol(ic)*(
      &     (pl%ti(ic)+pl%te(ic))*co%dna_ExB(ic)*
      &     (dnac(ic,0)*dlbc(ic,0) + dnac(ic,1)*dlbc(ic,1)) +

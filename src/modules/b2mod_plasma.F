@@ -12,7 +12,7 @@
      *  fnn_32(:,:,:,:),    fnn_52(:,:,:,:),
      *  fhe(:,:,:,:),  fhe0(:,:,:,:),  fhep(:,:,:,:),  fhet(:,:,:,:),
      *  fhi(:,:,:,:),  fhi0(:,:,:,:),  fhip(:,:,:,:),  fhit(:,:,:,:),
-     *  fhn(:,:,:,:),
+     *  fhn(:,:,:,:),  fkt(:,:,:,:),
      *  fna(:,:,:,:,:),  fna0(:,:,:,:,:),  fnap(:,:,:,:,:),
      *  fne(:,:,:,:),    fni(:,:,:,:),  fnn(:,:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
@@ -74,6 +74,7 @@
       allocate(fhe_mdf(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
       allocate(fhePSch(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
       allocate(fhi(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fkt(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhi0(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhip(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhit(-1:nxd,-1:nyd,0:1,0:1))
@@ -224,6 +225,7 @@
       deallocate(ni0)
       deallocate(pb)
       deallocate(kt)
+      deallocate(fkt)
       deallocate(po)
       deallocate(po0)
       deallocate(pop)
@@ -596,6 +598,7 @@
       call cfwure (nwrite, size(fnap), fnap, 'fnap')
       call cfwure (nwrite, size(fne),  fne,  'fne')
       call cfwure (nwrite, size(fni),  fni,  'fni')
+      call cfwure (nwrite, size(fkt),  fkt,  'fkt')
       call cfwure (nwrite, size(na),   na,   'na')
       call cfwure (nwrite, size(na0),  na0,  'na0')
       call cfwure (nwrite, size(nap),  nap,  'nap')
@@ -616,6 +619,7 @@
       call cfwure (nwrite, size(ti0),  ti0,  'ti0')
       call cfwure (nwrite, size(tip),  tip,  'tip')
       call cfwure (nwrite, size(tn),   tn,   'tn')
+      call cfwure (nwrite, size(kt),   kt,   'kt')
       call cfwure (nwrite, size(ua),   ua,   'ua')
       call cfwure (nwrite, size(ua0),  ua0,  'ua0')
       call cfwure (nwrite, size(uap),  uap,  'uap')
