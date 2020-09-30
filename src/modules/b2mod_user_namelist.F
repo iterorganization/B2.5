@@ -386,7 +386,7 @@ c*** Set default values according to current species list
       do while (ic.le.nomp .and..not.found)
         if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
           found = .true.
-          icsep = ic
+          icsep = ic+1
         endif
       ic = ic + 1 
       end do

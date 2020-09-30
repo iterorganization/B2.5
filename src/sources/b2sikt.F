@@ -161,17 +161,17 @@ cwdk           with factor fac_gamma_diss (~97%)
      &       abs(rza(ic,ismain)*qe*geo%cvBb(ic,3))
           css = cs(ic)
          else
-          rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep+1))/
-     &       (am(ismain)*mp))/abs(rza(omp(icsep+1),ismain)*
-     &       qe*geo%cvBb(omp(icsep+1),3))
-          css = cs(omp(icsep+1))
+          rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
+     &       (am(ismain)*mp))/abs(rza(omp(icsep),ismain)*
+     &       qe*geo%cvBb(omp(icsep),3))
+          css = cs(omp(icsep))
          endif
          if (fac_sheath_local.eq.1) then
           csfs = cs(ic)
           connfs = geo%ftConn(ic)
          else
-          csfs = cs(omp(icsep+1))
-          connfs = geo%ftConn(omp(icsep+1))
+          csfs = cs(omp(icsep))
+          connfs = geo%ftConn(omp(icsep))
          endif
          t0 = geo%cvVol(ic)*(
      &     (pl%ti(ic)+pl%te(ic))*co%dna_ExB(ic)*
