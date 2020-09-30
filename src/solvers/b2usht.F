@@ -792,8 +792,7 @@
 
 * ..turbulent kinetic energy correction equation
       corkt = 0.0_R8
-      reskt = 0.0_R8
-      if (solve_keps.gt.0) then                                 !srv 22.05.18
+      if (solve_keps.gt.0.and.any(solvekt(0:mpg%nnreg(0)))) then
        call restart_ma28_for_us
 *   ..compute flo0, con0
        flo0        = flokt
@@ -802,7 +801,9 @@
        aa = 0.0e0_R8
 *   ..compute the nine-point matrix
        do iCv = 1, nCv
-        aa(mpg%cvNvP(iCv,1)) =
+        ireg = mpg%cvReg(iCv)
+        if (solvekt(ireg))
+     &   aa(mpg%cvNvP(iCv,1)) =
      &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1)
        enddo
        do iFc = 1, nFc
@@ -811,20 +812,24 @@
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
-        aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
-        where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+        if (solvekt(mpg%cvReg(iCv1))) then
+          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-         aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &    aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
-     &    t2
-        end where
-        aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
-        where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)= 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
+     &      t2
+          end where
+        endif
+        if (solvekt(mpg%cvReg(iCv2))) then
+          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-         aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &    aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &    t1 
-        end where
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)= 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
+     &      t1 
+          end where
+        endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
         iVx1 = mpg%fcVx(iFc,1) ! number of v1
         iVx2 = mpg%fcVx(iFc,2) ! number of v2
@@ -839,57 +844,61 @@
           t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
-        ! contribution from iVx1
-        do inCv = 1, mpg%vxCvP(iVx1,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
-         where (mpg%cvNv(mpg%cvNvP(iCv1,1):
-     &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
-     &     t3*t1
-         end where
-        enddo
-        ! contribution from iVx2
-        do inCv = 1, mpg%vxCvP(iVx2,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
-         where (mpg%cvNv(mpg%cvNvP(iCv1,1):
-     &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
-     &     t3*t2
-         end where
-        enddo
+        if (solvekt(mpg%cvReg(iCv1))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+     &      t3*t2
+          end where
+         enddo
+        endif
         ! contribution to equation of iCv2
-        ! contribution from iVx1
-        do inCv = 1, mpg%vxCvP(iVx1,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
-         where (mpg%cvNv(mpg%cvNvP(iCv2,1):
-     &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
-     &     t3*t1
-         end where
-        enddo
-        ! contribution from iVx2
-        do inCv = 1, mpg%vxCvP(iVx2,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
-         where (mpg%cvNv(mpg%cvNvP(iCv2,1):
-     &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
-     &     t3*t2
-         end where
-        enddo
+        if (solvekt(mpg%cvReg(iCv2))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+     &      t3*t2
+          end where
+         enddo
+        endif
        enddo
 *   ..add matrix from contribution nine point stencil
 #ifdef WG_TODO
        if(iadd_9 .eq. 1) then
-        call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
-     &   aa, 'b2usht_Ti')                                             !srv 02.01.07
+        call b2uxm9 (nx, ny, nregionv, itcnt, solvekt, conkt(-1,-1,0,0,1),
+     &   aa, 'b2usht_kt')                                             !srv 02.01.07
        endif
 #endif
        do iCv = 1, nCv

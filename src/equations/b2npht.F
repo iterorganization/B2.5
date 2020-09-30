@@ -3,8 +3,8 @@
 
       subroutine b2npht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt, !srv 05.07.17
      &  ismain, solving, solvereg, solvireg, solvnreg, solvtreg,        !srv 22.05.18
-     &  solvpreg, solvmreg, rxf, BoRiS, pl, dv, co, rt, sr, st_ext,
-     &  ierr)
+     &  solvpreg, solvmreg, solvkreg, rxf, BoRiS, pl, dv, co, rt, sr, 
+     &  st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -24,7 +24,8 @@
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv), 
      *  solvnreg(0:nregionv), solvtreg(0:nregionv),                                          !srv 22.05.18
-     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
+     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
+     *  solvkreg(0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -185,7 +186,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
 *   ..sources due to k-eps model
       call b2sikt (nCv, nFc, nVx, ns, ismain, geo, mpg, pl, 
      &  dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, skt_diss)
-      if (solve_keps.eq.1) then
+      if (solve_keps.gt.0) then
         call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
         call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
         call b2saxpy (nCv*4, 1.0e0_R8, sr%skt, 1, skt0, 1)
@@ -227,8 +228,11 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
-      call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0, dv%fkt,
-     &   dv%reskt)
+      if ((solve_keps.gt.0.and.any(solvkreg(0:nregionv))).or.
+     &     get_residuals.eq.1) then
+        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0, 
+     &   dv%fkt, dv%reskt)
+      endif
 
 c residuals for separate neutral energy equation
       if (tn_style.eq.2) then   !! separate neutral energy equation
@@ -326,10 +330,9 @@ c residuals for separate neutral energy equation
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
-     &  solvpreg,
-     &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti, dv%cortn,
-     &  dv%corkt, dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, 
-     &  pl%kt, pl%po, dv%ne, dv%ni)
+     &  solvpreg, solvmreg, solvkreg, rxf, pcm0, dv%cortt, dv%corte, 
+     &  dv%corti, dv%cortn, dv%corkt, dv%pccm(1,0), pl%na, pl%ua, pl%te, 
+     &  pl%ti, pl%tn, pl%kt, pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)

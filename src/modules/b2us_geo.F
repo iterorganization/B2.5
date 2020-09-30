@@ -6,7 +6,7 @@
       private
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
-     .          init_geometry
+     .          init_geometry, calc_conn
 
       type, public :: geometry
 
@@ -496,8 +496,71 @@
         endif
       endif
 
+*   ..calculate connection length
+      call calc_conn(mpg, gm)
+
       return
       end subroutine init_geometry
+
+
+***********************************************************************
+
+      subroutine calc_conn (mpg, gm)
+      use b2us_map
+      implicit none
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (inout) :: gm
+      integer :: nCv, iCv, iFt, j, ic
+      integer, save :: conn_style = 0
+      real (kind=r8) :: wrk(mpg%nCv), Lr, Ll
+
+      call ipgeti ('b2mndr_conn_style',conn_style)
+
+      if (conn_style.eq.0) return ! don't modify what we read
+
+      if (mpg%isClassicalGrid.eq.1) then
+       wrk = 0.0_R8
+       gm%ftConn = 0.0_R8
+       do iCv = 1, mpg%nCv
+        wrk(iCv) = gm%cvHx(iCv)*gm%cvBb(iCv,3)/abs(gm%cvBb(iCv,0))
+       end do
+       do iFt = 1, mpg%nFt 
+        ic = mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (mpg%cvOnClosedSurface(ic)) then !core  
+         do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          gm%ftConn(ic) = gm%ftConn(ic) + wrk(mpg%ftCv(j))
+         enddo
+         gm%ftConn(mpg%ftCv(mpg%ftCvP(iFt,1):mpg%ftCvP(iFt,1)+
+     &                        mpg%ftCvP(iFt,2)-1)) = gm%ftConn(ic)
+        else
+         do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          iCv = mpg%ftCv(ic)
+          Lr = 0.5_R8*wrk(iCv)
+          do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
+           Lr = Lr + wrk(mpg%ftCv(j))
+          end do
+          Ll = 0.5_R8*wrk(iCv)
+          do j = mpg%ftCvP(iFt,1), ic-1
+           Ll = Ll + wrk(mpg%ftCv(j))
+          end do
+          if (conn_style.eq.1) then
+           gm%ftConn(iCv) = min(Lr,Ll)
+          elseif (conn_style.eq.2) then
+           gm%ftConn(iCv) = Lr*Ll/(Lr+Ll)
+          else
+           write (*,*) 'b2mndr_conn_style=',conn_style
+           call xerrab ('parameter b2mndr_conn_style not coded')
+          endif
+         end do
+        endif
+       end do
+      else
+       write(*,*) 
+     &   'WARNING: connection length not yet available for US grids'
+      endif  
+
+      return
+      end subroutine calc_conn
 
 
 ***********************************************************************

@@ -2033,7 +2033,7 @@
      .                       nVmxCv
       integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2, icv,
      .           ift
-      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy, wrk(nFC), Lr, Ll
+      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 
@@ -2203,35 +2203,8 @@
         ifc = mpg%fsFc(mpg%fsFcP(ift,1))
         gm%fsPsi(ift) = gm%vxFpsi(mpg%fcVx(ifc,1))
       end do
-! connection length for core region
-      gm%ftConn = 0.0_R8
-      wrk = 0.0_R8
-      do icv = 1,nCv
-        wrk(icv) = gm%cvHx(icv)*gm%cvBb(icv,3)/abs(gm%cvBb(icv,0))
-      end do
-      do ift = 1, nFt 
-        ic = mpg%ftCv(mpg%ftCvP(ift,1))
-        if (mpg%cvOnClosedSurface(ic)) then !core  
-          do j=mpg%ftCvP(ift,1), mpg%ftCvP(ift,1)+mpg%ftCvP(ift,2)-1
-            gm%ftConn(ic) = gm%ftConn(ic) + wrk(mpg%ftCv(j))
-          enddo
-          gm%ftConn(mpg%ftCv(mpg%ftCvP(ift,1):mpg%ftCvP(ift,1)+
-     &                        mpg%ftCvP(ift,2)-1)) = gm%ftConn(ic)
-        else
-          do ic = mpg%ftCvP(ift,1),mpg%ftCvP(ift,1)+mpg%ftCvP(ift,2)-1
-            icv = mpg%ftCv(ic)
-            Lr = 0.5_R8*wrk(icv)
-            do j = ic+1, mpg%ftCvP(ift,1) + mpg%ftCvP(ift,2)-1
-              Lr = Lr + wrk(mpg%ftCv(j))
-            end do
-            Ll = 0.5_R8*wrk(icv)
-            do j = mpg%ftCvP(ift,1), ic-1
-              Ll = Ll + wrk(mpg%ftCv(j))
-            end do          
-            gm%ftConn(icv) = Lr*Ll/(Lr+Ll)
-          end do
-        endif
-      end do      
+! calculate connection length
+      call calc_conn(mpg, gm)
 #ifdef WG_TODO
       do i = 1, nFs 
        ic = mpg%fsCv(mpg%fsCvP(i,1))

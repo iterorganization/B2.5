@@ -1467,7 +1467,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (ird_aver > 0)
      &  call run_av_get_plasma (state%pl%na, state%pl%te, 
      &             state%pl%ti, state%pl%ua, state%pl%po, 
-     &       nCv, ns)
+     &             state%pl%kt, nCv, ns)
 
       write (*,*) 'Starting conversion to unstructured format...'
 

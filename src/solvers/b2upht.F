@@ -3,8 +3,8 @@
 
       subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
-     &  solvpreg, solvmreg, rxf, pcm0, cortt, corte, corti, cortn,
-     &  corkt, pccm0, na, ua, te, ti, tn, kt, po, ne, ni)
+     &  solvpreg, solvmreg, solvkreg, rxf, pcm0, cortt, corte, corti, 
+     &  cortn, corkt, pccm0, na, ua, te, ti, tn, kt, po, ne, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -21,7 +21,8 @@
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
      &  solvnreg(0:nregionv), solvtreg(0:nregionv),                             !srv 22.05.18
-     &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
+     &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
+     &  solvkreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
@@ -147,11 +148,8 @@
         end if
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
-        if (solve_keps.gt.0) then
-          kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))   !xpb
-        else
-          kt(iCv) = kt(iCv)
-        endif
+        if (solve_keps.gt.0.and.solvkreg(ireg)) 
+     &    kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti
