@@ -584,8 +584,8 @@ cdjm Jan2017 Keep linearised sources for balance
 #endif
 ! csc for now identify pr with r-coordinate of midplane CVs
             pr = 0.0_R8
-            rsep = 0.5_R8*(geo%cvX(omp(icsep)) + 
-     &             geo%cvX(omp(icsep+1))) ! FIXME should use distance of face center to neighbouring CV center?
+            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
+     &             geo%cvX(omp(icsep))) ! FIXME should use distance of face center to neighbouring CV center?
             do ic=1, nomp
               pr(ic) = geo%cvX(omp(ic)) - rsep
             end do

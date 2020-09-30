@@ -3734,9 +3734,9 @@ c recompute hci0 and hcn0
               rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(ic)/am(is)/mp)/
      &         abs(rt%rza(ic,is)*qe*geo%cvBb(ic,3))
             else
-              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(omp(icsep+1))/
-     &               am(is)/mp)/abs(rt%rza(omp(icsep+1),is)*qe*
-     &               geo%cvBb(omp(icsep+1),3))
+              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
+     &               am(is)/mp)/abs(rt%rza(omp(icsep),is)*qe*
+     &               geo%cvBb(omp(icsep),3))
             endif
             if(transport_keps.eq.1) then
 *   ..compute D according to KUL, using kt
