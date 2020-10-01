@@ -58,3 +58,13 @@
 
       return
       end
+
+      function get_SOLPS_hash()
+      implicit none
+      character*32 get_SOLPS_hash
+#     include <git_version_B25.h>
+
+      get_SOLPS_hash = git_version_SOLPS
+
+      return
+      end

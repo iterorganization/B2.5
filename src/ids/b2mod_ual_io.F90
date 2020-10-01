@@ -101,6 +101,12 @@ module b2mod_ual_io
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #endif
+#if IMAS_MINOR_VERSION > 29
+#ifdef AMNS
+    use amns_types  ! IGNORE
+    use amns_module ! IGNORE
+#endif
+#endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas   ! IGNORE
@@ -165,6 +171,15 @@ contains
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
+#endif
+#if IMAS_MINOR_VERSION > 29
+        integer :: nlibs !< Number of declared libraries in IDS description
+#ifdef AMNS
+        type (amns_handle_type) :: amns
+        type (amns_query_type) :: query
+        type (amns_answer_type) :: answer
+        type (amns_error_type) :: amns_status
+#endif
 #endif
         integer, intent(in) :: shot, run
         character(len=24), intent(in) :: database, version
@@ -310,14 +325,19 @@ contains
         character*5 zone
         integer tvalues(8)
         character*16 usrnam
-        character*8 imas_version, ual_version
+        character*8 imas_version, ual_version, ggd_version, adas_version
         character*32 B25_git_version
         character*32 ADAS_git_version
+        character*32 SOLPS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
+        character*32 get_SOLPS_hash
         character*256 filename
         logical match_found, streql, exists
 #ifdef B25_EIRENE
+        character*8 eirene_version
+        character*32 Eirene_git_version
+        character*32 get_Eir_hash
         logical, allocatable :: in_species(:)
         logical isadigit
 #endif
@@ -384,13 +404,17 @@ contains
         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
         call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
+        call get_environment_variable('GGD_VERSION',status=ierror,length=lenval)
+        if (ierror.eq.0) call get_environment_variable('GGD_VERSION',value=ggd_version)
 #else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
         CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
+        CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
 #else
         call getenv ('IMAS_VERSION', imas_version)
         call getenv ('UAL_VERSION', ual_version)
+        call getenv ('GGD_VERSION', ggd_version)
 #endif
 #endif
 
@@ -735,6 +759,10 @@ contains
         edge_transport%code%name = source
         edge_sources%code%name = source
         radiation%code%name = source
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%name(1) )
+        edge_transport%model(1)%code%name = source
+#endif
 
         allocate( edge_profiles%code%version(1) )
         edge_profiles%code%version = newversion
@@ -744,6 +772,10 @@ contains
         edge_sources%code%version = newversion
         allocate( radiation%code%version(1) )
         radiation%code%version = newversion
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%version(1) )
+        edge_transport%model(1)%code%version = newversion
+#endif
 
         B25_git_version = get_B25_hash()
         allocate( edge_profiles%code%commit(1) )
@@ -757,18 +789,47 @@ contains
           ADAS_git_version = get_ADAS_hash()
           radiation%code%commit = 'B25 : '//trim(B25_git_version)// &
                            &  ' + ADAS : '//trim(ADAS_git_version)
+          p = index(ADAS_git_version,'-')
+          if (p.eq.0) then
+            adas_version = trim(ADAS_git_version)
+          else if (p.gt.1) then
+            adas_version = ADAS_git_version(1:p-1)
+          else
+            adas_version = ''
+          end if
         else
           radiation%code%commit = B25_git_version
         endif
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%commit(1) )
+        edge_transport%model(1)%code%commit = B25_git_version
+#endif
+#ifdef B25_EIRENE
+        if (use_eirene.ne.0) then
+          Eirene_git_version = get_Eir_hash()
+          p = index(Eirene_git_version,'-')
+          if (p.eq.0) then
+            eirene_version = trim(Eirene_git_version)
+          else if (p.gt.1) then
+            eirene_version = Eirene_git_version(1:p-1)
+          else
+            eirene_version = ''
+          end if
+        end if
+#endif
 
         allocate( edge_profiles%code%repository(1) )
-        edge_profiles%code%repository = "git.iter.org"
+        edge_profiles%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
         allocate( edge_transport%code%repository(1) )
-        edge_transport%code%repository = "git.iter.org"
+        edge_transport%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
         allocate( edge_sources%code%repository(1) )
-        edge_sources%code%repository = "git.iter.org"
+        edge_sources%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
         allocate( radiation%code%repository(1) )
-        radiation%code%repository = "git.iter.org"
+        radiation%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%repository(1) )
+        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
+#endif
 
         allocate( radiation%ids_properties%source(1) )
         radiation%ids_properties%source = AM_label
@@ -798,7 +859,7 @@ contains
         allocate( summary%code%commit(1) )
         summary%code%commit = get_B25_hash()
         allocate( summary%code%repository(1) )
-        summary%code%repository = "git.iter.org"
+        summary%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
         allocate( summary%ids_properties%provider(1) )
         summary%ids_properties%provider = usrnam()
 #endif
@@ -5269,6 +5330,250 @@ contains
 #if IMAS_MINOR_VERSION > 21
         allocate( summary%code%output_flag( num_time_slices ) )
         summary%code%output_flag( time_sind ) = 0
+#endif
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%output_flag%data( num_time_slices ) )
+        edge_transport%model(1)%code%output_flag%data( time_sind ) = 0
+        allocate( edge_transport%model(1)%code%output_flag%time( num_time_slices ) )
+        edge_transport%model(1)%code%output_flag%time( time_sind ) = time_slice_value
+
+        nlibs = 1
+        if (streql(b2frates_flag,'adas')) nlibs = nlibs + 1
+#ifdef AMNS
+        if (streql(b2frates_flag,'amns')) nlibs = nlibs + 1
+#endif
+#ifdef B25_EIRENE
+        if (use_eirene.ne.0) nlibs = nlibs + 1
+#endif
+        SOLPS_git_version = get_SOLPS_hash()
+        if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) &
+          & nlibs = nlibs + 1
+        allocate( edge_profiles%code%library( nlibs ) )
+        allocate( edge_sources%code%library( nlibs ) )
+        allocate( edge_transport%code%library( nlibs ) )
+        allocate( radiation%code%library( nlibs ) )
+        allocate( summary%code%library( nlibs ) )
+        nlibs = 1
+        allocate( edge_profiles%code%library( nlibs )%name(1) )
+        allocate( edge_sources%code%library( nlibs )%name(1) )
+        allocate( edge_transport%code%library( nlibs )%name(1) )
+        allocate( radiation%code%library( nlibs )%name(1) )
+        allocate( summary%code%library( nlibs )%name(1) )
+        edge_profiles%code%library( nlibs )%name = 'GGD'
+        edge_sources%code%library( nlibs )%name = 'GGD'
+        edge_transport%code%library( nlibs )%name = 'GGD'
+        radiation%code%library( nlibs )%name = 'GGD'
+        summary%code%library( nlibs )%name = 'GGD'
+        allocate( edge_profiles%code%library( nlibs )%version(1) )
+        allocate( edge_sources%code%library( nlibs )%version(1) )
+        allocate( edge_transport%code%library( nlibs )%version(1) )
+        allocate( radiation%code%library( nlibs )%version(1) )
+        allocate( summary%code%library( nlibs )%version(1) )
+        edge_profiles%code%library( nlibs )%version = ggd_version
+        edge_sources%code%library( nlibs )%version = ggd_version
+        edge_transport%code%library( nlibs )%version = ggd_version
+        radiation%code%library( nlibs )%version = ggd_version
+        summary%code%library( nlibs )%version = ggd_version
+        allocate( edge_profiles%code%library( nlibs )%repository(1) )
+        allocate( edge_sources%code%library( nlibs )%repository(1) )
+        allocate( edge_transport%code%library( nlibs )%repository(1) )
+        allocate( radiation%code%library( nlibs )%repository(1) )
+        allocate( summary%code%library( nlibs )%repository(1) )
+        edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        radiation%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        summary%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        if (streql(b2frates_flag,'adas')) then
+          nlibs = nlibs + 1
+          allocate( edge_profiles%code%library( nlibs )%name(1) )
+          allocate( edge_sources%code%library( nlibs )%name(1) )
+          allocate( edge_transport%code%library( nlibs )%name(1) )
+          allocate( radiation%code%library( nlibs )%name(1) )
+          allocate( summary%code%library( nlibs )%name(1) )
+          edge_profiles%code%library( nlibs )%name = 'ADAS'
+          edge_sources%code%library( nlibs )%name = 'ADAS'
+          edge_transport%code%library( nlibs )%name = 'ADAS'
+          radiation%code%library( nlibs )%name = 'ADAS'
+          summary%code%library( nlibs )%name = 'ADAS'
+          allocate( edge_profiles%code%library( nlibs )%version(1) )
+          allocate( edge_sources%code%library( nlibs )%version(1) )
+          allocate( edge_transport%code%library( nlibs )%version(1) )
+          allocate( radiation%code%library( nlibs )%version(1) )
+          allocate( summary%code%library( nlibs )%version(1) )
+          edge_profiles%code%library( nlibs )%version = adas_version
+          edge_sources%code%library( nlibs )%version = adas_version
+          edge_transport%code%library( nlibs )%version = adas_version
+          radiation%code%library( nlibs )%version = adas_version
+          summary%code%library( nlibs )%version = adas_version
+          allocate( edge_profiles%code%library( nlibs )%commit(1) )
+          allocate( edge_sources%code%library( nlibs )%commit(1) )
+          allocate( edge_transport%code%library( nlibs )%commit(1) )
+          allocate( radiation%code%library( nlibs )%commit(1) )
+          allocate( summary%code%library( nlibs )%commit(1) )
+          edge_profiles%code%library( nlibs )%commit = ADAS_git_version
+          edge_sources%code%library( nlibs )%commit = ADAS_git_version
+          edge_transport%code%library( nlibs )%commit = ADAS_git_version
+          radiation%code%library( nlibs )%commit = ADAS_git_version
+          summary%code%library( nlibs )%commit = ADAS_git_version
+          allocate( edge_profiles%code%library( nlibs )%repository(1) )
+          allocate( edge_sources%code%library( nlibs )%repository(1) )
+          allocate( edge_transport%code%library( nlibs )%repository(1) )
+          allocate( radiation%code%library( nlibs )%repository(1) )
+          allocate( summary%code%library( nlibs )%repository(1) )
+          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          summary%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+        end if
+#ifdef AMNS
+        if (streql(b2frates_flag,'amns')) then
+          nlibs = nlibs + 1
+          call IMAS_AMNS_SETUP(amns)
+          allocate( edge_profiles%code%library( nlibs )%name(1) )
+          allocate( edge_sources%code%library( nlibs )%name(1) )
+          allocate( edge_transport%code%library( nlibs )%name(1) )
+          allocate( radiation%code%library( nlibs )%name(1) )
+          allocate( summary%code%library( nlibs )%name(1) )
+          edge_profiles%code%library( nlibs )%name = 'AMNS'
+          edge_sources%code%library( nlibs )%name = 'AMNS'
+          edge_transport%code%library( nlibs )%name = 'AMNS'
+          radiation%code%library( nlibs )%name = 'AMNS'
+          summary%code%library( nlibs )%name = 'AMNS'
+          query%string = 'code_version'
+          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+          if (.not.amns_status%flag) then
+            allocate( edge_profiles%code%library( nlibs )%version(1) )
+            allocate( edge_sources%code%library( nlibs )%version(1) )
+            allocate( edge_transport%code%library( nlibs )%version(1) )
+            allocate( radiation%code%library( nlibs )%version(1) )
+            allocate( summary%code%library( nlibs )%version(1) )
+            edge_profiles%code%library( nlibs )%version = answer%string
+            edge_sources%code%library( nlibs )%version = answer%string
+            edge_transport%code%library( nlibs )%version = answer%string
+            radiation%code%library( nlibs )%version = answer%string
+            summary%code%library( nlibs )%version = answer%string
+          end if
+          query%string = 'code_commit'
+          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+          if (.not.amns_status%flag) then
+            allocate( edge_profiles%code%library( nlibs )%commit(1) )
+            allocate( edge_sources%code%library( nlibs )%commit(1) )
+            allocate( edge_transport%code%library( nlibs )%commit(1) )
+            allocate( radiation%code%library( nlibs )%commit(1) )
+            allocate( summary%code%library( nlibs )%commit(1) )
+            edge_profiles%code%library( nlibs )%commit = answer%string
+            edge_sources%code%library( nlibs )%commit = answer%string
+            edge_transport%code%library( nlibs )%commit = answer%string
+            radiation%code%library( nlibs )%commit = answer%string
+            summary%code%library( nlibs )%commit = answer%string
+          end if
+          query%string = 'code_repository'
+          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+          if (.not.amns_status%flag) then
+            allocate( edge_profiles%code%library( nlibs )%repository(1) )
+            allocate( edge_sources%code%library( nlibs )%repository(1) )
+            allocate( edge_transport%code%library( nlibs )%repository(1) )
+            allocate( radiation%code%library( nlibs )%repository(1) )
+            allocate( summary%code%library( nlibs )%repository(1) )
+            edge_profiles%code%library( nlibs )%repository = answer%string
+            edge_sources%code%library( nlibs )%repository = answer%string
+            edge_transport%code%library( nlibs )%repository = answer%string
+            radiation%code%library( nlibs )%repository = answer%string
+            summary%code%library( nlibs )%repository = answer%string
+          end if
+          call IMAS_AMNS_FINISH(amns)
+        end if
+#endif
+#ifdef B25_EIRENE
+        if (use_eirene.ne.0) then
+          nlibs = nlibs + 1
+          allocate( edge_profiles%code%library( nlibs )%name(1) )
+          allocate( edge_sources%code%library( nlibs )%name(1) )
+          allocate( edge_transport%code%library( nlibs )%name(1) )
+          allocate( radiation%code%library( nlibs )%name(1) )
+          allocate( summary%code%library( nlibs )%name(1) )
+          edge_profiles%code%library( nlibs )%name = 'EIRENE'
+          edge_sources%code%library( nlibs )%name = 'EIRENE'
+          edge_transport%code%library( nlibs )%name = 'EIRENE'
+          radiation%code%library( nlibs )%name = 'EIRENE'
+          summary%code%library( nlibs )%name = 'EIRENE'
+          allocate( edge_profiles%code%library( nlibs )%version(1) )
+          allocate( edge_sources%code%library( nlibs )%version(1) )
+          allocate( edge_transport%code%library( nlibs )%version(1) )
+          allocate( radiation%code%library( nlibs )%version(1) )
+          allocate( summary%code%library( nlibs )%version(1) )
+          edge_profiles%code%library( nlibs )%version = eirene_version
+          edge_sources%code%library( nlibs )%version = eirene_version
+          edge_transport%code%library( nlibs )%version = eirene_version
+          radiation%code%library( nlibs )%version = eirene_version
+          summary%code%library( nlibs )%version = eirene_version
+          allocate( edge_profiles%code%library( nlibs )%commit(1) )
+          allocate( edge_sources%code%library( nlibs )%commit(1) )
+          allocate( edge_transport%code%library( nlibs )%commit(1) )
+          allocate( radiation%code%library( nlibs )%commit(1) )
+          allocate( summary%code%library( nlibs )%commit(1) )
+          edge_profiles%code%library( nlibs )%commit = Eirene_git_version
+          edge_sources%code%library( nlibs )%commit = Eirene_git_version
+          edge_transport%code%library( nlibs )%commit = Eirene_git_version
+          radiation%code%library( nlibs )%commit = Eirene_git_version
+          summary%code%library( nlibs )%commit = Eirene_git_version
+          allocate( edge_profiles%code%library( nlibs )%repository(1) )
+          allocate( edge_sources%code%library( nlibs )%repository(1) )
+          allocate( edge_transport%code%library( nlibs )%repository(1) )
+          allocate( radiation%code%library( nlibs )%repository(1) )
+          allocate( summary%code%library( nlibs )%repository(1) )
+          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+          summary%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+        end if
+#endif
+        if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) then
+          nlibs = nlibs + 1
+          allocate( edge_profiles%code%library( nlibs )%name(1) )
+          allocate( edge_sources%code%library( nlibs )%name(1) )
+          allocate( edge_transport%code%library( nlibs )%name(1) )
+          allocate( radiation%code%library( nlibs )%name(1) )
+          allocate( summary%code%library( nlibs )%name(1) )
+          edge_profiles%code%library( nlibs )%name = 'SOLPS-ITER'
+          edge_sources%code%library( nlibs )%name = 'SOLPS-ITER'
+          edge_transport%code%library( nlibs )%name = 'SOLPS-ITER'
+          radiation%code%library( nlibs )%name = 'SOLPS-ITER'
+          summary%code%library( nlibs )%name = 'SOLPS-ITER'
+          allocate( edge_profiles%code%library( nlibs )%version(1) )
+          allocate( edge_sources%code%library( nlibs )%version(1) )
+          allocate( edge_transport%code%library( nlibs )%version(1) )
+          allocate( radiation%code%library( nlibs )%version(1) )
+          allocate( summary%code%library( nlibs )%version(1) )
+          edge_profiles%code%library( nlibs )%version = newversion
+          edge_sources%code%library( nlibs )%version = newversion
+          edge_transport%code%library( nlibs )%version = newversion
+          radiation%code%library( nlibs )%version = newversion
+          summary%code%library( nlibs )%version = newversion
+          allocate( edge_profiles%code%library( nlibs )%commit(1) )
+          allocate( edge_sources%code%library( nlibs )%commit(1) )
+          allocate( edge_transport%code%library( nlibs )%commit(1) )
+          allocate( radiation%code%library( nlibs )%commit(1) )
+          allocate( summary%code%library( nlibs )%commit(1) )
+          edge_profiles%code%library( nlibs )%commit = SOLPS_git_version
+          edge_sources%code%library( nlibs )%commit = SOLPS_git_version
+          edge_transport%code%library( nlibs )%commit = SOLPS_git_version
+          radiation%code%library( nlibs )%commit = SOLPS_git_version
+          summary%code%library( nlibs )%commit = SOLPS_git_version
+          allocate( edge_profiles%code%library( nlibs )%repository(1) )
+          allocate( edge_sources%code%library( nlibs )%repository(1) )
+          allocate( edge_transport%code%library( nlibs )%repository(1) )
+          allocate( radiation%code%library( nlibs )%repository(1) )
+          allocate( summary%code%library( nlibs )%repository(1) )
+          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          summary%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+        end if
 #endif
 
         deallocate(ionstt,istion,ispion)
