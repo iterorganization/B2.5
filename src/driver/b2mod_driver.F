@@ -2106,6 +2106,7 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2114,7 +2115,8 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+        call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
+     .              state%pl,state%dv,state%co,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
@@ -2130,10 +2132,11 @@ c new CDF movie option
              edition_run = edition_run + 1
              write (run_av_name,'(a14,i4.4)') 
      .              'run_av/run_av.',edition_run
-             call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
+             call run_av_save (run_av_name,nCv,ns,.true.,.false.)
              write(*,*) 'Saved ',run_av_name
           end if
         end if
+#ifdef WG_TODO
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2461,8 +2464,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
-     *                BoRiS,.true.,.false.,.false.)
+          call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
+     *                state%pl,state%dv,state%co,ismain,ismain0,BoRiS,
+     *                .true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
