@@ -43,6 +43,8 @@
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
+#ifdef WG_TODO
+
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
@@ -332,6 +334,10 @@ c read and rewrite data
 #else
       write(*,*)
      1 'b2co_time_cdf failed because compiled with NO_CDF option'
+#endif
+#else
+      write(*,*)
+     1 'b2co_time_cdf failed, not yet converted to WG'
 #endif
       call subend ()
       return
