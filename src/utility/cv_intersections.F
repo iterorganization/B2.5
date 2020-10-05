@@ -8,7 +8,7 @@
       type (geometry), intent (in) :: geo
       type(mapping), intent(in) :: m
       real(kind=r8) :: segm(2,2)
-      integer :: list(nCv), nncv
+      integer :: list(nmax), nncv
       integer :: ic, ifc, ii, kk
       real(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
       logical found, intersects, ifail

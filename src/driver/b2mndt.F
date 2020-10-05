@@ -109,7 +109,7 @@
      &  pz(nCv), rz(nCv), cssb(nCv,0:1)         !iyv 06.02.14
 ! csc UNCOMMENT WITH AD
 !  REAL(kind=r8) :: acorpad(0:ns-1), acoruad(0:ns-1), acorutd, acorted, &
-!& acortid, acorpod
+!& acortid, acorpod, acorktd
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb

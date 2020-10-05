@@ -1912,10 +1912,14 @@ cwdk  set some integers
         state%psnc%te = state%pl%te
         state%psnl%ti = state%psnc%ti
         state%psnc%ti = state%pl%ti
+        state%psnl%tn = state%psnc%tn
+        state%psnc%tn = state%pl%tn
         state%psnl%kinrgy = state%psnc%kinrgy
         state%psnc%kinrgy = state%dv%kinrgy
         state%psnl%po = state%psnc%po
         state%psnc%po = state%pl%po
+        state%psnl%kt = state%psnc%kt
+        state%psnc%kt = state%pl%kt
         state%psnl%fna = state%psnc%fna
         state%psnc%fna = state%dv%fna
         state%psnl%fhe = state%psnc%fhe
@@ -1924,6 +1928,8 @@ cwdk  set some integers
         state%psnc%fhi = state%dv%fhi
         state%psnl%fch = state%psnc%fch
         state%psnc%fch = state%dv%fch
+        state%psnl%fkt = state%psnc%fkt
+        state%psnc%fkt = state%dv%fkt
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {

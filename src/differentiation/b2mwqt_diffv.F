@@ -62,7 +62,7 @@
 *   ..set and test nfld
       nfld = 0
       if (1.le.style) then
-       nfld = nfld+2+2*(2*ns+4)
+       nfld = nfld+2+2*(2*ns+6)
       endif
       if (2.le.style) then
        nfld = nfld+36*(ns+3)
@@ -73,7 +73,6 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
-      nfld = nfld + 1
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 *   ..define region boundaries
 #ifdef WG_TODO
@@ -115,6 +114,8 @@
        k = k+1
        z(k) = diag%arespo
        k = k+1
+       z(k) = diag%areskt
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         z(k) = diag%acorpa(is)
@@ -130,7 +131,11 @@
        k = k+1
        z(k) = diag%acorti/ev
        k = k+1
+       z(k) = diag%acortn/ev
+       k = k+1
        z(k) = diag%acorpo
+       k = k+1
+       z(k) = diag%acorkt/ev
        k = k+1
       endif
       if (2.le.style) then
