@@ -24,7 +24,7 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
-     ,  ncf,cfstart(nncf),cfend(nncf), cftype(nncf)
+     ,  cfstart(nncf),cfend(nncf), cftype(nncf)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -33,7 +33,7 @@
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
       logical :: cfread(nncf)
-      integer, save :: ncfdata(nncf)
+      integer, save :: ncfdata(nncf), ncf
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM)
 
       private :: user
@@ -376,7 +376,7 @@ c*** Set default values according to current species list
         write(*,*) ' rzomp:', rzomp
       endif
       nomp = 0
-      omp = 0
+      omp = 0 !Need to add check for monotonicity in list
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
