@@ -30,6 +30,7 @@
       call cfrure (nput, nCv,      st % pl % ti, 'ti')
       call cfrure (nput, nCv,      st % pl % tn, 'tn')
       call cfrure (nput, nCv,      st % pl % po, 'po')
+      call cfrure (nput, nCv,      st % pl % kt, 'kt')
 
 *   ..read fluxes
       call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
@@ -41,6 +42,7 @@
       call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
       call cfrure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
+      call cfrure (nput, nFc*2,    st % dv % fkt, 'fkt')
 
 *   ..read time
       call cfrure (nput, 1, time, 'time')

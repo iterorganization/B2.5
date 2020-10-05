@@ -20,6 +20,7 @@
       call subini('b2usr_cost_function')
 
       if (first_call .and. ncf .gt. 0) then
+        call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
         ndata1 = maxval(mpg%cfCvP(1:ncf,2),1)
         eps = machsfr()
         allocate(ffdata(ncf,ndata1))
