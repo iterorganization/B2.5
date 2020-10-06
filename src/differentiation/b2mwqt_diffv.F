@@ -13,8 +13,8 @@
       integer nput, nCv, ns, itim, itcnt
       real (kind=R8) :: BoRiS
       type (geometry), intent (in) :: geo
-      type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
+      type (B2Plasma_diffv), intent (in) :: pl
+      type (B2Derivatives_diffv), intent (in) :: dv
       type (B2Diagnostic), intent (in) :: diag
 *   ..common blocks
 *-----------------------------------------------------------------------
