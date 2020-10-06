@@ -16,7 +16,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma_diff), intent (in) :: pl
-      type (B2Derivatives_diff), intent (in) :: dv
+      type (B2Derivatives), intent (in) :: dv
       real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic), intent (inout) :: diag

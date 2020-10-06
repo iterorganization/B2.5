@@ -7,7 +7,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
-      type (B2Derivatives_diff), intent (in) :: dv
+      type (B2Derivatives), intent (in) :: dv
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic), intent (inout) :: diag
 *-----------------------------------------------------------------------
