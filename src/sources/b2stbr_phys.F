@@ -999,8 +999,8 @@ c          while B2.5 uses internal energy equations.
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
-     &            istra,farea,pl,tnf,geo,cosa,sina,
-     &            fnni,fmomni,nni,nnwwni,feneni)
+     &              istra,farea,pl,tnf,geo,cosa,sina,
+     &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.2) then
                call CalcIncidentFluxesMfp(switch%mfp_b1,
      &              switch%mfp_b2,

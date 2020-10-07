@@ -357,13 +357,12 @@ c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
 
 
-c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), set all outputs to zero
+c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
       if (fnni.lt.0) then
-	fnni   = 0.0_R8 
-	fmomni = 0.0_R8
-	nni    = 0.0_R8
-	nnwwni = 0.0_R8
-	feneni = 0.0_R8
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fmomni,
+     &            nni,nnwwni,feneni)
       endif
 
       call subend ()
@@ -470,7 +469,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_rates
@@ -968,13 +967,12 @@ c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el =  fene_el*area
 
-!!    zero out if incident flux has wrong sign
+c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
       if (fnni.lt.0) then
-        fmomrefl = 0.0_R8
-        nnrefl = 0.0_R8
-        nnwwnrefl = 0.0_R8
-        fenerefl = 0.0_R8
-        fene_el = 0.0_R8
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            geo, mpg,cosa, sina,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
 
       call subend ()
@@ -983,7 +981,7 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
      &             iCv,iCn,nCi,iFc,
-     &            isign,isn,isi,iscx0,istra,iwall,
+     &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
@@ -1081,7 +1079,7 @@ c     Calculate rate coefficients at boundary
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_b2cmpa
