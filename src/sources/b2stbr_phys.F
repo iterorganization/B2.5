@@ -122,7 +122,7 @@ c     output for analysis/debugging
 *     calculated via the neutrals namelist.
 *
 *     For given species IS on boundary ISTRA:
-*     The particle recycling coefficient is given by RECYC(is,istra)
+*     The particle recycling coefficient is given by B2RECYC(is,istra)
 *     The energy recycling coefficient is given by ERECYC(is,istra)
 *     The recycling coefficient into the next ionized species is RCION(is,istra)
 *     The chemical sputtering yield is given by chem_sput(is,istra)
@@ -861,7 +861,7 @@ cdpc
 
 
          if (switch%kul_recycle.eq.0) then !! default neutral recycling/reflection model
-         srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+recyc(is,istra)*t0
+         srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+b2recyc(is,istra)*t0
 #ifdef WG_TODO
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
@@ -869,28 +869,28 @@ cxpb Whatever is not recycled is counted as deposition
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
      1           dtim*plate_time_factor(iwall)*
-     2           (1.0_R8-recyc(is,istra))*t0
+     2           (1.0_R8-b2recyc(is,istra))*t0
          endif
 #endif
 cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
 c     (toroidal piec only, because poloidal piece of parallel velocity flips sign after reflection)
          srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
      &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
-     &    recyc(is,istra)*t0*geo%cvHz(iCv)
+     &    b2recyc(is,istra)*t0*geo%cvHz(iCv)
          if (switch%lin_shi0.eq.1) then
           srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*max(
      &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0/
+     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0/
      &      pl%ti(iCv)
          else
           srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
      &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
+     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
          endif
          if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
      &        recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
+     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
 
 
@@ -919,7 +919,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            if (is.ne.is0) then !! ion species, recycling
 
 cmb   particle recycling
-             snan = recyc(is,istra)*t0  !! conservation of particles: t0 = incident ion flux
+             snan = b2recyc(is,istra)*t0  !! conservation of particles: t0 = incident ion flux
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
 
 cmb   net momentum sources from neutral particle recombination
@@ -928,7 +928,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
    
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
-     &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
+     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
@@ -1021,7 +1021,7 @@ c          while B2.5 uses internal energy equations.
              endif
 
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
-     &             (recyc(is,istra)-1)*fnni*neutral_sources_rescale
+     &             (b2recyc(is,istra)-1)*fnni*neutral_sources_rescale
 
 
 cmb   net momentum sources from neutral particle reflection
@@ -1029,7 +1029,7 @@ cmb   net momentum sources from neutral particle reflection
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
@@ -1037,7 +1037,7 @@ cmb   net momentum sources from neutral particle reflection
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
-     &              istra,iwall,farea,recyc(is,istra),pl,tnf,
+     &              istra,iwall,farea,b2recyc(is,istra),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.2) then
@@ -1045,7 +1045,7 @@ cmb   net momentum sources from neutral particle reflection
      &              switch%mfp_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
@@ -1053,7 +1053,7 @@ cmb   net momentum sources from neutral particle reflection
                else
                  call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
@@ -1577,7 +1577,7 @@ cxpb  with mixed materials model
                RES_sputtering(iwall,is) = 0.0_R8
             endif
 c back scattering ! mixed materials included thru layer constituents definitions
-            if (recyc(is,istra).eq.0.0_R8 .and. 
+            if (b2recyc(is,istra).eq.0.0_R8 .and. 
      &         erecyc(is,istra).eq.0.0_R8 .and. .not.is_neutral(is) 
      &   .and. reflection_on.ne.0) then ! use reflection model
                local_reflection = reflect(is,Ei*ev,iwall)
@@ -1646,14 +1646,14 @@ cxpb
      .           *core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+
-     &          recyc(is,istra)*t0
+     &          b2recyc(is,istra)*t0
 cwdk  recycling of true parallel momentum
 c     (at core, cell faces will be flux-surface aligned)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0)+
      .           mrecyc(is,istra)*am(is)*mp*pl%ua(iCv,is)*
-     .           recyc(is,istra)*t0*geo%cvHz(iCv)
+     .           b2recyc(is,istra)*t0*geo%cvHz(iCv)
                srw%shi0(iCv,0) = srw%shi0(iCv,0)+erecyc(is,istra)*
-     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*recyc(is,istra)*t0
+     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*b2recyc(is,istra)*t0
      &          *recycled_neutrals_contr  !srv          
             endif
          enddo      ! do is = nsmax, nsmin, -1
