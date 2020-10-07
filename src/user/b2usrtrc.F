@@ -397,7 +397,7 @@ c*** Calculate the basic quantities for each surface/species
                 else !}{
                   if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
                     ndta_tmp(k,j)=nmnt_tmp
-                    print '(3a,i3)',
+                    print '(4a,i3)',
      ,                 'b2usrtrc: different absorption coefficients',
      ,                 ' for diagnostic surface group ',gntrgrp(k),
      ,                 ', species ',j
