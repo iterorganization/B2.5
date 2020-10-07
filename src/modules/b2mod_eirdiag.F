@@ -24,6 +24,7 @@
      &  wldnm_res(:,:),     !incident molecule flux
      &  ewlda_res(:,:),     !incident energy flux of atoms
      &  ewldm_res(:,:),     !incident energy flux of molecules
+     &  ewldt_res(:),       !total energy wall load from Eirene particles
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
@@ -144,6 +145,7 @@ c
       allocate(wldnm_res(max(1,nmold),nsgmx))
       allocate(ewlda_res(max(1,natmd),nsgmx))
       allocate(ewldm_res(max(1,nmold),nsgmx))
+      allocate(ewldt_res(nsgmx))
       allocate(ewldea_res(max(1,natmd),nsgmx))
       allocate(ewldem_res(max(1,nmold),nsgmx))
       allocate(ewldrp_res(nsgmx))
@@ -212,6 +214,7 @@ c
       deallocate(wldnm_res)
       deallocate(ewlda_res)
       deallocate(ewldm_res)
+      deallocate(ewldt_res)
       deallocate(ewldea_res)
       deallocate(ewldem_res)
       deallocate(ewldrp_res)

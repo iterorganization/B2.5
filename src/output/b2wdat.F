@@ -81,9 +81,7 @@
       character*26 boundary_location(nbcd)
       character(7), save :: folder                                 !srv 26.09.17
 #ifdef B25_EIRENE
-      integer js
-      real (kind=R8), save :: hlp_neu_peak
-      data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
+      integer js, ind, ias
 #endif
 *   ..procedures
       integer len_of_digits
@@ -717,11 +715,14 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(1)+nlim
-      do iy=0,ny-1 !{
-        wrk0(5,iy)=wrk0(5,iy)+(wldnek(js,0)+wldnep(js,0))*
-     &                                hlp_neu_peak/hlp_s
-      enddo
+      js=ltns(1)
+      if (js.gt.0) then
+        ind=eirdiag_nds_ind(js)
+        ias=ind+1
+        do iy=0,ny-1 !{
+          wrk0(5,iy)=wrk0(5,iy)+ewldt_res(iy+ias)
+        enddo !}
+      end if
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
@@ -732,12 +733,13 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
-      if (ltns(nncut*2).gt.0) then
+      js=ltns(nncut*2)
+      if (js.gt.0) then
+        ind=eirdiag_nds_ind(js)
+        ias=ind+1
         do iy=0,ny-1 !{
-          wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
-     &                              hlp_neu_peak/hlp_s
-        enddo
+          wrk0(6,iy)=wrk0(6,iy)+ewldt_res(iy+ias)
+        enddo !}
       endif
 #endif
 
@@ -755,11 +757,14 @@
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(3)+nlim
-        do iy=0,ny-1 !{
-          wrk0(14,iy)=wrk0(14,iy)+(wldnek(js,0)+wldnep(js,0))*
-     &                                       hlp_neu_peak/hlp_s
-        enddo
+        js=ltns(3)
+        if (js.gt.0) then
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1
+          do iy=0,ny-1 !{
+            wrk0(14,iy)=wrk0(14,iy)+ewldt_res(iy+ias)
+          enddo !}
+        endif
 #endif
 ! inner upper target
         hlp_s=0.0_R8
@@ -771,11 +776,14 @@
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(2)+nlim
-        do iy=0,ny-1 !{
-          wrk0(13,iy)=wrk0(13,iy)+(wldnek(js,0)+wldnep(js,0))*
-     &                                 hlp_neu_peak/hlp_s
-        enddo
+        js=ltns(2)
+        if (js.gt.0) then
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1
+          do iy=0,ny-1 !{
+            wrk0(13,iy)=wrk0(13,iy)+ewldt_res(iy+ias)
+          enddo !}
+        end if
 #endif
       end if !}
 

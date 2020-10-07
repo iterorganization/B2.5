@@ -485,6 +485,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >         ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                  ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                  ewldt_res(NCL),
      .                  ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                  ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                  wldspt_res(NCL), sarea_res(NCL),
@@ -541,6 +542,10 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              read(44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
           ELSE
             call read_title(44)
             READ (44,1028)
@@ -575,6 +580,10 @@ cank
               READ (44,1028)
               call read_title(44)
               READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+            end if
+            if (jvft44.ge.20201006) then
               call read_title(44)
               READ (44,1028)
             end if
