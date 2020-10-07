@@ -144,6 +144,7 @@ cank }
       logical, save :: TIME_DEP_PUFF(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
+      integer, save :: b2species_start(NSTRAID), b2species_end(NSTRAID)
       integer, save :: b2eatcr(0:nsdmax-1)
       integer, save :: b2espcr(0:nsdmax-1)
       integer, save :: eb2atcr(1:natmid)
@@ -202,7 +203,7 @@ cank }
 #endif
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
-     .  species_start, species_end,
+     .  species_start, species_end, b2species_start, b2species_end,
      .  maxw, maxw_eff,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
@@ -252,6 +253,7 @@ csw 21feb2012
       NSTSID=nsts_in
       NATMID=natm_in
       allocate(RECYC(0:nsd-1,NSTRAID))
+      allocate(B2RECYC(0:nsd-1,NSTRAID))
       allocate(ERECYC(0:nsd-1,NSTRAID))
       allocate(MRECYC(0:nsd-1,NSTRAID))
       allocate(RCION(0:nsd-1,NSTRAID))
@@ -284,6 +286,8 @@ csw 21feb2012
       allocate(SURF_MAT(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
+      allocate(b2species_start(NSTRAID))
+      allocate(b2species_end(NSTRAID))
       allocate(maxw(NSTRAID))
       allocate(maxw_eff(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
@@ -358,6 +362,8 @@ cxpb The default recycling model is 100% particle recycling and
 cxpb 30% energy recycling for all ionised species except carbon.
 cwdk 0% momentum recycling, for backwards compatibility
       RECYC=0.0_R8
+cmb   b2recyc is set negative here to check whether the field was read. If not recyc is copied into b2recyc
+      B2RECYC = -1.0_R8
       ERECYC=0.0_R8
       MRECYC=0.0_R8
       do is = 1, nsd-1
@@ -391,6 +397,9 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       volrecwt=0.1_R8
       species_start(:)=0
       species_end(:)=nsd-1
+cmb   b2species_start and end are set -100 here to check whether the field was read. If not recyc is copied into b2recyc
+      b2species_start(:)=-100                            
+      b2species_end(:)=-100
       maxw(:) = 0
       maxw_eff(:) = 0
       neutrals_filename='b2.neutrals.parameters'
@@ -511,6 +520,8 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(SURF_MAT)
       deallocate(species_start)
       deallocate(species_end)
+      deallocate(b2species_start)
+      deallocate(b2species_end)
       deallocate(maxw)
       deallocate(maxw_eff)
       deallocate(b2eatcr)
@@ -787,6 +798,8 @@ c
         call xertst (4.gt.maxw(istra), 'faulty input maxw')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
+          call xertst (0.0_R8.le.b2recyc(is,istra), 'faulty input'//
+     .      ' b2recyc')
           call xertst (0.0_R8.le.erecyc(is,istra),
      .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
@@ -1157,7 +1170,7 @@ c.. Test consistency with physical edges within the computational domain
       type(mapping), intent(inout) :: m
       integer ns
       logical dotest
-      integer is, ic, ix, istra, i, j, k, n, ii(1), itrack,
+      integer is, ist, ic, ix, istra, i, j, k, n, ii(1), itrack,
      >        noss, instra, iss, indss, idb, nrcl
       logical found, side
       intrinsic mod
@@ -1287,9 +1300,26 @@ c
       end do
 
 *   ..set additional variables
-      do is = 1, nstrat
-        if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
-     &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
+      do ist = 1, nstrat
+        if (crcstra(ist).ne.'N' .and. crcstra(ist).ne.'S' .and.
+     &      crcstra(ist).ne.'W' .and. crcstra(ist).ne.'E') then
+          targsp(ist,:)=-1
+        endif
+cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
+!   to decouple these variables for the EIRENE side and the fluid neutral side.
+!   If these fields have not been set in the namelist they are made equal to their 
+!   variants without 'b2' in the field name.
+        if (b2species_start(ist).eq.-100) then
+        b2species_start(ist) = species_start(ist)
+        endif
+        if (b2species_end(ist).eq.-100) then
+        b2species_end(ist) = species_end(ist)
+        endif
+        do is = 0, ns-1
+          if (b2recyc(is,ist).lt.0.0_R8) then
+            b2recyc(is,ist) = recyc(is,ist)
+          endif
+        enddo
       end do
 
 *   ..test input
