@@ -1581,6 +1581,9 @@ cwdk       * need to correct this BC for hybrid scheme
 
           case (19)
           call xerrab ('b2stbc_phys -- BCCON = 19 not adapted for WG')
+          if (switch%spatial_hybrid.ne.0) then
+            call xerrab ('BCCON = 19 not compatible with spatial hybr')
+          endif
 #ifdef WG_TODO
           if(ncall.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
@@ -2565,6 +2568,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
           case (27)
           call xerrab ('b2stbc_phys -- BCCON = 27 not adapted for WG')
+          if (switch%spatial_hybrid.ne.0) then
+            call xerrab ('BCCON = 27 not compatible with spatial hybr')
+          endif
 #ifdef WG_TODO
           if(ncall.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
