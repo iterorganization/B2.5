@@ -322,7 +322,8 @@
 !WG_TODO      b2visa=0.0_R8
 !WG_TODO      b2sihs_visa=0.0_R8
       do is = 0, ns-1
-       if(.not.is_neutral(is).or.switch%use_eirene.eq.0) then                !srv 29.08.02
+       if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.            !srv 29.08.02
+     &                           switch%spatial_hybrid.eq.1) then               
         if (switch%style_visc.eq.0) then
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
          wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
