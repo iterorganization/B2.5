@@ -76,7 +76,8 @@ MOD = mod
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF} -lpgsse1 -lpgsse2
 
 ifdef LD_CATALYST

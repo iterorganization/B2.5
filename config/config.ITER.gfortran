@@ -61,7 +61,8 @@ OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF} -limf -lm # Intel Math must be before -lm
 
 ifdef USE_EIRENE

@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -22,7 +22,7 @@ CPP = cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = ftn
 
@@ -42,7 +42,7 @@ endif
 DBLFC=${FC}
 DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 # -I is used to specify search path for modules
 INCMOD = -I
@@ -51,7 +51,8 @@ OBJDEST = -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL} -lcgm -lngmath 
+GRLIBES = ${LD_NCARG} -lcgm -lngmath
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST

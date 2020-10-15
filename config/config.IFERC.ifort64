@@ -2,11 +2,11 @@
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -69,7 +69,8 @@ MOD      = mod
 
 BLD      = ar rucv
 
-GRLIBES  = ${LD_NCARG} ${LD_MSCL}
+GRLIBES  = ${LD_NCARG}
+PLLIBES  = ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST

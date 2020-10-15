@@ -83,7 +83,8 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD      = ar rucv
 
-GRLIBES  = ${LD_NCARG} ${LD_MSCL}
+GRLIBES  = ${LD_NCARG}
+PLLIBES  = ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST

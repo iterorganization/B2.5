@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -26,6 +26,7 @@ MOD =         # module suffix
 BLD =         # program and options for building a library
 
 GRLIBES =     # graphics libraries
+PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
 LD =          # loader
