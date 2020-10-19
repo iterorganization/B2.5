@@ -64,6 +64,7 @@
 
 * ..make plots
 *   ..compute auxiliaries
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
@@ -71,6 +72,7 @@
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
+#endif
 *   ..plot state
       call b2wgpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
      &  fna, fhe, fhi, fch, ne, ni, pr, pz, rz, fne, fni, wrk0)

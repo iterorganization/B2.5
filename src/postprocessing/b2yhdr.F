@@ -322,12 +322,12 @@
 * ..computation
 *   ..read physics common
       call cfruch (ninp(1), 120, lblcp, 'label')
-      call b2rucp (ninp(1), b2fparam_version, nx, ns)
+      call b2rucp (ninp(1), b2fparam_version, ns)
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblcp(1:60), lblcp(61:120)
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..write physics parameters
       if (istyl.eq.0) write (nout(0),'()')
       call b2wfcp (nout(0), istyl, ns)

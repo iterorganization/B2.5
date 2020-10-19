@@ -74,18 +74,20 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
+#ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
+#endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..read and echo code internal parameters
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
@@ -101,8 +103,8 @@
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,         !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,        !xpb
+     &  po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -110,8 +112,10 @@
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstate_version)
 *   ..test plasma state and fluxes
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
       call cfruch (ninp(5), 120, lblrc, 'label')
@@ -154,17 +158,21 @@
        goto 10
       endif
 *    ..compute log-log electron rate coefficients
+#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+#endif
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
       call xertst (0.le.ismain.and.ismain.lt.ns,
      &         'faulty b2mndr_ismain')
       call xertst (.not.is_neutral(ismain),
      &         'ismain cannot refer to a neutral species')
+#ifdef WG_TODO
       call b2sqel (nx, ny, ns, ismain, ev, te,
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+#endif
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
       nscx = 0
@@ -180,6 +188,7 @@
         iscx(k) = -1
       enddo
 *    ..compute log-log charge exchange rate coefficients
+#ifdef WG_TODO
       do k = 0, nscx-1
         call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
      &   rlcx(-1,-1,0,0,k))
@@ -189,6 +198,7 @@
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)
       enddo
+#endif
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,

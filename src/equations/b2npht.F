@@ -242,7 +242,7 @@ c residuals for separate neutral energy equation
           call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shn0, dv%fhn,
      &     dv%reshn)
         else
-          call xerrab('non-default energy equations not yet developed', 
+          call xerrab('non-default energy equations not yet developed'// 
      &                 'for mdf fluxes')
         endif
        endif

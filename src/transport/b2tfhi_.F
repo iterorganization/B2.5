@@ -133,7 +133,7 @@ cpax
        call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')
        call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1),1,'cdkt1','.ge.')
        if (tn_style.ne.0.and.mdf_fhi.eq.1) then
-         call xerrab('mdf_fhi not yet available for',
+         call xerrab('mdf_fhi not yet available for'//
      &               'non-default energy equation')
        endif
       endif

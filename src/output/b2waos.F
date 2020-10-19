@@ -117,12 +117,14 @@
      .   call xerrab ('b2waos--error, faulty edge gs(:,-1,1)')
 
 *   ..compute auxiliaries
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xpfe (nx, ny, ns, ns_ext, qe,
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
+#endif
 *
       IXR = -1
       IYR = NY/2 

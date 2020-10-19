@@ -656,7 +656,8 @@ c   --> better solution wanted here..
           if(.not.is_neutral(is)) then
            wrk0=sna0_eir(:,0,is)+
      &          sna0_eir(:,1,is)*pl%na(:,is)
-           call my_out_us(70,nCv,wrk0,'b2stbr_sna_eir'//chns//'_'//ch3)
+           call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns//
+     &                    '_'//ch3)
           endif
          enddo
         endif

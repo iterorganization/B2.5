@@ -276,8 +276,10 @@ c
 
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+#endif
       nfla=0
       do is=0,ns-1
         if(.not.is_neutral(is)) nfla=nfla+1
@@ -290,7 +292,9 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>NXDD or NY>NYDD',
      1   nx,nxdd,ny,nydd
       else
+#ifdef WG_TODO
         call copy_background(nx,ny,ns,BoRiS)
+#endif
       endif
 c
       call initialise_potentials(ns)
@@ -308,10 +312,12 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
+#ifdef WG_TODO
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
      1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
+#endif
       if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
         do iy=-1,ny
@@ -626,8 +632,9 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call read_b2mod_wall_namelist(99,'    ',ex)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .  'Inconsistent values of ndepth_nml and plate_model')
+#ifdef WG_TODO
       call get_wall_data(nx,ny,ns,BoRiS,ex)
-
+#endif
 #ifdef B25_EIRENE
 #ifndef HPUX
       filename='fort.44'

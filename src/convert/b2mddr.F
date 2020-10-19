@@ -103,12 +103,14 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
+#ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
+#endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read plasma state file label
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
@@ -116,16 +118,18 @@
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  ti, tn, po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p,
+     &  kinrgy, fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, 
+     &  fna_he, fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir,
+     &  fhi_eir, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  b2fstate_version)
 *   ..test plasma state and fluxes
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..read atomic rate data
       call cfruch (ninp(6), 120, lblrc, 'label')
       adpak_used = index(lblrc,'ADPAK').gt.0
@@ -142,6 +146,7 @@
      &   'faulty input rtzn--wrong rate table?')
       enddo
 *   ..compute log-log electron rate coefficients
+#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &  rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
@@ -153,6 +158,7 @@
       call b2sqel (nx, ny, ns, ismain, ev, te,
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+#endif
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
       nscx = 0
@@ -168,13 +174,15 @@
         iscx(k) = -1
       enddo
 *    ..compute log-log charge exchange rate coefficients
+#ifdef WG_TODO
       do k = 0, nscx-1
         call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
      &   rlcx(-1,-1,0,0,k))
       enddo
+#endif
 *   ..compute charge exchange rate coefficients
       do k = 0, nscx-1
-        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
+        call b2sqcx (nx, ns, ev, am(iscx(k)), ti, tn,
      &   rlcx(-1,-1,0,0,k), rcx)
       enddo
 *   ..obtain external species data if any

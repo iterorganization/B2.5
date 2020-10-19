@@ -639,7 +639,7 @@ cank
 
 cc<<<
 * -- NO ERROR --
-
+#ifdef WG_TODO
       call extend(dab2,ndx,ndy,natm,nnx,nny,natmi)
       call extend(tab2,ndx,ndy,natm,nnx,nny,natmi)
       call extend(dmb2,ndx,ndy,nmol,nnx,nny,nmoli)
@@ -663,6 +663,7 @@ cank
 cxpb 20130210
       call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
 cxpb
+#endif
       deallocate(ft44data)
 #endif
       NFEND = 1

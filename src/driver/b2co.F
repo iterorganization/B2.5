@@ -174,13 +174,13 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       label = lblmn
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..read and echo code internal parameters
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
@@ -196,14 +196,16 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
+#ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
+#endif
       call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb
-      call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
-     &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
+     &  po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -218,8 +220,10 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
         call alloc_b2mod_external_dummy(nx,ny)
       endif
 *   ..test plasma state and fluxes
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..save final state
       newversion = plasmastate_version
       write(lblmn,*) 'Recovered from ',trim(savefile)
@@ -231,8 +235,8 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
-      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
+     &  po, kt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -361,12 +365,14 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
           nnmoli = 0
         end if
       end if
+#ifdef WG_TODO
       if (ank_tracing.ne.0) then
         call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         call b2filei(0,ns,nnreg(0))
         call b2filec(0,ns,nnreg(0))
       end if
+#endif
 *   ..rewrite NetCDF files
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)

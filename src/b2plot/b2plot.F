@@ -405,7 +405,9 @@ cxpb  This call is moved up from 'f31' so that we used the original cell-faced
 cxpb  quantities before their mapping to cell centers
       call ipgeti ('b2tfnb_drift_style', drift_style)
       call ipgetr ('b2news_BoRiS', BoRiS)
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
+#endif
       nflai=0
       do is=0,ns-1
         if(is_neutral(is)) nflai=nflai+1
@@ -418,7 +420,9 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>NXDD or NY>NYDD',
      1   nx,nxdd,ny,nydd
       else
+#ifdef WG_TODO
         call copy_background(nx, ny, ns, BoRiS)
+#endif
       endif
 c
       call ipgetr ('b2trcl_lambda', lambda)
@@ -525,9 +529,11 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
+#ifdef WG_TODO
       call b2xpen (nx, ny, ns,
      1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
+#endif
 c calculate divergences of the various fluxes
       do is=0,ns-1
         do iy=-1,ny
@@ -1146,10 +1152,11 @@ c
         targety(i,2) = real(i)
         targety(i,1) = real(i)-0.5_R8
       end do
-      
+#ifdef WG_TODO      
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
       call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
+#endif
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
       targetr=0.5_R8*sum(targetcr,3)
@@ -1974,12 +1981,16 @@ c
         case('ehx')
           description='ehx'
           nz=1
+#ifdef WG_TODO
           call b2xehx(nx, ny, hx, hy, qz, qs, te, po, ne, mach(-1,-1,0))!srv 13.01.17
+#endif
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
           nz=1
+#ifdef WG_TODO
           call b2xehy(nx, ny, hx, hy, qz, qs, te, po, ne, mach(-1,-1,0))!srv 13.01.17
+#endif
           call copy(mach(-1,-1,1),1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'
@@ -7260,8 +7271,10 @@ cdpc still in testing phase
               end if
             end do
           end do
+#ifdef WG_TODO
           call extend(work(-1:nx,-1:ny,0:ndim(3,iwrk)-1,iwrk),
      1     nx,ny,ndim(3,iwrk),nx,ny,ndim(3,iwrk))
+#endif
           values(9)=minval(work(-1:ndim(1,iwrk),-1:ndim(2,iwrk),
      1         0:ndim(3,iwrk)-1,iwrk))
           values(10)=maxval(work(-1:ndim(1,iwrk),-1:ndim(2,iwrk),
@@ -10246,9 +10259,11 @@ c
       cflag=.true.
       FLVALUE: select case(cval)
         case('f30')      ! write fort.30
-          call write_f30(nx, ny)
+          call write_f30
+#ifdef WG_TODO
         case('f31')      ! write fort.31
           call write_f31(nx, ny)
+#endif
         case('glob')     ! transform an extra label into a global header
           call set_globalheader
         case('both')     ! both phys and comp
