@@ -1244,13 +1244,13 @@ c     *             dia_cur .ne. 0.0e0_R8 .or. vis_par .ne. 0.0_R8,
 c     *             'No radial current terms!') 
 
 c spatially hybrid neutrals
-      if(s%spatial_hybrid.ne.0.and.s%use_eirene.ne.0) then
+      if(s%spatial_hybrid.ne.0.and.s%use_eirene.eq.0) then
         call xerrab('spatial hybrid neutrals must be with eirene')
       endif
 
       if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
         call xerrab('spatial hybrid neutrals not yet developed',
-     &               'drifts and currents')
+     &               'with drifts and currents')
       endif
 
 
