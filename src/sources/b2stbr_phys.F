@@ -402,7 +402,7 @@ c for KUL recycling/reflection model
             
           
             call recycle(
-     &           species_start(istra), species_end(istra),
+     &           b2species_start(istra), b2species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
      &           Phi_app, lcore, dnndy, dnndz)
           enddo      ! end loop over boundary cells
