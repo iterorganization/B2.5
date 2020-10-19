@@ -132,7 +132,9 @@
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp)                                          !xpb
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+#endif
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx

@@ -181,7 +181,8 @@
 
 * ..read rate coefficients
       if (version.ge.'03.000.007') then
-        call cfruin (nget, 1, fix_recomb, 'fix_recomb')
+        call cfruin (nget, 1, idum(0), 'fix_recomb')
+        fix_recomb = idum(0)
       else
         fix_recomb = -1
       end if

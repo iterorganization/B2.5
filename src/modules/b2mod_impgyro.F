@@ -215,11 +215,11 @@ c     read the file if exists
         sch_ext = 0.0_R8
 
       end if
-
+#ifdef WG_TODO
          call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
          call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
          call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
-
+#endif
 cxpb
 cxpb  Here are computed the derived quantities
 cxpb

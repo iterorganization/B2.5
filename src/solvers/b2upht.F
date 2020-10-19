@@ -92,7 +92,7 @@
       endif 
 
       if (tn_style.ne.0.and.stylec.ne.0) then
-        call xerrab('b2upht stylec =/= 0 not yet available for',
+        call xerrab('b2upht stylec =/= 0 not yet available for'//
      &                  'non-default energy equation')
       endif
 

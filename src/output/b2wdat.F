@@ -1249,23 +1249,23 @@
         close(70)
         do is = 1,nnatmi                                            !srv 04.06.09 16.02.12{
          write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,dab2(1,is,1),'dab2'//chns)
-         call my_out_us(70,nCv,tab2(1,is,1),'tab2'//chns)
-         call my_out_us(70,nCv,rfluxa(1,is,1),'rfluxa'//chns)
-         call my_out_us(70,nCv,refluxa(1,is,1),
+         call my_out_us(70,nCv,0,dab2(1,is,1),'dab2'//chns)
+         call my_out_us(70,nCv,0,tab2(1,is,1),'tab2'//chns)
+         call my_out_us(70,nCv,0,rfluxa(1,is,1),'rfluxa'//chns)
+         call my_out_us(70,nCv,0,refluxa(1,is,1),
      .                       'refluxa'//chns)
-         call my_out_us(70,nCv,pfluxa(1,is,1),'pfluxa'//chns)
-         call my_out_us(70,nCv,pefluxa(1,is,1),
+         call my_out_us(70,nCv,0,pfluxa(1,is,1),'pfluxa'//chns)
+         call my_out_us(70,nCv,0,pefluxa(1,is,1),
      .                       'pefluxa'//chns)
         enddo
         do is = 1,nnmoli                                            !srv 16.02.12
          write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,dmb2(1,is,1),'dmb2'//chns) !srv 29.04.10
-         call my_out_us(70,nCv,tmb2(1,is,1),'tmb2'//chns) !srv 29.04.10
-         call my_out_us(70,nCv,rfluxm(1,is,1),'rfluxm'//chns)
-         call my_out_us(70,nCv,refluxm(1,is,1),'refluxm'//chns)
-         call my_out_us(70,nCv,pfluxm(1,is,1),'pfluxm'//chns)
-         call my_out_us(70,nCv,pefluxm(1,is,1),'pefluxm'//chns)
+         call my_out_us(70,nCv,0,dmb2(1,is,1),'dmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,0,tmb2(1,is,1),'tmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,0,rfluxm(1,is,1),'rfluxm'//chns)
+         call my_out_us(70,nCv,0,refluxm(1,is,1),'refluxm'//chns)
+         call my_out_us(70,nCv,0,pfluxm(1,is,1),'pfluxm'//chns)
+         call my_out_us(70,nCv,0,pefluxm(1,is,1),'pefluxm'//chns)
         enddo                                                       !srv 04.06.09 }
        endif
 #endif
@@ -1281,7 +1281,7 @@
        call my_outi(70,nx,ny,rightiy,'rightiy')
 #endif
 
-       call my_out_us(70,nCv,po,'po')                                !srv
+       call my_out_us(70,nCv,0,po,'po')                                !srv
 
        wrk0=0.0e0_R8
 #ifdef WG_TODO
@@ -1294,7 +1294,7 @@
          enddo
        enddo
 #endif
-       call my_out_us(70,nCv,'Eyf')                              !srv 15.06.04 }
+       call my_out_us(70,nCv,0,wrk0,'Eyf')                              !srv 15.06.04 }
        wrk0=0.0e0_R8                                                 !iyv 15.10.09 {
 #ifdef WG_TODO
        do iy=0,ny
@@ -1314,7 +1314,7 @@
            endif
          enddo
        enddo
-       call my_out_us(70,nCv,wrk0,'Eyc')
+       call my_out_us(70,nCv,0,wrk0,'Eyc')
 
 *     calculate shear
        wrk1=0.0e0_R8
@@ -1380,20 +1380,20 @@
          wrk2=0.0_R8
          do is = 0,ns-1
            write (chns,'(i3.3)') is
-           call my_out_us(70,nCv,state%pl%na(1,is),'na'//chns)           !srv
-           call my_out_us(70,nCv,state%pl%ua(1,is),'ua'//chns)           !srv
+           call my_out_us(70,nCv,0,state%pl%na(1,is),'na'//chns)           !srv
+           call my_out_us(70,nCv,0,state%pl%ua(1,is),'ua'//chns)           !srv
 #ifdef WG_TODO
            wrk2 = state%pl%ua(:,is)/cst                                   !srv 30.01.15
-           call my_out_us(70,nCv,wrk2,'ua_Mcst_'//chns)             !srv 30.01.15
+           call my_out_us(70,nCv,0,wrk2,'ua_Mcst_'//chns)             !srv 30.01.15
 #endif
          end do
        end if
 
-       call my_out_us(70,nCv,state%dv%ne,'ne')                               !srv
+       call my_out_us(70,nCv,0,state%dv%ne,'ne')                               !srv
        wrk2=state%pl%te/ev
-       call my_out_us(70,nCv,wrk2,'te_eV')
+       call my_out_us(70,nCv,0,wrk2,'te_eV')
        wrk2=state%pl%ti/ev
-       call my_out_us(70,nCv,wrk2,'ti_eV')
+       call my_out_us(70,nCv,0,wrk2,'ti_eV')
 #ifdef WG_TODO
        call my_out(70,nx,ny,lengthx,'lengthx')                     !srv 13.02.17
        wrkt=transpose(lengthx)
@@ -1654,22 +1654,22 @@
        close(70)                                                          !srv 12.04.12 }
 
 #ifdef WG_RM
-       call my_out_us(70,nCv,crx(-1,-1,0),'crx0')
-       call my_out_us(70,nCv,crx(-1,-1,1),'crx1')
-       call my_out_us(70,nCv,crx(-1,-1,2),'crx2')
-       call my_out_us(70,nCv,crx(-1,-1,3),'crx3')
-       call my_out_us(70,nCv,cry(-1,-1,0),'cry0')
-       call my_out_us(70,nCv,cry(-1,-1,1),'cry1')
-       call my_out_us(70,nCv,cry(-1,-1,2),'cry2')
-       call my_out_us(70,nCv,cry(-1,-1,3),'cry3')
+       call my_out_us(70,nCv,0,crx(-1,-1,0),'crx0')
+       call my_out_us(70,nCv,0,crx(-1,-1,1),'crx1')
+       call my_out_us(70,nCv,0,crx(-1,-1,2),'crx2')
+       call my_out_us(70,nCv,0,crx(-1,-1,3),'crx3')
+       call my_out_us(70,nCv,0,cry(-1,-1,0),'cry0')
+       call my_out_us(70,nCv,0,cry(-1,-1,1),'cry1')
+       call my_out_us(70,nCv,0,cry(-1,-1,2),'cry2')
+       call my_out_us(70,nCv,0,cry(-1,-1,3),'cry3')
 #endif
-       call my_out_us(70,nCv,geo%cvBb(1,0),'bbx')
-       call my_out_us(70,nCv,geo%cvBb(1,2),'bbz')
-       call my_out_us(70,nCv,geo%cvBb(1,3),'bb')
-       call my_out_us(70,nCv,geo%cvHx,'hx')
-       call my_out_us(70,nFc,geo%fcHt,'hy')
-       call my_out_us(70,nCv,geo%cvHz,'hz')
-       call my_out_us(70,nFc,geo%fcQgam(1,0),'qc')
+       call my_out_us(70,nCv,0,geo%cvBb(1,0),'bbx')
+       call my_out_us(70,nCv,0,geo%cvBb(1,2),'bbz')
+       call my_out_us(70,nCv,0,geo%cvBb(1,3),'bb')
+       call my_out_us(70,nCv,0,geo%cvHx,'hx')
+       call my_out_us(70,nFc,1,geo%fcHt,'hy')
+       call my_out_us(70,nCv,0,geo%cvHz,'hz')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'qc')
 #ifdef WG_TODO
        do iy=-1,ny
          do ix=-1,nx
@@ -1678,12 +1678,12 @@
        enddo
        call my_out(70,nx,ny,wrk0,'hy1')                                !srv 07.11.12
 #endif
-       call my_out_us(70,nCv,geo%cvVol,'vol')
-       call my_out_us(70,nFc,geo%fcPbs,'pbsx')
+       call my_out_us(70,nCv,0,geo%cvVol,'vol')
+       call my_out_us(70,nFc,1,geo%fcPbs,'pbsx')
 
 c     calculate coordinates of cell centre
 !WG_RM    wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
-       call my_out_us(70,nCv,geo%cvX,'crc_')
+       call my_out_us(70,nCv,0,geo%cvX,'crc_')
        open(70,file=trim(folder)//'crc.dat')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
        write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
 #ifdef WG_RM
@@ -1694,7 +1694,7 @@ c     calculate coordinates of cell centre
        write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
        close(70)
 !WG_RM        wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
-       call my_out_us(70,nCv,geo%cvY,'czc_')
+       call my_out_us(70,nCv,0,geo%cvY,'czc_')
        open(70,file=trim(folder)//'czc.dat')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
        write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
 #ifdef WG_RM

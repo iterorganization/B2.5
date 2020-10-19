@@ -252,9 +252,11 @@ cxpb
         she_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         deallocate(dext)
         close(74)
+#ifdef WG_TODO
         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
+#endif
 cxpb
 cxpb  Here are computed the derived quantities
 cxpb
