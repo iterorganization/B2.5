@@ -632,18 +632,20 @@
 *   ..read geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
+#ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
+#endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read state
       call cfruch (ninp(3), 120, lblmn, 'label')
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,          !xpb
+     &  po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -651,8 +653,10 @@
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  b2fstate_version)
 *   ..test plasma state and fluxes
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..read atomic rate data
       call cfruch (ninp(4), 120, lblrc, 'label')
       call read_b2mod_ppout('rates', ninp(4), lblrc)
@@ -668,6 +672,7 @@
      &   'faulty input rtzn--wrong rate table?')
       enddo
 *    ..compute log-log electron rate coefficients
+#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
@@ -679,6 +684,7 @@
       call b2sqel (nx, ny, ns, ismain, ev, te,
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+#endif
 *    ..check for external species
       call ipgeti ('b2mndr_external_species', external_species)
       if (external_species.ne.0) then
@@ -694,7 +700,7 @@
 *   ..write geometric information
       call b2wfgm (nout(0), idout, nx, ny)
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..write physics parameters
       call b2wfcp (nout(0), 1, ns)
 *   ..write state

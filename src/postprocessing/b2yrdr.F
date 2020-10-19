@@ -245,7 +245,7 @@
       call xertst (1.le.ns, 'faulty input ns from parameters file')
 *   ..read default physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read label
       call cfruch (ninp(1), 120, lblrc, 'label')
 *   ..write label

@@ -282,7 +282,7 @@ c     initialize debugging/analysis arrays
         fnni_out     = 0.0_R8
 
         if (ns.gt.2) then
-          call xerrab('KUL recycling model not yet developed for',
+          call xerrab('KUL recycling model not yet developed for'//
      &                    'multi-species cases')
         endif
         cvsf = 0.0_R8

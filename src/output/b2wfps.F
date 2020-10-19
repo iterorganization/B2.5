@@ -67,6 +67,7 @@
 
 * ..write state
 *   ..compute auxiliaries
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -74,6 +75,7 @@
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
+#endif
 *   ..write state
       call b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
      &  fna, fhe, fhi, fch, ne, ni, pr, ro, rz, fne, fni, wrk0)

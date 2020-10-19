@@ -34,9 +34,9 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalue(inpts)=chord_integral(ntrii,nrknot,nx,ny,
+        yvalue(inpts)=chord_integral(nx,ny,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2   crx,cry,bb,
      3   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab

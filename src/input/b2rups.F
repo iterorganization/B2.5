@@ -685,8 +685,6 @@
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
-      kt = 0.0_R8
-      call cfrure_opt (nget, n2, kt, 'kt') ! FIXME to be removed
 * ..return
       call subend ()
       return

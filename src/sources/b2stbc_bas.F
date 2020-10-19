@@ -113,8 +113,10 @@
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
+#ifdef WG_TODO
        call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
