@@ -1,0 +1,37 @@
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
+DEFINES += -DGRREAL=4 -DDOFLUSH
+
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
+SED      = sed s:\#PREC\#:d:g
+SED      =
+LINK_MOD =
+
+DBLFC    = ${FC}
+DBLSED   = sed -e s:\#PREC\#:d:g
+DBLSED   = 
+
+MOD      = mod
+
+BLD      = ar rucv
+
+GRLIBES  = ${LD_NCARG}
+PLLIBES  = ${LD_MSCL}
+LDLIBES += ${LD_NETCDF} ${LD_NAG}
+
+ifdef LD_CATALYST
+CXX      = c++
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+endif
+
+ifdef PERFMON
+LDLIBES += -L${SOLPSLIB} -lperf
+endif
+
+LD       = ${FC}
+
+LCPP     = ${LD_SONNET}
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

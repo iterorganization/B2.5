@@ -15,14 +15,7 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
-DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
-
 CPP      = /lib/cpp -traditional
-CPPOPTS  = -P -I${srcdir} ${EQUIVS}
-SED      = sed s:\#PREC\#:d:g
-SED      =
-LINK_MOD = 
 
 ifdef USE_MPI
 FC       = mpiifort
@@ -57,19 +50,8 @@ FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 
-DBLFC    = ${FC}
-DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
-
 INCMOD   = -I
-MOD      = mod
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD      = ar rucv
-
-GRLIBES  = ${LD_NCARG}
-PLLIBES  = ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
 
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
@@ -93,19 +75,6 @@ endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS = ${LD_UAL}
 endif
-
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
-ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
-endif
-
-LD       = ${FC}
-
-LCPP     = ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile
