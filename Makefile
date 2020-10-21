@@ -268,7 +268,7 @@ PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
-PROG_ID = b2_ual_write.exe b2_ual_write_b2mod.exe
+PROG_ID = b2_ual_write.exe b2_ual_rewrite.exe b2_ual_write_b2mod.exe
 PROG_TT = test_shrink_label.exe
 PROG_NC = nc2text_simple.exe
 

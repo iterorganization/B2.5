@@ -26,7 +26,7 @@ module b2mod_ual
 
   public open_ual, close_ual
 #ifdef IMAS
-  public put_ids_edge
+  public put_ids_edge, new_ids_edge, delete_ids_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description
@@ -170,6 +170,171 @@ contains
         return
 
     end subroutine put_ids_edge
+
+    !> Subroutine used to delete data from edge_profiles, edge_sources and
+    !! edge_transport IDSs.
+    subroutine delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
+#endif
+            &   treename, shot, run, idx, username, database, version )
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        integer, intent(in) :: shot   !< The shot number of the database being created
+        integer, intent(in) :: run    !< The run number of the database being created
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+            !< database
+        character(len=24), intent(in) :: database   !< IMAS database name
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+            !< database
+
+        if ( idx.ne.0 ) then
+
+        !! Delete data from IDS
+          call ids_delete( idx, "edge_profiles", edge_profiles)
+          call ids_delete( idx, "edge_transport", edge_transport)
+          call ids_delete( idx, "radiation", radiation)
+          call ids_delete( idx, "dataset_description", description)
+#if IMAS_MINOR_VERSION > 21
+          call ids_delete( idx, "summary", summary)
+#endif
+#if IMAS_MINOR_VERSION > 25
+          call ids_delete( idx, "numerics", numerics)
+#endif
+          write(*,*) "IDS delete finished"
+        end if
+        return
+
+    end subroutine delete_ids_edge
+
+    !> Subroutine used to rewrite data to edge_profiles, edge_sources and
+    !! edge_transport IDSs.
+    subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
+#endif
+            &   treename, shot, run, idx, username, database, version )
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        integer, intent(in) :: shot   !< The shot number of the database being created
+        integer, intent(in) :: run    !< The run number of the database being created
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+            !< database
+        character(len=24), intent(in) :: database   !< IMAS database name
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+            !< database
+        integer :: status
+
+        !! Set data to edge_profiles IDS
+        write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+#if IMAS_MINOR_VERSION > 21
+          &  "summary, "// &
+#endif
+#if IMAS_MINOR_VERSION > 25
+          &  "numerics, "// &
+#endif
+          &  "dataset_description, and radiation IDS"
+
+        !! Put data to IDS
+        call ids_put( idx, "edge_profiles", edge_profiles, status )
+        call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
+        call ids_put( idx, "edge_sources", edge_sources, status )
+        call xertst( status.eq.0, 'Error putting edge_sources IDS !')
+        call ids_put( idx, "edge_transport", edge_transport, status )
+        call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+        call ids_put( idx, "radiation", radiation, status )
+        call xertst( status.eq.0, 'Error putting radiation IDS !')
+        call ids_put( idx, "dataset_description", description, status )
+        call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+        call ids_put( idx, "summary", summary, status )
+        call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_put( idx, "numerics", numerics, status )
+        call xertst( status.eq.0, 'Error putting numerics IDS !')
+#endif
+
+        !! Close IDS
+        call ids_deallocate( edge_profiles )
+        call ids_deallocate( edge_sources )
+        call ids_deallocate( edge_transport )
+        call ids_deallocate( radiation )
+        call ids_deallocate( description )
+#if IMAS_MINOR_VERSION > 21
+        call ids_deallocate( summary )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_deallocate( numerics )
+#endif
+        write(*,*) "IDS rewrite finished"
+        return
+
+    end subroutine new_ids_edge
 
 #endif
 
