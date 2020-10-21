@@ -1,4 +1,8 @@
 include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.common.${COMPILER}
+  MAKES += ${SRCB2}/config/config.common.${COMPILER}
+endif
 INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}
