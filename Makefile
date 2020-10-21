@@ -98,11 +98,11 @@ include ${SRCB2}/config/compile
 MAKES += ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
 ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || echo no ),yes)
   include ${SRCB2}/config/config.common.${COMPILER}
-  MAKES+ = ${SRCB2}/config/config.common.${COMPILER}
+  MAKES += ${SRCB2}/config/config.common.${COMPILER}
 endif
 ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
   include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
-  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+  MAKES += ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
 # Add external includes first
