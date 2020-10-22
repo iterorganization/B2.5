@@ -240,7 +240,7 @@
 				<type>string</type>
 				<description>
 					local_sonnet is the file name of the geometry file to be read.
-					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, in $SOLPSTOP/data/meshes and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
+					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>
@@ -2593,7 +2593,7 @@
 					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities, evaluated at the end of the B2.5 iteration.
 					If iout.eq.4, an even larger set of output files will be produced, for the purposes of a full run analysis, evaluated in the individual routines where the quantities are used.
 					For even more detailed debugging analysis, one should instead use "procedure_name"_iout.eq.1.
-					The files and their content are fully described in the Output_description.pdf file in the SOLPSTOP/doc directory and Appendix G of the SOLPS-ITER manual.
+					The files and their content are fully described in the Output_description.pdf file in the $SOLPSTOP/doc directory and Appendix G of the SOLPS-ITER manual.
 				</description>
 			</switch>
 			<switch>
@@ -4577,7 +4577,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $(SOLPSTOP)/include(.local)/DIMENSIONS.F file.
+					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/include(.local)/DIMENSIONS.F file.
 					Need not include the time-dependent stratum. If a time-dependent stratum is used, is incremented internally as needed. The incremented value is referred to as NSTRAT below.
 				</description>
 			</switch>
@@ -5266,7 +5266,7 @@
 				<default>C</default>
 				<type>character*6 of size (NWALL)</type>
 				<description>
-					Contains the filename from which to extract the surface material properties for wall element (iwall). The files are to be found in $(SOLPSTOP)/data(.local)/Surface_properties/.
+					Contains the filename from which to extract the surface material properties for wall element (iwall). The files are to be found in $SOLPSTOP/data.local/Surface_properties/ or $SOLPSTOP/modules/B2.5/Database/Surface_properties/.
 				</description>
 			</switch>
 			<switch>
@@ -5282,14 +5282,14 @@
 				<default>C</default>
 				<type>character*6 of size (NWALL)</type>
 				<description>
-					Contains the filename from which to extract the bulk material properties for wall element (iwall). The files are to be found in $(SOLPSTOP)/data(.local)/Bulk_properties/.
+					Contains the filename from which to extract the bulk material properties for wall element (iwall). The files are to be found in $SOLPSTOP/data.local/Bulk_properties/ or $SOLPSTOP/modules/B2.5/Database/Bulk_properties/.
 				</description>
 			</switch>
 			<switch>
 				<name>LAYER_ALLOYS</name>
 				<type>character*6 of size (NALLOYS)</type>
 				<description>
-					Contains the filename from which to extract the material properties for alloy (nalloy) which may be present in mixed materials deposited layers. Not yet operational. The files are to be found in $(SOLPSTOP)/data(.local)/Bulk_properties/ and $(SOLPSTOP)/data(.local)/Surface_properties/.
+					Contains the filename from which to extract the material properties for alloy (nalloy) which may be present in mixed materials deposited layers. Not yet operational. The files are to be found in $SOLPSTOP/data.local/Bulk_properties/, $SOLPSTOP/data.local/Surface_properties/, $SOLPSTOP/modules/B2.5/Database/Surface_properties/, or $SOLPSTOP/modules/B2.5/Database/Bulk_properties/.
 				</description>
 			</switch>
 			<switch>
