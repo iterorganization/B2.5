@@ -13,13 +13,9 @@ CPP = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC = mpif90
-MPI_CPP ?= --with-pmi=pmi2
-LD_MPI  ?= -lpmi2
 else
 ifdef USE_IMPGYRO
 FC = mpif90
-MPI_CPP ?= --with-pmi=pmi2
-LD_MPI  ?= -lpmi2
 else
 FC = gfortran
 endif
