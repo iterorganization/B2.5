@@ -17,15 +17,22 @@ MAKES = ${SRCB2}/Makefile
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
-NODENAME = $(shell echo `hostname`)
-ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} ] && echo yes || echo no ),yes)
-  include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
-  MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  NODENAME = $(shell echo `hostname`)
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} ] && echo yes || echo no ),yes)
+    include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+    MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  else
+    $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
+  endif
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
+    include ${SOLPSTOP}/SETUP/config.common.${COMPILER}
+    MAKES += ${SOLPSTOP}/SETUP/config.common.${COMPILER}
+  endif
 else
-  $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
-endif
-else
   MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
+    MAKES += ${SOLPSTOP}/SETUP/config.common.${COMPILER}
+  endif
 endif
 ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
   MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER}.local
