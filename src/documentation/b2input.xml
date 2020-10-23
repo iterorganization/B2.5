@@ -7068,7 +7068,7 @@
 					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the viscous heat flux limit. Must be positive.
 				  </description>
 				</switch>
-				</switchgroup>
+			</switchgroup>
 			<switch>
 				<name>WRITE_NML_TRANSP</name>
 				<default>.true.</default>
