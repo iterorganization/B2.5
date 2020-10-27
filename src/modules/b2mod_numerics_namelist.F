@@ -195,9 +195,9 @@
       endif
 
       call xertst (0.0_R8.le.numerics_time_mod,
-     . 'faulty input boundary_time_mod')
+     . 'faulty input numerics_time_mod')
       call xertst (0.0_R8.le.numerics_time_switch,
-     . 'faulty input boundary_time_switch')
+     . 'faulty input numerics_time_switch')
       call xertst (0.0_R8.lt.core_dt_suppression,
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,

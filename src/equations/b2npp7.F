@@ -102,7 +102,9 @@
 
 * ..main computation
 *   ..compute residual
+#ifdef WG_TODOs
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+#endif
 *   ..compute correction
       call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,

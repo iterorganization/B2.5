@@ -1548,8 +1548,7 @@ c     local variables
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
-      if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call
-co%cvsahz_eff will still be zero...
+      if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
         call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
      &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
       else
