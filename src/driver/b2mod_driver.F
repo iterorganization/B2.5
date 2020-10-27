@@ -165,7 +165,7 @@
       integer stack_ntim(20)
       integer stack_ptr
       real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco
+     *  min_areshe, min_areshi, min_aresco, res_quit, res_max
       logical quit_residual, test_residual
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
@@ -187,7 +187,7 @@
 #endif
       save delta_cdfmovie_time, save_cdfmovie_time
       save delta_plasma_time, save_plasma_time
-      save min_areshe, min_areshi, min_aresco
+      save min_areshe, min_areshi, min_aresco, res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
@@ -220,7 +220,8 @@
 #endif
       data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
-      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/
+      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
+     &     res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
@@ -971,6 +972,9 @@
        else                                                              !jwk
           test_residual=.false.                                          !jwk
        endif                                                             !jwk
+       call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
+       call xertst (res_quit.ge.0.0_R8,                                  !sc
+     &      'faulty internal parameter res_quit')                        !sc
        call ipgeti ('b2mndr_plasinc', plasinc)
        call ipgeti ('b2mndr_plasnum', plasnum)
        call ipgeti ('b2mndr_mvinc', mvinc)
@@ -1853,6 +1857,7 @@ c new CDF movie option (1st frame at t=0)
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11
       quit_residual=.false.                                         !jwk
+      res_max = 10.0_R8*res_quit
       ne_wanted_next_time=tim
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
@@ -1862,19 +1867,25 @@ cwdk  set some integers
       nVx = mpg%nVx
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
-
+#ifdef FIXED_POINT
+! $AD FP-LOOP "res_max"
+      do while (res_max.ge.res_quit)
+#else
     1 continue
+#endif
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
       call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
+#ifndef FIXED_POINT
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
       if (first_time_step.or.
      &    (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
      &     (etim.gt.tim.or.etim.eq.0.0_R8))) then !{
+#endif
 
 #ifdef WG_TODO
 !!!
@@ -1963,7 +1974,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(mpg, state, geo, J)
+        call b2usr_cost_function(ns, mpg, state, geo, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
@@ -2191,6 +2202,24 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
+        res_max = 0.0_R8
+        do is = 0, ns-1
+          if (any(solveco(is,:)))
+     &       res_max = max(res_max,state%diag%aresco(is))
+          if (any(solvemo(is,:)))
+     &      res_max = max(res_max,state%diag%aresmo(is))
+        end do
+        if (any(solvepo))
+     &    res_max = max(res_max,state%diag%arespo)
+        if (any(solveee))
+     &    res_max = max(res_max,state%diag%areshe)
+        if (any(solveei))
+     &    res_max = max(res_max,state%diag%areshi)
+        if (any(solveen).and.tn_style.eq.2)
+     &    res_max = max(res_max,state%diag%areshn)
+        if (any(solvekt).and.solve_keps.eq.1)
+     &    res_max = max(res_max,state%diag%areskt)
+        
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
      &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
@@ -2314,10 +2343,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   float(topiy))
         endif
 #endif
+#ifdef FIXED_POINT
+*   ..loop test
+      if (quit .or. itim.ge.ntim .or. ierr.ne.0 .or.
+     &     (etim.le.tim .and. etim.gt.0.0_R8) ) then
+        exit
+      endif
+*   ..end loop
+      end do
+#else
         goto 1
 *   ..end loop
       endif  !}
-
+#endif
       call subend ()
       return
       end subroutine b2mndr_1
@@ -2357,7 +2395,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because ierr <> 0: ',ierr
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
-
+#ifdef FIXED_POINT
+      if(res_max.le.res_quit)  
+     1 write(*,*) 'stopping because res_quit criteria satisfied'
+#endif
 
       nCv = mpg%nCv
       nFc = mpg%nFc

@@ -173,6 +173,7 @@ cwdk           with factor fac_gamma_diss (~97%)
           csfs = cs(omp(icsep))
           connfs = geo%ftConn(omp(icsep))
          endif
+         call xertst(connfs.gt.0.0_R8,' connfs in b2sikt <=0!!')
          t0 = geo%cvVol(ic)*(
      &     (pl%ti(ic)+pl%te(ic))*co%dna_ExB(ic)*
      &     (dnac(ic,0)*dlbc(ic,0) + dnac(ic,1)*dlbc(ic,1)) +
