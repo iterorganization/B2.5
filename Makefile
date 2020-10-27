@@ -166,6 +166,9 @@ endif
 ifdef SOLPS_DEBUG
 DEFINES += -DDBG
 endif
+ifdef FIXED_POINT
+DEFINES += -DFIXED_POINT
+endif
 
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)

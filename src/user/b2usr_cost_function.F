@@ -1,4 +1,4 @@
-      subroutine b2usr_cost_function(mpg, state, geo, J)
+      subroutine b2usr_cost_function(ns, mpg, st, geo, J)
       use b2mod_types
       use b2mod_constants
       use b2mod_user_namelist
@@ -8,16 +8,20 @@
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
-      type(B2State), intent (inout)    :: state
-      real(kind=R8) :: J(nncf)
-      integer icf, ic1, ic2, iCv, ncall, ndata1, ndata2, ii
+      type(B2State), intent (in)    :: st
+      real(kind=R8) :: BoRiS, J(nncf)
+      integer :: ns
+      integer :: icf, ic1, ic2, iCv, ncall, ndata1, ndata2, ii,
+     &           ifc, ifc1, ifc2, is
       logical, save :: first_call=.true.
       real (kind=R8), allocatable, save :: ffdata(:,:)
       real (kind=R8), allocatable ::  xx1(:), yy1(:)
-      real(kind=R8) :: xcheck(2), ycheck(2), eps, machsfr
+      real(kind=R8) :: xcheck(2), ycheck(2), eps, machsfr, qq
       external machsfr, subini, subend
 
       call subini('b2usr_cost_function')
+
+      BoRiS = 0.0_R8 !!FIXME 
 
       if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
@@ -77,23 +81,39 @@
         do icf = 1, ncf
           ic1 = mpg%cfCvP(icf,1)
           ic2 = ic1 + mpg%cfCvP(icf,2) - 1
+          ifc1 = mpg%cfFcP(icf,1)
+          ifc2 = ifc1 + mpg%cfFcP(icf,2) - 1
           select case (cftype(icf))
           case (1) !electron density on desired CVs
             do iCv = ic1, ic2
-              J(icf) = J(icf) + state%dv%ne(mpg%cfCv(iCv))
+              J(icf) = J(icf) + st%dv%ne(mpg%cfCv(iCv))
      &                - ffdata(icf,iCv-ic1+1)
             enddo
           case (2) !electron temperature on desired CVs
             do iCv = ic1, ic2
-              J(icf) = J(icf) + state%pl%te(mpg%cfCv(iCv))
+              J(icf) = J(icf) + st%pl%te(mpg%cfCv(iCv))
      &                - ffdata(icf,iCv-ic1+1)
             enddo
             J(icf) = J(icf)/ev
           case (3) !max electron temperature on desired CVs
             do iCv = ic1, ic2
-              J(icf) = max(J(icf),state%pl%te(mpg%cfCv(iCv)))
+              J(icf) = max(J(icf),st%pl%te(mpg%cfCv(iCv)))
             enddo
             J(icf) = J(icf)/ev
+          case (4) !max heat flux on desired FCs
+            do iFc = ifc1, ifc2
+              iCv = mpg%fcCv(iFc,1)
+              qq = st%dv%fhe(mpg%cfFc(iFc),0) + 
+     &             st%dv%fhi(mpg%cfFc(iFc),0) + 
+     &             (1-BoRiS)*st%dv%fne(mpg%cfFc(iFc),0)*st%pl%te(iCv)
+              do is = 0, ns-1
+                qq = qq + st%dv%fna(mpg%cfFc(iFc),0,is)*
+     &               (st%rt%rpt(iCv,is)*ev + 
+     &               (1-BoRiS)*(st%dv%kinrgy(iCv,is)+st%pl%ti(iCv)))
+              end do
+              qq = abs(qq)
+              J(icf) = max(J(icf),qq) !!FIXME to be better difined with cffcor...
+            enddo
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')
