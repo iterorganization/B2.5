@@ -194,7 +194,7 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.3) call xerrab ('cftype>3 not coded ')
+          if (cftype(icf).gt.4) call xerrab ('cftype>4 not coded ')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
