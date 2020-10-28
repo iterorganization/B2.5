@@ -6,7 +6,7 @@ LINK_MOD =
 FC = pgf90
 
 ifndef SOLPS_CPP
-DEFINES += -DPGF90
+DEFINES += -DPGF90 -DNOQUAD
 endif
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
 DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}

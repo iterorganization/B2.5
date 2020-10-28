@@ -1,19 +1,26 @@
 # Test whether necessary variables are set
+NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lpthread -lXrender -lbz2 -lgfortran
 endif
-LD_NAG    ?= -L${SOLPSLIB} -lblaslapack
+LD_NAG    ?= `pkg-config openblas --libs`
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 CPP = /lib/cpp -C -traditional -ffreestanding
 SED = sed s:\#PREC\#:d:g
 
+ifndef SOLPS_CPP
+DEFINES += -DNO_NAG -DNO_21
+endif
+
 LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
 
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
+
+GGD_VERSION ?= ${EBVERSIONGGD}
 
 #!!!Local Variables:
 #!!! mode: Makefile
