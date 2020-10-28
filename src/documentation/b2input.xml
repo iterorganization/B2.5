@@ -1740,6 +1740,7 @@
 				<type>real</type>
 				<description>
 					Xcur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion poloidal flows (particle and energy).
+					If set to 0 (default), these currents are carried by electrons. If set to 1, these poloidal currents are carried by the main hydrogenic ions. The latter option can only be used if the plasma has a single majority hydrogenic species. Otherwise, an error will be returned.
 				</description>
 			</switch>
 			<switch>
@@ -1748,6 +1749,7 @@
 				<type>real</type>
 				<description>
 					Ycur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion radial flows (particle and energy).
+					If set to 0, these currents are carried by electrons. If set to 1 (default), these radial currents are carried by the main hydrogenic ions. The latter option can only be used if the plasma has a single majority hydrogenic species. Otherwise, an error will be returned.
 				</description>
 			</switch>
 			<switch>

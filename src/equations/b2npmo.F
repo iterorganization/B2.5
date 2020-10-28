@@ -235,6 +235,8 @@
         if (.not.main_lightest .and. style.eq.2) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for plasmas where the main species is not the lightest one!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas where the main species is not the lightest one!'
         endif
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 

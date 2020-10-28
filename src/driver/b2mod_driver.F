@@ -100,6 +100,7 @@
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
+      integer, save :: b2sigp_style = 2
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
@@ -1233,6 +1234,13 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
+       call ipgeti ('b2sigp_style', b2sigp_style)
+       if (.not.(k.eq.1.or.b2sigp_style.ne.2)) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+       endif
 *
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)

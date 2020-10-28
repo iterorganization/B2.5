@@ -1007,7 +1007,7 @@ ifdef USE_EIRENE
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
 	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo eirmod_*.F90 eirmod_*.f)`"; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/ \*\.F//g' -e 's/ eirmod_\*\.F90//g' -e 's/eirmod_\*\.f//g' -e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
@@ -1019,27 +1019,27 @@ else
 	for d in `echo "${FFPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/ \*\.F//g' -e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
-	@l="B2OBJS ="; \
+	@ll="B2OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
-		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
+		ll="$$ll `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F//g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
-	@l="B2F90OBJS ="; \
+	echo "$$ll" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
+	@lll="B2F90OBJS ="; \
 	for d in `echo "${FFPATH}" | tr : \ `; do \
-		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
+		lll="$$lll `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
+	echo "$$lll" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
 ${OBJDIR}/LISTOBJ: listobj
 
