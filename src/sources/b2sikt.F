@@ -121,6 +121,10 @@ c      use b2mod_keps
       call sfill (nCv*4, 0.0e0_R8, skt0, 1)
       call sfill (nCv, 0.0e0_R8, skt_prod, 1)
       call sfill (nCv, 0.0e0_R8, skt_diss, 1)
+      call sfill (nCv, 0.0e0_R8, dnac, 1)
+      call sfill (nCv, 0.0e0_R8, dlbc, 1)
+      call sfill (nCv, 0.0e0_R8, dtec, 1)
+      call sfill (nCv, 0.0e0_R8, dtic, 1)
       if (model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB particle flux
@@ -135,10 +139,6 @@ cwdk           with factor fac_gamma_diss (~97%)
 *     ..logarithm of magnetic field in cell center
         wrks(:) = 2.0_R8*log(geo%cvBb(:,3))
 *     ..gradients na and log(bb) in poloidal and radial direction
-        dnac = 0.0_R8
-        dlbc = 0.0_R8
-        dtec = 0.0_R8
-        dtic = 0.0_R8
         call gradc(nCv, nFc, nVx, 0, geo, mpg, 
      &     pl%na(:,ismain), wrkv, dnac)
         call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
@@ -198,15 +198,39 @@ cwdk           with factor fac_gamma_diss (~97%)
       if (iout.eq.1) then
         wrks=she0(:,0)+she0(:,1)*pl%te+
      &       she0(:,2)*dv%ne + she0(:,3)*pl%te*dv%ne
-        call my_out(70,nCv,0,wrks,'b2sikt_she')
+        call my_out_us(70,nCv,0,wrks,'b2sikt_she')
         wrks=shi0(:,0)+shi0(:,1)*pl%ti+
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
-        call my_out(70,nCv,0,wrks,'b2sikt_shi')
+        call my_out_us(70,nCv,0,wrks,'b2sikt_shi')
         wrks=skt0(:,0)+skt0(:,1)*pl%kt+
      &       skt0(:,2)*dv%ni(:,1)+skt0(:,3)*pl%kt*dv%ni(:,1)
-        call my_out(70,nCv,0,wrks,'b2sikt_skt')
-        call my_out(70,nCv,0,skt_prod,'b2sikt_skt_prod')
-        call my_out(70,nCv,0,skt_diss,'b2sikt_skt_diss')
+        call my_out_us(70,nCv,0,wrks,'b2sikt_skt')
+        call my_out_us(70,nCv,0,skt_prod,'b2sikt_skt_prod')
+        call my_out_us(70,nCv,0,skt_diss,'b2sikt_skt_diss')
+        wrks = geo%cvVol(:)*(
+     &     (pl%ti(:)+pl%te(:))*co%dna_ExB(:)*
+     &     (dnac(:,0)*dlbc(:,0)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_na_x')
+        wrks = geo%cvVol(:)*(
+     &     (pl%ti(:)+pl%te(:))*co%dna_ExB(:)*
+     &     (dnac(:,1)*dlbc(:,1)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_na_y')
+        wrks = geo%cvVol(:)*(
+     &      co%hce_ExB(:)*fac_aniso*
+     &     (dtec(:,0)*dlbc(:,0)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_te_x')
+        wrks = geo%cvVol(:)*(
+     &      co%hce_ExB(:)*fac_aniso*
+     &     (dtec(:,1)*dlbc(:,1)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_te_y')
+        wrks = geo%cvVol(:)*(
+     &      co%hci_ExB(:)*fac_aniso*
+     &     (dtic(:,0)*dlbc(:,0)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_ti_x')
+        wrks = geo%cvVol(:)*(
+     &      co%hci_ExB(:)*fac_aniso*
+     &     (dtic(:,1)*dlbc(:,1)))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_prod_ti_y')
       endif
 
 * ..return

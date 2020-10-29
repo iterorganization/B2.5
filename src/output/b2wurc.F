@@ -128,6 +128,8 @@
       enddo
 
 * ..save the table of rate coefficients
+      idum(0) = fix_recomb
+      call cfwuin (nput, 1, idum, 'fix_recomb')
 *   ..save dimensions
       idum(0) = rtnt
       idum(1) = rtnn
