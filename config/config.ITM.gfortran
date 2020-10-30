@@ -2,6 +2,7 @@
 MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
 NCARG_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
 MSCL_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
+GLI_HOME ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR ?= ${NAG_HOME}
 NCDIR ?= /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
 MPDIR ?= ${INTELMPI_HOME}
@@ -28,10 +29,12 @@ DDBLOPTION = -Ad # ???
 INCMOD = -B
 
 ifndef SOLPS_CPP
-DEFINES += -DITM
+DEFINES += -DITM -DNO_F01AAF -DNAG22
 endif
 
-ifndef IMAS_VERSION
+ifdef IMAS_VERSION
+GGD_VERSION ?= 1.9.1
+else
 UAL_MAJOR_VERSION = 0
 IMAS_MAJOR_VERSION = 0
 IMAS_MINOR_VERSION = 0

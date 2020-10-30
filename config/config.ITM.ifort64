@@ -6,6 +6,7 @@ MSCL_ROOT   ?= /pfs/work/g2dpc/SOLPS-ITER/mscl
 LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/NCARG
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
 
@@ -53,6 +54,7 @@ DEFINES += -DITM
 endif
 
 ifdef IMAS_VERSION
+GGD_VERSION ?= 1.9.1
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
