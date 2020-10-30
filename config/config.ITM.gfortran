@@ -34,6 +34,7 @@ endif
 
 ifdef IMAS_VERSION
 GGD_VERSION ?= 1.9.1
+LD_UAL += -lstdc++
 else
 UAL_MAJOR_VERSION = 0
 IMAS_MAJOR_VERSION = 0
