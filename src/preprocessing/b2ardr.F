@@ -112,7 +112,7 @@
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
       integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
-     *  no_weisheit, ns_pardf
+     *  no_weisheit, ns_pardf, amjhydhel
       integer kstart, kstart1, kend, kpart
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
@@ -126,8 +126,8 @@
      &  rtrd(:,:,:), rtbr(:,:,:),
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
-     &  wrk(:,:,:)
-      save fix_cx, no_weisheit, rtnt_in, rtnn_in
+     &  wrk(:,:,:), rtqa_ra(:,:,:)
+      save fix_cx, no_weisheit, amjhydhel, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
       logical unread
 *   ..procedures
@@ -138,7 +138,8 @@
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
       external cfverr, cfruin, is_comment
 *   ..initialisation
-      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/16/
+      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/16/,
+     & amjhydhel/0/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -352,6 +353,7 @@
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)
+      call ipgeti('b2ardr_amjhydhel', amjhydhel)
       call ipgeti('b2ardr_rtnt', rtnt_in)
       call xertst(0.lt.rtnt_in, 'faulty argument rtnt_in')
       call ipgeti('b2ardr_rtnn', rtnn_in)
@@ -376,6 +378,9 @@
       else
        call xerrab ('faulty data flag; flag='//flag)
       endif
+      if (amjhydhel) then                                           !mb 22.05.18
+        lblrc(85:120) = 'with AMJUEL neutral rates'
+      end if
 *   ..echo label
       write (nout(0),'(/2x,a)') 'label for rate coefficients'
       write (nout(0),'(/4x,a/4x,a)') lblrc(1:60), lblrc(61:120)
@@ -397,6 +402,7 @@
       allocate(rtsa(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtra(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtqa(0:rtnt_in,0:rtnn_in,0:nzmax))
+      allocate(rtqa_ra(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtcx(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtrd(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtbr(0:rtnt_in,0:rtnn_in,0:nzmax))
@@ -532,10 +538,31 @@ cxpb  We must account for the case when the user does not want all bundles
        endif
 *    ..correct hydrogen data
        if (nz(inuc).eq.1) then
-        if (no_weisheit.eq.0) then
+        if (no_weisheit.eq.0 .AND. amjhydhel.eq.1) then
+         call xerrab
+     1  ('incompatible choice of parameters no_weisheit and amjhydhel')  
+        elseif (no_weisheit.eq.0) then
          rewind (ninp(2))
          call ratwei (ninp(2), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
+c**************************************************************************************
+c*****************     New option to use Amjuel-Hydhel for H neutrals *****************
+c**************************************************************************************
+
+        elseif (amjhydhel.eq.1) then
+         write(*,*)
+     1    'Hydrogen rates were taken from Amjuel-Hydhel'
+         write(nout(0),*)
+     1    'Hydrogen rates were taken from Amjuel-Hydhel'
+         write(*,*)
+     1    'No Weisheit correction of the hydrogen rates was performed'
+         write(nout(0),*)
+     1    'No Weisheit correction of the hydrogen rates was performed'
+         rewind (ninp(0))
+         call ratamjhyd (ninp(0), nz(inuc), rtt, rtnt, rtn, rtnn,
+     &    rtsa, rtra, rtqa,rtqa_ra, rtcx, rtrd, rtbr, fix_recomb)
+
+c**************************************************************************************        
         else
          write(*,*)
      1    'No Weisheit correction of the hydrogen rates was performed'
@@ -646,7 +673,8 @@ cxpb  We must account for the case when the user does not want all bundles
        call ratprt (nout(0), nz(inuc), npart(inuc), 
      &   nidis, idis, njdis, jdis,
      &   rtt, rtnt, rtn, rtnn, 
-     &   rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi)
+     &   rtsa, rtra, rtqa, rtqa_ra, rtcx, rtrd, rtbr, rtzz, rtz2,
+     &   rtpt, rtpi)
 *    ..enter table into /b2cmrc/
        do k = kstart, kend
         do j = 0, rtnn
@@ -666,6 +694,11 @@ cxpb  We must account for the case when the user does not want all bundles
            rtlqa(i,j,is) = log(rtqa(i,j,k))
           else
            rtlqa(i,j,is) = lnzero
+          endif
+          if (rtqa_ra(i,j,k).ne.0.0_R8) then
+           rtlqa_ra(i,j,is) = log(rtqa_ra(i,j,k))
+          else
+           rtlqa_ra(i,j,is) = lnzero
           endif
           if (rtrd(i,j,k).ne.0.0_R8) then
            rtlrd(i,j,is) = log(rtrd(i,j,k))
@@ -735,6 +768,7 @@ cxpb  We must account for the case when the user does not want all bundles
       deallocate(rtsa)
       deallocate(rtra)
       deallocate(rtqa)
+      deallocate(rtqa_ra)
       deallocate(rtcx)
       deallocate(rtrd)
       deallocate(rtbr)
