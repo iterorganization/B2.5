@@ -647,12 +647,15 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
-*     logu(rtrqa), where rtrqa is the electron heat loss rate
-*     coefficient at electron temperature rtt(i) and electron density
-*     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
+*     at electron temperature rtt(i) and electron density rtn(j) for 
+*     processes starting from charge state k, excluding the contributions 
+*     coming from potential energy of recombination and other recombination 
+*     process contributions. In short, it includes the processes not 
+*     accounted for in EIRENE.
+*     rtqa has dimension eV*m**3/s.
 *     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
 *     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
@@ -1174,12 +1177,15 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(neutral_sources_rescale),
-     *         ' to relevant rtlra'
+     *         ' to relevant rtlra and rtlqa_ra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
+     *             log(neutral_sources_rescale)
+                write(*,*) is,zamax(is),rtlqa_ra(0,0,is+1)
              endif
            enddo
          else
@@ -2618,7 +2624,7 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
+     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi, rate_qa_ra
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac
@@ -2653,6 +2659,8 @@ c
      1     fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
           rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
      1     fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qa_ra = exp((1.0_R8-fxte)*rtlqa_ra(ixte,ine,ise) +
+     1     fxte*rtlqa_ra(ixte+1,ine,ise)) * ne_hot_frac
           rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
      1     fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
           rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
@@ -2674,6 +2682,9 @@ c
      1       log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
             rtlqa(ite,ine,ise) =
      1       log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
+            rtlqa_ra(ite,ine,ise) =
+     1       log(exp(rtlqa_ra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+
+     2       rate_qa_ra)
             rtlrd(ite,ine,ise) =
      1       log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
             rtlbr(ite,ine,ise) =

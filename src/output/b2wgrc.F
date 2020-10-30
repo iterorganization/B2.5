@@ -3,7 +3,8 @@
 
       subroutine b2wgrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
      &  rtn, nn, zn, 
-     &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
+     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt, 
+     &  rtlpi)
       use b2mod_types
       use b2mod_constants
       implicit none
@@ -16,7 +17,8 @@
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
      &  rtlqa(0:nt,0:nn,0:ns0-1), rtlcx(0:nt,0:nn,0:ns0-1),
      &  rtlza(0:nt,0:nn,0:ns0-1), rtlz2(0:nt,0:nn,0:ns0-1),
-     &  rtlpt(0:nt,0:nn,0:ns0-1), rtlpi(0:nt,0:nn,0:ns0-1)
+     &  rtlpt(0:nt,0:nn,0:ns0-1), rtlpi(0:nt,0:nn,0:ns0-1),
+     &  rtlqa_ra(0:nt,0:nn,0:ns0-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -103,6 +105,18 @@
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa(i,j,k)) specifies
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
+*     charge state k, excluding the contributions 
+*     coming from potential energy of recombination and other recombination 
+*     process contributions. In short, it includes the processes not 
+*     accounted for in EIRENE. rtqa has dimension ev*m**3/s. 
+*
+*     rtlqa_ra - (0:nt,0:nn,0:ns0-1) real*8 array, input.
+*     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa_ra(i,j,k)) specifies
+*     the electron heat loss rate coefficient at electron temperature
+*     rtt(i) and electron density rtn(j) for processes starting from
+*     charge state k. rtqa_ra only includes the contribution of recombination
+*     which replaces amjuel when EIRENE is not used. 
+*     rtqa_ra has dimension ev*m**3/s. 
 *     charge state k. rtqa has dimension ev*m**3/s.
 *
 *     rtlcx - (0:nt,0:nn,0:ns0-1) real*8 array, input.
@@ -327,6 +341,56 @@
        do k = 0, ns0-1
         do j = 0, nn
          wn(j) = expu1(rtlqa(i,j,k))
+        enddo
+        write (chk,'(i3)') k
+*$$$    call dashdc (chdc//chk, 10, 1)
+	if(real(maxval(wn(0:nn)),R4).gt.0) then
+	  call curved_d (rtn, wn, nn+1)
+	endif
+       enddo
+       call pagend ()
+      enddo
+*   ..plot rtqa_ra as function of rtt for several rtn                    !mb 22.05.18
+      do ind = 0, njdis-1
+       j = jdis(ind)
+       zmax = maxval(rtlqa_ra(0:nt,j,0:ns0-1))/log(10.0_R8)
+       zmin = minval(rtlqa_ra(0:nt,j,0:ns0-1))/log(10.0_R8)
+       kmax = int(zmax)
+       kmin = int(zmin)-1
+       kmin = max(kmin, kmax - 8)
+       write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', NE =',rtn(j)
+       write (nprt,fmtp) '+rtqa_ra', header
+       call pagini (3, rtt(0), rtt(nt), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtt', 'rtqa_ra', header)
+       do k = 0, ns0-1
+        do i = 0, nt
+         wt(i) = expu1(rtlqa_ra(i,j,k))
+        enddo
+        write (chk,'(i3)') k
+*$$$    call dashdc (chdc//chk, 10, 1)
+	if(real(maxval(wt(0:nt)),R4).gt.0) then
+	  call curved_d (rtt, wt, nt+1)
+	endif
+       enddo
+       call pagend ()
+      enddo
+*   ..plot rtqa_ra as function of rtn for several rtt                    !mb 22.05.18
+      do ind = 0, nidis-1
+       i = idis(ind)
+       zmax = maxval(rtlqa_ra(i,0:nn,0:ns0-1))/log(10.0_R8)
+       zmin = minval(rtlqa_ra(i,0:nn,0:ns0-1))/log(10.0_R8)
+       kmax = int(zmax)
+       kmin = int(zmin)-1
+       kmin = max(kmin, kmax - 8)
+       write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', TE =',rtt(i)
+       write (nprt,fmtp) '+rtqa_ra', header
+       call pagini (3, rtn(0), rtn(nn), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtn', 'rtqa_ra', header)
+       do k = 0, ns0-1
+        do j = 0, nn
+         wn(j) = expu1(rtlqa_ra(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
