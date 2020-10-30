@@ -160,6 +160,9 @@
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
+      if (version.ge.'03.000.007') then
+        call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
+      end if
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if (version.ge.'01.001.016') then
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlrd, 'rtlrd')

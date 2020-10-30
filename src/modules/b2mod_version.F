@@ -274,7 +274,7 @@ c                                 Added redef_pbs switch to b2fgmtry file
 c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms
 c                                 Added flux limit coefficients to b2mod_transport
-c
+c    Version 03.000.007  18.05.18 New fields fix_recomb_energy and rtlqa_ra in b2frates
 c    Version 03.001.000  16.12.15 Introduction of 9-point stencil
 c                                 Redimensioning of most flux arrays, to take into account both poloidal and radial flows across each cell face
 c                                 Introduced routines from computation of ue (b2xpue.F)
