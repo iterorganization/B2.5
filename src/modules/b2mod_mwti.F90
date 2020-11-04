@@ -2122,7 +2122,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 51, 'integrated poloidal total energy flux, Western edge')
+      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 60, 'integrated poloidal total internal energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2142,7 +2142,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 51, 'integrated poloidal total energy flux, Eastern edge')
+      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 60, 'integrated poloidal total internal energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2288,7 +2288,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 49, 'integrated radial total energy flux, main chamber')
+      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 58, 'integrated radial total internal energy flux, main chamber')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2308,7 +2308,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 52, 'integrated radial total energy flux, divertor region')
+      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 61, 'integrated radial total internal energy flux, divertor region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2364,7 +2364,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 67, 'poloidal total internal energy flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2384,7 +2384,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 58, 'poloidal total energy flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 67, 'poloidal total internal energy flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2404,7 +2404,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
+      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 58, 'poloidal total internal energy flux, core x-pt flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2424,7 +2424,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
+      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 61, 'poloidal total internal energy flux, x-pt private flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -3181,7 +3181,7 @@ contains
 
 
   subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
+    use b2mod_plasma   , only : ti, te, fna, fhe, fhi, fch, fht, fhj
     use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
     use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , only : ev, mp
@@ -3195,7 +3195,7 @@ contains
     character(len=1) :: side
     ! Local vars
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
+    real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
     ! computation
 
@@ -3235,16 +3235,7 @@ contains
     if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
     if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
     if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir) + fhi(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
-    tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir)*tef*(1.0_R8-BoRiS)
-    do is=0,ns-1
-      fet = fet + &
-        fac_flux*(fhm(ix_flux,iy_flux,idir,is)+ &
-                  fna(ix_flux,iy_flux,idir,is)*tif)*(1.0_R8-BoRiS) + &
-        fac_flux*fhp(ix_flux,iy_flux,idir,is)
-    enddo
+    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
