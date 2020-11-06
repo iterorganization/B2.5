@@ -30,9 +30,9 @@ FC       = ifort
 endif
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all -warn interfaces
+FCOPTS   = -g -C -debug all -traceback -check all #-warn interfaces
 else
-FCOPTS   = -O2 -vec_report0 -fp-model precise
+FCOPTS   = -O2 -vec_report0 -fp-model precise #-warn interfaces
 endif
 
 DBLFC    = ${FC}
@@ -69,6 +69,10 @@ LD       = ${FC}
 LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
+
+LIBOPT = -L${IPOPTDIR}/lib/ -lipopt
+ADDINCFLAGS =
+MODINCLUDE += -I${IPOPTDIR}/include/coin-or
 
 
 #!!!Local Variables:

@@ -21,9 +21,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-#ifdef PAR_OPT
       use b2mod_par_opt
-#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
@@ -234,7 +232,9 @@
 
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
-
+      if (optimization) then
+        parm_dna(1) = par_opt_phys(1)
+      endif
       if(transport_namelist.eq.1) then
         do is=0,ns-1
           if(.not.is_neutral(is)) then

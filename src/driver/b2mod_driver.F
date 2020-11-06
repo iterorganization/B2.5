@@ -1753,9 +1753,6 @@ c   --> better way doing this is necessary)
 !WG_TODO     &  te, ti, po, fna, fhe, fhi, fch)
 
 * ..main loop
-*   ..initialise counters
-      itim = 0
-      itim_plas = 0
       if (stim.ge.0.0_R8) tim = stim
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
@@ -1814,10 +1811,6 @@ c new CDF movie option (1st frame at t=0)
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
       endif
-      cpuval = 0.0_R8
-      elapsedval = 0.0_R8
-      stack_ptr = 0
-      first_time_step=.true.
       
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
@@ -1859,6 +1852,13 @@ c new CDF movie option (1st frame at t=0)
       call subini ('b2mndr_1')
 *   ..no error so far
       ierr = 0
+*   ..initialise counters
+      itim = 0
+      itim_plas = 0
+      cpuval = 0.0_R8
+      elapsedval = 0.0_R8
+      stack_ptr = 0
+      first_time_step=.true.
       quit=.false.
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11

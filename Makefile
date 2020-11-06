@@ -247,15 +247,18 @@ PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
 PROG_MND = b2mn_d.exe
 PROG_MNB = b2mn_b.exe
+PROG_OPT = b2optim.exe
 
-EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB}}
+EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB} ${PROG_OPT}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
 ifdef DIFF_D
-EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
+EX9DIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
+EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_OPT}}
 endif
 ifdef DIFF_B
-EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_MNB}}
+EX9DIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
+EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_OPT}}
 endif
 ADEXTRA =${CONTEXTAD}
 ifdef AD_DEBUG
@@ -274,6 +277,7 @@ MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
 MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
+OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
 CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
@@ -283,7 +287,7 @@ DBGAD = ${OBJDIR}/adDebug.o
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${OEEXE} ${OTEXE}
-DIFF_D: VERSION ${MNDEXE}
+DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
@@ -817,6 +821,9 @@ ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA} ${STACKAD}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${STACKAD} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
 	cc -c $< -o $@
 
@@ -928,7 +935,7 @@ endif
 
 else
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXDIFFLIST:.o=.F90}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EX90DIFFLIST:.o=.F90} ${EXDIFFLIST:.o=.F}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies
@@ -1079,6 +1086,7 @@ echo:
 	@echo EXELIST=${EXELIST}
 	@echo EX90LIST=${EX90LIST}
 	@echo EXDIFFLIST=${EXDIFFLIST}
+	@echo EX90DIFFLIST=${EX90DIFFLIST}
 	@echo GREXE=${GREXE}
 	@echo MNEXE=${MNEXE}
 	@echo XDEXE=${XDEXE}
@@ -1086,6 +1094,7 @@ echo:
 	@echo IDEXE=${IDEXE}
 	@echo MNDEXE=${MNDEXE}
 	@echo MNBEXE=${MNBEXE}
+	@echo OPTEXE=${OPTEXE}
 	@echo DIFFPATH=${DIFFPATH}
 	@echo EXCLUDEDIFF=${EXCLUDEDIFF}
 	@echo ADEXTRA=${ADEXTRA}
