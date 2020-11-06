@@ -86,13 +86,14 @@
           select case (cftype(icf))
           case (1) !electron density on desired CVs
             do iCv = ic1, ic2
-              J(icf) = J(icf) + st%dv%ne(mpg%cfCv(iCv))
-     &                - ffdata(icf,iCv-ic1+1)
+              J(icf) = J(icf) + (st%dv%ne(mpg%cfCv(iCv))
+     &                - ffdata(icf,iCv-ic1+1))**2 ! FIXME put normalization from user 
             enddo
+            J(icf) = J(icf)/1.0E19
           case (2) !electron temperature on desired CVs
             do iCv = ic1, ic2
-              J(icf) = J(icf) + st%pl%te(mpg%cfCv(iCv))
-     &                - ffdata(icf,iCv-ic1+1)
+              J(icf) = J(icf) + (st%pl%te(mpg%cfCv(iCv))
+     &                - ffdata(icf,iCv-ic1+1))**2
             enddo
             J(icf) = J(icf)/ev
           case (3) !max electron temperature on desired CVs
@@ -102,7 +103,8 @@
             J(icf) = J(icf)/ev
           case (4) !max heat flux on desired FCs
             do iFc = ifc1, ifc2
-              iCv = mpg%fcCv(iFc,1)
+              qq = 0.0
+              iCv = mpg%fcCv(mpg%cfFc(iFc),1)
               qq = st%dv%fhe(mpg%cfFc(iFc),0) + 
      &             st%dv%fhi(mpg%cfFc(iFc),0) + 
      &             (1-BoRiS)*st%dv%fne(mpg%cfFc(iFc),0)*st%pl%te(iCv)
