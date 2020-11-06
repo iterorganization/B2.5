@@ -293,7 +293,7 @@ csw
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step
+      subroutine b2mn_step(J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_boundary_namelist
