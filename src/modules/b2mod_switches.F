@@ -53,6 +53,9 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: csig_an_style 
       integer :: user_transport
       integer :: spatial_hybrid
+      integer :: ineustra
+
+
   
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00 
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02 
@@ -371,6 +374,7 @@ c Eirene coupling
       s % csig_an_style = 1
       s % user_transport = 0
       s % spatial_hybrid = 0
+      s % ineustra = 0
 
 
       s % fhe_vis_per = 0.0e0_R8
@@ -678,7 +682,8 @@ c eirene coupling
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
-      call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)      
+      call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
+      call ipgeti ('eirene_neutr_strata', s % ineustra)   
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)    
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
@@ -1251,6 +1256,10 @@ c spatially hybrid neutrals
       if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
         call xerrab('spatial hybrid neutrals not yet developed',
      &               'with drifts and currents')
+      endif
+
+      if(s%spatial_hybrid.ne.0.and.s%ineustra.eq.0) then
+        call xerrab('spatial hybrid needs neutral strata')
       endif
 
 

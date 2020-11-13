@@ -24,7 +24,7 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
-
+      use b2mod_switches
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -111,6 +111,7 @@
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
+      type(switches), save :: switch
       integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2, natm_loc
 *   ..procedures
       integer lnblnk
@@ -389,7 +390,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         else
           call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns, 
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
-          call read_neutrals_namelist(ns, mpg, .false.)
+          call read_neutrals_namelist(ns, mpg, switch, .false.)
         end if
         call rc_to_struct(mpg)
       end if

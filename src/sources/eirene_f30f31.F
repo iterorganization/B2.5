@@ -11,6 +11,8 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_diag
+     &     , only: fluids_list
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -222,10 +224,25 @@
       call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,
      .              fna_tmp(:,1,:),vvc)
 
+c for neutrals (needed on Eirene side in case of spatially hybrid neutrals),
+c always use fna instead of fna_eir, regardless of eirene_background switch
+      if (switch%spatial_hybrid.ne.0) then 
+        do is=0,ns-1
+          if (is_neutral(is)) then
+            fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
+     .                            nafsqalf(1:nFc,1,is)
+            call intcell(nFc,nCv,mpg,mpg%intcellR,
+     .              fna_tmp(1:nFc,1,is),vvc(1:nFc,is))
+          endif
+        enddo
+      endif
+
       nflai=0
       do is=0,ns-1
-        if(.not.is_neutral(is)) then
-          nflai=nflai+1
+!!        if(.not.is_neutral(is)) then
+!!          nflai=nflai+1
+          if (fluids_list(is) == 0) cycle
+          nflai = fluids_list(is)
           call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
           amb(nflai)=am(is)
           znb(nflai)=zn(is)
@@ -326,8 +343,11 @@ c     internal cell -> full diamagnetic drift
           do ifc = 1, nFc
             fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
           end do
-        endif
+!!        endif
       enddo
+
+!pb  05.03.18
+      nflai = count(fluids_list > 0,1)
 
       if(switch%eirene_extrap.eq.0) then
         ! do nothing
