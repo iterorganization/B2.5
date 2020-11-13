@@ -166,6 +166,7 @@ csw 26mar2013
 csw 26feb2014
       integer, save :: ihist=0, neutr_avg=0, nhist=1, nrelax = 0
       integer, save :: ih_end
+      logical, save :: lneustra
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
 
@@ -415,6 +416,9 @@ csw 26feb2013
         call ipgeti ('eirene_stab_corr',stab_corr)
       end if !}
 
+!! set logical lneustra
+      lneustra = switch%ineustra > 0
+
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
@@ -550,7 +554,7 @@ c*** recyc     : fudge factors for the sources in B2
 
         if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{          !! SH_TODO difference for E W S N in structured code !!
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
@@ -936,7 +940,8 @@ c*** Print the particle fluxes for each stratum and species
             do j=1,nnlimi+nnstsi !{
               if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) hlp_pi(b2eatcr(is))=
+                  if(.not.is_neutral(is).or.lneustra) 
+     +             hlp_pi(b2eatcr(is))=
      +             hlp_pi(b2eatcr(is))+wldpp(j,fluids_list(is),istrai)
                 end do !}
                 do i=1,nnatmi !{
@@ -986,7 +991,7 @@ c*** Print the particle fluxes for each stratum and species
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
                 do is=0,ns-1    !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     hlp_s(b2eatcr(is))=hlp_s(b2eatcr(is))+
      +                   sni(ic,fluids_list(is),istrai)
                   end if        !}
@@ -1085,7 +1090,7 @@ c*** species to be scaled with themselves (recycling species)
             do i=1,n !{
               j=nnlimi+i
               do is=0,ns-1 !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).eq.ls) then !{
                     hlp_pi(ls)=hlp_pi(ls)+
@@ -1114,7 +1119,7 @@ c!###}
 
             do ic=1,nCv !{
               do is=0,ns-1      !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
@@ -1291,7 +1296,7 @@ c>>>
 
             do ic=1,nCv !{
               do is=0,ns-1      !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
@@ -1367,7 +1372,7 @@ c*** Here only the second pass of correction
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     ls=b2eatcr(is)
                     hlp_s(ls)=hlp_s(ls)+
      .                 sni(ic,fluids_list(is),istrai)
@@ -1513,7 +1518,7 @@ c*** Here only the second pass of correction
             end do !}
 
             do is=0,ns-1 !{
-              if(.not.is_neutral(is)) then !{
+              if(.not.is_neutral(is).or.lneustra) then !{
                 ls=b2eatcr(is)
                 if(lstrascl(istrai,ls).gt.0) then !{
                   do ic=1,nCv !{
@@ -1586,7 +1591,7 @@ c*** Print the particle fluxes for each stratum and species
             do j=1,nnlimi+nnstsi !{
               if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     hlp_pi(b2eatcr(is))=hlp_pi(b2eatcr(is))+
      +               wldpp(j,fluids_list(is),istrai)
                   end if !}
@@ -2051,7 +2056,7 @@ c***  sclbase : the plasma sources
             sclbase(j,istrai)=0.0_R8
           end do !}
           do is=0,ns-1 !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{
               j=b2eatcr(is)
               if(use_recyceir.gt.0) then
                 recyctmp=recyceir(istrai)
@@ -2188,7 +2193,7 @@ c   and apply linearisation
       smo_tot=0.0_R8
       sni_tot=0.0_R8
       do is = 0, ns-1 !{
-        if(.not.is_neutral(is)) then !{
+        if(.not.is_neutral(is).or.lneustra) then !{
           j=b2eatcr(is)
           ifl=fluids_list(is)
           do istrai=1,nstrat !{
@@ -2239,7 +2244,7 @@ c   and apply linearisation
 * by ns
         recyc_hlp=0.0_R8
         do is=0,ns-1 !{
-          if(.not.is_neutral(is)) then !{
+          if(.not.is_neutral(is).or.lneustra) then !{
             ifl=fluids_list(is)
             j=b2eatcr(is)
             if(use_recyceir.gt.0) then
@@ -2836,7 +2841,7 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                   else
                     recyctmp=recyc(is,istrai)
                   endif
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     ifl=fluids_list(is)
                     j=b2eatcr(is)
                     if (smo_tot(ic,ifl).ne.0.0_R8 .and.
@@ -3398,7 +3403,7 @@ c*** SNIC and SNIV evaluation above
                   else
                     recyctmp=recyc(is,istrai)
                   endif
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     j=b2eatcr(is)
                     t0=sni(ic,fluids_list(is),istrai)*recyctmp*
      *               tflux(istrai)*flux_scale(istrai)
@@ -3431,7 +3436,7 @@ c*** recombination is already evaluated above.
         hlp_pff=.true.
         do istrai=1, nstrat !{
           do is=0,ns-1 !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{
               j=b2eatcr(is)
               if(use_recyceir.gt.0) then
                 recyctmp=recyceir(istrai)

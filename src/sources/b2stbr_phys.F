@@ -99,7 +99,7 @@ c for KUL advanced fluid neutral boundary conditions
       integer :: isn
       real (kind=R8) :: wrkv(nVx),
      &                  nnVx(nVx), dnndy, dnndz, dnn(nFc,0:1),
-     &                  min_mfp(1:nstrat), mfp
+     &                  min_mfp(1:nstrai), mfp
 c     output for analysis/debugging
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
@@ -266,7 +266,7 @@ c     initialize debugging/analysis arrays
 
 c     pre-computation of the minimal mean-free path along a boundary stratum
         min_mfp(:) = 1.0_R8
-        do istra = 1, nstrat
+        do istra = 1, nstrai
 *   ..loop over boundary cells
           do i = 1, mpg%rcCvP(istra,2)
             iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
@@ -401,7 +401,7 @@ c for KUL recycling/reflection model
             dnndz =  -mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1)*dnn(iFc,0)
             
           
-            call recycle(
+            call recycle(istra,
      &           b2species_start(istra), b2species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
      &           Phi_app, lcore, dnndy, dnndz)
@@ -563,8 +563,8 @@ c for KUL recycling/reflection model
 
       contains
 
-      subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore,
-     &                   dnndy, dnndz)
+      subroutine recycle(istra, nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,
+     &                   lcore,dnndy, dnndz)
 c iCv             number of the guard cell
 c iCn             number of the neighbour cell
 c iFc             number of the guard cell face
@@ -575,7 +575,7 @@ c lcore           is this a core element?
 c dnndy           the gradient of the main neutral species density along the length of the boundary face
 c dnndz           the gradient of the main neutral species density across the boundary face
       implicit none
-      integer nsmin, nsmax, iCv, iCn, iFc
+      integer, intent(in) :: istra, nsmin, nsmax, iCv, iCn, iFc
       real (kind=R8) Phi_app, pof, isign, dnndy, dnndz
       logical lcore, found
 
@@ -735,6 +735,13 @@ cxpb  with bulk and deposited contributions
       endif
 cdpc-end
 #endif
+
+c if nsmin = b2species_start = -1, this means that the spatially hybrid method for neutrals is used
+c and this strata should be ignored here
+      if (nsmin.lt.0) then 
+        return
+      endif
+
       if (temperature_at_guard_cell.eq.1) then
         tef = pl%te(iCv)
         tif = pl%ti(iCv)
