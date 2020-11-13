@@ -186,7 +186,8 @@
      &               nstg_aresco.gt.0.0_R8
        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
        if (switch%use_eirene) then
-         call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi)
+         call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi,
+     &                         switch)
        endif
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,

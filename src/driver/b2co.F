@@ -331,7 +331,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
      . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+!!WG_TODO      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
       write_nml_user = .false.
       call alloc_b2mod_wall_init(nx,ny,nncut)
 #ifdef WG_TODO

@@ -1364,8 +1364,9 @@ c 2002-09-11: logic revised
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in DIMENSIONS.F')
+#ifdef WG_TODO
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-
+#endif
       endif
 *   ..modify b2mn.dat parameters
       ismain = is1(ismain)

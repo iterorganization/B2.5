@@ -5,6 +5,7 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
+
 c
 c  version : 27.04.2005
 c
@@ -91,13 +92,16 @@ c***                    tracing
       integer, allocatable :: ions_list(:), fluids_list(:)
       character*120 label
       integer :: ank_tracing = 0
+
 c
       save
 
       contains 
 
-      subroutine alloc_b2mod_diag(nCv,nFc,nsd,nregionv,nstra,natm)
+      subroutine alloc_b2mod_diag(nCv,nFc,nsd,nregionv,nstra,natm,
+     &                            switch)
       use b2mod_b2cmpa
+      use b2mod_switches
       implicit none
       integer nCv,nFc,nsd,nregionv,nstra,natm
       integer i, is, iss
@@ -105,6 +109,7 @@ c
       logical streql
       external streql
 
+      type (switches), intent(in) :: switch
       call xertst(1.le.nCv, 'faulty input nCv')
       call xertst(1.le.nFc, 'faulty input nFc')
       call xertst(1.le.nsd, 'faulty input nsd')
@@ -188,6 +193,16 @@ c
           atoms_list(is)=species_list(latmscl(is))
         end if
       end do
+      if (switch%ineustra > 0) then
+       do is = 0, nsd-1
+         if (is_neutral(is)) then
+           i= i+1
+           fluids_list(is)=i
+           ions_list(i)=is
+         end if
+       end do
+      end if
+
       write(*,'(1x,a,3(i3,1x))') 'natm, nsd, nstages ',
      .                            natm, nsd, nstages
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i3)'
