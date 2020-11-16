@@ -75,4 +75,4 @@ c
       end do
       close (lun)
 c
-      end
+      end subroutine b2poleg

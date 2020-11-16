@@ -369,4 +369,4 @@ c      print *,hlp_frmr               !###
       deallocate(ix,iy,jx,jy)
       return
 c=======================================================================
-      end
+      end subroutine b2pedges

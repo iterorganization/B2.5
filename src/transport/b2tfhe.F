@@ -27,7 +27,7 @@
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      & fch_p(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),                   !srv 13.01.17
-     1 csig(-1:nx,-1:ny,0:1), 
+     1 csig(-1:nx,-1:ny,0:1),
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cddi(-1:nx,-1:ny,0:1,0:ns-1),                                     !srv 13.10.06
@@ -39,7 +39,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fhe(-1:nx,-1:ny,0:1),
-     &  fhet(-1:nx,-1:ny,0:1), 
+     &  fhet(-1:nx,-1:ny,0:1),
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      1  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),                !srv 02.01.07
      2  fllime(-1:nx,-1:ny)
@@ -76,7 +76,7 @@
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
+     *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1,
      &   tex, tex0, cutlo,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
@@ -102,7 +102,7 @@
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
-      data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/, 
+      data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/,
      *  pot_eq/1/
 
 *-----------------------------------------------------------------------
@@ -118,7 +118,7 @@
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
-       call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit)
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
        if (redef_gmtry.eq.0) then
          drift_style = 1
@@ -160,7 +160,7 @@
       endif
 
       call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne, cone, fhePSch)
-      
+
       fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
 
       call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
@@ -183,7 +183,7 @@
           if(leftix(ix,iy).eq.-2) then
             floe(ix,iy,0) = 0.0_R8
             cone(ix,iy,0,0) = 0.0_R8                                 !srv 02.01.07
-            fhe_mdf(ix,iy,0) = 0.0e0_R8                              !srv 13.10.06 
+            fhe_mdf(ix,iy,0) = 0.0e0_R8                              !srv 13.10.06
             fhe(ix,iy,0) = 0.0_R8
             fhet(ix,iy,0) = 0.0_R8
             fllime(ix,iy) = 1.0_R8
@@ -227,9 +227,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))                         !xpb
      &          +ne(ix,iy))/2.0_R8
               if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) +
      1            vedia(leftix(ix,iy),leftiy(ix,iy),0))
-                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,0) + 
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,0) +
      1            veecrb(leftix(ix,iy),leftiy(ix,iy),0))
               else
                 flo_vedia=prefactor*vedia(ix,iy,0)
@@ -256,7 +256,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &       ne(ix,iy))/2.0_R8
-            if (flomx.gt.0.0_R8 .and. 
+            if (flomx.gt.0.0_R8 .and.
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
               t0 = cone0*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
@@ -360,12 +360,12 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               t1 = dim ( cone0/fllime(ix,iy),
      .         abs(floe0) *
-     .         max(0.0_R8, 
+     .         max(0.0_R8,
      .             min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
      .         max(cutlo, te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy))) )
-              fhe(ix,iy,0) = 
+              fhe(ix,iy,0) =
      .         upwind(floe0, te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
-     .         - t1 * (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
+     .         - t1 * (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &         +alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               if (balance.and.
@@ -399,7 +399,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &             (1.0_R8-upfac)*te(ix,iy))
                 fhe_cond(ix,iy,0) = -t1*
-     &             (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
+     &             (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
                 fhe_pschused(ix,iy,0) = 0.0_R8
               endif
             endif
@@ -453,7 +453,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               flo_vedia=0.0_R8
               flo_veecrb=0.0_R8
             else
-              floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+ 
+              floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+
      1         2.5_R8*fne_52(ix,iy,1)-
      &	       5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                 !lk 21.02.08 !srv 17.12.13
      &         chve(ix,iy,1)*
@@ -464,9 +464,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         *(ne(bottomix(ix,iy),bottomiy(ix,iy))                     !xpb
      &          +ne(ix,iy))/2.0_R8                                       !xpb
               if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,1) + 
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,1) +
      1            vedia(bottomix(ix,iy),bottomiy(ix,iy),1))
-                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,1) + 
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,1) +
      1            veecrb(bottomix(ix,iy),bottomiy(ix,iy),1))
               else
                 flo_vedia=prefactor*vedia(ix,iy,1)
@@ -518,12 +518,12 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               cone0 = chce(ix,iy,1)
               t1 = dim ( cone0,
      .         abs(floe(ix,iy,1)) *
-     .         max(0.0_R8, 
+     .         max(0.0_R8,
      .             min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
-     .         max(cutlo, 
+     .         max(cutlo,
      .                 te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy))))
-              fhe(ix,iy,1) = 
-     .         upwind(floe(ix,iy,1), 
+              fhe(ix,iy,1) =
+     .         upwind(floe(ix,iy,1),
      .                te(bottomix(ix,iy),bottomiy(ix,iy)), te(ix,iy))
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &          +alfTeEh*calf(ix,iy,1)*
@@ -588,7 +588,7 @@ cxpb turn off flows between boundary cells
               floe(ix,iy,1)=0.0_R8
               cone(ix,iy,1,0)=0.0_R8
             endif
-          enddo        
+          enddo
         enddo
 
 cxpb turn off poloidal flows in core boundary
@@ -680,8 +680,8 @@ cxpb turn off poloidal flows in core boundary
 *.scribbles
 
 cxpb  This version of the routine uses a (1.5+BoRiS) factor for the
-cxpb  poloidal convective heat flux instead of the usual 3/2 or 5/2 
-cxpb  so as to solve the same equation as in BoRiS for benchmark purposes. 
+cxpb  poloidal convective heat flux instead of the usual 3/2 or 5/2
+cxpb  so as to solve the same equation as in BoRiS for benchmark purposes.
 cxpb  The default is BoRiS = 0.0.
 cxpb  For comparison, set BoRiS = 1.0.
 cxpb  Routine rewritten to explicitly separate 3/2 and 5/2 terms.

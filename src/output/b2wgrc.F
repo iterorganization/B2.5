@@ -144,7 +144,7 @@
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   cutll, rydberg, Ei, Ef, t0, zmin, zmax
+     *   cutll, Rydberg, Ei, Ef, t0, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, int, max, exp, log
@@ -174,7 +174,7 @@
       cutll = log(2.0_R8*machsfr())
       small_real_constant=tiny(small_real_constant)
 *!!   (increase cutll if a floating point error occurs.)
-      rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
+      Rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
 *   ..set izn0
       izn0 = nint(zn(0))
 *   ..compute ionisation potential scale
@@ -566,7 +566,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*Rydberg+0.5_R8,
      &   'rtt', 'rtpt', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -584,7 +584,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*Rydberg+0.5_R8,
      &   'rtn', 'rtpt', header)
        do k = 0, ns0-1
         do j = 0, nn
@@ -602,7 +602,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtt', 'rtpi', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -620,7 +620,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtn', 'rtpi', header)
        do k = 0, ns0-1
         do j = 0, nn

@@ -5,7 +5,7 @@
      1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
-     &  wrong_flow, main_call, diagno,     !xpb
+     &  wrong_flow, main_call, diagno,                                  !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
      &  area_fix, sheath_drift_fix)
@@ -22,8 +22,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), 
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),    !xpb
+     *  facdrift(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::

@@ -19,12 +19,12 @@
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
-*   .. output arguments
+*   ..output arguments
       real (kind=R8) ::
      * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
      1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3),
      2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
-      integer
+      integer ::
      *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
      1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
      2  topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1),
@@ -882,7 +882,7 @@ c check right neighbours
      2       'dist=',distval
             endif
             distval=
-     1     dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
+     1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -898,7 +898,7 @@ c check left neighbours
             write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1     dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
+     1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -1611,10 +1611,8 @@ c region 6 === right SOL
 c region 7 === right inboard divertor
 c region 8 === right outboard divertor
 c
-
       integer ix,iy,inseliy,inselix,iyt
-      real (kind=R8) ::
-     * geom_match_dist
+      real (kind=R8) :: geom_match_dist
       data geom_match_dist/1.0e-6_R8/
 c
       real (kind=R8) ::

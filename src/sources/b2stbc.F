@@ -199,13 +199,6 @@
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and. 
      & 1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-!      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
-!        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
-!          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
-!        else                                                             !xpb
-!          write (*,*) 'b2stbc_fchy_dia =', b2stbc_fchy_dia               !xpb
-!        endif                                                            !xpb
-!      endif
 *   ..check kinetic secondary electron emission model
       if (ncall.eq.0 .and. secmodel.eq.1) then
         call xertst (nint(zn(ismain)).eq.1, 

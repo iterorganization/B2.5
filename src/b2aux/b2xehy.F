@@ -51,7 +51,7 @@
       call subini ('b2xehy')
 *   ..set internal parameters on first call                             !srv
       if (ncall.eq.0) then                                              !srv
-       call ipgeti ('b2tfhe_mode_ehy',mode_ehy)                         !srv 06.04.15
+       call ipgeti ('b2tfhe_mode_ehy', mode_ehy)                        !srv 06.04.15
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)

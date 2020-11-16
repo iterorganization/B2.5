@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wfpi (nprt, idout, nx, ny, ns, 
+      subroutine b2wfpi (nprt, idout, nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       use b2mod_types
       use b2mod_rates

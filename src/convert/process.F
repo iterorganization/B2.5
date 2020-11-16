@@ -16,7 +16,7 @@ c
      1 in_leftcut(in_nncut),in_rightcut(in_nncut),
      2 in_topcut(in_nncut),in_bottomcut(in_nncut)
       real*8
-     *   in_crx(0:in_nx+1,0:in_ny+1,0:3),
+     * in_crx(0:in_nx+1,0:in_ny+1,0:3),
      . in_cry(0:in_nx+1,0:in_ny+1,0:3),
      . in_bb(0:in_nx+1,0:in_ny+1,0:3),
      . in_vol(0:in_nx+1,0:in_ny+1),

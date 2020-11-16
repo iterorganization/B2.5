@@ -377,9 +377,9 @@
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
      &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,        !srv 10.10.17
+        call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,         !srv 10.10.17
      &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -513,8 +513,8 @@ cxpb
      &    qz, vol, hx, hy, hz, bb, pbshz, lnlam,                         !srv 01.07.09
      &    na, te, ti, po, ue, fna_fcor,                                  !srv 05.07.17
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
-     &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
-     &    resmt, corua, corut, pcca, pccm, ier0)
+     &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
+     &    resmo, resmt, corua, corut, pcca, pccm, ier0)
         call xertst (ier0.eq.0, 'error return from b2npmo')
 *   ..set nep
 *     (= ne before continuity update)
@@ -522,12 +522,12 @@ cxpb
 *   ..recompute currents
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
         call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
-     &                       fac_vis, fchvispar)
+     &                fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
+     &                gs, hx, hy, bb, na, ua, facdrift, fchinert)
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
      &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,         !srv 10.10.17
+        call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
      &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance

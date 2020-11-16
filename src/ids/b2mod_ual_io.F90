@@ -57,10 +57,11 @@ module b2mod_ual_io
      & , only : nxtl, nxtr, jxa, jsep
 #ifdef B25_EIRENE
     use eirmod_comusr &
-    , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, nprt, nchrgi, nchari
+     & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
+     &          nprt, nchrgi, nchari
 #else
     use b2mod_b2plot &
-    , only : natmi
+     & , only : natmi
 #endif
 
     use logging

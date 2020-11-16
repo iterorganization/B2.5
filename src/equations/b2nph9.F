@@ -6,8 +6,8 @@
      &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht,  !srv 10.11.02
-     &  corte, corti, ierr)
+     &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
+     &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_tallies                                                 !srv 22.05.18

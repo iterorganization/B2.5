@@ -28,7 +28,7 @@
 #endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine prgend
       subroutine prgfin ()
       use b2mod_types
       implicit none
@@ -59,4 +59,4 @@
 #endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine prgfin

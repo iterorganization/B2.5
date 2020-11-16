@@ -1,13 +1,11 @@
 
       subroutine profile_average (laststep,itim,ntim_batch,nx,ny,ns)
-
       use b2mod_types
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
-
       implicit none
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns

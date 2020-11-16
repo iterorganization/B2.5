@@ -470,6 +470,7 @@ cxpb Data file material properties
      *  matbulk_Cp_B3,
      *  matbulk_Cp_B4)
 
+      return
       end subroutine dealloc_b2mod_wall
 
       subroutine read_b2mod_wall_namelist(nread,edition,found)

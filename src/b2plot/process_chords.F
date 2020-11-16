@@ -23,7 +23,7 @@ c
       integer lnblnk
       real (kind=R8) ::
      * chord_integral
-      external lnblnk, chord_integral, open_file, xerrab, subini, subend
+      external lnblnk,chord_integral,open_file,xerrab,subini,subend
 
       call subini ('process_chords')
       do is=0,ndim(3,iwrk)-1
@@ -351,7 +351,7 @@ c
       integer npoints,lnblnk,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_integral
-      external lnblnk,chord_integral, subini, subend, xerrab
+      external lnblnk, chord_integral, subini, subend, xerrab
 
       call subini ('calculate_zvalues')
       if(use_compile) then

@@ -14,9 +14,9 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),     !srv 01.07.09
-     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1), 
-     &  na(-1:nx,-1:ny,0:ns-1), 
-     &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
+     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
+     &  na(-1:nx,-1:ny,0:ns-1),
+     &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -38,9 +38,9 @@
 *.declarations
 
 c     Variables in COMPLASMA:
-c                 hfe, hfi:	poloidal comp. of par. heat flux
-c                 hce, hci:	poloidal heat conduction coeff.
-c                 thfi:	        parallel thermal force
+c                 hfe, hfi:     poloidal comp. of par. heat flux
+c                 hce, hci:     poloidal heat conduction coeff.
+c                 thfi:         parallel thermal force
 
 c     local variables:
 
@@ -51,11 +51,11 @@ c     local variables:
       real (kind=R8) ::
      *          u(ns+1), n(ns+1), r(ns+1), mm(ns+1),
      *          tef, tif, gte, gti, he, hi, ce, ci, pitface,
-     *          t0, t0i, t0e, cond, fac, 
+     *          t0, t0i, t0e, cond, fac,
      *          z(-1:nx,-1:ny,ns+1), z2(-1:nx,-1:ny,ns+1)
 
-      integer 	nz(ns+1)
-      integer 	i, ix, iy, ifail, nspec, ncharged
+      integer   nz(ns+1)
+      integer   i, ix, iy, ifail, nspec, ncharged
 
       external subini, subend, xertst, b2xvff, b2xvsg, ipgeti
 
@@ -77,7 +77,7 @@ c     local variables:
 *  ..read switches
       if(ncall.eq.0) then
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *  ..extensive tests on first few calls
@@ -86,7 +86,7 @@ c     local variables:
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test sign of na, ne, te, ti, ne2 
+*    ..test sign of na, ne, te, ti, ne2
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
@@ -104,7 +104,7 @@ c     local variables:
       nz(1) = 1
       nspec=2
       nz(nspec)=0
-      mm(nspec)=am(0)*mp 	 ! xpb <------- new line
+      mm(nspec)=am(0)*mp         ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
@@ -146,7 +146,7 @@ c         ------------------------------
             gti = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      1       pitface/(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8
 
-c	  temperature at cell faces
+c         temperature at cell faces
 c         -------------------------
 c !? seems to have a different averaging scheme for te/i and ne/i
             tef = (te(leftix(ix,iy),leftiy(ix,iy))*
@@ -169,7 +169,7 @@ c         --------------------------------------
             do i=0,ns-1
               if(.not.is_neutral(i)) then
                 ncharged=ncharged+1
-                u(ncharged) = 
+                u(ncharged) =
      1           (ua(leftix(ix,iy),leftiy(ix,iy),i)*hx(ix,iy)+
      1            ua(ix,iy,i)*hx(leftix(ix,iy),leftiy(ix,iy)))/
      *           (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
@@ -180,20 +180,20 @@ c         --------------------------------------
                 u(1) = u(1) + u(ncharged)*z(ix,iy,ncharged)*n(ncharged)
               endif
             end do
-            u(1) = u(1) + 
+            u(1) = u(1) +
      .       (ue_ext(leftix(ix,iy),leftiy(ix,iy))*
      .        ne_ext(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
      .        ue_ext(ix,iy)*ne_ext(ix,iy)*
      .        hx(leftix(ix,iy),leftiy(ix,iy)))/
      .       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
             u(1) = u(1) - fch_p(ix,iy,0)/pbs(ix,iy,0)/qe  ! parallel current
-c !? do we need to apply a 21-moment ansatz for 
+c !? do we need to apply a 21-moment ansatz for
 c    the electrical conductivities
 c
 c         electron velocity
 c         -----------------
             u(1) = u(1)/n(1)
-        
+
 c           -------------------------------------------------------------
 c                 solve 21-moments equations
 c           -------------------------------------------------------------
@@ -207,7 +207,7 @@ c       write(*,*) 'gte,gti',gte,gti
 c       write(*,*) 'nz',nz
 c       write(*,*) 'nspec',nspec
 c       write(*,*) 'ncharged',ncharged
-          call thermf( u, n, z(ix,iy,1), z2(ix,iy,1), 
+          call thermf( u, n, z(ix,iy,1), z2(ix,iy,1),
      &     mm, tef, tif, gte, gti, lnlam(ix,iy),                     !srv 01.07.09
      *     nz, nspec, ncharged, ce, ci, he, hi, r, ifail, cond )
           fac=(atan(xscal*(cond-xpos))-atan(-xscal*xpos))/
@@ -264,7 +264,7 @@ c ions
                   endif
                   t0i=t0*gti
                   if(t0i.ne.0) then
-                    cthi(ix,iy,i) = fac * (r(ncharged) / 
+                    cthi(ix,iy,i) = fac * (r(ncharged) /
      1               (0.5_R8*
      2               (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*t0i)) +
      2               (1-fac) * cthi(ix,iy,i)
@@ -300,10 +300,10 @@ c     3         (cthe(ix,iy,i)*gte+cthi(ix,iy,i)*gti)
             endif
             failcount=failcount+1
           end if
-c          ( ifail )        
+c          ( ifail )
         endif
       end do
-c         ( iy )        
+c         ( iy )
       end do
 c       ( ix )
 
@@ -351,11 +351,11 @@ c       ( ix )
 *.declarations
 
       real (kind=R8) ::
-     *                  wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns), 
+     *                  wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns),
      *                  eta(ns), mm(ns), coef, pit, cond,
      *                  z2(-1:nx,-1:ny,ns)
-      integer	        nz(ns)
-      integer	        i, ix, iy, ifail, nspec, ncharged
+      integer           nz(ns)
+      integer           i, ix, iy, ifail, nspec, ncharged
 
       external subini, subend, xertst, b2xvsg
 
@@ -377,7 +377,7 @@ c       ( ix )
 *  ..read switches
       if(ncall.eq.0) then
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *  ..extensive tests on first few calls
@@ -399,7 +399,7 @@ c       ( ix )
       failcount0=failcount
       nspec=1
       nz(nspec)=0
-      mm(nspec)=am(0)*mp 	 ! xpb <------- new line
+      mm(nspec)=am(0)*mp       ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
@@ -457,7 +457,7 @@ c         write(*,*) 'ti(ix,iy)',ti(ix,iy)
 c         write(*,*) 'nz',nz
 c         write(*,*) 'nspec,ncharged',nspec,ncharged
 c         write(*,*) 'wwpp',wwpp
-            call viscalc(n, z(ix,iy,1), z2(ix,iy,1), mm, ti(ix,iy), nz, 
+            call viscalc(n, z(ix,iy,1), z2(ix,iy,1), mm, ti(ix,iy), nz,
      *       nspec, ncharged, wwpp, visc, eta, lnlam(ix,iy), ifail,   !srv 01.07.09
      *       cond)
 c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
@@ -468,13 +468,13 @@ c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
               do i=0,ns-1
                 if(.not.is_neutral(i)) then
                   ncharged=ncharged+1
-                  cvsa(ix,iy,0,i)=eta(ncharged) * pit**2 * coef 
+                  cvsa(ix,iy,0,i)=eta(ncharged) * pit**2 * coef
                 endif
               end do
 
             else
 c            -------------------------------------------------------------
-c                 ( ifail != 0 )        
+c                 ( ifail != 0 )
 c               switch to previous simpler calculation, when matrix
 c               inversion with NAG routine fails
 c            -------------------------------------------------------------
@@ -489,9 +489,9 @@ c            -------------------------------------------------------------
             end if
           endif
         end do
-c        ( iy )        
+c        ( iy )
       end do
-c       ( ix )        
+c       ( ix )
 
       write(*,*) 'Failures per b2t21v call = ',failcount-failcount0
 
@@ -520,13 +520,13 @@ c
 *       --------
 *       n  = ( ns  (s=1,...,nsz) ) :    density                 in m-3
 *       z  = ( ns  (s=1,...,nsz) ) :  	charge                  in e
-*       z2 = ( ns  (s=1,...,nsz) ) :  	square charge           in e**2
-*       mm = ( ms  (s=1,...,ns) )  :  	mass                	in kg
-*       ti                         :  	k*temperature           in J
+*       z2 = ( ns  (s=1,...,nsz) ) :    square charge           in e**2
+*       mm = ( ms  (s=1,...,ns) )  :    mass                    in kg
+*       ti                         :    k*temperature           in J
 *       w  = ( wps (s=1,...,nsz) ) :    velocity gradient       in s-1
-*       nz = ( nzs (s=1,...,ns) )  :  	number of charge states
-*       ns                         :  	number of species
-*       nsz	                   :	total number of fluids
+*       nz = ( nzs (s=1,...,ns) )  :    number of charge states
+*       ns                         :    number of species
+*       nsz                        :    total number of fluids
 *
 *       Output:
 *       --------
@@ -546,21 +546,21 @@ c
       subroutine viscalc(n, z, z2, mm, ti, nz, ns, nsz, w, pi_pp,        !xpb
      1 eta, lnlam, ifail, cond)                                          !srv 01.07.09
       use b2mod_types
-      use b2mod_constants                                        	 !xpb
+      use b2mod_constants                                                !xpb
 
       implicit none
 
       integer           ns, nsz, nz(ns), ifail
       real (kind=R8) ::
      *                  n(nsz), z(nsz), z2(nsz), mm(ns),
-     1 eta(nsz), pi_pp(nsz), w(nsz), ti	                                 !xpb
+     1 eta(nsz), pi_pp(nsz), w(nsz), ti                                  !xpb
 
 C       internal variables:
 C       ww:     Sum  w*n    over Z
-C       p:	Sum  n*T    over Z         
-C       rho:	Sum  mm*n   over Z        
-C       d:	rho/mm
-C       z2n:	Sum  n*Z**2 over Z
+C       p:      Sum  n*T    over Z
+C       rho:    Sum  mm*n   over Z
+C       d:      rho/mm
+C       z2n:    Sum  n*Z**2 over Z
 
       real (kind=R8) ::
      *            ww(ns), d(ns), p(ns), z2n(ns)
@@ -592,7 +592,7 @@ C       z2n:	Sum  n*Z**2 over Z
 *=======================================================================
 *//COMPUTATION//
 
-C       n1(j): 	index of vector element corresponding to first charge
+C       n1(j):  index of vector element corresponding to first charge
 C               state of species j in vectors n, z, w, pi_pp, eta
       n1(1)= 1
       do i=2,ns
@@ -623,7 +623,7 @@ c       calculating  d(), z2n(), p(), ww()
 
 c         const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)		 !xpb
+        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)             !xpb
 !xpb      lnlam = 12.e0_R8
 
       do j=1,ns
@@ -636,7 +636,7 @@ c         const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
           g(i,j,3) =  6.e0_R8/35.e0_R8*
      *     (7.e0_R8*mm(i)+3.e0_R8*mm(j))/(mm(i)+mm(j))*g(i,j,0)
           g(i,j,4) = -6.e0_R8/7.e0_R8 * g(i,j,2)
-          g(i,j,5) = - (51.e0_R8/35.e0_R8*mm(j)**2/mm(i) + 
+          g(i,j,5) = - (51.e0_R8/35.e0_R8*mm(j)**2/mm(i) +
      *     37.e0_R8/7.e0_R8*mm(j)
      *     + 22.e0_R8/5.e0_R8*mm(i) + 4.e0_R8*mm(i)**2/mm(j) )
      *     * mu2(i,j)/(mm(i)+mm(j)) * g(i,j,0)
@@ -691,7 +691,7 @@ c  ---------------------------------------------------------------------
       cond=condval(a,2*ns,ifail)
 
       if( ifail .ne. 0 ) return
-      
+
       do i=1,ns
         x(i) = inva(i,1)*p(1)*ww(1)
         do j=2,ns
@@ -760,22 +760,22 @@ c
 *
 *       Input:
 *       --------
-*       up = ( ups (s=1,...,nfl) ) :  	||-velocity 	        in m/s
-*       n  = ( ns  (s=1,...,nfl) ) :  	density     	        in m-3
-*       z  = ( ns  (s=1,...,nfl) ) :  	charge                  in e
-*       te, ti 	                   :  	k*temperature 	        in J
-*       gte, gti 	           :  	grad_|| kT	        in J/m
-*       mm = ( ms  (s=1,...,ns) )  :  	mass	                in kg
-*	nz = ( nzs (s=1,...,ns) )  :  	number of charge states
+*       up = ( ups (s=1,...,nfl) ) :    ||-velocity             in m/s
+*       n  = ( ns  (s=1,...,nfl) ) :    density                 in m-3
+*       z  = ( ns  (s=1,...,nfl) ) :    charge                  in e
+*       te, ti                     :    k*temperature           in J
+*       gte, gti                   :    grad_|| kT              in J/m
+*       mm = ( ms  (s=1,...,ns) )  :    mass                    in kg
+*       nz = ( nzs (s=1,...,ns) )  :    number of charge states
 *                                       of species s
-*       ns  	                   :  	number of species
-*       nfl  	                   :  	number of fluids
+*       ns                         :    number of species
+*       nfl                        :    number of fluids
 *
 *       Output:
 *       --------
-*       r = ( rth (s=1,...,nfl) )  :  	||-thermal force      in N m-3
-*       he, hi   	           :  	||-heat flux	      in Jm-2s-1
-*       ce, ci    	           :  	||-heat conductivity  in m-1s-1
+*       r = ( rth (s=1,...,nfl) )  :    ||-thermal force      in N m-3
+*       he, hi                     :    ||-heat flux          in Jm-2s-1
+*       ce, ci                     :    ||-heat conductivity  in m-1s-1
 *
 *       real:   min. 8 Bytes precision
 *
@@ -787,30 +787,30 @@ c
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine thermf(up, n, z, z2, mm, te, ti, gte, gti, lnlam,    !srv 01.07.09
+      subroutine thermf(up, n, z, z2, mm, te, ti, gte, gti, lnlam,       !srv 01.07.09
      *                  nz, ns, nfl, ce, ci, he, hi, r, ifail, cond)
 
       use b2mod_types
-      use b2mod_constants	                                	 !xpb
+      use b2mod_constants                                                !xpb
       implicit none
 
-        integer     ns, nfl, nz(ns)
-        real (kind=R8) :: 
+      integer     ns, nfl, nz(ns)
+      real (kind=R8) ::
      *    up(nfl), n(nfl), z(nfl), z2(nfl), mm(ns), r(nfl)
-        real (kind=R8) :: te, ti, gte, gti, lnlam, he, hi, ce, ci     !srv 01.07.09
-        integer     ifail
+      real (kind=R8) :: te, ti, gte, gti, lnlam, he, hi, ce, ci          !srv 01.07.09
+      integer     ifail
 
 C       internal variables:
 
 C       heat flux h and a higher moment hh
       real (kind=R8) :: h(nfl+1), hh(nfl+1)
 
-C       d:	sum  of n      	                number density
-C       z2n:	sum  of n*Z**2 	                d * <Z**2>
-C       upm:	(sum of n*up*Z**2 )/z2n         mean parallel velocity
-C       p:	p(i) = d(i)*t(i) 	        pressure
-C       t:	                                temperature
-C       gt:	                                temperature gradient
+C       d:      sum  of n                       number density
+C       z2n:    sum  of n*Z**2                  d * <Z**2>
+C       upm:   (sum of n*up*Z**2 )/z2n          mean parallel velocity
+C       p:      p(i) = d(i)*t(i)                pressure
+C       t:                                      temperature
+C       gt:                                     temperature gradient
 
       real (kind=R8) ::
      *     z2n(ns), d(ns), upm(ns), p(ns)
@@ -850,7 +850,7 @@ C       gt:	                                temperature gradient
 *=======================================================================
 *//COMPUTATION//
 
-C     n1(j): 	index of vector element corresponding to first charge state
+C     n1(j):    index of vector element corresponding to first charge state
 C               of species j in vectors n, z, up, r
       n1(1)= 1
       do i=2,ns
@@ -880,7 +880,7 @@ C               of species j in vectors n, z, up, r
 
 C     ----  const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)		 !xpb
+        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)             !xpb
 !xpb      lnlam = 12.e0_R8
 
       do j=1,ns
@@ -965,7 +965,7 @@ c  ---------------------------------------------------------------------
         call subend ()
         return
       end if
-        
+
       do i=1,ns
         b(i) = p(i)*gt(i)
         do k=1,ns
@@ -979,7 +979,7 @@ c  ---------------------------------------------------------------------
         end do
         b(i+ns) = 17.5_R8*b(i+ns)
       end do
-        
+
       do i=1,2*ns
         x(i) = inva(i,1)*b(1)
         do j=2,2*ns
@@ -1071,7 +1071,7 @@ c  ---------------------------------------------------------------------
           end do
         end do
       end do
-        
+
 c  ---------------------------------------------------------------------
 c       heat fluxes he, hi
 c  ---------------------------------------------------------------------
@@ -1080,7 +1080,7 @@ c  ---------------------------------------------------------------------
       do i=3,nfl
         hi = hi + h(i)*n(i)
       end do
-        
+
       return
       end subroutine thermf
 c

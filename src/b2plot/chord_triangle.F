@@ -40,7 +40,7 @@ c
 
       pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
-      call subini ('chord_value')
+      call subini ('chord_tria_value')
       x=xp
       y=yp
       z=zp
@@ -207,7 +207,7 @@ c
       logical found
       external subini, subend
 
-      call subini('chord_compile')
+      call subini('chord_tria_compile')
       do it=1,ntrii
         tt(it)=1.0_R8
         score(it)=0.0_R8

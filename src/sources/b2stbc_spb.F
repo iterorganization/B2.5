@@ -20,12 +20,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),      !sv 09.07.99
-     *   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),      !sv 09.01.01
+     *  facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),       !sv 09.07.99
+     *  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !sv 09.01.01
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), !sv
      1  bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),  !sv 14.10.99
      1  vadia(-1:nx,-1:ny,0:1,0:ns-1),                                  !sv 12.05.00
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -44,7 +44,7 @@
      &   floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)           !sv 28.10.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3)
 *   ..common blocks
@@ -65,12 +65,12 @@
       integer ncall, n2, ix, iy, is, ireg
       logical wrong_flow
       real (kind=R8) ::
-     *   sna0ep, she0ep, shi0ep,
+     *  sna0ep, she0ep, shi0ep,
      1  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
-     4  csbm, cstm,   ! cstm1                                       !sv 14.10.99
-     6    s0hz, s1hz, vwest, veast, vminus, vplus  !, v0              !sv 09.01.01 18.07.03 28.01.05
+     4  csbm, cstm,   ! cstm1                                         !sv 14.10.99
+     6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
-     *   pz(-1:nx,-1:ny)                                              !sv 18.01.02
+     *  pz(-1:nx,-1:ny)                                               !sv 18.01.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0         !sv 08.08.02 14.02.05
       integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
       integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05

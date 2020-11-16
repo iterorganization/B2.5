@@ -23,8 +23,6 @@ module b2mod_ual_io_grid
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
 #if IMAS_MINOR_VERSION > 11
-    use ids_string        & ! IGNORE
-     & , only : idsInt2str
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
@@ -708,7 +706,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
-                        &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
@@ -720,7 +718,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
-                        &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no end node")
                 end if
             case( TOP )
@@ -733,7 +731,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
-                        &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
@@ -745,7 +743,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
-                        &   //idsInt2str(ix)//","//idsInt2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no end node")
                 end if
             end select
@@ -784,7 +782,7 @@ contains
 !!$            if (gmap%mapCvI(ix, iy) == B2_GRID_UNDEFINED) then
 !!$                call logmsg(LOGWARNING,
 !!$                "b2IMASFillGD: writing out edges for unused cell ("//
-!!$                idsint2str(ix)//","//idsint2str(iy)//")")
+!!$                int2str(ix)//","//int2str(iy)//")")
 !!$            end if
 
             select case ( gmap % mapFcIFace( iFc ) )
@@ -798,7 +796,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
-                        &   //idsint2str(ix)//","//idsint2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
@@ -810,7 +808,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
-                        &   //idsint2str(ix)//","//idsint2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no end node")
                 end if
 
@@ -824,7 +822,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
                     &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
-                        &   //idsint2str(ix)//","//idsint2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
@@ -836,7 +834,7 @@ contains
                 if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
                     &    B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
-                        &   //idsint2str(ix)//","//idsint2str(iy)//          &
+                        &   //int2str(ix)//","//int2str(iy)//                &
                         &   ") has no end node")
                 end if
             end select
@@ -1168,7 +1166,7 @@ contains
         if (jsep /= B2_GRID_UNDEFINED) nGSubset = nGSubset + 2
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
-            &//idsInt2str(nGSubset)//" grid subsets" )
+            &//int2str(nGSubset)//" grid subsets" )
         allocate( grid_ggd%grid_subset( nGSubset ) )
 
         !! Set up generic grid subsets
@@ -1284,9 +1282,9 @@ contains
 
                 call logmsg( LOGDEBUG,                                          &
                     &   "b2_IMAS_Fill_Grid_Desc: add (private) grid subset #"// &
-                    &   idsInt2str(GSubsetCount)//                              &
-                    &   " for iType "//idsInt2str( iType )//                    &
-                    &   ", iRegion "//idsInt2str( iRegion )//": "//             &
+                    &   int2str(GSubsetCount)//                                 &
+                    &   " for iType "//int2str( iType )//                       &
+                    &   ", iRegion "//int2str( iRegion )//": "//                &
                     &   regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list
@@ -1680,8 +1678,9 @@ contains
 
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-               &   idsInt2str(GSubsetCount)//": "//                    &
-               &   trim(gridSubsetName ( iSubset ))//", iType "//idsInt2str(iType) )
+               &   int2str(GSubsetCount)//": "//                       &
+               &   trim(gridSubsetName ( iSubset ))//                  &
+               &   ", iType "//int2str(iType) )
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
@@ -1795,9 +1794,9 @@ contains
                 if ( jsep .ne. B2_GRID_UNDEFINED ) then
                     GSubsetCount = GSubsetCount + 1
 
-                    call logmsg( LOGDEBUG,                                      &
-                        &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                        &   idsInt2str(GSubsetCount)//": "//                    &
+                    call logmsg( LOGDEBUG,                                &
+                        &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"// &
+                        &   int2str(GSubsetCount)//": "//                 &
                         &   gridSubsetName ( iSubset ) )
 
                     !! Create grid subset with one object list
@@ -1833,7 +1832,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             !! Create grid subset with one object list
@@ -1867,7 +1866,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             !! Create grid subset with one object list
@@ -1905,7 +1904,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             !! Create grid subset with one object list
@@ -1952,7 +1951,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             nInd = (topcut(2)-topcut(1))*((leftcut(2)+1)+(gmap%b2nx-rightcut(2)))
@@ -1993,7 +1992,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             !! Create grid subset with one object list
@@ -2040,7 +2039,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( iSubset ) )
 
             nInd = (topcut(1)-topcut(2))*((nxtl-leftcut(1)-1)+(rightcut(1)-nxtr))
@@ -2082,7 +2081,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX ) )
 
             !! Create grid subset with one object list
@@ -2109,7 +2108,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ) )
 
             !! Create grid subset with one object list
@@ -2159,7 +2158,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT ) )
 
             !! Create grid subset with one object list
@@ -2209,7 +2208,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ) )
 
             !! Create grid subset with one object list
@@ -2250,7 +2249,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
 
             !! Create grid subset with one object list
@@ -2291,7 +2290,7 @@ contains
 
             call logmsg( LOGDEBUG,                                      &
                 &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+                &   int2str(GSubsetCount)//": "//                       &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
 
             !! Create grid subset with one object list
@@ -2315,9 +2314,9 @@ contains
 
         end if
 
-        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of "    &
-            &   //idsInt2str(GSubsetCount)//" grid subsets (expected was "  &
-            &   //idsInt2str(size(grid_ggd%grid_subset))//")" )
+        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of " &
+            &   //int2str(GSubsetCount)//" grid subsets (expected was "  &
+            &   //int2str(size(grid_ggd%grid_subset))//")" )
 
         call xertst( GSubsetCount == size(grid_ggd%grid_subset), &
             &  "Assert error (grid subset count) in fill_In_GridSubset_Desc" )
@@ -2705,7 +2704,7 @@ contains
       nSubgrid = nSubgrid + 2
 
       call logmsg( LOGDEBUG, "b2ITMFillGridDescription: expecting total of "&
-          &//Int2str(nSubgrid)//" subgrids" )
+          &//int2str(nSubgrid)//" subgrids" )
       allocate( itmgrid % subgrids( nSubgrid ) )
 
       !! Set up generic subgrids

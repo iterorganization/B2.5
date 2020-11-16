@@ -6,7 +6,7 @@
      &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
-     &  hx, hy, qc, hx1, hy1, qc1, 
+     &  hx, hy, qc, hx1, hy1, qc1,
      &  bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,

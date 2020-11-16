@@ -823,7 +823,7 @@ cxpb Use 1-D equilibrium profile
 
       subroutine check_ok(nx, ny, ix, iy, idir)
       implicit none
-      integer nx, ny, ix, iy, idir
+      integer, intent(in) :: nx, ny, ix, iy, idir
 ! check on position
       if(ix.eq.-2) then
          write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',

@@ -20,10 +20,10 @@
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   corpb(-1:nx,-1:ny)
+     *  corpb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
+     *  aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -284,4 +284,4 @@
 *-----------------------------------------------------------------------
 *.end b2usc11
 
-      end                                                              !srv 02.04.18 }
+      end subroutine b2usc11                                           !srv 02.04.18 }

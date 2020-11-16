@@ -4,8 +4,8 @@
       subroutine b2usmo (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
      &  rxg, vol, hx, hz, bb, rob, rzb, pb, pz, ub,                  !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
-      use b2mod_indirect
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
       use b2mod_openmp
@@ -249,7 +249,8 @@ cxpb
        enddo
       enddo
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name
+      write(*,'(1x,a,a,a,i3)')
+     . 'Calling b2ux5p from ',name,' for species ',isb
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {

@@ -47,7 +47,7 @@
       get_B25_hash = git_version_B25
 
       return
-      end
+      end function get_B25_hash
 
       function get_ADAS_hash()
       implicit none
@@ -57,7 +57,7 @@
       get_ADAS_hash = git_version_ADAS
 
       return
-      end
+      end function get_ADAS_hash
 
       function get_SOLPS_hash()
       implicit none
@@ -67,4 +67,4 @@
       get_SOLPS_hash = git_version_SOLPS
 
       return
-      end
+      end function get_SOLPS_hash

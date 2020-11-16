@@ -1116,7 +1116,7 @@ c         and have to be modified for angular incidence.
       real (kind=R8) :: pwr2by3, z123z223sum,
      @  tpev, am2byam1, stoppwr, stoppwr1, stoppwr2,
      @  yldparres, eobyetf, ethbyeo, eth, etf, gamma
-        integer issput, itargsp
+      integer issput, itargsp
 c  Inputs to the code
 
 c  eo   -> incident ion energy (in eV).
@@ -1589,7 +1589,6 @@ c  z2 = 91 - 92
       entry reion(energy,nz1,m1,ibnd,theta)
 
 c  energy backscattering coefficient of light ions
-
       n = 0
     1 if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4

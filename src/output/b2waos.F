@@ -312,7 +312,7 @@
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
      .      XF(IX), RSX(IX), RFHEX(IX), RFHIX(IX), RFCHX(IX),
      .      RFNEX(IX), RFNIX(IX),
-     .      (RFNAX(IX,IS), IS = 0, NS-1)
+     .     (RFNAX(IX,IS), IS = 0, NS-1)
       ENDDO
 
       WRITE (NPRT, 112)
@@ -644,10 +644,10 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
 
 
 *=======================================================================
-*//END B2PRNT//
+*//END B2WAOS//
 
-      END
-*//B2PRNT//
+      END SUBROUTINE B2WAOS
+*//B2WAOS//
 
 *//B2PRNTI//
 *=======================================================================
@@ -743,7 +743,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
 *=======================================================================
 *//END B2PRNTI//
 
-      END
+      END SUBROUTINE B2PRNTI
 CRHW:BREIASLB.IPRI   AUSDRUCK VON 2-DIM. ARRAYS ALS INTEGER-ZAHLEN
 C                    DIESE ROUTINE IST AN DIE BRAAMS-ROUTINEN ANGEPASST.
 C                    DIE X-KOORDINATE (1. INDEX) LAEUFT SENKRECHT
@@ -849,5 +849,5 @@ C
   205 FORMAT (1X,I4,' | ',40I4)
 CC201 FORMAT (/,' IX =',34I4,/,' IY',/)
 C
-      END
+      END SUBROUTINE IPRI
 

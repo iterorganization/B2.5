@@ -23,7 +23,7 @@
      &  reshi(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
+     *  cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(-1:nx,-1:ny,0:1), con0(-1:nx,-1:ny,0:1,0:2),             !srv 02.01.07
@@ -548,4 +548,4 @@
 *-----------------------------------------------------------------------
 *.end b2ush9
 
-      end
+      end subroutine b2ush9

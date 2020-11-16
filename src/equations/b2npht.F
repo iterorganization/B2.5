@@ -197,9 +197,9 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, vol,  !xpb !srv 05.07.17
-     &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,              !srv 01.07.09
-     &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)                   !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz,       !xpb !srv 05.07.17
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,              !srv 01.07.09
+     &  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)              !xpb
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qz, vol, bb, pbs, lnlam,

@@ -25,10 +25,10 @@
      *  fch_p(:,:,:), fch_pi_c(:,:,:), fch_pi_f(:,:,:),                  !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:), fhp(:,:,:,:), fhj(:,:,:), fht(:,:,:),
      *  fhe_mdf(:,:,:), fhePSch(:,:,:), fhi_mdf(:,:,:), fhiPSch(:,:,:),  !srv 13.10.06
-     *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:), 
+     *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:),
      *  fna_fcor(:,:,:,:), fna_he(:,:,:,:),                              !srv 01.10.99 21.01.00
      *  fna_eir(:,:,:,:), fne_eir(:,:,:), fhe_eir(:,:,:),                !srv 14.07.10
-     *  fhi_eir(:,:,:), 
+     *  fhi_eir(:,:,:),
      *  fna_32nd(:,:,:,:), fna_52nd(:,:,:,:)                             !srv 18.06.08
 
       real (kind=R8), allocatable, save ::
@@ -37,7 +37,7 @@
      *  vadia(:,:,:,:), vedia(:,:,:), wadia(:,:,:,:),                    !xpb
      *  vaecrb(:,:,:,:), veecrb(:,:,:),
      *  wedia(:,:,:), ve(:,:),                                           !srv 14.07.10
-     *  fna_nodrift(:,:,:,:), 
+     *  fna_nodrift(:,:,:,:),
      *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
      *  fmo(:,:,:,:)
       real (kind=R8), allocatable, save ::
@@ -92,7 +92,7 @@
       fna_eir = 0.0_R8
       fne_eir = 0.0_R8
       fhe_eir = 0.0_R8
-      fhi_eir = 0.0_R8  
+      fhi_eir = 0.0_R8
       fna_fcor = 0.0_R8                                            !srv 14.07.10 }
       allocate(fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fna0(-1:nxd,-1:nyd,0:1,0:nsd-1))

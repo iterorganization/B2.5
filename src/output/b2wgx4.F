@@ -120,8 +120,7 @@
        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf,
      &   yc, yf)
 *    ..make plot
-       call b2wgxq (nx, ny, header, xc, xf, yc, yf,
-     &   fun, iloc, scal)
+       call b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc, scal)
       enddo
 
 * ..return

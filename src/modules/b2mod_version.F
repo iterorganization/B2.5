@@ -89,13 +89,13 @@ c                                 exchanged the interface of b2tinnt.F
 c    Version 01.001.036  01.07.09 introduced b2tlnl.F for the Coulomb logarithm
 c    Version 01.001.037  07.07.09 added the heat terms into b2stel.F, b2stcx.F, b2sihs_.F
 c                                 changed interface of mapx.F and mapxy.F
-c    Version 01.001.038  08.07.09 re-writed b2tinnt.F and changed b2tqin.F
+c    Version 01.001.038  08.07.09 re-wrote b2tinnt.F and changed b2tqin.F
 c    Version 01.001.039  15.07.09 b2agmx.F replaced by b2agmx.F from B2solps5.0
 c                                 modified subroutine open_file.F
 c    Version 01.001.040  11.09.09 done new diagnostics output, introduced new arrays for
 c                                 storing physical sources in r.h.s.
-c                        18.09.09 cleared quard cells for shei in b2nph9.F and b2npht.F
-c    Version 01.001.041  22.09.09 changed the calculating of uesx in b2sihs_.F
+c                        18.09.09 cleared guard cells for shei in b2nph9.F and b2npht.F
+c    Version 01.001.041  22.09.09 changed the calculation of uesx in b2sihs_.F
 c    Version 01.001.042  25.09.09 added bccon=16 in b2stbc_phys.F
 c    Version 01.001.043  07.10.09 deleted bccon=15 in b2stbc_phys.F. Use bccon=5.
 c    Version 01.001.044  14.10.09 changed status of the following files b2mn.prt, b2fparam,
@@ -103,7 +103,7 @@ c                                 b2fstate, b2fmovie, b2ftrace, b2ftrack.
 c    Version 01.001.045  20.10.09 changed logical condition in b2tral
 c                                 added term in flo_nodrift and flo2dia in b2tfnb
 c                        21.10.09 introduced internal key 'b2tfhe_mode_ehx'
-c                        23.10.09 modified energy recycled terms in b2stbr_phys
+c                        23.10.09 modified energy recycling terms in b2stbr_phys
 c    Version 01.001.046  29.10.09 changed contents of b2fstati_add and b2fstate_add
 c    Version 01.001.047  05.11.09 added termhz to flo2dia in b2tfnb
 c                        12.11.09 corrected b2mod_input_profile

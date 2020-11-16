@@ -1,12 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trno (nx, ny, ns, nscx, nscxmax, iscx, 
+      subroutine b2trno (nx, ny, ns, nscx, nscxmax, iscx,
      &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,               !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
      &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                         !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf,
-     4	fllim0fhi)
+     4  fllim0fhi)
       use b2mod_types
       use b2mod_anomalous_transport
       use b2mod_indirect
@@ -18,8 +18,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1)
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
+     *  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &  pbs(-1:nx,-1:ny,0:1), hz(-1:nx,-1:ny),                          !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -153,10 +153,10 @@
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      .              'faulty argument range qz(,,0)')
        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &              smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &              smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      .              'faulty argument range qz(,,1)')
 *    ..test sign of na, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
@@ -166,14 +166,14 @@
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nx, ny, ns, nscx, iscx, bb, na, te, ti, 
-     & ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,                 !srv 15.12.05
-     & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0, 
+      call b2tqna (nx, ny, ns, nscx, iscx, bb, na,
+     & te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,         !srv 15.12.05
+     & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      & hvi0, hve0, wrk)
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
 *   ..apply flux limit to neutrals contribution to hci
-        call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb, 
-     &   hcimx, fllim0fhi)      
+        call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb,
+     &   hcimx, fllim0fhi)
         if(hcimx_flag.eq.1) then
           hcib(:,:,:)=hcimx(:,:,1,:)
           do ix=-1,nx
@@ -258,9 +258,9 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci0,
      &     chci(-1,-1,1))
         else
-          call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx, 
+          call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx,
      &     chci(-1,-1,0))
-          call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx, 
+          call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx,
      &     chci(-1,-1,1))
         endif
       endif
@@ -320,7 +320,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   .. apply flux limit to neutrals contribution to cdpa
         call b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, flc)  !srv 09.07.03 30.11.15
         call b2tlc0 (nx, ny, ns, hx, hy, hzvol, qz, na, te, ti, cdpahz,   !srv 30.11.15
-     &               flchz) 
+     &               flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
@@ -331,7 +331,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         do is = 0, ns-1
           chci(:,:,0) = chci(:,:,0) + chcb(:,:,0,is)
           chci(:,:,1) = chci(:,:,1) + chcb(:,:,1,is)
-        enddo 
+        enddo
       endif                                                               !srv 07.12.15 }
 
 *    ..test sign of chce, chci

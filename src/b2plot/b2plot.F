@@ -6121,11 +6121,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     mach(ix,iy,0)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                   mach(ix,iy,0)
             enddo
           enddo
           do IX = -1,NX
@@ -6158,11 +6158,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     (mach(ix,iy,is),is=0,nz-1)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                  (mach(ix,iy,is),is=0,nz-1)
             enddo
           enddo
           do IX = -1,NX
@@ -6195,11 +6195,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     (mach(ix,iy,is),is=0,nz-1)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                  (mach(ix,iy,is),is=0,nz-1)
             enddo
           enddo
           do IX = -1,NX
