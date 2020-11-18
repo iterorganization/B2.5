@@ -1,4 +1,4 @@
-      subroutine b2xpen (nx, ny, ns, fna, fne,
+      subroutine b2xpen (nx, ny, ns, fna,
      1 fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa, rpt, te, ti, po,
      2 BoRiS, fhm, fhp, fhj, fht)
       use b2mod_types
@@ -9,7 +9,7 @@
 ! inputs
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1),
-     *  fne(-1:nx,-1:ny,0:1), fna_53(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna_53(-1:nx,-1:ny,0:1,0:ns-1),
      1  fne_53(-1:nx,-1:ny,0:1),
      2  fch(-1:nx,-1:ny,0:1),
      2  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),

@@ -51,7 +51,6 @@
 
 *  -- PROCEDURES --
       REAL (KIND=R8) ::
-     .      X, Y, XF, YF, RVX, RVY, RDX, RDY, RSX, RSY, PITX, PITY,
      .      SFEE, SFEI, SFNI(NBCD,0:NS)
       REAL (KIND=R8) :: sxhelp,syhelp
       real (kind=R8) :: XX(-1:NX,6), YY(-1:NY,6)
@@ -60,18 +59,6 @@
      * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
      &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       EXTERNAL XERRAB
-      X(IX)   = XX(IX,1)
-      Y(IY)   = YY(IY,1)
-      XF(IX)  = XX(IX,2)
-      YF(IY)  = YY(IY,2)
-      RVX(IX) = XX(IX,3)
-      RVY(IY) = YY(IY,3)
-      RDX(IX) = XX(IX,4)
-      RDY(IY) = YY(IY,4)
-      RSX(IX) = XX(IX,5)
-      RSY(IY) = YY(IY,5)
-      PITX(IX) = XX(IX,6)
-      PITY(IY) = YY(IY,6)
       rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
       rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
       rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
@@ -244,13 +231,14 @@
          T0 = SUM(HY(IX,-1:ny))
          IF (IX .LT. NX) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3, 2X, 2D11.3)')
-     .         IX, X(IX), RVX(IX), RDX(IX), T0, RVX(IX)/(RDX(IX)*T0),
-     .         PITX(IX), RVX(IX)/RDX(IX), XF(IX), RSX(IX)
+     .         IX, XX(IX,1), XX(IX,3), XX(IX,4),
+     .         T0, XX(IX,3)/(XX(IX,4)*T0),
+     .             XX(IX,6), XX(IX,3)/XX(IX,4), XX(IX,2), XX(IX,5)
          ELSE IF (IX .EQ. NX) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3)')
-     .         NX, X(NX), RVX(NX), RDX(NX),
-     .         T0, RVX(NX)/(RDX(NX)*T0),
-     .         PITX(NX), RVX(NX)/RDX(NX)
+     .         NX, XX(NX,1), XX(NX,3), XX(NX,4),
+     .         T0, XX(NX,3)/(XX(NX,4)*T0),
+     .             XX(NX,6), XX(NX,3)/XX(NX,4)
          END IF
       END DO
 
@@ -259,13 +247,14 @@
          T0 = SUM(HX(-1:NX,IY))
          IF (IY .EQ. NY) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3)')
-     .         NY, Y(NY), RVY(NY), T0, RDY(NY),
-     .         RVY(NY)/(T0*RDY(NY)),
-     .         PITY(NY), RVY(NY)/RDY(NY)
+     .         NY, YY(NY,1), YY(NY,3), T0, YY(NY,4),
+     .         YY(NY,3)/(T0*YY(NY,4)),
+     .         YY(NY,6), YY(NY,3)/YY(NY,4)
          ELSE IF (IY .LT. NY) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3, 2X, 2D11.3)')
-     .         IY, Y(IY), RVY(IY), T0, RDY(IY), RVY(IY)/(T0*RDY(IY)),
-     .         PITY(IY), RVY(IY)/RDY(IY), YF(IY), RSY(IY)
+     .         IY, YY(IY,1), YY(IY,3),
+     .         T0, YY(IY,4), YY(IY,3)/(T0*YY(IY,4)),
+     .             YY(IY,6), YY(IY,3)/YY(IY,4), YY(IY,2), YY(IY,5)
          END IF
       END DO
 
@@ -310,7 +299,8 @@
       WRITE (NPRT, 111)
       DO IX = -1, NX-1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
-     .      XF(IX), RSX(IX), RFHEX(IX), RFHIX(IX), RFCHX(IX),
+     .      XX(IX,2), XX(IX,5),
+     .      RFHEX(IX), RFHIX(IX), RFCHX(IX),
      .      RFNEX(IX), RFNIX(IX),
      .     (RFNAX(IX,IS), IS = 0, NS-1)
       ENDDO
@@ -318,8 +308,8 @@
       WRITE (NPRT, 112)
       DO IY = NY, 0, -1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
-     .      YF(IY), RSY(IY), RFHEY(IY), RFHIY(IY), RFCHY(IY),
-     .      RFNEY(IY), RFNIY(IY),
+     .      YY(IY,2), YY(IY,5), RFHEY(IY), RFHIY(IY),
+     .       RFCHY(IY), RFNEY(IY), RFNIY(IY),
      .      (RFNAY(IY,IS), IS = 0, NS-1)
       END DO
 

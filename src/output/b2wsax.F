@@ -87,7 +87,7 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, hy1, uax, uay, uaz, crxc, cryc
+     *   b2ssum, pit, hy1, uax, uay, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
@@ -100,7 +100,6 @@
      &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1	 hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
      &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-      uaz(ix,iy,is) = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+
      &  crx(ix,iy,3))/4
       cryc(ix,iy) = (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+
@@ -220,9 +219,9 @@
      &  ((gs(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
      &  ((pit(ix,iy),ix=-1,nx),iy=-1,ny),
      &  ((crxc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
+     & (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
      &  ((cryc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
+     & (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
 *   ..save mi, zamin, zamax
       write (nsav) (mp*am(is),zamin(is),zamax(is),is=0,ns-1)
 *   ..save plasma state
@@ -268,5 +267,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2wsax
+
+      contains
+
+      function uaz(ix,iy,is)
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uaz
+      uaz = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
+      return
+      end function uaz
 
       end subroutine b2wsax

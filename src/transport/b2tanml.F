@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,       !srv 20.09.06 {
-     &                    fchanml)
+      subroutine b2tanml (nx, ny, csig_an, po, fchanml)                 !srv 20.09.06 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -12,10 +11,9 @@
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     & po(-1:nx,-1:ny),
      1 csig_an(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -144,4 +142,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end                                                             !srv 20.09.06 }
+      end subroutine b2tanml                                                            !srv 20.09.06 }

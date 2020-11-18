@@ -151,11 +151,6 @@
 *   ..procedures
       intrinsic exp, log
       external subini, subend, xertst, b2xvsg
-      real (kind=R8) ::
-     *   dens, temp, wsven
-      dens(jw) = 10.0_R8**(16.0_R8+0.5_R8*(jw-1))
-      temp(iw) = 10.0_R8**(0.1_R8*(iw-13))
-      wsven(iw,jw) = wsveh(iw,jw)*welms(iw,jw)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -239,5 +234,31 @@
 
 *-----------------------------------------------------------------------
 *.end ratwei
+
+      contains
+
+      function dens(jw)
+      implicit none
+      integer, intent(in) :: jw
+      real(kind=R8) :: dens
+      dens = 10.0_R8**(16.0_R8+0.5_R8*(jw-1))
+      return
+      end function dens
+
+      function temp(iw)
+      implicit none
+      integer, intent(in) :: iw
+      real(kind=R8) :: temp
+      temp = 10.0_R8**(0.1_R8*(iw-13))
+      return
+      end function temp
+
+      function wsven(iw,jw)
+      implicit none
+      integer, intent(in) :: iw, jw
+      real(kind=R8) :: wsven
+      wsven = wsveh(iw,jw)*welms(iw,jw)
+      return
+      end function wsven
 
       end subroutine ratwei

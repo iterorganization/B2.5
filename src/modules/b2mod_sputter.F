@@ -1465,12 +1465,11 @@ c
 
       integer i, n
       integer, save :: icount
-      real (kind=R8) :: th, z1, z2, e, a1, a2, r, r0, as1, as2, sl,
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
-      real (kind=R8) :: f, fneps, rne
-      intrinsic sqrt, tan
+      intrinsic sqrt
 c
 c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
@@ -1577,11 +1576,6 @@ c  z2 = 91 - 92
 
       data icount/0/
 
-      f(z1,z2) = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
-      fneps(e,z1,a1,z2,a2) = 0.032534_R8 * e /
-     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
-      rne(th) = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
-     .  ( 2.0_R8 * as2 ) )
   600 format('  undefined projectile is called  ')
       n = 1
       go to 1
@@ -1754,6 +1748,29 @@ c       write(*,*) 'did light projectile calculation for rnion'
    88   rnion = r0
         return
       endif
+
+      contains
+
+      function f(z1,z2)
+      real(kind=R8) :: f, z1, z2
+      f = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
+      return
+      end function f
+
+      function fneps(e,z1,a1,z2,a2)
+      real(kind=R8) :: fneps, e, z1, a1, z2, a2
+      fneps = 0.032534_R8 * e /
+     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
+      return
+      end function fneps
+
+      function rne(th)
+      real(kind=R8) :: rne, th
+      intrinsic tan
+      rne = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
+     .  ( 2.0_R8 * as2 ) )
+      return
+      end function rne
 
       end function rnion
 c

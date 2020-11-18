@@ -2,10 +2,7 @@
       use b2mod_types
       use b2mod_b2plot
       implicit none
-      integer i, ix, iy, is, ixx, iyy
-      intrinsic mod
-      ixx(ix,iy)=mod(ix+1,nx+2)-1
-      iyy(ix,iy)=iy+(ix+1)/(nx+2)
+      integer i, ix, iy, is
 
       write(*,*) 'Too many data values on work stack'
       write(*,*) 'Dropping the bottom element!'
@@ -26,6 +23,23 @@
       end do
       iwrk = iwrk-1
       return
+
+      contains
+
+      integer function ixx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      ixx = mod(ix+1,nx+2)-1
+      return
+      end function ixx
+
+      integer function iyy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      iyy = iy+(ix+1)/(nx+2)
+      return
+      end function iyy
+
       end subroutine dropstackbottom
 
       subroutine dropeirenestackbottom()

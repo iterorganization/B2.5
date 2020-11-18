@@ -69,8 +69,8 @@ c 2002-09-11: logic revised
       use eirmod_eirbra
       use eirmod_extrab25
      , ,only: lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
-     ,        eirene_extrab25_cleanup
+     ,        eirene_extrab25_wneuinit, eirene_extrab25_cleanup,
+     ,        eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot

@@ -23,11 +23,8 @@ c*** The data dimensions must be nx, ny, and 1, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
+      integer i,j,k,l,m,n,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
-c=======================================================================
-      ixx(i)=mod(i-1,nx)+1-1
-      iyy(i)=(i-1)/nx+1-1
 c=======================================================================
 c      print *,'=== clvp: ',npplvp,npplvm !###
 
@@ -176,6 +173,22 @@ c*** Transfer the data to the plotting routines
 
       call clvs(l,wrk_hlp,l)
       return
+
+      contains
+
+      integer function ixx(i)
+      implicit none
+      integer, intent(in) :: i
+      ixx = mod(i-1,nx)+1-1
+      return
+      end function ixx
+
+      integer function iyy(i)
+      implicit none
+      integer, intent(in) :: i
+      iyy = (i-1)/nx+1-1
+      return
+      end function iyy
 c=======================================================================
       end subroutine clvp
 
@@ -543,11 +556,8 @@ c*** The data dimensions must be nbnd and ndepth_nml, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
+      integer i,j,k,l,m,n,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
-c=======================================================================
-      ixx(i)=mod(i-1,nbnd)+1
-      iyy(i)=(i-1)/nbnd+1
 c=======================================================================
 c      print *,'=== tclvp: ',npplvp,npplvm !###
 
@@ -688,6 +698,22 @@ c*** Transfer the data to the plotting routines
 
       call tclvs(l,twrk_hlp,l)
       return
+
+      contains
+
+      integer function ixx(i)
+      implicit none
+      integer, intent(in) :: i
+      ixx = mod(i-1,nbnd)+1
+      return
+      end function ixx
+
+      integer function iyy(i)
+      implicit none
+      integer, intent(in) :: i
+      iyy = (i-1)/nbnd+1
+      return
+      end function iyy
 c=======================================================================
       end subroutine tclvp
 

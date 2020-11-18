@@ -10,7 +10,7 @@
       integer nx, ny, iloc
       character header*(*)
       real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), 
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), 
      &  fun(-1:nx,-1:ny)
       real (kind=R8) ::
      *   scal
@@ -117,8 +117,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf,
-     &   yc, yf)
+       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
        call b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc, scal)
       enddo

@@ -112,7 +112,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i, j
+      integer n2, ix, iy, i
       integer volhmk
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1
@@ -122,15 +122,13 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
+     *   trim1, norm, sinang, cosang
       real (kind=R8) ::
      &  sin_t, cos_t, sin_tl, cos_tl, tt
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       sinang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosang(p0x,p0y,p1x,p1y) = trim1(
@@ -473,6 +471,14 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       YtriangleCentroid = ( y0 + y1 + y2 ) / 3.0_R8
       return
       end function YtriangleCentroid
+
+      function dist(ix,iy,i,j)
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
 
       end subroutine b2agmt
 

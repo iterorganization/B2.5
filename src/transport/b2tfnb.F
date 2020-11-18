@@ -5,7 +5,7 @@
      &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,              !xpb !iyv 06.02.14
      &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,        !xpb !srv 09.01.01
      &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb, !srv 09.01.01 13.10.06
-     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                 !srv 09.01.01
+     &  cvlbhz, cdnbhz, cdpbhz,                                         !srv 09.01.01
      &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,           !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,
@@ -36,7 +36,7 @@
      2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      3  vol(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), mb,
-     &  cvlbhz(-1:nx,-1:ny,0:1), cvmbhz(-1:nx,-1:ny,0:1),               !srv 09.01.01
+     &  cvlbhz(-1:nx,-1:ny,0:1),                                        !srv 09.01.01
      &  cdnbhz(-1:nx,-1:ny,0:1), cdpbhz(-1:nx,-1:ny,0:1),               !srv 09.01.01
      &  cddb(-1:nx,-1:ny,0:1), cssb(-1:nx,-1:ny,0:1),                   !srv 13.10.06 !iyv 06.02.14
      &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),          !srv 20.09.06
@@ -138,13 +138,11 @@
       !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
 *   ..procedures
       real (kind=R8) ::
-     *   kmpr, hybr, kap, cvmgp, hy1
-      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
+     *   hybr, cvmgp, hy1
+      external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      kmpr(ix,iy) = nb(ix,iy)/pb(ix,iy)
-      kap(ix,iy) = 1.0_R8 / (zb(ix,iy)*te(ix,iy) + ti(ix,iy))
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/,
@@ -2171,6 +2169,24 @@ csw 18feb2014 remove fluxes between guard cells
 
 *-----------------------------------------------------------------------
 *.end b2tfnb
+
+      contains
+
+      function kap(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: kap
+      kap = 1.0_R8 / (zb(ix,iy)*te(ix,iy) + ti(ix,iy))
+      return
+      end function kap
+
+      function kmpr(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: kmpr
+      kmpr = nb(ix,iy)/pb(ix,iy)
+      return
+      end function kmpr
 
       end subroutine b2tfnb
 

@@ -87,7 +87,7 @@
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
      1  t0, vis_per                                                      !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
-     3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
+     &  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  zero(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny),                        !lk 31.01.08 {
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
@@ -358,12 +358,12 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06  }
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06  {
+      call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06  }
+      call b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,                 !srv 20.09.06  {
      &              fac_vis, fchvispar)
-      call b2tiner (nx, ny, ns, vol,
-     &              gs, hx, hy, bb, na, ua, facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+     &              facdrift, fchinert)
+      call b2tvspr (nx, ny, ns, fac_vis, vol, hy, qz,                    !srv 10.10.17
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
@@ -407,8 +407,7 @@ csw 01oct2012 initialize potential if necessary
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
@@ -440,7 +439,7 @@ c   extra call at this place within internal iteration)
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor,                           !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -525,7 +524,7 @@ c   extra call at this place within internal iteration)
       if(iout.ne.0) then                                                 !srv 05.07.17
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
        call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
-       call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+       call b2xpif (nx, ny, hx, vol, fch_pi_c, fch_pi_f)
        call my_out(70,nx,ny,fch_pi_c,'b2news__fch_pi_c')
        call my_out(70,nx,ny,fch_pi_f,'b2news__fch_pi_f')
        call my_out(70,nx,ny,ue,'b2news__ve')
@@ -547,13 +546,13 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06 }
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06 {
+      call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06 }
+      call b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,                 !srv 20.09.06 {
      &              fac_vis, fchvispar)
-      call b2tiner (nx, ny, ns, vol,
-     &              gs, hx, hy, bb, na, ua, facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,            !srv 10.10.17
-     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+     &              facdrift, fchinert)
+      call b2tvspr (nx, ny, ns, fac_vis, vol, hy, qz,                    !srv 10.10.17
+     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
      &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
@@ -619,8 +618,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04  04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
@@ -735,8 +733,7 @@ csw 16oct2012 init ier0
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 20.09.06
      1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
@@ -901,8 +898,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
      &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &       cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
-     &       cdpahz(-1,-1,0,is),
+     &       cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is), !srv 09.01.01 15.12.05
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
      &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &       fna_fcor(-1,-1,0,is),
@@ -951,7 +947,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
       call b2xpen (nx, ny, ns,
-     1 fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     1 fna, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
      2 rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
       if (iout_b2wdat.eq.4) then
        call my_out(70,nx,ny,fht(-1,-1,0),'b2news__fhtx')
@@ -1066,8 +1062,7 @@ c   recompute particle fluxes
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04  04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
@@ -1187,8 +1182,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   cvlahz(-1,-1,0,is), cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
@@ -1220,4 +1214,4 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
 *-----------------------------------------------------------------------
 *.end b2news_
 
-      end
+      end subroutine b2news_

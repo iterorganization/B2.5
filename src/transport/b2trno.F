@@ -196,7 +196,7 @@
      &   cdpa(-1,-1,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
      &   cdpa(-1,-1,1,is))
-        call b2txsx (nx, ny, vol, hx, qz, vla0(-1,-1,0,is),
+        call b2txsx (nx, ny, vol, hx, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,is))
         call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
      &   cvla(-1,-1,1,is))
@@ -223,11 +223,11 @@
      &   cdpahz(-1,-1,0,is))
        call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dpa0(-1,-1,is),
      &   cdpahz(-1,-1,1,is))
-       call b2txsx (nx, ny, hzvol, hx, qz, vla0(-1,-1,0,is),
+       call b2txsx (nx, ny, hzvol, hx, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,is))
        call b2txsy (nx, ny, hzvol, hy, qz, vla0(-1,-1,1,is),
      &   cvlahz(-1,-1,1,is))
-       call b2txsx (nx, ny, hzvol, hx, qz, vma0(-1,-1,0,is),          !srv 15.12.05
+       call b2txsx (nx, ny, hzvol, hx, vma0(-1,-1,0,is),              !srv 15.12.05
      &   cvmahz(-1,-1,0,is))
        call b2txsy (nx, ny, hzvol, hy, qz, vma0(-1,-1,1,is),          !srv 15.12.05
      &   cvmahz(-1,-1,1,is))
@@ -238,9 +238,9 @@
       enddo                                                           !srv 09.01.01
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       cvsa_an = cvsa                                                  !srv 04.10.99
-      call b2txsx (nx, ny, vol, hx, qz, hvi0(-1,-1,0), chvi(-1,-1,0))
+      call b2txsx (nx, ny, vol, hx, hvi0(-1,-1,0), chvi(-1,-1,0))
       call b2txsy (nx, ny, vol, hy, qz, hvi0(-1,-1,1), chvi(-1,-1,1))
-      call b2txsx (nx, ny, vol, hx, qz, hve0(-1,-1,0), chve(-1,-1,0))
+      call b2txsx (nx, ny, vol, hx, hve0(-1,-1,0), chve(-1,-1,0))
       call b2txsy (nx, ny, vol, hy, qz, hve0(-1,-1,1), chve(-1,-1,1))
 
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0))
@@ -441,5 +441,5 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *-----------------------------------------------------------------------
 *.end b2trno
 
-      end
+      end subroutine b2trno
 

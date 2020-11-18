@@ -19,7 +19,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
       real (kind=R8) ::
-     *   cr(-1:nx,-1:ny),safetyfactor(-1:ny)
+     *   cr(-1:nx,-1:ny), safetyfactor(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),

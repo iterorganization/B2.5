@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,    !srv 20.09.06 {
+      subroutine b2tiner (nx, ny, ns, vol, gs, bb, na, ua,            !srv 20.09.06 {
      &                    facdrift, fchinert)                         !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -18,7 +18,6 @@
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      & na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                     !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -247,4 +246,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tiner
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tiner                                            !srv 20.09.06 }

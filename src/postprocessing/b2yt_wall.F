@@ -775,6 +775,7 @@ cxpb but in computational space
 
 * ..finalise time-dependent wall data
       entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
+
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.

@@ -69,11 +69,8 @@
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
-      real (kind=R8) ::
-     *   scalr
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                 !srv 02.01.07
-      scalr(t0) = 1.0e0_R8  ! t0                                      !srv 02.01.07
 *   ..initialization
       data ncall/0/
 
@@ -547,5 +544,14 @@
 
 *-----------------------------------------------------------------------
 *.end b2ush9
+
+      contains
+
+      function scalr(t0)
+      implicit none
+      real(kind=R8) :: scalr, t0
+      scalr = 1.0e0_R8  ! t0                                          !srv 02.01.07
+      return
+      end function scalr
 
       end subroutine b2ush9

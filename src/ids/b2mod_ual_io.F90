@@ -3255,7 +3255,7 @@ contains
                 &   time_sind = time_sind )
 
             !! fchanml: Anomalous current
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
+            call b2tanml (nx, ny, csig_an, po, fchanml)
             call write_cell_vector_component(                                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &

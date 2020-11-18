@@ -312,15 +312,14 @@ ctmp.dpc
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
 !          if(style.ne.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                    fchanml)                                       !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
+            call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
+            call b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,           !srv 20.09.06 {
      &                    fac_vis, fchvispar)
-            call b2tiner (nx, ny, ns, vol,
-     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
+            call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+     &                    facdrift, fchinert)
+            call b2tvspr (nx, ny, ns, fac_vis, vol, hy, qz,              !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,       !srv 10.10.17
+            call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,      !srv 10.10.17
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
@@ -347,7 +346,7 @@ ctmp.dpc
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
+     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor,                          !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -489,7 +488,7 @@ ctmp.dpc
      &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
      &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
-     &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
+     &          cdnahz(-1,-1,0,is),                                      !srv 09.01.01 15.12.05 13.10.06
      &          cdpahz(-1,-1,0,is),
      &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
@@ -507,7 +506,7 @@ ctmp.dpc
            call b2xpfe (nx, ny, ns, ns_ext, qe,
      &      rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                  !ajs 06.04.20
            call b2xpen (nx, ny, ns,
-     1      fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     1      fna, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
      2      rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8

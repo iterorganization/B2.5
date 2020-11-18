@@ -81,12 +81,8 @@
       !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux11p, b2uxm11
-!      rscal(t0) = t0
-      rscal(t0) = 1.0e0_R8                                             !srv 13.10.06
 *   ..initialization
       data ncall/0/
 
@@ -283,5 +279,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2usc11
+
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+!      rscal = t0
+      rscal = 1.0e0_R8                                                 !srv 13.10.06
+      return
+      end function rscal
 
       end subroutine b2usc11                                           !srv 02.04.18 }

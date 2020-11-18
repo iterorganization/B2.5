@@ -49,13 +49,8 @@
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *  rscal
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux7p
-! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
-      rscal(t0) = t0                                                  !srv 13.10.06
-!      rscal(t0) = 1.0e0_R8                                           !srv 13.10.06
 *   ..initialisation
       data ncall/0/
 
@@ -291,5 +286,15 @@ cxpb
 
 *-----------------------------------------------------------------------
 *.end b2usc7
+
+      contains
+
+      function rscal(t0)
+      real(kind=R8) :: rscal, t0
+! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
+      rscal = t0                                                  !srv 13.10.06
+!      rscal = 1.0e0_R8                                           !srv 13.10.06
+      return
+      end function rscal
 
       end subroutine b2usc7                                            !srv 02.04.18 }

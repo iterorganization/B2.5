@@ -11,8 +11,8 @@
       integer nx, ny, iloc, ncnta, ncntb
       character header*(*)
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3),
-     &  cry(-1:nx,-1:ny,0:3), fun(-1:nx,-1:ny)
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     *  fun(-1:nx,-1:ny)
       real (kind=R8) ::
      *  scal, fa0, fa1, fb0, fb1
 *   ..output arguments (unspecified on entry)

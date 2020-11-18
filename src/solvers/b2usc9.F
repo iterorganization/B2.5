@@ -22,7 +22,7 @@
      *  corpb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)                    !srv 13.10.06
+     *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)                        !srv 13.10.06
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -65,12 +65,8 @@
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                   !srv 02.01.07
-!      rscal(t0) = t0
-      rscal(t0) = 1.0e0_R8                                             !srv 13.10.06
 *   ..initialization
       data ncall/0/
 
@@ -257,5 +253,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2usc9
+
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+!      rscal = t0
+      rscal = 1.0e0_R8                                                  !srv 13.10.06
+      return
+      end function rscal
 
       end subroutine b2usc9

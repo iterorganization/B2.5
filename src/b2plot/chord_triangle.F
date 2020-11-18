@@ -276,9 +276,7 @@ c
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
       logical first
-      integer ir,iz,irpos,izpos
-      real (kind=R8) ::
-     *   rpos,zpos
+      integer ir,iz
       integer lngcov,lngind
       parameter(lngcov=200,lngind=500 000)
       integer covered(lngcov,lngcov),
@@ -304,11 +302,6 @@ c
       save covered,rmin,rmax,zmin,zmax,first,tcov,icov
 
       data first/.true./
-
-      irpos(r)=(r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
-      izpos(z)=(z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
-      rpos(ir)=rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
-      zpos(iz)=zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
 
       call subini ('chord_find')
       if(first) then
@@ -501,6 +494,39 @@ c next try the chain
       found=.true.
       call subend ()
       return
+
+      contains
+
+      integer function irpos(r)
+      implicit none
+      real(kind=R8), intent(in) :: r
+      irpos = (r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
+      return
+      end function irpos
+
+      integer function izpos(z)
+      implicit none
+      real(kind=R8), intent(in) :: z
+      izpos = (z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
+      return
+      end function izpos
+
+      function rpos(ir)
+      implicit none
+      integer, intent(in) :: ir
+      real(kind=R8) :: rpos
+      rpos = rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function rpos
+
+      function zpos(iz)
+      implicit none
+      integer, intent(in) :: iz
+      real(kind=R8) :: zpos
+      zpos = zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function zpos
+
       end subroutine chord_tria_find
 c
 !DIAG      subroutine chord_diagnostics      ! diag

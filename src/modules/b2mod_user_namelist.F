@@ -284,15 +284,16 @@ c*** Set default values according to current species list
 
       call subend ()
       return
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
+      end subroutine read_b2mod_user_namelist
 
-      entry write_b2mod_user_namelist(nx,ns)
+      subroutine write_b2mod_user_namelist
+      implicit none
 
       if (written) return
       if (user_namelist_used.and.write_nml_user) write(*,user)
       written = .true.
       return
-
-  999 call xerrab ('Error while reading FEEDBACK namelist!')
-      end subroutine read_b2mod_user_namelist
+      end subroutine write_b2mod_user_namelist
 
       end module b2mod_user_namelist

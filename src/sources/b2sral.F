@@ -8,7 +8,7 @@
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor,                             !srv 13.10.06 25.12.06 23.10.09
      &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -72,8 +72,6 @@
      *  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),            !srv 28.10.02
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
-     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06 25.12.06
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
@@ -270,22 +268,22 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+       call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
+       call b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,               !srv 20.09.06 {
      &               fac_vis, fchvispar)
-       call b2tiner (nx, ny, ns, vol,
-     &               gs, hx, hy, bb, na, ua, facdrift, fchinert)
-       call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+     &               facdrift, fchinert)
+       call b2tvspr (nx, ny, ns, fac_vis, vol, hy, qz,                  !srv 10.10.17
      &               po, ti, na, avisper, bvisper, cvisper, fchvisper)
        call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
+     &  vol, hx, hy, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
      &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,   !srv 05.06.18
-     &  wedia, uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  wedia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients

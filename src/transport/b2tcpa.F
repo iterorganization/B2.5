@@ -8,7 +8,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_geo
-     & , only : hx, hy, vol, bb
+     & , only : hx, vol, bb
       use b2mod_plasma
      & , only : fch_pi_f, fch_pi_c                                       !srv 13.01.17
       use b2mod_rates
@@ -100,7 +100,7 @@
         if(style.eq.2) then
           call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
           call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
-          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+          call b2xpif (nx, ny, hx, vol, fch_pi_c, fch_pi_f)
         else
           fch_pi_f = 0.0_R8                                              !srv 04.04.17
         endif

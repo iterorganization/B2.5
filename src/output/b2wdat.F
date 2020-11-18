@@ -439,7 +439,8 @@
       open(70,file=trim(folder)//'splne.dat')                      !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 
@@ -447,7 +448,8 @@
       open(70,file=trim(folder)//'splte.dat')                     !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 
@@ -455,7 +457,8 @@
       open(70,file=trim(folder)//'splti.dat')                    !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 

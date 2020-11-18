@@ -18,8 +18,12 @@ c
       m=k
       if(m.lt.n) call bfill(c(k+1),n-k,' ')
       return
+      end subroutine lefta
 c=====================================================
-      entry rghta(c,n,m)
+      subroutine rghta(c,n,m)
+      implicit none
+      character*1 c(*),b
+      integer :: i,n,k,m
 c=====================================================
       b=char(0)
       k=n+1
@@ -31,4 +35,4 @@ c=====================================================
       m=n+1-k
       if(m.lt.n) call bfill(c,n-k,' ')
 c=====================================================
-      end
+      end subroutine rghta

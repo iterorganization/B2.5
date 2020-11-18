@@ -27,9 +27,8 @@ c*** Local variables
 c
       integer ix,iy,k
       real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
-      real (kind=R8) :: area, pit
+      real (kind=R8) :: pit
 c----------------------------------------------------------------------
-      area(ix,iy)=gs(ix,iy,0)*qc(ix,iy)
       pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c----------------------------------------------------------------------
 c*** Check the ig value
@@ -75,4 +74,14 @@ c
       end do
       close (lun)
 c
+      contains
+
+      function area(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: area
+      area = gs(ix,iy,0)*qc(ix,iy)
+      return
+      end function area
+
       end subroutine b2poleg

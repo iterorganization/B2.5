@@ -220,7 +220,7 @@ c
      1 lambda, lnlam, hh, hhn, phi_app
       integer i,j,icell,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
+     2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
       external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
@@ -252,8 +252,6 @@ c
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      ixx(ix,iy)=mod(ix+1,nx+2)-1
-      iyy(ix,iy)=iy+(ix+1)/(nx+2)
 
 c Function to check the correct parameters!
 c
@@ -551,7 +549,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 !ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
       if (b2fplasma_version.lt.'03.000.007') then
         call b2xpen (nx, ny, ns,
-     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
      2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
       endif
 c calculate divergences of the various fluxes
@@ -1575,6 +1573,20 @@ c
       goto 10
 
       contains
+
+      integer function ixx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      ixx = mod(ix+1,nx+2)-1
+      return
+      end function ixx
+
+      integer function iyy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      iyy = iy+(ix+1)/(nx+2)
+      return
+      end function iyy
 
       subroutine select_matrix
       integer ix, iy, is, iso, ibc

@@ -1,5 +1,5 @@
-      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz,       !srv 02.04.18
-     &    bb, zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
+      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hy, qz,          !srv 02.04.18
+     &    zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -12,8 +12,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
-     1   fac_vis(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     1   fac_vis(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      &   kmpr(-1:nx,-1:ny), zb(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)

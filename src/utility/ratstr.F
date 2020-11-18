@@ -177,7 +177,7 @@
       real (kind=R8) ::
      *  cm3, rydbrg, zlradf, bremsf, zexp1, zexp2, zexp3,
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
-     &  zs7, zz, zzz, cxcoef, temp, dens
+     &  zs7, zz, zzz, cxcoef
       real (kind=R8) ::
      *   cutlo, cutll, t0, t1, t2
       parameter (nzm=99)
@@ -196,15 +196,8 @@
       intrinsic real, sqrt, log, exp, min, dim, max
       external subini, subend, xertst, xerrab
       real (kind=R8) ::
-     *  sei1, hydfud, expu, machsfr
-      sei1(zz) = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
-*     (sei1(z) is an approximation to the scaled exponential integral
-*     exp(z)*E1(z))
+     *  expu, machsfr
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-      hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
-     1 temp**(-0.60_R8))
-*!!   (hydfud is the fudge factor for the density dependence in the
-*!!   hydrogen ionisation rate coefficient; see the code.)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -564,5 +557,25 @@
 
 *-----------------------------------------------------------------------
 *.end ratstr
+
+      contains
+
+      function hydfud(temp,dens)
+*!!   (hydfud is the fudge factor for the density dependence in the
+*!!   hydrogen ionisation rate coefficient; see the code.)
+      implicit none
+      real(kind=R8) :: hydfud, temp, dens
+      hydfud = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*temp**(-0.60_R8))
+      return
+      end function hydfud
+
+      function sei1(zz)
+*     (sei1(z) is an approximation to the scaled exponential integral
+*     exp(z)*E1(z))
+      implicit none
+      real(kind=R8) :: sei1, zz
+      sei1 = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
+      return
+      end function sei1
 
       end subroutine ratstr

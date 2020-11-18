@@ -51,11 +51,8 @@
      *   t0, t1
 *   ..procedures
       intrinsic abs, sqrt, dim
-      real (kind=R8) ::
-     *   scalr
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2ux5p
-      scalr(t0) = t0
 *   ..initialisation
       data ncall/0/
 
@@ -585,5 +582,14 @@ cxpb
 
 *-----------------------------------------------------------------------
 *.end b2usht
+
+      contains
+
+      function scalr(t0)
+      implicit none
+      real(kind=R8) :: scalr, t0
+      scalr = t0
+      return
+      end function scalr
 
       end subroutine b2usht

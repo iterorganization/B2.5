@@ -1811,7 +1811,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 !ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
       if (b2fplasma_version.lt.'03.000.007') then
         call b2xpen (nx, ny, ns,
-     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
      2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
       endif
 *   ..rewrite input file with inverted velocity
@@ -2241,7 +2241,7 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
           call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-          if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+          if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl, !srv 20.09.06 { 16.10.17
+      subroutine b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,          !srv 20.09.06 { 16.10.17
      &                    fac_vis, fchvispar)                           !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -14,10 +14,9 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny),
      & ua(-1:nx,-1:ny,0:ns-1),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 16.10.17
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -167,4 +166,4 @@ c Drift terms
 *-----------------------------------------------------------------------
 *.end b2tvspa
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tvspa                                            !srv 20.09.06 }
