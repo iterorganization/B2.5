@@ -4,6 +4,7 @@
       subroutine b2urmo (nx, ny, isb, ub, rob, smb, flub, cvsb,
      .  resmb, fmb)                                                     !srv 02.06.11
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
@@ -62,14 +63,10 @@
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
       !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo          !srv 11.09.09
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hybr
       external subini, subend, xertst
       external b2xvsg, b2xvff
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
       data ncall/0/
 

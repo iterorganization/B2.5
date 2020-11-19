@@ -3,6 +3,7 @@
 
       subroutine rattai (nt, ndum, tailep, rtt, rtorg, rtmod)
       use b2mod_types
+      use b2mod_math
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nt, ndum
@@ -63,11 +64,9 @@
 *   ..local variables
       integer i, j, k
       real (kind=R8) ::
-     *   t0, t1, t2, rtm, rt0, rt1, rtt0, rtt1, ds, cutll, cutlo
+     *   t0, t1, t2, rtm, rt0, rt1, rtt0, rtt1, ds
 *   ..procedures
       intrinsic log
-      real (kind=R8) :: expu, machsfr
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
       external subini, subend, xertst
 
 *-----------------------------------------------------------------------
@@ -76,8 +75,7 @@
 * ..preliminaries
       call subini ('rattai')
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nt, ndum, tailep
       call xertst (0.le.nt, 'rattai--faulty argument nt')
       call xertst (1.le.ndum, 'rattai--faulty argument ndum')

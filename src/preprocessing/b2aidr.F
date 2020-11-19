@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_geo
+      use b2mod_math
       use b2mod_time
       use b2mod_work
       use b2mod_plasma
@@ -68,7 +69,6 @@
 *   ..local variables
       integer n2, is, js, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
-      real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
@@ -98,13 +98,11 @@
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      logical ltst                                                  !srv 22.12.09
       logical lnext
       external subini, subend, xertst, xerrab, sfill, streql,
      &  cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))       !srv 22.12.09
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *  ..initialisation

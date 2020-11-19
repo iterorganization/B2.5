@@ -870,6 +870,9 @@ c######alias ma30adcopy4
      * irn, lirn, lenc, ifirst, lastr, nextr, lastc, nextc, iptr, ipc,
      * u, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c if  the user requires a more convenient data interface then the ma28
 c     package should be used.  the ma28 subroutines call the ma30
@@ -1064,15 +1067,10 @@ c
       integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -2035,6 +2033,9 @@ c
       subroutine ma30bdcopy4(n, icn, a, licn, lenr, lenrl,idisp,ip,iq,w,
      * iw, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30b/bd performs the lu decomposition of the diagonal blocks of a
 c     new matrix paq of the same sparsity pattern, using information
@@ -2095,14 +2096,9 @@ c
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2244,6 +2240,9 @@ c
       subroutine ma30cdcopy4(n, icn, a, licn,lenr,lenrl,lenoff,idisp,ip,
      * iq, x, w, mtype)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30c/cd uses the factors produced by ma30a/ad or ma30b/bd to solve
 c     ax=b or a transpose x=b when the matrix p1*a*q1 (paq) is block
@@ -2311,15 +2310,10 @@ c
      * jpiv, jpivp1, lt, ltend, numblk
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data zero /0.0e0_R8/
 c
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero

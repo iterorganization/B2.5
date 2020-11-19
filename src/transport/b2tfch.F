@@ -10,6 +10,7 @@
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
+      use b2mod_math
       use b2mod_rates
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -79,7 +80,7 @@
       real (kind=R8), save :: prl_cur = 1.0_R8, phm2 = 1.0_R8           !srv 15.10.18
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, flomx,
+     *   ehx, ehy, flomx,
      &   tex, ehx_po, ehy_po, floe0, cone0,
      1   floe0_nd, cone0_nd, t0, t0_nd, tex0, tex0_nd                   !srv 15.10.18
       real (kind=R8) :: facdriftm, fac_ExBm                             !srv 23.12.19
@@ -89,12 +90,8 @@
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
-      intrinsic max, abs, sqrt                                   	!xpb
-      real (kind=R8) ::
-     *   hybr
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
       data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	!xpb
      * vis_par/1.0_R8/, no_current/0/, conduction_only/0/,

@@ -6,6 +6,7 @@
      &  rxf, pcm0, cortt, corte, corti,
      &  pccm0, na, ua, te, ti, po, ne, ni, wrk0, vol)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -41,18 +42,14 @@
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
-     *  ctt, dte, dti, t0, t1, t2
+     *  ctt, dte, dti, t0
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
       integer, save :: nrings, jxi, jxa, jsep
       save ncall, stylec, pot_eq
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *  med
       external subini, subend, xertst, ipgeti, b2xvsg
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
       data ncall/0/, stylec/0/, pot_eq/1/, nrings/0/
 *!!   (stylec is a numerical switch, needs experiments)

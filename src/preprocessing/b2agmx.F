@@ -15,6 +15,7 @@
      3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
@@ -152,13 +153,10 @@
       logical iniso, error
       integer i, j
       integer pbs_from_basis_mesh
-      real (kind=R8) ::
-     *   p0x, p0y
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
-     *   norm, dist1
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+     *   dist1
       dist1(ix,iy,i,j) = norm (
      &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
       external subini, subend, xertst, ipgeti

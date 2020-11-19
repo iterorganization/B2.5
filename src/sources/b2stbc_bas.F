@@ -10,6 +10,7 @@
      &  area_fix, sheath_drift_fix)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_rates
       use b2mod_indirect
       use b2mod_anomalous_transport
@@ -65,21 +66,16 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ireg
       real (kind=R8) ::
-     *  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     *  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
      2  naf(0:ns-1), udf(0:ns-1), nef, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log, dim
-      real (kind=R8) ::
-     *  machsfr, expu2
-      external subini, subend, xertst, machsfr, eseec0
+      intrinsic abs, sqrt
+      external subini, subend, xertst, eseec0
       external b2xvsg, b2xvff, b2xvps
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
 *   ..initialisation
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -118,9 +114,6 @@
        call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
        call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialise resignore array
       if (ncall.eq.0) then
         resignore(-1,-1:ny,1:2)=0

@@ -4,6 +4,7 @@
       subroutine ratstr (nrid, nz, rtt, nt, rtn, nn, 
      &  rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       implicit none
 #include "emissivity.constants"
@@ -179,7 +180,7 @@
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
      &  zs7, zz, zzz, cxcoef
       real (kind=R8) ::
-     *   cutlo, cutll, t0, t1, t2
+     *  t0, t1, t2
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 
@@ -193,11 +194,8 @@
      &  x1(0:nzm-1), x2(0:nzm-1), z1(0:nzm-1), z2(0:nzm-1),
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
-      intrinsic real, sqrt, log, exp, min, dim, max
+      intrinsic real, sqrt, log, exp, min
       external subini, subend, xertst, xerrab
-      real (kind=R8) ::
-     *  expu, machsfr
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -206,8 +204,7 @@
 *   ..subprogram start-up calls
       call subini ('ratstr')
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nz, nt, nn
       call xertst (0.lt.nz.and.nz.le.nzm, 'ratstr--faulty argument nz')
       call xertst (0.le.nt.and.0.le.nn,

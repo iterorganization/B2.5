@@ -4,6 +4,7 @@
       subroutine b2ytgm (nget, nx1, ny1, nncut, nnreg)
       use b2mod_types
       use b2mod_geo2
+      use b2mod_math
       use b2mod_version
       use b2mod_b2cmfs
       use b2mod_b2cmgs
@@ -178,18 +179,11 @@
      *   ebc1(-1:nx1,-1:ny1,0:1), ebf1(-1:nx1,-1:ny1,0:1),
      *   hzb(-1:nx1,-1:ny1), hzc(-1:nx1+1,-1:ny1+1)
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1
+     *   t0, t1
       logical qc_to_do, pbs_to_do
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external subini, subend, xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 

@@ -1302,21 +1302,14 @@ c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 
       subroutine heatdiff0D(ibnd,Qtot,Tp)
+      use b2mod_math
       implicit none
       integer ibnd
       real (kind=R8) :: Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      real (kind=R8), save :: cutll, cutlo
-      logical, save  :: lfirst, coating
+      logical, save  :: coating
       !$OMP THREADPRIVATE(coating)
-      real (kind=R8) :: t0
-      real (kind=R8) :: machsfr, expu2, layer_Kappa
-      external machsfr, layer_Kappa
-      intrinsic dim, exp, min, max
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
-*   ..initialisation
-      data lfirst /.true./
+      real (kind=R8) :: layer_Kappa
+      external layer_Kappa
 
 c  Inputs:
 c  Qtot -> incident heat flux (Joules/m^2/sec)
@@ -1339,15 +1332,6 @@ c  Td -> Temperature at interface between mixing layer and original wall materia
 
 c  Remarks:
 c  Consider adding the option of layer_thermal_contact
-
-*   ..set cutll, cutlo
-      if (lfirst) then
-        !$OMP CRITICAL (heatdiff0)
-        cutll = log(machsfr())
-        cutlo = max(machsfr(),exp(cutll))
-        lfirst = .false.
-        !$OMP END CRITICAL (heatdiff0)
-      end if
 
       TL = backplate_temp(ibnd)
       L = plate_thickness(ibnd)

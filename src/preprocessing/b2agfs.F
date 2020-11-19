@@ -1980,11 +1980,12 @@ c set up region where the residuals should be ignored (none yet)
       contains
 
       function distc(ix1,iy1,ip1,ix2,iy2,ip2)
+      use b2mod_math
       implicit none
       integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
       real(kind=R8) :: distc
-      distc = sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
-     .             (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
+      distc = norm(crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2),
+     .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
       return
       end function distc
 

@@ -1,5 +1,6 @@
       subroutine b2mxnu (n, funp, fun0, funq)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n
       real (kind=R8) ::
@@ -19,13 +20,10 @@
 *     ------------------------------------------------------------------
       integer i
       real (kind=R8) ::
-     *   eps, t0, t1, t2
+     *   eps, t0, t1
       parameter (eps=0.0_R8)
-      intrinsic min, max, abs
-      real (kind=R8) ::
-     *   med
+      intrinsic abs
       external subini, subend, b2scopy
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
 *     Must set eps to a small non-negative value. eps.eq.0 is safest,
 *     positive values of eps are suitable only if the inner iterations

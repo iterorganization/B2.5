@@ -7,6 +7,7 @@
       use b2mod_plasma
       use b2mod_geo
       use b2mod_work
+      use b2mod_math
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
@@ -76,18 +77,10 @@
       integer, allocatable :: idummy(:,:)
       real (kind=R8), allocatable :: za(:)
       logical file_open
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang, dist
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
+      real (kind=R8) :: dist
       dist(ix,iy,i,j) = norm (
      &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
       external b2xvgm, b2xvps, b2xvsg
       external cfverw, cfwuin, cfwuch

@@ -6,6 +6,7 @@
      &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &   hvi0, hve0, wrk0)
       use b2mod_types
+      use b2mod_math
       use b2mod_rates
       use b2mod_transport_namelist
       use b2mod_input_profile
@@ -112,9 +113,9 @@
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
      1  dcx, dion, vcx, lcx, lion, din, dnn,
-     1  cutlo, cutll, poloidal_scale_factor
+     1  poloidal_scale_factor
       real (kind=R8) ::
-     *  t0, t1, min_df0, max_df0,
+     *  min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
       save ncall, new_df0, ixref, transport_namelist, user_transport,
@@ -123,9 +124,7 @@
      3  neutral_sources_rescale
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, sfill, machsfr, ipgeti, ipgetr
-      real (kind=R8) ::
-     *  expu, addup, machsfr
+      external subini, subend, xertst, sfill, ipgeti, ipgetr
 *   ..initialisation
       data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
      1  user_transport/0/, transport_inputfile/0/,
@@ -133,9 +132,6 @@
      3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
      4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
      5  neutral_sources_rescale/1.0_R8/
-*   ..statement functions
-      addup(t0,t1)=t0+t1
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries
@@ -195,8 +191,7 @@
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
       endif
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..compute auxiliary wrk0
       do iy = -1, ny
        do ix = -1, nx

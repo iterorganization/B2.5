@@ -4,6 +4,7 @@
       subroutine b2yidr (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -75,7 +76,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, iftp, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -86,14 +87,12 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      intrinsic abs
-      logical streql, ltst, is_comment
+      logical streql, is_comment
       external subini, subend, xertst, xerrab, streql, gacwk,
      &  gdawk, cfruch, lbfilx, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
       external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal

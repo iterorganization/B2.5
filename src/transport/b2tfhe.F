@@ -7,6 +7,7 @@
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
      &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -78,15 +79,14 @@
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1,
-     &   tex, tex0, cutlo,
+     *   ehx, ehy, floe0, flomx, cone0, alfe0, t0, t1,
+     &   tex, tex0,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
      &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                          !srv 13.01.17
-      parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
@@ -94,14 +94,8 @@
 #endif
       save ncall, no_current, conduction_only, no_hybr, pot_eq
 *   ..procedures
-      intrinsic dim, min, max, abs, sqrt
-      real (kind=R8) ::
-     *   harm, hybr, upwind
       external subini, subend, xertst, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
-      harm(t0,t1) = 2*t0*t1/(t0+t1)
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/,
      *  pot_eq/1/

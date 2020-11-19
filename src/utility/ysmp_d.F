@@ -172,13 +172,13 @@ C ** ERROR -- INSUFFICIENT STORAGE
 C ** ERROR -- ILLEGAL PATH SPECIFIED
   111   FLAG = 11*N + 1
         RETURN
-        END
+        END SUBROUTINE ODRV
 
 C***********************************************************************
 C***********************************************************************
 C  MD -- MINIMUM DEGREE ALGORITHM (BASED ON ELEMENT MODEL)
 C***********************************************************************
-        SUBROUTINE  MD
+        SUBROUTINE MD
      *     (N, NNZ, IA, JA, MAX, V, L, HEAD, LAST, NEXT, MARK, FLAG)
         use b2mod_types
         IMPLICIT NONE                                                    !srv 11.01.07
@@ -317,7 +317,7 @@ C----GENERATE INVERSE PERMUTATION FROM PERMUTATION
     5   CONTINUE
 C
         RETURN
-        END
+        END SUBROUTINE MD
 C
 C***********************************************************************
 C  MDI -- INITIALIZATION
@@ -382,7 +382,7 @@ C
 C ** ERROR -- INSUFFICIENT STORAGE
   101   FLAG = 9*N + VI
         RETURN
-        END
+        END SUBROUTINE MDI
 C
 C***********************************************************************
 C  MDM -- FORM ELEMENT FROM UNELIMINATED NEIGHBORS OF VK
@@ -441,7 +441,7 @@ C----TERMINATE LIST OF UNELIMINATED NEIGHBORS
     5   L(TAIL) = 0
 C
         RETURN
-        END
+        END SUBROUTINE MDM
 C
 C***********************************************************************
 C  MDP -- PURGE INACTIVE ELEMENTS AND DO MASS ELIMINATION
@@ -535,7 +535,7 @@ C----TERMINATE BOUNDARY LIST
    12   L(TAIL) = 0
 C
         RETURN
-        END
+        END SUBROUTINE MDP
 C
 C***********************************************************************
 C  MDU -- UPDATE DEGREES OF UNELIMINATED VERTICES IN EK
@@ -626,7 +626,7 @@ C
    10     CONTINUE
 C
    11   RETURN
-        END
+        END SUBROUTINE MDU
 C                                                                1/15/81
 C***********************************************************************
 C  SDRV -- DRIVER FOR SPARSE SYMMETRIC POSITIVE DEFINITE MATRIX ROUTINES
@@ -864,7 +864,7 @@ C ** ERROR -- INSUFFICIENT STORAGE
 C ** ERROR -- ILLEGAL PATH SPECIFICATION
   111   FLAG = 11*N + 1
         RETURN
-        END
+        END SUBROUTINE SDRV
 C
 C***********************************************************************
 C  SNF -- NUMERICAL UT-D-U FACTORIZATION OF SPARSE SYMMETRIC POSITIVE
@@ -874,6 +874,9 @@ C***********************************************************************
      *     (N, NNZ, P, IP, IA, JA, A, D, IJU, JU, IU, U, UMAX, JUMAX,
      *      IL, JL, FLAG)
         use b2mod_types
+#ifdef DBG
+        use b2mod_math
+#endif
         IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  ADDITIONAL PARAMETERS
@@ -905,9 +908,6 @@ C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
          real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI              !srv 11.01.07
 #ifdef DBG
          real (kind=R8) :: product
-         real (kind=R8), save :: cutlo
-
-         cutlo = log(tiny(1.0_R8))
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
@@ -1014,7 +1014,7 @@ C ** ERROR -- INSUFFICIENT STORAGE FOR U
 C ** ERROR -- ZERO PIVOT
   108   FLAG = 8*N + K
         RETURN
-        END
+        END SUBROUTINE SNF
 C
 C***********************************************************************
 C  SNS -- SOLUTION OF SPARSE SYMMETRIC POSITIVE DEFINITE SYSTEM OF
@@ -1070,7 +1070,7 @@ C----SOLVE  U X = Y  BY BACK SUBSTITUTION
     6   CONTINUE
 C
         RETURN
-        END
+        END SUBROUTINE SNS
 C***********************************************************************
 C***********************************************************************
 C  SRO -- SYMMETRIC REORDERING OF SPARSE SYMMETRIC MATRIX
@@ -1184,7 +1184,7 @@ C--PHASE 3 -- PERMUTE (JA,A) TO UPPER TRIANGULAR FORM (WRT NEW ORDERING)
     8     CONTINUE
 C
         RETURN
-        END
+        END SUBROUTINE SRO
 C
 C
 C***********************************************************************
@@ -1446,4 +1446,4 @@ C ** ERROR -- DUPLICATE ENTRY IN A
 C ** ERROR -- INSUFFICIENT STORAGE FOR JU
   106   FLAG = 6*N + K
         RETURN
-        END
+        END SUBROUTINE SSF

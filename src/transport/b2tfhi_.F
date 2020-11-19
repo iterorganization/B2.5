@@ -7,6 +7,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -75,7 +76,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8) ::
-     *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
+     *   floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,              !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf                           !srv 13.10.06 17.06.09
 cpax
       real (kind=R8) ::
@@ -83,17 +84,10 @@ cpax
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
       real (kind=R8) :: upfac, hybfac, scur !djm Jan2017
-      real (kind=R8) :: cutlo
-      parameter (cutlo = 1.0e-60_R8)
       save ncall, vdia_par                                              !srv 17.05.99
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hybr, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                 !srv 17.05.99
 

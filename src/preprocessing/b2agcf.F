@@ -3,6 +3,7 @@
 
       subroutine b2agcf (nx, ny, crx, cry, fpsi, ffbz)
       use b2mod_types
+      use b2mod_math
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -78,16 +79,14 @@
 *   ..local variables
       integer ix, iy
       real (kind=R8) ::
-     *   prtst1, edg, ax, ay, t0
+     *   prtst1, edg, ax, ay
       parameter (prtst1=1.0_R8+1.0e-12_R8)
 *     (prtst1.eq.1.0 will be used as test of the numerical precision)
 *   ..procedures
-      intrinsic min, max
       real (kind=R8) ::
-     *   rratio, trunc
+     *   rratio
       external subini, subend, xertst, rratio
       external b2agsp
-      trunc(t0,edg) = max(-edg,min(1+edg,t0))
 
 *-----------------------------------------------------------------------
 *.computation

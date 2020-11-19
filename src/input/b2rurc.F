@@ -3,6 +3,7 @@
 
       subroutine b2rurc (nget, version)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
       use b2mod_b2cmpa
       implicit none
@@ -146,14 +147,14 @@
       logical lt0
       integer k, k1, idum(0:9)
       real (kind=R8) ::
-     *   cutlo, lnzero, t0
+     *   lnzero, t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
       intrinsic log
       logical lnext
       real (kind=R8) ::
-     *   machsfr, smax
+     *   smax
       external subini, subend, xertst, machsfr, smax, cfrure, cfruin,
      1 cfverr
       lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
@@ -167,7 +168,7 @@
 *   ..test nget
       call xertst (1.le.nget, 'faulty argument nget')
 *   ..set cutlo
-      cutlo = machsfr()
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..read rate coefficients
 *   ..read dimensions

@@ -8,6 +8,7 @@
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
+      use b2mod_math
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
@@ -141,7 +142,7 @@
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, t2, czetap, czetae                                !srv 13.01.17
+     *  rxg, t0, t1, czetap, czetae                                    !srv 13.01.17
       real (kind=R8) ::
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
@@ -170,16 +171,14 @@
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
       save ncall, rxg, diagno, nsmin, nsmax
 *   ..procedures
-      intrinsic min, max
       real (kind=R8) ::
-     *  med, roxa
+     *  roxa
       external subini, subend, xertst, ipgetr, sfill, b2scopy,
      &  b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, rxg/1.0e6_R8/, diagno/0/

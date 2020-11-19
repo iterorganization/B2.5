@@ -9,6 +9,7 @@
       use b2mod_sources
       use b2mod_anomalous_transport
       use b2mod_transport
+      use b2mod_math
       use b2mod_work
       use b2mod_indirect
       use b2mod_external
@@ -63,7 +64,7 @@
      &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny),
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  cutll, cutlo, t0, phi_app,
+     &  phi_app,
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
@@ -86,12 +87,9 @@
 *   ..procedures
       integer len_of_digits
       external len_of_digits
-      external subini, subend, ipgeti, machsfr
+      external subini, subend, ipgeti
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
-      real (kind=R8) ::                                            !srv
-     *   expu2, machsfr                                            !srv
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
       save ncall, iout, use_astra
       data ncall/0/, iout/0/, use_astra/0/
@@ -104,9 +102,6 @@
       call subini ('b2wdat')
 *   ..initialise files and common
 
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..set internal parameters on first (and only) call
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01

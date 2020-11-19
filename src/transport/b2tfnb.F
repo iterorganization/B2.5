@@ -12,6 +12,7 @@
      &  fnb_52nd, fnb_53, kbnrgy, fllim0fnb,
      &  balance)                                                        !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -97,8 +98,8 @@
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
      &   poldidr = 1.0_R8, raddidr = 1.0_R8                             !srv 25.04.00
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie,
-     *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
+     *   con(-1:nx,-1:ny), flo, con_nodrift, flo_nodrift, xfrhie,
+     *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   flux_limit_min_ti,
      *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
      *   term(-1:nx,-1:ny), flo_he, flo_53, con_he(-1:nx,-1:ny),        !srv 25.04.00 13.09.02 11.09.09
@@ -107,7 +108,6 @@
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),             !srv 21.10.10
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
      &   rdiv, scur, vsprcur                                            !srv 05.03.16 02.04.18
-      parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
@@ -138,11 +138,9 @@
       !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, cvmgp
+     *   cvmgp
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, sqrt
-      hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/,
      *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/

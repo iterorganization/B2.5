@@ -868,6 +868,9 @@ c######alias ma30ad
      * irn, lirn, lenc, ifirst, lastr, nextr, lastc, nextc, iptr, ipc,
      * u, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c if  the user requires a more convenient data interface then the ma28
 c     package should be used.  the ma28 subroutines call the ma30
@@ -1061,16 +1064,11 @@ c
      * nblock, num, nnm1, nzcol, nzmin, nzrow
       integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
-      real (kind=R8) :: product, cutlo
-      save cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8) :: product
 #endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -2031,6 +2029,9 @@ c
       subroutine ma30bd(n, icn, a, licn, lenr, lenrl, idisp, ip, iq, w,
      * iw, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30b/bd performs the lu decomposition of the diagonal blocks of a
 c     new matrix paq of the same sparsity pattern, using information
@@ -2090,15 +2091,10 @@ c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
-      real (kind=R8) :: product, cutlo
-      save cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8) :: product
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2240,6 +2236,9 @@ c
       subroutine ma30cd(n, icn, a, licn, lenr, lenrl, lenoff, idisp, ip,
      * iq, x, w, mtype)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30c/cd uses the factors produced by ma30a/ad or ma30b/bd to solve
 c     ax=b or a transpose x=b when the matrix p1*a*q1 (paq) is block
@@ -2302,9 +2301,7 @@ c see block data for comments on variables in common.
       common /ma30hd/ resid
       !$OMP THREADPRIVATE(/ma30hd/)
 #ifdef DBG
-      real (kind=R8) :: product, cutlo
-      save cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8) :: product
 #endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
@@ -2313,9 +2310,6 @@ c
 c
       data zero /0.0e0_R8/
 c
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero

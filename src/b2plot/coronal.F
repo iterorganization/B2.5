@@ -11,6 +11,7 @@ c     -------------------------------------------------------------------------
 
       subroutine getsa(ns,rcsa,rcra,T)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
@@ -24,23 +25,14 @@ c     -------------------------------------------------------------------------
      *   rcra(0:ns-1), rcsa(0:ns-1), rlte, rlne,
      *   rclra(0:1,0:ns-1), rclsa(0:1,0:ns-1)
       real (kind=R8) ::
-     *   cutlo, cutll, t0, t1, tt, wrk0, ne0, fxte, fxne
-      real (kind=R8) ::
-     *   machsfr, expu, trimg
+     *   t0, t1, tt, wrk0, ne0, fxte, fxne
 
       integer is,ite,ine
       logical ltst0
       external subini, subend
-      intrinsic log, dim, exp, max, min
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
+      intrinsic log
 
       call subini('getsa')
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 
       wrk0 = log(T)
       ne0 = log(1.0e16_R8)

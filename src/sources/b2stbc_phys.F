@@ -17,6 +17,7 @@
      2  sheath_drift_fix)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_rates
       use b2mod_indirect
       use b2mod_feedback
@@ -132,7 +133,7 @@
       integer, save :: bcpot_16_step = 50                            !Solovyev 23.05.14 !srv 29.09.15 }
       integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
-     *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2, !srv 15.11.07
+     *  vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,             !srv 15.11.07
      1  t3, totflux, weight,
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, totfluxn, totfluxi
@@ -178,15 +179,12 @@
      2  na_min, na_new, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
-      intrinsic min, abs, sqrt, exp, log, dim, mod
+      intrinsic abs, sqrt, mod
       real (kind=R8) ::
-     *  machsfr, expu2, sy, bcint, syhz                              !srv 24.08.08
+     *  sy, bcint, syhz                                              !srv 24.08.08
       logical lnext
-      external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
+      external subini, subend, xertst, ipgeti, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
       syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
      &            hz(ix,iy)
@@ -206,14 +204,11 @@
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-      real (kind=R8) :: hybr, harm, pit, upwind
+      real (kind=R8) :: pit
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
       pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
-      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
 *-----------------------------------------------------------------------
 *.computation
 
@@ -342,8 +337,7 @@
        call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
       endif
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 *  -- INITIALISE CERTAIN CONSTANTS --
       EPSLON=1.e-10_R8

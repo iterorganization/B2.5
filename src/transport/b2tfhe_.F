@@ -6,6 +6,7 @@
      & chvemx, cddi, fch_p, fchstoch, floe, cone,                        !srv 07.07.99 24.03.07
      & fhe, fhe_mdf, fhePSch, balance)                                   !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -33,8 +34,6 @@
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      &   cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
      &   fch_p(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny)                   !lk 31.01.08 {
-      real (kind=R8) :: cutlo
-      parameter (cutlo = 1.0e-60_R8)
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -85,7 +84,7 @@ csw 10oct2012
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
-     *  ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1,
+     *  ehx, ehy, floe0, flomx, cone0, alfe0, t0,
      &  tex, tex0, floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf     !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fledia(-1:nx,-1:ny,0:1), vdia_par,                             !srv 22.11.99 25.01.02
@@ -97,15 +96,8 @@ csw 10oct2012
 
       save ncall, vdia_par
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   harm, hybr, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
-      harm(t0,t1) = 2*t0*t1/(t0+t1)
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                  !srv 17.05.99 22.03.02
 

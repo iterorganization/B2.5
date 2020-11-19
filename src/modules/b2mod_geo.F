@@ -1,5 +1,6 @@
       module b2mod_geo
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_geo_corner
       use b2mod_cellhelper
@@ -111,20 +112,11 @@
       end subroutine dealloc_b2mod_geo
 
       subroutine read_b2mod_geo(nx,ny,nread)
+      use b2mod_math
       use b2mod_indirect
       implicit none
       integer nread, nx, ny
       integer ix, iy
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
-*   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
       call cfrure (nread, size(bb), bb, 'bb')
       call cfrure (nread, size(crx), crx, 'crx')

@@ -8,6 +8,7 @@
      &  sna0, smo0, she0, shi0, sch0, wrong_flow)                       !sv 09.07.99 01.07.05
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_indirect
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
@@ -64,7 +65,7 @@
       logical wrong_flow
       real (kind=R8) ::
      *  sna0ep, she0ep, shi0ep,
-     1  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     1  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      4  csbm, cstm,   ! cstm1                                         !sv 14.10.99
      6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
@@ -108,14 +109,11 @@
       integer, save :: iout = 0, k                                    !sv 11.07.05
       save ncall, sna0ep, she0ep, shi0ep
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log
+      intrinsic abs, sqrt
       real (kind=R8) ::
-     *   machsfr, b2ssum, expu2
-      external subini, subend, xertst, machsfr, sfill, b2ssum, b2saxpy
+     *   b2ssum
+      external subini, subend, xertst, sfill, b2ssum, b2saxpy
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                  !sv 18.01.02
-      expu2(t0) = dim(exp(min(20.0e0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somehwat arbitrary level.)
 *   ..initialization
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1 shi0ep/1.0e-36_R8/
@@ -184,9 +182,6 @@
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialize sources to 0
       call sfill (n2*2*ns, 0.0e0_R8, sna0, 1)
       call sfill (n2*4*ns, 0.0e0_R8, smo0, 1)

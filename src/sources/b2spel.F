@@ -4,6 +4,7 @@
       subroutine b2spel (nx, ny, ns, ev, te, ne, 
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
 #ifdef WITH_FTIMINGS
       use timings
@@ -63,14 +64,9 @@
       real (kind=R8) ::
      *   rlte, rlne, fxte, fxne, t0, t1, tt
 *   ..procedures
-      intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
+      intrinsic log
       external subini, subend, xertst
       external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 *   ..initialisation
       data ncall/0/
 
