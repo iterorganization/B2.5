@@ -13,6 +13,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_geo
+     &                    , only : hy1
       use b2mod_transport
      &                    , only :
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
@@ -111,11 +113,10 @@ csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax, hy1                                               !srv 22.04.16
+     *  smin, smax                                                    !srv 22.04.16
       external subini, subend, xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,

@@ -381,4 +381,4 @@ cdjm Store the total change in linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2srsm
 
-      end
+      end subroutine b2srsm

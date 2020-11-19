@@ -167,12 +167,12 @@
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
       call b2tqna (nx, ny, ns, nscx, iscx, bb, na,
-     & te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,         !srv 15.12.05
+     & te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,             !srv 15.12.05
      & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      & hvi0, hve0, wrk)
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
 *   ..apply flux limit to neutrals contribution to hci
-        call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb,
+        call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti, hcib, chcb,
      &   hcimx, fllim0fhi)
         if(hcimx_flag.eq.1) then
           hcib(:,:,:)=hcimx(:,:,1,:)
@@ -198,7 +198,7 @@
      &   cdpa(-1,-1,1,is))
         call b2txsx (nx, ny, vol, hx, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,is))
-        call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
+        call b2txsy (nx, ny, vol, hy, vla0(-1,-1,1,is),
      &   cvla(-1,-1,1,is))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa0(-1,-1,is),
      &   cvsa(-1,-1,0,is))
@@ -225,11 +225,11 @@
      &   cdpahz(-1,-1,1,is))
        call b2txsx (nx, ny, hzvol, hx, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,is))
-       call b2txsy (nx, ny, hzvol, hy, qz, vla0(-1,-1,1,is),
+       call b2txsy (nx, ny, hzvol, hy, vla0(-1,-1,1,is),
      &   cvlahz(-1,-1,1,is))
        call b2txsx (nx, ny, hzvol, hx, vma0(-1,-1,0,is),              !srv 15.12.05
      &   cvmahz(-1,-1,0,is))
-       call b2txsy (nx, ny, hzvol, hy, qz, vma0(-1,-1,1,is),          !srv 15.12.05
+       call b2txsy (nx, ny, hzvol, hy, vma0(-1,-1,1,is),              !srv 15.12.05
      &   cvmahz(-1,-1,1,is))
        call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, vsa0(-1,-1,is),  !srv 01.07.05 {
      &   cvsahz(-1,-1,0,is))
@@ -239,9 +239,9 @@
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       cvsa_an = cvsa                                                  !srv 04.10.99
       call b2txsx (nx, ny, vol, hx, hvi0(-1,-1,0), chvi(-1,-1,0))
-      call b2txsy (nx, ny, vol, hy, qz, hvi0(-1,-1,1), chvi(-1,-1,1))
+      call b2txsy (nx, ny, vol, hy, hvi0(-1,-1,1), chvi(-1,-1,1))
       call b2txsx (nx, ny, vol, hx, hve0(-1,-1,0), chve(-1,-1,0))
-      call b2txsy (nx, ny, vol, hy, qz, hve0(-1,-1,1), chve(-1,-1,1))
+      call b2txsy (nx, ny, vol, hy, hve0(-1,-1,1), chve(-1,-1,1))
 
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0))
       call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,1))
@@ -276,7 +276,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
       if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
-        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+        call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch,    !srv 07.07.14
      &      fchstoch)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
@@ -318,14 +318,14 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        call b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, flc)  !srv 09.07.03 30.11.15
-        call b2tlc0 (nx, ny, ns, hx, hy, hzvol, qz, na, te, ti, cdpahz,   !srv 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, vol, na, te, ti, cdpa, flc)          !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hzvol, na, te, ti, cdpahz,           !srv 30.11.15
      &               flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-       call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb,      !srv 07.12.15 {
+       call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti, hcib, chcb,          !srv 07.12.15 {
      &              hcimx, fllim0fhi)
         chci = 0.0_R8
         do is = 0, ns-1

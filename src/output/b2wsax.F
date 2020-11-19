@@ -2,10 +2,9 @@
 *.specification
 
       subroutine b2wsax (nsav, nx, ny, ns, lblgm, 
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -14,12 +13,6 @@
 *   ..input arguments (unchanged on exit)
       integer nsav, nx, ny, ns
       character lblgm*120
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),  
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), 
-     &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -64,7 +57,6 @@
 *     lblgm identifies the instance of the program employed to prepare
 *     the geometry.
 *
-*     crx, cry, bb, vol, hx, hy, qz, qc, qcb, gs, pbs - real*8 array, input.
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
 *     ne, pr, uac - real*8 array, input.
 *     See the calling routine for description.
@@ -87,11 +79,10 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, hy1, uax, uay, crxc, cryc
+     *   b2ssum, pit, uax, uay, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       uax(ix,iy,is) = fna(ix,iy,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1  BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,           !srv 13.01.17
+     1  BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,                   !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
      &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
@@ -15,6 +15,8 @@
       use b2mod_rates                                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
@@ -31,7 +33,7 @@
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cddi(-1:nx,-1:ny,0:1,0:ns-1),                                     !srv 13.10.06
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1 hx(-1:nx,-1:ny),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
       real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
@@ -94,13 +96,12 @@
 *   ..procedures
       intrinsic dim, min, max, abs, sqrt
       real (kind=R8) ::
-     *   harm, hybr, upwind, hy1
+     *   harm, hybr, upwind
       external subini, subend, xertst, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
       harm(t0,t1) = 2*t0*t1/(t0+t1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/,
      *  pot_eq/1/
@@ -423,7 +424,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                 !srv 13.01.17
+      call b2xehy (nx, ny, te, po, ne, ehy_)                         !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_bas (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua,
+     &  dtim, BoRiS, hx, gs, na, ua,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
@@ -29,6 +29,8 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -36,8 +38,7 @@
      *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
+     *  hx(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -94,10 +95,7 @@
 *   ..procedures
       intrinsic abs, max, exp
       external subini, subend, xertst
-      external b2xvsg, b2xvff, smin, smax
-      real (kind=R8) ::
-     *   smax, smin, hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      external b2xvsg, b2xvff
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -147,21 +145,8 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+*    ..test sign of hx
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
-     &  'faulty argument range qz(,,0)')
-       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
-     &  'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')

@@ -91,10 +91,10 @@
 *     symmetry it includes a factor 2*pi*cry1.)
 *     It will hold that 0.lt.vol1(,).
 *
-*     hx1, hy1 - (-1:nx1,-1:ny1) real*8 array, output.
-*     For (ix,iy) in (-1:nx1,-1:ny1), hx1(ix,iy) and hy1(ix,iy) specify the
+*     hxx, hyy - (-1:nx1,-1:ny1) real*8 array, output.
+*     For (ix,iy) in (-1:nx1,-1:ny1), hxx(ix,iy) and hyy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.hx1(,) and 0.lt.hy1(,).
+*     It will hold that 0.lt.hxx(,) and 0.lt.hyy(,).
 *
 *     hz1 - (-1:nx1,-1:ny1) real*8 array, output.
 *     For (ix,iy) in (-1:nx1,-1:ny1), hz1(ix,iy) specifies the
@@ -220,8 +220,8 @@
       call cfrure (nget, n2*4, bb1, 'bb')
 *   ..read vol, hx, hy
       call cfrure (nget, n2, vol1, 'vol')
-      call cfrure (nget, n2, hx1, 'hx')
-      call cfrure (nget, n2, hy1, 'hy')
+      call cfrure (nget, n2, hxx, 'hx')
+      call cfrure (nget, n2, hyy, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
 cxpb
@@ -472,13 +472,13 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
             end if
             if (bottomiy1(ix,iy).gt.-2) then
               wbbv1(ix,iy,0) = (
-     &          bb1(ix,iy,0) * hy1(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
+     &          bb1(ix,iy,0) * hyy(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
      &          bb1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
-     &          hy1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &          hyy(bottomix1(ix,iy),bottomiy1(ix,iy)) *
      &          hz1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
      &          qz1(bottomix1(ix,iy),bottomiy1(ix,iy),1) ) /
-     &        ( hy1(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
-     &          hy1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &        ( hyy(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
+     &          hyy(bottomix1(ix,iy),bottomiy1(ix,iy)) *
      &          hz1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
      &          qz1(bottomix1(ix,iy),bottomiy1(ix,iy),1) )
             else
@@ -499,13 +499,13 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           end do
           if (bottomiy1(nx1,iy).gt.-2) wbbc1(nx1+1,iy,0) =
      &      (wbbr1(nx1,iy,0) *
-     &         hy1(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
+     &         hyy(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
      &       wbbr1(bottomix1(nx1,iy),bottomiy1(nx1,iy),0) *
-     &         hy1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &         hyy(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
      &         hz1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
      &         qz1(bottomix1(nx1,iy),bottomiy1(nx1,iy),1) ) /
-     &      (hy1(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
-     &       hy1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &      (hyy(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
+     &       hyy(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
      &       hz1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
      &       qz1(bottomix1(nx1,iy),bottomiy1(nx1,iy),1) )
           wbbc1(nx1+1,iy,2) = ffbz1(nx1,iy,1) / hzc(nx1+1,iy)
@@ -648,8 +648,8 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           end do
         end do
       end if
-      cell_width1 = hx1
-      cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
+      cell_width1 = hxx
+      cell_height1(:,:) = hyy(:,:)*qz1(:,:,1)
       if(b2fgmtry_version.ge.'01.001.033') then
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
@@ -667,7 +667,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
       call xertst(maxval(region1(-1:nx1,-1:ny1,2)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
      $            'Y-regions not set, re-run b2ag!')
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qcb1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qcb1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,

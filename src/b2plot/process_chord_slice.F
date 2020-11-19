@@ -39,8 +39,7 @@ c
         inpts=inpts+1
         yvalues(inpts)=chord_value(nx,ny,
      1   work(-1,-1,is,iwrk),crx,cry,bb,
-     2   x1,y1,z1,
-     3   dx1,dy1,dz1,vector)
+     2   x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab ('increase array size in process_chord_slice')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))

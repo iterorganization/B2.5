@@ -1,4 +1,4 @@
-      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hy, qz,          !srv 02.04.18
+      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol,                  !srv 02.04.18
      &    zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
       use b2mod_types
       use b2mod_indirect
@@ -8,12 +8,14 @@
       use b2mod_b2cmpa
       use b2mod_geo_corner
       use b2mod_openmp
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
-     1   fac_vis(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1   fac_vis(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      &   kmpr(-1:nx,-1:ny), zb(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -32,11 +34,8 @@
       character(3) :: chns
       !$OMP THREADPRIVATE(ncall, iout, vis_per)
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
 *.computation
 

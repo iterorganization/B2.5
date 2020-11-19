@@ -42,11 +42,8 @@
      *    tauia(-1:nx,-1:ny,0:ns-1)                                     !srv 28.03.99 11.07.99
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
 *.computation
 

@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nx, ny, ns, isb, mb, hx, hy, hz, vol,
-     & qz, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
+      subroutine b2siav (nx, ny, ns, isb, mb,
+     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
      & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_indirect
       use b2mod_geo_corner
@@ -19,9 +20,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
       real (kind=R8) ::
-     & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
+     & mb, lnlam(-1:nx,-1:ny),                                        !srv 01.07.09
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
@@ -64,7 +63,7 @@
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
      &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
+     &   tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
      &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
@@ -72,9 +71,7 @@
       save ncall
       data ncall/0/
 *   ..procedures
-      intrinsic abs, sqrt
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      intrinsic sqrt
 *-----------------------------------------------------------------------
 *.computation
 
@@ -113,7 +110,6 @@
           tt1 = 0.0e0_R8
           tt2 = 0.0e0_R8
           tt3 = 0.0e0_R8
-          conn = 0.0e0_R8
           bbaverage2 = 0.0e0_R8
           eps1 = 0.0e0_R8
 !pbwdk          mintopcut = ny
@@ -124,8 +120,6 @@
               if(on_closed_surface(ix,iy)) then
                 tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
                 tt1(iy) = tt1(iy) +vol(ix,iy)
-                conn(iy) = conn(iy) +
-     .                     hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
                 tt2(iy) = tt2(iy) +hx(ix,iy)
                 tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
               endif

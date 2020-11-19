@@ -3,7 +3,7 @@
 
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
-     &  vol, hx, hy, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
+     &  vol, hx, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
      &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,    !srv 05.06.18
      &  wedia, fna_eir, fne_eir, fhe_eir, fhi_eir)
@@ -15,7 +15,7 @@
       use b2mod_b2cmfs
       use b2mod_transport_fun                                            !srv 13.01.17
       use b2mod_geo
-     &   , only : hyl, hxb
+     &   , only : hy1, hyl, hxb
       use b2mod_geo_corner
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -33,8 +33,8 @@
      &  chce(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), veecrb(-1:nx,-1:ny,0:1),
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     2  gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
@@ -92,14 +92,13 @@
       save ncall
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, hy1
+     *   hybr
       real (kind=R8) :: nete(-1:nx,-1:ny),
      *    netec(-1:nx,-1:ny), nec(-1:nx,-1:ny), weight(-1:nx,-1:ny)
 
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, sqrt
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation
       data ncall/0/

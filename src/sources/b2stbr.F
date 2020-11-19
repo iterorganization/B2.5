@@ -503,7 +503,7 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua,
+     &   hx, gs, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,

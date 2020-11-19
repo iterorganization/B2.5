@@ -195,13 +195,12 @@ c Drift terms
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+      call b2tdia(nx, ny, ns, vol, gs, bb,
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, hy, qz, bb, ua,
-     & cvsa_cl, fac_vis, fchvispar)                                      !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)      !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, fac_vis, vol, hy, qz,                     !srv 10.10.17
+      call b2tvspr(nx, ny, ns, fac_vis, vol,                             !srv 10.10.17
      & po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,           !srv 10.10.17
@@ -211,8 +210,7 @@ c Drift terms
      & facdrift, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
-     & fchstoch)
+      call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch, fchstoch)
 
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
      &  ehx_, zeff, fch_p)
@@ -315,7 +313,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fchy, concy
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
+      call b2xehy (nx, ny, te, po, ne, ehy_)                             !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then

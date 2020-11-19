@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, qz, vol, bb, pbs, lnlam,                                 !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     &  hx, hy, vol, bb, pbs, lnlam,                                     !srv 07.06.00 02.06.99 07.05.08 05.07.17
      1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
@@ -14,6 +14,8 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
@@ -30,7 +32,7 @@
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                       !srv 07.05.08 01.07.09
+     &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -92,11 +94,8 @@
      *   t0, t1, ctaup, coef, czetap, czetae                          !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *    hy1
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 07.05.08
 *   ..initialization
       data ncall/0/, style/0/
       data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
@@ -218,7 +217,7 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+       call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch,       !srv 07.07.14
      &      fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
@@ -577,7 +576,7 @@
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
        call b2xehx (nx, ny, hx, te, po, ne, ehx)                      !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
-     &   call b2xehy (nx, ny, hy, qz, te, po, ne, ehy)                !srv 13.01.17
+     &   call b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        do iy = 0, ny-1
@@ -713,4 +712,4 @@
 *-----------------------------------------------------------------------
 *.end b2sihs_
 
-      end
+      end subroutine b2sihs_

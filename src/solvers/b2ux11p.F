@@ -202,7 +202,7 @@
 *-----------------------------------------------------------------------
 *.end b2ux11p
 
-      end                                                               !srv 02.04.18 }
+      end subroutine b2ux11p                                           !srv 02.04.18 }
 
       subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,            !srv 02.04.18 {
      *                      indexes, iasave, jasave, name)
@@ -551,5 +551,5 @@
 
       ncall = ncall + 1
 
-      end                                                             !srv 02.04.18 }
+      end subroutine storage_11                                       !srv 02.04.18 }
 

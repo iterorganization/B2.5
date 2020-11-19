@@ -1,5 +1,5 @@
-      subroutine b2txvspr(nx, ny, ns, fac_vis, vol, hy,                 !srv 10.10.17
-     &   qz, avisper, bvisper, cvisper)
+      subroutine b2txvspr(nx, ny, ns, fac_vis, vol,                     !srv 10.10.17
+     &   avisper, bvisper, cvisper)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -7,12 +7,14 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     1   fac_vis(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1)
+     1   fac_vis(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
@@ -28,11 +30,8 @@
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
 *.computation
 

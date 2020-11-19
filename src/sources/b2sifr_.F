@@ -281,9 +281,9 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out(70,nx,ny,smbch(-1,-1,k),
-     *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
+     *                'b2sifr_smoch'//chk//chns)                    !srv 07.02.12
          enddo
-      endif                                                            !srv 17.06.02 }
+      endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
@@ -301,4 +301,4 @@ cdjm Jan2017 Store the linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2sifr_
 
-      end                                                             !srv 01.07.05 }
+      end subroutine b2sifr_                                        !srv 01.07.05 }

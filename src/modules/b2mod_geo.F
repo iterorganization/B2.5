@@ -33,6 +33,8 @@
 
       logical, save :: b2mod_geo_allocated = .false.
 
+      public :: hy1
+
       contains
 
       subroutine alloc_b2mod_geo(nxd,nyd)
@@ -218,5 +220,14 @@ c conn
       endif
       return
       end subroutine write_b2mod_geo
+
+      function hy1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: hy1
+      hy1 = hy(ix,iy)*qz(ix,iy,1)
+      return
+      end function hy1
+
 
       end module b2mod_geo

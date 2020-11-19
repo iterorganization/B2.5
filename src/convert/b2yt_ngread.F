@@ -21,7 +21,7 @@ C
      . no_sputtering, savestratum, non_commensurate, flip,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     . hx, hy, qc, hx1, hy1, qc1, gs1)
+     . hx, hy, qc, hxx, hyy, qc1, gs1)
 c
 c  version : 06.11.97 22:11
 c
@@ -49,7 +49,7 @@ c
       real (kind=R8) :: e_bundle_contr(npls1,nfla)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1),
+     *  hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1),
      *  gs1(-1:nx1,-1:ny1,0:2)
       character*4 solps_version
       character*8 eirene_format
@@ -400,7 +400,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'rfluxa',n2*natm1)
@@ -424,7 +424,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'rfluxm',n2*nmol1)
@@ -448,7 +448,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pfluxa',n2*natm1)
@@ -472,7 +472,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pfluxm',n2*nmol1)
@@ -496,7 +496,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'refluxa',n2*natm1)
@@ -520,7 +520,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'refluxm',n2*nmol1)
@@ -544,7 +544,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pefluxa',n2*natm1)
@@ -568,7 +568,7 @@ C
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pefluxm',n2*nmol1)

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx, hy,    !srv 23.11.10
-     1 qz, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99
+      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx,        !srv 23.11.10
+     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99
      & chvemx, cddi, fch_p, fchstoch, floe, cone,                        !srv 07.07.99 24.03.07
      & fhe, fhe_mdf, fhePSch, balance)                                   !djm Jan2017
       use b2mod_types
@@ -14,6 +14,8 @@
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
@@ -23,8 +25,8 @@
       integer nx, ny, ns
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &   qz(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &   ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
      &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
@@ -97,11 +99,9 @@ csw 10oct2012
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
-     *   harm, hybr, hy1, upwind
+     *   harm, hybr, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
-csw aug2014 fix hy1 as suggested by xpb (multiply qz instead divide)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                 !srv 07.05.08
       harm(t0,t1) = 2*t0*t1/(t0+t1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
@@ -703,7 +703,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
       endif                                                              !srv 16.09.02 }
 
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
+      call b2xehy (nx, ny, te, po, ne, ehy_)                             !srv 13.01.17
       do ix = -1, nx
        floe(ix,-1,1)    = 0
        cone(ix,-1,1,0)  = 0                                              !srv 02.01.07

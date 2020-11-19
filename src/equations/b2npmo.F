@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
-     &  qz, vol, hx, hy, hz, bb, pbshz, lnlam,
+     &  vol, hx, hz, bb, pbshz, lnlam,
      &  na, te, ti, po, ue, fna_fcor,                                  !srv 09.01.01 01.07.09 05.07.17
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
@@ -77,10 +77,9 @@
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
       real (kind=R8) ::
      *  rxf,
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1),
+     &  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                              !srv 09.01.01
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
-     &  pbshz(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
+     &  pbshz(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny),                       !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -366,7 +365,7 @@
 !$OMP& SHARED(b2npmo_smav, fmo, solving, get_residuals, ro, solvemo)
 !$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, solvemt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
-!$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
+!$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
 !$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
@@ -493,8 +492,8 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, am(is)*mp, hx, hy, hz, vol,
-     &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
+       call b2siav (nx, ny, ns, is, am(is)*mp,
+     &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo,
@@ -504,8 +503,7 @@
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nx, ny, is, facdrift, fac_ExB, bb, vol,            !srv 25.09.17 15.04.19
-     &           hx, hy, hz, qz, fchanml, smban)
+       call b2sian (nx, ny, is, facdrift, fac_ExB, fchanml, smban)
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)

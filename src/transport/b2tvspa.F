@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, hy, qz, bb, ua, cvsa_cl,          !srv 20.09.06 { 16.10.17
+      subroutine b2tvspa (nx, ny, ns, bb, ua, cvsa_cl,                  !srv 20.09.06 { 16.10.17
      &                    fac_vis, fchvispar)                           !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -10,13 +10,14 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     , , only : hy1
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      & ua(-1:nx,-1:ny,0:ns-1),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 16.10.17
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -48,8 +49,6 @@
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *   ..initialization
       data ncall/0/, vis_par/1.0_R8/
 *-----------------------------------------------------------------------

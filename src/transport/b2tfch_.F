@@ -143,13 +143,12 @@
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+      call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, hy, qz, bb, ua,
-     &             cvsa_cl, fac_vis, fchvispar)                          !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)      !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, fac_vis, vol, hy, qz,                     !srv 10.10.17
+      call b2tvspr(nx, ny, ns, fac_vis, vol,                             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
@@ -161,7 +160,7 @@
       call b2tanml (nx, ny, csig_an, po, fchanml)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
+      call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch,            !srv 07.07.14
      &              fchstoch)
 *  .. compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,

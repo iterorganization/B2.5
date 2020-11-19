@@ -2,8 +2,7 @@
 *.specification
       subroutine b2stbc_phys (nx, ny, ns, ismain, ismain0,
      1  BoRiS, facdrift, fac_ExB,
-     1  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na, ua,     !srv 24.08.08
-     1  uadia, vedia, vadia, veecrb, vaecrb,
+     1  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,         !srv 28.10.02
      1  fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      !srv 13.10.06
      &  fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
@@ -17,6 +16,7 @@
      1  b2stbc_fchy_dia_coreonly, secmodel, area_fix,
      2  sheath_drift_fix)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_feedback
@@ -43,12 +43,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0, diagno
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 24.08.08
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  pbshz(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
@@ -185,14 +180,13 @@
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod
       real (kind=R8) ::
-     *  machsfr, expu2, hy1, sy, bcint, syhz                         !srv 24.08.08
+     *  machsfr, expu2, sy, bcint, syhz                              !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
       syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
      &            hz(ix,iy)
@@ -332,10 +326,6 @@
      &       1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
        call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

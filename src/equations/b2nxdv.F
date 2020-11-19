@@ -60,4 +60,4 @@ cdjm Store the total change in linearised source for balance
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdv

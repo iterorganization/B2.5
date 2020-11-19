@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,
-     1  vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
+     1  vol, hx, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
      3  chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,            !lk 30.05.11
@@ -13,6 +13,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                              !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
@@ -29,9 +31,7 @@
      &  fchvisq(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:nx-1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny), 
-     1  qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
+     &  hx(-1:nx,-1:ny),
      .  na(-1:nx,-1:ny,0:ns-1), 
      2  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      3  facdrift(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1), BoRiS
@@ -84,12 +84,11 @@
 *   ..procedures
       intrinsic min, max, dim, abs, sqrt, sign
       real (kind=R8) ::
-     *  hybr, upwind, hy1
+     *  hybr, upwind
       external subini, subend, xertst, ipgeti
       external b2xvsg, b2xvff
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, conduction_only/0/, no_hybr/0/
 

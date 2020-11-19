@@ -12,7 +12,7 @@
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny
       real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),

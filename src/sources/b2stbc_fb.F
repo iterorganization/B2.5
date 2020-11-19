@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_post (nx, ny, ns, ismain,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
+     1  na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
@@ -16,8 +17,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
-      real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
@@ -79,8 +78,6 @@
      . 'invalid main plasma species ismain; must not be neutral')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 *    ..test sign of ni, ne, te, ti
        call b2xvsg (n2, ni(-1,-1,0), 1, 'ni0', '.gt.')
        call b2xvsg (n2, ni(-1,-1,1), 1, 'ni1', '.gt.')

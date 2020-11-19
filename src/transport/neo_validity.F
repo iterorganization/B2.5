@@ -89,8 +89,6 @@ c     conversion of constants to CGS units
       integer n2, ix, iy, is, is2, ixref, iyref
       save ixref, iyref
       real (kind=R8) ::
-     *   hy1(-1:nx,-1:ny)
-      real (kind=R8) ::
      &   gradient, lnab, minlnlt, crmin, crmax
       real (kind=R8) ::
      &   rmaj_(-1:ny)
@@ -160,13 +158,6 @@ c     conversion of constants to CGS units
       deltab(:,:,:)=0._R8
       deltapar(:,:,:)=0._R8
       rmaj_(:)=0._R8
-
-*   ..calculate hy-projection
-      do ix=-1,nx
-        do iy=-1,ny
-          hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-        enddo
-      enddo
 
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep

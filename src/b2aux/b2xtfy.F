@@ -3,13 +3,13 @@
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
       use b2mod_types
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
      *   fy(-1:nx,-1:ny), fy1(-1:nx1,-1:ny1),
-     *   hx(-1:nx,-1:ny), hx1(-1:nx1,-1:ny1)
+     *   hx(-1:nx,-1:ny), hxx(-1:nx1,-1:ny1)
       integer non_commensurate
       integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
@@ -117,7 +117,7 @@
         call E01BEF(nx+2,xx(-1:nx),fa(-1:nx,0),d,ifail)
         call E01BFF(nx+2,xx(-1:nx),fa(-1:nx,0),d,
      .              nx1,xx1(0:nx1-1),fa1(0:nx1-1,0),ifail)
-        fy1(0:nx1-1,0) = fa1(0:nx1-1,0)*hx1(0:nx1-1,0)
+        fy1(0:nx1-1,0) = fa1(0:nx1-1,0)*hxx(0:nx1-1,0)
         do iy1 = 1, ny1-1
           fy1(0:nx1-1,iy1) = fy1(0:nx1-1,0)
         enddo
@@ -128,7 +128,7 @@
         call E01BEF(nx+2,xx(-1:nx),fa(-1:nx,ny),d,ifail)
         call E01BFF(nx+2,xx(-1:nx),fa(-1:nx,ny),d,
      .              nx1,xx1(0:nx1-1),fa1(0:nx1-1,ny1),ifail)
-        fy1(0:nx1-1,ny1) = fa1(0:nx1-1,ny1)*hx1(0:nx1-1,ny1)
+        fy1(0:nx1-1,ny1) = fa1(0:nx1-1,ny1)*hxx(0:nx1-1,ny1)
 *     ..region 1 : 1-D parallel case : eastern edge
         fy1(nx1,0:ny1-1) = fy(nx,0)
         fy1(nx1,ny1) = fy(nx,ny)
@@ -155,7 +155,7 @@
         call interp2d(nx+1,ny+1,nx1+1,ny1+1,
      .   xx(0:nx),yy(0:ny),xx1(0:nx1),yy1(0:ny1),
      .   fa(0:nx,0:ny),fa1(0:nx1,0:ny1))
-        fy1(0:nx1-1,0:ny1) = fa1(0:nx1-1,0:ny1)/hx1(0:nx1-1,0:ny1)
+        fy1(0:nx1-1,0:ny1) = fa1(0:nx1-1,0:ny1)/hxx(0:nx1-1,0:ny1)
 *     ..region 1 : 2-D slab case : eastern edge (includes top row)
         call E01BEF(ny+1,yy(0:ny),fy(nx,0:ny),d,ifail)
         call E01BFF(ny+1,yy(0:ny),fy(nx,0:ny),d,
@@ -218,7 +218,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        endif
 *    ..region 2 :
        if (nncut.ge.1 .or. periodic_bc.eq.1) then
@@ -328,7 +328,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
           iya = max(topcut(1),topcut(2))
           iyb = ny
@@ -348,7 +348,7 @@
      .     xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .     fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
           fy1(ixc:ixd,iyc:iyd) =
-     .     fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .     fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         endif
        endif
 *    ..region 3 :
@@ -406,7 +406,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 3 : DDN HFS lower divertor : between separatrices
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
          if (topcut(1).lt.topcut(2)) ixp = leftcut(1)   ! position past the X-point
@@ -432,7 +432,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         endif
 *     ..region 3 : western divertor SOL : above the separatrices
         ixp = leftcut(1)   ! position past the X-point
@@ -479,7 +479,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         endif
        endif
 *    ..region 4 :
@@ -549,7 +549,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 4 : eastern SN PFR or HFS top DN PFR : below the separatrix (eastern edge)
         if (.not.flip) then
           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
@@ -579,7 +579,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 4 : HFS DDN top divertor : between the separatrices (eastern edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
          call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
@@ -616,7 +616,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 4 : western divertor SN SOL or HFS DDN top divertor SOL : above the separatrices (eastern edge)
          if (.not.flip) then
            call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
@@ -662,7 +662,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        else if (nncut.eq.2) then  ! DN LFS core
 *     ..region 5 : DN LFS core : central part
         ixa = leftcut(2)
@@ -694,7 +694,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fy1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fy1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        endif
 *    ..region 6 :
        if (nncut.eq.2) then
@@ -740,7 +740,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         if (topcut(1).ne.topcut(2)) then
 *     ..region 6 : DDN LFS SOL above the second separatrix
          ixp = rightcut(1)   ! position past the X-point
@@ -762,7 +762,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         endif
        endif
 *    ..region 7 :
@@ -810,7 +810,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 7 : DDN LFS upper divertor : between separatrices
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
          if (topcut(1).gt.topcut(2)) ixp = rightcut(2)   ! position past the X-point
@@ -836,7 +836,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         endif
 *     ..region 7 : DDN LFS upper divertor : above the second separatrix
         ixp = rightcut(2)   ! position past the X-point
@@ -862,7 +862,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        endif
 *    ..region 8 :
        if (nncut.eq.2) then
@@ -897,7 +897,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 8 : eastern DN LFS PFR : below the separatrix (eastern edge)
         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
@@ -922,7 +922,7 @@
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
-     .    fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 8 : eastern DN LFS divertor : between the separatrices (eastern edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
          call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
@@ -947,7 +947,7 @@
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
-     .   fa1(ixc:ixd,iyc:iyd)*hx1(ixc:ixd,iyc:iyd)
+     .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 8 : eastern DN LFS divertor : above the second separatrix (eastern edge)
         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,

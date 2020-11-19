@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti,
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, ti,
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
@@ -13,6 +13,8 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
@@ -24,9 +26,9 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     & cddi(-1:nx,-1:ny,0:1,0:ns-1), qz(-1:nx,-1:ny,0:1),               !srv 13.10.06
-     & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
+     & cddi(-1:nx,-1:ny,0:1,0:ns-1),
+     & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     1 na(-1:nx,-1:ny,0:ns-1),
      & facdrift(-1:nx,-1:ny),
      & vadia(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 17.05.99 27.12.01 25.01.02
      & fchvispar(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),            !lk 30.05.11
@@ -86,12 +88,10 @@ cpax
       save ncall, vdia_par                                              !srv 17.05.99
 *   ..procedures
       intrinsic max, abs
-cpax
       real (kind=R8) ::
-     *   hybr, hy1, upwind
+     *   hybr, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization

@@ -95,7 +95,7 @@ c
       integer i, icnt, nsw
       integer itmp(-1:nxd,-1:nyd)
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
      6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
@@ -695,7 +695,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      hy1(-1:nx,-1:ny)=hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny

@@ -85,7 +85,7 @@ c
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
-     4   pz(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     4   pz(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -813,7 +813,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         texttargsp(i)=' '//trim(track_species(i))
       end do
       call get_wall_data(nx,ny,ns,BoRiS,found)
-      hy1(:,:)=hy(:,:)*qz(:,:,1)
 cxpb  We now use the data already computed in init_wall
       do ibnd = 1, nbnd
         ix = imapx(ibnd)
@@ -1957,7 +1956,12 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          call copy(hy1,1.0_R8,nz,textbl)
+          do iy = -1, ny
+            do ix = -1, nx
+              mach(ix,iy,0)=hy1(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('sx')
           description='sx (m^{2})'
           nz=1
@@ -2058,7 +2062,7 @@ c
         case('ehy')
           description='ehy'
           nz=1
-          call b2xehy (nx, ny, hy, qz, te, po, ne, mach(-1,-1,0))       !srv 13.01.17
+          call b2xehy (nx, ny, te, po, ne, mach(-1,-1,0))               !srv 13.01.17
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'

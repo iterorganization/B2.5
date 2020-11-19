@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian (nx, ny, isb, facdrift, fac_ExB, bb, vol,        !srv 15.04.19 25.09.17 {
-     &           hx, hy, hz, qz, fchanml, smban)
+      subroutine b2sian (nx, ny, isb, facdrift, fac_ExB, fchanml, smban)
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_indirect
       use b2mod_b2cmpa
@@ -15,8 +15,6 @@
       integer nx, ny, isb
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                    !srv 15.04.19
-     &   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &   fchanml(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -42,11 +40,8 @@
       save ncall, phm0
       !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
       data ncall/0/, phm0/1.0e0_R8/
 

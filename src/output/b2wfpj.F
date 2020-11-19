@@ -206,8 +206,8 @@
        write (nprt,108)
        do iy = 0, ny
         write (nprt,'(2x,i4,1p,(t10,5e11.3))')
-     &    iy, rfney(iy), rfniy(iy), rfhey(iy),
-     &        rfhiy(iy), rfchy(iy)
+     &    iy, rfney(iy), rfniy(iy),
+     &        rfhey(iy), rfhiy(iy), rfchy(iy)
        enddo
       endif
 *   ..write pzso segment?

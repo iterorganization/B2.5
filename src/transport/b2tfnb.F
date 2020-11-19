@@ -4,7 +4,7 @@
       subroutine b2tfnb (nx, ny, isb, ismain,                           !srv 08.09.01 !lk 02.06.11
      &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,              !xpb !iyv 06.02.14
      &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,        !xpb !srv 09.01.01
-     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb, !srv 09.01.01 13.10.06
+     &  te, ti, bb, hx, hy, hz, gs, qc, po, cvlb, cdnb, cdpb, cddb,     !srv 09.01.01 13.10.06
      &  cvlbhz, cdnbhz, cdpbhz,                                         !srv 09.01.01
      &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,           !srv 13.10.06
@@ -19,7 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_geo
-     &   , only : hyl, hxb, hzl, hzb
+     &   , only : hy1, hyl, hxb, hzl, hzb
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
@@ -33,7 +33,7 @@
      &  cdpb(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
      &  po(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
-     2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
+     2  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      3  vol(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), mb,
      &  cvlbhz(-1:nx,-1:ny,0:1),                                        !srv 09.01.01
@@ -138,11 +138,10 @@
       !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, cvmgp, hy1
+     *   hybr, cvmgp
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, sqrt
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/,

@@ -1200,7 +1200,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
+     &    hx, hy, qc, hxx, hyy, qc1, bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -3287,7 +3287,7 @@ cxpb This will need to be checked !!!
                           pxa(-1) = 0.0_R8
                           l_conn(-1) = 0.0_R8
                           do i = 0, nx1-1
-                            l_conn(i) = hx1(i,iyref1)/
+                            l_conn(i) = hxx(i,iyref1)/
      1                       (sqrt(bb1(i,iyref1,0)**2+
      2                             bb1(i,iyref1,1)**2)/bb1(i,iyref1,3))
                             pxa(i) =
@@ -10090,7 +10090,7 @@ cxpb  Convert fort.44 file if needed
      &     no_sputtering, savestratum, non_commensurate, flip,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc, hx1, hy1, qc1, gs1)
+     &     hx, hy, qc, hxx, hyy, qc1, gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then

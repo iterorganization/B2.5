@@ -320,4 +320,4 @@
      . 'Ambiguous multiple A&M data package setting !')
 
       return
-      end
+      end subroutine get_AM_flag

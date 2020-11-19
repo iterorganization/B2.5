@@ -462,4 +462,4 @@ c   .. apply flux limit
 *-----------------------------------------------------------------------
 *.end b2sifrtf
 
-      end                                                               !srv 01.07.05 }
+      end subroutine b2sifrtf                                           !srv 01.07.05 }

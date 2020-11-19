@@ -140,8 +140,6 @@ c-----------------------------------------------------------------------
       data ntgs / ntrgs_tmp*1 /
       real (kind=R8), save :: hlp
 #endif
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c-----------------------------------------------------------------------
 c*** Local lists:
 c***  ltgs      Eirene surfaces corresponding to the target surfaces
