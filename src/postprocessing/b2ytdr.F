@@ -1002,9 +1002,7 @@ c 2002-09-11: logic revised
         call cfwuch (nout(6), 120, lblgm, 'label')
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &   cell_width, cell_height)
+        call b2wugm (nout(6), nx, ny)
         close(nout(6))
       endif
       call get_nxt(nx,nxtl,nxtr)

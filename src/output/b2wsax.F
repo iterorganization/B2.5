@@ -122,7 +122,7 @@
 
 * ..compute zxx and zyy
 *   ..compute zxx(1:2) and zyy(1:2)
-      call b2xgxy (nx, ny, crx, cry, 0, 0, zxx(-1,1), zxx(-1,2),
+      call b2xgxy (nx, ny, 0, 0, zxx(-1,1), zxx(-1,2),
      &  zyy(-1,1), zyy(-1,2))
 *   ..compute zxx(3:6)
       do ix = -1, nx

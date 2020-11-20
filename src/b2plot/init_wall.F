@@ -336,7 +336,7 @@ cxpb Recopy geometrical arrays into namelist defaults
       integer i, j, is, ix, iy
       integer ibnd, ibndm, icoat, itrack, ik, ikink, ikink0
       real(kind=R8) :: xa, xb, ya, yb, xa2, ya2, xo, yo,
-     *  dist, distp, normal_r, normal_z, qex, qpl, torl,
+     *  distance, distp, normal_r, normal_z, qex, qpl, torl,
      *  nhalf_r, nhalf_z, nhalf, xint, yint, dint,
      *  xap, yap, xbm, ybm, xbp, ybp, xbq, ybq, sum
       real(kind=R8) :: sput_frac(0:ntrack), wrk(ndepth_nml)
@@ -543,8 +543,8 @@ c no mixed materials
           xb = r2(ibnd)
           ya = z1(ibnd)
           yb = z2(ibnd)
-          dist = sqrt((xb-xa)**2+(yb-ya)**2)
-          target_width(ibnd,1) = dist
+          distance = sqrt((xb-xa)**2+(yb-ya)**2)
+          target_width(ibnd,1) = distance
           targetcr(ibnd,1,1) = xa
           targetcz(ibnd,1,1) = ya
           targetcr(ibnd,1,2) = xb
@@ -632,7 +632,8 @@ cxpb and far enough away from the OAp line
      .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
               distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
      .         sqrt((yap-yo)**2+(xo-xap)**2)
-              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8)) then
+              if(.not.(correct_quadrant.and.distp/distance.ge.0.1_R8))
+     .         then
                 ik = min(ik,i)
                 xbp = xo + (xbm-xo) + (xap-xo)
                 ybp = yo + (ybm-yo) + (yap-yo)

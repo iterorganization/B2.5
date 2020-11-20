@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_version
+      use b2mod_indirect
       use b2mod_geo_corner
       use b2mod_cellhelper
       use b2mod_grid_mapping
@@ -32,8 +33,11 @@
 
       type(B2GridMap), save :: gmap
 
+      real (kind=R8) :: geom_match_dist
+      data geom_match_dist/1.0e-6_R8/
       logical, save :: b2mod_geo_allocated = .false.
 
+      public :: diff, dist, disx, disy, distc, match
       public :: hy1
 
       contains
@@ -213,6 +217,48 @@ c conn
       return
       end subroutine write_b2mod_geo
 
+      function diff(p1,p2)
+      implicit none
+      real(kind=R8) :: diff, p1, p2
+      diff = abs(p1-p2)
+      return
+      end function diff
+
+      function dist(ix,iy,i,j)
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
+
+      function distc(ix1,iy1,ip1,ix2,iy2,ip2)
+      implicit none
+      integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+      real(kind=R8) :: distc
+      distc = norm(crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2),
+     .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
+      return
+      end function distc
+
+      function disx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disx
+      disx = (dist(bottomix(ix,iy),bottomiy(ix,iy),2,3)+
+     1        dist(ix,iy,0,1))/2.0_R8
+      return
+      end function disx
+
+      function disy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disy
+      disy = (dist(leftix(ix,iy),leftiy(ix,iy),1,3)+
+     1        dist(ix,iy,0,2))/2.0_R8
+      return
+      end function disy
+
       function hy1(ix,iy)
       implicit none
       integer, intent(in) :: ix, iy
@@ -220,6 +266,15 @@ c conn
       hy1 = hy(ix,iy)*qz(ix,iy,1)
       return
       end function hy1
+
+      logical function match(ix1,iy1,ix2,iy2)
+      implicit none
+      integer, intent(in) :: ix1,iy1,ix2,iy2
+      match =
+     & (distc(ix1,iy1,1,ix2,iy2,0)+distc(ix1,iy1,3,ix2,iy2,2)).lt.
+     & geom_match_dist
+      return
+      end function match
 
 
       end module b2mod_geo

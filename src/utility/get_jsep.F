@@ -5,21 +5,8 @@
       implicit none
       integer nx,ny,jxi,jxa,jsep
       integer ix,iy
-      real (kind=R8) ::
-     * geom_match_dist
       intrinsic min
       external subini, xerrab, xertst, ipgeti, subend
-      data geom_match_dist/1.0e-6_R8/
-      real (kind=R8) ::
-     *   dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
-     2      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
 
       call subini ('get_jsep')
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)

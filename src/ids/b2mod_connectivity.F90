@@ -2738,24 +2738,7 @@ contains
 !!$    lAbsTol = DEFAULTABSTOL
 !!$    if (present(absTol)) lAbsTol = absTol
 !!$
-!!$    pointsIdentical = ( dist(x1, y1, x2, y2) < lAbsTol )
-!!$
-!!$  contains
-!!$
-!!$    ! For two points (x0,y0), (x1,y1), compute distance between the points
-!!$    REAL(r8) FUNCTION dist(x0,y0,x1,y1)
-!!$
-!!$      !  arguments
-!!$      REAL(r8), intent(in) :: x0,y0,x1,y1
-!!$
-!!$      !  local variables
-!!$      REAL(r8) dx,dy
-!!$
-!!$      dx = x1 - x0
-!!$      dy = y1 - y0
-!!$
-!!$      dist = sqrt( dx**2 + dy**2 )
-!!$    END FUNCTION dist
+!!$    pointsIdentical = ( points_dist(x1, y1, x2, y2) < lAbsTol )
 !!$
 !!$  end function pointsIdentical
 

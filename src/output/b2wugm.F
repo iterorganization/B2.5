@@ -1,24 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+      subroutine b2wugm (nput, nx, ny)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx+1,-1:ny+1,0:3),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -80,8 +71,7 @@
       external subini, subend, xertst, cfwure, cfwuin, ipgeti
       external b2xvsg, b2xvgm
       real (kind=R8) ::
-     *   dist,distval,p1,p2
-      dist(p1,p2)=abs(p1-p2)
+     *   distval
 
 *-----------------------------------------------------------------------
 *.computation
@@ -141,7 +131,7 @@ c check right neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(crx(ix,iy,1),crx(ixr,rightiy(ix,iy),0))
+     1       diff(crx(ix,iy,1),crx(ixr,rightiy(ix,iy),0))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -149,7 +139,7 @@ c check right neighbours
      2          ix,iy,' (lower point), ','dist=',distval
             endif
             distval=
-     1       dist(crx(ix,iy,3),crx(ixr,rightiy(ix,iy),2))
+     1       diff(crx(ix,iy,3),crx(ixr,rightiy(ix,iy),2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -170,7 +160,7 @@ c check left neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1       dist(crx(ix,iy,0),crx(ixl,leftiy(ix,iy),1))
+     1       diff(crx(ix,iy,0),crx(ixl,leftiy(ix,iy),1))
             if(distval.ne.0) then
             if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -178,7 +168,7 @@ c check left neighbours
      2         'dist=',distval
             endif
             distval=
-     1       dist(crx(ix,iy,2),crx(ixl,leftiy(ix,iy),3))
+     1       diff(crx(ix,iy,2),crx(ixl,leftiy(ix,iy),3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -201,7 +191,7 @@ c check top neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(crx(ix,iy,2),crx(topix(ix,iy),iyt,0))
+     1       diff(crx(ix,iy,2),crx(topix(ix,iy),iyt,0))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -209,7 +199,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(crx(ix,iy,3),crx(topix(ix,iy),iyt,1))
+     1       diff(crx(ix,iy,3),crx(topix(ix,iy),iyt,1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -231,7 +221,7 @@ c check bottom neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(crx(ix,iy,0),crx(bottomix(ix,iy),iyb,2))
+     1       diff(crx(ix,iy,0),crx(bottomix(ix,iy),iyb,2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -239,7 +229,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(crx(ix,iy,1),crx(bottomix(ix,iy),iyb,3))
+     1       diff(crx(ix,iy,1),crx(bottomix(ix,iy),iyb,3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -263,7 +253,7 @@ c check right neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(cry(ix,iy,1),cry(ixr,rightiy(ix,iy),0))
+     1       diff(cry(ix,iy,1),cry(ixr,rightiy(ix,iy),0))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -271,7 +261,7 @@ c check right neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(cry(ix,iy,3),cry(ixr,rightiy(ix,iy),2))
+     1       diff(cry(ix,iy,3),cry(ixr,rightiy(ix,iy),2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -292,7 +282,7 @@ c check left neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1       dist(cry(ix,iy,0),cry(ixl,leftiy(ix,iy),1))
+     1       diff(cry(ix,iy,0),cry(ixl,leftiy(ix,iy),1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -300,7 +290,7 @@ c check left neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(cry(ix,iy,2),cry(ixl,leftiy(ix,iy),3))
+     1       diff(cry(ix,iy,2),cry(ixl,leftiy(ix,iy),3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -323,7 +313,7 @@ c check top neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(cry(ix,iy,2),cry(topix(ix,iy),iyt,0))
+     1       diff(cry(ix,iy,2),cry(topix(ix,iy),iyt,0))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -331,7 +321,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(cry(ix,iy,3),cry(topix(ix,iy),iyt,1))
+     1       diff(cry(ix,iy,3),cry(topix(ix,iy),iyt,1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -353,7 +343,7 @@ c check bottom neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(cry(ix,iy,0),cry(bottomix(ix,iy),iyb,2))
+     1       diff(cry(ix,iy,0),cry(bottomix(ix,iy),iyb,2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -361,7 +351,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(cry(ix,iy,1),cry(bottomix(ix,iy),iyb,3))
+     1       diff(cry(ix,iy,1),cry(bottomix(ix,iy),iyb,3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)

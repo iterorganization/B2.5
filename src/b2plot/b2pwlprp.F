@@ -41,7 +41,7 @@ c======================================================================
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
       logical lim_cnf
 c
-      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
+      real (kind=R8) :: width,distance,distmin,xx1,xx2,yy1,yy2,temp,
      ,                  distmin1
       integer, allocatable :: lwldlis_old(:)
       logical, allocatable :: istarget(:)
@@ -820,9 +820,9 @@ ccc*** Order elements of original plot zone in CCW direction
             k2=abs(lwldlis(i1,1))
             xx2=pp1(1,k2)
             yy2=pp1(2,k2)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i1
             end if !}
           end do
@@ -871,18 +871,18 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
             ksel=lwldlis(i,1)
             xx2=pp1(1,ksel)
             yy2=pp1(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i
             end if !}
             xx1=pp2(1,k2)
             yy1=pp2(2,k2)
             xx2=pp2(1,ksel)
             yy2=pp2(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin1) then !{
-              distmin1=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin1) then !{
+              distmin1=distance
               flagmin1=i
             end if !}
           end do !}

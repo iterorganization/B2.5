@@ -333,11 +333,7 @@
 *!!   be generated with dimensions (nx1,ny1).
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
-     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-     3 topix1,topiy1,bottomix1,bottomiy1,
-     4 leftcut1,rightcut1,bottomcut1,topcut1,
-     5 periodic_bc,nncut,nncutmax)
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
@@ -730,9 +726,7 @@ cdpc-debug
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,

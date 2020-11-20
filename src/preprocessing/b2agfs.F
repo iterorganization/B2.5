@@ -2,12 +2,9 @@
 *.specification
 
       subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
-     & crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,
-     1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax)
+     1 cflag,lblgm,periodic_bc,nncut,nncutmax)
 
+      use b2mod_geo2
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
@@ -20,18 +17,7 @@
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
 *   ..output arguments
-      real (kind=R8) ::
-     * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3),
-     2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
-      integer ::
-     *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
-     1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
-     2  topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1),
-     3  bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1),
-     4  leftcut1(nncutmax),rightcut1(nncutmax),
-     5  bottomcut1(nncutmax),topcut1(nncutmax),
-     6  periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
+      integer :: periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
       character*(*) lblgm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -114,30 +100,19 @@
      .  fpsi((nx1+2)*(ny1+2)*4),ffbz((nx1+2)*(ny1+2)*4)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, geom_match_dist, distval,
+     .  min_pitch, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
       integer ireg,zone(-1:nx1),errors
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/,
-     .  geom_match_dist/1.0e-6_R8/
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
       external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
      * b2xvsg, b2gxdr_dummy
-      intrinsic abs, sqrt, cos, sin, min, max, sign, acos
-      real (kind=R8) ::
-     *  dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
-     2 (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
+      intrinsic abs, cos, sin, min, max, sign, acos
 
 *-----------------------------------------------------------------------
 *.computation
@@ -773,7 +748,7 @@ c check right neighbours
             write(*,*) 'No right neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
+     1       distc1(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -781,7 +756,7 @@ c check right neighbours
      2         ix,iy,' (lower point), ','dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
+     1       distc1(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -797,7 +772,7 @@ c check left neighbours
             write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
+     1       distc1(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
             if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -805,7 +780,7 @@ c check left neighbours
      2         'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
+     1       distc1(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -823,7 +798,7 @@ c check top neighbours
             write(*,*) 'No top neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
+     1       distc1(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -831,7 +806,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
+     1       distc1(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -847,7 +822,7 @@ c check bottom neighbours
             write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
+     1       distc1(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -855,7 +830,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
+     1       distc1(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -874,7 +849,7 @@ c check right neighbours
             write(*,*) 'No right neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
+     1       distc1(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -882,7 +857,7 @@ c check right neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
+     1       distc1(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -898,7 +873,7 @@ c check left neighbours
             write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
+     1       distc1(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -906,7 +881,7 @@ c check left neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
+     1       distc1(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -924,7 +899,7 @@ c check top neighbours
             write(*,*) 'No top neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
+     1       distc1(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -932,7 +907,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
+     1       distc1(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -948,7 +923,7 @@ c check bottom neighbours
             write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
+     1       distc1(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -956,7 +931,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
+     1       distc1(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -1020,6 +995,18 @@ cxpb
 
 *-----------------------------------------------------------------------
 *.end b2agfs
+
+      contains
+
+      logical function match(ix1,iy1,ix2,iy2)
+      use b2mod_geo2
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      match=
+     1 (distc1(ix1,iy1,1,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,2)).lt.
+     2 geom_match_dist
+      return
+      end function match
 
       end subroutine b2agfs
 c

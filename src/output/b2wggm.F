@@ -99,7 +99,7 @@
       if (strmas(idout,'mpcr')) then
        write (nprt,fmtp) '+mpcr', headr2
 *      (cartesian representation)
-       call b2wgx0 (nx, ny, headr2, crx, cry)
+       call b2wgx0 (nx, ny, headr2)
 *      (physical representation)
        call b2wgx1 (nx, ny, headr2, crx, cry)
       endif
@@ -111,7 +111,7 @@
       if (strmas(idout,'mpff')) then
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, fpsi(-1,-1,0),
+       call b2wgx2 (nx, ny, header, fpsi(-1,-1,0),
      1	3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
@@ -127,7 +127,7 @@
       if (strmas(idout,'mpff')) then
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, ffbz(-1,-1,0),
+       call b2wgx2 (nx, ny, header, ffbz(-1,-1,0),
      1	 3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
@@ -141,7 +141,7 @@
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,0),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,0),
      1	 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -156,7 +156,7 @@
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,1),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,1),
      1	 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -171,7 +171,7 @@
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,2),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,2),
      1	 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
@@ -186,7 +186,7 @@
       if (strmas(idout,'mpbb')) then
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
-       call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,3),
+       call b2wgx2 (nx, ny, header, bb(-1,-1,3),
      1	 0, 1.0_R8,
      &   0.0_R8, 1.2_R8*t0, 24, 0.0_R8, t0/20.0_R8, 5)
 *      (physical representation)

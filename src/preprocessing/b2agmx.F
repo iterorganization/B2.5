@@ -21,6 +21,8 @@
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_geo2
+     , , only : dist1
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
@@ -151,14 +153,9 @@
       real (kind=R8) ::
      *   t0, t1, t2, t3, t4, t5
       logical iniso, error
-      integer i, j
       integer pbs_from_basis_mesh
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   dist1
-      dist1(ix,iy,i,j) = norm (
-     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
       external subini, subend, xertst, ipgeti
       external b2xvgm1
 *   ..initialisation

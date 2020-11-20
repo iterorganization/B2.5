@@ -78,9 +78,6 @@
       real (kind=R8), allocatable :: za(:)
       logical file_open
 *   ..procedures
-      real (kind=R8) :: dist
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
       external b2xvgm, b2xvps, b2xvsg
       external cfverw, cfwuin, cfwuch
@@ -841,9 +838,7 @@
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm') 
-      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+      call b2wugm (nout(2), nx, ny)
 
       open(91,file='core_boundary.txt')
       iy=-1
