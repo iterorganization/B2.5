@@ -232,7 +232,7 @@
 
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
-      if (optimization) then
+      if (flag_optim) then
         parm_dna(1) = par_opt_phys(1)
       endif
       if(transport_namelist.eq.1) then
