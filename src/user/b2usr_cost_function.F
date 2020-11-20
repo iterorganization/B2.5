@@ -87,15 +87,15 @@
           case (1) !electron density on desired CVs
             do iCv = ic1, ic2
               J(icf) = J(icf) + (st%dv%ne(mpg%cfCv(iCv))
-     &                - ffdata(icf,iCv-ic1+1))**2 ! FIXME put normalization from user 
+     &                - ffdata(icf,iCv-ic1+1))**2
             enddo
-            J(icf) = J(icf)/1.0E19
+            J(icf) = J(icf)/(cfnorm(icf)**2)
           case (2) !electron temperature on desired CVs
             do iCv = ic1, ic2
               J(icf) = J(icf) + (st%pl%te(mpg%cfCv(iCv))
      &                - ffdata(icf,iCv-ic1+1))**2
             enddo
-            J(icf) = J(icf)/ev
+            J(icf) = J(icf)/(cfnorm(icf)**2)
           case (3) !max electron temperature on desired CVs
             do iCv = ic1, ic2
               J(icf) = max(J(icf),st%pl%te(mpg%cfCv(iCv)))

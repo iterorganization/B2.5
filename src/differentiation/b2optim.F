@@ -11,9 +11,9 @@ C
 C
 C     Size of the problem (number of variables and equality constraints)
 C
-      integer     N,     M,     NELE_JAC,     NELE_HESS,      IDX_STY
-      parameter  (N = 1, M = 1, NELE_JAC = 1, NELE_HESS = 0)
-      parameter  (IDX_STY = 1 )
+
+      integer :: nvar, ncon, nele_jac, NELE_HESS, IDX_STY
+      parameter  (NELE_HESS = 0, IDX_STY = 1 )
 csc N = number design variables
 c   M number of constraints (it's 2 because the third one is the variable bound!
 c   NELE_JAC # of nonzeros in Jacobian of Lagrangian
@@ -21,17 +21,16 @@ c   IDX_STY index style for matrix (1 for fortran normally)
 C
 C     Space for multipliers and constraints
 C
-      double precision LAM(M)
-      double precision G(M)
+      double precision, allocatable :: LAM(:), G(:)
 C
 C     Vector of variables
 C
-      double precision X(N)
+      double precision, allocatable :: X(:)
 C
 C     Vector of lower and upper bounds
 C
-      double precision X_L(N), X_U(N), Z_L(N), Z_U(N)
-      double precision G_L(M), G_U(M)
+      double precision, allocatable :: X_L(:), X_U(:), Z_L(:), Z_U(:)
+      double precision, allocatable :: G_L(:), G_U(:)
 Csc  X_L/X_U lower upper bound for each desiign variable
 c    Z_L, Z_U initial value for the bound multiplier --> seems not needed to be initialized here
 c    G_L,G_U lower/upper bounds for constraints
@@ -54,50 +53,58 @@ C
       integer IPOPENOUTPUTFILE
 C
       double precision F
-      integer i
-      real(kind=R8), save :: b2opt_elapsed=0.0_R8
-      double precision, save :: cpu_ipopt=0.0
-      integer, save :: b2opt_maxiter=100
+      integer ivar, icon
 C
 C     The following are the Fortran routines for computing the model
 C     functions and their derivatives - their code can be found further
 C     down in this file.
 C
       external EV_F, EV_G, EV_GRAD_F, EV_JAC_G, ITER_CB
-csc   these are the external subroutine names passed to IPOPT
-CC
-CC     The next is an optional callback method.  It is called once per
-CC     iteration.
-CC
-C      external ITER_CB
-C
-C     Set initial point and bounds:
-C
-      data X   / 1.0d0/
-      data X_L / 0.5d0 /
-      data X_U / 2.5d0 /
-C
-C     Set bounds for the constraints
-C
-      data G_L / 0.5d0 /
-      data G_U / 2.5d0 /
+!sc   these are the external subroutine names passed to IPOPT
 
 
-C
-C     Allocate and initialize par_opt variables to be used in B2.5
-C
+!     ..START OF COMPUTATION
+
+      call read_b2mod_par_opt(nvar, ncon, nele_jac)
+      write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
+     & 'trivial constraint'
+      ncon = 1 ! FIXME to be updated whenever nonlinear constraints are needed
+      nele_jac = 1
+
+      allocate(X(nvar),X_L(nvar),X_U(nvar),Z_L(nvar),Z_U(nvar))
+      allocate(G(ncon),G_L(ncon),G_U(ncon),LAM(ncon))
+
+      do ivar = 1, nvar
+        X(ivar) = x0(ivar)
+        X_L(ivar) = xl(ivar)
+        X_U(ivar) = xu(ivar)
+        if (X_L(ivar).lt.-inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_L(',ivar,') set to infty'
+        if (X_U(ivar).gt.inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_U(',ivar,') set to infty'
+      end do
+      do icon = 1, ncon
+        G_L(icon) = -inf_opt*10!gl(icon)
+        G_U(icon) = 0.0!gu(icon)
+        if (G_L(icon).lt.-inf_opt)
+     &    write(*,*) 'IPOPT: warning, G_L(',icon,') set to infty'
+        if (G_U(icon).gt.inf_opt)
+     &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
+      end do
+! FIXME Z_L/Z_U
+
+
+!     Allocate and initialize par_opt variables to be used in B2.5
+
       call b2mn_init_d
-      npar_opt = N
+      npar_opt = nvar
       allocate(par_opt_phys(1:npar_opt))
       par_opt_phys = 0.0_R8
-      optimization  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
+      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
-C
-C     First create a handle for the Ipopt problem (and read the options
-C     file)
-C
-      IPROBLEM = IPCREATE(N, X_L, X_U, M, G_L, G_U, NELE_JAC, NELE_HESS,
-     1     IDX_STY, EV_F, EV_G, EV_GRAD_F, EV_JAC_G)
+!     First create a handle for the Ipopt problem (and read the options file)
+      IPROBLEM = IPCREATE(nvar, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
+     &     NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F, EV_JAC_G)
       if (IPROBLEM.eq.0) then
          write(*,*) 'Error creating an Ipopt Problem handle.'
          stop
@@ -111,37 +118,55 @@ C
          goto 9000
       endif
 
+      IERR = IPADDSTROPTION(IPROBLEM, 'print_user_options', 'yes')
+      if (IERR.ne.0 ) goto 9990
+
 !     Set mu strategy
       IERR = IPADDSTROPTION(IPROBLEM, 'mu_strategy', 'adaptive')
       if (IERR.ne.0 ) goto 9990
+
+!     Set scaling methods
+c      IERR = IPADDSTROPTION(IPROBLEM, 'nlp_scaling_method',
+c     & 'user-scaling')
+c      if (IERR.ne.0 ) goto 9990
+
 !csc IMPORTANT HERE these are needed for BFGS updates without hessian
       IERR = IPADDSTROPTION(IPROBLEM, 'hessian_approximation',
-     & 'limited-memory')
+     & hessian_approximation)
       if (IERR.ne.0 ) goto 9990
       IERR = IPADDSTROPTION(IPROBLEM, 'limited_memory_update_type',
-     & 'bfgs')
+     & limited_memory_update_type)
       if (IERR.ne.0 ) goto 9990
 
 !     Set max number of iterations
-      call ipgeti ('b2opt_maxiter', b2opt_maxiter)
-      call xertst (b2opt_maxiter.gt.0,
-     1  'faulty internal parameter b2opt_maxiter')
-      IERR = IPADDINTOPTION(IPROBLEM, 'max_iter', b2opt_maxiter)
+      call xertst (maxiter.gt.0,
+     1  'faulty internal parameter maxiter')
+      IERR = IPADDINTOPTION(IPROBLEM, 'max_iter', maxiter)
       if (IERR.ne.0 ) goto 9990
 
+c      IERR = IPADDINTOPTION(IPROBLEM, 'print_level', 12)
+c      if (IERR.ne.0 ) goto 9990
+
 !     Set a minimum tolerance
-      IERR = IPADDNUMOPTION(IPROBLEM, 'tol', 1.d-7)
+      call xertst (tol_opt.gt.0.0,
+     1  'faulty internal parameter tol_opt')
+      IERR = IPADDNUMOPTION(IPROBLEM, 'tol', tol_opt)
       if (IERR.ne.0 ) goto 9990
 
 !     Set a maximum cpu time for ipopt based on b2mndr_elapsed
-      call ipgetr ('b2opt_elapsed', b2opt_elapsed)
-      call xertst (b2opt_elapsed.ge.0.0_R8,
-     1  'faulty internal parameter b2opt_elapsed')
-      if (b2opt_elapsed.gt.0.0_R8) then
-        cpu_ipopt = DBLE(b2opt_elapsed)
-        IERR = IPADDNUMOPTION(IPROBLEM, 'max_cpu_time', cpu_ipopt)
+      call xertst (cpu_opt.ge.0.0_R8,
+     1  'faulty internal parameter cpu_opt')
+      if (cpu_opt.gt.0.0_R8) then
+        IERR = IPADDNUMOPTION(IPROBLEM, 'max_cpu_time', cpu_opt)
         if (IERR.ne.0 ) goto 9990
       endif
+
+!     Set infinity bounds
+      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_upper_bound_inf',
+     & inf_opt*0.1)
+      IERR = IPADDNUMOPTION(IPROBLEM, 'nlp_lower_bound_inf', 
+     & -inf_opt*0.1)
+      if (IERR.ne.0 ) goto 9990
 
 CC     Set a callback function to give you control once per iteration.
 CC     You can use it if you want to generate some output, or to stop
@@ -185,26 +210,26 @@ C
       write(*,*)
       write(*,*) 'The optimal values of X are:'
       write(*,*)
-      do i = 1, N
-        write(*,*) 'X  (',i,') = ',X(i)
+      do ivar = 1, nvar
+        write(*,*) 'X  (',ivar,') = ',X(ivar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the lower bounds are:'
       write(*,*)
-      do i = 1, N
-        write(*,*) 'Z_L(',i,') = ',Z_L(i)
+      do ivar = 1, nvar
+        write(*,*) 'Z_L(',ivar,') = ',Z_L(ivar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the upper bounds are:'
       write(*,*)
-      do i = 1, N
-        write(*,*) 'Z_U(',i,') = ',Z_U(i)
+      do ivar = 1, nvar
+        write(*,*) 'Z_U(',ivar,') = ',Z_U(ivar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the equality constraints are:'
       write(*,*)
-      do i = 1, M
-        write(*,*) 'LAM(',i,') = ',LAM(i)
+      do icon = 1, ncon
+        write(*,*) 'LAM(',icon,') = ',LAM(icon)
       enddo
       write(*,*)
 C
@@ -214,6 +239,9 @@ C     Clean up
 C
       call b2mn_fin_d
       call IPFREE(IPROBLEM)
+      deallocate(X,X_L,X_U,Z_L,Z_U)
+      deallocate(G,G_L,G_U,LAM)
+      deallocate(par_opt_phys)
       stop 'b2optim'
 C
  9990 continue
@@ -227,7 +255,7 @@ C                    Computation of objective function
 C
 C =============================================================================
 C
-      subroutine EV_F(N, XX, NEW_X, F, IDAT, DAT, IER)
+      subroutine EV_F(nvar, XX, NEW_X, F, IDAT, DAT, IER)
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step
@@ -236,8 +264,8 @@ C
      , , only : nncf
       use b2mod_par_opt
       implicit none
-      integer N, NEW_X
-      double precision F, XX(N)
+      integer nvar, NEW_X
+      double precision F, XX(nvar)
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
@@ -246,6 +274,7 @@ C
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
         par_opt_phys(1) = real(XX(1),kind=r8)
+        write(*,*) 'IPOPT: eval_f with x= ', par_opt_phys(1)
         call b2mn_step(j)
       endif
       F = DBLE(j(1))
@@ -259,7 +288,7 @@ C                Computation of gradient of objective function
 C
 C =============================================================================
 C
-      subroutine EV_GRAD_F(N, XX, NEW_X, GRAD, IDAT, DAT, IER)
+      subroutine EV_GRAD_F(nvar, XX, NEW_X, GRAD, IDAT, DAT, IER)
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step_d
@@ -267,8 +296,8 @@ C
      , , only : nncf
       use b2mod_par_opt
       implicit none
-      integer N, NEW_X
-      double precision GRAD(N), XX(N)
+      integer nvar, NEW_X
+      double precision GRAD(nvar), XX(nvar)
       real(kind=r8) j(nncf), jd(nncf), jb(nncf)
       double precision DAT(*)
       integer IDAT(*)
@@ -278,8 +307,8 @@ C
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         par_opt_phys(1) = real(XX(1),kind=r8)
+        write(*,*) 'IPOPT: eval_grad_f with x= ', par_opt_phys(1)
         call b2mn_step_d(j,jd)
-        grad(1) = DBLE(jd(1))
       endif
       grad(1) = DBLE(jd(1))
 
@@ -303,18 +332,19 @@ C                     Computation of equality constraints
 C
 C =============================================================================
 C
-      subroutine EV_G(N, X, NEW_X, M, G, IDAT, DAT, IERR)
+      subroutine EV_G(nvar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
       use b2mod_types
       implicit none
-      integer N, NEW_X, M
-      double precision G(M), X(N)
+      integer nvar, NEW_X, ncon
+      double precision G(ncon), X(nvar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IERR
+      integer IERR, icon
 C     s.t.  x1*x2*x3*x4                   >=  25
 C           x1**2 + x2**2 + x3**2 + x4**2  =  40
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
-      G(1) = X(1) - DAT(1)
+!csc WARNING to be updated whenever nonlinear constraints are needed
+      G(1) = -1.0
+
       IERR = 0
       return
       end subroutine EV_G
@@ -325,16 +355,16 @@ C                Computation of Jacobian of equality constraints
 C
 C =============================================================================
 C
-      subroutine EV_JAC_G(TASK, N, X, NEW_X, M, NZ, ACON, AVAR, A,
+      subroutine EV_JAC_G(TASK, nvar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
      1     IDAT, DAT, IERR)
       use b2mod_types
-      integer TASK, N, NEW_X, M, NZ
-      double precision X(N), A(NZ)
+      use b2mod_par_opt
+      integer TASK, nvar, NEW_X, ncon, NZ
+      double precision X(nvar), A(NZ)
       integer ACON(NZ), AVAR(NZ), I
       double precision DAT(*)
       integer IDAT(*)
       integer IERR
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
 C
 C     structure of Jacobian:
 C
@@ -346,14 +376,16 @@ c         2*x1       2*x2       2*x3       2*x4]
       data  AVAR1 /1/ !ROWS
       data  ACON1 /1/ !COLUMNS
       save  AVAR1, ACON1
-C
+!csc WARNING to be updated whenever nonlinear constraints are needed
       if( TASK.eq.0 ) then
         do I = 1, NZ
-          AVAR(I) = AVAR1(I)
-          ACON(I) = ACON1(I)
+          AVAR(I) = 1!jrow(i)
+          ACON(I) = 1!jcol(i)
         enddo
       else
-        A(1) = 1.0 ![1,1]
+        do I = 1, NZ
+          A(I) = 0.0! FIXME jj(i) ![1,1]
+        end do
       endif
       IERR = 0
       return
@@ -376,6 +408,7 @@ C
       double precision DAT(*)
       integer IDAT(*)
       integer ISTOP
+      logical quitexist, quitexist_
 
       write(*,*) 'IPOPT: iteration ', ITER_COUNT
       write(*,*) 'IPOPT: objval ', OBJVAL
@@ -383,7 +416,11 @@ C
 C     And set ISTOP to 1 if you want Ipopt to stop now.  Below is just a
 C     simple example.
 C
-c      if (INF_PR.le.1D-04) ISTOP = 1
+      inquire(file='.quit',exist=quitexist)
+      inquire(file='_quit',exist=quitexist_)
+      if(quitexist)  write(*,*) 'IPOPT: stopping because .quit seen'
+      if(quitexist_) write(*,*) 'IPOPT: stopping because _quit seen'
+      if (quitexist.or.quitexist_) ISTOP = 1
 
       return
       end

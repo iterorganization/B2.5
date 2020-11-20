@@ -24,7 +24,7 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
-     ,  cfstart(nncf),cfend(nncf), cftype(nncf)
+     ,  cfstart(nncf),cfend(nncf),cftype(nncf)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -34,7 +34,7 @@
       logical, save :: user_initialised = .false.
       logical, save :: cfread(nncf), cfomp(nncf)
       integer, save :: ncfdata(nncf), ncf
-      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfnorm(nncf)
 
       private :: user
       namelist /user/
@@ -45,7 +45,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp
+     ,  cfread, cftype, rzomp, cfomp, cfnorm
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -128,6 +128,7 @@ c***  Standard setup:
       cfdata = 0.0_R8
       ncfdata = 0
       rzomp = 0.0_R8
+      cfnorm = 1.0_R8
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
