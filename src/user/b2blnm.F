@@ -88,12 +88,11 @@ c
       character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
 c----------------------------------------------------------------------
       real (kind=R8) ::
-     *     sx, pit      
+     *     sx
 csw 29sep2014: xpb fix on sx calculation
       sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
      .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
      .  qc(rightix(ix,iy),rightiy(ix,iy)))
-      pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
 c*** to be moved to init.F:
 c
       data hlp_div / 'il', 'ol' /
@@ -119,7 +118,7 @@ c
      +  hlp_div, hlp_hdv,
      +  lun,
      +  i, j, ic, is, ix, iy, nv,
-     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf, 
+     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      +  ex,warn_tmp,
      +  hlp_c, tab, f, hlp_frm, hlp_frf
 c======================================================================
@@ -157,7 +156,7 @@ c
      .       fmo(rightix(ix,iy),rightiy(ix,iy),0,is)
           end if
         end do
-        hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
+        hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pitx(ix,iy)
         ix=rightcut(1)
         do is=0,ns-1
           if (.not.is_neutral(is)) then
@@ -165,7 +164,7 @@ c
            end if
         end do
         hlp_po=hlp_po+
-     .   pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pit(ix,iy)
+     .   pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pitx(ix,iy)
       end do
       prsup(1)=hlp_pi
       prsup(2)=hlp_po
@@ -176,8 +175,8 @@ c
       hlp_fi=0.0_R8
       hlp_fo=0.0_R8
       do iy = 0, ny-1
-        hlp_pi=hlp_pi+pr(0,iy)*sx(0,iy)*pit(0,iy)
-        hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pit(nx-1,iy)
+        hlp_pi=hlp_pi+pr(0,iy)*sx(0,iy)*pitx(0,iy)
+        hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pitx(nx-1,iy)
         do is=0,ns-1
           if (.not.is_neutral(is)) then
             hlp_fi=hlp_fi+fmo(0,iy,0,is)
@@ -201,7 +200,7 @@ c
           end if
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
@@ -225,7 +224,7 @@ c
         do ix=rightcut(1),nx-1
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+

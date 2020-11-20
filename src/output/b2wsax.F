@@ -79,10 +79,9 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, uax, uay, crxc, cryc
+     *   b2ssum, uax, uay, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
-      pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
       uax(ix,iy,is) = fna(ix,iy,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/

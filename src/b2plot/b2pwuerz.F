@@ -29,11 +29,8 @@ c*** Local variables
 c
       integer ix,iy,is,i,j,k
       integer, allocatable :: mz_hlp(:)
-      real (kind=R8) :: pit
       character hlp_frmr*600
       character*2, allocatable :: hlp_al(:)
-c-----------------------------------------------------------------------
-      pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c

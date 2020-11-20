@@ -27,9 +27,6 @@ c*** Local variables
 c
       integer ix,iy,k
       real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
-      real (kind=R8) :: pit
-c----------------------------------------------------------------------
-      pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c----------------------------------------------------------------------
 c*** Check the ig value
 c

@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig,
-     &                   alf)                                            !srv 01.07.09
+      subroutine b2tqce (nx, ny, lnlam, te, ti, ne, ne2, hce, sig, alf)  !srv 01.07.09
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_indirect
@@ -12,7 +12,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), te(-1:nx,-1:ny),        !srv 01.07.09
+     *  lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),                             !srv 01.07.09
      &  ti(-1:nx,-1:ny), ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -76,10 +76,9 @@
 *   ..procedures
       intrinsic abs, sqrt
       real (kind=R8) ::
-     *  pitx, fke, fse, fal, fke_Zh
+     *  fke, fse, fal, fke_Zh
       external subini, subend, xertst, sfill
       external b2xvsg, ipgeti
-      pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
       fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
       fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
       fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
@@ -157,8 +156,6 @@
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test bb
-       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *    ..test state
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')

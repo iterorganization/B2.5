@@ -194,7 +194,7 @@
 
 * ..compute transport coefficients
 *   ..compute flux limit coefficients
-      call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+      call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx, 

@@ -1,12 +1,14 @@
-      subroutine b2tlhe (nx, ny, me, cfl, bb, gs, pbsx, qc, ne, te,
+      subroutine b2tlhe (nx, ny, me, cfl, gs, pbsx, qc, ne, te,
      &  chvemx)
       use b2mod_types
+      use b2mod_geo
+     & , only : pitx
       use b2mod_indirect
       implicit none
       integer nx, ny
       real (kind=R8) ::
      *  me, cfl(-1:nx,-1:ny),
-     &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
+     &  gs(-1:nx,-1:ny,0:2),
      &  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), chvemx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
@@ -18,10 +20,8 @@
      *   t0, t1
       save ncall, area_fix, model
 *   ..procedures
-      real (kind=R8) :: pit
       intrinsic max, sqrt
       external subini, subend, xertst, b2xvsg, ipgeti
-      pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
       data ncall/0/, area_fix/3/, model/1/
 *     ------------------------------------------------------------------
@@ -66,9 +66,9 @@ c           as case b2tqce_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhe), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
             chvemx(ix,iy) = cfl(ix,iy) * gs(ix,iy,0) *
-     .       (ne(ix,iy)*pit(ix,iy)*sqrt(t0/me)*t0 +
+     .       (ne(ix,iy)*pitx(ix,iy)*sqrt(t0/me)*t0 +
      .        ne(leftix(ix,iy),leftiy(ix,iy))*
-     .        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/
+     .        pitx(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/
      .       ((ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*max(t0,t1))
             if (area_fix.ge.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy)
           endif

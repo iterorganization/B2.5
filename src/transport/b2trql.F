@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+      subroutine b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
       use b2mod_types
       use b2mod_indirect
@@ -13,7 +13,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
+     *  gs(-1:nx,-1:ny,0:2),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -85,8 +85,6 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test bb
-       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *    ..test sign of vol, hx, hy
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
@@ -114,12 +112,12 @@
 *   ..compute electron heat flux limit velocity
       call cfl_tanh_profile(nx, ny, cflim(0),
      .  cflme_core, cflme_sol, cflme_tanh_a, cflme_tanh_b, cfl)
-      call b2tlhe (nx, ny, me, cfl, bb, gs, pbs(-1,-1,0), qc, ne, te,
+      call b2tlhe (nx, ny, me, cfl, gs, pbs(-1,-1,0), qc, ne, te,
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
       call cfl_tanh_profile(nx, ny, cflim(1),
      .  cflmi_core, cflmi_sol, cflmi_tanh_a, cflmi_tanh_b, cfl)
-      call b2tlhi (nx, ny, mp, cfl, bb, gs, pbs(-1,-1,0), qc, ni,
+      call b2tlhi (nx, ny, mp, cfl, gs, pbs(-1,-1,0), qc, ni,
      &  nirm, ti, chvimx)
 
 * ..return

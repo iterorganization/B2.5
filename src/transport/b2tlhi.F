@@ -1,13 +1,15 @@
-      subroutine b2tlhi (nx, ny, mp, cfl, bb, gs, pbsx, qc, ni, nirm,
+      subroutine b2tlhi (nx, ny, mp, cfl, gs, pbsx, qc, ni, nirm,
      &  ti, chvimx)
       use b2mod_types
       use b2mod_indirect
       use b2mod_external
+      use b2mod_geo
+     , , only : pitx
       implicit none
       integer nx, ny
       real (kind=R8) ::
      *  mp, cfl(-1:nx,-1:ny),
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
+     *  gs(-1:nx,-1:ny,0:2),
      *  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      *  nirm(-1:nx,-1:ny), ti(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
@@ -19,10 +21,8 @@
      *   t0, t1
       save ncall, area_fix, model
 *   ..procedures
-      real (kind=R8) :: pit
       intrinsic max, sqrt
       external subini, subend, xertst, b2xvfx, ipgeti
-      pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
       data ncall/0/, area_fix/3/, model/1/
 *     ------------------------------------------------------------------
@@ -65,9 +65,9 @@ c           as case b2tqca_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhi), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
             chvimx(ix,iy) = cfl(ix,iy)*gs(ix,iy,0)*
-     &       (nirm(ix,iy)*pit(ix,iy)*sqrt(t0/mp)*t0 +
+     &       (nirm(ix,iy)*pitx(ix,iy)*sqrt(t0/mp)*t0 +
      &        nirm(leftix(ix,iy),leftiy(ix,iy))*
-     &        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/mp)*t1)/
+     &        pitx(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/mp)*t1)/
      &       ((ni(leftix(ix,iy),leftiy(ix,iy),0)+
      &         ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
      &         ni(ix,iy,0)+ni_ext(ix,iy,0))*max(t0,t1))

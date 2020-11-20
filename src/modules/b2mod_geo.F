@@ -38,7 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: diff, dist, disx, disy, distc, match
-      public :: hy1
+      public :: hy1, pit
 
       contains
 
@@ -275,6 +275,22 @@ c conn
      & geom_match_dist
       return
       end function match
+
+      function pit(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: pit
+      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
+      return
+      end function pit
+
+      function pitx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: pitx
+      pitx = abs(bb(ix,iy,0))/bb(ix,iy,3)
+      return
+      end function pitx
 
 
       end module b2mod_geo

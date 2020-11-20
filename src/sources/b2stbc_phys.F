@@ -204,11 +204,9 @@
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-      real (kind=R8) :: pit
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-      pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
 *-----------------------------------------------------------------------
 *.computation
 

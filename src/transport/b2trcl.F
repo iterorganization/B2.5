@@ -191,8 +191,8 @@ csw 13mar2012
 
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
-      call b2tqca (nx, ny, ns, lnlam, bb, na, te, ti, ne, ne2, vsa, hci)  !srv 01.07.09 20.09.11
-      call b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig, alf) !srv 01.07.09 20.09.11
+      call b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2, vsa, hci)  !srv 01.07.09 20.09.11
+      call b2tqce (nx, ny, lnlam, te, ti, ne, ne2, hce, sig, alf)     !srv 01.07.09 20.09.11
       call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
       call sfill (n2*ns, cthev, cthe,1)
       call sfill (n2*ns, cthiv, cthi,1)

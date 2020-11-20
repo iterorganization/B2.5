@@ -1,23 +1,21 @@
 c
-      function chord_tria_value(ntrii,nrknot,nx,ny,tt,
-     1 xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+      function chord_tria_value(ntrii,nrknot,tt,
+     1 xtrian,ytrian,necke,ixtri,iytri,
      2 xp,yp,zp,dxp,dyp,dzp,vector)
 
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       implicit none
       
       real (kind=R8) ::
      * chord_tria_value
-      integer nx,ny,ntrii,nrknot
+      integer ntrii,nrknot
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
-     2 ytrian(nrknot),
-     3 crx(-1:nx,-1:ny,0:3),
-     4 cry(-1:nx,-1:ny,0:3),
-     5 bb(-1:nx,-1:ny,0:3)
+     2 ytrian(nrknot)
       real (kind=R8) ::
      * xp,yp,zp,dxp,dyp,dzp
       logical vector
@@ -32,13 +30,9 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      integer ix, iy
       integer ix_e2b
-      real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, subini, subend, xertst, ix_e2b
-
-      pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
       call subini ('chord_tria_value')
       x=xp
@@ -113,8 +107,8 @@ c         write(*,*) 'dl.bl = ',dotprod
       return
       end function chord_tria_value
 c
-      function chord_tria_integral(ntrii,nrknot,nx,ny,tt,
-     2 xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+      function chord_tria_integral(ntrii,nrknot,tt,
+     2 xtrian,ytrian,necke,ixtri,iytri,npoints,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
@@ -122,15 +116,12 @@ c
       
       real (kind=R8) ::
      * chord_tria_integral 
-      integer nx,ny,ntrii,nrknot,npoints
+      integer ntrii,nrknot,npoints
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
-     2 ytrian(nrknot),
-     3 crx(-1:nx,-1:ny,0:3),
-     4 cry(-1:nx,-1:ny,0:3),
-     5 bb(-1:nx,-1:ny,0:3)
+     2 ytrian(nrknot)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       logical vector
@@ -164,8 +155,8 @@ c
         y=yp1*(1.0-f)+yp2*f
         z=zp1*(1.0-f)+zp2*f
         chord_tria_integral=chord_tria_integral+dl*
-     1   chord_tria_value(ntrii,nrknot,nx,ny,tt,
-     2                    xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     1   chord_tria_value(ntrii,nrknot,tt,
+     2                    xtrian,ytrian,necke,ixtri,iytri,
      2                    x,y,z,dx,dy,dz,vector)
       enddo
 
@@ -175,23 +166,20 @@ c
       return
       end function chord_tria_integral
 c
-      subroutine chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
-     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+      subroutine chord_tria_compile(npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,iytri,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
      2 indchd,indit,indscl)
 
       use b2mod_types
       implicit none
 
-      integer npoints,ntrii,nrknot,nx,ny
+      integer npoints,ntrii,nrknot
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(ntrii),score(ntrii),
      * xtrian(nrknot),
-     * ytrian(nrknot),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * ytrian(nrknot)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       integer indchd,indit(*)
@@ -231,8 +219,8 @@ c
      &   x,y,z,found,it)
         if(found) then
           score(it)=score(it)+dl*
-     1     chord_tria_value(ntrii,nrknot,nx,ny,tt,
-     2      xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     1     chord_tria_value(ntrii,nrknot,tt,
+     2      xtrian,ytrian,necke,ixtri,iytri,
      2      x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo

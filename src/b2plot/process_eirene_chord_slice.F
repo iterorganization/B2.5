@@ -41,9 +41,9 @@ c
           read(99,*,err=30,end=40) x1,y1,z1,xvalues(inpts+1)
         endif
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_value(ntrii,nrknot,nx,ny,
+        yvalues(inpts)=chord_tria_value(ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2   xtrian,ytrian,necke,ixtri,iytri,
      2   x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab
