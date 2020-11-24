@@ -7,6 +7,7 @@ c*** Calculates radiation load onto the specified wall sections
 c*** The list of the wall segments is to be specified in lwldrad
 c======================================================================
       use b2mod_types
+      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot

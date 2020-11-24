@@ -160,4 +160,4 @@ c*** Calculate the balances for each cell in question
       deallocate(s_ni,s_io,s_nt)
 
       return
-      end
+      end subroutine analyse_xpt

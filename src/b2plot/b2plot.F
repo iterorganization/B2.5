@@ -1175,8 +1175,6 @@ c
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
       call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
       psi_sep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
       psi=0.25_R8*sum(fpsi,3)-psi_sep
       fbz=0.25_R8*sum(ffbz,3)
@@ -2660,11 +2658,21 @@ c
         case ('cr')
           description='CR (m)'
           nz=1
-          call copy(cr,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cr(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('cz')
           description='CZ (m)'
           nz=1
-          call copy(cz,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cz(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('na0')
           description='na at previous time step (m^{-3})'
           nz=ns
@@ -6136,7 +6144,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6173,7 +6181,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6210,7 +6218,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -11429,7 +11437,7 @@ c calculate neoclassical diagnostics
       if(rerun_neoclassical) then
         call neo_diagnostics(nx, ny, ns, neo_ic, dn_neo, chi_neo,
      &   vn_neo, vw_neo)
-        call neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,
+        call neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.

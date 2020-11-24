@@ -10,6 +10,7 @@ c***
 c***  horton.dat with the data for L. Horton
 c----------------------------------------------------------------------
       use b2mod_types
+      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
@@ -115,4 +116,5 @@ c
       close (lun)
       deallocate(mz_hlp,hlp_al,hlp_ml,hlp_f,imol)
 c
+      return
       end subroutine b2phortn

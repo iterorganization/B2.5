@@ -11,7 +11,7 @@
       call curved(X4,Y4,N)
 #endif
       return
-      end
+      end subroutine curved_d
 c
       subroutine gpl_d(N,X,Y)
       use b2mod_types
@@ -26,7 +26,7 @@ c
       call gpl(N,X4,Y4)
 #endif
       return
-      end
+      end subroutine gpl_d
 c
       subroutine gpm_d(N,X,Y)
       use b2mod_types
@@ -41,7 +41,7 @@ c
       call gpm(N,X4,Y4)
 #endif
       return
-      end
+      end subroutine gpm_d
 c
       subroutine set_d(VL,VR,VB,VT,WL,WR,WB,WT,LF)
       use b2mod_types
@@ -62,7 +62,7 @@ c
       call set(VL4,VR4,VB4,VT4,WL4,WR4,WB4,WT4,LF)
 #endif
       return
-      end
+      end subroutine set_d
 c
       subroutine gtx_d(X,Y,STRING)
       use b2mod_types
@@ -76,7 +76,7 @@ c
       call gtx(X4,Y4,STRING)
 #endif
       return
-      end
+      end subroutine gtx_d
 c
       subroutine gsmksc_d(X)
       use b2mod_types
@@ -89,7 +89,7 @@ c
       call gsmksc(X4)
 #endif
       return
-      end
+      end subroutine gsmksc_d
 c
       subroutine gschxp_d(X)
       use b2mod_types
@@ -102,7 +102,7 @@ c
       call gschxp(X4)
 #endif
       return
-      end
+      end subroutine gschxp_d
 c
       subroutine gschsp_d(X)
       use b2mod_types
@@ -115,7 +115,7 @@ c
       call gschsp(X4)
 #endif
       return
-      end
+      end subroutine gschsp_d
 c
       subroutine gschh_d(X)
       use b2mod_types
@@ -128,7 +128,7 @@ c
       call gschh(X4)
 #endif
       return
-      end
+      end subroutine gschh_d
 c
       subroutine gschup_d(X,Y)
       use b2mod_types

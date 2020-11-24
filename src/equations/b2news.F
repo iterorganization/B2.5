@@ -1234,7 +1234,7 @@ c
      1 facvis_tanh_a, facvis_tanh_b
       integer ncall, iy_nocoreExB, fac_ref
       integer ix, iy, jxi, jxa, jsep
-      real (kind=R8) cr, cz, dssep
+      real (kind=R8) dssep
       save
      1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
      1 facExB_target, facExB_start, facExB_inc, facExB_dec,
@@ -1255,11 +1255,6 @@ c
      & facdrift_tanh_a/0.0_R8/, facdrift_tanh_b/0.0_R8/,
      & facExB_tanh_a/0.0_R8/, facExB_tanh_b/0.0_R8/,
      & facvis_tanh_a/0.0_R8/, facvis_tanh_b/0.0_R8/
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
       if(ncall.eq.0) then
        call get_jsep(nx,ny,jxi,jxa,jsep)

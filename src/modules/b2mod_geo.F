@@ -38,7 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: diff, dist, disx, disy, distc, match
-      public :: hy1, pit
+      public :: cr, cz, hy1, pit
 
       contains
 
@@ -216,6 +216,22 @@ c conn
       endif
       return
       end subroutine write_b2mod_geo
+
+      function cr(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr
+      cr = 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+      return
+      end function cr
+
+      function cz(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz
+      cz = 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+      return
+      end function cz
 
       function diff(p1,p2)
       implicit none

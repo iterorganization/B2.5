@@ -179,10 +179,10 @@ contains
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+      call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
+      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
+      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
+      call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
@@ -192,8 +192,8 @@ contains
         do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
+        call output_ds(ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
+        call output_ds(ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -3129,24 +3129,17 @@ contains
   end subroutine rwcdf_setbatch
 #endif
 !
-  subroutine output_ds(crx,cry,nx,ny,iref,target_offset, &
-       jsep,iystart,iyend,filename)
+  subroutine output_ds(ny,iref,target_offset,jsep,iystart,iyend,filename)
+    use b2mod_geo
     use b2mod_indirect
     implicit none
-    integer nx,ny,iref,jsep,iystart,iyend,target_offset
-    real (kind=R8) :: &
-         crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3)
+    integer ny,iref,jsep,iystart,iyend,target_offset
     real (kind=R8) :: &
          ds(-1:ny), ds_offset
     character*(*) filename
-    integer ix,iy
+    integer iy
     external subini, subend, xertst
     intrinsic sqrt
-    real (kind=R8) :: &
-         cr,cz
-
-    cr(ix,iy)=0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-    cz(ix,iy)=0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
     call subini ('output_ds')
     iystart=-1

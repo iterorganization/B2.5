@@ -241,6 +241,24 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
 
       end function interpolateToVertices1
 
+      function cr1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr1
+      cr1 = 0.25_R8*(crx1(ix,iy,0)+crx1(ix,iy,1)+
+     .               crx1(ix,iy,2)+crx1(ix,iy,3))
+      return
+      end function cr1
+
+      function cz1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz1
+      cz1 = 0.25_R8*(cry1(ix,iy,0)+cry1(ix,iy,1)+
+     .               cry1(ix,iy,2)+cry1(ix,iy,3))
+      return
+      end function cz1
+
       function dist1(ix,iy,i,j)
       use b2mod_math
       implicit none

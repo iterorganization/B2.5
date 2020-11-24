@@ -12,7 +12,7 @@
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
      *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     *          cr, cz, natmi, nmoli, nioni, wklng,
+     *          natmi, nmoli, nioni, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
@@ -214,8 +214,6 @@ c
 #endif
 #endif
 #endif
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
 #ifdef MDSPLUS
       cr_x=0.0_R8
       cz_x=0.0_R8
@@ -625,19 +623,29 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cr(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cz(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 

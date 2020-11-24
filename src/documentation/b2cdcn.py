@@ -44,6 +44,7 @@ def get_default(text):
             return base + text + end
     else:
         return ''
+
 def bracketize_args(string):
     if len(string.split()) > 1:
         return True
@@ -52,8 +53,8 @@ def bracketize_args(string):
     return False
 
 def replace_tags(text):
-    # Replacing st
-    # First find all occurances of <sup>STRING</sup>
+    # Replacing special strings
+    # First find all occurences of <sup>STRING</sup>
     pattern = "<sup>(.+?)</sup>"
     sup_strings = re.findall(pattern, text, re.DOTALL)
     to_replace = []
@@ -67,12 +68,12 @@ def replace_tags(text):
             replacement += '{' + string + '}'
         else:
             replacement += string
-
         text = text.replace('<sup>' + string + '</sup>', replacement)
-    # Second for all occurances of <sub>STRING</sub>
+
+    # Second for all occurences of <sub>STRING</sub>
     pattern = "<sub>(.+?)</sub>"
     sub_strings = re.findall(pattern, text, re.DOTALL)
-    to_replace =[]
+    to_replace = []
     for string in sub_strings:
         if string in to_replace:
             continue
@@ -84,6 +85,24 @@ def replace_tags(text):
         else:
             replacement += string
         text = text.replace('<sub>' + string + '</sub>', replacement)
+
+    # Because of an internal Python bug in the replace function
+    # the closing curly bracket must be followed by an unwanted space
+    # which we now remove
+    text = text.replace('} .','}.')
+    text = text.replace('} ,','},')
+    text = text.replace('} ]','}]')
+
+    # Otherwise we get double periods which we now remove as well
+    pattern = "_.\.\."
+    sub_strings = re.findall(pattern, text, re.DOTALL)
+    to_replace = []
+    for string in sub_strings:
+        if string in to_replace:
+            continue
+        else:
+            to_replace.append(string)
+        text = text.replace('..','.')
 
     return text
 
@@ -191,9 +210,9 @@ for category in categories:
     for element in category:
         if element.tag == 'switch':
             text = ''
-            text +=  element.findtext('name') + ' - '
-            text +=  element.findtext('type') + '. '
-            text +=  dedent_without_wraping(stringify_children(element.find('description')))[:-1]
+            text += element.findtext('name') + ' - '
+            text += element.findtext('type') + '. '
+            text += dedent_without_wraping(stringify_children(element.find('description')))[:-1]
             text += get_default(element.findtext('default'))
             add_to_fort(text)
         elif element.tag == 'switchgroup':
@@ -202,9 +221,9 @@ for category in categories:
             for switch in element.findall('switch'):
                 counter+=1
                 text = ''
-                text +=  switch.findtext('name') + ' - '
-                text +=  switch.findtext('type') + '. '
-                text +=  dedent_without_wraping(stringify_children(switch.find('description')))[:-1]
+                text += switch.findtext('name') + ' - '
+                text += switch.findtext('type') + '. '
+                text += dedent_without_wraping(stringify_children(switch.find('description')))[:-1]
                 default = get_default(switch.findtext('default'))
                 if default:
                     text += get_default(switch.findtext('default'))
@@ -215,7 +234,7 @@ for category in categories:
                 add_to_fort(text)
 
 
-        # Adding a stand alone note.
+        # Adding a standalone note.
         elif element.tag == 'note':
             fort += '*\n'
             text = dedent(element.text, prefix='\n* ')+'*\n'

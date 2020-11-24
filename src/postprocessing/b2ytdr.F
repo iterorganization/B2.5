@@ -555,8 +555,8 @@ c 2002-09-11: logic revised
       intrinsic iabs, min0
 #endif
       integer conformal_convert
-      real (kind=R8) :: cr, cz, cr1, cz1, rratio
-      logical open_file, streql, is_comment, lnext1
+      real (kind=R8) :: rratio
+      logical open_file, streql, is_comment
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, len_of_digits,
      &  open_file, get_jsep, conformal_convert,
@@ -600,17 +600,6 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-      cr1(ix,iy)=0.25_R8*
-     1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
-      cz1(ix,iy)=0.25_R8*
-     1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
-      lnext1(is,js) = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
-     &  .and.abs(am1(is)-am1(js)).lt.amtol
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -11983,6 +11972,16 @@ cxpb as they no longer necessarily point to the same species
 
 *-----------------------------------------------------------------------
 *.end b2ytdr
+
+      contains
+
+      logical function lnext1(is,js)
+      implicit none
+      integer, intent(in) :: is, js
+      lnext1 = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
+     &  .and.abs(am1(is)-am1(js)).lt.amtol
+      return
+      end function lnext1
 
       end subroutine b2ytdr
 

@@ -45,4 +45,4 @@ c
         call end_page
       endif
       return
-      end
+      end subroutine trgsurf

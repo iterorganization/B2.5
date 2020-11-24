@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,  !cjk
+      subroutine neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,  !cjk
      &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
@@ -19,7 +19,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
       real (kind=R8) ::
-     *   cr(-1:nx,-1:ny), safetyfactor(-1:ny)
+     *   safetyfactor(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),
@@ -441,7 +441,7 @@ c     conversion of constants to CGS units
 *   ..return
       call subend ()
       return
-      end
+      end subroutine neo_validity
 
       subroutine chang_hinton(nx,ny,ns,jsep,jxa,lambda,safetyfactor,
      1 cr,cz,crx,bb,ne,te,ti,na,transport)
@@ -601,7 +601,7 @@ c     conversion of constants to CGS units
       enddo
       call subend ()
       return
-      end
+      end subroutine chang_hinton
 
 
 
