@@ -294,7 +294,6 @@ c
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
   700   format('#   ',3i8/'#  ',a)
-  701   format(a1,3x,3i8)
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then

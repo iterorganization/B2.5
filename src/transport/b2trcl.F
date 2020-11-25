@@ -46,7 +46,7 @@
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),
-     &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),				 !xpb
+     &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                           !xpb
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 09.01.01
@@ -149,7 +149,7 @@ csw 13mar2012
         call ipgeti ('b2trcl_lluciani',lluciani)
         call ipgetr ('b2trcl_cthi', cthiv)
         call xertst (0.0_R8.le.cthiv,
-     &	 'faulty internal parameter cthiv')
+     &   'faulty internal parameter cthiv')
         call ipgetr ('b2trcl_cthe', cthev)
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
@@ -570,9 +570,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
              if(.not.on_closed_surface(ix,iy)) then
                dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
                flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     & 	                              ne(ix,iy))/2.0_R8
+     &                                ne(ix,iy))/2.0_R8
                t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
-     & 	            te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
+     &              te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
                calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
                alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)                !iyv 19.11.13 !srv 08.10.14

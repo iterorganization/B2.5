@@ -243,7 +243,9 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      .                                 'faulty parameter cflmv_tanh_b')
 
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading TRANSPORT namelist!')
+#endif
       end subroutine read_b2mod_transport_namelist
 
       subroutine write_b2mod_transport_namelist

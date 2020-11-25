@@ -52,7 +52,6 @@ c
       mimp=lun
       ufile='param.dg'
       call find_file(ufile,file_ok)
-c      open(lun,file=ufile,status='old',err=998)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
@@ -71,8 +70,5 @@ c
 c
       call subend ()
       return
-c======================================================================
-  998 write(*,*) 'Error opening the file ',ufile
-      call xerrab ('Error opening file in b2pwinp')
 c======================================================================
       end subroutine b2pwinp

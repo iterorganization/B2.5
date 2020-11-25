@@ -160,7 +160,7 @@
       call b2tanml (nx, ny, csig_an, po, fchanml)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch,            !srv 07.07.14
+      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                !srv 07.07.14
      &              fchstoch)
 *  .. compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,

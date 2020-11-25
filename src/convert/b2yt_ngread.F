@@ -393,11 +393,9 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
-     &        field, rfa1(0,0,iatm1(is)),
+          call b2xtfy (nx, ny, nx1, ny1, field, rfa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -417,11 +415,9 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfy (nx, ny, nx1, ny1,
-     &        field, rfm1(0,0,imol1(is)),
+            call b2xtfy (nx, ny, nx1, ny1, field, rfm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -441,11 +437,9 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pfa1(0,0,iatm1(is)),
+          call b2xtfx (nx, ny, nx1, ny1, field, pfa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
@@ -465,11 +459,9 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pfm1(0,0,imol1(is)),
+            call b2xtfx (nx, ny, nx1, ny1, field, pfm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
@@ -489,11 +481,9 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = refluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
-     &        field, refa1(0,0,iatm1(is)),
+          call b2xtfy (nx, ny, nx1, ny1, field, refa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -513,11 +503,9 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfy (nx, ny, nx1, ny1,
-     &        field, refm1(0,0,imol1(is)),
+            call b2xtfy (nx, ny, nx1, ny1, field, refm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -537,11 +525,9 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pefa1(0,0,iatm1(is)),
+          call b2xtfx (nx, ny, nx1, ny1, field, pefa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
@@ -561,11 +547,9 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pefm1(0,0,imol1(is)),
+            call b2xtfx (nx, ny, nx1, ny1, field, pefm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
@@ -1815,13 +1799,13 @@ cank
       end if
       if(jvft44.ge.960513) nlimi = nlim1
 
+   99 CONTINUE
+ 1028 format()
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
       close(44)
       close(45)
- 1028 format()
 C
       call subend ()
       RETURN

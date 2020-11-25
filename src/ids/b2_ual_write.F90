@@ -77,7 +77,7 @@ program b2_ual_write
     use eirmod_comusr
     use eirmod_extrab25
 #endif
-
+    use b2mod_ipmain
     implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror
@@ -90,7 +90,7 @@ program b2_ual_write
     character(len=24) :: device_env
 #endif
     logical streql
-    external ipgeti, ipgetc, streql
+    external ipgeti, streql
 
     !! Local variables
     character(len=24) :: shot_string
@@ -179,7 +179,7 @@ program b2_ual_write
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-    call imas_open_env('treename', shot, run, idx, username, database, version, status)
+    call imas_open_env(treename, shot, run, idx, username, database, version, status)
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
@@ -242,8 +242,8 @@ program b2_ual_write
 #else
             call system(systemarg)
 #endif
-            call imas_open_env('treename', shot, run, idx, &
-             &                  username, database, version, status)
+            call imas_open_env(treename, shot, run, idx, &
+             &                 username, database, version, status)
           end if
           write (0,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1

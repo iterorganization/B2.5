@@ -66,7 +66,7 @@ C
      >      FNISIP(NTDIM)   , FEESIP(NTDIM)   , FEISIP(NTDIM)   ,
      >      FNISAP(NTDIM)   , FEESAP(NTDIM)   , FEISAP(NTDIM)   ,
      >      FNISIPP(NTDIM)  , FEESIPP(NTDIM)  , FEISIPP(NTDIM)  ,
-     >	    FNISAPP(NTDIM)  , FEESAPP(NTDIM)  , FEISAPP(NTDIM)  ,
+     >      FNISAPP(NTDIM)  , FEESAPP(NTDIM)  , FEISAPP(NTDIM)  ,
      >      FNIYIP(NTDIM)   , FEEYIP(NTDIM)   , FEIYIP(NTDIM)   ,
      >      FNIYAP(NTDIM)   , FEEYAP(NTDIM)   , FEIYAP(NTDIM)   ,
      >      NESEPI(NTDIM)   , TESEPI(NTDIM)   , TISEPI(NTDIM)   ,
@@ -75,7 +75,7 @@ C
      >      NEMXIP(NTDIM)   , TEMXIP(NTDIM)   , TIMXIP(NTDIM)   ,
      >      NEMXAP(NTDIM)   , TEMXAP(NTDIM)   , TIMXAP(NTDIM)   ,
      >      PWMXIP(NTDIM)   , PWMXAP(NTDIM)   ,
-     >	    tmne(ntdim),tmte(ntdim),tmti(ntdim),
+     >      tmne(ntdim),tmte(ntdim),tmti(ntdim),
      >      tmhacore(ntdim),tmhasol(ntdim),tmhadiv(ntdim))
 
       end subroutine allocate_comtimpl

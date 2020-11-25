@@ -114,7 +114,9 @@
      .            .gt. 0.0_R8
       return
 
+#ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK namelist!')
+#endif
       end subroutine read_b2mod_feedback
 
       subroutine write_b2mod_feedback(nwrite,edition)
@@ -193,7 +195,9 @@ cxpb size is changed in DIMENSIONS.F
       endif
       return
 
+#ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#endif
       end subroutine read_b2mod_feedback_control
 
       subroutine write_b2mod_feedback_control(nwrite)

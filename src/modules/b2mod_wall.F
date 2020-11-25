@@ -240,6 +240,11 @@ cxpb  Geometric information
       external subini, subend, xertst
 
       call subini('b2mod_wall')
+*   ..test arguments
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.natm, 'faulty argument natm')
+      call xertst (0.le.nmol, 'faulty argument nmol')
+      call xertst (0.le.nion, 'faulty argument nion')
 #ifdef ALLOCATE_AND_NAMELIST
 cxpb  Namelist data
       allocate(inertial_cooling(nwall))

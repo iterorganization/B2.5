@@ -1027,8 +1027,8 @@ c
      &    flxic, flxnc, flxit,
      &    flxnt, flxiw, flxnw,
      &    flxnp, flxps, !blnna_tmp,
-     &    flxnw_rec, flxnw_pump, flxnw_sput,                                       ! IYS 12.01.2018
-     &    flxnt_rec, flxnt_pump, flxnt_sput,                                       ! IYS 12.01.2018
+     &    flxnw_rec, flxnw_pump, flxnw_sput,                             ! IYS 12.01.2018
+     &    flxnt_rec, flxnt_pump, flxnt_sput,                             ! IYS 12.01.2018
 c*** from 960727 on 
      &    flxid, !flxbl, flxbr,
 c*** from 960808 on
@@ -1045,6 +1045,5 @@ c*** from 20190627 on
 
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blns

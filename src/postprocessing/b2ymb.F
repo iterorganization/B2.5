@@ -31,7 +31,7 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
       INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
-      real, ALLOCATABLE :: MM(:,:),BB(:,:), rr(:),zz(:),rout(:),zout(:),
+      real, ALLOCATABLE :: MM(:,:),BB(:,:),rr(:),zz(:),rout(:),zout(:),
      . dd(:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat',
      . OUTFILE0 = 'mnb_in.dat'
@@ -115,7 +115,7 @@
       ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
                              ! second the total  heat flux, third the plasma heat flux and fourth the number of point
       MM=0.0d0
-      MM(1,4)=dble(NLINE)
+      MM(1,4)=real(NLINE)
       open(unit=inunit,file=infile,status='old',action='read')
       do ii=1,nskip
          READ(INUNIT,*) ss

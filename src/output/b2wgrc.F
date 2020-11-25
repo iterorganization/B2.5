@@ -149,7 +149,7 @@
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, int, log
-      external subini, subend, xertst, pagini, pagend, machsfr,
+      external subini, subend, xertst, pagini, pagend,
      &  dashdc, curved_d
 
 *-----------------------------------------------------------------------

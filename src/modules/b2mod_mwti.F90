@@ -130,8 +130,8 @@ contains
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), dims(1), iret
-    integer nvars, natts, ndims, unlimid, nastepid
+    integer imap(maxvdims), iret
+    integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &

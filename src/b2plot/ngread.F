@@ -68,6 +68,8 @@ C
       do is = 0, ns-1
         if (.not.is_neutral(is)) nplsi = nplsi + 1
       end do
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 
 #ifdef B25_EIRENE
 C
@@ -671,12 +673,12 @@ cxpb
 cxpb 20180323
 cxpb
       deallocate(ft44data)
-#endif
+ 1028 format()
       NFEND = 1
+   99 CONTINUE
+#endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
- 1028 format()
 C
       call subend ()
       RETURN

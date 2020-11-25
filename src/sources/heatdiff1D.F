@@ -56,15 +56,15 @@ c  Tp = Target surface temperature (K).
       integer iwk(ndepth_nml)
       external mstep
 #else
+      integer :: itask, itrace, ind, ifail
+      real (kind=R8) :: acc
       external pdedef, bndary, D03PCF
 #endif
       integer, save :: ncall = 0
 
       integer, save :: npde, nw, niw
-      integer :: itask, itrace, ind, ifail
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
-      real (kind=R8) :: acc
       !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
       external xertst, subini, subend
 

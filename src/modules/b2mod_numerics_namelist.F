@@ -229,7 +229,9 @@ c additional time modification factor
       enddo
 
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading NUMERICS namelist!')
+#endif
       end subroutine read_b2mod_numerics_namelist
 
       subroutine write_b2mod_numerics_namelist

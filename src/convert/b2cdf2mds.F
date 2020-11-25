@@ -315,14 +315,14 @@ c and now for f(t)
                 else
                   mds_signal_name=''
                 endif
-	      case('tm')                                    ! varname(1:2)
-	        select case(varname(3:4))                   ! varname(3:4)
-		case('ha')
-		  mds_signal_name='\TOP.TIMEDEP:HAL' //
-     1		   varname(5:len_trim(varname))
-		case default
-		  mds_signal_name=''
-		end select
+              case('tm')                                    ! varname(1:2)
+                select case(varname(3:4))                   ! varname(3:4)
+                case('ha')
+                  mds_signal_name='\TOP.TIMEDEP:HAL' //
+     1             varname(5:len_trim(varname))
+                case default
+                  mds_signal_name=''
+                end select
               case default                                  ! varname(1:2)
                 mds_signal_name=''
               end select                                    ! varname(1:2)

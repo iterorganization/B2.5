@@ -84,6 +84,12 @@
       implicit none
       integer nx,ny,nncut,nlim,nsts
 
+*   ..test arguments
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.nncut, 'faulty argument nncut')
+      call xertst (0.le.nlim, 'faulty argument nlim')
+      call xertst (0.le.nsts, 'faulty argument nsts')
+
 #ifdef ALLOCATE_AND_NAMELIST
       nwall = 2*(nx+2)+max(nncut,2)*(ny+2)+nlim+nsts
       allocate(layer_nconstituents(nwall))

@@ -16,8 +16,8 @@
 #endif
 #endif
       integer :: status
-      integer :: idim, ivar, iatt, iret, ib, it, ih, idum,
-     1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
+      integer :: idim, ivar, iatt, ib, it, ih, idum,
+     1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      4 index(NF_MAX_VAR_DIMS)

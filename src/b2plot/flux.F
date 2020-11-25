@@ -3,8 +3,8 @@ c
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
+      implicit none
 #include <graphics_vars.h>
-
       character*(*) shotinfo
       integer nx,ny
       real (kind=R8) :: xlod,xhid,ylod,yhid
@@ -17,23 +17,24 @@ c
       integer m,n,ierr,nshot,nedit,lpfx
       integer lnblnk
       external lnblnk
-      real tshot
+      real (kind=R4) :: tshot
       character*4 expnam
       character*3 dianam
-      real ri(0:mdim),zj(0:mdim),pfm(0:mdim,0:mdim),
+      real (kind=R4) :: ri(0:mdim),zj(0:mdim),pfm(0:mdim,0:mdim),
      1 pfxx(0:lpfxdim),rpfx(0:lpfxdim),zpfx(0:lpfxdim),
      2 rin(lin),zin(lin),br(lin),bz(lin),bt(lin),fpf(lin),fjp(lin)
 
       integer i,j
-      logical main
+      logical main, streql
+      external streql
 
       data nshot /0/
 
       save nshot
 
-      if(shotinfo.eq.' ') then
-	nshot=0
-	return
+      if(streql(shotinfo,' ')) then
+        nshot=0
+        return
       endif
 
       call init_page(
@@ -65,18 +66,18 @@ c
 
       pfxx(1)=pfxx(1)/(2.0*pi)
       do i=0,m
-	do j=0,n
-	  pfm(i,j)=pfm(i,j)/(2.0*pi)-pfxx(1)
-	enddo
+        do j=0,n
+          pfm(i,j)=pfm(i,j)/(2.0*pi)-pfxx(1)
+        enddo
       enddo
 
       flow=pfm(0,0)
       fhgh=pfm(0,0)
       do i=0,m
-	do j=0,n
-	  flow=min(flow,pfm(i,j))
-	  fhgh=max(fhgh,pfm(i,j))
-	enddo
+        do j=0,n
+          flow=min(flow,pfm(i,j))
+          fhgh=max(fhgh,pfm(i,j))
+        enddo
       enddo
       finc=max(abs(flow),abs(fhgh))
 
@@ -96,19 +97,19 @@ c
 
       is=0
       do while(ri(is).lt.xlo.and.is.lt.m)
-	is=is+1
+        is=is+1
       enddo
       ie=m
       do while(ri(ie).gt.xhi.and.ie.gt.0)
-	ie=ie-1
+        ie=ie-1
       enddo
       js=0
       do while(zj(js).lt.ylo.and.js.lt.n)
-	js=js+1
+        js=js+1
       enddo
       je=n
       do while(zj(je).gt.yhi.and.je.gt.0)
-	je=je-1
+        je=je-1
       enddo
 
       if(is.ge.ie.or.js.ge.je) return
@@ -121,11 +122,11 @@ c
      1 CALL CPSETC('ILT - INFORMATION LABEL TEXT STRING',' ')
       ic=0
       do j=js,je
-	do i=is,ie
-	  ic=ic+1
-	  x(ic)=ri(i)
-	  y(ic)=zj(j)
-	enddo
+        do i=is,ie
+          ic=ic+1
+          x(ic)=ri(i)
+          y(ic)=zj(j)
+        enddo
       enddo
       nnx=ie-is+1
       nny=je-js+1

@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_indirect
      . ,only: GRID_N_CELLFLAGS
@@ -110,7 +111,7 @@
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
-      external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
+      external subini, subend, ipgeti, ipgetr, xertst,
      * b2xvsg, b2gxdr_dummy
       intrinsic abs, cos, sin, min, max, sign, acos
 

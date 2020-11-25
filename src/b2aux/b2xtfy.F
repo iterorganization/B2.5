@@ -1,6 +1,6 @@
       subroutine b2xtfy (nx, ny, nx1, ny1, fy, fy1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -11,7 +11,7 @@
      *   fy(-1:nx,-1:ny), fy1(-1:nx1,-1:ny1),
      *   hx(-1:nx,-1:ny), hxx(-1:nx1,-1:ny1)
       integer non_commensurate
-      integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
+      integer nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
       integer leftcut(nncutmax), leftcut1(nncutmax)
       integer rightcut(nncutmax), rightcut1(nncutmax)

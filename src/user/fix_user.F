@@ -147,13 +147,13 @@ c*** Fill the species names and find the positions of related quantities
           do i=1,nhdr !{
             if(index(chdr(i),'area_').eq.1) then !{
               k=k+1
-              csrntr(k)=chdr(i)(6:)
+              csrntr(k)=trim(chdr(i)(6:))
               larea(k)=i
             end if !}
           end do !}
           do i=1,nhdr !{
             if(index(chdr(i),'Area_').eq.1) then !{
-              cc=chdr(i)(6:)
+              cc=trim(chdr(i)(6:))
               do j=1,nntr !{
                 if(streql(cc,csrntr(j))) then !{
                   lnarea(j)=i
@@ -186,7 +186,7 @@ c*** Fill the species names and find the positions of related quantities
                 if(ex) then !{
                   k=k+1
                   j=k
-                  cspntr(k)=cc
+                  cspntr(k)=trim(cc)
                 end if !}
                 if(chdr(i)(1:1).eq.'n') then !{
                   lnnntr(j,ii)=i

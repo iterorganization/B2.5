@@ -72,7 +72,7 @@
 #     include "mdslib.inc"
       integer idum(0:9), io, ishot, n2, nx, ny, ns
       integer status, retlen, dbversion
-      integer ix, iy, i, j, is
+      integer ix, iy, is
       character*120 lblmn, lblgm
       integer, allocatable :: idummy(:,:)
       real (kind=R8), allocatable :: za(:)

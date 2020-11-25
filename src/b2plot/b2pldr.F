@@ -22,6 +22,7 @@
       use b2mod_work
       use b2mod_math
       use b2mod_external
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns

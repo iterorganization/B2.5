@@ -12,6 +12,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_ipmain
       use b2mod_ppout
       use b2mod_diag
      . , only : label
@@ -96,7 +97,7 @@
      *   zpdum(0:nsdecl-1,4)
 *   ..procedures
       logical is_comment
-      external subini, subend, xertst, xerrab, ipsetc, cfruch, cfruin,
+      external subini, subend, xertst, xerrab, cfruch, cfruin,
      &  cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
@@ -250,7 +251,7 @@
       call b2wfcp (nout(0), 0, ns)
 *   ..write header to nout(1)
       idum(0) = ns
-      call cfverw (nout(1), newversion)					 !xpb
+      call cfverw (nout(1), newversion)                                 !xpb
       call cfwuin (nout(1), 1, idum, 'ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
 *   ..save physics parameters to nout(1)
@@ -259,15 +260,15 @@
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(2), newversion)					 !xpb
+      call cfverw (nout(2), newversion)                                 !xpb
       call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(3), newversion)					 !xpb
+      call cfverw (nout(3), newversion)                                 !xpb
       call cfwuin (nout(3), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(3), 120, lblmn, 'label')
       call b2wuzd (nout(3), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(5), newversion)					 !xpb
+      call cfverw (nout(5), newversion)                                 !xpb
       call cfwuin (nout(5), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)

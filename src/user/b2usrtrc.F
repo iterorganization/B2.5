@@ -134,7 +134,7 @@ c*** Global values
       equivalence (equg3_tmp(1), hlp_isat),
      ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
      ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
-      character hlp_hg3(ngl3_tmp)*10, hlp_lb3(ngl3_tmp)
+      character*10 hlp_hg3(ngl3_tmp), hlp_lb3(ngl3_tmp)
       integer ngl4_tmp
       parameter (ngl4_tmp=3)
 c     integer kgl4_tmp(2)
@@ -1889,6 +1889,5 @@ c     Finalization step
       return
 c=======================================================================
   700 format('#   ',5i8)
-  701 format(a1,3x,5i8)
 c=======================================================================
       end subroutine b2usrtrc

@@ -3,9 +3,9 @@
 
       subroutine b2tfch (nx, ny, ns, ismain, ismain0,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,       	 !xpb
+     1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia, vedia, wadia, vaecrb,
-     2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,   	 !xpb
+     2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,      !xpb
      &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
@@ -15,24 +15,24 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_anomalous_transport                             	 !xpb
-      use b2mod_geo_corner                                      	 !xpb
+      use b2mod_anomalous_transport                                      !xpb
+      use b2mod_geo_corner                                               !xpb
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, ismain0, guard_flows                	 !xpb
+      integer nx, ny, ns, ismain, ismain0, guard_flows                   !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
      & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
-     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),      	 !xpb
+     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),        !xpb
      & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 	 !xpb
+     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),    !xpb
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      1 csig(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                   	 !xpb
+     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                             !xpb
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
@@ -93,7 +93,7 @@
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
 *   ..initialisation
-      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	!xpb
+      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,    !xpb
      * vis_par/1.0_R8/, no_current/0/, conduction_only/0/,
      1 vis_per/1.0_R8/, no_hybr/0/, pot_eq/1/, sig_stoch/1.0_R8/
 
@@ -103,9 +103,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch')
-      if (ncall.eq.0) then                                      	!xpb
-       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	!xpb
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	!xpb
+      if (ncall.eq.0) then                                              !xpb
+       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)                  !xpb
+       call ipgetr ('b2tfhe_anomalous', fch_anomalous)                  !xpb
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
        call ipgetr ('b2tstch_sig', sig_stoch)
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
@@ -113,8 +113,8 @@
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgetr ('b2tfhe_vis_q', vis_q)                              !srv 11.07.99
-       call ipgetr ('b2tfhe_vis_par', vis_par)                  	!xpb
-       call ipgetr ('b2tfhe_vis_per', vis_per)                  	!xpb
+       call ipgetr ('b2tfhe_vis_par', vis_par)                          !xpb
+       call ipgetr ('b2tfhe_vis_per', vis_per)                          !xpb
        call ipgetr ('b2tfhe_dia_cur', dia_cur)                          !srv
        call ipgetr ('b2tiner_inert', fch_inert)                         !srv 07.07.99
        call xertst (fch_anomalous.ne.0.0_R8
@@ -207,7 +207,7 @@ c Drift terms
      & facdrift, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch, fchstoch)
+      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)
 
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
      &  ehx_, zeff, fch_p)
@@ -233,7 +233,7 @@ c Drift terms
               ehx_po = 0.0_R8
             else
               ehx = ehx_(ix,iy)                                          !srv 13.01.17
-              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
+              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))      !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
@@ -305,7 +305,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                   enddo
                 endif
               enddo
-            endif                                               	 !xpb
+            endif                                                        !xpb
           endif
         enddo
       enddo
@@ -344,7 +344,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
                     if (is_neutral(is0)) conc(ix,iy,1) = conc(ix,iy,1) 
-     .               + csigin(ix,iy,1,is,is0)                     	 !xpb
+     .               + csigin(ix,iy,1,is,is0)                            !xpb
                   enddo
                 endif
               enddo
@@ -352,11 +352,11 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
               conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
             endif                                                        !lk 31.01.08 }
-          endif                                                 	 !xpb
+          endif                                                          !xpb
         enddo
       enddo
 
-      if(guard_flows.eq.0) then                                 	 !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -389,7 +389,7 @@ cxpb turn off poloidal flows in core boundary
             fchvisq(ix,-1,0) = 0.0_R8
           endif
         enddo
-      endif                                                     	 !xpb
+      endif                                                              !xpb
 
 cxpb turn off current terms if requested
       if (no_current.eq.1) then

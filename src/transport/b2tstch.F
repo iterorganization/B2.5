@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, bb, po, te, ne,                  !srv 07.07.14
+      subroutine b2tstch (nx, ny, vol, po, te, ne,                      !srv 07.07.14
      *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
       use b2mod_types
       use b2mod_boundary_namelist
@@ -15,8 +15,7 @@
       integer nx, ny
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3)
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
@@ -58,10 +57,10 @@
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
-     &	 'faulty internal parameter sig_stoch')
+     &   'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
-     &	 'faulty internal parameter delta_stoch')
+     &   'faulty internal parameter delta_stoch')
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)
@@ -117,4 +116,4 @@
 *-----------------------------------------------------------------------
 *.end b2tstch
 
-      end                                                              !lk 31.01.08 }
+      end subroutine b2tstch                                            !lk 31.01.08 }

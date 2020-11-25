@@ -740,7 +740,7 @@
 *     SUBXND is employed to build down the stack when the program
 *     is terminated because of an error condition.
 *
-*     IPMAIN is a group of routines (entry points in ipmain) that
+*     IPMAIN is a group of routines that
 *     operate on a collection of names and values representing 
 *     "internal parameters" in a code. The entry points are ipsetc, 
 *     ipgetc, and ipfini.

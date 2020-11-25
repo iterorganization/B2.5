@@ -278,7 +278,6 @@ program b2_ual_write_b2mod
 #endif
 
     !! Local variables
-    integer :: i      !< Iterator
     integer :: num_step !< Number of steps
     integer :: narg     !< Total Number of input arguments (shot, run etc.)
     integer :: cptArg
@@ -462,8 +461,8 @@ program b2_ual_write_b2mod
 #else
             call system(systemarg)
 #endif
-            call imas_open_env('treename', shot, run, idx, &
-             &                  username, database, version, status)
+            call imas_open_env(treename, shot, run, idx, &
+             &                 username, database, version, status)
           end if
           write (0,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1
@@ -561,7 +560,7 @@ contains
         !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, &
+        call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
         call xertst ( status.eq.0, 'Error opening IMAS database !')
         call ids_get(idx, "edge_profiles", edge_profiles, status)

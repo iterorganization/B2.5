@@ -6,6 +6,7 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -102,7 +103,7 @@
 *   ..procedures
       logical streql
       external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, ipsetc, ipgeti, gacwk, gdawk
+      external cfruin, streql, ipgeti, gacwk, gdawk
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------

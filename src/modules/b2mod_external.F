@@ -37,6 +37,10 @@
       implicit none
       integer nxd,nyd,nsd
 
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+
       if (allocated_externals) return
       ns_ext = 0
       allocate(ne_ext(-1:nxd,-1:nyd))
@@ -143,6 +147,11 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       integer lnblnk
       external xertst, xerrab, open_file, lnblnk
 
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+      call xertst (0.le.ismain.and.ismain.lt.nsd,
+     * 'faulty argument ismain')
 cxpb
 cxpb  First read ns_ext
 cpxb

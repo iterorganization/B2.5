@@ -30,26 +30,26 @@
      *  vol1(-1:nx1,-1:ny1), hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1),
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1), qcb1(-1:nx1,-1:ny1),
      &  gs1(-1:nx1,-1:ny1,0:2),
-     1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
+     1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
+     2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
      &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
-     1	rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
-     2	topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
-     3	bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
-     4	leftcut1(1:nncutmax), rightcut1(1:nncutmax),
+     1  rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
+     2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
+     3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
+     4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
      5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
-     1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
+     1  gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -663,7 +663,7 @@ cdpc-end
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
               t1 = t1+(hyy(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
-     &	       vol1(ix1+jx1,iy1+jy1)
+     &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1
           enddo

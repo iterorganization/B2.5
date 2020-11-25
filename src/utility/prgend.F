@@ -1,12 +1,13 @@
       subroutine prgend ()
       use b2mod_types
+      use b2mod_ipmain
       implicit none
 *     ------------------------------------------------------------------
 *     PRGEND performs any tasks required at the end of program
 *     execution.
 *     ------------------------------------------------------------------
       integer lwmx, lwimx
-      external sysend, subend, lwmax, lwimax, ipfini
+      external sysend, subend, lwmax, lwimax
 *     ------------------------------------------------------------------
 *   ..write maximum workspace use
 *     (activate or deactivate as desired)
@@ -31,13 +32,14 @@
       end subroutine prgend
       subroutine prgfin ()
       use b2mod_types
+      use b2mod_ipmain
       implicit none
 *     ------------------------------------------------------------------
 *     PRGFIN performs any tasks required at the end of program
 *     execution.
 *     ------------------------------------------------------------------
       integer lwmx, lwimx
-      external sysend, subend, lwmax, lwimax, ipfini
+      external sysend, subend, lwmax, lwimax
 *     ------------------------------------------------------------------
 *   ..write maximum workspace use
 *     (activate or deactivate as desired)

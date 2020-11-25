@@ -2702,8 +2702,6 @@ cdjm Update ion heat sources
      &          topix,topiy,bottomix,bottomiy
       use b2mod_b2cmpa
      & , only : zamin,zamax
-      use b2mod_residuals
-     & , only : resco, resmo, reshe, reshi
       use b2mod_b2cmpa
      & , only : am
       use b2mod_constants
@@ -2718,7 +2716,7 @@ cdjm Update ion heat sources
       integer nstrad
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
+     .        eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
       integer vdims(4)
       integer jxi,jxa,jsep
       integer is
@@ -2784,11 +2782,11 @@ cdjm Update ion heat sources
       vdims(3)=n4id
       call write_cdf_double(ncid,'crx',crx,vdims,3)
       call write_cdf_double(ncid,'cry',cry,vdims,3)
-*   ..bb,hx,hz,vol,gs,am:
+*   ..bb,hx,hy,hz,vol,gs,am:
       call write_cdf_double(ncid,'bb',bb,vdims,3)
       call write_cdf_double(ncid,'hx',hx,vdims,2)
-      call write_cdf_double(ncid,'hy',hx,vdims,2)
-      call write_cdf_double(ncid,'hz',hx,vdims,2)
+      call write_cdf_double(ncid,'hy',hy,vdims,2)
+      call write_cdf_double(ncid,'hz',hz,vdims,2)
       call write_cdf_double(ncid,'vol',vol,vdims,2)
       vdims(3)=n3id
       call write_cdf_double(ncid,'gs',gs,vdims,3)
@@ -2830,7 +2828,7 @@ cdjm Update ion heat sources
 *   ..za:
       vdims(1)=nsid
       allocate(za(0:nsd-1))
-      za(0:nsd-1)=(zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8
+      za(0:nsd-1)=nint((zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8)
       call write_cdf_int(ncid,'za',za(0:nsd-1),vdims,1)
 *   ..Arrays for particle balance:
 *     Fluxes

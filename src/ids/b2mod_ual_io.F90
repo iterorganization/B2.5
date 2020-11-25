@@ -195,13 +195,9 @@ contains
 
         !! Internal variables
         character(len=120) :: AM_label  !< Description of A&M data source
-        character(len=132) :: ion_label !< Ion species label (e.g. D+1)
-        character(len=132) :: mol_label !< Molecule species label (e.g. D2)
-        character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         character(len=24) :: source     !< Code source
         character(len=2)  :: plate_name(4) !< Divertor plate name
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
-        integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns    !< Total number of B2.5 species
         integer :: nsion !< Total number of IDS ion species
         integer :: nneut !< Total number of IDS neutral species
@@ -210,18 +206,13 @@ contains
         integer :: ny    !< Specifies the number of interior cells
                          !< along the second coordinate
         integer :: n_process !< Number of radiation processes handled
-        integer :: nelems    !< Number of elements present in a molecule or molecular ion
         integer :: is, js, ks !< Species indices (iterators)
-        integer :: iss    !< State index
         integer :: ii, jj !< Iterators
         integer :: i      !< Iterator
         integer :: j      !< Iterator
         integer :: k      !< Iterator
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
-        integer :: iatm   !< Atom iterator
-        integer :: iatm1  !< Hydrogenic atom index in molecule composition
-        integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
         integer :: istrai !< Stratum iterator
         integer :: ntimes !< Number of previous timesteps in IDS
         integer :: is1    !< First ion of an isonuclear sequence
@@ -229,7 +220,6 @@ contains
         integer :: icnt   !< Boundary cell counter
         integer :: ib     !< Boundary condition index
         integer :: ntrgts !< Number of divertor targets
-        integer :: o      !< Dummy integer
         integer :: p      !< Dummy integer
         integer :: isep(2) !< Array of separatrix regions
         integer, allocatable :: ionstt(:) !< Mapping array
@@ -240,14 +230,17 @@ contains
            !< ispion(i,j) contains the B2.5 species index for (ion i,state j) or
            !<                      the Eirene molecular ion index
 #ifdef B25_EIRENE
+        integer :: iss    !< State index
+        integer :: iatm   !< Atom iterator
+        integer :: iatm1  !< Hydrogenic atom index in molecule composition
+        integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
+        integer :: nelems !< Number of elements present in a molecule or molecular ion
         integer, allocatable :: isstat(:) !< Mapping array
                                           !< from Eirene atoms and molecules to IDS neutral states
         integer, allocatable :: imneut(:) !< Mapping array
                                           !< from Eirene molecules to IDS neutrals
         integer, allocatable :: imiion(:) !< Mapping array
                                           !< from Eirene molecular ions to IDS ion sequences
-        integer, allocatable :: ionimi(:) !< Mapping array
-                                          !< from IDS ion sequences to Eirene molecular ions
 #endif
         integer :: nscx, iscx(0:nscxmax-1)
         integer :: ixpos(4), iypos(4) !< Target positions
@@ -285,23 +278,23 @@ contains
         real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: roxa( -1:ubound( na, 1), -1:ubound( na, 2), 0:ubound( na, 3) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
-                       &        -1:ubound( na, 3) )
-        real(IDS_real) :: smo0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3, &
-                       &        -1:ubound( na, 3) )
-        real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
-        real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
             &             u, qetot, qitot, qemax, qimax, lambda, &
-            &             vtor, nisep, nasum, gsum, gmid, gbot, gtop
+            &             vtor, nisep, nasum
+#ifdef B25_EIRENE
+        real(IDS_real) :: gsum, gmid, gbot, gtop
+        real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
+        real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
+        real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
+                       &        -1:ubound( na, 3) )
+        real(IDS_real) :: smo0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3, &
+                       &        -1:ubound( na, 3) )
+#endif
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_face
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_bnd_core
 
         integer, parameter :: nsources = 12
         integer, save :: style = 1
@@ -339,8 +332,9 @@ contains
         character*8 eirene_version
         character*32 Eirene_git_version
         character*32 get_Eir_hash
+        character(len=132) :: mol_label !< Molecule species label (e.g. D2)
+        character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         logical, allocatable :: in_species(:)
-        logical isadigit
 #endif
 #ifdef USE_PXFGETENV
         integer lenval, ierror
@@ -500,6 +494,12 @@ contains
         call xertst( num_time_slices .ge. time_sind, &
             & "B25_process_ids: Time step index cannot be greater " // &
             & "than total number of time steps!" )
+        if( present( time_slice_ind_IN ) ) &
+            & call xertst( time_slice_ind_IN .ge. 1, &
+            & "faulty argument time_slice_ind_IN" )
+        if( present( num_time_slices_IN ) ) &
+            & call xertst( num_time_slices_IN .ge. 1, &
+            & "faulty argument num_time_slices_IN" )
 
         !! Preparing edge_profiles IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -1198,7 +1198,7 @@ contains
           do i = eb2spcr(is), ks
             if (is_neutral(i)) cycle
             js = js + 1
-            ionstt(i+1) = js
+            ionstt(i) = js
             ispion(is,js) = i
           end do
         end do
@@ -1212,15 +1212,19 @@ contains
             ispion(nspecies+1,1) = 1
             ionstt(ns) = 1
             do is = 2, nioni
+              ks = 0
               do js = 1, is-1
                 match_found = .false.
                 do iatm = 1, natmi
                   match_found = match_found .and. micmp(iatm,js).eq.micmp(iatm,is)
                 end do
-                if (match_found) imiion(is)=imiion(js)
+                if (match_found) then
+                  imiion(is)=imiion(js)
+                  ks = js
+                end if
               end do
               if (imiion(is).ne.0) then
-                ionstt(ns-1+is) = ionstt(ns+js)+1
+                ionstt(ns-1+is) = ionstt(ns-1+ks)+1
                 ispion(imiion(is),ionstt(ns-1+is)) = is
               else
                 nsion = nsion + 1
@@ -5168,7 +5172,7 @@ contains
           match_found = .true.
           do is = 0, ns-1
             if (is_neutral(is).and.use_eirene.ne.0) cycle
-            if (bccon(ib,is).eq.9) then
+            if (bccon(is,ib).eq.9) then
               if (nibnd.eq.IDS_REAL_INVALID) then
                 nibnd = conpar(is,ib,1)
               else
@@ -5590,6 +5594,8 @@ contains
             implicit none
             character*2 compname
             integer is, iatm
+            logical streql
+            external streql
 
             get_atom_number = 0
             do iatm = 1, natmi

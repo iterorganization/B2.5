@@ -22,6 +22,7 @@
       use b2mod_b2cmpt
       use b2mod_b2cmwg
       use b2mod_external
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -54,11 +55,11 @@
       logical is_comment
       external is_comment
       external subini, subend, xertst, xerrab, cfruch, cfruin
-      external b2rups, b2rugm, b2rucp, b2mds, ipsetc, ipgetr
+      external b2rups, b2rugm, b2rucp, b2mds, ipgetr
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp
 *   ..namelist
-      character :: exp*128, comment*128
+      character :: exp*32, comment*128
       integer :: shot, overwrite_shotnumber
       real (kind=R8) :: time
       logical :: timedep, snapshot, tallies, movies

@@ -518,19 +518,19 @@ C
 
       deallocate(field1)
       deallocate(pux,puy,pvx,pvy)
+   99 CONTINUE
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
       close(46)
       close(47)
 C
       call subend ()
-      RETURN
+      return
 
 *=======================================================================
 *//END B2YT_NTREAD//
-
+#ifdef B25_EIRENE
  1983 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"33 ",
      .     "(NODES OF TRIANGULAR GRID)"
@@ -542,7 +542,8 @@ C
  1985 WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open '//fort_lc//'35 file!')
-      END
+#endif
+      end subroutine b2yt_ntread
 
 
 

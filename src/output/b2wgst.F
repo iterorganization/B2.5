@@ -240,10 +240,10 @@
         write (header,fmth2) 'PARALLEL VELOCITY (m/s).', is, t0/100
         write (nprt,fmtp) '+cpua', header
         call b2wgx2 (nx, ny, header, ua(-1,-1,is), 0,
-     1	 1.0_R8,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
-     1	 1.0_R8,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
      &    wrkx, wrky)
        enddo

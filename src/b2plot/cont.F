@@ -32,12 +32,12 @@ c
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'
           call init_page(titlestring,
-     1	   values(1),values(2),values(3),values(4),1,.false.,.true.,
+     1     values(1),values(2),values(3),values(4),1,.false.,.true.,
      3     .false.)
           call plotcontour(nx,ny,nx,ny,is,
-     2	   xx,yy,
-     3	   work(-1,-1,is,iwrk),
-     4	   values(9),values(10),.false.,linlog)
+     2     xx,yy,
+     3     work(-1,-1,is,iwrk),
+     4     values(9),values(10),.false.,linlog)
           call end_page
         endif
         if(mod(typeofplot,2) .eq. 1) then
@@ -45,12 +45,12 @@ c
           call map(nx,ny,
      1         vol,work(-1,-1,is,iwrk),work(-1,-1,ns+1,iwrk))
           call init_page(titlestring,
-     1	   values(5),values(6),values(7),values(8),1,.true.,.true.,
+     1     values(5),values(6),values(7),values(8),1,.true.,.true.,
      2     .true.)
           call plotcontour(nx,ny,nx,nx,is,
-     2	   wrkx,wrky,
-     3	   work(-1,-1,ns+1,iwrk),
-     4	   values(9),values(10),.true.,linlog)
+     2     wrkx,wrky,
+     3     work(-1,-1,ns+1,iwrk),
+     4     values(9),values(10),.true.,linlog)
           if(arrowl .gt. 0.0_R8) call plot_arrows(is)
           call end_page
         endif

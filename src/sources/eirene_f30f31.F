@@ -699,7 +699,6 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
       close (30)
 
       return
- 1028 format()
       end subroutine write_f30
 c
       subroutine write_f31(nx, ny)

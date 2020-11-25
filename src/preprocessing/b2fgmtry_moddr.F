@@ -339,14 +339,6 @@
       return
 
 *-----------------------------------------------------------------------
-*.error conditions
-
-   91 call xerrab ('error trying to read heading *param')
-   92 call xerrab ('error trying to read parg')
-   93 call xerrab
-     1 ('error trying to read non-default internal parameters')
-
-*-----------------------------------------------------------------------
 *.end b2fgmtry_moddr
 
       end subroutine b2fgmtry_moddr

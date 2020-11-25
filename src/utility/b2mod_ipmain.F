@@ -1,9 +1,8 @@
-      subroutine ipmain (cnam, cval)
+      module b2mod_ipmain
       use b2mod_types
       implicit none
-      character cnam*(*), cval*(*)
 *     ------------------------------------------------------------------
-*     IPMAIN is a group of routines (entry points in ipmain) that
+*     IPMAIN is a group of routines that
 *     operate on a collection of names and values representing internal
 *     parameters in a code. The entry points are ipsetc, ipgetc, and
 *     ipfini.
@@ -28,17 +27,13 @@
 *     first call).
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iptinc, iptbmx, ipgtmx, ipcnt, ip, i, k
+      integer iptinc, iptbmx, ipgtmx, ipcnt
       real (kind=R8) ::
      *   xdmx
       parameter (iptinc=233, iptbmx=377, ipgtmx=400, xdmx=0.8_R8)
-      character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80, cnam0*80
+      character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80
       integer ipstat(0:iptbmx-1)
-      logical prohib
       save ipcnt, ipnam, ipval, ipstat
-*   ..procedures
-      intrinsic mod, ichar
-      external xertst, chcase
 *   ..initialisation
       data ipcnt/0/, ipstat/iptbmx*-1/
 *     ------------------------------------------------------------------
@@ -57,9 +52,17 @@
 *     retrieved; ipstat(ip).eq.-1 if the parameter has not been set.
 *     ipcnt is the number of parameters that have been set.
 *     ------------------------------------------------------------------
-      return
-*     ------------------------------------------------------------------
-      entry ipsetc (cnam, cval)
+
+      contains
+
+      subroutine ipsetc (cnam, cval)
+      implicit none
+      character cnam*(*), cval*(*)
+      integer i, k, ip
+      character cnam0*80
+*   ..procedures
+      intrinsic mod, ichar
+      external xertst, chcase
 *   ..standardise the name
       cnam0 = cnam
       call chcase (0, cnam0)
@@ -94,8 +97,16 @@
        !$OMP END CRITICAL(ipsetc_lock)
       endif
       return
+      end subroutine ipsetc
 *     ------------------------------------------------------------------
-      entry ipgetc (cnam, cval)
+      subroutine ipgetc (cnam, cval)
+      implicit none
+      character cnam*(*), cval*(*)
+      integer i, k, ip
+      character cnam0*80
+*   ..procedures
+      intrinsic mod, ichar
+      external xertst, chcase
 *   ..standardise the name
       cnam0 = cnam
       call chcase (0, cnam0)
@@ -124,9 +135,13 @@
 *      (no action, return cval unchanged)
       endif
       return
+      end subroutine ipgetc
 *     ------------------------------------------------------------------
 !srv 15.09.15 {
-      entry ipprhp ()
+      subroutine ipprhp ()
+      implicit none
+      integer ip
+      logical prohib
       do ip = 0, iptbmx-1
         prohib = .true.
         select case (ipnam(ip))
@@ -176,9 +191,12 @@
      &      ('Prohibited "'//trim(ipnam(ip))//'" switch usage!')
       enddo
       return
+      end subroutine ipprhp
 !srv 15.09.15 }
 *     ------------------------------------------------------------------
-      entry ipfini ()
+      subroutine ipfini ()
+      implicit none
+      integer ip
       do ip = 0, iptbmx-1
        if (ipstat(ip).eq.0) then
         write (*,'(1x,a,1x,a)')
@@ -187,5 +205,6 @@
        endif
       enddo
       return
+      end subroutine ipfini
 *     ------------------------------------------------------------------
-      end subroutine ipmain
+      end module b2mod_ipmain

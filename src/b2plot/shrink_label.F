@@ -4,7 +4,7 @@
       external lnblnk
       character*(*) label
       lng=lnblnk(label)
-C	write(*,*) ' In: ',label(1:lnblnk(label))
+C     write(*,*) ' In: ',label(1:lnblnk(label))
    10 continue
       do i=1,lng
         if(label(i:i).eq.' ') then

@@ -6,6 +6,7 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_ipmain
 #ifdef IMAS
 #ifdef AMNS
       use amns_types       ! IGNORE

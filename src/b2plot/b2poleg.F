@@ -25,7 +25,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,k
+      integer ix,k
       real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
 c----------------------------------------------------------------------
 c*** Check the ig value

@@ -222,7 +222,7 @@
             do ix=0,nx
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
-	       tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/              !lk 20.11.07 { !iyv 06.12.13
+              tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/              !lk 20.11.07 { !iyv 06.12.13
      &         (1.0e0_R8+15.12e16_R8/conn_(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &         /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8

@@ -12,14 +12,15 @@ c======================================================================
 c======================================================================
 c	 print *,'%% targeton: onflag,trgmind,trgmaxd,trglog=',
 c     , 	               onflag,trgmind,trgmaxd,trglog
-      trgmin=trgmind
-      trgmax=trgmaxd
+      trgmin=real(trgmind,R4)
+      trgmax=real(trgmaxd,R4)
       trglinlog=trglog
       target=onflag
       return
       end subroutine targeton
 c======================================================================
       subroutine set_trglinlog(trglog)
+      use b2mod_types
       implicit none
 #include "graphics_vars.h"
       integer, intent(in) :: trglog
@@ -28,6 +29,7 @@ c======================================================================
       end subroutine set_trglinlog
 c======================================================================
       subroutine targetoff
+      use b2mod_types
       implicit none
 #include "graphics_vars.h"
       target=.false.

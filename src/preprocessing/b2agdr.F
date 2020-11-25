@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_grid_mapping
       implicit none

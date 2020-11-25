@@ -450,7 +450,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+
      1         2.5_R8*fne_52(ix,iy,1)-
-     &	       5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                 !lk 21.02.08 !srv 17.12.13
+     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                 !lk 21.02.08 !srv 17.12.13
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=

@@ -580,59 +580,6 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
 
  1001 FORMAT ('  TIME (SECONDS):', 2X, 1D11.4)
 
- 1113 FORMAT (/' SOUTH EDGE:',I3, '   AT POSITION IY:', I3 //
-     .      T8, 'IX', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'UP', T74, 'UD', T85, 'NI(1)', T96, 'NI(..)'/
-     .      T8, 'SY', T16, 'FEEY/SY', T27, 'FEIY/SY', T38, 'FNEY/SY',
-     .      T51, 'PHI', T63, 'DD', T74, 'CD',
-     .      T82, 'FNIY/SY', T93, 'FNIY/SY'/
-     .      T5, 'SINANGY',
-     .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52 ,'VO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
-     .      T62, 'FNIY', T73,  'FNIY')
-
- 1114 FORMAT (/' NORTH EDGE:',I3, '   AT POSITION IY:', I3 //
-     .      T8, 'IX', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'UP', T74, 'UD', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SY', T16, 'FEEY/SY', T27, 'FEIY/SY', T38, 'FNEY/SY',
-     .      T51, 'PHI', T63, 'DD', T74, 'CD',
-     .      T82, 'FNIY/SY', T93, 'FNIY/SY'/
-     .      T5, 'SINANGY',
-     .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52,'VO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
-     .      T62, 'FNIY', T73,  'FNIY')
-
- 1115 FORMAT (/'  WEST EDGE:',I3, '   AT POSITION IX:', I3 //
-     .      T8, 'IY', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'CC', T74, 'CP', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SX', T16, 'FEEX/SX', T27, 'FEIX/SX', T38, 'FNEX/SX',
-     .      T51, 'PHI', T63, 'UD', T74, 'CD',
-     .      T82, 'FNIX/SX', T93, 'FNIX/SX'/
-     .      T5, 'SINANGX',
-     .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
-     .      T62, 'FNIX', T73,  'FNIX')
-
- 1116 FORMAT (/'  EAST EDGE:',I3, '   AT POSITION :', I3 //
-     .      T8, 'IY', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'CC', T74, 'CP', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SX', T16, 'FEEX/SX', T27, 'FEIX/SX', T38, 'FNEX/SX',
-     .      T51, 'PHI', T63, 'UD', T74, 'CD',
-     .      T82, 'FNIX/SX', T93, 'FNIX/SX'/
-     .      T5, 'SINANGX',
-     .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
-     .      T62, 'FNIX', T73,  'FNIX')
-
-
 *=======================================================================
 *//END B2WAOS//
 
@@ -782,7 +729,7 @@ C
            DO 13 IY=-1,NY
              SIGF = 1.0
              IF (Z(IX,IY).LT.0.0)   SIGF = -1.0
-             IZ(IX,IY) = 100.0 * Z(IX,IY)/ZMAX + 0.5*SIGF
+             IZ(IX,IY) = INT(100.0 * Z(IX,IY)/ZMAX + 0.5*SIGF)
    13      CONTINUE
 C
         ELSE

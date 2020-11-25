@@ -21,27 +21,27 @@ c
       if(typeofplot .ge. 2) then
         if(b2plot_debug.ge.7) write(*,*) 'computational domain'
         call init_page(
-     1	   target_label(itwrk)(1:lnblnk(target_label(itwrk))),
-     1	   values(24),values(25),values(26),values(27),1,.false.,.true.,
+     1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
+     1     values(24),values(25),values(26),values(27),1,.false.,.true.,
      2     .false.)
         call plottarget(nx,ny,nbnd,ndepth_nml,
-     .	   targetcr(1:nbnd,1:ndepth_nml,1:2),
+     .     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
      .     target_stack(1:nbnd,1:ndepth_nml,itwrk),
-     4	   values(32),values(33),.false.,trglinlog,igraphs)
+     4     values(32),values(33),.false.,trglinlog,igraphs)
         call end_page
       endif
       if(mod(typeofplot,2) .eq. 1) then
         if(b2plot_debug.ge.7) write(*,*) 'physical domain'
         call init_page(
-     1	   target_label(itwrk)(1:lnblnk(target_label(itwrk))),
-     1	   values(28),values(29),values(30),values(31),1,.true.,.true.,
+     1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
+     1     values(28),values(29),values(30),values(31),1,.true.,.true.,
      2     .true.)
         call plottarget(nx,ny,nbnd,ndepth_nml,
-     2	   targetcr(1:nbnd,1:ndepth_nml,1:2),
+     2     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
-     3	   target_stack(1:nbnd,1:ndepth_nml,itwrk),
-     4	   values(32),values(33),.true.,trglinlog,igraphs)
+     3     target_stack(1:nbnd,1:ndepth_nml,itwrk),
+     4     values(32),values(33),.true.,trglinlog,igraphs)
         call end_page
       endif
       return

@@ -116,9 +116,9 @@ c     filling array and computing rate
      &         (ic.eq.ncnct-1.and.last_stage).or.
      &         (ic.gt.0.and.ic.lt.ncnct-1)) then
               if(first_stage) then
-	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
+                DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
               else
-	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
+                DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
               endif
             elseif (id.lt.10) then
               DTMP(1:ITMAXD,1:IDMAXD)=6.0_R8
@@ -1053,9 +1053,6 @@ C
       CLOSE (UNIT=29)
       call subend ()
       RETURN
-  991 WRITE (6,*) ' INVALID CONSTANT IN SLREAC. CONST= ',CONST
-      WRITE (6,*) ' CHECK "REACTION CARDS" FOR REACTION NO. ',IR
-      CALL XERRAB ('Invalid constant in reaction card')
       END SUBROUTINE SLREAC_b2plot
 
       SUBROUTINE SLREAC_READ_COEFFS (ZEILE,CH,FP)

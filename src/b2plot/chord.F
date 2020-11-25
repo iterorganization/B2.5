@@ -495,14 +495,14 @@ c next try the chain
       integer function irpos(r)
       implicit none
       real(kind=R8), intent(in) :: r
-      irpos = (r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
+      irpos = int((r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1)
       return
       end function irpos
 
       integer function izpos(z)
       implicit none
       real(kind=R8), intent(in) :: z
-      izpos = (z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
+      izpos = int((z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1)
       return
       end function izpos
 

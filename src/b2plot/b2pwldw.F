@@ -249,7 +249,7 @@ c***  sfpr_m    : list of active materials
      ,  sfpr_m(nsptmx)*(lnwlmtrl),hdr_line*(m_hdln),frmt_hlp*24,
      ,  hdpr_ml(n_hdpr_ml), hdpr_er(n_hdpr_er),
      ,  sfpr_sp(DEF_NATM+DEF_NMOL)*3
-      character*10 ssmol,ssion
+      character*16 ssmol,ssion
       data hdpr_c /'x', 'Wtot','Wrad','Wpart','Wpls',
      2  'Wneu','Wheat','Wpot', 'Whtpl', 'Wptpl' /
       data hdpr_t /'ne', 'Te','Ti','xMP'/
@@ -321,7 +321,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         nclm_nm=nmoli
 #endif
         do ia=1,nclm_na
-          sfpr_a(ia)=adjustl(TEXTA(ia))
+          sfpr_a(ia)=TEXTA(ia)(1:2)
         end do
 c        print *,'First call. format:',frmt_hlp,':'                  !###
 c        print *,'n_sfpr_s=',n_sfpr_s                                !###

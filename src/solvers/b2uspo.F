@@ -121,7 +121,7 @@
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	     iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2uspo for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            if (solvereg(ireg))

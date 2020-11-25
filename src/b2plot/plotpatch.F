@@ -20,24 +20,24 @@ C =====================================================================
       integer nst,nnd
       parameter(nst=16,nnd=24)
       integer ind(nnd)
-      real dst(nst)
+      real (kind=R4) :: dst(nst)
 #endif
-      real xbox(8),ybox(8),
+      real (kind=R4) :: xbox(8),ybox(8),
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
       integer ix,iy,icol,ici,n,i,ic,
      2 no_available_colors,noz,nozm,nfmtz
       real floor,ceil
       external floor,ceil
 
-      zlo=zlod
-      zhi=zhid
-      RLO=work(0,0)
-      RHI=work(0,0)
+      zlo=real(zlod,R4)
+      zhi=real(zhid,R4)
+      RLO=real(work(0,0),R4)
+      RHI=real(work(0,0),R4)
       do IY=-1,NY
         do IX=-1,NX
           if(.not.physical.or.region(ix,iy,0).ne.0)then
-            RLO=MIN(RLO,REAL(work(IX,IY)))
-            RHI=MAX(RHI,REAL(work(IX,IY)))
+            RLO=MIN(RLO,REAL(work(IX,IY),R4))
+            RHI=MAX(RHI,REAL(work(IX,IY),R4))
           endif
         end do
       end do
@@ -46,16 +46,16 @@ C =====================================================================
         ZHI=RHI
       end if
 
-      small = tiny(1.0)
-      if (abs(zlo).lt.small) zlo = 0.0
-      if (abs(zhi).lt.small) zhi = 0.0
+      small = tiny(1.0_R4)
+      if (abs(zlo).lt.small) zlo = 0.0_R4
+      if (abs(zhi).lt.small) zhi = 0.0_R4
 
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         end if
       end if
 
@@ -81,15 +81,15 @@ C =====================================================================
           ENDDO
         ELSE  ! ==> do log plot <=======================================
           if(b2plot_debug.ge.10) write (*,*) 'STANDARD CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
+          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -101,14 +101,14 @@ C =====================================================================
 #ifndef PLPLOT
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               clval(i)=zval
             enddo
           else
             do i=1,ncont+1
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               clval(i)=zval
             enddo
           endif
@@ -126,11 +126,11 @@ C =====================================================================
         if(nofcls.eq.0) then ! standard contouring
           WRITE (LBLS(I), FMTZ) CLV
         else
-          if(abs(clv).ge.1e3.or.abs(clv).lt.1e-2) then
+          if(abs(clv).ge.1.0e3_R4.or.abs(clv).lt.1.0e-2_R4) then
             write(LBLS(I),'(1p,e10.3)') CLV
-          elseif(abs(clv).ge.1e2) then
+          elseif(abs(clv).ge.1.0e2_R4) then
             write(LBLS(I),'(f8.3)') CLV
-          elseif(abs(clv).ge.1e1) then
+          elseif(abs(clv).ge.1.0e1_R4) then
             write(LBLS(I),'(f8.4)') CLV
           else
             write(LBLS(I),'(f8.5)') CLV
@@ -184,22 +184,22 @@ C =====================================================================
 cxpb Do not plot dead cells in physical domain
           if(physical) then
             do ic=0,1
-              xbox(ic+1)=crx(ix,iy,ic)
-              ybox(ic+1)=cry(ix,iy,ic)
+              xbox(ic+1)=real(crx(ix,iy,ic),R4)
+              ybox(ic+1)=real(cry(ix,iy,ic),R4)
             enddo
             do ic=2,3
-              xbox(6-ic)=crx(ix,iy,ic)
-              ybox(6-ic)=cry(ix,iy,ic)
+              xbox(6-ic)=real(crx(ix,iy,ic),R4)
+              ybox(6-ic)=real(cry(ix,iy,ic),R4)
             enddo
           else
-            xbox(1)=ix-0.5
-            xbox(2)=ix+1-0.5
-            xbox(3)=ix+1-0.5
-            xbox(4)=ix-0.5
-            ybox(1)=iy-0.5
-            ybox(2)=iy-0.5
-            ybox(3)=iy+1-0.5
-            ybox(4)=iy+1-0.5
+            xbox(1)=ix-0.5_R4
+            xbox(2)=ix+1-0.5_R4
+            xbox(3)=ix+1-0.5_R4
+            xbox(4)=ix-0.5_R4
+            ybox(1)=iy-0.5_R4
+            ybox(2)=iy-0.5_R4
+            ybox(3)=iy+1-0.5_R4
+            ybox(4)=iy+1-0.5_R4
           endif
           n=4
           call clip_box(xbox,ybox,xlo,ylo,xhi,yhi,n)
@@ -245,58 +245,58 @@ c
       real (kind=R8) :: dpx,dpy,dqx,dqy,dzmin,dzmax
 
 #ifndef PLPLOT
-      real px,py,qx,qy,zmin,zmax
-      real clvl(100),sclvl(100)
-      real clv,zval,zinc,ceil,floor
+      real (kind=R4) :: px,py,qx,qy,zmin,zmax
+      real (kind=R4) :: clvl(100),sclvl(100)
+      real (kind=R4) :: clv,zval,zinc,ceil,floor
       external ceil,floor
       integer noz,nozm,nfmtz,ncnt,i
       integer isclvl(100)
       CHARACTER*20 LBLS(100)
       character*20 fmtz
 
-      zmin=dzmin
-      zmax=dzmax
+      zmin=real(dzmin,R4)
+      zmax=real(dzmax,R4)
       if(zmin.eq.zmax) then
-        zmin=real(colia(1))
-        zmax=real(colia(1))
+        zmin=real(colia(1),R4)
+        zmax=real(colia(1),R4)
         do i=2,dimx*dimy
-          zmin=min(zmin,real(colia(i)))
-          zmax=max(zmax,real(colia(i)))
+          zmin=min(zmin,real(colia(i),R4))
+          zmax=max(zmax,real(colia(i),R4))
         enddo
       endif
       write(*,*) 'zmin,zmax = ',zmin,zmax
       if(mod(linlog,2).eq.0) then              ! logarithmic
-        if(zmax.le.0) then
+        if(zmax.le.0.0_R4) then
           write(*,*)
      1     'Non-positive max value for log plot in process_camera'
           return
         endif
-        zmax=10**ceil(log10(zmax))
-        if(zmin.gt.0) then
-          zmin=max(10.0**floor(log10(zmin)),10.0**(-ndec)*zmax)
+        zmax=10.0_R4**ceil(log10(zmax))
+        if(zmin.gt.0.0_R4) then
+          zmin=max(10.0_R4**floor(log10(zmin)),10.0_R4**(-ndec)*zmax)
         else
-          zmin=10.0**(-ndec)*zmax
+          zmin=10.0_R4**(-ndec)*zmax
         endif
         write(*,*) 'zmin,zmax = ',zmin,zmax
-        NCNT=CEIL(LOG10(ZMAX))-FLOOR(LOG10(ZMIN))
+        NCNT=INT(CEIL(LOG10(ZMAX))-FLOOR(LOG10(ZMIN)))
         write(*,*) 'ncnt = ',ncnt
         if(ncnt.lt.5) then
           ncnt=ncnt*3
           do i=1,ncnt+1
-            zval=10.0**((i-1)/3)*zmin
+            zval=10.0_R4**((i-1)/3)*zmin
             if(mod(i-1,3).eq.1) zval=zval*2
             if(mod(i-1,3).eq.2) zval=zval*5
             clvl(i)=zval
           enddo
         else
           do i=1,ncnt+1
-            zval=10.0**(i-1)*zmin
+            zval=10.0_R4**(i-1)*zmin
             clvl(i)=zval
           enddo
         endif
         fmtz='(1pg8.2)'
         do i=1,dimx*dimy
-          colia(i)=(log10(max(real(colia(i)),zmin))-log10(zmin))/
+          colia(i)=(log10(max(real(colia(i),R4),zmin))-log10(zmin))/
      1     (log10(zmax)-log10(zmin))
         enddo      
         do i=1,ncnt+1
@@ -333,18 +333,18 @@ c
       LBLS(NCNT+2:100)=' '
       write(*,*) 'zmin,zmax = ',zmin,zmax
 
-      px=dpx
-      py=dpy
-      qx=dqx
-      qy=dqy
+      px=real(dpx,R4)
+      py=real(dpy,R4)
+      qx=real(dqx,R4)
+      qy=real(dqy,R4)
       do i=1,dimx*dimy
-        icolia(i)=min(1.0d0,max(0.0d0,colia(i)))*(ncol-1)+2
+        icolia(i)=int(min(1.0_R8,max(0.0_R8,colia(i)))*(ncol-1))+2
       enddo
       call gca(px,py,qx,qy,dimx,dimy,
      1   1,1,dimx,dimy,icolia)
 
       do i=1,ncnt+1
-        isclvl(i)=min(1.0,max(0.0,sclvl(i)))*(ncol-1)+2
+        isclvl(i)=int(min(1.0_R4,max(0.0_R4,sclvl(i)))*(ncol-1))+2
       enddo
       if(noax.gt.0) CALL LBLBAR(1,
      1 colorbar_left*XSIZE+XPOS,colorbar_right*XSIZE+XPOS,

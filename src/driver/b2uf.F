@@ -56,10 +56,10 @@
       call cfopen (nout(7),'b2fplasmf','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)
@@ -82,7 +82,7 @@
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_anomalous_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)
       call read_b2mod_geo(nx,ny,ninp(4))

@@ -173,7 +173,7 @@
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (model.eq.1.or.model.eq.3) then
-        ctaue = t0*sqrt(me)						 !xpb
+        ctaue = t0*sqrt(me)                                                !xpb
       else if (model.eq.2) then
         ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
       endif
@@ -186,7 +186,7 @@
        do iy = -1, ny
         do ix = -1, nx
          t0 = te(ix,iy)/ev
-         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)	   !xpb !srv 01.07.09
+         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)          !xpb !srv 01.07.09
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
@@ -221,7 +221,7 @@
        do iy = -1, ny
         do ix = -1, nx
          t0 = te(ix,iy)/ev
-         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)	   !xpb !srv 01.07.09
+         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)          !xpb !srv 01.07.09
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit

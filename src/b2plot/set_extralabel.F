@@ -38,7 +38,7 @@ C ===================================================================
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
       call subini ('customise_label')
-      backslash='\\'
+      backslash=char(92)
       icpos=1
       jcpos=1
       elength=lnblnk(locallabel)
@@ -282,6 +282,7 @@ C ===================================================================
 c
       subroutine set_wallbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
@@ -293,6 +294,7 @@ C ===================================================================
 c
       subroutine set_targetbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel

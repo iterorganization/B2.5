@@ -596,7 +596,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       if(in_jxi.ge.-1) jxi=in_jxi
       if(in_jxa.ge.-1) jxa=in_jxa
       if(in_jxi.ge.-1) jsep=in_jsep
-    5 continue
       write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
 
 #ifdef MDSPLUS

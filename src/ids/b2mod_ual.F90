@@ -181,7 +181,7 @@ contains
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
 #endif
-            &   treename, shot, run, idx, username, database, version )
+            &   idx )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -207,23 +207,14 @@ contains
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-            !< (i.e. "edge_profiles" (mandatory) )
-        integer, intent(in) :: shot   !< The shot number of the database being created
-        integer, intent(in) :: run    !< The run number of the database being created
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
-            !< database
-        character(len=24), intent(in) :: database   !< IMAS database name
-            !< (i. e. solps-iter, iter, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
-            !< database
 
         if ( idx.ne.0 ) then
 
         !! Delete data from IDS
           call ids_delete( idx, "edge_profiles", edge_profiles)
+          call ids_delete( idx, "edge_sources", edge_sources)
           call ids_delete( idx, "edge_transport", edge_transport)
           call ids_delete( idx, "radiation", radiation)
           call ids_delete( idx, "dataset_description", description)
@@ -249,7 +240,7 @@ contains
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
 #endif
-            &   treename, shot, run, idx, username, database, version )
+            &   idx )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -275,18 +266,8 @@ contains
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-            !< (i.e. "edge_profiles" (mandatory) )
-        integer, intent(in) :: shot   !< The shot number of the database being created
-        integer, intent(in) :: run    !< The run number of the database being created
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
-            !< database
-        character(len=24), intent(in) :: database   !< IMAS database name
-            !< (i. e. solps-iter, iter, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
-            !< database
         integer :: status
 
         !! Set data to edge_profiles IDS

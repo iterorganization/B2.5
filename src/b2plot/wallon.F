@@ -12,8 +12,8 @@ c======================================================================
 c======================================================================
 c	 print *,'%% wallon: onflag,inum,wmind,wmaxd,wlinlog=',
 c     , 	             onflag,inum,wmind,wmaxd,wlinlog
-      wmin=wmind
-      wmax=wmaxd
+      wmin=real(wmind,R4)
+      wmax=real(wmaxd,R4)
       wlinlog=ilog
       if(onflag) then
         wall=inum.ne.0
@@ -31,14 +31,15 @@ c======================================================================
 #include "graphics_vars.h"
       integer, intent(in) :: ilog
       real (kind=R8), intent(in) :: wmind, wmaxd
-      wmin=wmind
-      wmax=wmaxd
+      wmin=real(wmind,R4)
+      wmax=real(wmaxd,R4)
       wlinlog=ilog
       wall=.true.
       return
       end subroutine set_wall_on
 c======================================================================
       subroutine set_wlinlog(ilog)
+      use b2mod_types
       implicit none
 #include "graphics_vars.h"
       integer, intent(in) :: ilog
@@ -47,6 +48,7 @@ c======================================================================
       end subroutine set_wlinlog
 c======================================================================
       subroutine walloff
+      use b2mod_types
       implicit none
 #include "graphics_vars.h"
       wall=.false.

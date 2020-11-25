@@ -221,7 +221,7 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, bb, po, te, ne, csig_stoch,      !srv 07.07.14
+       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,          !srv 07.07.14
      &      fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
@@ -317,7 +317,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                         !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)

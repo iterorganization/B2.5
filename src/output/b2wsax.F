@@ -84,11 +84,11 @@
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       uax(ix,iy,is) = fna(ix,iy,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
-     1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
+     1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
      &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
       uay(ix,iy,is) = fna(ix,iy,1,is)*
      &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1	 hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
+     1   hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
      &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
 
 *-----------------------------------------------------------------------

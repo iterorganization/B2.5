@@ -75,7 +75,7 @@ program b2_ual_rewrite
     use eirmod_comusr
     use eirmod_extrab25
 #endif
-
+    use b2mod_ipmain
     implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror
@@ -88,7 +88,7 @@ program b2_ual_rewrite
     character(len=24) :: device_env
 #endif
     logical streql
-    external ipgeti, ipgetc, streql
+    external ipgeti, streql
 
     !! Local variables
     character(len=24) :: shot_string
@@ -177,7 +177,7 @@ program b2_ual_rewrite
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-    call imas_open_env('treename', shot, run, idx, username, database, version, status)
+    call imas_open_env(treename, shot, run, idx, username, database, version, status)
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
       call ids_get( idx, "dataset_description", old_description, status)
@@ -215,8 +215,8 @@ program b2_ual_rewrite
 #else
         call system(systemarg)
 #endif
-        call imas_open_env('treename', shot, run, idx, &
-          &                  username, database, version, status)
+        call imas_open_env(treename, shot, run, idx, &
+          &                username, database, version, status)
       end if
     else
       write (0,*) "No previous IDS found, new one will be created"
@@ -242,7 +242,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
-        &   treename, shot, run, idx, username, database, version )
+        &   idx )
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &
@@ -252,7 +252,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
-        &   treename, shot, run, idx, username, database, version )
+        &   idx )
     call close_ual(idx)
 
 end program b2_ual_rewrite

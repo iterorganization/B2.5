@@ -155,8 +155,7 @@
       logical lnext
       real (kind=R8) ::
      *   smax
-      external subini, subend, xertst, machsfr, smax, cfrure, cfruin,
-     1 cfverr
+      external subini, subend, xertst, smax, cfrure, cfruin, cfverr
       lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
 *-----------------------------------------------------------------------

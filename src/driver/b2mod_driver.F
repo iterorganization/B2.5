@@ -42,6 +42,7 @@
       use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_mwti
+      use b2mod_ipmain
       use b2mod_openmp
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
@@ -169,7 +170,7 @@
       integer :: num_time_slices, time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
-      character old_imas_version*8, imas_version*8, systemarg*256
+      character old_imas_version*132, imas_version*132, systemarg*256
 #endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -1957,8 +1958,10 @@ c new CDF movie option (1st frame at t=0)
 
       call subend()
       return
+#ifdef USE_MPI
   999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
+#endif
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, nx, ny, ns, add_ntim)
@@ -2420,7 +2423,7 @@ c new CDF movie option
           if (idx.eq.0.and.continued) then
             write(*,*) "Checking if IDS already exists : ",
      .       trim(database), shot, run
-            call imas_open_env('treename', shot, run, idx,
+            call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
@@ -2489,7 +2492,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 #else
                     call system(systemarg)
 #endif
-                    call imas_open_env('treename', shot, run, idx,
+                    call imas_open_env(treename, shot, run, idx,
      .                username, database, version, status)
                   end if
                   write(*,*)
@@ -2759,7 +2762,7 @@ cxpb Do the recreate to a temporary location and then bring it back
         else if (continued) then
           write(*,*) "Checking if IDS already exists : ",
      .      trim(database), shot, run
-          call imas_open_env('treename', shot, run, idx,
+          call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
@@ -2827,7 +2830,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 #else
                   call system(systemarg)
 #endif
-                  call imas_open_env('treename', shot, run, idx,
+                  call imas_open_env(treename, shot, run, idx,
      .              username, database, version, status)
                 end if
                 write(*,*)

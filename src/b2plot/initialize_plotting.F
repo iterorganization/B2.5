@@ -1,4 +1,5 @@
       subroutine initialise_plotting
+      use b2mod_types
       use b2mod_b2plot_debug
 #ifdef NAGF95
       use f90_unix           ! IGNORE
@@ -143,9 +144,9 @@ c
 c
       extralabel=' '
       globalheader=' '
-      runtime=time
-      glsz=1.0
-      lbsz=1.0
+      runtime=real(time,R4)
+      glsz=1.0_R4
+      lbsz=1.0_R4
       ndec=10
       initialised_plotting=.false.
       want_aspect=.true.
@@ -159,6 +160,7 @@ c
       end subroutine initialise_plotting_flags
 
       subroutine set_color_map(sval)
+      use b2mod_types
       implicit none
       character*(*), intent(in) :: sval
 #include <graphics_vars.h>
@@ -179,6 +181,7 @@ c
       end subroutine set_color_map
 
       subroutine set_fill_option(iopt_fill)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt_fill
 #include <graphics_vars.h>
@@ -188,6 +191,7 @@ c
       end subroutine set_fill_option
 
       subroutine initialise_plotting_0
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
 c
@@ -205,7 +209,7 @@ c
       real (kind=R8), intent(in) :: rval
 #include <graphics_vars.h>
 c
-      glsz=rval
+      glsz=real(rval,R4)
       return
       end subroutine set_glsz
 
@@ -215,11 +219,12 @@ c
       real (kind=R8), intent(in) :: rval
 #include <graphics_vars.h>
 c
-      lbsz=rval
+      lbsz=real(rval,R4)
       return
       end subroutine set_lbsz
 
       subroutine set_ndec(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -229,6 +234,7 @@ c
       end subroutine set_ndec
 
       subroutine get_ndec(iopt)
+      use b2mod_types
       implicit none
       integer, intent(out) :: iopt
 #include <graphics_vars.h>
@@ -238,6 +244,7 @@ c
       end subroutine get_ndec
 
       subroutine set_noax
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
 c
@@ -246,6 +253,7 @@ c
       end subroutine set_noax
 
       subroutine swap_aspect
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
 c
@@ -255,6 +263,7 @@ c
       end subroutine swap_aspect
 
       subroutine set_zero
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
 c
@@ -264,6 +273,7 @@ c
       end subroutine set_zero
 
       subroutine toggle_label_lines
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
 c
@@ -272,6 +282,7 @@ c
       end subroutine toggle_label_lines
 
       subroutine set_device(devnam)
+      use b2mod_types
       implicit none
       character*256, intent(in) :: devnam
 #include <graphics_vars.h>
@@ -281,6 +292,7 @@ c
       end subroutine set_device
 
       subroutine set_line_font_size(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -290,6 +302,7 @@ c
       end subroutine set_line_font_size
 
       subroutine set_axes_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -299,6 +312,7 @@ c
       end subroutine set_axes_color
 
       subroutine set_header_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -308,6 +322,7 @@ c
       end subroutine set_header_color
 
       subroutine set_title_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -317,6 +332,7 @@ c
       end subroutine set_title_color
 
       subroutine set_frame_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -326,6 +342,7 @@ c
       end subroutine set_frame_color
 
       subroutine set_barlabel_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -335,6 +352,7 @@ c
       end subroutine set_barlabel_color
 
       subroutine set_extralabel_color(iopt)
+      use b2mod_types
       implicit none
       integer, intent(in) :: iopt
 #include <graphics_vars.h>
@@ -344,6 +362,7 @@ c
       end subroutine set_extralabel_color
 
       subroutine new_color_map
+      use b2mod_types
       use b2mod_b2plot_debug
       implicit none
 #include <graphics_vars.h>

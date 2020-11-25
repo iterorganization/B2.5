@@ -146,7 +146,9 @@
       found = maxval(sputter_yield).gt.0.0_R8 .or.
      .        maxval(sputter_yield2).gt.0.0_R8
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading SPUTTER_SAVE namelist!')
+#endif
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)
@@ -1631,7 +1633,7 @@ c     write(*,*)'delta = ',delta
         else
           fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
         end if
-   30   tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
+        tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
         beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
         epsb = 1.022e6_R8 * beta2 / z2 / fi0
         if ( z1 .le. 2.9_R8) then
@@ -1639,7 +1641,7 @@ c     write(*,*)'delta = ',delta
         else
           ch = 5.0_R8
         endif
-   60   sb = 61.474_R8 / fmu * w *
+        sb = 61.474_R8 / fmu * w *
      .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
      .   / fi0 / epsb
         sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl
@@ -1800,7 +1802,7 @@ c  gamma( 0 , x ) = - eibar( - x )      for x < 0
           t = - z
    20     q = t + p
           if ( (abs(p-q) - conver).le.0.0_R8 ) goto 30
-   22     p = q
+          p = q
           t = - z * f * t
           f = f + 1.0_R8
           t = t / f ** 2
