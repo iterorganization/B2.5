@@ -563,7 +563,7 @@ c 2002-09-11: logic revised
      &  open_file, get_jsep, conformal_convert,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
-      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
+      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
       intrinsic nint, mod, index, sqrt
       real (kind=R8) :: amtol

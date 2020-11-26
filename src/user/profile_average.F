@@ -40,8 +40,6 @@
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
       character lble*120, lbli*120
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
 

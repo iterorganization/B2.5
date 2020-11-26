@@ -102,7 +102,7 @@
       character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, cfverr, cfruch
+      external subini, subend, xertst, xerrab, cfruch
       external cfruin, streql, ipgeti, gacwk, gdawk
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
