@@ -153,7 +153,8 @@ cxpb size is changed in DIMENSIONS.F
      > write(nwrite,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
       write(hlp_frm,'(a,i2,a)')
      > '(a,1p,',nspecies,'(1x,1e15.8,'',''))'
-      write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
+      if (maxval(abs(saved_na_feedback_actuator)).gt.0.0_R8)
+     > write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
      > (saved_na_feedback_actuator(is),is=0,nspecies-1)
       write(nwrite,'(a1)') '/'
       close(nwrite)

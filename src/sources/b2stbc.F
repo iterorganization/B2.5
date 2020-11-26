@@ -7,7 +7,7 @@
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,        !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
@@ -56,6 +56,9 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
      &  fchinert(-1:nx,-1:ny,0:1),                                       !srv 21.10.02 }
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 25.02.00
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1),       !srv 13.10.06
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)             !srv 28.10.02
@@ -66,7 +69,7 @@
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
@@ -378,10 +381,13 @@
       if(boundary_namelist.ge.1) then
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
-     1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fhm, fch,
-     &        sna0, smo0, she0, shi0, sch0, sne0,
-     &        main_call, diagno)
+     1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
+     1      vol, gs, na, ne, ni, te, ti,
+     &      fna, fna_mdf, fna_fcor, fna_nodrift,
+     &      fna_he, fnaPSch, fna_eir, fna_32, fna_52,
+     &      fhe, fhi, fhm, fch,
+     &      sna0, smo0, she0, shi0, sch0, sne0,
+     &      main_call, diagno)
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,

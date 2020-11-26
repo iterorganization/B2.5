@@ -193,7 +193,10 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fhm, fch,
+     1  vol, gs, na, ne, ni, te, ti,
+     &  fna, fna_mdf, fna_fcor, fna_nodrift,
+     &  fna_he, fnaPSch, fna_eir, fna_32, fna_52,
+     &  fhe, fhi, fhm, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
@@ -221,6 +224,13 @@
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1), fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
@@ -377,6 +387,27 @@
        end do
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  boundary_namelist.lt.1
+       do ispecies = 0, nspecies-1
+         if (na_feedback_ib(ispecies).ge.0) cycle
+         consistent = consistent .and.
+     &     .not.(na_feedback_actuator(ispecies).eq.1 .or.
+     &           na_feedback_actuator(ispecies).eq.3) .and.
+     &     .not.(na_feedback_option(ispecies).eq.4)
+       end do
+       do ispecies = 0, nspecies-1
+         if (na_feedback_actuator(ispecies).ne.2) cycle
+         do is = is_start, is_end
+           do ib = 1, nbc
+             consistent = consistent .and.
+     &        (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
+     &         bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
+     &         bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
+     &         bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
+     &        (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
+     &        (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8))
+           end do
+         end do
+       end do
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
 *  ..now read data for other feedback schemes given directly in b2mn.dat
@@ -624,7 +655,7 @@
      .            bccon(isfeedback,ib).eq.12
                end if
              end if
-             if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8) 
+             if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8)
      >        then
                if (mod(region(bc_list_x(1,ib),
      >                        bc_list_y(1,ib),0),4).eq.3) then
@@ -1095,7 +1126,7 @@
                        na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
-                       do is=0, ns-1
+                       do is = 0, ns-1
                          if(b2espcr(is).eq.ispecies+1) then
                            if(is_start.eq.-1) is_start=is
                            do iy = -1, ny
@@ -1142,7 +1173,7 @@
                end select
 
                write(*,'(a,1x,1p,i3,6g15.6)')
-     &              'na_feedback_rescale ', ispecies+1, 
+     &              'na_feedback_rescale ', ispecies+1,
      &              na_feedback_current,
      &              na_feedback_target(ispecies),
      &              na_feedback_rescale,
@@ -1214,8 +1245,29 @@
      &                    ispecies+1
                   endif
 
-                  na(:,:,is_start:is_end) = na(:,:,is_start:is_end) *
-     &                 na_feedback_rescale
+                  do is = is_start, is_end
+                    na(:,:,is) = na(:,:,is) * na_feedback_rescale
+                    ne(:,:)=ne(:,:)+(na_feedback_rescale-1.0_R8)*
+     &               na(:,:,is)*rza(:,:,is)
+                    fna(:,:,0:1,is) =
+     &               fna(:,:,0:1,is)*na_feedback_rescale
+                    fna_mdf(:,:,0:1,is) =
+     &               fna_mdf(:,:,0:1,is)*na_feedback_rescale
+                    fna_fcor(:,:,0:1,is) =
+     &               fna_fcor(:,:,0:1,is)*na_feedback_rescale
+                    fna_nodrift(:,:,0:1,is) =
+     &               fna_nodrift(:,:,0:1,is)*na_feedback_rescale
+                    fna_he(:,:,0:1,is) =
+     &               fna_he(:,:,0:1,is)*na_feedback_rescale
+                    fnaPSch(:,:,0:1,is) =
+     &               fnaPSch(:,:,0:1,is)*na_feedback_rescale
+                    fna_eir(:,:,0:1,is) =
+     &               fna_eir(:,:,0:1,is)*na_feedback_rescale
+                    fna_32(:,:,0:1,is) =
+     &               fna_32(:,:,0:1,is)*na_feedback_rescale
+                    fna_52(:,:,0:1,is) =
+     &               fna_52(:,:,0:1,is)*na_feedback_rescale
+                 end do
 
                case (3) ! core boundary flux condition
 
@@ -1270,7 +1322,9 @@
 
                end select
 
-               write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ', 
+               if (na_feedback_actuator(ispecies).eq.1 .or.
+     &             na_feedback_actuator(ispecies).eq.3)
+     >          write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
      &              ispecies+1, saved_na_feedback_actuator(ispecies)
 
                if(na_feedback_choice(ispecies).eq.6)
@@ -1280,7 +1334,9 @@
 
          enddo
 
-         feedback_namelist_used = .true.
+         feedback_namelist_used = feedback_namelist_used .or.
+     &    na_feedback_actuator(ispecies).eq.1 .or.
+     &    na_feedback_actuator(ispecies).eq.3
          dt_prev = dtim
 
       endif
@@ -1686,7 +1742,7 @@ c new attempt
             nesepm_integral_error =
      1       nesepm_gamma * nesepm_integral_error +
      1       (1-nesepm_gamma)* nesepm_error
-            write(*,'(a,1p,2e15.7)') 
+            write(*,'(a,1p,2e15.7)')
      .       'nesepm_error, nesepm_integral_error= ',
      1        nesepm_error, nesepm_integral_error
             cbsna(0,isfeedback,solregno) =
