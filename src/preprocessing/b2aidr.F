@@ -87,7 +87,8 @@
      &  fchvisq1(:,:,:,:), fchinert1(:,:,:,:),
      &  vaecrb1(:,:,:,:,:), vadia1(:,:,:,:,:), wadia1(:,:,:,:,:),
      &  veecrb1(:,:,:,:), vedia1(:,:,:,:),
-     &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:)
+     &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:), tn1(:,:), kt1(:,:),
+     &  fhn1(:,:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
@@ -591,10 +592,11 @@
      &  vadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  wadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  veecrb1(-1:nx,-1:ny,0:1,0:1), vedia1(-1:nx,-1:ny,0:1,0:1),
-     &  floe_noc1(-1:nx,-1:ny,0:1,0:1), floi_noc1(-1:nx,-1:ny,0:1,0:1) )
+     &  floe_noc1(-1:nx,-1:ny,0:1,0:1), floi_noc1(-1:nx,-1:ny,0:1,0:1) ,
+     &  tn1(-1:nx,-1:ny), kt1(-1:nx,-1:ny), fhn1(-1:nx,-1:ny,0:1,0:1))
 *   ..read initial state from the file
        call b2rups (ninp(3), idum(0), idum(1), idum(2),
-     &  ne1, na1, ua1, uadia1, te1, ti1, po1,
+     &  ne1, na1, ua1, uadia1, te1, ti1, tn1, po1, kt1,
      &  fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
      &  fnaPSch1, fhePSch1, fhiPSch1,
@@ -783,8 +785,8 @@
 *   ..save /b2cmpa/
       call b2wuzd (nout(1), newversion, ns, zamin, zamax, zn, am)
 *   ..save state
-      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,          !xpb
+     &  po, kt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,

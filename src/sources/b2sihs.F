@@ -221,7 +221,9 @@
       call sfill (n2*4, 0.0_R8, shi0, 1)
       call sfill (n2*4, 0.0e0_R8, shest, 1)                        !srv 17.12.13
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+#endif
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
@@ -400,9 +402,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(b2sigp_style.eq.2) then                                         !srv 05.07.17
+#ifdef WG_TOD
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17 {
        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+#endif
        do iy = -1, ny
          do ix = -1, nx
            ce1(ix,iy)=fce1(zeff(ix,iy))
@@ -412,7 +416,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          enddo
        enddo                                                             !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
+#endif
 *   ..compute zetap and zetae
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
@@ -500,9 +506,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
 *    ..contribution from electron-atom friction
 *      (a.k.a. Joule heating)
+#ifdef WG_TODO
        call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)             !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
      &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)           !srv 13.01.17
+#endif
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        if (balance_netcdf.ne.0) then !djm Jan2017

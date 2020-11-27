@@ -14,7 +14,7 @@
       type B2Plasma
         integer :: ns ! total number of species (1:ns or 0:ns-1)
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
-        real(R8), dimension(:), allocatable :: po, te, ti, tn
+        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt
       end type B2Plasma
 
   ! Quantities derived from plasma state
@@ -43,10 +43,11 @@
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
      .                           fhePSch(:,:), fhe_eir(:,:)
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
-     .                           fhiPSch(:,:), fhi_eir(:,:),
+     .                           fhiPSch(:,:), fhi_eir(:,:)
+        real(R8), allocatable :: fnn (:,:), fnn_32(:,:), fnn_52(:,:),
      .                           fhn(:,:)
         real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:), 
-     .                           fht(:,:)
+     .                           fht(:,:), fkt(:,:)
 
 
         ! kinetic energy
@@ -57,21 +58,23 @@
         real(R8), dimension(:,:), allocatable :: conc
         real(R8), dimension(:,:), allocatable :: flob, floe, floi, 
      .                                           floe_noc, floi_noc,
-     .                                           flon
+     .                                           flon, flokt
         real(R8), dimension(:,:,:), allocatable :: conb, cone, coni,
-     .                                             conn
+     .                                             conn, conkt
         real(R8), dimension(:), allocatable :: fllime, fllimi
         
         ! residuals
         real(R8), dimension(:,:), allocatable :: resmo
         real(R8), dimension(:,:), allocatable :: resco          
         real(R8), dimension(:), allocatable :: respo, reshe, reshi, 
-     .                                         resht, resmt, reshn
+     .                                         resht, resmt, reshn,
+     .                                         reskt
 
         ! corrections
         real(R8), dimension(:,:), allocatable :: corua, corpa
         real(R8), dimension(:), allocatable :: corut, corpo, cortt, 
-     .                                           corte, corti, cortn
+     .                                         corte, corti, cortn,
+     .                                         corkt
 
         ! coupling coefficients
         real(R8), dimension(:,:,:), allocatable :: pcca
@@ -102,7 +105,7 @@
      .                                           calf_cl
         real(R8), dimension(:,:,:,:), allocatable :: csigin
         real(R8), dimension(:,:), allocatable :: chve, chce
-        real(R8), dimension(:,:), allocatable :: chvi, chci, chcn
+        real(R8), dimension(:,:), allocatable :: chvi, chci, chcn, cdkt
         real(R8), dimension(:), allocatable :: chvemx, chvimx
         real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:), 
      .                           cdpa(:,:,:), cvsa(:,:,:),
@@ -120,7 +123,8 @@
         real(R8), allocatable :: vsaf_cl(:,:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, hcn0,
-     .                                         alf0
+     .                                         alf0, dkt0, dna_ExB,
+     .                                           hce_ExB, hci_ExB
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
      .                                           hcib
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
@@ -141,8 +145,10 @@ cwdk move to dv
       end type B2Coeff
   
       type B2Source 
-        real(R8), dimension(:,:), allocatable :: sch, she, shi, sne, shn
+        real(R8), dimension(:,:), allocatable :: sch, she, shi, sne, 
+     .                                           shn, skt
         real(R8), dimension(:,:,:), allocatable :: smo, smq, sna
+        real(R8), dimension(:), allocatable :: skt_diss, skt_prod 
       end type B2Source
 
       type B2SourceEir
@@ -152,7 +158,7 @@ cwdk move to dv
 
       type B2SourceWork
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0,
-     .                                           shn0
+     .                                           shn0, skt0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0         
         real(R8), dimension(:), allocatable :: 
      .            b2stbm_sch, b2stbm_she, b2stbm_shi, b2stbm_sne
@@ -186,10 +192,10 @@ cwdk move to dv
   ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
       type B2PlasmaSnapshot
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
-        real(R8), dimension(:), allocatable :: po, te, ti
+        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt
         real(R8), allocatable :: ne(:), ni(:,:)
         real(R8), allocatable :: fch(:,:), fna(:,:,:), 
-     .                           fhi(:,:), fhe(:,:), fhn(:,:)
+     .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
       end type B2PlasmaSnapshot
  
@@ -201,11 +207,11 @@ cwdk move to dv
 
         ! b2mod_residuals
         real(R8), allocatable ::  aresco(:), aresmo(:)
-        real(R8) :: aresmt, areshe, areshi, arespo, areshn         
+        real(R8) :: aresmt, areshe, areshi, arespo, areshn, areskt        
 
         ! b2nmndt: corrections
         real(R8), allocatable :: acorpa(:), acorua(:)
-        real(R8) :: acorut, acorte, acorti, acorpo
+        real(R8) :: acorut, acorte, acorti, acorpo, acorkt, acortn
 
         ! b2mod_diag
         real (R8), allocatable ::  rescoreg(:,:) , resmoreg(:,:), 
@@ -214,7 +220,7 @@ cwdk move to dv
 
       type B2Update
         real(R8), dimension(:,:), allocatable :: ua, na, pa
-        real(R8), dimension(:), allocatable :: po, te, ti
+        real(R8), dimension(:), allocatable :: po, te, ti, kt
       end type B2Update
 
   ! Full set of state variables  
@@ -316,6 +322,7 @@ cwdk move to dv
       allocate( plasma % te( nCv ) )
       allocate( plasma % ti( nCv ) )
       allocate( plasma % tn( nCv ) )
+      allocate( plasma % kt( nCv ) )
 
       plasma % na = 0._R8
       plasma % ua = 0._R8
@@ -323,12 +330,7 @@ cwdk move to dv
       plasma % te = 0._R8
       plasma % ti = 0._R8
       plasma % tn = plasma % ti
-
-      plasma % na = 0._R8
-      plasma % ua = 0._R8
-      plasma % po = 0._R8
-      plasma % te = 0._R8
-      plasma % ti = 0._R8
+      plasma % kt = plasma % ti*0.01_R8
 
       return      
       end subroutine createB2Plasma
@@ -344,6 +346,7 @@ cwdk move to dv
       deallocate( plasma % te )   
       deallocate( plasma % ti )   
       deallocate( plasma % tn )   
+      deallocate( plasma % kt )   
 
       return      
       end subroutine destroyB2Plasma
@@ -373,6 +376,7 @@ cwdk move to dv
       allocate( coeff % chcn( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % chvimx( nFc ), SOURCE=0._R8 )
+      allocate( coeff % cdkt( nFc, 0:1 ), SOURCE=0._R8 )
       
       allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -416,6 +420,10 @@ cwdk move to dv
       allocate( coeff%hce0( nCv ), SOURCE=0._R8 )
       allocate( coeff%sig0( nCv ), SOURCE=0._R8 )
       allocate( coeff%alf0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%dkt0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%dna_ExB( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hce_ExB( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hci_ExB( nCv ), SOURCE=0._R8 )
 
       allocate( coeff%fllim_ki( nFc ), SOURCE=0._R8 )
       allocate( coeff%fllim_ke( nFc ), SOURCE=0._R8 )
@@ -452,6 +460,7 @@ cwdk move to dv
       deallocate( coeff % chcn )
       deallocate( coeff % chcb )
       deallocate( coeff % chvimx )
+      deallocate( coeff % cdkt )
       
       deallocate( coeff % cvla )
       deallocate( coeff % cdna )
@@ -493,6 +502,10 @@ cwdk move to dv
       deallocate( coeff%hce0 )
       deallocate( coeff%sig0 )
       deallocate( coeff%alf0 )
+      deallocate( coeff%dkt0 )
+      deallocate( coeff%dna_ExB )
+      deallocate( coeff%hce_ExB )
+      deallocate( coeff%hci_ExB )
 
       deallocate( coeff%fllim_ki )
       deallocate( coeff%fllim_ke )
@@ -541,6 +554,10 @@ cwdk move to dv
       allocate( dv % fni_he( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fni_32( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fni_52( nFc, 0:1 ), SOURCE=0._R8 )
+
+      allocate( dv % fnn( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fnn_32( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fnn_52( nFc, 0:1 ), SOURCE=0._R8 )
       
       allocate( dv % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )    
@@ -574,6 +591,7 @@ cwdk move to dv
       allocate( dv % fhp( nFc, 0:1, 0:ns-1), SOURCE=0._R8 ) 
       allocate( dv % fhj( nFc, 0:1 ), SOURCE=0._R8 ) 
       allocate( dv % fht( nFc, 0:1 ), SOURCE=0._R8 ) 
+      allocate( dv % fkt( nFc, 0:1 ), SOURCE=0._R8 )    
       
 ! kinetic energy
       allocate( dv % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )    
@@ -612,8 +630,10 @@ cwdk move to dv
       allocate( dv % floi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % floi_noc( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % flon( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % flokt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % coni( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
       allocate( dv % conn( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
+      allocate( dv % conkt( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
       
 ! residuals
       allocate( dv % resmo( nCv, 0:ns-1 ) )
@@ -624,6 +644,7 @@ cwdk move to dv
       allocate( dv % reshn( nCv ) )
       allocate( dv % resht( nCv ) )
       allocate( dv % resmt( nCv ) )
+      allocate( dv % reskt( nCv ) )
       dv % resmo = 0.0_R8                             !srv 22.05.18 {     
       dv % resco = 0.0_R8
       dv % respo = 0.0_R8
@@ -631,6 +652,7 @@ cwdk move to dv
       dv % reshi = 0.0_R8
       dv % reshn = 0.0_R8
       dv % resht = 0.0_R8
+      dv % reskt = 0.0_R8
       dv % resmt = 0.0_R8                             !srv 22.05.18 }    
       
 ! corrections
@@ -642,6 +664,7 @@ cwdk move to dv
       allocate( dv % corte( nCv ) )
       allocate( dv % corti( nCv ) )
       allocate( dv % cortn( nCv ) )
+      allocate( dv % corkt( nCv ) )
       dv % corua = 0.0_R8                             !srv 22.05.18 {     
       dv % corpa = 0.0_R8
       dv % corut = 0.0_R8
@@ -649,7 +672,8 @@ cwdk move to dv
       dv % cortt = 0.0_R8
       dv % corte = 0.0_R8
       dv % corti = 0.0_R8                             !srv 22.05.18 }   
-      dv % cortn = 0.0_R8                                
+      dv % cortn = 0.0_R8     
+      dv % corkt = 0.0_R8                           
 ! coupling coefficients
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
@@ -670,6 +694,9 @@ cwdk move to dv
       deallocate( dv % fni_he )
       deallocate( dv % fni_32 )
       deallocate( dv % fni_52 )
+      deallocate( dv % fnn )
+      deallocate( dv % fnn_32 )
+      deallocate( dv % fnn_52 )
       deallocate( dv % fch )
       deallocate( dv % fch_32 )
       deallocate( dv % fch_52 )
@@ -741,6 +768,7 @@ cwdk move to dv
       deallocate( dv % fhp )
       deallocate( dv % fhj )
       deallocate( dv % fht )
+      deallocate( dv % fkt )
 
       deallocate( dv % conc )
       deallocate( dv % fllime )
@@ -751,8 +779,10 @@ cwdk move to dv
       deallocate( dv % floi )
       deallocate( dv % floi_noc )
       deallocate( dv % flon )
+      deallocate( dv % flokt )
       deallocate( dv % coni )
       deallocate( dv % conn )
+      deallocate( dv % conkt )
       
       deallocate( dv % resmo )
       deallocate( dv % resco )
@@ -762,6 +792,7 @@ cwdk move to dv
       deallocate( dv % reshn )
       deallocate( dv % resht )
       deallocate( dv % resmt )
+      deallocate( dv % reskt )
       
       deallocate( dv % corua )
       deallocate( dv % corpa )
@@ -771,6 +802,7 @@ cwdk move to dv
       deallocate( dv % corte )
       deallocate( dv % corti )
       deallocate( dv % cortn )
+      deallocate( dv % corkt )
       deallocate( dv % pcca )
       deallocate( dv % pccm )
 
@@ -792,6 +824,9 @@ cwdk move to dv
       allocate( sr % smq( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( sr % sna( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( sr % sne( nCv, 0:1 ), SOURCE=0._R8 )
+      allocate( sr % skt( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( sr % skt_prod( nCv ), SOURCE=0._R8 )
+      allocate( sr % skt_diss( nCv ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2Source
@@ -807,6 +842,9 @@ cwdk move to dv
       deallocate( sr % smq )
       deallocate( sr % sna )
       deallocate( sr % sne )
+      deallocate( sr % skt )
+      deallocate( sr % skt_diss )
+      deallocate( sr % skt_prod )
 
       return
       end subroutine destroyB2Source
@@ -851,6 +889,7 @@ cwdk move to dv
       allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shn0( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( srw % skt0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % smo0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % smq0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -874,6 +913,7 @@ cwdk move to dv
       deallocate( srw % she0 )
       deallocate( srw % shi0 )
       deallocate( srw % shn0 )
+      deallocate( srw % skt0 )
       deallocate( srw % smo0 )
       deallocate( srw % smq0 )
       deallocate( srw % sna0 )
@@ -989,7 +1029,9 @@ cwdk move to dv
       allocate( snap % po( nCv ), SOURCE=0._R8 )
       allocate( snap % te( nCv ), SOURCE=0._R8 )
       allocate( snap % ti( nCv ), SOURCE=0._R8 )
-      
+      allocate( snap % tn( nCv ), SOURCE=0._R8 )  
+      allocate( snap % kt( nCv ), SOURCE=0._R8 )   
+ 
       allocate( snap % ne( nCv ), SOURCE=0._R8 ) 
       allocate( snap % ni( nCv, 0:1 ), SOURCE=0._R8 )    
       
@@ -997,6 +1039,7 @@ cwdk move to dv
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( snap % fkt( nFc, 0:1 ), SOURCE=0._R8 )    
       
       allocate( snap % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )    
 
@@ -1012,6 +1055,7 @@ cwdk move to dv
       deallocate( snap % po )   
       deallocate( snap % te )   
       deallocate( snap % ti )   
+      deallocate( snap % tn )
       deallocate( snap % ne )
       deallocate( snap % ni )
       deallocate( snap % fch )
@@ -1019,6 +1063,8 @@ cwdk move to dv
       deallocate( snap % fhe )
       deallocate( snap % fhi )
       deallocate( snap % kinrgy )
+      deallocate( snap % kt )  
+      deallocate( snap % fkt ) 
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -1087,6 +1133,7 @@ cwdk move to dv
       allocate( update % po( nCv ), SOURCE=0._R8 )
       allocate( update % te( nCv ), SOURCE=0._R8 )
       allocate( update % ti( nCv ), SOURCE=0._R8 )
+      allocate( update % kt( nCv ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2Update
@@ -1101,6 +1148,7 @@ cwdk move to dv
       deallocate( update % po )
       deallocate( update % te )
       deallocate( update % ti )
+      deallocate( update % kt )
 
       return
       end subroutine destroyB2Update
@@ -1204,6 +1252,7 @@ cwdk move to dv
         snap % po = pl % po
         snap % te = pl % te
         snap % ti = pl % ti
+        snap % tn = pl % tn
         snap % ne = dv % ne
         snap % ni = dv % ni
         snap % fna = dv % fna
@@ -1211,6 +1260,8 @@ cwdk move to dv
         snap % fhe = dv % fhe
         snap % fhi = dv % fhi
         snap % kinrgy = dv % kinrgy
+        snap % kt = pl % kt
+        snap % fkt = dv % fkt
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -1225,6 +1276,7 @@ cwdk move to dv
         pl % po = snap % po
         pl % te = snap % te
         pl % ti = snap % ti
+        pl % tn = snap % tn
         dv % ne = snap % ne
         dv % ni = snap % ni
         dv % fna = snap % fna
@@ -1232,6 +1284,8 @@ cwdk move to dv
         dv % fhe = snap % fhe
         dv % fhi = snap % fhi
         dv % kinrgy = snap % kinrgy
+        pl % kt = snap % kt
+        dv % fkt = snap % fkt
     
       return
       end subroutine putB2PlasmaSnapshot
@@ -1270,6 +1324,7 @@ cwdk move to dv
       call cfrure (nput, nCv,      st % pl % ti, 'ti')
       call cfrure (nput, nCv,      st % pl % tn, 'tn')
       call cfrure (nput, nCv,      st % pl % po, 'po')
+      call cfrure (nput, nCv,      st % pl % kt, 'kt')
 
 *   ..read fluxes
       call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
@@ -1281,6 +1336,7 @@ cwdk move to dv
       call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
       call cfrure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
+      call cfrure (nput, nFc*2,    st % dv % fkt, 'fkt')
 
 *   ..read time
       call cfrure (nput, 1, time, 'time')
@@ -1361,6 +1417,7 @@ cwdk move to dv
       call cfwure (nput, nCv,      st % pl % ti, 'ti')
       call cfwure (nput, nCv,      st % pl % tn, 'tn')
       call cfwure (nput, nCv,      st % pl % po, 'po')
+      call cfwure (nput, nCv,      st % pl % kt, 'kt')
 
 *   ..save fluxes
       call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
@@ -1372,6 +1429,7 @@ cwdk move to dv
       call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
       call cfwure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
+      call cfwure (nput, nFc*2,    st % dv % fkt, 'fkt')
 
 *   ..save time
       time(1)=tim
@@ -1468,6 +1526,7 @@ cwdk move to dv
       call cfwure (nout, nCv,      st % pl % ti, 'ti')
       call cfwure (nout, nCv,      st % pl % tn, 'tn')
       call cfwure (nout, nCv,      st % pl % po, 'po')
+      call cfwure (nout, nCv,      st % pl % kt, 'kt')
 
 *   ..save fluxes
       call cfwure (nout, nFc*2*ns, st % dv % fna, 'fna')
@@ -1478,6 +1537,7 @@ cwdk move to dv
       call cfwure (nout, nFc*2,    st % dv % fch_32, 'fch_32')
       call cfwure (nout, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfwure (nout, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+      call cfwure (nout, nFc*2,    st % dv % fkt, 'fkt')
 
 *   ..save parallel current
       call cfwure (nout, nFc*2,    st % dv % fch_p, 'fch_p')
@@ -1529,6 +1589,7 @@ cwdk move to dv
       call cfwure (nout, nCv*ns,   st % dv % resmo, 'resmo')
       call cfwure (nout, nCv,      st % dv % resmt, 'resmt')
       call cfwure (nout, nCv,      st % dv % respo, 'respo')
+      call cfwure (nout, nCv,      st % dv % reskt, 'reskt')
 
 *  .. sources
       call cfwure (nout, nCv*ns*2,   st % sr % sna, 'sna')
@@ -1536,6 +1597,9 @@ cwdk move to dv
       call cfwure (nout, nCv*ns*4,   st % sr % smq, 'smq')
       call cfwure (nout, nCv*4,   st % sr % shi, 'shi')
       call cfwure (nout, nCv*4,   st % sr % she, 'she')
+      call cfwure (nout, nCv*4,   st % sr % skt, 'skt')
+      call cfwure (nout, nCv,   st % sr % skt_prod, 'skt_prod')
+      call cfwure (nout, nCv,   st % sr % skt_diss, 'skt_diss')
 
 *  .. transport
       call cfwure (nout, nFc*2,      st % co % calf, 'calf')
@@ -1548,6 +1612,7 @@ cwdk move to dv
       call cfwure (nout, nFc,        st % co % chvemx, 'chvemx')
       call cfwure (nout, nFc*2,      st % co % chvi, 'chvi')
       call cfwure (nout, nFc,        st % co % chvimx, 'chvimx')
+      call cfwure (nout, nFc*2,      st % co % cdkt, 'cdkt')
       call cfwure (nout, nFC*2,      st % co % csig, 'csig')
       call cfwure (nout, nFc*2*ns,   st % co % cvla, 'cvla')
       call cfwure (nout, nFc*2*ns,   st % co % cvsa, 'cvsa')
@@ -1569,6 +1634,20 @@ cwdk move to dv
       call cfwure (nout, nFc,        st % co % fllim_ki, 'fllim_ki')
       call cfwure (nout, nFc,        st % co % fllim_al, 'fllim_al')
       call cfwure (nout, nCv,        st % co % fllim_al_c, 'fllim_al_c')
+
+      call cfwure (nout, nCv,      st % co % sig0, 'sig0')
+      call cfwure (nout, nCv,      st % co % hce0, 'hce0')
+      call cfwure (nout, nCv,      st % co % alf0, 'alf0')
+      call cfwure (nout, nCv,      st % co % hci0, 'hci0')
+      call cfwure (nout, nCv*ns,   st % co % hcib, 'hcib')
+      call cfwure (nout, nCv*ns,   st % co % dpa0, 'dpa0')
+      call cfwure (nout, nCv*ns,   st % co % dna0, 'dna0')
+      call cfwure (nout, nCv*ns,   st % co % vsa0, 'vsa0')
+      call cfwure (nout, nCv*2*ns, st % co % vla0, 'vla0')
+      call cfwure (nout, nCv,   st % co % dkt0, 'dkt0')
+      call cfwure (nout, nCv,   st % co % dna_ExB, 'dna_ExB')
+      call cfwure (nout, nCv,   st % co % hce_ExB, 'hce_ExB')
+      call cfwure (nout, nCv,   st % co % hci_ExB, 'hci_ExB')
 
       close (nout)
 

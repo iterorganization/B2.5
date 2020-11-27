@@ -76,6 +76,7 @@
 
 * ..special output
 *   ..compute auxiliaries
+#ifdef WG_TODO
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -83,6 +84,7 @@
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
+#endif
 *   ..call output routine
       call b2wsst (nspc, nx, ny, ns,
      &  crx, cry, bb, vol,

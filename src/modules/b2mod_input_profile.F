@@ -1,15 +1,17 @@
       module b2mod_input_profile
-      use b2mod_types
-      use b2mod_indirect
+c      use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_time
-      use b2mod_sources 
-     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-      use b2mod_balance !djm Jan2017
-     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-     &             balance_netcdf
-      use b2mod_geo_corner
-     &     , only: nmdpl
+!WG_TODO      use b2mod_sources 
+!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
+!WG_TODO     &             balance_netcdf
+!WG_TODO      use b2mod_geo_corner
+!WG_TODO     &     , only: nmdpl
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -37,13 +39,13 @@
 
       contains
 
-      subroutine alloc_input_profile(nx,ny,ns)
+      subroutine alloc_input_profile(nCv,ns)
       implicit none
-      integer nx, ny, ns
+      integer nCv, ns
 
 #ifdef ALLOCATE_AND_NAMELIST
-      nrr = ny+2
-      nxx = nx+2
+      nrr = nCv
+      nxx = nCv
       nss = ns
 
       if (.not.allocated(nsdata)) then
@@ -56,8 +58,7 @@
         allocate(addspec(nss,nkind_coeff,0:nss))
       endif
 #else
-      call xertst (nx.le.DEF_NXD, 'faulty input nx')
-      call xertst (ny.le.DEF_NYD, 'faulty input ny')
+!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
       call xertst (ns.le.DEF_NSD, 'faulty input ns')
 #endif
 
@@ -82,6 +83,7 @@
       return
       end subroutine dealloc_input_profile
 
+#ifdef WG_TODO
       subroutine source_input(nx,ny,ns,
      &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc)
 !**************************************************************************
@@ -413,11 +415,12 @@ cdjm Jan2017 Keep linearised sources for balance
       end subroutine read_source_profile
 
       end subroutine source_input
+#endif
 
 *-----------------------------------------------------------------------
 
-      subroutine transport_input(nx, ny, ns, rza, na, ne, te, ti, hcib,
-     &  dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
+      subroutine transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt,
+     &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
 
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -427,35 +430,42 @@ cdjm Jan2017 Keep linearised sources for balance
 !**************************************************************************
       use b2mod_time
       use b2mod_constants
-      use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_user_namelist
+     , , only : nomp, omp, icsep
       IMPLICIT NONE
-      integer :: nx,ny,ns
-      integer :: iy,ix,i,ifail,spec,nspec,iiy,iir,
+      integer :: nCv, nFc, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2Rates), intent (in) :: rt
+*   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
+     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
+     &  hci0(nCv), hcib(nCv,0:ns-1)
+      real (kind=R8) ::
+     *  hce0(nCv), sig0(nCv), alf0(nCv)
+      integer :: iy,i,ifail,spec,nspec,iiy,iir,ift,icv,
      &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
-     &      kind_coeff,kind_data,isc
+     &      kind_coeff,kind_data,isc,ic,lbl
       integer :: ixwidth(nscale), ixmean(nscale)
-
-      real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: 
-     &    rza,dna0,dpa0,vsa0,na
-      real(kind=R8), dimension(-1:nx,-1:ny) :: 
-     &    hci0,hce0,sig0,alf0,ne,te,ti
        
       real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
-     &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
-     &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
+     &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
       character*256, save :: transport_filename
       real (kind=R8), save :: transport_time_mod
       real (kind=R8), save :: transport_time_switch
       real (kind=R8), save :: elm_time_begin, elm_time_end
       real (kind=R8), save :: elm_time_period
-      real (kind=R8) :: poloidal_scale_factor
+      real (kind=R8) :: poloidal_scale_factor, rsep
       integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer, save :: elm_ix_begin, elm_ix_end
-      logical, save :: region_flags(NNREGMAX,nkind_coeff), no_pflux,
+      integer, save :: elm_ix_begin, elm_ix_end, nlbl
+      logical, save :: region_flags(CVREGMAX,nkind_coeff), no_pflux,
      1 poloidal_scaling(nscale), elm_time, elm_region, elm_data,
-     2 no_div
+     2 no_div, found
       character*260 filename
       character*26 hlp_frm
       integer, save :: elm_count
@@ -473,13 +483,14 @@ cdjm Jan2017 Keep linearised sources for balance
      1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
 
       if(ncall.eq.0) then
-        call xertst(NNREGMAX.ge.nnreg(0),
-     1   'Increase NNREGMAX in b2mod_numerics_namelist')
+        call xertst(CVREGMAX.ge.mpg%nnreg(0),
+     1   'Increase CVREGMAX in b2mod_numerics_namelist')
         filename=transport_filename
         new_files = .true.
         call read_transport_input         
 !  read the profile data
         if(transport_time_mod.gt.0.0_R8) then
+          call xerrab('ELM transport inputifile not coded yet for WG')
           elm_count=tim/transport_time_mod
         else
           elm_count=0
@@ -496,6 +507,13 @@ cdjm Jan2017 Keep linearised sources for balance
             catch_up=.false.
           endif
         enddo
+        call xertst(nomp.gt.0,
+     &    'No CVs in omp list, check rzomp in b2.user.parameters')
+        call xertst(icsep.gt.0,
+     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+        nlbl = max(1,maxval(mpg%ftLbl))
+        if (any(poloidal_scaling)) 
+     .    call xerrab('Poloidal scaling not yet coded for WG')
       else
         if(transport_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3(1x,e14.7),2i4)')
@@ -516,6 +534,7 @@ cdjm Jan2017 Keep linearised sources for balance
         open (93,file='da2')
       end if
 
+#ifdef WG_TODO
       do isc=1,nscale
         ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
         ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
@@ -530,7 +549,7 @@ cdjm Jan2017 Keep linearised sources for balance
         elm_time=.false.
       endif 
       elm_data = maxval(tdata(3,:,:,:)).gt.0.0_R8  
-
+#endif
 !        write (*,*) 'vor loop'
       iloop=0
       do kind_coeff=1,nkind_coeff
@@ -555,22 +574,30 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-              
+#ifdef WG_TODO
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
 !           write (*,*) 'ifa=',ifa
             if (ifa.eq.1) goto 99
+#endif
+! csc for now identify pr with r-coordinate of midplane CVs
+            pr = 0.0_R8
+            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
+     &             geo%cvX(omp(icsep))) ! FIXME should use distance of face center to neighbouring CV center?
+            do ic=1, nomp
+              pr(ic) = geo%cvX(omp(ic)) - rsep
+            end do
         
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
 !           write(*,*) 'zwischen,ifail=',ifail
+            ndim = nomp ! FIXME
             call E01BFF(ndat,r,f,d,ndim,pr,pf,ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             if (elm_data) 
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
-
             if (new_files) then
 
               if (elm_data) then
@@ -593,23 +620,25 @@ cdjm Jan2017 Keep linearised sources for balance
             endif
 
             do is=1,nspec
-              do ix=-1,nx
-                do iy=1,ndim  
-
-                  iiy=nfitanf-3+iy
-                  iir=region(ix,iiy,0)
-                  if(iir.le.0.or.iir.gt.NNREGMAX) then
-                    write(*,*) 'transport_input: out of bounds ',
-     1               'ix,iy,region(ix,iy) ',ix,iiy,iir
-                    iir=NNREGMAX
-                  endif
-                  lpflux=mod(iir-1,4)+1.ge.3.and.
-     2             (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
-     4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5               iiy.lt.topcut(2)))
-                  ldiv=mod(iir-1,4)+1.ge.3
-                  poloidal_scale_factor = 1.0_R8
+              do iy=1,ndim  
+                iir=mpg%cvReg(omp(iy))
+                if(iir.le.0.or.iir.gt.CVREGMAX) then
+                  write(*,*) 'transport_input: out of bounds ',
+     1             'iy,region(ix,iy) ',iy,iir
+                  iir=CVREGMAX
+                endif
+                lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
+                do ift=1,mpg%nFt
+                  if (mpg%ftLbl(ift).ne.lbl) cycle
+                  do ic = mpg%ftCvP(ift,1), mpg%ftCvP(ift,1) + 
+     &                                    mpg%ftCvP(ift,2) - 1
+                    icv = mpg%ftCv(ic)
+                    iir = mpg%cvReg(icv)
+                    lpflux = mpg%ftReg(mpg%cvFt(icv)).eq.3
+                    ldiv = mod(iir-1,4)+1.ge.3
+                    poloidal_scale_factor = 1.0_R8
+                    elm_region=.false.
+#ifdef WG_TODO
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
      $                ix.ge.scaling_ix_begin(isc) .and. 
@@ -623,70 +652,75 @@ cdjm Jan2017 Keep linearised sources for balance
                   enddo
                   elm_region=elm_time.and.elm_data.and.
      &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
-
-                  if(.not.
-     1             (.not.region_flags(iir,kind_coeff).or.
-     1             (lpflux.and.no_pflux).or.
-     1             (ldiv.and.no_div))) then
-
-                    if (elm_region) then
-                      prof(1:ndim)=pelm(1:ndim)
-                    else
-                      prof(1:ndim)=pf(1:ndim)
-                    endif
-
-                    if (kind_coeff.eq.1) then
-                      dna0(ix,iiy,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.2) then
-                      dpa0(ix,iiy,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor/
-     &                 (rza(ix,iiy,nsp(is))*te(ix,iiy)+ti(ix,iiy))
-
-                    elseif (kind_coeff.eq.3) then         
-                      hcib(ix,iiy,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy)*na(ix,iiy,nsp(is))
-             
-                    elseif (kind_coeff.eq.4) then
-                      hce0(ix,iiy)=prof(iy)*ne(ix,iiy)*
-     1                 poloidal_scale_factor
-                    
-                    elseif (kind_coeff.eq.5) then
-                      vla0(ix,iiy,0,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
-                
-                    elseif (kind_coeff.eq.6) then
-                     vla0(ix,iiy,1,nsp(is))=
-     1                prof(iy)*poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.7) then
-                      vsa0(ix,iiy,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy)*mp*am(nsp(is))*na(ix,iiy,nsp(is))
-                 
-                    elseif (kind_coeff.eq.8) then
-                      if (csig_an_style.eq.0) then
-                        sig0(ix,iiy)=prof(iy)*qe*ne(ix,iiy)*
-     1                   poloidal_scale_factor
-                      elseif(csig_an_style.eq.1) then
-                        sig0(ix,iiy)=prof(iy)*qe*ne(nmdpl,-1)*
-     1                   poloidal_scale_factor
+#endif
+                    if(.not.
+     1               (.not.region_flags(iir,kind_coeff).or.
+     1               (lpflux.and.no_pflux).or.
+     1               (ldiv.and.no_div))) then
+  
+                      if (elm_region) then
+                        prof(1:ndim)=pelm(1:ndim)
+                      else
+                        prof(1:ndim)=pf(1:ndim)
                       endif
-                
-                    elseif (kind_coeff.eq.9) then
-                      alf0(ix,iiy)=poloidal_scale_factor*
-     1                 prof(iy)*ne(ix,iiy)*
-     2                 sqrt(qe/te(ix,iiy))
-              
-                    else
-                      write(*,*) 
-     .                 'Option',kind_coeff,'not yet implemented'
-                    endif
 
-                  endif
-                enddo
-              enddo
-            enddo
+                      if (kind_coeff.eq.1) then
+                        dna0(icv,nsp(is))=
+     1                   prof(iy)*poloidal_scale_factor
+
+                      elseif (kind_coeff.eq.2) then
+                        dpa0(icv,nsp(is))=
+     1                   prof(iy)*poloidal_scale_factor/
+     &                   (rt%rza(icv,nsp(is))*pl%te(icv)+pl%ti(icv))
+
+                      elseif (kind_coeff.eq.3) then         
+                        hcib(icv,nsp(is))=poloidal_scale_factor*
+     &                   prof(iy)*pl%na(icv,nsp(is))
+             
+                      elseif (kind_coeff.eq.4) then
+                        hce0(icv)=prof(iy)*dv%ne(icv)*
+     1                   poloidal_scale_factor
+                    
+                      elseif (kind_coeff.eq.5) then
+                        vla0(icv,0,nsp(is))=
+     1                   prof(iy)*poloidal_scale_factor
+                
+                      elseif (kind_coeff.eq.6) then
+                        vla0(icv,1,nsp(is))=
+     1                   prof(iy)*poloidal_scale_factor
+
+                      elseif (kind_coeff.eq.7) then
+                        vsa0(icv,nsp(is))=poloidal_scale_factor*
+     1                   prof(iy)*mp*am(nsp(is))*pl%na(icv,nsp(is))
+                 
+                      elseif (kind_coeff.eq.8) then
+
+                        if (csig_an_style.eq.0) then
+                          sig0(icv)=prof(iy)*qe*dv%ne(icv)*
+     1                     poloidal_scale_factor
+                        elseif(csig_an_style.eq.1) then
+                          call xerrab 
+     1                     ('csig_an_style=1 not yet coded for WG')
+#ifdef WG_TODO
+                          sig0(icv)=prof(iy)*qe*dv%ne(nmdpl,-1)*
+     1                     poloidal_scale_factor
+#endif
+                        endif
+
+                      elseif (kind_coeff.eq.9) then
+                        alf0(icv)=poloidal_scale_factor*
+     1                   prof(iy)*dv%ne(icv)*
+     2                   sqrt(qe/pl%te(icv))
+              
+                      else
+                        write(*,*) 
+     .                   'Option',kind_coeff,'not yet implemented'
+                      endif
+                    endif
+                  enddo !ic
+                enddo !ift
+              enddo !iy
+            enddo !is
             if (ncall.eq.0) then
               if (elm_data) then
                 write(hlp_frm,'(a,i3,a)') 
@@ -761,7 +795,6 @@ cdjm Jan2017 Keep linearised sources for balance
           enddo
         enddo
       enddo
-       
        
       goto 100
  99   write (*,*) 'Error in reading the dsp file'
@@ -1017,6 +1050,7 @@ c*** Clear data to forget previous profiles
       call subend ()
       return
       end subroutine axial_profile
+
 
       end module b2mod_input_profile
       

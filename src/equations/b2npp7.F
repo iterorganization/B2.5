@@ -102,14 +102,17 @@
 
 * ..main computation
 *   ..compute residual
+#ifdef WG_TODOs
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+#endif
 *   ..compute correction
       call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,
      &    sch, respo, corpo, aa11)
 *   ..apply correction
+#ifdef WG_TODO
       call b2uppo (nx, ny, rxf, corpo, po)
-
+#endif
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2npp7_te')
 !       call my_out(70,nx,ny,ne,'b2npp7_ne')

@@ -59,7 +59,7 @@ c  version : 26.07.2002 23:39
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (inout) :: rt
+      type (B2Rates), intent (in) :: rt
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 

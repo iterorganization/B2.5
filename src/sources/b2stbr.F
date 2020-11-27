@@ -179,8 +179,8 @@
      4     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      5     redep_alpha/0.0_R8/, temperature_at_guard_cell/1/,
      6     potential_at_guard_cell/1/
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+!      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+!     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -647,7 +647,7 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call, geo, mpg, pl, dv)
+     &                 main_call, geo, mpg, pl, dv, rt)
 
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
@@ -656,7 +656,8 @@ c   --> better solution wanted here..
           if(.not.is_neutral(is)) then
            wrk0=sna0_eir(:,0,is)+
      &          sna0_eir(:,1,is)*pl%na(:,is)
-           call my_out_us(70,nCv,wrk0,'b2stbr_sna_eir'//chns//'_'//ch3)
+           call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns//
+     &                    '_'//ch3)
           endif
          enddo
         endif

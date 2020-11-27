@@ -64,8 +64,10 @@
 
 * ..make plots
 *   ..compute auxiliaries
+#ifdef WG_TODO
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
+#endif
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
      &  fna, fhe, fhi, fch, ne, fne, kinrgy,

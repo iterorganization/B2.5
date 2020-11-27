@@ -51,7 +51,7 @@
 
       call read_mapping (ninp, mpg)
       call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nVmxCv, gm)
+     .  mpg%nFt, mpg%nVmxCv, gm)
       
       end subroutine read_map_geo
 
@@ -71,7 +71,7 @@
 
       call write_mapping (nout, mpg)
       call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nVmxCv, gm)
+     .  mpg%nFt, mpg%nVmxCv, gm)
       
       end subroutine write_map_geo
 
@@ -87,13 +87,14 @@
       integer, intent(in) :: nx, ny
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
+     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, ifs,
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o, iy2o,
-     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
+     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
-     .           lbix, lbiy,
-     .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg
+     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, ifccy,
+     .           lbix, lbiy, nyreg, ixreg, iyreg, is, nxtl, nxtr,
+     .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
+     .           istrtc, istrtfc, istrtfy, ilbl
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -105,8 +106,9 @@
 !     .           locbottomix(:,:), locbottomiy(:,:),
      .           loctopix(:,:), loctopiy(:,:),
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
-     .           ixvxe(:), iyvxe(:)
-
+     .           ixvxe(:), iyvxe(:), ftFcP(:,:), ftCvP(:,:), fsFcP(:,:), 
+     .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), ftLbl(:), 
+     .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:) 
       real(R8) :: xco(4), yco(4), babs
       logical lfound, swapped, classical, bound, lkeep, cellError
       intrinsic pack
@@ -1028,6 +1030,7 @@
 
 ! no. of flux surfaces (conservative estimate)
       m%nFs = max(1,(1 + 2*nncut)*ny)
+      m%nFt = m%nFs
 
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg
@@ -1057,7 +1060,7 @@
       write (*,*) 'Mapping defined, with'
       write (*,*) 'nCv, nCi, nCg  = ', m%nCv, m%nCi, m%nCg
       write (*,*) 'nFc, nVx       = ', m%nFc, m%nVx
-      write (*,*) 'nFs            = ', m%nFs
+      write (*,*) 'nFs, nFt       = ', m%nFs, m%nFt
       write (*,*) 'nCmxFc, nCmxVx = ', m%nCmxFc, m%nCmxVx
       write (*,*) 'nVmxFc, nVmxCv = ', m%nVmxFc, m%nVmxCv
       write (*,*) 'nCmxNv         = ', m%nCmxNv
@@ -1769,61 +1772,229 @@
 
       mxReg = maxval(m%cvReg(1:m%nCv))
 
-! identify the various flux surfaces
-      m%fsCv = 0 ! init to 0
+! identify the various flux tubes and surfaces
+      m%ftCv = 0 ! init to 0
+      m%ftFc = 0 ! init to 0
       m%fsFc = 0 ! init to 0
-      m%fsCvP = 0
+      m%cvFt = 0 ! init to 0
+      m%ftCvP = 0
+      m%ftFcP = 0
       m%fsFcP = 0
-#ifdef WG_TODO
-      ifs = 0
-      icv = 0
-      ifcc = 0
-      do ireg= 1, mxReg
-    	do iy = 1, ny
-          istart = -1
-          do ix = 1, nx
-            if((m%imapCv(ix-1,iy-1)/=0) .and. 
-     &         (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-              ic = m%imapCv(ix-1,iy-1)
-              ifc = m%imapFcx(ix-1,iy-1)
-!	do iy = 0, ny-1
-!	  istart = -1
-!	  do ix = 0, nx-1
-!            ic = (ix+1) + iy*nx
-!            ifc = ix+1 + iy*(nx+1)
-              if (m%cvReg(ic) == ireg) then
-                if (istart == -1) then
-                  ifs = ifs + 1
-                  icv = icv + 1
-                  ifcc = ifcc + 1
-                  m%fsCv(icv) = ic
-                  m%fsCvP(ifs,1) = icv
-                  m%fsFc(ifcc) = ifc
-                  m%fsFcP(ifs,1) = ifcc
-     	          istart = 1
-                else
-     	          icv = icv + 1
-                  ifcc = ifcc + 1
-                  m%fsCv(icv) = ic
-     	          m%fsFc(ifcc) = ifc
-                  m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
-                  m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-                  if (m%imapCv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
-     &              .gt.m%nCi) then
-                    ifcc = ifcc + 1
-                    ifc = 
-     &                m%imapFcx(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
-                    m%fsFc(ifcc) = ifc
-                    m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
+      m%ftLbl = 0
+      if (m%isClassicalGrid.eq.1) then
+! csc these arrays are needed because otherwise the nFt with which the mapping is written
+!     is different wrt the nFt with which they have been allocated
+        allocate (ftCvP(m%nFt,2))
+        allocate (ftFcP(m%nFt,2))
+        allocate (fsFcP(m%nFs,2))
+        allocate (ftReg(m%nFt))
+        allocate (ftLbl(m%nFt))
+        ftCvP = 0
+        ftFcP = 0
+        fsFcP = 0
+        ftReg = 0
+        ftLbl = 0
+        ift = 0
+        ifs = 0
+        icv = 0
+        ifcc = 0
+        ifccy = 0
+        ilbl = 0
+        if (nncut.le.1) then
+          nyreg = 2
+          allocate(nxreg(nyreg),reg(2,nyreg),nseg(2,nyreg))
+          allocate(ixstart(2,nyreg,2),ixend(2,nyreg,2))
+          allocate(iystart(nyreg),iyend(nyreg))
+          iystart(1) = -1
+          iyend(1) = topcut(1)-1
+          iystart(2) = topcut(1)
+          iyend(2) = ny
+          nxreg(1) = 2
+          nxreg(2) = 1
+          nseg(1,1) = 2 !segments for pfr
+          nseg(2,1) = 1 !segments for core
+          nseg(1,2) = 1 !segments for SOL
+          ixstart(1,1,1) = -1 
+          ixend  (1,1,1) = leftcut(1)-1
+          ixstart(1,1,2) = rightcut(1) 
+          ixend  (1,1,2) = nx
+          ixstart(2,1,1) = leftcut(1)
+          ixend  (2,1,1) = rightcut(1)-1
+          ixstart(1,2,1) = -1
+          ixend  (1,2,1) = nx
+          reg(1,1) = 3
+          reg(2,1) = 1
+          reg(1,2) = 2
+        else
+          nyreg = 3
+          call get_nxt(nx, nxtl, nxtr)
+          allocate(nxreg(nyreg),reg(3,nyreg),nseg(3,nyreg))
+          allocate(ixstart(3,nyreg,2),ixend(3,nyreg,2))
+          allocate(iystart(nyreg),iyend(nyreg))
+          nxreg(1) = 3
+          nxreg(2) = 2 !both DDN & DDNU
+          nxreg(3) = 2
+          iystart(1) = -1
+          iyend(1) = topcut(2)-1
+          iystart(2) = topcut(2)
+          iyend(2) = topcut(1)-1
+          iystart(3) = topcut(1)
+          iyend(3) = ny
+          nseg(:,1) = 2 !segments for pfr1/core/pfr2
+          nseg(:,2) = 2 !segments for sol1/pfr2
+          nseg(:,3) = 1 !segments for sol2/sol3
+          ! pfr1
+          ixstart(1,1,1) = -1 
+          ixend  (1,1,1) = leftcut(1)-1
+          ixstart(1,1,2) = rightcut(1) 
+          ixend  (1,1,2) = nx
+          reg(1,1) = 3
+          ! core
+          ixstart(2,1,1) = leftcut(1)
+          ixend  (2,1,1) = leftcut(2)-1 
+          ixstart(2,1,2) = rightcut(2)
+          ixend  (2,1,2) = rightcut(1)-1 
+          reg(2,1) = 1
+          ! pfr2
+          ixstart(3,1,1) = nxtr -1
+          ixend  (3,1,1) = rightcut(2)-1
+          ixstart(3,1,2) = leftcut(2)
+          ixend  (3,1,2) = nxtl -1
+          reg(3,1) = 3
+          if (topcut(1).gt.topcut(2)) then !DDNU
+            ix = 1
+            reg(1,2) = 2
+            reg(2,2) = 3
+          elseif (topcut(1).lt.topcut(2)) then !DDND
+            ix = 2
+            reg(1,2) = 3
+            reg(2,2) = 2
+          else
+            ix = 1
+            nxreg(2) = 0 !CDN
+          endif
+          ! sol1(ddnu)/pfr2(ddnd)
+          ixstart(1,2,1) = nxtr-1
+          ixend  (1,2,1) = rightcut(ix)-1
+          ixstart(1,2,2) = leftcut(ix) 
+          ixend  (1,2,2) = nxtl-1
+          ! pfr2(ddnu)/sol1(ddnd)
+          ixstart(2,2,1) = -1
+          ixend  (2,2,1) = leftcut(ix)-1
+          ixstart(2,2,2) = rightcut(ix) 
+          ixend  (2,2,2) = nx
+          ! sol2
+          ixstart(1,3,1) = -1 
+          ixend  (1,3,1) = nxtl-1
+          reg(1,3) = 2
+          ! sol3
+          ixstart(2,3,1) = nxtr-1
+          ixend  (2,3,1) = nx
+          reg(2,3) = 2
+        endif
+        do iyreg = 1, nyreg
+    	  do iy = iystart(iyreg), iyend(iyreg)
+            ilbl = ilbl + 1
+            do ixreg = 1, nxreg(iyreg)
+              istrtc = -1
+              istrtfc = -1
+              istrtfy = -1
+              do is = 1, nseg(ixreg,iyreg)
+                do ix = ixstart(ixreg,iyreg,is), ixend(ixreg,iyreg,is)
+                  if((m%imapCv(ix,iy)/=0)) then
+                    ic = m%imapCv(ix,iy)
+                    ifc = m%imapFcx(ix,iy)
+                    ifcy = m%imapFcy(ix,iy)
+                    if (istrtc.eq.-1) then
+                      ift = ift + 1
+                      icv = icv + 1
+                      m%ftCv(icv) = ic
+                      ftCvP(ift,1) = icv
+                      m%cvFt(ic) = ift
+                      ftReg(ift) = reg(ixreg,iyreg)
+                      ftLbl(ift) = ilbl
+                      istrtc = 1
+                    else
+                      icv = icv + 1
+                      m%ftCv(icv) = ic
+                      m%cvFt(ic) = ift
+                      ftCvP(ift,2) = icv - ftCvP(ift,1) + 1
+                    end if
+                    if (ifc.ne.0) then
+                      if (istrtfc.eq.-1) then
+                        ifcc = ifcc + 1
+                        m%ftFc(ifcc) = ifc
+                        ftFcP(ift,1) = ifcc
+                        istrtfc = 1
+                      else
+                        ifcc = ifcc + 1
+     	                m%ftFc(ifcc) = ifc
+                        ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
+                      end if
+                    endif
+                    if (ifcy.ne.0) then
+                      if (istrtfy.eq.-1) then
+                        ifs = ifs + 1
+                        ifccy = ifccy + 1
+                        m%fsFc(ifccy) = ifcy
+                        fsFcP(ifs,1) = ifccy
+                        istrtfy = 1
+                      else
+                        ifccy = ifccy + 1
+     	                m%fsFc(ifccy) = ifcy
+                        fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                      end if
+                    endif
                   end if
-                end if
-              end if
-            end if 
-          end do
-        end do	
-      end do
-      m%nFs = ifs
-#endif
+                end do !ix
+              end do !is
+            end do !ixreg
+          end do !iy
+        end do !iyreg
+! csc last flux surface needs ny + 1
+        do ixreg = 1, nxreg(nyreg)
+          istrtfy = -1
+          do is = 1, nseg(ixreg,nyreg)
+            do ix = ixstart(ixreg,nyreg,is), ixend(ixreg,nyreg,is)
+              if((m%imapCv(ix,ny)/=0)) then
+                ifcy = m%imapFcy(ix,ny)
+                if (ifcy.ne.0) then
+                  if (istrtfy == -1) then
+                    ifs = ifs + 1
+                    ifccy = ifccy + 1
+                    m%fsFc(ifccy) = ifcy
+                    fsFcP(ifs,1) = ifccy
+                    istrtfy = 1
+                  else
+                    ifccy = ifccy + 1
+     	            m%fsFc(ifccy) = ifcy
+                    fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
+                  endif
+                endif
+              endif
+            enddo !ix
+          enddo !is
+        enddo !ixreg
+        m%nFt = ift
+        m%nFs = ifs
+! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
+        deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg,m%ftLbl)
+        allocate (m%ftFcP(m%nFt,2))
+        allocate (m%ftCvP(m%nFt,2))
+        allocate (m%fsFcP(m%nFs,2))
+        allocate (m%ftReg(m%nFt))
+        allocate (m%ftLbl(m%nFt))
+        m%ftFcP = ftFcP(1:m%nFt,:)
+        m%ftCvP = ftCvP(1:m%nFt,:)
+        m%fsFcP = fsFcP(1:m%nFs,:)
+        m%ftReg = ftReg(1:m%nFt)
+        m%ftLbl = ftLbl(1:m%nFt)
+        deallocate(ftFcP,ftCvP,fsFcP,ftReg,ftLbl)
+        deallocate(ixstart, ixend, iystart, iyend, reg, nxreg, nseg)
+      else
+        write (*,*) 'WARNING flux surfaces not yet available'//
+     .              ' for non-classical grids'
+      endif
 
       deallocate (icorner)
       deallocate (ighostcv)
@@ -1854,12 +2025,14 @@
 
 ***********************************************************************
 
-      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv,
-     .  gm, mpg)
+      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nFt, 
+     .  nVmxCv, gm, mpg)
 
       implicit none
-      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2
+      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
+     .                       nVmxCv
+      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2, icv,
+     .           ift
       real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -1868,7 +2041,7 @@
 
       nfx = (nx+1)*ny
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
 ! cell volumes 
       do iy = -1, ny
@@ -2022,9 +2195,16 @@
       end do
       close (idb)
 #endif      
- 
-! connection length for core region
-      gm%fsConn = 0.0_R8
+! Psi for each flux surface
+      deallocate(gm%fsPsi)
+      allocate (gm%fsPsi(mpg%nFs))
+      gm%fsPsi = 0.0_R8
+      do ift = 1, nFs
+        ifc = mpg%fsFc(mpg%fsFcP(ift,1))
+        gm%fsPsi(ift) = gm%vxFpsi(mpg%fcVx(ifc,1))
+      end do
+! calculate connection length
+      call calc_conn(mpg, gm)
 #ifdef WG_TODO
       do i = 1, nFs 
        ic = mpg%fsCv(mpg%fsCvP(i,1))
@@ -2075,6 +2255,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % pl % te(ic) = te(ix,iy)
             st % pl % ti(ic) = ti(ix,iy)
             st % pl % tn(ic) = tn(ix,iy)
+            st % pl % kt(ic) = kt(ix,iy)
 
 ! B2coeff
             st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2089,6 +2270,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % co % hce0(ic) = hce0(ix,iy)
             st % co % sig0(ic) = sig0(ix,iy)
             st % co % alf0(ic) = alf0(ix,iy)
+            st % co % dkt0(ic) = dkt0(ix,iy)
+            st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+            st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+            st % co % hci_ExB(ic) = hci_ExB(ix,iy)
       
 ! kinetic energy
             st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2107,6 +2292,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % dv % reshi(ic) = reshi(ix,iy)
 !          st % dv % resht(ic) = resht(ix,iy)
             st % dv % resmt(ic) = resmt(ix,iy)
+            st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
             st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2163,6 +2349,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
           st % pl % tn(ic) = tn(ix,iy)
+          st % pl % kt(ic) = kt(ix,iy)
 
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2177,6 +2364,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2195,6 +2386,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2247,6 +2439,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
           st % pl % tn(ic) = tn(ix,iy)
+          st % pl % kt(ic) = kt(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2261,6 +2454,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2279,6 +2476,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2335,6 +2533,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
           st % pl % tn(ic) = tn(ix,iy)
+          st % pl % kt(ic) = kt(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2349,6 +2548,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2367,6 +2570,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2420,6 +2624,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
           st % pl % tn(ic) = tn(ix,iy)
+          st % pl % kt(ic) = kt(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2434,6 +2639,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dkt0(ic) = dkt0(ix,iy)
+          st % co % dna_ExB(ic) = dna_ExB(ix,iy)
+          st % co % hce_ExB(ic) = hce_ExB(ix,iy)
+          st % co % hci_ExB(ic) = hci_ExB(ix,iy)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2452,6 +2661,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % reskt(ic) = reskt(ix,iy)
       
 ! corrections
           st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
@@ -2506,6 +2716,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
             st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
             st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
+            st % co % cdkt(ifc,0:1) = cdkt(ix,iy,0,0:1)
 
             st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
             st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
@@ -2580,6 +2791,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
             st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fkt(ifc,0:1) = fkt(ix,iy,0,0:1)
             st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
             st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
             st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
@@ -2648,6 +2860,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           st % co % csig_an(ifc,0:1) = csig_an(ix,iy,1,0:1)
           st % co % calf(ifc,0:1) = calf(ix,iy,1,0:1)
+          st % co % cdkt(ifc,0:1) = cdkt(ix,iy,1,0:1)
         
           st % co % csig(ifc,0:1) = csig(ix,iy,1,0:1)
           st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
@@ -2720,6 +2933,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
         
           st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fkt(ifc,0:1) = fkt(ix,iy,1,0:1)
           st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
           st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
           st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
@@ -2843,6 +3057,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           te(ix,iy)        = st % pl % te(ic) 
           ti(ix,iy)        = st % pl % ti(ic) 
           tn(ix,iy)        = st % pl % tn(ic) 
+          kt(ix,iy)        = st % pl % kt(ic) 
 
 ! B2coeff
           ceqp(ix,iy) = st % co % ceqp(ic)
@@ -2858,6 +3073,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           hce0(ix,iy)            = st % co % hce0(ic) 
           sig0(ix,iy)            = st % co % sig0(ic)
           alf0(ix,iy)            = st % co % alf0(ic)
+          dkt0(ix,iy)            = st % co % dkt0(ic) 
+          dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+          hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+          hci_ExB(ix,iy)         = st % co % hci_ExB(ic) 
       
 ! kinetic energy
           kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -2877,6 +3096,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           reshn(ix,iy)        = st % dv % reshn(ic)
 !         resht(ix,iy)        = st % dv % resht(ic)
           resmt(ix,iy)        = st % dv % resmt(ic)
+          reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
           corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -2899,6 +3119,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           she(ix,iy,0:3)        = st % sr % she(ic,0:3)
           shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
           shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+          skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+          skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+          skt_diss(ix,iy)       = st % sr % skt_diss(ic)
           smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
           smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -2936,6 +3159,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
         tn(ix,iy)        = st % pl % tn(ic)
+        kt(ix,iy)        = st % pl % kt(ic)
 
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -2951,6 +3175,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -2970,6 +3198,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -2992,6 +3221,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3025,6 +3257,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
         tn(ix,iy)        = st % pl % tn(ic)
+        kt(ix,iy)        = st % pl % kt(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -3040,6 +3273,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3059,6 +3296,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3081,6 +3319,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3117,6 +3358,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
         tn(ix,iy)        = st % pl % tn(ic)
+        kt(ix,iy)        = st % pl % kt(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -3132,6 +3374,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3151,6 +3397,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3173,6 +3420,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3206,6 +3456,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
         tn(ix,iy)        = st % pl % tn(ic)
+        kt(ix,iy)        = st % pl % kt(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -3221,6 +3472,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
         alf0(ix,iy)            = st % co % alf0(ic)
+        dkt0(ix,iy)            = st % co % dkt0(ic) 
+        dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
+        hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
+        hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3240,6 +3495,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
+        reskt(ix,iy)        = st % dv % reskt(ic)
       
 ! corrections
         corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
@@ -3262,6 +3518,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
+        skt(ix,iy,0:3)        = st % sr % skt(ic,0:3)
+        skt_prod(ix,iy)       = st % sr % skt_prod(ic)
+        skt_diss(ix,iy)       = st % sr % skt_diss(ic)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3418,6 +3677,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           csig_an(ix,iy,0,0:1) = st % co % csig_an(ifc,0:1)
           calf(ix,iy,0,0:1)    = st % co % calf(ifc,0:1)
+          cdkt(ix,iy,0,0:1)    = st % co % cdkt(ifc,0:1)
 
           csig(ix,iy,0,0:1) = st % co % csig(ifc,0:1)
           csigin(ix,iy,0,0:1,0:ns-1,0:ns-1) = 
@@ -3494,6 +3754,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(ifc,0:1,0:ns-1)
 
           fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
+          fkt(ix,iy,0,0:1)     = st % dv % fkt(ifc,0:1)
           fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,0,0:1) = st % dv % fhePSch(ifc,0:1)
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
@@ -3552,6 +3813,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 ! B2coeff
           csig_an(ix,iy,1,0:1) = st % co % csig_an(ifc,0:1)
           calf(ix,iy,1,0:1)    = st % co % calf(ifc,0:1)
+          cdkt(ix,iy,1,0:1)    = st % co % cdkt(ifc,0:1)
         
           csig(ix,iy,1,0:1) = st % co % csig(ifc,0:1)
           csigin(ix,iy,1,0:1,0:ns-1,0:ns-1) =
@@ -3626,6 +3888,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(ifc,0:1,0:ns-1)
 
           fhe(ix,iy,1,0:1)     = st % dv % fhe(ifc,0:1)
+          fkt(ix,iy,1,0:1)     = st % dv % fkt(ifc,0:1)
           fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(ifc,0:1)
           fhet(ix,iy,1,0:1)    = st % dv % fhet(ifc,0:1)
@@ -3705,8 +3968,8 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
 *   ..write plasma state
       call b2wups (nout_st, nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, tn, po, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, 
-     &  kinrgy,
+     &  ti, tn, po, kt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, 
+     &  fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,

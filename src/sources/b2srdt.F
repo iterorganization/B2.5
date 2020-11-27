@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
-     &  na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
+     &  na0, ua0, te0, ti0, tn0, ne0, ni0, kinrgy0, kt0,
+     &  na, ua, te, ti, tn, ne, ni, kinrgy, kt,                           !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
       use b2mod_types 
       use b2mod_numerics_namelist 
@@ -23,12 +23,12 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  dtim, BoRiS, na0(nCv,0:ns-1),
-     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv),
+     &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
      &  ne0(nCv), ni0(nCv,0:1),
-     &  kinrgy0(nCv,0:ns-1),
+     &  kinrgy0(nCv,0:ns-1), kt0(nCv),
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1),              !srv 16.07.10
-     &  te(nCv), ti(nCv), ne(nCv),
-     &  ni(nCv,0:1), kinrgy(nCv,0:ns-1)
+     &  te(nCv), ti(nCv), tn(nCv), ne(nCv),
+     &  ni(nCv,0:1), kinrgy(nCv,0:ns-1), kt(nCv)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
 *   ..common blocks
@@ -108,6 +108,7 @@
        call b2xvsg (nCv, ne0, 1, 'ne0', '.gt.')
        call b2xvsg (2*nCv, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
+       call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
       endif
 
 cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
@@ -163,6 +164,14 @@ csw 24feb2014 check for guard cell (SOLPS4)
 *         shedt(iCv,1) = (unchanged)
 *         shedt(iCv,2) = (unchanged)
           sr%she(iCv,3) = sr%she(iCv,3)-1.5_R8*t0
+
+          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+          t0 = (phm3/ttim)*geo%cvVol(iCv)
+          sr%skt(iCv,0) = sr%skt(iCv,0)+
+     &     t0*ni0(iCv,1)*kt0(iCv)
+*         sktdt(iCv,1) = (unchanged)
+*         sktdt(iCv,2) = (unchanged)
+          sr%skt(iCv,3) = sr%skt(iCv,3)-t0
       enddo
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
@@ -170,11 +179,18 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (phm3/ttim)*geo%cvVol(iCv)
-          sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-          sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-
+          if (tn_style.eq.0) then
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          elseif (tn_style.eq.1) then
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+          else
+            sr%shi(iCv,0) = sr%shi(iCv,0)+
+     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+            sr%shn(iCv,0) = sr%shn(iCv,0)+
+     &       1.5_R8*t0*(ni0(iCv,0)-ni0(iCv,1))*tn0(iCv)
+          endif
           if (BoRiS.eq.1.0_R8) then
             if (tn_style.ne.0) then
               call xerrab('BoRiS only with default energy eq.')
@@ -271,6 +287,7 @@ cdjm Store the total change in linearised sources for balance
         call my_out_us(70,nCv,0,sr%she(1,k),'b2srdt_shedt'//chk)
         call my_out_us(70,nCv,0,sr%shi(1,k),'b2srdt_shidt'//chk)
         call my_out_us(70,nCv,0,sr%sch(1,k),'b2srdt_schdt'//chk)
+        call my_out_us(70,nCv,0,sr%skt(1,k),'b2srdt_sktdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
 

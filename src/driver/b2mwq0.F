@@ -71,7 +71,7 @@
 *   ..set nfld
       nfld = 0
       if (1.le.style) then
-       nfld = nfld+2+2*(2*ns+4)
+       nfld = nfld+2+2*(2*ns+6)
       endif
       if (2.le.style) then
        nfld = nfld+36*(ns+3)
@@ -82,7 +82,6 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
-      nfld = nfld + 1
 *   ..set ll
 *     (silly time; ll is needed as an argument to cfwuin)
       ll(0) = 0
@@ -159,6 +158,12 @@
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')
        k = k+1
+       chtit = 'norm of residual of turbulent kinetic energy equation'
+       chlab = 'areskt'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         write (id,'(i3)') is
@@ -198,8 +203,20 @@
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')
        k = k+1
+       chtit = 'norm of correction of the fluid neutral heat equation'
+       chlab = 'acortn'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
        chtit = 'norm of correction of electric potential'
        chlab = 'acorpo'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
+       chtit = 'norm of correction of turbulent kinetic energy'
+       chlab = 'acorkt'
        call cfwuin (nput, 1, ll(1), 'linlog')
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')

@@ -18,6 +18,7 @@
      *   solveei(:),
      *   solveen(:),
      *   solveet(:),
+     *   solvekt(:),
      *   last_solve_5(:),
      *   last_solve_9(:)
 #else
@@ -38,6 +39,7 @@
       logical, save :: solveei(0:CVREGMAX)
       logical, save :: solveen(0:CVREGMAX)
       logical, save :: solveet(0:CVREGMAX)
+      logical, save :: solvekt(0:CVREGMAX)
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
 #endif
@@ -54,7 +56,7 @@
       namelist /numerics/ dtco,dtmo,dtee,dtei,dten,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
-     3 write_nml_num,numerics_filename,numerics_time_mod,
+     3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
      $ numerics_time_switch
 
 
@@ -85,6 +87,7 @@
       allocate(solveei(0:nnreg(0)))
       allocate(solveen(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
+      allocate(solvekt(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
 #else
@@ -112,6 +115,7 @@
       solveei=.true.
       solveen=.true.
       solveet=.true.
+      solvekt=.true.
       last_solve_5=.true.
       last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
@@ -142,6 +146,7 @@
       deallocate(solveei)
       deallocate(solveen)
       deallocate(solveet)
+      deallocate(solvekt)
       deallocate(last_solve_5)
       deallocate(last_solve_9)
 #endif
@@ -190,9 +195,9 @@
       endif
 
       call xertst (0.0_R8.le.numerics_time_mod,
-     . 'faulty input boundary_time_mod')
+     . 'faulty input numerics_time_mod')
       call xertst (0.0_R8.le.numerics_time_switch,
-     . 'faulty input boundary_time_switch')
+     . 'faulty input numerics_time_switch')
       call xertst (0.0_R8.lt.core_dt_suppression,
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,

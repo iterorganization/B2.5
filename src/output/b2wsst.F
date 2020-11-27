@@ -114,8 +114,10 @@
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
 *   ..test plasma state
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..test sign of ni, pr, ro, rz
       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
       call b2xvsg (n2, pr, 1, 'pr', '.gt.')

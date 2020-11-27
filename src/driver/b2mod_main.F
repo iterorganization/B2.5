@@ -238,13 +238,14 @@ csw
         call xerrab('Using old input format. Run b2us first.')
       endif
 *   ..obtain mapping/geometry dimensions from file
-      call cfruin (ninp(1),6,idum,'nCi,nCg,nCv,nFc,nVx,nFs')
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       mpg%nCi = idum(0) 
       mpg%nCg = idum(1) 
       mpg%nCv = idum(2)
       mpg%nFc = idum(3)
       mpg%nVx = idum(4)
       mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
       call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
       mpg%nCmxVx = idum(0)
       mpg%nCmxFc = idum(1)
@@ -280,7 +281,7 @@ csw
 *   ..obtain external state
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nVmxCv)
+     .  mpg%nFt, mpg%nVmxCv)
       call createB2State (mpg%nCv, mpg%nFc, ns, state)
       call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
 *   ..call principal driver routine
@@ -292,7 +293,7 @@ csw
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step
+      subroutine b2mn_step(J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_boundary_namelist

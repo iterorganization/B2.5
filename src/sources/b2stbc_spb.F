@@ -193,8 +193,10 @@
        call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
        call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test state
+#ifdef WG_TODO
        call b2xvps (nx, ny, ns, ne, na, ua, te, ti, po, 
      &              fna, fhe, fhi, fch)
+#endif
 *    ..test edge values of fne, fni
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
@@ -233,7 +235,9 @@
 * ..compute conditions at south boundary
 *   ..initialize ireg
        ireg = cbirso
+#ifdef WG_TODO
 	 call b2xppz (nx, ny, ns, ne, na, te, ti, pz)             !sv 18.01.02
+#endif
 *   ..find the average pressure for inner flux surface            !sv 24.03.99
        if (istyle_average_pr .eq.0) then                          !sv 08.08.02
         iy = -1                                                   !sv 24.03.99

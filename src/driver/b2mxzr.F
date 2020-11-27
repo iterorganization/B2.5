@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2mxzr (nCv, ns, mpg, resco, resmo, resmt, reshe,
-     &  reshi, respo)
+     &  reshi, reshn, respo, reskt)
       use b2mod_types
       use b2us_map
       implicit none
@@ -13,7 +13,7 @@
       real (kind=R8) ::
      *  resco(nCv,0:ns-1), resmo(nCv,0:ns-1),
      &  resmt(nCv), reshe(nCv), reshi(nCv),
-     &  respo(nCv)
+     &  respo(nCv), reshn(nCv), reskt(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -83,10 +83,20 @@
        do iCv = mpg%nCi+1, nCv
         reshi(iCv) = 0.0_R8
        enddo
+*   ..zero-out parts of (tn) residual
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshn, 0)
+       do iCv = mpg%nCi+1, nCv
+        reshn(iCv) = 0.0_R8
+       enddo
 *   ..zero-out parts of (po) residual
 !WG_TODO      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
        do iCv = mpg%nCi+1, nCv
         respo(iCv) = 0.0_R8
+       enddo
+*   ..zero-out parts of (kt) residual
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reskt, 0)
+       do iCv = mpg%nCi+1, nCv
+        reskt(iCv) = 0.0_R8
        enddo
 
 #ifdef WG_TODO
@@ -102,7 +112,9 @@
             resmt(ix,iy) = 0.0_R8
             reshe(ix,iy) = 0.0_R8
             reshi(ix,iy) = 0.0_R8
+            reshn(ix,iy) = 0.0_R8
             respo(ix,iy) = 0.0_R8
+            reskt(ix,iy) = 0.0_R8
           endif
         enddo
       enddo

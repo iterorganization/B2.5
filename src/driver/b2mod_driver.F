@@ -127,14 +127,16 @@
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
-     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
+     *  tn_style = 0, kul_recycle = 0, user_transport = 0,
+     *  solve_keps = 0 
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps, sput_frc, 
+     2  sput_phys, delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
@@ -163,7 +165,7 @@
       integer stack_ntim(20)
       integer stack_ptr
       real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco
+     *  min_areshe, min_areshi, min_aresco, res_quit, res_max
       logical quit_residual, test_residual
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
@@ -175,7 +177,7 @@
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
      4  use_astra, BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     .  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
      7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
@@ -185,7 +187,7 @@
 #endif
       save delta_cdfmovie_time, save_cdfmovie_time
       save delta_plasma_time, save_plasma_time
-      save min_areshe, min_areshi, min_aresco
+      save min_areshe, min_areshi, min_aresco, res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
@@ -202,6 +204,7 @@
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
+     5     kt_eps/1.0e-2_R8/,
      6     ua_eps/1.0e+4_R8/,
      7     delta_min/0.0_R8/,
      8     dt_change_inc/1.0_R8/,
@@ -217,7 +220,8 @@
 #endif
       data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
-      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/
+      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
+     &     res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
@@ -259,8 +263,8 @@
      & rescale_rd, rescale_br
 *   ..procedures
       logical lnext
-      real (kind=R8) :: rratio
-      external rratio
+      real (kind=R8) :: rratio, smax
+      external rratio, smax
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
@@ -643,12 +647,15 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
-*     logu(rtrqa), where rtrqa is the electron heat loss rate
-*     coefficient at electron temperature rtt(i) and electron density
-*     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
+*     at electron temperature rtt(i) and electron density rtn(j) for 
+*     processes starting from charge state k, excluding the contributions 
+*     coming from potential energy of recombination and other recombination 
+*     process contributions. In short, it includes the processes not 
+*     accounted for in EIRENE.
+*     rtqa has dimension eV*m**3/s.
 *     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
 *     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
@@ -968,6 +975,9 @@
        else                                                              !jwk
           test_residual=.false.                                          !jwk
        endif                                                             !jwk
+       call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
+       call xertst (res_quit.ge.0.0_R8,                                  !sc
+     &      'faulty internal parameter res_quit')                        !sc
        call ipgeti ('b2mndr_plasinc', plasinc)
        call ipgeti ('b2mndr_plasnum', plasnum)
        call ipgeti ('b2mndr_mvinc', mvinc)
@@ -1029,6 +1039,7 @@
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_ntim_run', ntim_run)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
+       call ipgeti ('b2mndr_solve_keps', solve_keps)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1053,6 +1064,8 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.po_eps,'faulty internal parameter po_eps')
        call ipgetr ('b2mndr_ua_eps',ua_eps)
        call xertst (0.0_R8.lt.ua_eps,'faulty internal parameter ua_eps')
+       call ipgetr ('b2mndr_kt_eps',kt_eps)
+       call xertst (0.0_R8.lt.kt_eps,'faulty internal parameter kt_eps')
        call ipgetr ('b2mndr_delta_min',delta_min)
        call xertst (0.0_R8.le.delta_min,
      1  'faulty internal parameter delta_min')
@@ -1164,12 +1177,15 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(neutral_sources_rescale),
-     *         ' to relevant rtlra'
+     *         ' to relevant rtlra and rtlqa_ra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
+     *             log(neutral_sources_rescale)
+                write(*,*) is,zamax(is),rtlqa_ra(0,0,is+1)
              endif
            enddo
          else
@@ -1239,6 +1255,17 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
+       call ipgeti ('b2mn_tn_style', tn_style)
+       call xertst(tn_style.ge.0 .and. tn_style.le.2 ,
+     &   'tn_style value not supported')
+       call ipgeti ('b2stbr_kul_recycle', kul_recycle)
+       call ipgeti ('b2tqna_user_transport', user_transport)
+c       if (kul_recycle.eq.1 .XOR. user_transport.eq.10) call xerrab(
+c     &   'Must use user_transport=10 and kul_recycle=1 together')
+       if (tn_style.gt.0 .and. ns.gt.2) call xerrab(
+     &   'tn_style=1,2 not supported for multispecies plasma')
+       if (tn_style.gt.0 .and. kul_recycle.eq.0) call xerrab(
+     &   'Must use kul_recycle=1 with tn_style>0')
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1428,6 +1455,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 #endif
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
+      if (solve_keps.gt.0 .and. .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
+     .  state%pl%kt = state%pl%ti*0.1_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
 !    call read_plasma_state_diff (ninp(6), ns, mpg%nCv, mpg%nFc, stated)
@@ -1448,7 +1477,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (ird_aver > 0)
      &  call run_av_get_plasma (state%pl%na, state%pl%te, 
      &             state%pl%ti, state%pl%ua, state%pl%po, 
-     &       nCv, ns)
+     &             state%pl%kt, nCv, ns)
 
       write (*,*) 'Starting conversion to unstructured format...'
 
@@ -1724,9 +1753,6 @@ c   --> better way doing this is necessary)
 !WG_TODO     &  te, ti, po, fna, fhe, fhi, fch)
 
 * ..main loop
-*   ..initialise counters
-      itim = 0
-      itim_plas = 0
       if (stim.ge.0.0_R8) tim = stim
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
@@ -1741,7 +1767,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
-      call alloc_b2mod_user(mpg,ns,nlim,nmol,nsts)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -1785,10 +1811,6 @@ c new CDF movie option (1st frame at t=0)
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
       endif
-      cpuval = 0.0_R8
-      elapsedval = 0.0_R8
-      stack_ptr = 0
-      first_time_step=.true.
       
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
@@ -1830,10 +1852,18 @@ c new CDF movie option (1st frame at t=0)
       call subini ('b2mndr_1')
 *   ..no error so far
       ierr = 0
+*   ..initialise counters
+      itim = 0
+      itim_plas = 0
+      cpuval = 0.0_R8
+      elapsedval = 0.0_R8
+      stack_ptr = 0
+      first_time_step=.true.
       quit=.false.
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11
       quit_residual=.false.                                         !jwk
+      res_max = 10.0_R8*res_quit
       ne_wanted_next_time=tim
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
@@ -1843,19 +1873,25 @@ cwdk  set some integers
       nVx = mpg%nVx
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
-
+#ifdef FIXED_POINT
+! $AD FP-LOOP "res_max"
+      do while (res_max.ge.res_quit)
+#else
     1 continue
+#endif
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
       call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
+#ifndef FIXED_POINT
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
       if (first_time_step.or.
      &    (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
      &     (etim.gt.tim.or.etim.eq.0.0_R8))) then !{
+#endif
 
 #ifdef WG_TODO
 !!!
@@ -1893,10 +1929,14 @@ cwdk  set some integers
         state%psnc%te = state%pl%te
         state%psnl%ti = state%psnc%ti
         state%psnc%ti = state%pl%ti
+        state%psnl%tn = state%psnc%tn
+        state%psnc%tn = state%pl%tn
         state%psnl%kinrgy = state%psnc%kinrgy
         state%psnc%kinrgy = state%dv%kinrgy
         state%psnl%po = state%psnc%po
         state%psnc%po = state%pl%po
+        state%psnl%kt = state%psnc%kt
+        state%psnc%kt = state%pl%kt
         state%psnl%fna = state%psnc%fna
         state%psnc%fna = state%dv%fna
         state%psnl%fhe = state%psnc%fhe
@@ -1905,6 +1945,8 @@ cwdk  set some integers
         state%psnc%fhi = state%dv%fhi
         state%psnl%fch = state%psnc%fch
         state%psnc%fch = state%dv%fch
+        state%psnl%fkt = state%psnc%fkt
+        state%psnc%fkt = state%dv%fkt
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
@@ -1938,7 +1980,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(mpg, state, geo, J)
+        call b2usr_cost_function(ns, mpg, state, geo, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
@@ -1999,6 +2041,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%ti+ti_eps*ev)))
         write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
+     &    (abs(state%pl%kt)+kt_eps*ev)))
         write(*,*) 'delta ua ',
      *   maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
@@ -2013,6 +2057,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%ti+ti_eps*ev))),
      &     maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
+     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &    (state%pl%kt+kt_eps*ev))),
      &     maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
@@ -2083,6 +2129,7 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2091,7 +2138,8 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+        call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
+     .              state%pl,state%dv,state%co,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
@@ -2107,10 +2155,11 @@ c new CDF movie option
              edition_run = edition_run + 1
              write (run_av_name,'(a14,i4.4)') 
      .              'run_av/run_av.',edition_run
-             call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
+             call run_av_save (run_av_name,nCv,ns,.true.,.false.)
              write(*,*) 'Saved ',run_av_name
           end if
         end if
+#ifdef WG_TODO
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2159,11 +2208,30 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
+        res_max = 0.0_R8
+        do is = 0, ns-1
+          if (any(solveco(is,:)))
+     &       res_max = max(res_max,state%diag%aresco(is))
+          if (any(solvemo(is,:)))
+     &      res_max = max(res_max,state%diag%aresmo(is))
+        end do
+        if (any(solvepo))
+     &    res_max = max(res_max,state%diag%arespo)
+        if (any(solveee))
+     &    res_max = max(res_max,state%diag%areshe)
+        if (any(solveei))
+     &    res_max = max(res_max,state%diag%areshi)
+        if (any(solveen).and.tn_style.eq.2)
+     &    res_max = max(res_max,state%diag%areshn)
+        if (any(solvekt).and.solve_keps.eq.1)
+     &    res_max = max(res_max,state%diag%areskt)
+        
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
-     &        (areshe*min_areshe).le.(min_areshe*min_areshe).and.        !jwk
-     &        (areshi*min_areshi).le.(min_areshi*min_areshi).and.        !jwk
-     &        (aresco(ismain)*min_aresco).le.(min_aresco*min_aresco)     !jwk
+     &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
+     &        .and.(state%diag%areshi*min_areshi).le.(min_areshi*        !jwk
+     &        min_areshi).and.(state%diag%aresco(ismain)*min_aresco)     !jwk
+     &        .le.(min_aresco*min_aresco)                                !jwk
         endif                                                            !jwk
         quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
@@ -2281,10 +2349,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   float(topiy))
         endif
 #endif
+#ifdef FIXED_POINT
+*   ..loop test
+      if (quit .or. itim.ge.ntim .or. ierr.ne.0 .or.
+     &     (etim.le.tim .and. etim.gt.0.0_R8) ) then
+        exit
+      endif
+*   ..end loop
+      end do
+#else
         goto 1
 *   ..end loop
       endif  !}
-
+#endif
       call subend ()
       return
       end subroutine b2mndr_1
@@ -2324,7 +2401,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because ierr <> 0: ',ierr
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
-
+#ifdef FIXED_POINT
+      if(res_max.le.res_quit)  
+     1 write(*,*) 'stopping because res_quit criteria satisfied'
+#endif
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -2437,8 +2517,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
-     *                BoRiS,.true.,.false.,.false.)
+          call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
+     *                state%pl,state%dv,state%co,ismain,ismain0,BoRiS,
+     *                .true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
@@ -2543,7 +2624,7 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
+     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi, rate_qa_ra
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac
@@ -2578,6 +2659,8 @@ c
      1     fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
           rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
      1     fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qa_ra = exp((1.0_R8-fxte)*rtlqa_ra(ixte,ine,ise) +
+     1     fxte*rtlqa_ra(ixte+1,ine,ise)) * ne_hot_frac
           rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
      1     fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
           rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
@@ -2599,6 +2682,9 @@ c
      1       log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
             rtlqa(ite,ine,ise) =
      1       log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
+            rtlqa_ra(ite,ine,ise) =
+     1       log(exp(rtlqa_ra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+
+     2       rate_qa_ra)
             rtlrd(ite,ine,ise) =
      1       log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
             rtlbr(ite,ine,ise) =

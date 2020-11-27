@@ -50,7 +50,9 @@
       diag%acorut = samax(nCv,dv%corut,1)
       diag%acorte = samax(nCv,dv%corte,1)
       diag%acorti = samax(nCv,dv%corti,1)
+      diag%acortn = samax(nCv,dv%cortn,1)
       diag%acorpo = samax(nCv,dv%corpo,1)
+      diag%acorkt = samax(nCv,dv%corkt,1)
 
 * ..return
       ncall = ncall+1

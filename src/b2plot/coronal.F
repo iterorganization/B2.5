@@ -243,13 +243,14 @@ c     -------------------------------------------------------------------------
       call subini('corora')
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
+#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
      &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
      &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi)
-
+#endif
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1
@@ -335,13 +336,14 @@ c     -------------------------------------------------------------------------
       call subini('coroni')
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
+#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
      &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi)
-
+#endif
 c     initialise array on stack for coronal radiation
       if(iwrk .ge. wklng) call dropstackbottom()
       iwrk=iwrk+1

@@ -2,8 +2,12 @@
 *.specification
 
       program b2mn
+      use b2mod_types
       use b2mod_main
+      use b2mod_user_namelist
+     , , only: nncf
       implicit none
+      real(kind=R8) J(nncf)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -105,7 +109,7 @@
 *.computation
 
       call b2mn_init
-      call b2mn_step
+      call b2mn_step(J)
       call b2mn_fin
 
       stop 'b2mn'

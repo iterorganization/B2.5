@@ -319,14 +319,14 @@
 *   ..read physics parameters
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 
 * ..output
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for default physics parameters:'
       write (nout(0),'(/4x,a/4x,a)') lblcp(1:60), lblcp(61:120)
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..write physics parameters
       call b2wfcp (nout(0), 1, ns)
 *   ..write version number
@@ -337,7 +337,7 @@
 *   ..save label
       call cfwuch (nout(1), 120, lblcp, 'label')
 *   ..save physics common
-      call b2wucp (nout(1), newversion, nx, ns)
+      call b2wucp (nout(1), newversion, ns)
 
 * ..return
       call subend ()

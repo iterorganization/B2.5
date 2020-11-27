@@ -6367,7 +6367,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
-          if (kul_recycle.ne.1) then !! default, include also contribution from fluid neutrals in hci0.
+          if (tn_style.eq.0.and.kul_recycle.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
           srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
      &                    sy
           else
@@ -6375,10 +6375,12 @@ cghgh
      &                    sy
           endif
           do is = 0, ns-1
-            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
+            if(.not.(is_neutral(is)) .or. tn_style.eq.0) then
+              srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
-            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
+              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
      &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
+            endif
           enddo !! end species loop
         enddo   !! end boundary cell loop
 #ifdef WG_TODO
@@ -9026,6 +9028,155 @@ c end of implementation
          endif
         endif                                                        !srv 01.02.09 }
 #endif
+* -- BOUNDARY CONDITIONS FOR TURBULENT KINETIC ENERGY EQUATION --
+
+        select case (BCENK(IB))
+
+        case (0)
+
+* -- BCENK=1 -- PRESCRIBE THE VALUE OF KT
+
+        case (1)
+        if(ncall.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified kt ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+          call xertst(ENKPAR(IB,1).gt.0.0_R8,
+     1     'BCENK = 1, ENKPAR(,1) !> 0')
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enkpar(iB,1)*EV
+          srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+* -- BCENK=2 -- not implemented
+        case (2)
+        CALL XERRAB ('B2STBC -- BCENK=2, NOT AVAILABLE')
+
+* -- BCENK=3 -- not implemented
+        case (3)
+        CALL XERRAB ('B2STBC -- BCENK=3, NOT AVAILABLE')
+
+* -- BCENK=4 -- not implemented
+        case (4)
+        CALL XERRAB ('B2STBC -- BCENK=4, NOT AVAILABLE')
+
+* -- BCENK=5 -- not implemented
+        case (5)
+        CALL XERRAB ('B2STBC -- BCENK=5, NOT AVAILABLE')
+
+* -- BCENK=6 -- not implemented
+        case (6)
+        CALL XERRAB ('B2STBC -- BCENK=6, NOT AVAILABLE')
+
+* -- BCENK=7 -- not implemented
+        case (7)
+        CALL XERRAB ('B2STBC -- BCENK=7, NOT AVAILABLE')
+
+* -- BCENK=8 -- not implemented
+        case (8)
+        CALL XERRAB ('B2STBC -- BCENK=8, NOT AVAILABLE')
+
+* -- BCENK=9 -- not implemented
+        case (9)
+        CALL XERRAB ('B2STBC -- BCENK=9, NOT AVAILABLE')
+
+* -- BCENK=10 -- not implemented
+        case (10)
+        CALL XERRAB ('B2STBC -- BCENK=10, NOT AVAILABLE')
+
+* -- BCENK=11 -- not implemented
+        case (11)
+        CALL XERRAB ('B2STBC -- BCENK=11, NOT AVAILABLE')
+
+* -- BCENK=12 -- not implemented
+        case (12)
+        CALL XERRAB ('B2STBC -- BCENK=12, NOT AVAILABLE')
+
+* -- BCENK=13 -- not implemented
+        case (13)
+        CALL XERRAB ('B2STBC -- BCENK=13, NOT AVAILABLE')
+
+* -- BCENK=14 -- Leakage option for turbulent kinetic energy
+        case (14)
+        if(ncall.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'turb. kin. energy leakage ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          srw%skt0(iCv1,0) = 0.0_R8
+          srw%skt0(iCv1,3) = geo%fcS(iFc)*cs*enkpar(ib,1)
+        enddo  
+
+* -- BCENK=15 -- Sheath tranmission factor
+        case (15)
+        if(ncall.eq.0) then
+            write(*,*) 'BCENK=15 - assuming BCCON=14 for all ions'
+#ifdef WG_TODO
+          IF(BCCHAR(IB).EQ.'W') THEN
+            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_W(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          IF(BCCHAR(IB).EQ.'E') THEN
+            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_E(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          call xertst(ENKPAR(IB,1).gt.0.0_R8,
+     1       'BCENK = 15, ENKPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
+          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
+     &     'from b2stbc_spb for ion temperature with ENIPAR(IB,1) =',
+     &     ENKPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)        !srv 20.09.17
+#endif
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          t0 = 0.0_R8
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+            endif
+          enddo
+          srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -                         !srv 11.03.09 {
+     &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))
+cwdk    Todo: corrections for BCCON.ne.14
+        enddo                                                           !srv 01.02.09 }
+
+        case default
+          write(*,*) BCENK(IB)
+          call xerrab ('BCENK out of bounds')
+
+        end select
+
       enddo
 #ifdef WG_TODO
 * ---------------------------------------------------------------------

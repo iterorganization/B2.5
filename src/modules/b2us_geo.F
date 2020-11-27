@@ -6,7 +6,7 @@
       private
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
-     .          init_geometry
+     .          init_geometry, calc_conn
 
       type, public :: geometry
 
@@ -48,7 +48,8 @@
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
 
 !  flux surface quantities
-        real (kind=R8), allocatable  :: fsConn(:)      ! Connection length
+        real (kind=R8), allocatable  :: ftConn(:)      ! (nCv) Connection length for each CV
+        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
 
       end type geometry
 
@@ -56,10 +57,10 @@
 
 ***********************************************************************
 
-      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs, nVmxCv)
+      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
       implicit none
-      integer, intent(in) :: nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: nCv, nFc, nVx, nFs, nFt, nVmxCv
       type(geometry), intent(in out) :: g
 
       if (allocated(g%cvBb)) return
@@ -102,7 +103,8 @@
       allocate (g%vxOnedBsq(nVx))
 
 !  flux surface quantites
-      allocate (g%fsConn(nFs))
+      allocate (g%ftConn(nCv))
+      allocate (g%fsPsi(nFs))
 
       call initialize_geometry(g)
       
@@ -154,7 +156,8 @@
       g%vxOnedBsq = 0._R8
 
 !  flux surface quantites
-      g%fsConn = 0._R8
+      g%ftConn = 0._R8
+      g%fsPsi = 0._R8
       
       return
       end subroutine initialize_geometry
@@ -206,7 +209,8 @@
       deallocate (g%vxOnedBsq)
 
 !  flux surface quantites
-      deallocate (g%fsConn)
+      deallocate (g%ftConn)
+      deallocate (g%fsPsi)
       
       return
       end subroutine dealloc_geometry
@@ -214,14 +218,15 @@
 ***********************************************************************
 
 
-      subroutine read_geometry (iun, nCv, nFc, nVx, nFs, nVmxCv, gm)
+      subroutine read_geometry (iun, nCv, nFc, nVx, nFs, nFt, nVmxCv,
+     .  gm)
 
       implicit none
-      integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       integer :: idum(0:9)
       type (geometry), intent (inout) :: gm
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
 ! cell volumes 
       call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
@@ -252,17 +257,19 @@
       call cfrure (iun, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
+      call cfrure (iun, nCv,   gm%ftConn, 'ftConn')
+      call cfrure (iun, nFs,   gm%fsPsi, 'fsPsi')
 
       return
       end subroutine read_geometry
 
 ***********************************************************************
 
-      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nVmxCv, gm)
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt, 
+     .                           nVmxCv, gm)
 
       implicit none
-      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nVmxCv
+      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
       integer :: idum(0:9)
       type (geometry), intent (in) :: gm
 
@@ -295,7 +302,8 @@
       call cfwure (nout, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
+      call cfwure (nout, nCv,   gm%ftConn, 'ftConn')
+      call cfwure (nout, nFs,   gm%fsPsi, 'fsPsi')
 
       return
       end subroutine write_geometry
@@ -488,8 +496,71 @@
         endif
       endif
 
+*   ..calculate connection length
+      call calc_conn(mpg, gm)
+
       return
       end subroutine init_geometry
+
+
+***********************************************************************
+
+      subroutine calc_conn (mpg, gm)
+      use b2us_map
+      implicit none
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (inout) :: gm
+      integer :: nCv, iCv, iFt, j, ic
+      integer, save :: conn_style = 0
+      real (kind=r8) :: wrk(mpg%nCv), Lr, Ll
+
+      call ipgeti ('b2mndr_conn_style',conn_style)
+
+      if (conn_style.eq.0) return ! don't modify what we read
+
+      if (mpg%isClassicalGrid.eq.1) then
+       wrk = 0.0_R8
+       gm%ftConn = 0.0_R8
+       do iCv = 1, mpg%nCv
+        wrk(iCv) = gm%cvHx(iCv)*gm%cvBb(iCv,3)/abs(gm%cvBb(iCv,0))
+       end do
+       do iFt = 1, mpg%nFt 
+        ic = mpg%ftCv(mpg%ftCvP(iFt,1))
+        if (mpg%cvOnClosedSurface(ic)) then !core  
+         do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          gm%ftConn(ic) = gm%ftConn(ic) + wrk(mpg%ftCv(j))
+         enddo
+         gm%ftConn(mpg%ftCv(mpg%ftCvP(iFt,1):mpg%ftCvP(iFt,1)+
+     &                        mpg%ftCvP(iFt,2)-1)) = gm%ftConn(ic)
+        else
+         do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          iCv = mpg%ftCv(ic)
+          Lr = 0.5_R8*wrk(iCv)
+          do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
+           Lr = Lr + wrk(mpg%ftCv(j))
+          end do
+          Ll = 0.5_R8*wrk(iCv)
+          do j = mpg%ftCvP(iFt,1), ic-1
+           Ll = Ll + wrk(mpg%ftCv(j))
+          end do
+          if (conn_style.eq.1) then
+           gm%ftConn(iCv) = min(Lr,Ll)
+          elseif (conn_style.eq.2) then
+           gm%ftConn(iCv) = Lr*Ll/(Lr+Ll)
+          else
+           write (*,*) 'b2mndr_conn_style=',conn_style
+           call xerrab ('parameter b2mndr_conn_style not coded')
+          endif
+         end do
+        endif
+       end do
+      else
+       write(*,*) 
+     &   'WARNING: connection length not yet available for US grids'
+      endif  
+
+      return
+      end subroutine calc_conn
 
 
 ***********************************************************************

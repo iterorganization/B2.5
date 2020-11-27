@@ -90,13 +90,14 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
-*     logu(rtrqa), where rtrqa is the electron heat loss rate
-*     coefficient at electron temperature rtt(i) and electron density
-*     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension eV*m**3/s.
-
+*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
+*     at electron temperature rtt(i) and electron density rtn(j) for 
+*     processes starting from charge state k, excluding the contributions 
+*     coming from potential energy of recombination and other 
+*     recombination process contributions. In short, it includes the 
+*     processes not accounted for in EIRENE. rtqa has dimension eV*m**3/s.
 *     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
 *     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
@@ -105,7 +106,6 @@
 *     state k. rtqa_ra only includes the contribution of recombination
 *     which replaces amjuel when EIRENE is not used. rtqa_ra has 
 *     dimension eV*m**3/s.
-
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -181,7 +181,8 @@
 
 * ..read rate coefficients
       if (version.ge.'03.000.007') then
-        call cfruin (nget, 1, fix_recomb, 'fix_recomb')
+        call cfruin (nget, 1, idum(0), 'fix_recomb')
+        fix_recomb = idum(0)
       else
         fix_recomb = -1
       end if

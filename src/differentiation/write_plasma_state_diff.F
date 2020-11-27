@@ -27,6 +27,7 @@
       call cfwure (nput, nCv,      st % pl % ti, 'ti')
       call cfwure (nput, nCv,      st % pl % tn, 'tn')
       call cfwure (nput, nCv,      st % pl % po, 'po')
+      call cfwure (nput, nCv,      st % pl % kt, 'kt')
 
 *   ..save fluxes
       call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
@@ -38,6 +39,7 @@
       call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
       call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
       call cfwure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
+      call cfwure (nput, nFc*2,    st % dv % fkt, 'fkt')
 
 *   ..save time
       time(1)=tim

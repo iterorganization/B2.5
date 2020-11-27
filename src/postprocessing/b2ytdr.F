@@ -205,7 +205,9 @@ c 2002-09-11: logic revised
      6 fchinert1(-1:nx1,-1:ny1,0:1,0:1),
      7 floe_noc1(-1:nx1,-1:ny1,0:1,0:1), 
      7 floi_noc1(-1:nx1,-1:ny1,0:1,0:1),
-     8 veecrb1(-1:nx1,-1:ny1,0:1,0:1), vedia1(-1:nx1,-1:ny1,0:1,0:1)
+     8 veecrb1(-1:nx1,-1:ny1,0:1,0:1), vedia1(-1:nx1,-1:ny1,0:1,0:1),
+     9 tn1(-1:nx1,-1:ny1), kt1(-1:nx1,-1:ny1), 
+     9 fhn1(-1:nx1,-1:ny1,0:1,0:1)
       real (kind=R8), allocatable ::
      . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
      . ua_mean(:,:,:), po_mean(:,:),
@@ -857,8 +859,8 @@ c 2002-09-11: logic revised
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,
+     &  po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -898,9 +900,11 @@ c 2002-09-11: logic revised
         call cfruch (70, 120, lblgm, 'label')
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
+#ifdef WG_TODO
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
      &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &   wbbc, cell_width, cell_height, gmap)
+#endif
         if (non_commensurate.eq.1) then
         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
      &   periodic_bc.eq.periodic_bc1,
@@ -923,9 +927,11 @@ c 2002-09-11: logic revised
         call cfruin (ninp(3), 2, idum, 'nx,ny')
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
+#ifdef WG_TODO
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
      &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &   wbbc, cell_width, cell_height, gmap)
+#endif
       endif
       if (invert_bpol.eq.1) then
         bb(:,:,0) = -bb(:,:,0)
@@ -959,9 +965,11 @@ c 2002-09-11: logic revised
         call cfwuch (nout(6), 120, lblgm, 'label')
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
+#ifdef WG_TODO
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
      &   vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
      &   cell_width, cell_height)
+#endif
         close(nout(6))
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -971,7 +979,7 @@ c 2002-09-11: logic revised
       nsm=max(ns,ns1)
       nxm=max(nx,nx1)
       nym=max(ny,ny1)
-      call alloc_input_profile(nxm,nym,nsm)
+!WG_TODO      call alloc_input_profile(nxm,nym,nsm)
       allocate(am1(0:ns1-1))
       allocate(zn1(0:ns1-1))
       allocate(zamin1(0:ns1-1))
@@ -1211,8 +1219,10 @@ c 2002-09-11: logic revised
             fna_521(:,:,:,:,is)=fna_521(:,:,:,:,is)*neutral_rescale
           endif
         enddo
+#ifdef WG_TODO
         call b2xpfi (nx, ny, ns, fna_321, fni_321)
         call b2xpfi (nx, ny, ns, fna_521, fni_521)
+#endif
       endif
 
 *   ..write header for transformed state
@@ -1227,8 +1237,8 @@ c 2002-09-11: logic revised
       call b2wuzd (nout(1), newversion, ns1, zamin1, zamax1, zn1, am1)
 *   ..save transformed state
       call b2wups (nout(1), nx1, ny1, ns1,
-     &  ne1, na1, ua1, uadia1, te1, ti1, po1,
-     &  fna1, fhe1, fhi1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
+     &  ne1, na1, ua1, uadia1, te1, ti1, tn1, po1, kt1,
+     &  fna1, fhe1, fhi1, fhn1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
      &  fnaPSch1, fhePSch1, fhiPSch1,
      &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
@@ -1252,7 +1262,7 @@ c 2002-09-11: logic revised
 
 *   ..read default physics common
       call cfruch (ninp(8), 120, lblcp, 'label')
-      call b2rucp (ninp(8), b2fparam_version, nx, ns)
+      call b2rucp (ninp(8), b2fparam_version, ns)
 *   ..now we treat b2mn.dat
 *   ..rewrite b2mn.dat into b2mn.dat.2
 *   ..read in label and revised parameters in physics common
@@ -10005,7 +10015,7 @@ cxpb as they no longer necessarily point to the same species
       call dealloc_b2mod_b2cmrc
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
-      call dealloc_input_profile
+!WG_TODO      call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
