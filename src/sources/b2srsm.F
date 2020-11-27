@@ -10,6 +10,8 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_plasma
+     , , only : roxa
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
@@ -57,8 +59,6 @@
      &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
-      real (kind=R8) :: roxa
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod
 *   ..initialisation

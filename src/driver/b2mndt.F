@@ -93,7 +93,7 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum,
-     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
+     &  lnlam(-1:nx,-1:ny),                                             !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
 *   ..procedures
@@ -232,7 +232,7 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
+        call set_facdrift_fac_ExB_init(nx,ny,ramp_slow)
       endif
 *   ..initialise error parameter
       ierr = 0

@@ -110,7 +110,6 @@ c
      *   vv(-1:nxd,-1:nyd,0:nsd_local-1),
      *   up(-1:nxd,-1:nyd,0:nsd_local-1),
      *   ww(-1:nxd,-1:nyd,0:nsd_local-1),
-     *   ue(-1:nxd,-1:nyd),
      *   safetyfactor(-1:nyd), shear(-1:nyd), rave(-1:nyd),
      1   cvsa_cl_x(-1:nxd,-1:nyd,0:nsd_local-1),
      2   cvsa_cl_y(-1:nxd,-1:nyd,0:nsd_local-1),

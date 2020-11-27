@@ -1869,8 +1869,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 *   ..write geometric information
       call b2wfgm (nout(0), idout0, nx, ny)
 *   ..write summary of initial state
-      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout0, nx, ny, ns)
 
 * ..main loop
 *   ..initialise counters
@@ -2642,8 +2641,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 
 * ..display and save the result of the calculation
 *   ..write summary of final state
-      call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout1, nx, ny, ns)
       if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state

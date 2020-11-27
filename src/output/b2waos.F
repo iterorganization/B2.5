@@ -12,8 +12,7 @@
 *=======================================================================
 *//DECLARATIONS//
 
-      SUBROUTINE B2WAOS (NPRT, nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      SUBROUTINE B2WAOS (NPRT, nx, ny, ns)
 
       use b2mod_types
       use b2mod_time
@@ -22,7 +21,7 @@
      . , only : label
       use b2mod_geo
       use b2mod_transport_namelist
-!pb      use b2mod_plasma
+      use b2mod_plasma
       use b2mod_b2cmpa
       use b2mod_boundary_namelist
       use b2mod_residuals
@@ -31,12 +30,6 @@
       implicit none
 
       integer, intent(in) :: nprt, nx, ny, ns
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny)
 
       integer ncall, model
       integer, save :: style = 1
@@ -45,8 +38,6 @@
       INTEGER :: IX, IY, IS, IB, IXR, IYR
       REAL (KIND=R8) :: T0,RZO,CS,MACH,T1
       real (kind=R8) ::
-     * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
-     2 ni(-1:nx,-1:ny,0:1),
      3 rz(-1:nx,-1:ny), pz(-1:nx,-1:ny)
 
 *  -- PROCEDURES --
@@ -55,22 +46,7 @@
       REAL (KIND=R8) :: sxhelp,syhelp
       real (kind=R8) :: XX(-1:NX,6), YY(-1:NY,6)
       real (kind=R8) :: b2tqca_phm0, b2treq_phm0
-      real (kind=R8) ::
-     * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
-     &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       EXTERNAL XERRAB
-      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
       data ncall/0/, b2tqca_phm0/1.0_R8/, model/3/, b2treq_phm0/1.0_R8/
 
@@ -300,17 +276,17 @@
       DO IX = -1, NX-1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
      .      XX(IX,2), XX(IX,5),
-     .      RFHEX(IX), RFHIX(IX), RFCHX(IX),
-     .      RFNEX(IX), RFNIX(IX),
-     .     (RFNAX(IX,IS), IS = 0, NS-1)
+     .      RFHEX(NX,NY,IX), RFHIX(NX,NY,IX), RFCHX(NX,NY,IX),
+     .      RFNEX(NX,NY,IX), RFNIX(NX,NY,IX),
+     .     (RFNAX(NX,NY,IX,IS), IS = 0, NS-1)
       ENDDO
 
       WRITE (NPRT, 112)
       DO IY = NY, 0, -1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
-     .      YY(IY,2), YY(IY,5), RFHEY(IY), RFHIY(IY),
-     .       RFCHY(IY), RFNEY(IY), RFNIY(IY),
-     .      (RFNAY(IY,IS), IS = 0, NS-1)
+     .      YY(IY,2), YY(IY,5), RFHEY(NX,IY), RFHIY(NX,IY),
+     .            RFCHY(NX,IY), RFNEY(NX,IY), RFNIY(NX,IY),
+     .      (RFNAY(NX,IY,IS), IS = 0, NS-1)
       END DO
 
       WRITE (NPRT,1112)

@@ -87,7 +87,7 @@
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
      1  t0, vis_per                                                      !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
-     &  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
+     &  lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),                           !srv 05.07.17
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  zero(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny),                        !lk 31.01.08 {
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
@@ -236,7 +236,7 @@
      >   write(*,*) 'Not solving potential equation!'
        if(.not.solving(4))
      >   write(*,*) 'Not solving heat equations!'
-       call b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
+       call set_facdrift_fac_ExB_init(nx, ny, ramp_slow)
        call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
        call ipgeti ('b2news_no_b2sral_call', no_b2sral_call)
        call ipgeti ('b2news_do_2nd_b2npco_call', do_2nd_b2npco_call)
@@ -332,9 +332,7 @@ csw 01oct2012 initialize potential if necessary
         fchstoch = 0.0_R8
       endif
 
-      if (ramp_call .or. ncall.eq.0) then
-        call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
-      endif
+      if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
@@ -535,9 +533,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,          !srv 13.01.17
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
-     &   na, te, ti, po, ue, fna_fcor,                                   !srv 05.07.17
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
-     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
+     &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 
       call xertst (ier0.eq.0, 'error return from b2npmo')

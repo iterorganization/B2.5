@@ -21,6 +21,8 @@
       use b2mod_external                                                 !srv 05.07.17
       use b2mod_geo
      , , only : hy1
+      use b2mod_plasma
+     , , only : uasx, uasy, uesx
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -85,19 +87,8 @@
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *  uasx, uesx, uasy                                                !srv 13.01.17
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
-      uasx(ix,iy,is)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1  hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
-     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-      uesx(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
-     1  hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
-     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-      uasy(ix,iy,is)=(hy1(ix,iy)*ua(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1  hy1(bottomix(ix,iy),bottomiy(ix,iy))*ua(ix,iy,is))/
-     2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
 *   ..initialisation
       data ncall/0/, style/0/
       data rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/,

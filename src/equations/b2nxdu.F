@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
+      subroutine b2nxdu (nx, ny, ns, smq, smqdu, wrk0, wrk1)
       use b2mod_types
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -10,7 +11,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  smq(-1:nx,-1:ny,0:3,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -34,11 +34,8 @@
       integer ncall, n2, ix, iy, is
       save ncall
 *   ..procedures
-      real (kind=R8) ::
-     *   roxa
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvfx
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/
 

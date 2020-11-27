@@ -3,13 +3,13 @@
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
      &  vol, hx, hz, bb, pbshz, lnlam,
-     &  na, te, ti, po, ue, fna_fcor,                                  !srv 09.01.01 01.07.09 05.07.17
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
-     &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
+     &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
       use b2mod_math
       use b2mod_rates
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_sources
@@ -18,8 +18,6 @@
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
-      use b2mod_plasma
-     & , only : fmo, fchanml, facdrift, fac_ExB                        !srv 25.09.17 15.04.19
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -80,20 +78,14 @@
      *  rxf,
      &  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                              !srv 09.01.01
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
-     &  pbshz(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny),                       !srv 01.07.09 05.07.17
-     &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
+     &  pbshz(-1:nx,-1:ny,0:1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
      2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
-     &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
       logical solving
-*   ..input/output arguments
-      real (kind=R8) ::
-     *  ua(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
@@ -148,14 +140,13 @@
      *  smbgp(-1:nx,-1:ny,0:3),
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
      *  smbcf(-1:nx,-1:ny,0:3), smban(-1:nx,-1:ny,0:3),                !srv 09.07.01 25.09.17
-     1  pb(-1:nx,-1:ny), cvct(-1:nx,-1:ny,0:1),
+     1  cvct(-1:nx,-1:ny,0:1),
      2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1),
      *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
      3  wrkf(-1:nx,-1:ny,0:1), aa5(-1:nx,-1:ny,-2:2),
      4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1),
      5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
-     6  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
+     6  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3), cst,                  !srv 17.01.14
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -171,15 +162,12 @@
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
       save ncall, rxg, diagno, nsmin, nsmax
 *   ..procedures
-      real (kind=R8) ::
-     *  roxa
       external subini, subend, xertst, ipgetr, sfill, b2scopy,
      &  b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, rxg/1.0e6_R8/, diagno/0/
 
@@ -323,7 +311,7 @@
      &   ehxp, wrk0, wrk1)
       endif                                                            !srv 13.01.17 }
 *   ..compute smqdu
-      call b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
+      call b2nxdu (nx, ny, ns, smq, smqdu, wrk0, wrk1)
       if (iout.ne.0) then
        call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
       endif

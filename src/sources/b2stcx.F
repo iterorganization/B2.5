@@ -12,6 +12,8 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
@@ -62,12 +64,11 @@
       intrinsic abs
       logical lnext
       real (kind=R8) ::
-     *  samax, roxa
+     *  samax
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)

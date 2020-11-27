@@ -1166,7 +1166,7 @@ c find where particles need to be added
         do iy=-1,ny
           do ix=-1,nx
             nadd=int(warr(ix,iy,is)/swarr*np)
-     .             -iwarr(ix,iy,is)+addval+nadd
+     .             -iwarr(ix,iy,is)+nint(addval)+nadd
             if(nadd .gt. 0 .and. ikilled .gt. 0) then
               ipt=index_arr(ix,iy,is)
               ipto=0

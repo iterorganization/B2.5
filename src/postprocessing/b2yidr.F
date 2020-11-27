@@ -310,8 +310,7 @@
      &  'style of contour plots:', iftp,
      &  'idout:', idout
 *   ..write state
-      call b2wfpi (nout(0), idout, nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout, nx, ny, ns)
 *   ..activate graphics on nout(1)
       call gacwk (nout(1))
 *   ..mark contour style

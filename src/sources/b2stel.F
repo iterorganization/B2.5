@@ -15,6 +15,8 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
@@ -95,12 +97,11 @@
       intrinsic abs
       logical lnext, streql
       real (kind=R8) ::
-     *   samax, roxa
+     *   samax
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg, streql
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,

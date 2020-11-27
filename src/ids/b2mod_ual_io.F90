@@ -276,7 +276,6 @@ contains
         real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: roxa( -1:ubound( na, 1), -1:ubound( na, 2), 0:ubound( na, 3) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
@@ -429,9 +428,6 @@ contains
         ns = size( na, 3 )
         nx = ubound( na, 1 )
         ny = ubound( na, 2 )
-        do is = 0, ns - 1
-           roxa(:,:,is) = am(is)*mp*na(:,:,is)
-        end do
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
@@ -2665,11 +2661,18 @@ contains
                 !! smo: Ion parallel momentum sources
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  tmpCv(:,:) = ( smo(:,:,0,ispion(is,js)) +                              &
-                      &          smo(:,:,1,ispion(is,js)) * ua(:,:,ispion(is,js)) +      &
-                      &          smo(:,:,2,ispion(is,js)) * roxa(:,:,ispion(is,js)) +    &
-                      &          smo(:,:,3,ispion(is,js)) * roxa(:,:,ispion(is,js))      &
-                      &                                   * ua(:,:,ispion(is,js)) ) / vol(:,:)
+                  do iy = -1, ny
+                    do ix = -1, nx
+                      tmpCv(ix,iy) = ( smo(ix,iy,0,ispion(is,js)) + &
+                      &                smo(ix,iy,1,ispion(is,js)) * &
+                      &                   ua(ix,iy,ispion(is,js)) + &
+                      &                smo(ix,iy,2,ispion(is,js)) * &
+                      &                 roxa(ix,iy,ispion(is,js)) + &
+                      &                smo(ix,iy,3,ispion(is,js)) * &
+                      &                 roxa(ix,iy,ispion(is,js)) * &
+                      &                   ua(ix,iy,ispion(is,js)) ) / vol(ix,iy)
+                    end do
+                  end do
                   totCv(:,:) = totCv(:,:) + tmpCv(:,:)
                   call write_cell_vector_component(                               &
                       &   vectorComponent = edge_sources%source(1)%               &
@@ -2718,11 +2721,18 @@ contains
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  tmpCv(:,:) = ( smodt(:,:,0,ispion(is,js)) +                     &
-                      &          smodt(:,:,1,ispion(is,js)) * ua(:,:,ispion(is,js)) +   &
-                      &          smodt(:,:,2,ispion(is,js)) * roxa(:,:,ispion(is,js)) + &
-                      &          smodt(:,:,3,ispion(is,js)) * roxa(:,:,ispion(is,js))   &
-                      &                                     * ua(:,:,ispion(is,js)) ) / vol(:,:)
+                  do iy = -1, ny
+                    do ix = -1, nx
+                      tmpCv(ix,iy) = ( smodt(ix,iy,0,ispion(is,js)) + &
+                      &                smodt(ix,iy,1,ispion(is,js)) * &
+                      &                     ua(ix,iy,ispion(is,js)) + &
+                      &                smodt(ix,iy,2,ispion(is,js)) * &
+                      &                   roxa(ix,iy,ispion(is,js)) + &
+                      &                smodt(ix,iy,3,ispion(is,js)) * &
+                      &                   roxa(ix,iy,ispion(is,js)) * &
+                      &                     ua(ix,iy,ispion(is,js)) ) / vol(ix,iy)
+                    end do
+                  end do
                   totCv(:,:) = totCv(:,:) + tmpCv(:,:)
                   call write_cell_vector_component(                               &
                       &   vectorComponent = edge_sources%source(4)%               &
@@ -4041,11 +4051,15 @@ contains
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                 !! smo: Ion parallel momentum sources
-                    tmpCv(:,:) = ( smo(:,:,0,js) +                            &
-                        &          smo(:,:,1,js) * ua(:,:,js) +               &
-                        &          smo(:,:,2,js) * roxa(:,:,js) +             &
-                        &          smo(:,:,3,js) * roxa(:,:,js)               &
-                        &                        * ua(:,:,js) ) / vol(:,:)
+                    do iy = -1, ny
+                      do ix = -1, nx
+                        tmpCv(ix,iy) = ( smo(ix,iy,0,js) +                  &
+                        &                smo(ix,iy,1,js) * ua(ix,iy,js) +   &
+                        &                smo(ix,iy,2,js) * roxa(ix,iy,js) + &
+                        &                smo(ix,iy,3,js) * roxa(ix,iy,js)   &
+                        &                                * ua(ix,iy,js) ) / vol(ix,iy)
+                      end do
+                    end do
                     call write_cell_vector_component(                         &
                         &   vectorComponent = edge_sources%source(1)%         &
                         &                     ggd( time_sind )%               &
@@ -4085,11 +4099,15 @@ contains
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    tmpCv(:,:) = ( smodt(:,:,0,js) +                          &
-                        &          smodt(:,:,1,js) * ua(:,:,js) +             &
-                        &          smodt(:,:,2,js) * roxa(:,:,js) +           &
-                        &          smodt(:,:,3,js) * roxa(:,:,js)             &
-                        &                          * ua(:,:,js) ) / vol(:,:)
+                    do iy = -1, ny
+                      do ix = -1, nx
+                        tmpCv(ix,iy) = ( smodt(ix,iy,0,js) +                  &
+                        &                smodt(ix,iy,1,js) * ua(ix,iy,js) +   &
+                        &                smodt(ix,iy,2,js) * roxa(ix,iy,js) + &
+                        &                smodt(ix,iy,3,js) * roxa(ix,iy,js)   &
+                        &                                  * ua(ix,iy,js) ) / vol(ix,iy)
+                      end do
+                    end do
                     call write_cell_vector_component(                         &
                         &   vectorComponent = edge_sources%source(4)%         &
                         &                     ggd( time_sind )%neutral( j )%  &

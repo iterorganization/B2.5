@@ -10,6 +10,8 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_plasma
+     &     , only : roxa
       use b2mod_balance                                              !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
@@ -70,11 +72,8 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic sqrt, sign, abs
-      real (kind=R8) ::
-     *   roxa
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
       !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)

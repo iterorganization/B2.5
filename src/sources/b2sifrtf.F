@@ -11,8 +11,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-!      use b2mod_plasma
-!     , , only : po
+      use b2mod_plasma
+     , , only : roxa
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -93,11 +93,8 @@
 #endif
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *  roxa
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
 #ifdef NO_IEEE
       logical, external :: my_isnan
 #endif
