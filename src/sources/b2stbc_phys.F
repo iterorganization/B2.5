@@ -85,6 +85,7 @@
       integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
+      integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
@@ -104,7 +105,7 @@
       integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
-     1  t3, totflux, weight,
+     1  t3, t4, totflux, weight, dsh, vt,
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, vbnd, totfluxn, totfluxi
      &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
@@ -150,9 +151,9 @@
      2  na_min, na_new, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
-      intrinsic min, abs, sqrt, exp, log, dim, mod
+      intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
-     *  machsfr, expu2, sy, bcint, syhz                            !srv 24.08.08
+     *  machsfr, expu2, sy, bcint, syhz, sheath_g                        !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
@@ -175,17 +176,18 @@
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-!!      real (kind=R8) :: hybr, harm, pit, upwind
+      real (kind=R8) :: hybr, harm, pit, upwind
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-!!      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-!!      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
-!!      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-!!      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
+      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
+      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
+      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
+      sheath_g(t0) = 1.0_R8 + sqrt(pi)*t0*(1+erf(t0))*exp(t0**2)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -257,6 +259,7 @@
         call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
         call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
+        call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
         call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
         call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
         call ipgeti ('b2tfhe_no_current', no_current)
@@ -3426,7 +3429,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
-            if (abs(geo%fcQalf(iFc,0)).lt.Qalfmin) then
+            if (abs(geo%fcQalf(iFc,0)*geo%cvBb(iCv1,0)/geo%cvBb(iCv1,3))
+     &          .lt.Qalfmin) then
               srw%smo0(iCv1,0,is) = 0.0_R8
               srw%smo0(iCv1,1,is) = 0.0_R8
               if (conpar(is,ib,2).gt.0.0_R8) then
@@ -6776,16 +6780,43 @@ cxpb          endif
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
           t1 = 0.0_R8
-          do is = 0, ns-1
+          t2 = 0.0_R8
+          if (bceni_15_style == 0) then
+           do is = 0, ns-1
             if(.not.is_neutral(is)) then
               t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
               if (conpar(is,ib,2).gt.0.0_R8)
      &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif
-          enddo
-          srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                         !srv 11.03.09 {
-     &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -                    !srv 19.04.13
-     &      enipar(ib,2)*t1*geo%fcS(iFc)
+           enddo
+           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                        !srv 11.03.09 {
+     &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
+     &      enipar(ib,2)*t1*geo%fcS(iFc)                                !srv 19.04.13
+          else
+           if(maxval(dv%facdrift) .ne. 0.0_R8)
+     &       call xerrab ('bceni_15_style > 0 not ready for drifts')
+           !wdk sheath transmission factor consistent with truncated
+           !    Maxwellian distribution on Eirene side (NEMODS=7)
+           !    See eirene manual for details.
+           do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+             vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
+             t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
+             t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 + 
+     &                 (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
+             dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
+     &         0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
+             t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
+             if (conpar(is,ib,2).gt.0.0_R8)
+     &        t1 = t1 + enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &          pl%na(iCv1,is)
+             t4 = t4 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
+            endif
+           enddo
+           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &      t0*cs*abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &      t4*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          endif
           if(mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -8521,10 +8552,34 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &      dv%fchinert(iFc,0)  + dv%fchinert(iFc,1))
         enddo                                                           !srv 03.03.15 }
 
-* -- BCPOT=14 -- Nothing implemented
+* -- BCPOT=14 -- PRESCRIBE THE TOTAL CURRENT WITHOUT IMPOSING A
+*                 SPECIFIC PROFILE
+cwdk    Intended use: core boundary, total PF boundary,...
+cwdk    For testing purposes, use with care!
 
         case (14)
-        CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'total current ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        US = 0.0_R8
+        t0 = 0.0_R8
+        do ibc = 1, mpg%bcCvP(ib,2)
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          US   = US + geo%fcS(iFc)
+          t0   = t0 + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &      (dv%fch(iFc,0) + dv%fch(iFc,1))
+        enddo
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%sch0(iCv1,0) = - mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &      (dv%fch(iFc,0) + dv%fch(iFc,1)) +
+     &      (t0-POTPAR(IB,1))/US*geo%fcS(iFc)
+          srw%sch0(iCv1,1) = 0.0_R8
+        enddo  
 
 * -- BCPOT=15 -- Nothing implemented
 
