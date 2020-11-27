@@ -453,8 +453,6 @@ c the logic statements below could be simplfied but for now we go for readabilit
 *-----------------------------------------------------------------------
 *.scribbles
 
-*!!   Consider to apply a flux limit to the anomalous particle transport.
-*!!   Still must consider how to deal with a non-orthogonal grid.
 
 *-----------------------------------------------------------------------
 *.end b2trno
