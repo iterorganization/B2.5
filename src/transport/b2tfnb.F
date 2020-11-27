@@ -56,7 +56,7 @@
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti, term(nFc), termhz(nFc),
+     *   flux_limit_min_ti, term(nFc),
      *   flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
@@ -484,21 +484,9 @@ c csc To be added contribution of ubdia
       enddo
       cdpb(:,1) = 0.0_R8
       term   = -cdpb(:,0)*(dpb(:,0) - dpbm)
-      termhz = -cdpb(:,0)*(dpb(:,0) - dpbm)*geo%fcHz
 
       fna_mdf0(:,0)      = fna_mdf0(:,0) + term
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
-
-
-*   ..add non-hybrid drift contribution
-      fna_mdf0(:,0) = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
-      fna_mdf0(:,1) = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
-      dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
-      dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
 *   ..compute other fluxes
       dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
@@ -678,7 +666,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
 !       wrk4 = -con_2dia*dnb(:,0)
        wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
-       wrk6 = termhz
+       wrk6 = term*geo%fcHz
 !       wrk7 = -con_mdf*dnb(:,0)
        wrk8 = co%cvla(:,0,isb)*nbf
        if(.not. is_neutral(isb)) then
@@ -884,7 +872,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nFc,1,co%cddi(1,0,isb),'b2tfnb_cddbx'//chns)
        call my_out_us(70,nFc,1,co%cddi(1,1,isb),'b2tfnb_cddby'//chns)
        call my_out_us(70,nFc,1,term,'b2tfnb_term'//chns)
-       call my_out_us(70,nFc,1,termhz,'b2tfnb_termhz'//chns)
+       call my_out_us(70,nFc,1,term*geo%fcHz,'b2tfnb_termhz'//chns)
        call my_out_us(70,nFc,1,geo%fcPbs,'b2tfnb_pbsx')
        call my_out_us(70,nFc,1,geo%fcPbshz,'b2tfnb_pbshzx')
        call my_out_us(70,nFc,1,ub2dia(1,0),'b2tfnb_ub2diax'//chns)
