@@ -55,6 +55,7 @@
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       integer, save :: meth = 2
+      integer, save :: tn_style = 0
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
@@ -159,6 +160,7 @@
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2tfnb_discr_meth', meth)
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
+        call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -460,9 +462,14 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo_he(:,0) = geo%fcPbs*wrk0 +
-     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
-     &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+      if (.not.is_neutral(isb).or.tn_style.eq.0) then
+        flo_he(:,0) = geo%fcPbs*wrk0 +
+     &    5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
+     &    drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+      else
+        flo_he(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb)
+c csc To be added contribution of ubdia
+      endif
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +

@@ -164,12 +164,23 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
-*     logu(rtrqa), where rtrqa is the electron heat loss rate
-*     coefficient at electron temperature rtt(i) and electron density
-*     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
+*     at electron temperature rtt(i) and electron density rtn(j) for 
+*     processes starting from charge state k, excluding the contributions 
+*     coming from potential energy of recombination and other recombination 
+*     process contributions. In short, it includes the processes not 
+*     accounted for in EIRENE.
+*     rtqa has dimension eV*m**3/s.
+*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
+*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*     coefficient at electron temperature rtt(i)
+*     and electron density rtn(j) for processes starting from charge
+*     state k. rtqa_ra only includes the contribution of recombination
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -245,7 +256,7 @@
       call xertst (1.le.ns, 'faulty input ns from parameters file')
 *   ..read default physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read label
       call cfruch (ninp(1), 120, lblrc, 'label')
 *   ..write label
@@ -350,11 +361,12 @@
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
      &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is), 
-     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is), 
+     &   rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
      &   rtnt, rtn, rtnn, rtzn(is), rtlsa(0,0,is),
-     &   rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
+     &   rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
        is = is1

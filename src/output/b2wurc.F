@@ -128,6 +128,8 @@
       enddo
 
 * ..save the table of rate coefficients
+      idum(0) = fix_recomb
+      call cfwuin (nput, 1, idum, 'fix_recomb')
 *   ..save dimensions
       idum(0) = rtnt
       idum(1) = rtnn
@@ -158,6 +160,9 @@
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
+      if (version.ge.'03.000.007') then
+        call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
+      end if
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if (version.ge.'01.001.016') then
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlrd, 'rtlrd')

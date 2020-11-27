@@ -73,7 +73,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2n_tn_style',tn_style)
+       call ipgeti ('b2mn_tn_style',tn_style)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
@@ -91,10 +91,10 @@
       endif
 
 * ..choose the correct temperature
-      if (is_neutral(isb)) then
-	tb = tn !! tn = ti if no separate neutral energy equation is solved
+      if (tn_style.eq.2.and.is_neutral(isb)) then
+        tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
-	tb = ti
+        tb = ti
       endif
 
       if (phm0.ne.0.0_R8) then                                     !srv 26.06.18

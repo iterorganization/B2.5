@@ -135,7 +135,9 @@ csw 24sep2013
       t0 = (3/(4*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp) ! /lnlam                !srv 01.07.09 it is taken below
 *   ..compute the Coulomb logarithm
+#ifdef WG_TODO
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+#endif
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx

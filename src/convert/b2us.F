@@ -213,7 +213,7 @@
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 
-      call ipgeti ('use_eirene', use_eirene)	
+      call ipgeti ('b2mndr_eirene', use_eirene)	
       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
@@ -231,7 +231,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call b2ruzd (ninp(3), b2fstati_version, ns0, 
      & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
-     &  tn, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  tn, po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -252,8 +252,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       write (*,*) 'Mapping created'
       
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nVmxCv,
-     .        gm, mpg)
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
+     .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
       
 
@@ -278,7 +278,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       idum(3) = mpg%nFc
       idum(4) = mpg%nVx
       idum(5) = mpg%nFs
-      call cfwuin (nout(1),6,idum,'nCi,nCg,nCv,nFc,nVx,nFs')
+      idum(6) = mpg%nFt
+      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       idum(0) = mpg%nCmxVx
       idum(1) = mpg%nCmxFc
       idum(2) = mpg%nVmxCv

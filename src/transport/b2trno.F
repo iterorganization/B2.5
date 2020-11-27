@@ -158,7 +158,7 @@
       call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, mpg,
      &  pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
      &  co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, 
-     &  hve0)
+     &  hve0, co%dkt0, co%dna_ExB, co%hce_ExB, co%hci_ExB)
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -224,7 +224,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
       if (user_transport.eq.10) then 
        do is = 0, ns-1
          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-           wrk_afn =  co%dpa0(:,is)*geo%cvbb(:,2)/geo%cvbb(:,3)
+           wrk_afn =  co%dpa0(:,is)*abs(geo%cvbb(:,2)/geo%cvbb(:,3))
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &                 wrk_afn, co%cdpa(1,0,is))   
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
@@ -257,6 +257,10 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  co%alf0, co%calf(1,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%alf0, co%calf(1,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  co%dkt0, co%cdkt(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  co%dkt0, co%cdkt(1,1))
 
 *   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
@@ -346,6 +350,8 @@ c the logic statements below could be simplfied but for now we go for readabilit
       call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1), 1, 'chci', '.ge.')
       call b2xvsg (nFc, co%chcn(:,0)*geo%fcQalf(:,0), 1, 'chcn', '.ge.')
       call b2xvsg (nFc, co%chcn(:,1)*geo%fcQalf(:,1), 1, 'chcn', '.ge.')
+      call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0), 1, 'cdkt', '.ge.')
+      call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1), 1, 'cdkt', '.ge.')
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
      &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
@@ -435,6 +441,8 @@ c the logic statements below could be simplfied but for now we go for readabilit
        call my_out_us(70,nFc,1,co%calf_an(1,1),'b2trno_calf_any')
        call my_out_us(70,nFc,1,co%csig_an(1,0),'b2trno_csig_anx')
        call my_out_us(70,nFc,1,co%csig_an(1,1),'b2trno_csig_any')
+       call my_out_us(70,nFc,1,co%cdkt(1,0),'b2trno_cdktx')
+       call my_out_us(70,nFc,1,co%cdkt(1,1),'b2trno_cdkty')
       endif                                                          !srv 17.06.08 }
 
 * ..return

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2tfhi_ (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,  !srv 13.10.06
-     &  balance)                                                        !djm Jan2017
+      subroutine b2tfhi_ (nCv, nFc, nVx, ns, ismain, geo, mpg, pl, dv,   !srv 13.10.06
+     &  co, rt, balance)                                                 !djm Jan2017
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
@@ -15,7 +15,7 @@
 !WG_TODO     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer nCv, nFc, nVx, ns, ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -58,17 +58,19 @@
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      real (kind=R8), save :: fflokt = 0.0_R8, fconkt = 0.0_R8
       real (kind=R8) ::
      *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), vdia_par,     !srv 17.05.99
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
-     *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1)
+     *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1),
+     *   flokt0(nFc,0:1), conkt0(nFc,0:1)
 cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
-     *   dnati2(nFc,0:1), cddi(nFc,0:1)
+     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -115,6 +117,8 @@ cpax
        call ipgeti ('b2tfhi_discr_meth', meth)
        call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
        call ipgeti ('b2mn_tn_style', tn_style)
+       call ipgetr ('b2tfhi_fflokt', fflokt)
+       call ipgetr ('b2tfhi_fconkt', fconkt)
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -123,11 +127,13 @@ cpax
 *    ..test sign of ni, ti, chci
        call b2xvsg (nCv, dv%ni, 1, 'ni', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, pl%kt, 1, 'kt', '.ge.')
        call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
-
+       call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')
+       call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1),1,'cdkt1','.ge.')
        if (tn_style.ne.0.and.mdf_fhi.eq.1) then
-         call xerrab('mdf_fhi not yet available for',
+         call xerrab('mdf_fhi not yet available for'//
      &               'non-default energy equation')
        endif
       endif
@@ -259,26 +265,22 @@ cpax
       elseif (tn_style.eq.1) then
 !! AFN_TODO when more contributions are considered (e.g. drifts), or multi-species cases, 
 !! additions (floi0 = floi0 + ...) must be considered instead of overwrites (floi0 = ...)
-        do is= 0,ns-1
-          if (.not.is_neutral(is)) then
-            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          endif 
-          flon0(:,0) = 0.0_R8
-          flon0(:,1) = 0.0_R8
-        enddo
+        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+     &    flidia(:,0) + scur(:,0)
+        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+     &    flidia(:,1) + scur(:,1)
+        flon0(:,0) = 0.0_R8
+        flon0(:,1) = 0.0_R8
       else
-        do is= 0,ns-1
-          if (.not.is_neutral(is)) then
-            floi0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            floi0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          else
-            flon0(:,0) = 1.5e0_R8*dv%fna_he(:,0,is)
-            flon0(:,1) = 1.5e0_R8*dv%fna_he(:,1,is)
-          endif
-        enddo
+        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+     &    flidia(:,0) + scur(:,0)
+        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+     &    flidia(:,1) + scur(:,1)
+        flon0(:,0) = 1.5e0_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
+        flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
-
+      flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
+      flokt0(:,1) = dv%fna(:,1,ismain) 
 
       if (tn_style.eq.0) then !! default combined ion-neutral energy equation
       
@@ -337,6 +339,14 @@ cpax
      &    dv%flon,dv%conn)
 
       endif
+      cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
+      cdkt0(:,1) = co%cdkt(:,1)
+*   ..apply discretization scheme
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
+     &  cdkt0,dv%fkt,dumm0,dumm1)
+*   ..compute flokt, conkt
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
+     &  dv%flokt,dv%conkt)
 
 
 

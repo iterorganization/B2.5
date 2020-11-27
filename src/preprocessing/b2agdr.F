@@ -608,7 +608,7 @@ cdpc-debug
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
 *   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
-      call write_f30 (nx, ny)
+      call write_f30
 
 * ..return
       call subend ()

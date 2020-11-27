@@ -90,7 +90,7 @@
             cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
             flc(iFc,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-	  enddo
+          enddo
          endif
         enddo
        else
@@ -122,7 +122,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
             flc(iFc,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-	  enddo
+          enddo
          endif
         enddo
        endif

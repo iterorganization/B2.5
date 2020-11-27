@@ -65,7 +65,7 @@
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
      *  fix_recomb_energy
       real (kind=R8) ::
-     *  rf0, t0, t1, tkin, t1i, t1n
+     *  rf0, t0, t1, t1n, t1i, tkin
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
@@ -214,31 +214,27 @@
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
+            t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+     &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
+     &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
            if (tn_style.eq.0) then
-             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
-     &         ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
-     &         ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
            elseif (tn_style.eq.1) then
-	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
-     &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
-             t1i = t0*pl%na(iCv,is)*(1.5_R8*pl%tn(iCv) + tkin)
+             t1i = t1 + t0*pl%na(iCv,is)*1.5_R8*pl%tn(iCv)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
            else
-	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
-     &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
-             t1i = t0*pl%na(iCv,is)*(1.5_R8*pl%tn(iCv) + tkin)
+             t1i = t1 + t0*pl%na(iCv,is)*1.5_R8*pl%tn(iCv)
              t1n = t0*pl%na(iCv,is)*(-1.5_R8*pl%tn(iCv))
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
-	     shn0_ion(iCv,0) = shn0_ion(iCv,0)+(1.0_R8+rf0)*t1n
+             shn0_ion(iCv,0) = shn0_ion(iCv,0)+(1.0_R8+rf0)*t1n
              shn0_ion(iCv,3) = shn0_ion(iCv,3)-
      &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
@@ -340,28 +336,27 @@
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
            if (tn_style.eq.0) then !! combined ion-neutral (default)
-           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
-     &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
-     &       ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
-           shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
-           shi0_rec(iCv,3) = shi0_rec(iCv,3)-
+             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+     &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
+     &         ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
+             shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
+             shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
            elseif (tn_style.eq.1) then !! pure ion
-	     tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
-     &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
-             t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))
-	     shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
+             t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))*
+     *         (1.0_R8-BoRiS)
+             shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
            else !! separate ion-neutral
-	     tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
+             tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
      &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))
              t1n = t0*pl%na(iCv,is)*(+1.5_R8*pl%ti(iCv)+tkin)
-	     shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
+             shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
-	     shn0_rec(iCv,0) = shn0_rec(iCv,0)+(1.0_R8+rf0)*t1n
+             shn0_rec(iCv,0) = shn0_rec(iCv,0)+(1.0_R8+rf0)*t1n
              shn0_rec(icv,3) = shn0_rec(iCv,3)-
      *                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
            endif

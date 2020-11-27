@@ -126,9 +126,11 @@
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
 *   ..test plasma state
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+#endif
 
 * ..compute zxx and zyy
 *   ..compute zxx(1:2) and zyy(1:2)

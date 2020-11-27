@@ -5,7 +5,7 @@
      1 geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
       use b2mod_constants
-!WG_TBD      use b2mod_input_profile
+      use b2mod_input_profile
       use b2mod_b2cmpa
 !WG_TBD      use b2mod_neoclassical
       use b2us_geo
@@ -116,7 +116,7 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
-!WG_TBD        call alloc_input_profile(nx,ny,ns)
+        call alloc_input_profile(nCV,ns)
       end if
 
 * ..compute transport coefficients
@@ -256,6 +256,8 @@ cwdk combined check for poloidal or radial diffusion
        call my_out_us(70,nFc,1,co%csig(1,1),'csigy')
        call my_out_us(70,nFc,1,co%calf(1,0),'calfx')
        call my_out_us(70,nFc,1,co%calf(1,1),'calfy')
+       call my_out_us(70,nFc,1,co%cdkt(1,0),'cdktx')
+       call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkty')
       endif                                                          !srv 17.06.08 }
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {

@@ -106,8 +106,10 @@
       call xertst (1.le.nprt, 'faulty argument nprt')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test plasma state
+#ifdef WG_TODO
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+#endif
 *   ..test sign of ni, pr, ro, rz
       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
       call b2xvsg (n2, pr, 1, 'pr', '.gt.')
@@ -151,12 +153,14 @@
        write (nprt,104) 'po', po(ix0,iy0), ix0, iy0,
      &   po(ix1,iy1), ix1, iy1
 *    ..write min and max of pa
+#ifdef WG_TODO
        do is = 0, ns-1
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
         call b2xxmm (nx, ny, wrk0, 0, ix0, iy0, ix1, iy1)
         write (nprt,103) 'pa', is, wrk0(ix0,iy0), ix0, iy0,
      &    wrk0(ix1,iy1), ix1, iy1
        enddo
+#endif
 *    ..write min and max of pr
        call b2xxmm (nx, ny, pr, 0, ix0, iy0, ix1, iy1)
        write (nprt,104) 'pr', pr(ix0,iy0), ix0, iy0,

@@ -44,7 +44,7 @@
       integer ncall, iCv, is
       integer, save :: tn_style = 0                               
       real (kind=R8) ::
-     *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3
+     *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
@@ -128,16 +128,19 @@
       t1 = 0.0_R8
       t2 = 0.0_R8
       t3 = 0.0_R8
+      t4 = 0.0_R8
       do iCv = 1, mpg%nCi
        t0 = t0+abs(dv%reshe(iCv))
        t1 = t1+abs(dv%reshi(iCv))
        t2 = t2+abs(dv%respo(iCv))
        t3 = t3+abs(dv%reshn(iCv))
+       t4 = t4+abs(dv%reskt(iCv))
       enddo
       diag%areshe = t0/((1.5_R8+BoRiS)*prvi)
       diag%areshi = t1/((1.5_R8+BoRiS)*prvi)
       diag%arespo = t2/(qe*nevi)
       diag%areshn = t3/((1.5_R8+BoRiS)*prvn)
+      diag%areskt = t4/(prvi)
 
 * ..compute regional scaled sums
       diag%rescoreg = 0.0_R8

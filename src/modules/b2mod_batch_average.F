@@ -12,11 +12,11 @@
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:), te_mean(:),
      .                             ti_mean(:), ua_mean(:,:),
-     .                             po_mean(:)
+     .                             po_mean(:), kt_mean(:)
       real (kind=R8), allocatable, save :: 
      .                             e_na(:,:), e_te(:),
      .                             e_ti(:), e_ua(:,:),
-     .                             e_po(:)
+     .                             e_po(:), e_kt(:)
       real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:),
      .                             smo_mean(:,:),
@@ -49,6 +49,7 @@
       call batch_average (nCv,    ti, ti_mean, itp, ntim_batch)
       call batch_average (nCv,    po, po_mean, itp, ntim_batch)
       call batch_average (nCv*ns, ua, ua_mean, itp, ntim_batch)
+      call batch_average (nCv,    kt, kt_mean, itp, ntim_batch)
 
       call batch_average (nCv*ns, sna_tot, sna_mean, itp, ntim_batch)
       call batch_average (nCv,    she_tot, she_mean, itp, ntim_batch)
@@ -61,6 +62,7 @@
       call batch_average_sq (nCv,    ti, e_ti, itp, ntim_batch)
       call batch_average_sq (nCv,    po, e_po, itp, ntim_batch)
       call batch_average_sq (nCv*ns, ua, e_ua, itp, ntim_batch)
+      call batch_average_sq (nCv,    kt, e_kt, itp, ntim_batch)
       
       call batch_average_sq (nCv*ns, sna_tot, e_sna, itp, ntim_batch)
       call batch_average_sq (nCv,    she_tot, e_she, itp, ntim_batch)
@@ -85,11 +87,13 @@
          allocate (te_mean(1:nCv))        
          allocate (ti_mean(1:nCv))
          allocate (po_mean(1:nCv))
+         allocate (kt_mean(1:nCv))
          allocate (e_na(1:nCv,0:ns-1))
          allocate (e_ua(1:nCv,0:ns-1))
          allocate (e_te(1:nCv))
          allocate (e_ti(1:nCv))
          allocate (e_po(1:nCv))
+         allocate (e_kt(1:nCv))
 
 ctb: the sources are now stored in linearized form I propose to store the total part only 
 ctb..as the mean of the product does not equal the product of the means etc.
@@ -109,11 +113,13 @@ ctb..as the mean of the product does not equal the product of the means etc.
       ti_mean = 0.0_R8
       ua_mean = 0.0_R8
       po_mean = 0.0_R8
+      kt_mean = 0.0_R8
       e_na = 0.0_R8
       e_te = 0.0_R8
       e_ti = 0.0_R8
       e_ua = 0.0_R8
       e_po = 0.0_R8
+      e_kt = 0.0_R8
       
       sna_mean = 0.0_R8
       she_mean = 0.0_R8
@@ -139,11 +145,13 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (te_mean)
       deallocate (ti_mean)
       deallocate (po_mean)
+      deallocate (kt_mean)
       deallocate (e_na)
       deallocate (e_ua)
       deallocate (e_te)
       deallocate (e_ti)
       deallocate (e_po)
+      deallocate (e_kt)
       deallocate (sna_mean)
       deallocate (smo_mean)
       deallocate (she_mean)
@@ -194,6 +202,8 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, nCv, ti_mean, 'ti_mean')
       call cfwure (iun, nCv, po_mean, 'po_mean')
       call cfwure (iun, nCv*ns, ua_mean, 'ua_mean')
+      if (newversion.ge.'03.000.009')
+     &  call cfwure (iun, nCv, kt_mean, 'kt_mean')
       
       call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
       call cfwure (iun, nCv, she_mean, 'she_mean')
@@ -205,6 +215,8 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, nCv,    e_ti, 'e_ti')
       call cfwure (iun, nCv,    e_po, 'e_po')
       call cfwure (iun, nCv*ns, e_ua, 'e_ua')
+      if (newversion.ge.'03.000.009')
+     &  call cfwure (iun, nCv,    e_kt, 'e_kt')
       
       call cfwure (iun, nCv*ns, e_sna, 'e_sna')
       call cfwure (iun, nCv,    e_she, 'e_she')

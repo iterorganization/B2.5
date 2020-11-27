@@ -104,16 +104,14 @@ c for KUL advanced fluid neutral boundary conditions
      &  tn_style = 0,
      &  remove_FC_el = 0
       real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
-      integer :: isn
       real (kind=R8) :: wrkv(nVx),
-     &                  nnVx(nVx), dnndy, dnndz, dnn(nFc,0:1),
-     &                  min_mfp(1:nstrat), mfp
+     &                  dnndy, dnndz, dnn(nFc,0:1)
 c     output for analysis/debugging
       integer, save ::  AFN_out = 0
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
-     &                  fnni_out(nCv), mfp_out(nCv)
+     &                  fnni_out(nCv) 
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, mod, exp
@@ -280,42 +278,14 @@ c     initialize debugging/analysis arrays
         fenerefl_out = 0.0_R8
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
-        mfp_out      = 0.0_R8
 
         if (ns.gt.2) then
-          call xerrab('KUL recycling model not yet developed for',
+          call xerrab('KUL recycling model not yet developed for'//
      &                    'multi-species cases')
         endif
-        isn = 0 !! AFN_TODO generalize species index for multi-species cases? 
-                    !! For now KUL AFN models have only been developed for single species cases.
-        call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx) 
-        call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn),
-     &                  nnVx,  dnn)
-
-c     pre-computation of the minimal mean-free path along a boundary stratum
-        min_mfp(:) = 1.0_R8
-        do istra = 1, nstrat
-*   ..loop over boundary cells
-          do i = 1, mpg%rcCvP(istra,2)
-            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
-            call CalcMinMfp(iRc1,isn,istra,
-     &          pl,dv,rt,min_mfp,mfp)
-            mfp_out(iRc1) = mfp
-          enddo
-
-c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
-          if (min_mfp(istra).lt.mfp_b1) then
-            maxw_eff(istra) = 0
-          elseif (min_mfp(istra).gt.mfp_b2) then
-            maxw_eff(istra) = 1
-          else
-c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
-          endif
-
-        enddo
-
-
-        
+        dnn = 0.0_R8
+        call precompute_kul_quant(nCv, nFc, nVx, geo, mpg, pl, dv,
+     &   co, rt, mfp_b1, mfp_b2, afn_out, dnn)
       endif !! end pre-computations KUL fluid neutrals
 
 
@@ -566,7 +536,6 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
         call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
-        call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
       endif
 
 #ifdef WG_TODO
@@ -955,7 +924,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
-     &              cosa, sina, use_uy_uz_0,     
+     &              cosa, sina, use_uy_uz_0,      
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -974,8 +943,6 @@ cmb   net neutral energy source from recycling
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
-               !! neutral energy boundary conditions are not used
              else 
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec*
      &                              neutral_sources_rescale   
@@ -1009,8 +976,6 @@ c          while B2.5 uses internal energy equations.
 
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-             elseif (tn_style.eq.1) then
-               !! do nothing, no neutral contributions in the boundary conditions of the pure ion energy equation
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
              endif
@@ -1108,10 +1073,9 @@ cmb   net momentum sources from neutral particle reflection
              if (tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + (feneni + fenerefl)*
      &                                          neutral_sources_rescale   
-             elseif (tn_style.eq.1) then
-               !! neutral energy boundary conditions are not used
              else
-               srw%shn0(iCv,0) = srw%shn0(iCv,0) + feneni + fenerefl   
+               srw%shn0(iCv,0) = srw%shn0(iCv,0) + (feneni + fenerefl)* 
+     &                                          neutral_sources_rescale 
              endif
 
 c remove the Franck-Condon energy, that has been provided to the neutrals, from the electrons at the boundary

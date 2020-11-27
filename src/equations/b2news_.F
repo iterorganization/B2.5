@@ -444,13 +444,13 @@ c   extra call at this place within internal iteration)
      &    pl%te, pl%ti, dv%ne, dv%ni, sr, .false.)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
-     &    psnc%na, psnc%ua, psnc%te, psnc%ti, 
-     &    psnc%ne, psnc%ni, psnc%kinrgy,
-     &    pl%na, pl%ua, pl%te, pl%ti, dv%ne, 
-     &    dv%ni, dv%kinrgy,  sr, .false.)
+     &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
+     &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt,
+     &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
+     &    dv%ni, dv%kinrgy, pl%kt, sr, .false.)
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
-     &    pl%ti, pl%po, dv%ne, dv%ni, sr)
+     &    pl%ti, pl%po, dv%ne, dv%ni, pl%kt, sr)
       endif
       if (ue_style.eq.2 .or. iout.ne.0)
 *   ..compute ue, electron parallel velocity
@@ -689,17 +689,30 @@ c      with diamagnetic drift part                                       !srv 13
      &  rt%rza, st_ext%za, dv%fna_32nd, st_ext%fa, dv%fch_32, dv%fne_32)
       call b2xpfe (nCv, nFc, ns, 0, geo, mpg, qe, 
      &      rt%rza, zero, dv%fna_52nd, zerof, dv%fch_52, dv%fne_52)
-      call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                        !srv 13.05.99 21.01.00
-      call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                      !xpb
-      call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                      !xpb
+      if (tn_style.eq.0) then
+        call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                      !srv 13.05.99 21.01.00
+        call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                    !xpb
+        call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                    !xpb
+      elseif (tn_style.eq.1) then
+        call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
+        call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
+        call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
+      else
+        call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
+        call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
+        call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
+        call b2xpfn (nFc, ns, dv%fna_he, dv%fnn)
+        call b2xpfn (nFc, ns, dv%fna_32nd, dv%fnn_32)
+        call b2xpfn (nFc, ns, dv%fna_52nd, dv%fnn_52)
+      endif
 *      ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
      &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
       call b2tfhe_ (nCv, nFc, nVx, ns, geo, mpg,                         !srv 29.01.20
      &      pl, dv, co, .true.)                                          !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-      call b2tfhi_(nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,          !srv 13.10.06
-     &  .true.)                                                          !djm Jan2017
+      call b2tfhi_(nCv, nFc, nVx, ns, ismain, geo, mpg, pl, dv,          !srv 13.10.06
+     &  co, rt,.true.)                                                   !djm Jan2017
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
 
@@ -727,7 +740,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), ncall,
      &  ismain, solving, solveee, solveei, solveen, solveet, solvepo,       !srv 22.05.18
-     &  solvemo, rxf3, BoRiS, pl, dv, co, sr, ier0)
+     &  solvemo, solvekt, rxf3, BoRiS, pl, dv, co, rt, sr, st_ext, ier0)
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) pl%po=0.0_R8                                          !srv 13.07.05
