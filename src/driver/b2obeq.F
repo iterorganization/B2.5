@@ -82,8 +82,6 @@
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, func, fcain, fab, shift
       character*12 hlp_frm
-*   ..procedures
-!      external xerset, xertst
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

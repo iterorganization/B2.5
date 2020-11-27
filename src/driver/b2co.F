@@ -29,6 +29,7 @@
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_xerset
       use b2mod_ipmain
 #ifdef B25_EIRENE
       use eirmod_clogau
@@ -96,7 +97,7 @@
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/

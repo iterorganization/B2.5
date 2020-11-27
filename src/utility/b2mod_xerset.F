@@ -1,17 +1,23 @@
-      subroutine xerset (nprt)
+      module b2mod_xerset
       use b2mod_types
       implicit none
-      integer nprt, nprt1
-*     ------------------------------------------------------------------
-*     XERSET sets the unit number for error messages.
-*     XERGET gets the unit number for error messages.
-*     ------------------------------------------------------------------
+
       integer npdflt, npsave
       parameter (npdflt=0)
       save npsave
 *     npdflt is the default unit number.
 *     npsave is the designated unit number.
       data npsave/npdflt/
+
+      contains
+
+*     ------------------------------------------------------------------
+*     XERSET sets the unit number for error messages.
+*     XERGET gets the unit number for error messages.
+*     ------------------------------------------------------------------
+      subroutine xerset (nprt)
+      implicit none
+      integer, intent(in) :: nprt
 *     ------------------------------------------------------------------
 *     This routine is used to specify a unit number for output from the
 *     routine xerrab and from other error handling routines. If xerset
@@ -28,9 +34,13 @@
        npsave = npdflt
       endif
       return
+      end subroutine xerset
 *     ------------------------------------------------------------------
-      entry xerget (nprt1)
+      subroutine xerget (nprt1)
+      implicit none
+      integer, intent(out) :: nprt1
       nprt1 = npsave
       return
+      end subroutine xerget
 *     ------------------------------------------------------------------
-      end
+      end module b2mod_xerset

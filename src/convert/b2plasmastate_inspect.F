@@ -15,7 +15,7 @@
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
-
+      use b2mod_xerset
       implicit none
 #include "DIMENSIONS.F"
 
@@ -41,7 +41,7 @@
       integer :: ninp(0:5), nx, ny, ns, ns0, idum(0:9)
       character :: arg*256
 *   ..procedures
-      external xerset, xertst, cfopen, cfruin
+      external xertst, cfopen, cfruin
       external b2rucp, b2rups
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/

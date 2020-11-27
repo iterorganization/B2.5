@@ -15,6 +15,7 @@
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -68,7 +69,7 @@
       integer ninp(0:4), nx, ny, ns, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
 !      external b2tsdr
 *   ..initialise input units
       data ninp/50,51,52,53,54/

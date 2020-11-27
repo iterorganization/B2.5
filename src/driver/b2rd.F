@@ -13,6 +13,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmgs
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -83,7 +84,7 @@
       external cfwuin, cfwuch
       external intfaceh1, intfacer1, intfacev1
 #endif
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
 *   ..initialise input/output units
       data ninp/50/
       data nout/60,61,62/

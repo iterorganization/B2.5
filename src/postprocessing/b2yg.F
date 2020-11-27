@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -60,7 +61,7 @@
       integer ninp(0:1), nout(0:1), nx, ny, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgend, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2ygdr
 *   ..initialise input/output units

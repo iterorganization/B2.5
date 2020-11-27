@@ -25,6 +25,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_xerset
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -156,7 +157,7 @@
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET

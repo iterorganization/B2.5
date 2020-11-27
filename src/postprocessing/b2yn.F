@@ -13,6 +13,7 @@
       use b2mod_transport
       use b2mod_work
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -70,7 +71,7 @@
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgfin, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2yndr
 *   ..initialise input/output units

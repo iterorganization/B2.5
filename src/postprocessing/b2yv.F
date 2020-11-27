@@ -16,6 +16,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_elements
+      use b2mod_xerset
 #ifdef WINDOWS
 ! AVDef is the AViz module file
       use AVDef    ! IGNORE
@@ -56,7 +57,7 @@
       character hlp_frm*22
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, xerrab, cfopen, cfruin
+      external prgini, prgend, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
