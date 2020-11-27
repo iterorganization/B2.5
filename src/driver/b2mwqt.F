@@ -84,6 +84,10 @@
 *     arespo specifies the scaled norm of the residual of the electric
 *     potential equation.
 *
+*     areskt - real, input.
+*     areskt specifies the scaled norm of the residual of the turbulent
+*     kinetic energy equation.
+*
 *     acorpa - (0:ns-1) real*8 array, input.
 *     For (is) in (0:ns-1), acorpa(is) specifies the norm of the last
 *     computed correction for the continuity equation for species (is).
@@ -105,9 +109,17 @@
 *     acorti specifies the norm of the last computed correction for the
 *     all atom heat balance equation.
 *
+*     acortn - real, input.
+*     acortn specifies the norm of the last computed correction for the
+*     fluid neutral heat balance equation.
+*
 *     acorpo - real, input.
 *     acorpo specifies the norm of the last computed correction for the
 *     electric potential equation.
+*
+*     acorkt - real, input.
+*     acorkt specifies the norm of the last computed correction for the
+*     turbulent kinetic energy equation.
 *
 *     (parameters in common:)
 *
@@ -165,15 +177,17 @@
 *   ..test residuals
       call xertst (0.0_R8.le.smin(ns,diag%aresco,1).and.
      &  0.0_R8.le.diag%areshe.and.0.0_R8.le.diag%areshi.and.
-     &  0.0_R8.le.diag%arespo,'faulty argument aresco/ee/ei/po')
+     &  0.0_R8.le.diag%arespo.and.0.0_R8.le.diag%areskt,
+     &  'faulty argument aresco/ee/ei/po/kt')
 *   ..test corrections
       call xertst (0.0_R8.le.smin(ns,diag%acorpa,1).and.
      &  0.0_R8.le.diag%acorte.and.0.0_R8.le.diag%acorti.and.
-     &  0.0_R8.le.diag%acorpo,'faulty argument acorpa/te/ti/po')
+     &  0.0_R8.le.diag%acorpo.and.0.0_R8.le.diag%acorkt.and.
+     &  0.0_R8.le.diag%acortn,'faulty argument acorpa/te/ti/po/kt')
 *   ..set and test nfld
       nfld = 0
       if (1.le.style) then
-       nfld = nfld+2+2*(2*ns+4)
+       nfld = nfld+2+2*(2*ns+6)
       endif
       if (2.le.style) then
        nfld = nfld+36*(ns+3)
@@ -184,7 +198,6 @@
       if (4.le.style) then
        nfld = nfld+72*(ns+3)
       endif
-      nfld = nfld + 1
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 *   ..define region boundaries
 #ifdef WG_TODO
@@ -226,6 +239,8 @@
        k = k+1
        z(k) = diag%arespo
        k = k+1
+       z(k) = diag%areskt
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         z(k) = diag%acorpa(is)
@@ -241,7 +256,11 @@
        k = k+1
        z(k) = diag%acorti/ev
        k = k+1
+       z(k) = diag%acortn/ev
+       k = k+1
        z(k) = diag%acorpo
+       k = k+1
+       z(k) = diag%acorkt/ev
        k = k+1
       endif
       if (2.le.style) then

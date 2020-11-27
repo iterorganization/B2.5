@@ -70,10 +70,12 @@
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then               !srv 16.10.17
 
 *     ..compute radial gradients of ti
+#ifdef WG_TODO
          call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
 
 *       compute differences of OnedBsq on cell faces
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+#endif
 !        wght = 1.0_R8
 !        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
 !     .    dOnedBsq(-1,-1,0,0))

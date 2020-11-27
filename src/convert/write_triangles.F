@@ -270,7 +270,7 @@
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
         call conv_surface_models (nout, mpg, gm, 
-     .     bndmdl, trifc, nelem)
+     .     bndmdl, trifc, elem_cv, nelem)
       else
         call find_nondef_surfaces (nout, mpg, gm, 
      .     elem, bndmdl, elem_cv, nelem)

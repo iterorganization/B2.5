@@ -8,16 +8,15 @@
      *  resmo(:,:,:),
      *  resmt(:,:),
      *  respo(:,:),
+     *  reskt(:,:),
      *  aresco(:),
      *  aresmo(:)
        real (kind=R8), save ::
      *  aresmt,
      *  areshe,
      *  areshi,
-     *  arespo
-! csc UNCOMMENT WITH AD
-!  REAL(kind=r8), ALLOCATABLE, SAVE :: arescod(:), aresmod(:)
-!  REAL(kind=r8), SAVE :: aresmtd, areshed, areshid, arespod
+     *  arespo,
+     *  areskt
 
       contains
 
@@ -32,14 +31,9 @@
       allocate(resmo(-1:nxd,-1:nyd,0:nsd-1))
       allocate(resmt(-1:nxd,-1:nyd))
       allocate(respo(-1:nxd,-1:nyd))
+      allocate(reskt(-1:nxd,-1:nyd))
       allocate(aresco(0:nsd-1))
       allocate(aresmo(0:nsd-1))
-
-! csc UNCOMMENT WITH AD
-!    ALLOCATE(arescod(0:nsd-1))
-!    ALLOCATE(aresmod(0:nsd-1))
-!    arescod = 0.0_R8
-!    aresmod = 0.0_R8
 
       resco=0.0_R8
       reshe=0.0_R8
@@ -48,6 +42,7 @@
       resmo=0.0_R8
       resmt=0.0_R8
       respo=0.0_R8
+      reskt=0.0_R8
       aresco=0.0_R8
       aresmo=0.0_R8
 
@@ -64,12 +59,9 @@
       deallocate(resmo)
       deallocate(resmt)
       deallocate(respo)
+      deallocate(reskt)
       deallocate(aresco)
       deallocate(aresmo)
-
-! csc UNCOMMENT WITH AD
-!      deallocate(arescod)
-!      deallocate(aresmod)
 
       return
       end subroutine dealloc_b2mod_residuals
@@ -84,6 +76,7 @@
       call cfrure (nread, size(resmo), resmo, 'resmo')
       call cfrure (nread, size(resmt), resmt, 'resmt')
       call cfrure (nread, size(respo), respo, 'respo')
+      call cfrure (nread, size(reskt), reskt, 'reskt')
 
       return
       end subroutine read_b2mod_residuals
@@ -99,6 +92,7 @@
       call cfwure (nwrite, size(resmo), resmo, 'resmo')
       call cfwure (nwrite, size(resmt), resmt, 'resmt')
       call cfwure (nwrite, size(respo), respo, 'respo')
+      call cfwure (nwrite, size(reskt), reskt, 'reskt')
 
       return
       end subroutine write_b2mod_residuals

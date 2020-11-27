@@ -37,10 +37,6 @@ c
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
 
-! csc UNCOMMENT WITH AD
-!  REAL(kind=r8), ALLOCATABLE :: rescoregd(:, :), resmoregd(:, :), resheregd&
-!& (:), reshiregd(:)
-
 c----------------------------------------------------------------------
 c*** sclstra: scaling factors for neutral fluxes per species and strata
 c*** sclalph: scaling factors for particle sources
@@ -147,16 +143,6 @@ c
       allocate(
      ,     rescoreg(0:nregionv,0:nsd-1), resmoreg(0:nregionv,0:nsd-1),
      ,     reshereg(0:nregionv)        , reshireg(0:nregionv))
-
-! csc UNCOMMENT WITH AD
-!      ALLOCATE(rescoregd(0:nregionv, 0:nsd-1))
-!      ALLOCATE(resmoregd(0:nregionv, 0:nsd-1))
-!      ALLOCATE(resheregd(0:nregionv))
-!      ALLOCATE(reshiregd(0:nregionv))
-!      rescoregd = 0.0_R8
-!      resmoregd = 0.0_R8
-!      resheregd = 0.0_R8
-!      reshiregd = 0.0_R8
 
       call xertst(1.le.nspecies.and.nspecies.le.natm,
      . 'faulty parameter nspecies')
@@ -281,12 +267,6 @@ c>>>
       deallocate(src_ee, src_ei, src_es, src_ms, src_ni, src_mo, src_ne)
       deallocate(cor_ee, cor_ei, cor_ni, cor_mo, cor_ne)
       deallocate(rescoreg, resmoreg, reshereg, reshireg)
-
-! csc UNCOMMENT WITH AD
-!      DEALLOCATE(rescoregd)
-!      DEALLOCATE(resmoregd)
-!      DEALLOCATE(resheregd)
-!      DEALLOCATE(reshiregd)
 
       return
       end subroutine dealloc_b2mod_diag

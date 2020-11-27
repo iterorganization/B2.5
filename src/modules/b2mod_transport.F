@@ -9,6 +9,7 @@
      *  cddi(:,:,:,:,:),                                                !srv 13.10.06
      *  cdnahz(:,:,:,:,:),                                              !srv 09.01.01
      *  cdpahz(:,:,:,:,:),                                              !srv 09.01.01
+     *  cdkt(:,:,:,:),
      *  ceqp(:,:),
      *  chce(:,:,:,:),
      *  chci(:,:,:,:),
@@ -59,6 +60,8 @@
       allocate(cddi(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                     !srv 13.10.06
       allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                   !srv 09.01.01
       allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                   !srv 09.01.01
+      allocate(cdkt(-1:nxd,-1:nyd,0:1,0:1))
+      cdkt = 0.0_R8
       allocate(ceqp(-1:nxd,-1:nyd))
       allocate(chce(-1:nxd,-1:nyd,0:1,0:1))
       allocate(chci(-1:nxd,-1:nyd,0:1,0:1))
@@ -153,6 +156,7 @@
       deallocate(sigx_c)                                   !iys 19.11.13
       deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
+      deallocate(cdkt)
 
       return
       end subroutine dealloc_b2mod_transport
@@ -291,6 +295,11 @@
         fllim_al=0.0_R8
         fllim_al_c=0.0_R8
       endif
+      if(b2fplasma_version.ge.'03.000.009') then
+        call cfrure (nread, size(cdkt), cdkt, 'cdkt')
+      else
+        cdkt=0.0_R8
+      endif
 
       return
       end subroutine read_b2mod_transport
@@ -339,6 +348,9 @@
         call cfwure (nwrite, size(fllim_ki), fllim_ki, 'fllim_ki')
         call cfwure (nwrite, size(fllim_al), fllim_al, 'fllim_al')
         call cfwure (nwrite, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
+      endif
+      if(newversion.ge.'03.000.009') then
+        call cfwure (nwrite, size(cdkt), cdkt, 'cdkt')
       endif
 
       return
