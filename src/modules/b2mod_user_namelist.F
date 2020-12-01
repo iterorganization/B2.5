@@ -34,7 +34,7 @@
       logical, save :: user_initialised = .false.
       logical, save :: cfread(nncf), cfomp(nncf)
       integer, save :: ncfdata(nncf), ncf
-      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfnorm(nncf)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
 
       private :: user
       namelist /user/
@@ -45,7 +45,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp, cfnorm
+     ,  cfread, cftype, rzomp, cfomp, cfweight
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -128,7 +128,7 @@ c***  Standard setup:
       cfdata = 0.0_R8
       ncfdata = 0
       rzomp = 0.0_R8
-      cfnorm = 1.0_R8
+      cfweight = 1.0_R8
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -196,6 +196,9 @@ c***  Standard setup:
         incf = 0
         do icf = 1, ncf
           if (cftype(icf).gt.4) call xerrab ('cftype>4 not coded ')
+          if ((cftype(icf).eq.1 .or. cftype(icf).eq.2) .and.
+     &         .not.cfread(icf)) call xerrab ('cftype=1 or 2 need to'//
+     &         'read experimental profile')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
