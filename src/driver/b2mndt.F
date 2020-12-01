@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nx, ny, ns, nxtl, nxtr, ismain, ismain0,
+      subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0,
      . nscx, iscx, itim, dtim, ntim, ierr)
       use b2mod_types
       use b2mod_geo
@@ -16,6 +16,7 @@
       use b2mod_diag
       use b2mod_work
       use b2mod_time
+      use b2mod_file
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
@@ -24,7 +25,7 @@
       use b2mod_numerics_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:5), nx, ny, ns, nxtl, nxtr, ismain, ismain0,
+      integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: iav_run = 0
@@ -338,13 +339,13 @@ ctmp.dpc
           cor_ei=0.0_R8
 *     ..compute source linearisation
           main_call = ntim.ne.0
-          call b2sral (nx, ny, ns, nxtl, nxtr,
+          call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
      &     vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                   !srv 09.01.01 02.04.18
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
+     &     te, ti, po, ne, ni, floe_noc, floi_noc,                       !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
@@ -383,11 +384,11 @@ ctmp.dpc
 *      ..basic iterative step
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
-            call b2news (nx, ny, ns, nxtl, nxtr,
+            call b2news (nx, ny, ns,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
            else                                                          !srv 01.07.08 {
-            call b2news_(nx, ny, ns, nxtl, nxtr,
+            call b2news_(nx, ny, ns,
      &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
            endif                                                         !srv 01.07.08 )
            flush(6)
@@ -454,10 +455,10 @@ ctmp.dpc
            if (ank_tracing.ne.0) then
              if (ncall.eq.0.and.istg(2).eq.0) then
                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-               call b2filei(1,ns,nnreg)
+               call b2filei(ns,nnreg(0))
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >        call b2filew(istg(2),ns,nnreg)
+     >        call b2filew(istg(2),nnreg(0))
            endif
 *      ..update iteration counter
            itcnt = itcnt+1

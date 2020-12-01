@@ -1,42 +1,23 @@
-      subroutine b2wrsep(nx,ny,ns,BoRiS,iline)
+      module b2mod_wrsep
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
       use b2mod_time
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-     . , only : sna
-      use b2mod_tallies
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_user_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_numerics_namelist
       use b2mod_b2cmpa
-      use b2mod_external
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-      use eirmod_eirbra
-#else
-      use b2mod_eirbra
-#endif
-c
-c  version : 10.12.2000 23:36
-c
+      use b2mod_indirect
+      implicit none
+
 c======================================================================
 c*** Puts some separatrix data on the output file "tracing/sepdata.trc"
 c***  - primarily, to provide boundary conditions for core models
 c----------------------------------------------------------------------
-      implicit none
 
-      integer nx, ny, ns, iline
-      real (kind=R8) :: BoRiS
 c----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 
       integer lv
       parameter (lv=20000828)
+      integer ltrc
+      parameter (ltrc=ntrc_sep)
 
 c----------------------------------------------------------------------
 c*** Separatrix data:
@@ -69,26 +50,23 @@ c***.............................................................(ions)
 c***     nii_sep_   nisi_tmp    average ni for each ion
 c***     Gii_sep_   gisi_tmp    outward ion flux for each ion
 c----------------------------------------------------------------------
-c
-c*** Global values
-      integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=9)
-      real (kind=R8) ::
-     *     equg_tmp(nglb_tmp)
-      real (kind=R8) ::
-     *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
-     ,     hlp_qisp, hlp_qrsl, hlp_spmn
-      equivalence
-     ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
-     ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
-     ,     (equg_tmp(5),  hlp_qtsp), (equg_tmp(6),  hlp_qesp),
-     ,     (equg_tmp(7),  hlp_qisp), (equg_tmp(8),  hlp_qrsl),
-     ,     (equg_tmp(9),  hlp_spmn)
-      character hlp_hg(nglb_tmp)*8
 
-c*** Values by species
-      integer nspc_tmp, nsp_tmp, ns_tmp
+      integer, save :: ng_tmp, nsp_tmp, ns_tmp, ni_tmp, nii_tmp, nis_tmp
+      integer, save :: jxi, jxa, jsep, lun
+      integer, save, allocatable :: ii(:)
+      character*2, save, allocatable :: hlp_a(:)
+      character, save :: f*(lenfnm), hlp_frm*256
+
+      integer nglb_tmp
+      parameter (nglb_tmp=9)
+      integer nspc_tmp
       parameter (nspc_tmp=10)
+      integer nion_tmp
+      parameter (nion_tmp=2)
+      character, save :: hlp_hg(nglb_tmp)*8
+      character, save :: hlp_hs(nspc_tmp)*7
+      character, save :: hlp_hi(nion_tmp)*8
+c*** Values by species
       real (kind=R8), allocatable ::
      *      equs_tmp(:,:)
       real (kind=R8), allocatable ::
@@ -96,32 +74,12 @@ c*** Values by species
      ,      gisp_tmp(:), nasp_tmp(:), tasp_tmp(:),
      ,      gasp_tmp(:), gpuf_tmp(:),
      ,      prsr_tmp(:), nrsr_tmp(:)
-      character hlp_hs(nspc_tmp)*7
 
 c*** Values by ion charge states
-      integer nion_tmp, ni_tmp, nii_tmp, nis_tmp
-      parameter (nion_tmp=2)
       real (kind=R8), allocatable ::
      *     equi_tmp(:,:)
       real (kind=R8), allocatable ::
      *     nisi_tmp(:), gisi_tmp(:)
-      character hlp_hi(nion_tmp)*8
-
-c*** Local variables of general use
-      integer lun, ltrc
-      parameter (ltrc=ntrc_sep)
-      real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
-      real (kind=R8) :: stim = 0.0_R8
-      real (kind=R8) :: tdummy
-      integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
-      integer, allocatable :: ii(:)
-      logical ex, warn_tmp
-      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      character*2, allocatable :: hlp_a(:)
-
-      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
-      logical :: first=.TRUE.
 
 c----------------------------------------------------------------------
 c*** Column headers:
@@ -134,6 +92,52 @@ c*** Column headers:
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
 c----------------------------------------------------------------------
+
+      contains
+
+      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_sources
+     . , only : sna
+      use b2mod_tallies
+      use b2mod_constants
+      use b2mod_user_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_external
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+      use eirmod_eirbra
+#else
+      use b2mod_eirbra
+#endif
+      implicit none
+
+      integer nx, ny, ns
+      real (kind=R8) :: BoRiS
+c
+c*** Global values
+      real (kind=R8) ::
+     *     equg_tmp(nglb_tmp)
+      real (kind=R8) ::
+     *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
+     ,     hlp_qisp, hlp_qrsl, hlp_spmn
+      equivalence
+     ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
+     ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
+     ,     (equg_tmp(5),  hlp_qtsp), (equg_tmp(6),  hlp_qesp),
+     ,     (equg_tmp(7),  hlp_qisp), (equg_tmp(8),  hlp_qrsl),
+     ,     (equg_tmp(9),  hlp_spmn)
+
+c*** Local variables of general use
+      real (kind=R8) ::
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
+      integer i,j,k,l,ia,is,ix,iy
+
+      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
+      logical :: first=.TRUE.
 
       save
 c======================================================================
@@ -376,9 +380,20 @@ c*** Write the data in a separate file for plotting...
      ,         ((equi_tmp(i,j),i=1,nii_tmp),j=1,ni_tmp)
       end if !}
       return
+c
+   94 write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+      end subroutine b2wrsep
 c======================================================================
 
-      entry b2wrsepi(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepi(nx,ny,ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      integer i, j, k, nv
+      real (kind=R8) :: stim = 0.0_R8
+      character hlp_c, tab, hlp_frf*400
+      logical ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
@@ -558,13 +573,17 @@ c
    92 write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
-c
-   94 write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
-      filedata(ltrc)=.false.
-      return
+c======================================================================
+  700 format('#   ',6i8)
+      end subroutine b2wrsepi
 c======================================================================
 c
-      entry b2wrsepc(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      logical ex
+      real (kind=R8) :: tdummy
+      character hlp_c
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -594,13 +613,16 @@ c======================================================================
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2wrsepc
 c======================================================================
-      entry b2wrseps(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrseps
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2wrseps
 c======================================================================
-      entry b2wrsepf(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepf
+      implicit none
 c----------------------------------------------------------------------
 c     Finalization step
       deallocate(equs_tmp)
@@ -620,7 +642,6 @@ c     Finalization step
       deallocate(ii)
       deallocate(hlp_a)
       return
+      end subroutine b2wrsepf
 c======================================================================
-  700 format('#   ',6i8)
-c======================================================================
-      end subroutine b2wrsep
+      end module b2mod_wrsep

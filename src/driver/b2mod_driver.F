@@ -42,6 +42,8 @@
       use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_mwti
+      use b2mod_file
+      use b2mod_trace
       use b2mod_ipmain
       use b2mod_openmp
       use b2mod_balance !djm Jan2017
@@ -2051,7 +2053,7 @@ c new CDF movie option (1st frame at t=0)
         call b2mxnu (n2*2, fhep, fhe0, fhe)
         call b2mxnu (n2*2, fhip, fhi0, fhi)
         call b2mxnu (n2*2, fchp, fch0, fch)
-        call b2trcs (70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
+        call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
           po   =0.0e0_R8
@@ -2065,8 +2067,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nx, ny, ns, nxtl, nxtr,
-     &     ismain, ismain0, nscx, iscx, itim, dtim, ntim, ierr)
+          call b2mndt (nout, nx, ny, ns, ismain, ismain0,
+     &     nscx, iscx, itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2242,12 +2244,12 @@ c new CDF movie option
         if (first_time_step) then
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-          call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+          call b2trci(nx,ny,ns,nnreg(0))
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+     >     call b2trace(nx,ny,ns,nxtl,nxtr,nnreg(0),ismain,dtim,BoRiS)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2345,7 +2347,7 @@ c new CDF movie option
           call find_file(filename,found)
           if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
-          if (ank_tracing.ne.0) call b2filef(0,ns,nnreg)
+          if (ank_tracing.ne.0) call b2filef
 
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
@@ -2903,7 +2905,7 @@ cxpb Do the recreate to a temporary location and then bring it back
       if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
-      call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      call b2trcf
 
 * ..return
       ncall = ncall+1

@@ -1,28 +1,15 @@
-      subroutine b2blnm(nx,ny,ns,iline)
+      module b2mod_blnm
       use b2mod_types
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_external
-      use b2mod_b2cmpa
-      use b2mod_numerics_namelist
-c
-c  version : 03.03.2001 00:37
-c
+      use b2mod_time
+      implicit none
+
 c======================================================================
 c*** Computes the parallel momentum balance (forces) in the plasma in
 c*** the inner and outer divertors (only lower divertors for
 c*** double-null case)
 c----------------------------------------------------------------------
-      implicit none
-c
-c
-      integer nx, ny, ns, iline
+
 c
 c*** lv    :  version number to appear in the file
 c*** lvm   :  version number corresponding to the last major change
@@ -30,6 +17,7 @@ c
       integer lv, lvm
       parameter (lv=970911)
       parameter (lvm=970909)
+
 c
 c----------------------------------------------------------------------
 c*** Parallel momentum balance in the plasma:
@@ -52,12 +40,47 @@ c***     rel_fneu rlfnu   friction with neutrals (relative)
 c***     rel_fmag rlfmf   pressure taken by magnetic field (relative)
 c***     rel_resf rlres   resulting force onto divertor leg (relative)
 c----------------------------------------------------------------------
-c
+
+      integer lun, ltrc
+      parameter (ltrc=ntrc_blm)
 c*** Values by divertors. Here nqudiv is the number of values,
 c*** ndivx is the maximum, and ndiv the actual, number
 c*** of divertor legs (at present, the same)
       integer ndivx, ndiv, nqudiv, nd_tmp, ndv_tmp
       parameter (nqudiv=13, ndivx=2)
+
+      character hlp_frm*80, hlp_frf*160
+      character hlp_div(ndivx)*2, hlp_hdv(nqudiv)*8
+c
+      data hlp_div / 'il', 'ol' /
+c----------------------------------------------------------------------
+c*** Column headers:
+      data hlp_hdv /
+     1      'prs_xpnt','prs_trgt','mfl_xpnt','mfl_trgt','fric_neu',
+     2      'prs_magn','res_frce','rel_prtg','rel_flxp','rel_fltg',
+     3      'rel_fneu','rel_fmag','rel_resf'/
+c----------------------------------------------------------------------
+
+      save lun, ndiv, nd_tmp, ndv_tmp,
+     & hlp_frm, hlp_frf, hlp_div, hlp_hdv
+
+      contains
+
+      subroutine b2blnm(nx,ny,ns)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_sources
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_external
+      use b2mod_b2cmpa
+      use b2mod_numerics_namelist
+      implicit none
+c
+c
+      integer nx, ny, ns
+c
       real (kind=R8) ::
      *     equdiv(ndivx,nqudiv)
       real (kind=R8) ::
@@ -73,54 +96,25 @@ c*** of divertor legs (at present, the same)
      ,            (equdiv(1,9), rlmup), (equdiv(1,10), rlmtg),
      ,            (equdiv(1,11), rlfnu), (equdiv(1,12), rlfmf),
      ,            (equdiv(1,13), rlres)
-      character hlp_div(ndivx)*2, hlp_hdv(nqudiv)*8
 c----------------------------------------------------------------------
 c
-      integer lun, ltrc
-      parameter (ltrc=ntrc_blm)
-      integer i, j, ic, is, ix, iy, nv
+      integer i, j, ic, is, ix, iy
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(-1:nx, -1:ny)
-      real (kind=R8), save :: stim = 0.0_R8
-      real (kind=R8) :: tdummy
-      logical ex,warn_tmp
-      character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
-c----------------------------------------------------------------------
-      real (kind=R8) ::
-     *     sx
-csw 29sep2014: xpb fix on sx calculation
-      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
-     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     .  qc(rightix(ix,iy),rightiy(ix,iy)))
-c*** to be moved to init.F:
-c
-      data hlp_div / 'il', 'ol' /
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
-c----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_hdv /
-     1      'prs_xpnt','prs_trgt','mfl_xpnt','mfl_trgt','fric_neu',
-     2      'prs_magn','res_frce','rel_prtg','rel_flxp','rel_fltg',
-     3      'rel_fneu','rel_fmag','rel_resf'/
-c----------------------------------------------------------------------
 c
       save
-     +  ndiv, nd_tmp, ndv_tmp,
      +  equdiv,
      +  prsup, prstg, flmup,
      ,  flmtg, prsnu, prsmf,
      ,  rsfrc, rlptg, rlmup,
      ,  rlmtg, rlfnu, rlfmf,
      ,  rlres,
-     +  hlp_div, hlp_hdv,
-     +  lun,
-     +  i, j, ic, is, ix, iy, nv,
-     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
-     +  ex,warn_tmp,
-     +  hlp_c, tab, f, hlp_frm, hlp_frf
+     +  i, j, ic, is, ix, iy,
+     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf
 c======================================================================
 
       do i=1,ndivx
@@ -266,9 +260,30 @@ c
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}
       return
+
+      contains
+c----------------------------------------------------------------------
+      function sx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real (kind=R8) ::
+     *     sx
+csw 29sep2014: xpb fix on sx calculation
+      sx=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
+     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
+     .  qc(rightix(ix,iy),rightiy(ix,iy)))
+      return
+      end function sx
+
+      end subroutine b2blnm
 c======================================================================
 c
-      entry b2blnmi(nx,ny,ns,iline)
+      subroutine b2blnmi
+      implicit none
+      integer i, j, nv
+      real (kind=R8), save :: stim = 0.0_R8
+      character f*(lenfnm), tab, hlp_c
+      logical :: ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_blm)=.true.
@@ -366,8 +381,15 @@ c*** Prepare the formats for the printout
   710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
   720 format('(1p,1x,a2,1x,',i3,'e11.3)')
 c======================================================================
+      end subroutine b2blnmi
 c
-      entry b2blnmc(nx,ny,ns,iline)
+      subroutine b2blnmc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character f*(lenfnm)
+      character hlp_c
+      logical ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -397,21 +419,24 @@ c======================================================================
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2blnmc
 c======================================================================
 c
-      entry b2blnms(nx,ny,ns,iline)
+      subroutine b2blnms
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnms
 c======================================================================
 c
-      entry b2blnmf(nx,ny,ns,iline)
+      subroutine b2blnmf
 c----------------------------------------------------------------------
 c*** - Finalization step
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnmf
 c======================================================================
-      end subroutine b2blnm
+      end module b2mod_blnm

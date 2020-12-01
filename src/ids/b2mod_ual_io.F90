@@ -458,7 +458,7 @@ contains
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
             &       fllim0fhi, fllimvisc, csig_cl, calf_cl)
 #ifdef B25_EIRENE
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, time_step, BoRiS, &
+        call eirene_mc(nx, ny, ns, time_step, BoRiS, &
             &          sna0, smo0, she0, shi0, .false.)
 #endif
         if (balance_netcdf.ne.0) call read_balance

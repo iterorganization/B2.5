@@ -1,47 +1,23 @@
-      subroutine b2wrsrt(nx,ny,ns,nregionv,iline)
+      module b2mod_wrsrt
       use b2mod_types
-      use b2mod_constants
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
-      use b2mod_rates
+      use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_tallies
-      use b2mod_indirect
-      use b2mod_external
-      use b2mod_constants
-      use b2mod_numerics_namelist
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-      use eirmod_eirbra
-#else
-      use b2mod_eirbra
-#endif
-c
-c  version : 15.03.2002 16:33
-c
+      implicit none
+
 c========================================================================
 c*** Puts some integral quantities on the output file
 c*** "tracing/intshrt.trc"
 c-----------------------------------------------------------------------
-      implicit none
 c
-#     include <DIMENSIONS.F>
-c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
-      integer nx, ny, ns, nregionv, iline
-c
       integer lv
-c      parameter (lv=970522)
-c#ifndef SCL_IMP_RCI
       parameter (lv=20200605)
-c      parameter (lv=20171020)
-c#else
-c      parameter (lv=20010716)
-c#endif
-c
+      integer ltrc
+      parameter (ltrc=ntrc_srt)
+      integer, save :: lun
+
 c-----------------------------------------------------------------------
 c*** Additional integrals:
 c***
@@ -70,74 +46,83 @@ c***
 c***..........................................................(species)
 c***     res_rci_  rrci_tmp   residuals in impurity balance
 c-----------------------------------------------------------------------
+
+      integer, save :: nrg_tmp, nr_tmp, nsp_tmp, ns_tmp, na_tmp, nfl_tmp
+      integer nrgn_tmp
+      parameter (nrgn_tmp=2) ! Number of quantities computed in each region
+      integer nspc_tmp
+      parameter (nspc_tmp=1)
+      integer nsar_tmp
+      parameter (nsar_tmp=2)
+      character, save :: hlp_hr(nrgn_tmp)*8
+      character, save :: hlp_hs(nspc_tmp)*8
+      character, save :: hlp_ha(nsar_tmp)*8
+
+      character, save :: f*(lenfnm), hlp_frm*256
+c-----------------------------------------------------------------------
+c*** Column headers:
+      data hlp_hr / 'totenre_','totamom_' /
+      data hlp_hs / 'N_a_tot_' /
+      data hlp_ha / 'N_i_reg_', 'N_a_reg_' /!,'mom_reg_' /
+c-----------------------------------------------------------------------
+
+      contains
+
+      subroutine b2wrsrt(nx,ny,ns)
+      use b2mod_constants
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_tallies
+      use b2mod_indirect
+      use b2mod_external
+      use b2mod_constants
+      use b2mod_numerics_namelist
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+      use eirmod_eirbra
+#else
+      use b2mod_eirbra
+#endif
+      implicit none
+c
+#     include <DIMENSIONS.F>
+      integer nx, ny, ns
+c
+c
 c
 c*** Values by regions
-      integer nrgn_tmp, nrg_tmp, nr_tmp
-      parameter (nrgn_tmp=2) ! Number of quantities computed in each region
       real (kind=R8) :: tesum(NNREGMAX), ang_mom_sum(NNREGMAX)
 
       real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum), (equr_tmp(1,2), ang_mom_sum)
-      character hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
-      integer nspc_tmp, nsp_tmp, ns_tmp
-      parameter (nspc_tmp=1)
       real (kind=R8) :: equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) :: Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), Natm_tmp)
-      character hlp_hs(nspc_tmp)*8
 
 c*** Values by species and regions
-      integer nsar_tmp, na_tmp
-      parameter (nsar_tmp=2)
       real (kind=R8) :: equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)  ! IYS 29.09.2017 added total number of neutrals
 !     &       , amomsum(DEF_NATM,NNREGMAX)
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
 !     *    ,(equa_tmp(1,1,3), amomsum)
-      character hlp_ha(nsar_tmp)*8
-c
-c*** Values by strata
-      integer nfl_tmp
 c-----------------------------------------------------------------------
 c*** Local variables of general use
-      integer lun, ltrc
-      parameter (ltrc=ntrc_srt)
-      real (kind=R8), save :: stim = 0.0_R8
-      real (kind=R8) :: tdummy
-      integer i, j, k, ir,is,ix,iy, nv
-      logical ex, warn_tmp
-      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
+      integer i, j, k, ir, is, ix, iy
       integer iatm ! IYS 29.09.2017
 #ifdef B25_EIRENE
       integer imol
 #endif
-c-----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_hr / 'totenre_','totamom_' /
-      data hlp_hs / 'N_a_tot_' /
-      data hlp_ha / 'N_i_reg_', 'N_a_reg_' /!,'mom_reg_' /
-
-c-----------------------------------------------------------------------
 c
       save
-     +  nrg_tmp, nr_tmp,
      +  equr_tmp,
-     +  hlp_hr,
-     +  nsp_tmp, ns_tmp, 
      +  equs_tmp,
      +  Natm_tmp,
-     +  hlp_hs,
-     +  na_tmp,
      +  equa_tmp,
-     +  hlp_ha,
-     +  nfl_tmp,
-     +  lun,
-     +  i, j, k, is, ix, nv,
-     +  ex, warn_tmp,
-     +  tab, hlp_c, f, hlp_frm, hlp_frf
+     +  i, j, k, is, ix
 c=======================================================================
 
 c*** Initialise the arrays
@@ -215,9 +200,20 @@ c
         end if
       end if
       return
+c
+   94 write(*,*) 'b2wrsrt: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+      end subroutine b2wrsrt
 c=======================================================================
 c
-      entry b2wrsrti(nx,ny,ns,nregionv,iline)
+      subroutine b2wrsrti(nregionv)
+      implicit none
+      integer, intent(in) :: nregionv
+      integer i, j, k, nv
+      real (kind=R8), save :: stim = 0.0_R8
+      character tab, hlp_c, hlp_frf*400
+      logical ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
@@ -393,13 +389,17 @@ c
    92 write(*,*) 'b2wrsrt: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
-c
-   94 write(*,*) 'b2wrsrt: cannot write in the file ',trim(f)
-      filedata(ltrc)=.false.
-      return
+c=======================================================================
+  700 format('#   ',7i8/'#  ',a)
+      end subroutine b2wrsrti
 c======================================================================
 c
-      entry b2wrsrtc(nx,ny,ns,nregionv,iline)
+      subroutine b2wrsrtc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character hlp_c
+      logical ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -429,21 +429,22 @@ c======================================================================
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2wrsrtc
 c=======================================================================
-      entry b2wrsrts(nx,ny,ns,nregionv,iline)
+      subroutine b2wrsrts
 c-----------------------------------------------------------------------
 c*** Save the values (not used for this set)
 c-----------------------------------------------------------------------
 c
       return
+      end subroutine b2wrsrts
 c=======================================================================
-      entry b2wrsrtf(nx,ny,ns,nregionv,iline)
+      subroutine b2wrsrtf
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
       return
+      end subroutine b2wrsrtf
 c=======================================================================
-  700 format('#   ',7i8/'#  ',a)
-c=======================================================================
-      end subroutine b2wrsrt
+      end module b2mod_wrsrt

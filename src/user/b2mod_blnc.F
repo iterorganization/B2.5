@@ -1,57 +1,10 @@
-      subroutine b2blnc(nx,ny,ns,dtim,iline)
+      module b2mod_blnc
       use b2mod_types
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
+      use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
-      use b2mod_numerics_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_boundary_namelist
-#include "DIMENSIONS.F"
-c
-c  version : 19.07.2001 18:46
-c
-c======================================================================
-c*** Computes the global particle flows across the boundaries in
-c*** B2-Eirene and the global particle balance in B2
-c----------------------------------------------------------------------
       implicit none
-c
-      integer nx, ny, ns, iline
-      real (kind=R8) :: dtim
-c
-      integer lun, ltrc
-      parameter (ltrc=ntrc_bln)
-      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
-     ,        nc, nv, kks, np_tmp
-      logical first, ex, hlp_lw, hlp_lt
-c<<<
-      logical hlp_tt
-      real (kind=R8) :: tdummy
-      real (kind=R8) :: hlp_wldpp
-      real (kind=R8) :: hlpit_l,hlpit_r
-      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
-      real (kind=R8) :: hlp_pls(nbcd,ns)
-      real (kind=R8), allocatable, save :: hlp_neu(:,:)
-      integer kst_hlp
-      integer use_recyceir, use_eirene
-      real (kind=R8) :: recyctmp
-      real (kind=R8), save :: stim = 0.0_R8
-c>>>
-c
-c*** lv    :  version number to appear in the file
-c*** np_tmp:  number of output data for each species
-c
-      parameter (lv=961229, np_tmp=20)
-c
-      real (kind=R8) :: 
-     *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     ,     hlpdt,hlp,hlpids
-      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
-c
+
 c----------------------------------------------------------------------
 c*** debug_flags usage:
 c***  90  >0 : debugging printout on
@@ -89,7 +42,23 @@ c***   bln_blnc  blnne   error in particle balance
 c***   bln_blnr  blnnr   the same divided by the sum of the abs. values
 c***                     of the other terms (relative error)
 c----------------------------------------------------------------------
-      real (kind=R8), allocatable :: 
+
+c
+c*** lv    :  version number to appear in the file
+c*** np_tmp:  number of output data for each species
+c
+      integer lv, np_tmp
+      parameter (lv=961229, np_tmp=20)
+      integer ltrc, lun
+      parameter (ltrc=ntrc_bln)
+      integer, save :: nc
+
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
+      real (kind=R8), allocatable, save :: hlp_neu(:,:)
+      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
+c
+      real (kind=R8), allocatable ::
      *     flxic_tmp(:),flxnc_tmp(:),flxit_tmp(:),
      ,     flxnt_tmp(:),flxiw_tmp(:),flxnw_tmp(:),
      ,     flxnp_tmp(:),flxps_tmp(:),blnna_tmp(:),
@@ -100,10 +69,70 @@ c*** from 960727 on
      ,     flxid_tmp(:),flxbl_tmp(:),flxbr_tmp(:),
 c*** from 960808 on
      ,     flxrl_tmp(:)
+
+      character f*(lenfnm), hlp_h(np_tmp)*8, hlp_frm*80
+
+      save f, hlp_frm, hlp_h, lun,
+     , hlpit_lp,hlpit_rp,hlpit_pl,hlpic_s,hlpiw_s,hlpit_s,
+     , flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
+     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
+     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
+     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
+     , flxid_tmp,flxbl_tmp,flxbr_tmp,
+     , flxrl_tmp
+
+c*** Column headers:
+      data hlp_h /
+     1          'ion_core','ntr_core','ion_targ','ntr_targ','ion_wall',
+     2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
+     3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
+     4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
+
+      contains
+
+      subroutine b2blnc(nx,ny,ns,dtim)
+      use b2mod_geo
+      use b2mod_plasma
+      use b2mod_sources
+      use b2mod_indirect
+      use b2mod_numerics_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_boundary_namelist
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
+#include "DIMENSIONS.F"
+c
+c  version : 19.07.2001 18:46
+c
+c======================================================================
+c*** Computes the global particle flows across the boundaries in
+c*** B2-Eirene and the global particle balance in B2
+c----------------------------------------------------------------------
+      implicit none
+c
+      integer nx, ny, ns
+      real (kind=R8) :: dtim
+c
+      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls,
+     ,        kks
+      logical first, hlp_lw, hlp_lt
+c<<<
+      logical hlp_tt
+      real (kind=R8) :: hlp_wldpp
+      real (kind=R8) :: hlpit_l,hlpit_r
+      real (kind=R8) :: hlp_pls(nbcd,ns)
+      integer kst_hlp
+      integer use_recyceir, use_eirene
+      real (kind=R8) :: recyctmp
+c>>>
+c
+      real (kind=R8) ::
+     *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
+     ,     hlpdt,hlp,hlpids
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab,
-     ,     hlp_prt*26
+      character hlp_prt*26
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -122,30 +151,17 @@ c***       gpfc(i,j)=(fraction of atoms of kind i in stratum number j)
 c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_h /
-     1          'ion_core','ntr_core','ion_targ','ntr_targ','ion_wall',
-     2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
-     3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
-     4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
 *   ..initialisation
       data use_recyceir /1/, use_eirene /0/
 c
       data first / .true. /
 c----------------------------------------------------------------------
-      save lun, i, j, k, l, m, n, ic, is, ix, iy,
-     1 js, ks, ls, nc, nv, kks, use_recyceir,
-     2 first, ex, hlp_lw, hlp_lt, hlp_tt,
-     3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
+      save i, k, l, m, n, ic, is, ix, iy,
+     1 js, ks, ls, kks, use_recyceir,
+     2 first, hlp_lw, hlp_lt, hlp_tt,
+     3 hlpit_l,hlpit_r,
      4 hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     5 hlpdt,hlp,hlpids,hlpic_s,hlpiw_s,hlpit_s,
-     8 flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
-     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
-     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
-     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
-     , flxid_tmp,flxbl_tmp,flxbr_tmp,
-     , flxrl_tmp,
-     1 f, hlp_c, hlp_h, hlp_frm, tab
+     5 hlpdt,hlp,hlpids
 c======================================================================
 
       if(first) then
@@ -398,7 +414,7 @@ c*** total number of particles and time derivative
           do iy=0,ny-1
             do ix=0,nx-1
               j=region(ix,iy,0)
-              if(j.ne.0 .and. 
+              if(j.ne.0 .and.
      &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
                 hlpis=hlpis+
@@ -650,7 +666,7 @@ c
         write(*,*) 'particle_fluxes ',nspecies
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
-          write(*,'(1p,30e12.3)') 
+          write(*,'(1p,30e12.3)')
      ,     flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
      ,     flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
      ,     flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
@@ -662,9 +678,15 @@ c
         end do
       end if
       return
+      end subroutine b2blnc
 c======================================================================
 c
-      entry b2blnci(nx,ny,ns,dtim,iline)
+      subroutine b2blnci
+      implicit none
+      character, save :: tab
+      integer :: i, j, nv
+      character :: hlp_c
+      logical :: ex
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -770,8 +792,16 @@ c
       filedata(ltrc)=.false.
       return
 c======================================================================
+  700 format('#   ',3i8/'#  ',a)
+c======================================================================
+      end subroutine b2blnci
 c
-      entry b2blncc(nx,ny,ns,dtim,iline)
+      subroutine b2blncc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character :: hlp_c
+      logical :: ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -802,22 +832,23 @@ c======================================================================
       iline=-1
       return
 c======================================================================
+      end subroutine b2blncc
 c
-      entry b2blncs(nx,ny,ns,dtim,iline)
+      subroutine b2blncs
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blncs
 c======================================================================
 c
-      entry b2blncf(nx,ny,ns,dtim,iline)
+      subroutine b2blncf
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blncf
 c======================================================================
-  700 format('#   ',3i8/'#  ',a)
-c======================================================================
-      end subroutine b2blnc
+      end module b2mod_blnc

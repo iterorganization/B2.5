@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news_(nx, ny, ns, nxtl, nxtr, nscx, iscx,
+      subroutine b2news_(nx, ny, ns, nscx, iscx,
      &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
@@ -23,7 +23,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, ns
       integer nscx, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
@@ -429,12 +429,12 @@ c   extra call at this place within internal iteration)
       if(no_b2sral_call .eq. 0) then
         write(*,*) ' re-compute source '
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nx, ny, ns, nxtl, nxtr,
+        call b2sral (nx, ny, ns,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
      &    vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                   !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
+     &    te, ti, po, ne, ni, floe_noc, floi_noc,                        !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,

@@ -1,36 +1,41 @@
-      subroutine b2blne(nx,ny,ns,BoRiS,iline)
-      use b2mod_types
-      use b2mod_geo
-      use b2mod_time
-      use b2mod_diag
-      use b2mod_rates
-      use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_boundary_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_numerics_namelist
-      use b2mod_external
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
-
-c
-c  version : 29.07.2000 23:52
-c
+      module b2mod_blne
 c=======================================================================
 c*** Computes the global energy flows across the boundaries and the
 c*** sources in B2-Eirene, and the global energy balance in B2
 c-----------------------------------------------------------------------
+      use b2mod_types
+      use b2mod_diag
+      use b2mod_time
+      use b2mod_b2cmpa
+      use b2mod_boundary_namelist
       implicit none
-      integer nx,ny,ns,iline
-      real (kind=R8) :: BoRiS
+
+c-----------------------------------------------------------------------
+c*** Values by surface. Here ntrg_tmp is the number of values,
+c*** and ntrgs_tmp is the maximum number of different surfaces.
+c*** At present, there can be up to 5 surfaces: 4 targets and side wall
+c*** (to be generalised later)
+c*** ntrgf_tmp is the actual number of surfaces for the geometry used
+c*** nz_tmp is the number of surfaces read and to be written
+c*** nt_tmp is the number of values read and to be written
+
+      integer ntrg_tmp, ntrgs_tmp, nglb_tmp, nimp_tmp, nspc_tmp
+      integer ntrgf_tmp
+
+      parameter (nspc_tmp=1)
+      parameter (ntrg_tmp=5, ntrgs_tmp=5)
+      parameter (nglb_tmp=19)
+
+      integer ni_tmp, nz_tmp
+      integer nt_tmp, ng_tmp
+      integer, allocatable :: limp_tmp(:)
 c
 c*** lv    :  version number to appear in the file
 c
       integer lv
       parameter (lv=20000704)
+      integer lun, ltrc
+      parameter (ltrc=ntrc_ble)
 c
 c-----------------------------------------------------------------------
 c*** Power balance:
@@ -65,10 +70,72 @@ c***     pwr_neut pwtnu   neutrals to the target
 c***     pwr_ionz pwtio   ionisation energy to the target
 c***     pwr_diss pwtds   dissociation energy to the target
 c***   suffices: il, ol, iu, ou, wl for inner and outer targets and wall
+
+      character hlp_frm*80
+      character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
+     ,          hlp_trgs(ntrgs_tmp,2)*2
+      character*8 hlp_hs(nspc_tmp)
+      character*8 hlp_hg(nglb_tmp)
+      character*2, allocatable :: hlp_spc(:)
+
+      integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
+      real (kind=R8), allocatable :: radim_tmp(:)
+
+c*** Local lists:
+c***  ltgs      Eirene surfaces corresponding to the target surfaces
+c***  indt_hlp  B2 boundaries corresponding to the target surfaces
+c***
+c*** Taken from the common blocks:
+c***
+c*** lcbs: boundary segments representing the core boundary in B2
+c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
+c*** ltns: 'non-default surfaces' for the targets (Eirene)
+c*** lsns: list of Eirene surfaces comprising the recycling sources
+c*** msns: msns(1,k): index of first surface in lsns list for Eirene
+c***                  recycling source k
+c***       msns(2,k): number of surfaces for Eirene recycling source k
+c-----------------------------------------------------------------------
+      integer, allocatable :: ltgs(:,:)
+c*** Identification suffices:
+      data hlp_trgs / 'il','ol','wl','  ','  ',
+     ,                'il','iu','ou','ol','wl'/
+c*** Column headers:
+      data hlp_hg /
+     1          'pwr_totl','pwr_tscl','tot_core','tot_targ','tot_wall',
+     2          'tot_rad ','heat_cor','ptnt_cor','ntrl_cor','plsm_trg',
+     3          'ntrl_trg','plsm_wll','ntrl_wll','brms_rad','ntrl_rad',
+     4          'imp_rad ','tot_enrg','tot_enre','tot_enri'/
+      data hlp_hs / 'imp_rad_' /
+      data hlp_ht /
+     1          'pwr_totl','pwr_plsm','pwr_neut','pwr_ionz','pwr_diss'/
+c-----------------------------------------------------------------------
+
+      save lun, limp_tmp, nimp_tmp, ni_tmp, ng_tmp, nt_tmp, nz_tmp,
+     & indt_hlp, nsrf_hlp, ntrgf_tmp,
+     & ltgs, radim_tmp,
+     & hlp_frm, hlp_trg, hlp_trgs, hlp_hg, hlp_hs, hlp_ht, hlp_spc
+
+      contains
+
+      subroutine b2blne(nx,ny,ns,BoRiS)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_external
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
+
+      implicit none
+      integer nx,ny,ns
+      real (kind=R8) :: BoRiS
+
 c-----------------------------------------------------------------------
 c*** Global values
-      integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=19)
       real (kind=R8) ::
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
@@ -87,28 +154,9 @@ c*** Global values
      ,     (equg_tmp(15), radnu_tmp), (equg_tmp(16), rdtim_tmp),
      ,     (equg_tmp(17), enrtt_tmp), (equg_tmp(18), enrti_tmp),
      ,     (equg_tmp(19), enrte_tmp)
-      character hlp_hg(nglb_tmp)*8
 c-----------------------------------------------------------------------
 c*** Values by species
-      integer nspc_tmp, nimp_tmp, ni_tmp, ns_tmp
-      integer, allocatable :: limp_tmp(:)
-      parameter (nspc_tmp=1)
-      real (kind=R8), allocatable :: radim_tmp(:)
-      character*2, allocatable :: hlp_spc(:)
-      character*8 hlp_hs(nspc_tmp)
-      real (kind=R8), save :: stim = 0.0_R8
-      real (kind=R8) :: tdummy
-c-----------------------------------------------------------------------
-c*** Values by surface. Here ntrg_tmp is the number of values,
-c*** and ntrgs_tmp is the maximum number of different surfaces.
-c*** At present, there can be up to 5 surfaces: 4 targets and side wall
-c*** (to be generalised later)
-c*** ntrgf_tmp is the actual number of surfaces for the geometry used
-c*** nz_tmp is the number of surfaces read and to be written
-c*** nt_tmp is the number of values read and to be written
 
-      integer ntrg_tmp, ntrgs_tmp, nt_tmp, nz_tmp, ntrgf_tmp
-      parameter (ntrg_tmp=5, ntrgs_tmp=5)
       real (kind=R8) ::
      *     equt_tmp(ntrgs_tmp,ntrg_tmp)
       real (kind=R8) ::
@@ -119,81 +167,35 @@ c*** nt_tmp is the number of values read and to be written
      ,     (equt_tmp(1,1), pwttt_tmp), (equt_tmp(1,2), pwtpl_tmp),
      ,     (equt_tmp(1,3), pwtnu_tmp), (equt_tmp(1,4), pwtio_tmp),
      ,     (equt_tmp(1,5), pwtds_tmp)
-      character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
-     ,          hlp_trgs(ntrgs_tmp,2)*2
-      integer, allocatable :: ltgs(:,:)
-      integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
       logical ltarg_hlp(ntrgs_tmp)
 c-----------------------------------------------------------------------
 
-      integer lun, ltrc
-      parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf, nv
+      integer i, j, k, n, ic, is, ix, iy,
+     .        ixr, iyr, ixf, iyf
       real (kind=R8) :: hlp_h, hlp_p
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
-      logical ex, warn_tmp
-      character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
 #ifdef B25_EIRENE
-      integer, save :: m, js
+      integer, save :: l, m, js
       integer, save :: ntgs(ntrgs_tmp)
       data ntgs / ntrgs_tmp*1 /
       real (kind=R8), save :: hlp
 #endif
 c-----------------------------------------------------------------------
-c*** Local lists:
-c***  ltgs      Eirene surfaces corresponding to the target surfaces
-c***  indt_hlp  B2 boundaries corresponding to the target surfaces
-c***
-c*** Taken from the common blocks:
-c***
-c*** lcbs: boundary segments representing the core boundary in B2
-c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
-c*** ltns: 'non-default surfaces' for the targets (Eirene)
-c*** lsns: list of Eirene surfaces comprising the recycling sources
-c*** msns: msns(1,k): index of first surface in lsns list for Eirene
-c***                  recycling source k
-c***       msns(2,k): number of surfaces for Eirene recycling source k
-c-----------------------------------------------------------------------
-c*** Identification suffices:
-      data hlp_trgs / 'il','ol','wl','  ','  ',
-     ,                'il','iu','ou','ol','wl'/
-c*** Column headers:
-      data hlp_hg /
-     1          'pwr_totl','pwr_tscl','tot_core','tot_targ','tot_wall',
-     2          'tot_rad ','heat_cor','ptnt_cor','ntrl_cor','plsm_trg',
-     3          'ntrl_trg','plsm_wll','ntrl_wll','brms_rad','ntrl_rad',
-     4          'imp_rad ','tot_enrg','tot_enre','tot_enri'/
-      data hlp_hs / 'imp_rad_' /
-      data hlp_ht /
-     1          'pwr_totl','pwr_plsm','pwr_neut','pwr_ionz','pwr_diss'/
-c-----------------------------------------------------------------------
 c
       save
-     +  ng_tmp,
      +  equg_tmp,
      +  pwtot_tmp, pwttr_tmp, pwcrt_tmp, pwtgt_tmp, pwwlt_tmp,
      ,     pwrdt_tmp, pwcrh_tmp, pwcrp_tmp, pwcrn_tmp, pwtgp_tmp,
      ,     pwtgn_tmp, pwwlp_tmp, pwwln_tmp, radbr_tmp, radnu_tmp,
      ,     rdtim_tmp, enrtt_tmp, enrti_tmp, enrte_tmp,
-     +  hlp_hg,
-     +  nimp_tmp, ni_tmp, ns_tmp, limp_tmp, ntrgf_tmp,
-     +  radim_tmp,
-     +  hlp_spc, hlp_hs,
-     +  nt_tmp, nz_tmp,
      +  equt_tmp,
      +  pwttt_tmp, pwtpl_tmp,
      ,     pwtnu_tmp, pwtio_tmp,
      ,     pwtds_tmp,
-     +  hlp_trg, hlp_ht,
-     +  ltgs,
-     +  indt_hlp, nsrf_hlp,
      +  ltarg_hlp,
-     +  lun,
-     +  i, j, k, l, ic, is, ix, iy, nv,
+     +  i, j, k, ic, is, ix, iy,
      +  hlp_h, hlp_p,
-     +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp, ex, warn_tmp,
-     +  f, hlp_c, hlp_frm, tab, hlp_frf
+     +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
 c=======================================================================
 
 c*** Initialisation
@@ -522,9 +524,17 @@ c
      ,                                     (radim_tmp(i),i=1,n)
       end if !}
       return
+      end subroutine b2blne
 c=======================================================================
 c
-      entry b2blnei(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnei(ny)
+      implicit none
+      integer, intent(in) :: ny
+      integer :: i, j, k, l, n, is, nv, ns_tmp
+      real (kind=R8), save :: stim = 0.0_R8
+      character hlp_c
+      character f*(lenfnm), tab, hlp_frf*160
+      logical :: ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
@@ -751,12 +761,21 @@ c
    92 write(*,*) 'b2blne: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
-c======================================================================
+c=======================================================================
+  700 format('#   ',6i8/'#  ',a)
+c=======================================================================
+      end subroutine b2blnei
 c
-      entry b2blnec(nx,ny,ns,BoRiS,iline)
-c----------------------------------------------------------------------
+      subroutine b2blnec(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character hlp_c
+      character f*(lenfnm)
+      logical :: ex
+c-----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
-c----------------------------------------------------------------------
+c-----------------------------------------------------------------------
 c
       if(.not.filedata(ntrc_ble)) return
       lun=ntrc(ltrc)
@@ -778,26 +797,31 @@ c
       end do
   155 continue
       return
-c======================================================================
+c=======================================================================
   190 write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2blnec
 c=======================================================================
-      entry b2blnes(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnes
 c-----------------------------------------------------------------------
 c*** Save the values of the plasma fluxes across the boundaries
 c-----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnes
 c=======================================================================
-      entry b2blnef(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnef
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      deallocate(limp_tmp)
+      deallocate(ltgs)
+      deallocate(radim_tmp)
+      deallocate(hlp_spc)
       return
+      end subroutine b2blnef
 c=======================================================================
-  700 format('#   ',6i8/'#  ',a)
-c=======================================================================
-      end subroutine b2blne
+      end module b2mod_blne

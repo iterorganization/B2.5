@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
+      subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
      &  te, ti, po, ne, ni,
@@ -50,7 +50,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
@@ -663,7 +663,7 @@ c   --> better solution wanted here..
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, dtim, BoRiS,                     !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 

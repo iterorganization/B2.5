@@ -1,4 +1,4 @@
-      subroutine eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
 
 c  version : 26.07.2002 23:39
@@ -20,6 +20,7 @@ c  version : 26.07.2002 23:39
       use b2mod_diag
       use b2mod_time
       use b2mod_rates
+      use b2mod_trace
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_balance !djm Jan2017
@@ -56,7 +57,7 @@ c  version : 26.07.2002 23:39
       use b2mod_eirbra
 #endif
       implicit none
-      integer nx,ny,ns,nxtl,nxtr,ismain
+      integer nx,ny,ns
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -869,7 +870,7 @@ c           l_ddt=l_ddt+1
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
       if (ncall.eq.0) then
-        call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        call b2trci(nx,ny,ns,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0

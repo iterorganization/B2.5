@@ -1,12 +1,9 @@
-      subroutine b2file(it,ns,nnreg)
+      module b2mod_file
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_version
-      use b2mod_b2cmpa
       use b2mod_diag
-c
-c  version : 21.12.2000 19:05
-c
+      use b2mod_b2cmpa
+      implicit none
+
 c======================================================================
 c***  Writes the tracing data on the output files for plotting
 c***
@@ -21,20 +18,12 @@ c***
 c***    tracing/residuals.trc   to  ntrc(ntrc_res)
 c***    tracing/sources.trc     to  ntrc(ntrc_src)
 c----------------------------------------------------------------------
-      implicit none
-c
-      integer ns, nnreg(0:2), it
-c
-      integer, save :: i, j, k, l, m, n, lf_tmp, nis_tmp
-      integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
-      parameter (nh_tmp=6, nf_tmp=3)
-      logical, save :: ex, op
 c
 c*** lvr, lvs:    version numbers to appear in the files
 c
+      integer lvr, lvs, lvt
 c      parameter (lvr=960719, lvs=960821, lvt=980805)
       parameter (lvr=960719, lvs=960821, lvt=20001218)
-c
 c*** nf_tmp: number of files which are written in b2filew
 c*** lf_tmp: number of files whose buffers should be flushed in b2filef
 c***        (must be consistent with ntrc assignment)
@@ -44,28 +33,38 @@ c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
 c
-      character, save :: tab, hlp_c, f*(lenfnm), hlp_s(3),
-     ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
+      integer :: nh_tmp, nf_tmp
+      parameter (nh_tmp=6, nf_tmp=3)
+      integer, save :: nis_tmp
+c
+      character, save :: hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
-      character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
-      real (kind=R8), save :: stim = 0.0_R8
-      integer iline
-c
-      external subini, subend, ipgetr, xertst
-c
-c
-c----------------------------------------------------------------------
-      data hlp_h / 'ms', 'es', 'ee', 'ei', 'co', 'mo', 'ni', 'mo' /
-      data hlp_s / 'r', 'c', 'i' /
       data hlp_emsg /
      1      'cannot open the file',
      2      'wrong format of the file',
      3      'unexpected error. Unopened',
      4      'error during writing -->',
      5      'unexpected error. Cannot close' /
+
+      contains
+c
+      subroutine b2filei(ns,nregionv)
+      use b2mod_plasma
+      use b2mod_version
+      implicit none
+      integer ns, nregionv
+      integer, save :: i, j, k, l, m, n, lf_tmp
+      integer :: mh_tmp(0:ns-1)
+      logical, save :: ex
+      character, save :: tab, hlp_c, f*(lenfnm), hlp_s(3)
+      character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
+      real (kind=R8), save :: stim = 0.0_R8
+c
+c----------------------------------------------------------------------
+      data hlp_h / 'ms', 'es', 'ee', 'ei', 'co', 'mo', 'ni', 'mo' /
+      data hlp_s / 'r', 'c', 'i' /
 c======================================================================
 c
-      entry b2filei(it,ns,nnreg)
 c----------------------------------------------------------------------
 c*** Initialisation call.
 c*** Check whether the directory "tracing" exists and the files can
@@ -182,9 +181,9 @@ c
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
-        if(j.ne.nnreg(0)) then
+        if(j.ne.nregionv) then
           write(*,'(a,i2,3a,i2)')
-     ,     '!! b2file: current number of regions ',nnreg(0),
+     ,     '!! b2file: current number of regions ',nregionv,
      ,     ' differs from that in the file ',trim(f),' : ',j
           write(*,*) ' --  Remove the file first!'
           go to 10
@@ -211,17 +210,17 @@ c*** New file - write the headers
         l=4
         nis_tmp=k
 
-        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),nis_tmp
+        write(ntrc(ntrc_res),700,err=5) '#',lvr,nregionv,nis_tmp
         write(ntrc(ntrc_res),710,err=5) '## ',label
 
 c       write(hlp_frmr,'(7h(3h#it,,i3,17h(1h'//tab//
 c     /  ',a3,a2,i2.2),,i3,29h(1h'//tab//
-c     /  ',a3,a2,i2.2,1h_,i2.2,a2)))') nnreg(0)*2,nnreg(0)*ns*2
+c     /  ',a3,a2,i2.2,1h_,i2.2,a2)))') nregionv*2,nregionv*ns*2
         write(hlp_frmr,'(a,i3,a,i3,a)')
      /        '(''#it'',',
-     -         nnreg(0)*2,
+     -         nregionv*2,
      /        '('''//tab//''',a3,a2,i2.2),',
-     -         nnreg(0)*(nis_tmp)*2,
+     -         nregionv*(nis_tmp)*2,
      /        '('''//tab//''',a3,a2,i2.2,''_'',i2.2,a2))'
 c<<<
         print *,'%%% b2file: header format'   !###
@@ -229,12 +228,12 @@ c<<<
 c>>>
 
         write(ntrc(ntrc_res),hlp_frmr,err=5)
-     ,   (('res',hlp_h(i),j,j=1,nnreg(0)),i=1,2),
-     ,   ((('res',hlp_h(i),j,mh_tmp(k),hlp_al(k),j=1,nnreg(0)),
+     ,   (('res',hlp_h(i),j,j=1,nregionv),i=1,2),
+     ,   ((('res',hlp_h(i),j,mh_tmp(k),hlp_al(k),j=1,nregionv),
      ,   i=3,4),k=1,nis_tmp)
       end if
       write(hlp_frmr,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -  nnreg(0)*2*(nis_tmp+1)
+     -  nregionv*2*(nis_tmp+1)
       filedata(ntrc_res)=.true.
       go to 10
 c
@@ -260,9 +259,9 @@ c
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
-        if(j.ne.nnreg(0)) then
+        if(j.ne.nregionv) then
           write(*,'(a,i2,3a,i2)')
-     ,     '!! b2file: current number of regions ',nnreg(0),
+     ,     '!! b2file: current number of regions ',nregionv,
      ,     ' differs from that in the file ',trim(f),' : ',j
           write(*,*) ' --  Remove the file first!'
           go to 35
@@ -277,18 +276,18 @@ c
       else
 c*** New file - write the headers
         l=4
-        write(ntrc(ntrc_src),700,err=30) '#',lvs,nnreg(0),nspecies
+        write(ntrc(ntrc_src),700,err=30) '#',lvs,nregionv,nspecies
         write(ntrc(ntrc_src),710,err=30) '## ',label
 
 c        write(hlp_frms,'(7h(3h#it,,i3,20h(1h'//tab//
 c     /          ',a3,a2,i2.2,a1),,i3,27h(1h'//tab//
 c     /          ',a3,a2,i2.2,a1,1h_,a2)))')
-c     -                          (nnreg(0)+1)*12,(nnreg(0)+1)*nspecies*6
+c     -                          (nregionv+1)*12,(nregionv+1)*nspecies*6
         write(hlp_frms,'(a,i3,a,i3,a)')
      /        '(''#it'',',
-     -                          (nnreg(0)+1)*12,
+     -                          (nregionv+1)*12,
      /        '('''//tab//''',a3,a2,i2.2,a1),',
-     -                          (nnreg(0)+1)*nspecies*6,
+     -                          (nregionv+1)*nspecies*6,
      /        '('''//tab//''',a3,a2,i2.2,a1,''_'',a2))'
 
 c<<<
@@ -296,12 +295,12 @@ c<<<
         print *,trim(hlp_frms)
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
-     ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),
+     ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nregionv),i=-1,2),
      ,   (((('src',hlp_h(i),j,hlp_s(l),species_list(k),l=1,3),
-     ,   j=0,nnreg(0)),i=5,6),k=1,nspecies)
+     ,   j=0,nregionv),i=5,6),k=1,nspecies)
       end if
       write(hlp_frms,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -                                      (nnreg(0)+1)*6*(nspecies+2)
+     -                                      (nregionv+1)*6*(nspecies+2)
 
       filedata(ntrc_src)=.true.
       go to 35
@@ -323,7 +322,15 @@ c
       call subend()
       return
 c======================================================================
-      entry b2filec(it,ns,nnreg)
+  700 format(a1,2x,4i10)
+  710 format(2a)
+      end subroutine b2filei
+c======================================================================
+      subroutine b2filec
+      implicit none
+      integer :: k, l, iline
+      character f*(lenfnm), hlp_c
+      logical :: ex
       do k=1,nf_tmp
         l=k+1
         if(filedata(l)) then
@@ -346,8 +353,14 @@ c======================================================================
   299   continue
       end do
       return
+      end subroutine b2filec
 c======================================================================
-      entry b2filew(it,ns,nnreg)
+      subroutine b2filew(it,nregionv)
+      implicit none
+      integer, intent(in) :: it, nregionv
+      integer i, j, k, l
+      character f*(lenfnm)
+      logical :: op
 c
 c----------------------------------------------------------------------
 c*** Write the data onto the files
@@ -375,10 +388,10 @@ c
         if(.not.op) go to 72
         l=4
         write(ntrc(ntrc_res),hlp_frmr,err=72) it,
-     ,     (reshereg(i),i=1,nnreg(0)),
-     ,     (reshireg(i),i=1,nnreg(0)),
-     ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
-     ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
+     ,     (reshereg(i),i=1,nregionv),
+     ,     (reshireg(i),i=1,nregionv),
+     ,    ((rescoreg(i,ions_list(j)),i=1,nregionv),
+     ,     (resmoreg(i,ions_list(j)),i=1,nregionv),j=1,nis_tmp)
         go to 75
    72   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_res)=.false.
@@ -391,20 +404,24 @@ c
         if(.not.op) go to 77
         l=4
         write(ntrc(ntrc_src),hlp_frms,err=77) it,
-     ,          ((src_ms(i,k),k=1,3),i=0,nnreg(0)),
-     ,          ((src_es(i,k),k=1,3),i=0,nnreg(0)),
-     ,          ((src_ee(i,k),k=1,3),i=0,nnreg(0)),
-     ,          ((src_ei(i,k),k=1,3),i=0,nnreg(0)),
-     ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
-     ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
+     ,          ((src_ms(i,k),k=1,3),i=0,nregionv),
+     ,          ((src_es(i,k),k=1,3),i=0,nregionv),
+     ,          ((src_ee(i,k),k=1,3),i=0,nregionv),
+     ,          ((src_ei(i,k),k=1,3),i=0,nregionv),
+     ,         (((src_ni(i,k,j),k=1,3),i=0,nregionv),
+     ,          ((src_mo(i,k,j),k=1,3),i=0,nregionv),j=1,nspecies)
         return
    77   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
+      end subroutine b2filew
 c======================================================================
 c
-      entry b2filef(it,ns,nnreg)
+      subroutine b2filef
+      implicit none
+      integer j, k, l
+      character f*(lenfnm)
 c----------------------------------------------------------------------
 c*** flush the buffers
 c----------------------------------------------------------------------
@@ -437,8 +454,6 @@ c
         end if
   100 continue
       return
-c======================================================================
-  700 format(a1,2x,4i10)
-  710 format(2a)
+      end subroutine b2filef
 c
-      end subroutine b2file
+      end module b2mod_file

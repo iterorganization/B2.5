@@ -1,35 +1,26 @@
-      subroutine b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      module b2mod_usrtrc
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
       use b2mod_time
-      use b2mod_rates
       use b2mod_b2cmpa
-      use b2mod_plasma
       use b2mod_indirect
-      use b2mod_external
-      use b2mod_constants
       use b2mod_user_namelist
-      use b2mod_boundary_namelist
-      use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
 #else
       use b2mod_eirbra
 #endif
-
-c  version : 03.04.2001 15:55
+      implicit none
+#     include <DIMENSIONS.F>
 
 c=======================================================================
 c*** Puts user-specific quantities on the output file
 c*** "tracing/user.trc"
 c-----------------------------------------------------------------------
-      implicit none
-#     include <DIMENSIONS.F>
+      integer lun, ltrc
+      parameter (ltrc=ntrc_usr)
 
-      integer nx, ny, ns, nxtl, nxtr, iline
-      real (kind=R8) :: BoRiS
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c*** lvmj  :  version number referring to the last major change
@@ -93,6 +84,93 @@ c-----------------------------------------------------------------------
 c*** Global values
       integer nglb_tmp, ng_tmp
       parameter (nglb_tmp=22)
+
+c*** File markers: routine version, number of global values, number of
+c***               PFR values, number of species, number of PFR surface
+c***               groups, number of diagnostic surface groups
+      integer nrkn_hlp
+      parameter(nrkn_hlp=7)
+      integer mrkn_hlp(nrkn_hlp), mrks_hlp(nrkn_hlp)
+c***    number of tallies, particle index (<0 - mol.), species index
+      integer ndta_tmp(nntrgrpd,DEF_NATM+DEF_NMOL),
+     *        ndtm_tmp(DEF_NATM+DEF_NMOL), ndtx_tmp(DEF_NATM+DEF_NMOL)
+c-----------------------------------------------------------------------
+c*** Number of positions in the output line and temporary arrays for
+c*** the data and header lines
+      integer ntrc_tmp
+      real (kind=R8), allocatable :: hlp_out(:)
+      character*(mhdr), allocatable :: hlp_hdr(:)
+c-----------------------------------------------------------------------
+
+c*** Neutral-related data on surfaces
+c***                          - by diagnostic surface groups and species
+c***    max. and min. number of tallies, number of species
+      integer ndtk_tmp, nmnt_tmp, ndts_tmp
+      parameter (ndtk_tmp=7, nmnt_tmp=4)
+c*** Neutral-related data on PFR interfaces
+c***                                       - by side and neutral species
+c***    number of PFR interfaces and of tallies
+      integer ngl2_tmp
+      parameter (ngl2_tmp=4)
+      integer ngl3_tmp
+      parameter (ngl3_tmp=4)
+      integer ngl4_tmp
+      parameter (ngl4_tmp=3)
+      integer npff_tmp, npfi_tmp, npft_tmp
+      parameter (npff_tmp=1, npfi_tmp=2, npft_tmp=3)
+      character, save :: hlp_hg(nglb_tmp)*8, hlp_lb(nglb_tmp)*8
+      character, save :: hlp_hg2(ngl2_tmp)*8, hlp_lb2(ngl2_tmp)*8
+      character, save :: hlp_hg3(ngl3_tmp)*10, hlp_lb3(ngl3_tmp)*10
+      character, save :: hlp_hg4(ngl4_tmp)*10
+      character, save :: hlp_hn(ndtk_tmp)
+      character, save :: hlp_hp(npff_tmp)*8
+      character, save :: hlp_hr(npft_tmp), hlp_hs(npfi_tmp)
+c-----------------------------------------------------------------------
+      integer, save :: itg_tmp(4)
+      data itg_tmp / 4*-2 /
+      real (kind=R8), save :: hlp_ksdts(nntrgrpd,DEF_NATM+DEF_NMOL)
+c*** Column headers:
+      data hlp_hg /
+     1      'Pneu_PFR', 'Pneu_PFi', 'Pneu_PFo', 'He_fract', 'He_enrch',
+     2      'He_p_prs', 'pk_pwr_i', 'pk_pwr_o', 'pk_pw_iu', 'pk_pw_ou',
+     3      'Sp_DT   ', 'Sp_He   ', 'Sp_He_sc', 'He_src  ', 'He_sc_cr',
+     4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
+     4      'DT_thrpt', 'He_thrpt'/
+      data hlp_hg2 /
+     1      'DoD_il', 'DoD_ol', 'DoD_iu', 'DoD_ou' /
+      data hlp_hg3 /
+     1      'isat_tt_il', 'isat_tt_ol', 'isat_tt_iu', 'isat_tt_ou' /
+      data hlp_hg4 /
+     1      'al_bll_max', 'al_bll_ix', 'al_bll_iy' /
+      data hlp_hp / 'PFR_flow' /
+      data hlp_hn / 'n','p','T','j','G','S','s' /
+      data hlp_hr / 'n', 'T', 'v' /
+      data hlp_hs / 'i', 'o' /
+
+      logical double_null
+      data double_null / .false. /
+
+      integer, save :: jxi, jxa, jsep, n_pad_str
+      real (kind=R8), save :: xdum(1)
+      character, save :: tab, hlp_frm*120
+
+      external fix_user
+
+      contains
+
+      subroutine b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_external
+      use b2mod_constants
+      use b2mod_boundary_namelist
+      use b2mod_numerics_namelist
+
+      implicit none
+
+      integer nx, ny, ns, nxtl, nxtr
+      real (kind=R8) :: BoRiS
       real (kind=R8) ::
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
@@ -112,9 +190,6 @@ c*** Global values
      ,     (equg_tmp(17), hlp_heoc), (equg_tmp(18), hlp_heos),
      ,     (equg_tmp(19), hlp_hens), (equg_tmp(20), hlp_henc),
      ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp)
-      character hlp_hg(nglb_tmp)*8, hlp_lb(nglb_tmp)*8
-      integer ngl2_tmp
-      parameter (ngl2_tmp=4)
       real (kind=R8) ::
      *     equg2_tmp(ngl2_tmp)
       real (kind=R8) ::
@@ -122,9 +197,7 @@ c*** Global values
       equivalence (equg2_tmp(1), hlp_dod),
      ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
      ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
-      character hlp_hg2(ngl2_tmp)*8, hlp_lb2(ngl2_tmp)*8
-      integer ngl3_tmp, mgl3_tmp
-      parameter (ngl3_tmp=4)
+      integer mgl3_tmp
       integer kgl3_tmp(ngl3_tmp) 
       data kgl3_tmp / -1, 0, 0, -1 /
       real (kind=R8) ::
@@ -134,9 +207,6 @@ c*** Global values
       equivalence (equg3_tmp(1), hlp_isat),
      ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
      ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
-      character*10 hlp_hg3(ngl3_tmp), hlp_lb3(ngl3_tmp)
-      integer ngl4_tmp
-      parameter (ngl4_tmp=3)
 c     integer kgl4_tmp(2)
       real (kind=R8) ::
      *     equg4_tmp(ngl4_tmp)
@@ -145,11 +215,8 @@ c     integer kgl4_tmp(2)
       equivalence (equg4_tmp(1), hlp_albll),
      ,     (equg4_tmp(1),  al_bll_mx), (equg4_tmp(2),  al_bll_ix),
      ,     (equg4_tmp(3),  al_bll_iy)
-      character hlp_hg4(ngl4_tmp)*10
 
 c*** PFR flow values
-      integer npff_tmp, np_tmp, ns_tmp, na_tmp, lnh_tmp
-      parameter (npff_tmp=1, lnh_tmp=20)
       real (kind=R8) ::
      *     equp_tmp(0:npfrgrpd,DEF_NATM,npff_tmp)
       real (kind=R8) ::
@@ -157,21 +224,11 @@ c*** PFR flow values
       real (kind=R8) ::
      *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
-      character hlp_hp(npff_tmp)*8,hlp_hb*8,
-     ,  hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
+      character hlp_hb*8
 
-c*** Neutral-related data on surfaces
-c***                          - by diagnostic surface groups and species
-c***    max. and min. number of tallies, number of species
-      integer ndtk_tmp, nmnt_tmp, ndts_tmp
-      parameter (ndtk_tmp=7, nmnt_tmp=4)
-c***    number of tallies, particle index (<0 - mol.), species index
-      integer ndta_tmp(nntrgrpd,DEF_NATM+DEF_NMOL),
-     *        ndtm_tmp(DEF_NATM+DEF_NMOL), ndtx_tmp(DEF_NATM+DEF_NMOL)
 c***    atomic/molecular weight, group area, absorption
       real (kind=R8) ::
-     *  hlp_awdts(DEF_NATM+DEF_NMOL),hlp_ardts(nntrgrpd),
-     ,  hlp_ksdts(nntrgrpd,DEF_NATM+DEF_NMOL)
+     *  hlp_awdts(DEF_NATM+DEF_NMOL),hlp_ardts(nntrgrpd)
       real (kind=R8) ::
      *   equn_tmp(nntrgrpd,DEF_NATM+DEF_NMOL,ndtk_tmp),
      ,  hlp_dndts(nntrgrpd,DEF_NATM+DEF_NMOL),
@@ -186,13 +243,8 @@ c***    atomic/molecular weight, group area, absorption
      ,  (equn_tmp(1,1,3),hlp_tmdts), (equn_tmp(1,1,4),hlp_fxdts),
      ,  (equn_tmp(1,1,5),hlp_fldts), (equn_tmp(1,1,6),hlp_stdts),
      ,  (equn_tmp(1,1,7),hlp_sedts)
-      character hlp_hn(ndtk_tmp), hlp_m*16
+      character hlp_m*16
 
-c*** Neutral-related data on PFR interfaces
-c***                                       - by side and neutral species
-c***    number of PFR interfaces and of tallies
-      integer npfi_tmp, npft_tmp
-      parameter (npfi_tmp=2, npft_tmp=3)
 c***    number of Eirene surfaces per interface, list of these surfaces,
 c***    starting and ending B2 cell for interface
       integer npfs_tmp(npfi_tmp),lpfs_tmp(nstra,npfi_tmp),
@@ -210,30 +262,16 @@ c***    surface area,cell interface areas
       equivalence
      ,  (equr_tmp(1,1,1),hlp_dnpfs), (equr_tmp(1,1,2),hlp_tmpfs),
      ,  (equr_tmp(1,1,3),hlp_vlpfs)
-      character hlp_hr(npft_tmp),hlp_hs(npfi_tmp)
-      data hlp_hr / 'n', 'T', 'v' /
-      data hlp_hs / 'i', 'o' /
-c-----------------------------------------------------------------------
-c*** Number of positions in the output line and temporary arrays for
-c*** the data and header lines
-      integer ntrc_tmp
-      real (kind=R8), allocatable :: hlp_out(:)
-      character*(mhdr),allocatable :: hlp_hdr(:)
-c-----------------------------------------------------------------------
 
-      integer lun, ltrc
-      parameter (ltrc=ntrc_usr)
       real (kind=R8) ::
      *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
      ,  hlp_he, hlp_hep,
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
      *  d, e, s, x
-      real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
-      real (kind=R8) :: stim = 0.0_R8
-      real (kind=R8) :: tdummy
-      integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
-     ,  j_he_i, l_pad_str, n_pad_str
+      real (kind=R8) :: pz(-1:nx,-1:ny)
+      integer i, j, k, l, m, n, i0, is, ix, iy, js, irt,
+     ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls, ind, ias
       real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
@@ -241,39 +279,13 @@ c     real (kind=R8) :: e0
 #endif
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
-      integer isp_tmp(4),itg_tmp(4),imp_tmp(4)
-c*** File markers: routine version, number of global values, number of
-c***               PFR values, number of species, number of PFR surface
-c***               groups, number of diagnostic surface groups
-      integer nrkn_hlp
-      parameter(nrkn_hlp=7)
-      integer mrkn_hlp(nrkn_hlp), mrks_hlp(nrkn_hlp)
-      integer jxi, jxa, jsep
+      integer isp_tmp(4),imp_tmp(4)
       integer use_eirene
-      logical ex, warn_tmp, first, first_out, double_null
-      character tab, hlp_c, f*(lenfnm)
-      character hlp_frm*120, hlp_frf*240, hlp_tpl*2
-      data itg_tmp / 4*-2 /
+      logical ex, first, first_out
+      character f*(lenfnm)
+      character hlp_tpl*2
       data use_eirene / 0 /
-      data first,first_out / 2*.true. /, double_null / .false. /
-c-----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_hg /
-     1      'Pneu_PFR', 'Pneu_PFi', 'Pneu_PFo', 'He_fract', 'He_enrch',
-     2      'He_p_prs', 'pk_pwr_i', 'pk_pwr_o', 'pk_pw_iu', 'pk_pw_ou',
-     3      'Sp_DT   ', 'Sp_He   ', 'Sp_He_sc', 'He_src  ', 'He_sc_cr',
-     4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
-     4      'DT_thrpt', 'He_thrpt'/
-      data hlp_hg2 /
-     1      'DoD_il', 'DoD_ol', 'DoD_iu', 'DoD_ou'/
-      data hlp_hg3 /
-     1      'isat_tt_il', 'isat_tt_ol', 'isat_tt_iu', 'isat_tt_ou'/
-      data hlp_hg4 /
-     1      'al_bll_max', 'al_bll_ix', 'al_bll_iy'/
-      data hlp_hp /'PFR_flow'/
-      data hlp_hn /'n','p','T','j','G','S','s'/
-
-      external fix_user
+      data first,first_out / 2*.true. /
 c-----------------------------------------------------------------------
 
       save
@@ -1499,8 +1511,36 @@ c*** Write the data in a separate file for plotting...
       end if !}
       return
 c=======================================================================
+   92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
 
-      entry b2usrtri(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+   93 write(*,'(1x,4a)') 'b2usrtrc: number of species changed - ',
+     ,                'remove the ',trim(f),' tracing file first!'
+      filedata(ltrc)=.false.
+      return
+
+   94 write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+
+   98 write(*,'(1x,2a,2i8)') 'b2usrtrc: internal error. ',
+     ,  'Number of columns in the header - ',ntrc_tmp,n
+      filedata(ltrc)=.false.
+      return
+      end subroutine b2usrtrc
+c=======================================================================
+
+      subroutine b2usrtri(nx,ny,ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      integer i, j, k, l, i0, nv, na_tmp, np_tmp, ns_tmp
+      real (kind=R8) :: stim = 0.0_R8
+      character hlp_c, hlp_frf*240, f*(lenfnm), hlp_hb*8
+      integer lnh_tmp
+      parameter (lnh_tmp=20)
+      character hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
+      logical ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
@@ -1635,22 +1675,19 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
-   93 write(*,'(1x,4a)') 'b2usrtrc: number of species changed - ',
-     ,                'remove the ',trim(f),' tracing file first!'
-      filedata(ltrc)=.false.
-      return
-
-   94 write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
-      filedata(ltrc)=.false.
-      return
-
-   98 write(*,'(1x,2a,2i8)') 'b2usrtrc: internal error. ',
-     ,  'Number of columns in the header - ',ntrc_tmp,n
-      filedata(ltrc)=.false.
-      return
+c=======================================================================
+  700 format('#   ',5i8)
+      end subroutine b2usrtri
 c======================================================================
 c
-      entry b2usrtrcc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      subroutine b2usrtrcc(nx,nxtl,nxtr,iline)
+      implicit none
+      integer, intent(in) :: nx, nxtl, nxtr
+      integer, intent(out) :: iline
+      integer :: i, j, k, l, m, n, i0, irt, js, l_pad_str, mgl3_tmp
+      real (kind=R8) :: tdummy, x
+      character hlp_c, hlp_tpl*2, hlp_hb*8, f*(lenfnm), hlp_m*16
+      logical ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -1876,19 +1913,31 @@ c*** Limiter case
   155 continue
       return
 c======================================================================
+   92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+
+   93 write(*,'(1x,4a)') 'b2usrtrc: number of species changed - ',
+     ,                'remove the ',trim(f),' tracing file first!'
+      filedata(ltrc)=.false.
+      return
+
   190 write(*,*) 'b2usrtrc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2usrtrcc
 c=======================================================================
-      entry b2usrtrs(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      subroutine b2usrtrs
 
       return
+      end subroutine b2usrtrs
 c=======================================================================
-      entry b2usrtrf(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      subroutine b2usrtrf
 c     Finalization step
+      deallocate(hlp_hdr)
+      deallocate(hlp_out)
       return
+      end subroutine b2usrtrf
 c=======================================================================
-  700 format('#   ',5i8)
-c=======================================================================
-      end subroutine b2usrtrc
+      end module b2mod_usrtrc
