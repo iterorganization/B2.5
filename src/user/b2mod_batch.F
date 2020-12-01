@@ -1,37 +1,29 @@
-
-      subroutine batch_av_all (itim,ntim_batch,nx,ny,ns)
-
+      module b2mod_batch
       use b2mod_types
-      use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
-#ifdef B25_EIRENE
-      use eirmod_infcop
-#endif
-
+      use b2mod_version
       implicit none
 
-      integer, intent(in) :: itim, ntim_batch, nx, ny, ns
-      character(*), intent(in) :: batch_name
- 
+      integer, save :: naver
+!     integer, save :: ntotdt
+
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
      .                             ti_mean(:,:), ua_mean(:,:,:),
      .                             po_mean(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_na(:,:,:), e_te(:,:),
      .                             e_ti(:,:), e_ua(:,:,:),
      .                             e_po(:,:)
 
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:,:,:),
      .                             sne_mean(:,:,:),
      .                             smo_mean(:,:,:,:),
      .                             she_mean(:,:,:),
      .                             shi_mean(:,:,:),
      .                             sch_mean(:,:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      .                             e_sna(:,:,:,:),
      .                             e_sne(:,:,:),
      .                             e_smo(:,:,:,:),
@@ -39,10 +31,17 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer :: iun, n2, itp, idum(0:2)
-      integer, save :: naver
-!     integer, save :: ntotdt
-      character lble*120
+      contains
+
+      subroutine batch_av_all (itim,ntim_batch,nx,ny,ns)
+      use b2mod_constants
+      use b2mod_plasma
+      use b2mod_sources
+      implicit none
+
+      integer, intent(in) :: itim, ntim_batch, nx, ny, ns
+
+      integer :: n2, itp
 
       n2 = (nx+2)*(ny+2)
 
@@ -54,7 +53,7 @@
       call batch_average (n2,    ti, ti_mean, itp, ntim_batch)
       call batch_average (n2,    po, po_mean, itp, ntim_batch)
       call batch_average (n2*ns, ua, ua_mean, itp, ntim_batch)
-      
+
       call batch_average (n2*2*ns, sna, sna_mean, itp, ntim_batch)
       call batch_average (n2*2,    sne, sne_mean, itp, ntim_batch)
       call batch_average (n2*4,    she, she_mean, itp, ntim_batch)
@@ -68,7 +67,7 @@
       call batch_average_sq (n2,    ti, e_ti, itp, ntim_batch)
       call batch_average_sq (n2,    po, e_po, itp, ntim_batch)
       call batch_average_sq (n2*ns, ua, e_ua, itp, ntim_batch)
-      
+
       call batch_average_sq (n2*2*ns, sna, e_sna, itp, ntim_batch)
       call batch_average_sq (n2*2,    sne, e_sne, itp, ntim_batch)
       call batch_average_sq (n2*4,    she, e_she, itp, ntim_batch)
@@ -79,14 +78,17 @@
       naver = naver + 1
 
       return
+      end subroutine batch_av_all
 
-      entry batch_av_all_init(nx,ny,ns)
+      subroutine batch_av_all_init(nx,ny,ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
 
       if (.not.allocated(na_mean)) then
 
          allocate (na_mean(-1:nx,-1:ny,0:ns-1))
-         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))      
-         allocate (te_mean(-1:nx,-1:ny))        
+         allocate (ua_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (te_mean(-1:nx,-1:ny))
          allocate (ti_mean(-1:nx,-1:ny))
          allocate (po_mean(-1:nx,-1:ny))
          allocate (e_na(-1:nx,-1:ny,0:ns-1))
@@ -95,7 +97,7 @@
          allocate (e_ti(-1:nx,-1:ny))
          allocate (e_po(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only 
+ctb: the sources are now stored in linearized form I propose to store the total part only
 ctb..as the mean of the product does not equal the product of the means etc.
          allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny,0:1))
@@ -122,7 +124,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
       e_ti = 0.0_R8
       e_ua = 0.0_R8
       e_po = 0.0_R8
-      
+
       sna_mean = 0.0_R8
       sne_mean = 0.0_R8
       she_mean = 0.0_R8
@@ -135,12 +137,14 @@ ctb..as the mean of the product does not equal the product of the means etc.
       e_shi = 0.0_R8
       e_sch = 0.0_R8
       e_smo = 0.0_R8
-     
-      naver = 0
-      
-      return
 
-      entry batch_av_all_fin
+      naver = 0
+
+      return
+      end subroutine batch_av_all_init
+
+      subroutine batch_av_all_fin
+      implicit none
 
       if (.not.allocated(na_mean)) return
 
@@ -168,8 +172,17 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (e_sch)
 
       return
+      end subroutine batch_av_all_fin
 
-      entry batch_av_all_save (batch_name,nx,ny,ns)
+      subroutine batch_av_all_save (batch_name,nx,ny,ns)
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      character(*), intent(in) :: batch_name
+      integer iun, n2, idum(0:2)
+      character lble*120
 
       n2 = (nx+2)*(ny+2)
 #ifdef B25_EIRENE
@@ -182,7 +195,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
 *   ..get label
       call b2xxid ('b2mn', lble(1:60))
-      lble(61:120) = 
+      lble(61:120) =
      *  '                                                            '
 
 *   ..write header
@@ -198,26 +211,26 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwuin (iun, 1, idum, 'naver')
 !     idum(0) = ntotdt
 !     call cfwuin (iun, 1, idum, 'ntotdt')
-      
+
       call cfwure (iun, n2*ns, na_mean, 'na_mean')
       call cfwure (iun, n2, te_mean, 'te_mean')
       call cfwure (iun, n2, ti_mean, 'ti_mean')
       call cfwure (iun, n2, po_mean, 'po_mean')
       call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
-      
+
       call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
       call cfwure (iun, n2*2, sne_mean, 'sne_mean')
       call cfwure (iun, n2*4, she_mean, 'she_mean')
       call cfwure (iun, n2*4, shi_mean, 'shi_mean')
       call cfwure (iun, n2*4, sch_mean, 'sch_mean')
       call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
-      
+
       call cfwure (iun, n2*ns, e_na, 'e_na')
       call cfwure (iun, n2,    e_te, 'e_te')
       call cfwure (iun, n2,    e_ti, 'e_ti')
       call cfwure (iun, n2,    e_po, 'e_po')
       call cfwure (iun, n2*ns, e_ua, 'e_ua')
-      
+
       call cfwure (iun, n2*2*ns, e_sna, 'e_sna')
       call cfwure (iun, n2*2,    e_sne, 'e_sne')
       call cfwure (iun, n2*4,    e_she, 'e_she')
@@ -226,9 +239,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, n2*4*ns, e_smo, 'e_smo')
 
       naver = 0
-      
+
       close(iun)
       return
-      
-      end subroutine batch_av_all
-      
+      end subroutine batch_av_all_save
+
+      end module b2mod_batch
+

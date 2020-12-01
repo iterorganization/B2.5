@@ -7,6 +7,7 @@ modules/b2mod_heatdiff_common.F
 modules/b2mod_b2_to_astra_com.F
 driver/b2mod_driver.F
 driver/b2mod_main.F
+user/b2mod_batch.F
 user/b2mod_trace.F
 utility/b2mod_ipmain.F
 utility/b2mod_xerset.F

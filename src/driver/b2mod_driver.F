@@ -43,9 +43,11 @@
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
+      use b2mod_batch
       use b2mod_trace
       use b2mod_ipmain
       use b2mod_openmp
+      use b2mod_average
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,

@@ -1,30 +1,10 @@
-
-      subroutine running_average (nx,ny,ns)
-
+      module b2mod_average
       use b2mod_types
-      use b2mod_version
-      use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
-#ifdef B25_EIRENE
-      use eirmod_infcop
-#endif
-
+      use b2mod_version
       implicit none
 
-      integer, intent(in) :: nx, ny, ns, iav_cont
-      logical, intent(in) :: lpr, ler
-
-      real (kind=R8), intent(inout) ::
-     *  na_arg(-1:nx,-1:ny,0:ns-1), ua_arg(-1:nx,-1:ny,0:ns-1),
-     &  te_arg(-1:nx,-1:ny), ti_arg(-1:nx,-1:ny), po_arg(-1:nx,-1:ny)
-      real (kind=R8), intent(inout) ::
-     *  sna0(-1:nx,-1:ny,0:ns-1), smo0(-1:nx,-1:ny,0:ns-1),
-     &  she0(-1:nx,-1:ny), shi0(-1:nx,-1:ny)
-
-      character(*) :: savefile
-
+      integer, save :: naver, ntotdt
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:,:), te_mean(:,:),
      .                             ti_mean(:,:), ua_mean(:,:,:),
@@ -44,11 +24,18 @@
      .                             e_she(:,:),
      .                             e_shi(:,:)
 
-      integer :: io, iun, n2, itp, idum(0:2), iex
-      integer, save :: naver, ntotdt
-      character lble*120, lbli*120, check*10
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
+      contains
+
+      subroutine running_average (nx,ny,ns)
+      use b2mod_version
+      use b2mod_constants
+      use b2mod_plasma
+      use b2mod_sources
+      implicit none
+
+      integer, intent(in) :: nx, ny, ns
+
+      integer :: n2, itp
 
       call subini ('running_average')
 
@@ -86,9 +73,20 @@
       call subend ()
 
       return
+      end subroutine running_average
 
-
-      entry run_av_init (iav_cont, nx, ny, ns, lpr, ler)
+      subroutine run_av_init (iav_cont, nx, ny, ns, lpr, ler)
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
+      implicit none
+      integer, intent(in) :: nx, ny, ns, iav_cont
+      logical, intent(in) :: lpr, ler
+      integer io, iex, iun, n2, idum(0:2)
+      real (kind=R8) ::
+     *   zpdum(0:nsdecl-1,4)
+      character check*10
+      character lbli*120
 
       call subini ('run_av_init')
 
@@ -210,8 +208,10 @@
       call subend ()
 
       return
+      end subroutine run_av_init
 
-      entry run_av_fin
+      subroutine run_av_fin
+      implicit none
 
       if (.not.allocated(na_mean)) return
 
@@ -235,8 +235,18 @@
       deallocate (e_shi)
 
       return
+      end subroutine run_av_fin
 
-      entry run_av_save (savefile, nx, ny, ns, lpr, ler)
+      subroutine run_av_save (savefile, nx, ny, ns, lpr, ler)
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(in) :: lpr, ler
+      character(*) :: savefile
+      integer n2, iun, idum(0:2)
+      character lble*120
 
       call subini ('run_av_save')
 
@@ -314,10 +324,15 @@
       call subend ()
 
       return
+      end subroutine run_av_save
 
-
-      entry run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg, po_arg,
-     &                          nx, ny, ns)
+      subroutine run_av_get_plasma
+     &  (na_arg, te_arg, ti_arg, ua_arg, po_arg, nx, ny, ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(inout) ::
+     *  na_arg(-1:nx,-1:ny,0:ns-1), ua_arg(-1:nx,-1:ny,0:ns-1),
+     &  te_arg(-1:nx,-1:ny), ti_arg(-1:nx,-1:ny), po_arg(-1:nx,-1:ny)
 
       call subini ('run_av_get_plasma')
 
@@ -330,9 +345,14 @@
       call subend ()
 
       return
+      end subroutine run_av_get_plasma
 
-
-      entry run_av_get_sources (sna0, smo0, she0, shi0, nx, ny, ns)
+      subroutine run_av_get_sources (sna0, smo0, she0, shi0, nx, ny, ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(inout) ::
+     *  sna0(-1:nx,-1:ny,0:ns-1), smo0(-1:nx,-1:ny,0:ns-1),
+     &  she0(-1:nx,-1:ny), shi0(-1:nx,-1:ny)
 
       call subini ('run_av_get_sources')
 
@@ -343,4 +363,7 @@
 
       call subend ()
 
-      end subroutine running_average
+      return
+      end subroutine run_av_get_sources
+
+      end module b2mod_average
