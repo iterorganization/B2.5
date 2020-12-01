@@ -145,18 +145,16 @@
 
 *   ..local variables
       logical lt0
-      integer k, k1, idum(0:9)
+      integer k, idum(0:9)
       real (kind=R8) ::
      *   lnzero, t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
       intrinsic log
-      logical lnext
       real (kind=R8) ::
      *   smax
       external subini, subend, xertst, smax, cfrure, cfruin, cfverr
-      lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -236,7 +234,7 @@
         if (k.eq.rtns-1) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k,k+1)
+          lt0 = .not.lrtnext(k,k+1)
         endif
 *      (the meaning of lt0 is 'species k cannot ionise to k+1')
         if (lt0) then
@@ -250,7 +248,7 @@
         if (k.eq.0) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k-1,k)
+          lt0 = .not.lrtnext(k-1,k)
         endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then
@@ -264,7 +262,7 @@
         if (k.eq.0) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k-1,k)
+          lt0 = .not.lrtnext(k-1,k)
         endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then

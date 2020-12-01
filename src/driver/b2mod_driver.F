@@ -192,8 +192,6 @@
       real (kind=R8) ::
      *  min_areshe, min_areshi, min_aresco
       logical quit_residual, test_residual
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
@@ -267,7 +265,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer ix, iy, is, js, k, idum(0:9)
+      integer ix, iy, is, k, idum(0:9)
 #ifdef B25_EIRENE
       integer iflag
 #endif
@@ -291,7 +289,6 @@
      & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      & rescale_rd, rescale_br
 *   ..procedures
-      logical lnext
       real (kind=R8) :: rratio
       external rratio
 #ifdef IMAS
@@ -299,8 +296,6 @@
       logical streql
       external streql, usrnam
 #endif
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.documentation
 *

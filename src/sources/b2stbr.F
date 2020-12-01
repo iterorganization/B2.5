@@ -93,7 +93,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k               !iyv 07.03.18
+      integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
@@ -146,8 +146,6 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
       logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
@@ -162,13 +160,10 @@
       character*256, save :: filename
 #endif
 *   ..procedures
-      logical lnext
       external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic abs, mod
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+      intrinsic mod
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,

@@ -87,10 +87,9 @@
       character charns*3, chark*1
       character*15 hlp_frm
       real (kind=R8) ::
-     *   amtol, t0, t1, t2, t3, qpl, qex, surface_temp,
+     *   t0, t1, t2, t3, qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
-      parameter (amtol=1.0e-2_R8)
       logical lcore
 *   ..procedures
       intrinsic abs, max, exp
@@ -119,13 +118,6 @@
 *     cbrec(6,is,ireg) gives the recycling coefficient for particles
 *         of charged species (is) to (is+1) (intended mainly for the
 *         core boundary)
-*
-*     Description of some local variables:
-*
-*     amtol - real.
-*     amtol specifies the mass difference (in amu) up to which two
-*     species may be considered the same for the purpose of the
-*     recycling model.
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -422,11 +414,8 @@ c lcore           is this a core element
      *  wrk(ndepth_nml)
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack
+      integer is0, is1, is2, is, k, iwall, itrack
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf
-      logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 
       iwall=xymap(ix,iy)
       tef = (te(ix,iy)*hhn+te(ixn,iyn)*hh)/(hhn+hh)

@@ -95,14 +95,13 @@
       real (kind=R8), allocatable :: area(:)
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   amtol, t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1),
+     *   t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1),
      *   qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   lnorm, deposition_error(ntrack), reflection_max,
      *   redep_max, yself_max
       logical l_chem_sput, lcore, match
       integer sput_dst_bulk
-      parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, exp
       external subini, subend, xertst
@@ -652,7 +651,7 @@ c lcore           is this a core element?
       real (kind=R8) hh, hhn, Phi_app, area, pof
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack
+      integer is0, is1, is2, is, k, iwall, itrack
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
@@ -660,9 +659,6 @@ c lcore           is this a core element?
       real (kind=R8) mass_density, local_reflection
       character*13 hlp_frm
       external mass_density
-      logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 
       iwall=xymap(ix,iy)
 cdpc-exp

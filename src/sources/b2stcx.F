@@ -47,7 +47,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, k
+      integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -61,14 +61,10 @@
 #endif
       save ncall, styl0, rg0
 *   ..procedures
-      intrinsic abs
-      logical lnext
       real (kind=R8) ::
      *  samax
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)

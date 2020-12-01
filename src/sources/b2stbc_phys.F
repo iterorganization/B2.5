@@ -100,7 +100,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, js, ib, ireg, coreregno, coreregn2,
+      integer ncall, n2, ix, iy, is, ib, ireg, coreregno, coreregn2,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
      2  bc_type16_ixx,
@@ -158,8 +158,6 @@
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                 !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                        !srv 11.07.05
       logical decay_length_ok, fedback_species, core_boundary, ishigh
       logical, save :: BCCON14(NBCD)                                 !srv 20.09.17
@@ -182,15 +180,12 @@
       intrinsic abs, sqrt, mod
       real (kind=R8) ::
      *  sy, bcint, syhz                                              !srv 24.08.08
-      logical lnext
       external subini, subend, xertst, ipgeti, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
       syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
      &            hz(ix,iy)
 !     &            hz(topix(ix,iy),topiy(ix,iy))
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,

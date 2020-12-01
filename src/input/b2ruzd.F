@@ -1,7 +1,7 @@
       subroutine b2ruzd(nget, version, ns, zamin, zamax, zn, am, todo)
       use b2mod_types
       use b2mod_b2cmpa
-     , ,only : is_neutral, partition_number, nspecies
+     , ,only : is_neutral, partition_number, nspecies, amtol
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, ns
@@ -14,8 +14,7 @@
 *   ..local variables
       integer is
       real (kind=R8) ::
-     *  amtol, za(0:ns-1), za2(0:ns-1)
-      parameter (amtol=1.0e-2_R8)
+     *  za(0:ns-1), za2(0:ns-1)
 
 *   ..procedures
       external subini, subend, xertst, cfrure

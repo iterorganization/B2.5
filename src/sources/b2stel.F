@@ -74,7 +74,7 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, ireg
+      integer ncall, styl0, n2, ix, iy, is, ireg
 !     integer k
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
@@ -94,14 +94,11 @@
       real (kind=R8) :: she0_ion(-1:nx,-1:ny,0:3),
      &                  she0_rec(-1:nx,-1:ny,0:3)
 *   ..procedures
-      intrinsic abs
-      logical lnext, streql
+      logical streql
       real (kind=R8) ::
      *   samax
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg, streql
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,

@@ -68,7 +68,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9)
+      integer n2, is, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
@@ -93,19 +93,15 @@
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
       real (kind=R8) ::
-     *  amtol, naini(0:ns-1), ttini, na_min
-      parameter (amtol=1.0e-2_R8)
+     *  naini(0:ns-1), ttini, na_min
       logical oldversion, ex
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      logical lnext
       external subini, subend, xertst, xerrab, sfill, streql,
      &  cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *  ..initialisation
       save na_min
       data na_min/1.0e4_R8/

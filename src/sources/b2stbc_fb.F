@@ -262,7 +262,7 @@
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
      &                 isfeedback, nesepm_istra, use_eirene
-      real (kind=R8) :: amtol,
+      real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
      &  dt_prev, sum_e, sum_s,
@@ -310,7 +310,6 @@
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
-      parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,

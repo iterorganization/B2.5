@@ -566,8 +566,6 @@ c 2002-09-11: logic revised
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
       intrinsic nint, mod, index, sqrt
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
