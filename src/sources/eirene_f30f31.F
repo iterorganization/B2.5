@@ -20,7 +20,7 @@
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi
+     & , only: crcstra, rcfe, rcfi, strat_type
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -158,6 +158,8 @@
      &                                 switch%eir_te_min)
         tib(ic)=max(min(pl%ti(ic)*evi,switch%eir_ti_max),
      &                                 switch%eir_ti_min)
+        tnb(ic)=max(min(pl%tn(ic)*evi,switch%eir_ti_max),
+     &                                 switch%eir_ti_min)
         pob(ic)=pl%po(ic)
         prb(ic)=teb(ic)*max(min(dv%ne(ic),switch%eir_na_max),
      &                                 switch%eir_na_min)
@@ -264,7 +266,11 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
             vvdiab(ic,nflai)=max(min(
      1         wadiac(ic,1,is)+vaecrbc(ic,1,is),switch%eir_ua_max),
      2                                            switch%eir_ua_min)
-            prb(ic)=prb(ic)+tib(ic)*dnib(ic,nflai)
+            if(.not.is_neutral(is)) then
+              prb(ic)=prb(ic)+tib(ic)*dnib(ic,nflai)
+            else
+              prb(ic)=prb(ic)+tnb(ic)*dnib(ic,nflai)
+            endif
 c     Velocities uub, vvb, wwb
 c     * cell centered
 c     * internal cell values used for plasma background properties in infcop
@@ -357,6 +363,7 @@ c we derive the guard cell value from its neighbouring interior cell
           ic2 = mpg%rcCv(ian+i-1,2)   ! index of plasma cell
           teb(ic)=teb(ic2)
           tib(ic)=tib(ic2)
+          tnb(ic)=tnb(ic2)
           pob(ic)=pob(ic2)
           dnib(ic,:)=dnib(ic2,:)
         enddo
@@ -394,6 +401,7 @@ c we derive the guard cell value from its neighbouring interior cell
        enddo
        call my_out_us(70,nCv,0,teb,'copy_teb')
        call my_out_us(70,nCv,0,tib,'copy_tib')
+       call my_out_us(70,nCv,0,tnb,'copy_tnb')
        call my_out_us(70,nCv,0,pob,'copy_pob')
        icall = icall + 1
       endif 
@@ -423,12 +431,24 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%flength(i) = sqrt((gm%vxX(iv1)-gm%vxX(iv2))**2 +
      >                            (gm%vxY(iv1)-gm%vxY(iv2))**2)*100._R8
           trgt(istra)%tet(i) = teb(ic)
-          trgt(istra)%tit(i) = tib(ic)
+
+          if (strat_type(istra).eq.'P') then
+            trgt(istra)%tit(i) = tib(ic)
+          elseif (strat_type(istra).eq.'N') then
+            trgt(istra)%tit(i) = tnb(ic)
+          else
+            call xerrab('strat_type should be P(plasma) or N(neutral)')
+          endif
+          trgt(istra)%tnt(i) = tnb(ic)
           trgt(istra)%fe(i) = rcfe(istra)
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
             trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)
+            if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
+              write(*,*) 'negative flux !!'
+              trgt(istra)%flux(i,ifl) = 0.0_R8
+            endif 
             trgt(istra)%fi(i,ifl) = rcfi(istra)
 
             ebx = gm%fcEb(iFc,0)
