@@ -1,3 +1,12 @@
+      module b2mod_ilutern_7
+      implicit none
+
+      logical, save :: lfirst
+      !$OMP THREADPRIVATE(lfirst)
+      data lfirst /.true./
+
+      contains
+
       SUBROUTINE ILUTERN_7(N1, N2, N1D,                            !srv 11.01.00 26.12.17
      . ASO1, ASO, AWE, ACP, AEA, ANO, ANO1, RHS, SOL, name)        !srv 11.01.00
       use b2mod_types
@@ -54,14 +63,13 @@ c
 *  -- PROCEDURES --
       EXTERNAL XERRAB
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
-      save lfirst, ncall, nwrite
-      !$OMP THREADPRIVATE(lfirst, ncall, nwrite)
+      save ncall, nwrite
+      !$OMP THREADPRIVATE(ncall, nwrite)
       !$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -318,13 +326,15 @@ cdpc
       ncall=ncall+1
       call subend ()
       RETURN
+      END SUBROUTINE ILUTERN_7
 
-      entry restart_ma28_for_7                                     !srv 11.01.00
+      subroutine restart_ma28_for_7                                !srv 11.01.00
       lfirst=.true.
       write(*,*) 'Restarting ma28_for_7'                           !srv 02.04.18
       return
+      end subroutine restart_ma28_for_7
 
 *=======================================================================
 *//END ILUTERN_7//
 
-      END
+      END MODULE B2MOD_ILUTERN_7

@@ -1,3 +1,12 @@
+      module b2mod_ilutern
+      implicit none
+
+      logical, save :: lfirst
+      !$OMP THREADPRIVATE (lfirst)
+      data lfirst /.true./
+
+      contains
+
       SUBROUTINE ILUTERN(N1, N2, N1D, ASO, AWE, ACP, AEA, ANO,
      .      RHS, SOL, NAME)                                          !srv 18.03.10
       use b2mod_types
@@ -15,7 +24,7 @@ C
       character*(*) name                                             !srv 18.03.10
       REAL (KIND=R8) ::
      *   ASO(N1D,N2), AWE(N1D,N2), ACP(N1D,N2),
-     .      AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
+     .   AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
 
 *  -- OUTPUT ARGUMENTS --
       REAL (KIND=R8) ::
@@ -52,17 +61,16 @@ c
 *  -- PROCEDURES --
       EXTERNAL XERRAB
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.03.10
       integer, save :: kwrite_bnr = -1                                !srv 18.03.10
       integer, save :: b2swtest=0
-      save lfirst, ncall, nwrite
+      save ncall, nwrite
 !!FR Make all the save and common block variables threadprivate
-      !$OMP THREADPRIVATE (lfirst, ncall, nwrite)
+      !$OMP THREADPRIVATE (ncall, nwrite)
       !$OMP THREADPRIVATE (/ma28fd/,/ma28hd/)
       !$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr, b2swtest)
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -332,13 +340,15 @@ cdpc
       ncall=ncall+1
       call subend ()
       RETURN
+      END SUBROUTINE ILUTERN
 
-      entry restart_ma28
+      subroutine restart_ma28
       lfirst=.true.
       write(*,*) 'Restarting ma28'
       return
+      end subroutine restart_ma28
 
 *=======================================================================
 *//END ILUTERN//
 
-      END
+      END MODULE B2MOD_ILUTERN

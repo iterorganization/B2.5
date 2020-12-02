@@ -4,6 +4,7 @@
       subroutine b2ux5p (nx, ny, aa5, itcnt, resfun, corfun, name)   !srv 18.03.10
       use b2mod_types
       use b2mod_ma28
+      use b2mod_ilutern
       use b2mod_indirect
       use b2mod_openmp
       implicit none

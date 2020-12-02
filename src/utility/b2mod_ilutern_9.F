@@ -1,11 +1,20 @@
-      SUBROUTINE ILUTERN_11(N1, N2, N1D, NZ, RHS, SOL, name)      !srv 02.04.18 {
+      module b2mod_ilutern_9
+      implicit none
+
+      logical, save :: lfirst
+      !$OMP THREADPRIVATE(lfirst)
+      data lfirst /.true./
+
+      contains
+
+      SUBROUTINE ILUTERN_9(N1, N2, N1D, NZ, RHS, SOL, name)      !srv 13.10.06 (
       use b2mod_types
-      use b2mod_ma28_for_11diag
+      use b2mod_ma28_for_9diag
       use b2mod_indirect
       use b2mod_openmp
       IMPLICIT NONE
 #ifndef GFORTRAN
-      external bd1copy4
+      external bd1copy
 #endif
 C
 
@@ -32,56 +41,52 @@ c ma28 common blocks
      *   eps,rmin,resid
       integer irncp,icncp,minirn,minicn,irank
       logical abort1,abort2
-      common /ma28fdc4/ eps,rmin,resid,irncp,icncp,minirn,minicn,
+      common /ma28fdc/ eps,rmin,resid,irncp,icncp,minirn,minicn,
      1 irank,abort1,abort2
       real (kind=R8) ::
-     *   tol,themax,big,dxmax,errmax,dres,cgce
-      integer ndrop,maxit,noiter,nsrch,istart
-      logical lbig
-      common /ma28hdc4/ tol,themax,big,dxmax,errmax,dres,cgce,
-     1 ndrop,maxit,noiter,nsrch,istart,lbig
-      !$OMP THREADPRIVATE(/ma28fdc4/,/ma28hdc4/)
+     *   rtol,themax,big,dxmax,errmax,dres,cgce
+      integer ndrop,maxit,noiter,nsrch,istart,ibig
+      common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
+     1 ndrop,maxit,noiter,nsrch,istart,ibig
+      !$OMP THREADPRIVATE(/ma28fdc/, /ma28hdc/)
 c
 
 *  -- PROCEDURES --
       EXTERNAL XERRAB
 
-      logical lfirst
       integer ncall, nwrite
-      integer, save :: kwrite_fmt = -1                             !srv 18.05.02
-      integer, save :: kwrite_bnr = -1                             !srv 18.05.02
-      save lfirst, ncall, nwrite
-      !$OMP THREADPRIVATE(lfirst, ncall, nwrite)
+      integer, save :: kwrite_fmt = -1                                !srv 18.05.02
+      integer, save :: kwrite_bnr = -1                                !srv 18.05.02
+      save ncall, nwrite
+      !$OMP THREADPRIVATE(ncall, nwrite)
       !$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
-*   ..subprogram start-up calls
-      call subini ('ilutern_11')
 
 *  ---------------------------------------------------------------------
 *  TEST INPUTS AND SET AUXILIARIES.
 *  ---------------------------------------------------------------------
 
       if(ncall.eq.0) then
-        call ipgeti ('ma28_for_11d_nwrite', nwrite)
-        call ipgeti ('ma28_for_11d_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
-        call ipgeti ('ma28_for_11d_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
+        call ipgeti ('ma28_for_9d_nwrite', nwrite)
+        call ipgeti ('ma28_for_9d_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
+        call ipgeti ('ma28_for_9d_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
         if (in_parallel() .and. ( nwrite.ne.0 .or.
      &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
          !$OMP MASTER
-         write(*,*) 'ilutern_11 OpenMP warning: no file IO ' ,
+         write(*,*) 'ilutern_9 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
          !$OMP END MASTER
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1
-        endif 
+       endif 
 #ifdef GFORTRAN
-        call set_data_bd1copy4
-        call set_data_bd2copy4
-        call set_data_bd3copy4
+       call set_data_bd1copy
+       call set_data_bd2copy
+       call set_data_bd3copy
 #endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
@@ -91,7 +96,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
         IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
-          CALL XERRAB ('ILUTERN_11 -- FAULTY ARGUMENT N1, N2, N1D')
+          CALL XERRAB ('ILUTERN_9 -- FAULTY ARGUMENT N1, N2, N1D')
         END IF
 
       endif
@@ -104,31 +109,31 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       enddo
 
       if(kwrite_bnr.eq.ncall) then                                  !srv 18.05.02 {
-        write(*,*) 'Opening 76'
-        open(76,file='b2_11_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
-        write(76) n
-        do i=1,n
-          write(76) r1(i)
-        enddo
-        close(76)
-        write(*,*) 'Opening 77'
-        open(77,file='b2_11_matrix_binary_'//
-     &      trim(name),form='unformatted')                         !srv 11.03.13
-        write(77) n, nz
-        do i=1,nz
-          write(77) IRNH(i),ICNH(i),A1H(i)
-        enddo
-        close(77)
+         write(*,*) 'Opening 76'
+         open(76,file='b2_9_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
+         write(76) n
+         do i=1,n
+           write(76) r1(i)
+         enddo
+         close(76)
+         write(*,*) 'Opening 77'
+         open(77,file='b2_9_matrix_binary_'//
+     &       trim(name),form='unformatted')                         !srv 11.03.13
+         write(77) n, nz
+         do i=1,nz
+           write(77) IRNH(i),ICNH(i),A1H(i)
+         enddo
+         close(77)
       endif                                                         !srv 18.05.02 }
       if(kwrite_fmt.eq.ncall) then                                  !srv 18.05.02 {
         write(*,*) 'Opening 76'
-        open(76,file='b2_11_rhs_'//trim(name))
+        open(76,file='b2_9_rhs_'//trim(name))
         write(76,*) n
         do i=1,n
           write(76,*) r1(i)
         enddo
         close(76)
-        open(77,file='b2_11_matrix_'//trim(name))
+        open(77,file='b2_9_matrix_'//trim(name))
         write(77,*) n, nz
         do i=1,nz
           write(77,*) IRNH(i),ICNH(i),A1H(i)
@@ -140,7 +145,7 @@ cdpc
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
             write(*,*) 'Opening 79'
-            open(79,file='b2_11_matrix')
+            open(79,file='b2_9_matrix')
           endif
           write(*,*) 'Writing 79'
           write(79,*) 'Called from '//trim(name)
@@ -159,7 +164,7 @@ cdpc
       endif
 cdpc
       if(lfirst) then
-        write(*,*) 'ilutern_11: nz = ',nz
+        write(*,*) 'ilutern_9: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
       endif
 
@@ -170,10 +175,10 @@ cdpc
       enddo
 
       if(.not.lfirst) then
-        call ma28bdcopy4
+        call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
-     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)")
+     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
      *    trim(name), iflag                                          !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
@@ -185,25 +190,25 @@ cdpc
       endif
 
       if(lfirst.or.iflag.lt.0) then
-        call ma28adcopy4
+        call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim      !srv 09.07.02 28.06.16
-    2 format(' ma28ad for ',a13,': iflag =',i9/,
+    2  format(' ma28ad for ',a13,': iflag =',i9/,
      1 ' minirn =',i9,' solvdim1 =',i9,
      2 ' minicn =',i9,' solvdim =',i9)                               !srv 09.07.02
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false.
+        lfirst=.false. 
       endif
 
-      call ma28idcopy4
+      call ma28idcopy
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-    3 format(' ma28id for ',a13,
+    3    format(' ma28id for ',a13,
      1       ': iflag =',i9,' errmax =',es9.1,
      2       ' dres =',es9.1,' noiter =',i2)                         !srv 09.07.02 28.06.16 }
 
@@ -215,7 +220,7 @@ cdpc
           a1h(i)  = a1h_save(i)
         enddo
 
-        call ma28adcopy4
+        call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
@@ -223,7 +228,7 @@ cdpc
           icnhkeep(i)=icnh(i)
         enddo
 
-        call ma28idcopy4
+        call ma28idcopy
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
 
@@ -246,15 +251,16 @@ cdpc
 *  ---------------------------------------------------------------------
       call cpu_time(cpu_end)
       ncall=ncall+1
-      call subend()
       RETURN
+      END SUBROUTINE ILUTERN_9
 
-      entry restart_ma28_for_11
+      subroutine restart_ma28_for_9
       lfirst=.true.
-      write(*,*) 'Restarting ma28_for_11'
+      write(*,*) 'Restarting ma28_for_9'
       return
+      end subroutine restart_ma28_for_9
 
 *=======================================================================
-*//END ILUTERN_11//                                                !srv 13.10.06
+*//END ILUTERN_9//                                                    !srv 13.10.06
 
-      END
+      END MODULE B2MOD_ILUTERN_9

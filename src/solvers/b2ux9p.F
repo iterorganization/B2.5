@@ -3,6 +3,7 @@
 
       subroutine b2ux9p (nx, ny, aa9, itcnt, resfun, corfun, name)    !sv 13.10.06 {
       use b2mod_types
+      use b2mod_ilutern_9
       use b2mod_ma28_for_9diag
       use b2mod_indirect
       use b2mod_openmp
@@ -78,7 +79,7 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
+      external subini, subend, xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu

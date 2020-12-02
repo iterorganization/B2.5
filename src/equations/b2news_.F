@@ -21,6 +21,11 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_ilutern
+      use b2mod_illtern_7
+      use b2mod_ilutern_7
+      use b2mod_ilutern_9
+      use b2mod_ilutern_11
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

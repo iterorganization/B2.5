@@ -7,6 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_ilutern_9
       use b2mod_numerics_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
