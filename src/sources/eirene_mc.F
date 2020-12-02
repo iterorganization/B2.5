@@ -558,11 +558,12 @@ c*** recyc     : fudge factors for the sources in B2
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
-                tflux(istrai)=tflux(istrai)+mpg%rcFcOr(ind)*
-     1             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
+                tflux(istrai)=tflux(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
-     1             mpg%rcFcOr(ind)*
-     2             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
               end do !}
             end if !}
           end do   
