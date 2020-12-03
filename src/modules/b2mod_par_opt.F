@@ -1,6 +1,6 @@
       module b2mod_par_opt
       use b2mod_types
-
+      implicit none
       integer :: npar_opt
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:)
@@ -29,8 +29,8 @@
       integer nvar, ncon, nele_jac
 
       filename='b2.optimization.parameters'
-      write (*,*) 'IPOPT: max number of readablee vars and cons:',nvmx
-      write (*,*) 'IPOPT: infinity bound set to:',inf_opt
+      write (*,*) 'OPTIM: max number of readablee vars and cons:',nvmx
+      write (*,*) 'OPTIM: infinity bound set to:',inf_opt
       x0 = inf_opt*10
       xl = -inf_opt*10
       xu = inf_opt*10
@@ -54,7 +54,7 @@
       else
         call xerrab ('No '//trim(filename))
       endif
-      write (*,*) 'IPOPT: read parameters'
+      write (*,*) 'OPTIM: read parameters'
       write(*,optimization)
       call xertst(nnvar.le.nvmx,'b2mod_par_opt: increase size of nvmx')
       call xertst(nncon.le.nvmx,'b2mod_par_opt: increase size of nvmx')
