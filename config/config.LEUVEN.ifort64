@@ -17,7 +17,7 @@ endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
 
-CPP      = /lib/cpp -traditional
+CPP      = ifort -c
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
@@ -70,10 +70,13 @@ LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
+ifdef IPOPT
 LIBOPT = -L${IPOPTDIR}/lib/ -lipopt
-ADDINCFLAGS =
 MODINCLUDE += -I${IPOPTDIR}/include/coin-or
-
+endif
+ifdef TAO
+LIBOPT = ${PETSC_LIB}
+endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -147,6 +147,11 @@ INCLUDE += -I${SRCDIR}/differentiated_files
 TAGSLIST += ${SRCB2}/builds/differentiated_files/*.F*
 TAGSLIST += ${SRCDIR}/differentiated_files/*.F
 endif
+ifdef TAO
+include ${PETSC_DIR}/lib/petsc/conf/variables
+INCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
+MODINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
+endif
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
@@ -247,19 +252,14 @@ PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
 PROG_MND = b2mn_d.exe
 PROG_MNB = b2mn_b.exe
-PROG_OPT = b2optim.exe
+ifdef OPT
+PROG_OPT = b2optim_${OPT}.exe
+endif
+OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 
-EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB} ${PROG_OPT}}
+EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
-ifdef DIFF_D
-EX9DIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
-EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_OPT}}
-endif
-ifdef DIFF_B
-EX9DIFFLIST = ${patsubst %.exe, %.o, ${PROG_MND}}
-EXDIFFLIST = ${patsubst %.exe, %.o, ${PROG_OPT}}
-endif
 ADEXTRA =${CONTEXTAD}
 ifdef AD_DEBUG
 ADEXTRA =${DBGAD} ${STACKAD}
@@ -821,8 +821,10 @@ ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA} ${STACKAD}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${STACKAD} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+endif
 
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
 	cc -c $< -o $@
@@ -1096,7 +1098,6 @@ echo:
 	@echo MNBEXE=${MNBEXE}
 	@echo OPTEXE=${OPTEXE}
 	@echo DIFFPATH=${DIFFPATH}
-	@echo EXCLUDEDIFF=${EXCLUDEDIFF}
 	@echo ADEXTRA=${ADEXTRA}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
