@@ -7,6 +7,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -34,7 +35,7 @@
       integer ncall, n2, ix, iy, is
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvfx
 *   ..initialisation
       data ncall/0/

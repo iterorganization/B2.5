@@ -1,26 +1,28 @@
-      subroutine lwmain ()
+      module b2mod_lwmain
       use b2mod_types
       implicit none
-      integer lw0, lw1, nw
-#     include "stackw.h"
+      private
+      public :: lwset, lwget, lwmax
 *     ------------------------------------------------------------------
 *     LWMAIN is a group of routines (entry points in lwmain) that
 *     maintain a base address for free space in the workspace area
-*     stackw%w. The entry points are lwset, lwget, and lwmax.
+*     stackw%w. The subroutines are lwset, lwget, and lwmax.
 *     LWSET frees workspace by resetting the base address.
 *     LWGET reserves workspace by incrementing the base address.
 *     LWMAX returns the maximum workspace use.
 *     ------------------------------------------------------------------
       integer lwrk, lwrkmx
       save lwrk, lwrkmx
-      intrinsic max
-      external prvrt, b25_mpi_stop
       data lwrk/0/, lwrkmx/0/
 *     Invariant: 0.le.lwrk.le.lwrkmx.le.nstckw
 *     ------------------------------------------------------------------
-      return
+      contains
 *     ------------------------------------------------------------------
-      entry lwset (lw0)
+      subroutine lwset (lw0)
+      implicit none
+      integer, intent(in) :: lw0
+      external prvrt, b25_mpi_stop
+#     include "stackw.h"
 *     (revert base address to lw0)
       if (lw0.lt.0.or.lwrk.lt.lw0) then
         write (0,*) 'lwset--faulty argument lw0'
@@ -30,8 +32,15 @@
       call prvrt (lwrk-lw0, w(lw0), 1)
       lwrk = lw0
       return
+      end subroutine lwset
 *     ------------------------------------------------------------------
-      entry lwget (nw, lw1)
+      subroutine lwget (nw, lw1)
+      implicit none
+      integer, intent(in) :: nw
+      integer, intent(out) :: lw1
+      intrinsic max
+      external b25_mpi_stop
+#     include "stackw.h"
       if (nw.lt.0) then
         write (0,*) 'lwget--faulty argument nw'
         call b25_mpi_stop
@@ -44,9 +53,13 @@
         call b25_mpi_stop
       end if
       return
+      end subroutine lwget
 *     ------------------------------------------------------------------
-      entry lwmax (lw1)
+      subroutine lwmax (lw1)
+      implicit none
+      integer, intent(out) :: lw1
       lw1 = lwrkmx
       return
+      end subroutine lwmax
 *     ------------------------------------------------------------------
-      end subroutine lwmain
+      end module b2mod_lwmain

@@ -25,6 +25,7 @@
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,
@@ -102,8 +103,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
-      external subini, subend, xertst, ipgeti, ipgetr, smin,
-     &  smax, b2sasum, samax
+      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm

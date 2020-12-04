@@ -4,6 +4,7 @@
       subroutine b2nxst (nx, ny, rob, smb, ro, smt)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -29,7 +30,7 @@
       !$OMP THREADPRIVATE(ncall)
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 

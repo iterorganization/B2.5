@@ -234,6 +234,7 @@ VPATH += :${SRCDIR}/ids
 VPATH += :${SRCDIR}/ids/archive
 FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
+FFPATH += :${SRCDIR}/user
 
 MODLIST =
 MODLISTF =

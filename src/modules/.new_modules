@@ -11,4 +11,5 @@ user/b2mod_batch.F
 user/b2mod_trace.F
 utility/b2mod_ilutern.F
 utility/b2mod_ipmain.F
+utility/b2mod_lwmain.F
 utility/b2mod_xerset.F

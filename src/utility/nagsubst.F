@@ -1,11 +1,12 @@
 #ifdef NO_NAG
       subroutine e01bef (n, x, f, d, ifail)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer n, ifail
       real (kind=R8) ::
      *   x(n), f(n), d(n)
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *     A crude substitute for the NAG routine of the same name, for the
 *     case of an eight-byte real*8 environment.
@@ -27,11 +28,12 @@
       end subroutine e01bef
       subroutine e01bff (n, x, f, d, m, px, pf, ifail)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer n, m, ifail
       real (kind=R8) ::
      *   x(n), f(n), d(n), px(m), pf(m)
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *     A crude substitute for the NAG routine of the same name, for the
 *     case of an eight-byte real*8 environment.

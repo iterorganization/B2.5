@@ -28,6 +28,7 @@
       use b2mod_ilutern_7
       use b2mod_ilutern_9
       use b2mod_ilutern_11
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -107,8 +108,7 @@
       real (kind=R8) :: smin, smax
       integer len_of_digits
       external len_of_digits
-      external subini, subend, xertst, ipgetr, smin, smax,
-     &  b2scopy, b2saxpy, ipgeti
+      external xertst, ipgetr, smin, smax, b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,

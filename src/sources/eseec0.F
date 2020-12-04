@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_geo
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ix, iy, nx, ny, ns, ismain, material, diagno
@@ -77,7 +78,7 @@
       save ncall
 *   ..procedures
       intrinsic exp, log, sqrt, abs, asin, sin
-      external subini, subend, xertst, average
+      external xertst, average
 *   ..initialisation
       data ncall/0/
 *

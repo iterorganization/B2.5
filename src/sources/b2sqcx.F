@@ -4,6 +4,7 @@
       subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -53,7 +54,7 @@
       save ncall, styl0, phm0
 *   ..procedures
       intrinsic log
-      external subini, subend, xertst, ipgeti, ipgetr, machsfr
+      external xertst, ipgeti, ipgetr, machsfr
       external b2xvsg
 *   ..initialisation
       data ncall/0/, styl0/0/, phm0/1.0_R8/

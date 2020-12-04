@@ -10,6 +10,7 @@
      &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
+      use b2mod_subsys
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -842,7 +843,7 @@ c*** Clear data to forget previous profiles
       integer ixref, iyref
       character*256 filename
       logical exist
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
@@ -936,7 +937,7 @@ c*** Clear data to forget previous profiles
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref
       integer ireg
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, ncall
       data ncall/0/

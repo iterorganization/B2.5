@@ -18,6 +18,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmfs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -112,7 +113,7 @@
       intrinsic abs, sqrt
       real (kind=R8) ::
      *   b2ssum
-      external subini, subend, xertst, sfill, b2ssum, b2saxpy
+      external xertst, sfill, b2ssum, b2saxpy
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                  !sv 18.01.02
 *   ..initialization
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,

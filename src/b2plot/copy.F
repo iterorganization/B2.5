@@ -144,9 +144,10 @@ c  Copy the top of the wall stack to the data array
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_ank
+      use b2mod_subsys
       implicit none
       integer is
-      external subini, subend, xertst
+      external xertst
 
       call subini('data_copy')
       if (iwwrk.eq.0) then

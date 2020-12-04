@@ -69,6 +69,7 @@
       use b2mod_geo
       use b2mod_plasma
       use b2mod_constants
+      use b2mod_subsys
       implicit none
       integer ix0,iy0,nx,ny,output
       integer ix,iy,ia,curr,cnt,new
@@ -77,7 +78,7 @@
      *    t1,x,y,dx,dy
       logical inside
       character*1 orientation
-      external subini, subend, xerrab
+      external xerrab
 
       call subini ('setup_b2mod_first_flight')
       ptr_index=ptr_index+1

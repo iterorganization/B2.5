@@ -10,6 +10,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -65,7 +66,7 @@
       integer, save :: use_eirene=0
 *   ..procedures
       intrinsic log, min
-      external subini, subend, xertst, ipgetr, machsfr
+      external xertst, ipgetr, machsfr
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/,
      1 art_rad/0.0_R8/

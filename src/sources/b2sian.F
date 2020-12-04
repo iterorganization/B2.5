@@ -10,6 +10,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2sian_smo0to3, balance_netcdf
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -40,7 +41,7 @@
       save ncall, phm0
       !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
 *   ..initialization
       data ncall/0/, phm0/1.0e0_R8/

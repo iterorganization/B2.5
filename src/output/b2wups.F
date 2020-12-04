@@ -12,6 +12,7 @@
       use b2mod_types
       use b2mod_time
       use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns
@@ -84,7 +85,7 @@
       integer n2
       real (kind=R8) :: time(1)
 *   ..procedures
-      external subini, subend, xertst, cfwure
+      external xertst, cfwure
       external b2xvps, b2xvsg
 
 *-----------------------------------------------------------------------

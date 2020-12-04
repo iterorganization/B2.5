@@ -11,6 +11,7 @@
       use b2mod_constants
       use b2mod_rates
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -54,7 +55,7 @@
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 

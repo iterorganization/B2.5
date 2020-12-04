@@ -23,6 +23,7 @@
       use b2mod_math
       use b2mod_external
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -44,7 +45,7 @@
       data ismain/1/, external_species/0/
 *   ..procedures
       logical is_comment, cfendf
-      external subini, subend, xertst, xerrab, is_comment
+      external xertst, xerrab, is_comment
       external cfruch, cfruin, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp

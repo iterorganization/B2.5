@@ -4,6 +4,7 @@
       subroutine b2nxfm (nx, ny, mb, fnb, flub)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -45,7 +46,7 @@
       integer ncall, ix, iy
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvff
 *   ..initialisation
       data ncall/0/

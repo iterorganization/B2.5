@@ -31,6 +31,7 @@
       use b2mod_external
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -93,7 +94,7 @@
       logical lcore
 *   ..procedures
       intrinsic abs, max, exp
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialisation
       save ncall

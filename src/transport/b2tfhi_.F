@@ -20,6 +20,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
      &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -86,7 +87,7 @@ cpax
       real (kind=R8) :: upfac, hybfac, scur !djm Jan2017
       save ncall, vdia_par                                              !srv 17.05.99
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                 !srv 17.05.99

@@ -1,6 +1,7 @@
       subroutine b2tbfl(nx, ny, lcore, flux, tbfl, div)              !srv 12.02.16 {
       use b2mod_types
       use b2mod_boundary_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny

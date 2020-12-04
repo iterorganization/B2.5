@@ -9,6 +9,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_transport_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -51,7 +52,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst, smin, smax
+      external xertst, smin, smax
       external b2tlhe, b2tlhi, b2tlmv, b2xpnr, b2xvsg
 *   ..initialisation
       data ncall/0/

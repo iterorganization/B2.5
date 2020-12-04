@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 
 c======================================================================

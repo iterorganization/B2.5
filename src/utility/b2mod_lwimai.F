@@ -1,26 +1,29 @@
-      subroutine lwimai ()
+      module b2mod_lwimai
       use b2mod_types
       implicit none
-      integer lwi0, lwi1, nwi
-#     include "stackw.h"
+      private
+      public :: lwiset, lwiget, lwimax
+
 *     ------------------------------------------------------------------
 *     LWIMAI is a group of routines (entry points in lwimai) that
 *     maintain a base address for free space in the workspace area
-*     stackw%wi. The entry points are lwiset, lwiget, and lwimax.
+*     stackw%wi. The subroutines are lwiset, lwiget, and lwimax.
 *     LWISET frees workspace by resetting the base address.
 *     LWIGET reserves workspace by incrementing the base address.
 *     LWIMAX returns the maximum workspace use.
 *     ------------------------------------------------------------------
       integer lwrki, lwrkimx
       save lwrki, lwrkimx
-      intrinsic max
-      external prvrti, xertst
       data lwrki/0/, lwrkimx/0/
 *     Invariant: 0.le.lwrki.le.lwrkimx.le.nstcwi
 *     ------------------------------------------------------------------
-      return
+      contains
 *     ------------------------------------------------------------------
-      entry lwiset (lwi0)
+      subroutine lwiset (lwi0)
+      implicit none
+      integer, intent(in) :: lwi0
+      external prvrti
+#     include "stackw.h"
 *     (revert base address to lwi0)
       if (lwi0.lt.0.or.lwrki.lt.lwi0) then
         write (0,*) 'lwiset--faulty argument lwi0'
@@ -30,8 +33,14 @@
       call prvrti (lwrki-lwi0, wi(lwi0), 1)
       lwrki = lwi0
       return
+      end subroutine lwiset
 *     ------------------------------------------------------------------
-      entry lwiget (nwi, lwi1)
+      subroutine lwiget (nwi, lwi1)
+      implicit none
+      integer, intent(in) :: nwi
+      integer, intent(out) :: lwi1
+      intrinsic max
+#     include "stackw.h"
       if (nwi.lt.0) then
         write (0,*) 'lwiget--faulty argument nwi'
         call b25_mpi_stop
@@ -44,9 +53,13 @@
         call b25_mpi_stop
       end if
       return
+      end subroutine lwiget
 *     ------------------------------------------------------------------
-      entry lwimax (lwi1)
+      subroutine lwimax (lwi1)
+      implicit none
+      integer, intent(out) :: lwi1
       lwi1 = lwrkimx
       return
+      end subroutine lwimax
 *     ------------------------------------------------------------------
-      end subroutine lwimai
+      end module b2mod_lwimai

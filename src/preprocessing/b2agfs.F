@@ -13,6 +13,7 @@
       use b2mod_indirect
      . ,only: GRID_N_CELLFLAGS
       use carre_constants
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -111,8 +112,7 @@
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
-      external subini, subend, ipgeti, ipgetr, xertst,
-     * b2xvsg, b2gxdr_dummy
+      external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
       intrinsic abs, cos, sin, min, max, sign, acos
 
 *-----------------------------------------------------------------------
@@ -1015,6 +1015,7 @@ c
      & crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -1052,7 +1053,7 @@ c
       character*12 device
       logical open_file, uop, first_read, ex
       character uline*(line_length)
-      external xertst, subini, subend, open_file
+      external xertst, open_file
       intrinsic index, sqrt
       real (kind=R8) :: t0
 

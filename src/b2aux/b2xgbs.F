@@ -1,6 +1,7 @@
       subroutine b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -15,7 +16,7 @@
 *     ------------------------------------------------------------------
       integer n2, ix, iy, ncall, area_fix
       real (kind=R8) :: t1
-      external subini, subend, xertst, b2xvsg, b2xvff, ipgeti
+      external xertst, b2xvsg, b2xvff, ipgeti
       save ncall, area_fix
       data ncall/0/, area_fix/3/
 *-----------------------------------------------------------------------
@@ -60,6 +61,7 @@
      . bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx1, ny1
       integer bottomiy1(-1:nx1,-1:ny1)
@@ -77,7 +79,7 @@
 *     ------------------------------------------------------------------
       integer n2, ix, iy, ncall, area_fix
       real (kind=R8) :: t1
-      external subini, subend, xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
+      external xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
       save ncall, area_fix
       data ncall/0/, area_fix/3/
 *-----------------------------------------------------------------------

@@ -213,7 +213,8 @@ program b2_ual_write
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &
            &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)
         continued = continued .or. &
-           &        run_start_time.ge.ids_end_time
+           &       (run_start_time.ge.ids_end_time .and. &
+           &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID))
         if (continued) then
           if (.not.streql(old_imas_version,imas_version)) then
             write(*,*) &

@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -74,7 +75,7 @@
       save ncall, model, phm0, style
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, sfill, ipgetr, ipgeti
+      external xertst, sfill, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, model/1/, style/1/

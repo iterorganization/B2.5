@@ -13,6 +13,7 @@
       use b2mod_ma28_for_7diag
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_subsys
       IMPLICIT NONE
 #ifndef GFORTRAN
       external bd1copy3                                            !srv 26.12.17

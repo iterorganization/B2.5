@@ -15,6 +15,7 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -59,7 +60,7 @@
      &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
-      external subini, subend, xertst, ipgeti, b2xvsg
+      external xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod
 *   ..initialisation
       save ncall, diagno, enable

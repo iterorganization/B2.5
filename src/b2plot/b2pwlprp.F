@@ -32,6 +32,7 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
       real (kind=R8) ::
@@ -63,7 +64,7 @@ c>>>
       save use_eirene
       data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
       intrinsic mod
-      external ipgeti, ipgetr, subini, subend, xerrab
+      external ipgeti, ipgetr, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call ipgetr ('b2agmt_1d_width', width)

@@ -15,6 +15,7 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -452,6 +453,7 @@ c     conversion of constants to CGS units
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_external
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns,jsep,jxa
       real (kind=R8) :: lambda,
@@ -467,7 +469,7 @@ c     conversion of constants to CGS units
      2 bave,epsilon,lnlam,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
-      external subini, subend, xertst
+      external xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8

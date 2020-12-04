@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, mode
       real (kind=R8) ::
@@ -19,7 +20,7 @@
       intrinsic max, sqrt
       real (kind=R8) ::
      *   harm
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
       harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------

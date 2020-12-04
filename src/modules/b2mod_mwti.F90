@@ -1,5 +1,6 @@
 module b2mod_mwti
   use b2mod_types , only : R8
+  use b2mod_subsys
   implicit none
   private
   public :: b2mwti, output_ds, dealloc_b2mod_mwti
@@ -124,7 +125,7 @@ contains
          nya, nyi, nybl, nybr, nytl, nytr, nc
 
     !   ..procedures
-    external subini, subend, xertst, ipgeti, batch_average
+    external xertst, ipgeti, batch_average
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
     integer, save :: ntstep, nastep
@@ -3038,7 +3039,7 @@ contains
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
     integer :: istride, imax
     logical, parameter :: debug = .false.
-    external subini, subend, xerrab
+    external xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
@@ -3138,7 +3139,7 @@ contains
          ds(-1:ny), ds_offset
     character*(*) filename
     integer iy
-    external subini, subend, xertst
+    external xertst
     intrinsic sqrt
 
     call subini ('output_ds')

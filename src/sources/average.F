@@ -4,6 +4,7 @@
 
       subroutine average (e,b,w0,phi,mu)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       real (kind=R8) ::
@@ -58,7 +59,7 @@
       real (kind=R8) :: acc
       parameter (acc=1.e-2_R8)
 *   ..procedures
-      external subini, subend, xertst, ggfill, setwrk0, integrate
+      external xertst, ggfill, setwrk0, integrate
 *   ..initialisation
 *
 *     The following table assign the values of v, ph and gg0. Note some 

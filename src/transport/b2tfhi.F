@@ -20,6 +20,7 @@
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
      &          fhi_inert, fhi_vispar, fhi_visper, fhi_visq, fhi_anml
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -83,7 +84,7 @@
       save ncall, conduction_only, no_hybr
 *   ..procedures
       intrinsic min, max, dim, sign
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvsg, b2xvff
 *   ..initialisation
       data ncall/0/, conduction_only/0/, no_hybr/0/

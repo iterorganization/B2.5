@@ -1,4 +1,5 @@
       subroutine b2cdf2mds
+      use b2mod_subsys
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
@@ -42,7 +43,7 @@
       data mds_zone /'TARGET1','IMP','OMP','TARGET4',
      1 'TARGET2','TARGET3'/
 #endif
-      external subini, subend, xerrab, xertst
+      external xerrab, xertst
 
       call subini ('b2cdf2mds')
       write(*,*) 'b2cdf2mds ...'

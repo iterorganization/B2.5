@@ -35,6 +35,7 @@ c
 #else
       use b2mod_eirbra, only: fort, fort_lc
 #endif
+      use b2mod_subsys
       implicit none
 
 *  -- INPUT ARGUMENTS --
@@ -59,7 +60,6 @@ c
       character*32 :: get_B25_hash
       external ipgeti, ipgetr, xertst, get_B25_hash
 #endif
-      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//

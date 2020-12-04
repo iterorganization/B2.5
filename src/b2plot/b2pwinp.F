@@ -8,6 +8,7 @@ c*** MUST be compiled in single precision!!!
 c======================================================================
       use b2mod_types
       use b2mod_b2plot_wall_loading
+      use b2mod_subsys
       implicit none
 #     include "impcon.inc"
       integer lun
@@ -15,7 +16,7 @@ c======================================================================
       integer i
       logical open_file, file_ok
       character*24 ufile
-      external b2pwinm, open_file, subini, subend, xerrab
+      external b2pwinm, open_file, xerrab
 c======================================================================
 c*** This routine works once
 c

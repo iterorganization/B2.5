@@ -26,6 +26,7 @@
      &                    , only : nmdpl
       use b2mod_b2_to_astra
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, ismain
@@ -114,7 +115,7 @@ csw 13mar2012
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
-      external subini, subend, xertst, xerrab, sfill, smin, smax
+      external xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation

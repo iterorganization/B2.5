@@ -22,6 +22,7 @@
       use b2mod_b2cmpt
       use b2mod_b2cmwg
       use b2mod_external
+      use b2mod_subsys
       use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -54,7 +55,7 @@
 *   ..procedures
       logical is_comment
       external is_comment
-      external subini, subend, xertst, xerrab, cfruch, cfruin
+      external xertst, xerrab, cfruch, cfruin
       external b2rups, b2rugm, b2rucp, b2mds, ipgetr
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp

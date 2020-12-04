@@ -17,6 +17,7 @@
 #endif
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -64,7 +65,7 @@
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
 *   ..procedures
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 *   ..initialisation
       data use_eirene/0/, area_fix/3/
 *-----------------------------------------------------------------------

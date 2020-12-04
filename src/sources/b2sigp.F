@@ -11,6 +11,7 @@
      &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
      &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -52,7 +53,7 @@
       !$OMP THREADPRIVATE(pot_eq, no_current, pressure_restriction)
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/

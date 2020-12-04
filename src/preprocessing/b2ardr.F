@@ -7,6 +7,7 @@
       use b2mod_b2cmrc
       use b2mod_b2cmpa
       use b2mod_ipmain
+      use b2mod_subsys
 #ifdef IMAS
 #ifdef AMNS
       use amns_types       ! IGNORE
@@ -167,7 +168,7 @@
       intrinsic log, exp
       logical streql, is_comment
       character*32 get_ADAS_hash
-      external subini, subend, xertst, xerrab, streql, cfwuch
+      external xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
       external cfruin, is_comment, get_ADAS_hash

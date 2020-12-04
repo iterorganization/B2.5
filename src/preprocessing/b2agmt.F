@@ -7,6 +7,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
@@ -123,7 +124,7 @@
 *   ..procedures
       real (kind=R8) ::
      &  sin_t, cos_t, sin_tl, cos_tl, tt
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/

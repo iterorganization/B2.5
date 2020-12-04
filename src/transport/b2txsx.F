@@ -1,6 +1,7 @@
       subroutine b2txsx (nx, ny, vol, hx, fun, funsx)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -13,7 +14,7 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer n2, ix, iy
-      external subini, subend, b2xxgs
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
 *   ..test nx, ny

@@ -5,6 +5,7 @@
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
@@ -30,7 +31,7 @@
       real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1)
       real (kind=R8) :: fa(-1:nx,-1:ny), fa1(-1:nx1,-1:ny1)
       real (kind=R8) :: rratio
-      external b2xvfy1, xerrab, subini, subend, interp2d, rratio
+      external b2xvfy1, xerrab, interp2d, rratio
       external E01BEF, E01BFF
       intrinsic min, max
 *     ------------------------------------------------------------------

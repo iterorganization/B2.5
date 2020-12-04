@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -31,7 +32,7 @@
      *   ft                                                            !srv 16.10.17
       save ncall
       !$OMP THREADPRIVATE(ncall)
-      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
+      external xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/

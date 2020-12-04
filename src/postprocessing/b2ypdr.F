@@ -21,6 +21,7 @@
       use b2mod_geo_corner
       use b2mod_external
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -90,7 +91,7 @@
       data ismain/1/, external_species/0/
 *   ..procedures
       logical streql, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
+      external xertst, xerrab, streql, gacwk,
      &  gdawk, cfruch, cfruin, lbfilx, ipgeti, is_comment
       external b2rugm, b2rups, b2rucp, b2wfgm, b2wfcp, b2wfps, b2xvps,
      &  b2wggm, b2wgps, b2wscp, b2wsps, b2ruzd, b2rurc, b2spel, b2sqel,

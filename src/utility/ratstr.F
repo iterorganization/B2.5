@@ -6,6 +6,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
@@ -195,7 +196,7 @@
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
       intrinsic real, sqrt, log, exp, min
-      external subini, subend, xertst, xerrab
+      external xertst, xerrab
 
 *-----------------------------------------------------------------------
 *.computation

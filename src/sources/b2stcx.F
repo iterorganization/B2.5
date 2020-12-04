@@ -17,6 +17,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif     
@@ -63,7 +64,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  samax
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/

@@ -79,6 +79,7 @@ c 2002-09-11: logic revised
       use b2mod_braeir
 #endif
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 
@@ -558,7 +559,7 @@ c 2002-09-11: logic revised
       integer conformal_convert
       real (kind=R8) :: rratio
       logical open_file, streql, is_comment
-      external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
+      external xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits,
      &  open_file, get_jsep, conformal_convert,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
@@ -12987,6 +12988,7 @@ cxpb  itype = 3 : Inherit value from first old species
       end subroutine e_bundle_transmit_i
 
       integer function B2IDEZ(I,J,IZIF)
+      use b2mod_subsys
       implicit none
       integer i, j, izif
 C
@@ -13002,7 +13004,7 @@ C                           J=3: IDEZ=12
 C                           J=4: ERROR, J GT IZIF
 C
       integer idif, iz, k, it, iq
-      external subini, subend, xertst
+      external xertst
 
       call subini('b2idez')
       IDIF=IZIF-J+1

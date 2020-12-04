@@ -1,6 +1,7 @@
       module b2mod_wall
       use b2mod_types
       use b2mod_layer
+      use b2mod_subsys
       implicit none
 
       integer ndepth, nwall_segments, nsegments, nline
@@ -203,7 +204,6 @@ cxpb element: xymap(ix,iy)
       logical errdim
       external xertst
 #endif
-      external subini, subend
 
       call subini('b2mod_wall_init')
 cxpb  Geometric information
@@ -237,7 +237,7 @@ cxpb  Geometric information
       subroutine alloc_b2mod_wall(ns,natm,nmol,nion)
       implicit none
       integer ns, natm, nmol, nion
-      external subini, subend, xertst
+      external xertst
 
       call subini('b2mod_wall')
 *   ..test arguments

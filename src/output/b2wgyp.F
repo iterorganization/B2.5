@@ -4,6 +4,7 @@
       subroutine b2wgyp (n0, n1, n0d, fun, scal, fa0, fa1, ncnta,
      &  fb0, fb1, ncntb)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer n0, n1, n0d, ncnta, ncntb
@@ -87,7 +88,7 @@
       real (kind=R4) fun4(0:n0d-1,0:n1-1)
 *   ..procedures
       integer nerro
-      external subini, subend, xertst, cprect, cpseti,
+      external xertst, cprect, cpseti,
      &  cpsetr_d, cpsetc, cpclam, cplbam, cplbdr, cpdrpl, cpcldm, 
      &  cpcldr,
      &  arinam, arpram, arscam, gncolr, lbfilq, entsr, nerro, errof

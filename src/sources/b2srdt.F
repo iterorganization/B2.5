@@ -15,6 +15,7 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
      2          b2srdt_shi0to3, balance_netcdf
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -64,7 +65,7 @@
      &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
-      external subini, subend, xertst, ipgetr
+      external xertst, ipgetr
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm3/1.0_R8/,

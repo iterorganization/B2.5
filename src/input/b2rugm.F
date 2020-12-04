@@ -13,6 +13,7 @@
       use b2mod_b2cmfs
       use b2mod_constants
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny
@@ -223,7 +224,7 @@
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
 

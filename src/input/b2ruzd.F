@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_b2cmpa
      , ,only : is_neutral, partition_number, nspecies, amtol
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, ns
@@ -17,7 +18,7 @@
      *  za(0:ns-1), za2(0:ns-1)
 
 *   ..procedures
-      external subini, subend, xertst, cfrure
+      external xertst, cfrure
 
 *   ..main computation
       call subini ('b2ruzd')

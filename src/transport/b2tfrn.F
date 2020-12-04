@@ -18,6 +18,7 @@
       use b2mod_geo
      &   , only : hy1, hyl, hxb
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -94,7 +95,7 @@
       real (kind=R8) :: nete(-1:nx,-1:ny),
      *    netec(-1:nx,-1:ny), nec(-1:nx,-1:ny), weight(-1:nx,-1:ny)
 
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
 *   ..initialisation
       data ncall/0/

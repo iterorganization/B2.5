@@ -16,6 +16,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
@@ -94,7 +95,7 @@
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, b2saxpy
+      external xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
       data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/

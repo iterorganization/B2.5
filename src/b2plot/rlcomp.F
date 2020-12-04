@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_diag
+      use b2mod_subsys
       implicit none
 c
 c  version : 18.02.98 19:00
@@ -33,7 +34,7 @@ c======================================================================
       integer i, j, k
       real (kind=R8) :: x1, x2, y1, y2, angle, anglb, uda, utx, uxx
       intrinsic mod, atan2
-      external subini, subend, xerrab
+      external xerrab
 c<<<
       integer lun_s, lun_t, lun_l
       parameter (lun_s=76, lun_t=75, lun_l=74)

@@ -16,6 +16,7 @@
       use b2mod_ppout
       use b2mod_diag
      . , only : label
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:5), nx, ny, ns, ns0
@@ -97,8 +98,7 @@
      *   zpdum(0:nsdecl-1,4)
 *   ..procedures
       logical is_comment
-      external subini, subend, xertst, xerrab, cfruch, cfruin,
-     &  cfwuch, cfwuin
+      external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment

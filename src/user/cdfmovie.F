@@ -14,6 +14,7 @@
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_subsys
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>

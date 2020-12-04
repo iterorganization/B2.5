@@ -23,6 +23,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
+      use b2mod_subsys
       use b2mod_ilutern
 #ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
@@ -163,8 +164,7 @@
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
       save ncall, rxg, diagno, nsmin, nsmax
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, b2scopy,
-     &  b2sscal, b2saxpy
+      external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,

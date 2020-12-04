@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -57,7 +58,7 @@ c     local variables:
       integer   nz(ns+1)
       integer   i, ix, iy, ifail, nspec, ncharged
 
-      external subini, subend, xertst, b2xvff, b2xvsg, ipgeti
+      external b2xvff, b2xvsg, ipgeti
 
       integer, save :: icase = 0
       integer ncall, n2, failcount, failcount0
@@ -324,6 +325,7 @@ c       ( ix )
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -357,7 +359,7 @@ c       ( ix )
       integer           nz(ns)
       integer           i, ix, iy, ifail, nspec, ncharged
 
-      external subini, subend, xertst, b2xvsg
+      external b2xvsg
 
       integer, save :: icase = 0
       integer ncall,n2,failcount,failcount0
@@ -791,6 +793,7 @@ c
 
       use b2mod_types
       use b2mod_constants                                                !xpb
+      use b2mod_subsys
       implicit none
 
       integer     ns, nfl, nz(ns)
@@ -840,7 +843,6 @@ C       gt:                                     temperature gradient
       integer   i, j, k, l
       real (kind=R8) ::
      *          i1, i2, h1, hh1, const, cii
-      external subini, subend, xertst
 
       call subini ('thermf')
       call xertst( nz(1) .eq. 1 ,

@@ -45,6 +45,7 @@ c
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_rates
+      use b2mod_subsys
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -68,7 +69,7 @@ c
       integer, save :: drift_style, iout = 0                           !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrapolate,in,
      1 eirene_uub_style, print_minmax, eirene_background
-      external ipgetr, ipgeti, subini, subend, xerrab
+      external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,

@@ -12,6 +12,7 @@
      &                       lres   , lstan  , lptn
      &                     )
       use b2mod_types
+      use b2mod_subsys
       implicit none
 c-----------------------------------------------------------------------
 c
@@ -304,7 +305,7 @@ c-----------------------------------------------------------------------
       data      cdonors/'HYDROGEN    ','DEUTERIUM   ','TRITIUM     ',
      &                  'HELIUM      '/
 c-----------------------------------------------------------------------
-      external  subini, subend, xerrab
+      external  xerrab
 c
 c-----------------------------------------------------------------------
 c  search for 'prnt' and count number of dash delimiters
@@ -1261,6 +1262,7 @@ C----------------------------------------------------------------------
      &                    cstrg  ,
      &                    ncptn_stack     , cptn_stack
      &                  )
+       use b2mod_subsys
        implicit none
 c-----------------------------------------------------------------------
 c
@@ -1368,7 +1370,7 @@ c-----------------------------------------------------------------------
       character cptna(idptnl)*1024
       character cptn_stack(ndstack)*80
 c-----------------------------------------------------------------------
-      external  subini, subend, xerrab
+      external  xerrab
 c
 c-----------------------------------------------------------------------
 c  read partition data if present

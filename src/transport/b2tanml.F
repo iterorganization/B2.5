@@ -9,6 +9,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -42,7 +43,7 @@
       real (kind=R8) :: fch_anomalous
       save ncall, fch_anomalous
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
       data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/, guard_flows/2/

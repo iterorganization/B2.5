@@ -6,6 +6,7 @@
       use b2mod_wall2
       use b2mod_layer
       use b2mod_b2cmpb
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
@@ -17,7 +18,7 @@
       integer, allocatable :: iseg1(:)
       logical, allocatable :: flip_segment(:)
       real (kind=R8) :: rratio
-      external subini, subend, xertst, get_nxt, rratio
+      external xertst, get_nxt, rratio
 
       call subini('b2yt_wall_init')
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
@@ -335,6 +336,7 @@ cxpb lb and ub are lower and upper interval bounds
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
 
@@ -367,7 +369,7 @@ cxpb lb and ub are lower and upper interval bounds
 
       intrinsic max, min
       logical streql
-      external xertst, subini, subend
+      external xertst
       external convert_bundle_r, streql
       external E01BEF, E01BFF
 

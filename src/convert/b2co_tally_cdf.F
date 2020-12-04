@@ -3,6 +3,7 @@
       use b2mod_geo
       use b2mod_tallies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -35,7 +36,7 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_tally_cdf')
       write(*,*) 'b2co_tally_cdf ...'

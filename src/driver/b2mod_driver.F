@@ -91,6 +91,7 @@
       use b2mod_ual_io
      , ,only: imas_open_env, ids_deallocate, ids_get
 #endif
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 #     include "DIMENSIONS.F"

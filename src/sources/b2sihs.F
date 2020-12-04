@@ -23,6 +23,7 @@
      , , only : hy1
       use b2mod_plasma
      , , only : uasx, uasy, uesx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -87,7 +88,7 @@
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
 *   ..initialisation
       data ncall/0/, style/0/
@@ -747,6 +748,7 @@ c
      & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -770,7 +772,7 @@ c
       save ncall, facgt
       real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..procedures
-      external subini, subend, xertst, b2xvsg, ipgetr
+      external xertst, b2xvsg, ipgetr
       intrinsic min, max
 *   ..initialisation
       data ncall/0/, facgt/0.0_R8/

@@ -4,6 +4,7 @@
       use b2mod_indirect
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
@@ -26,7 +27,7 @@
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls

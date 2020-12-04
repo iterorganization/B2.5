@@ -7,6 +7,7 @@
       use b2mod_ma28_for_11diag
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -78,8 +79,7 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr,
-     &  slv5pt, iluter, xerrab
+      external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 

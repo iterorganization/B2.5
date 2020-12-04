@@ -45,6 +45,7 @@ c     -------------------------------------------------------------------------
       use b2mod_types
       use b2mod_constants
       use b2mod_solpstop
+      use b2mod_subsys
 
       implicit none
 
@@ -179,7 +180,7 @@ c     ionisation potentials
      *   ip(0:nc-1)
 
       logical silent_open
-      external silent_open, subini, subend, xerrab
+      external silent_open, xerrab
 
 *   ..subprogram start-up calls
       call subini ('ratadas')
@@ -1099,7 +1100,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       use b2mod_types
 #endif
 #endif
-
+      use b2mod_subsys
       implicit none
 
 c     INPUT

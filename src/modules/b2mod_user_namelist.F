@@ -129,6 +129,7 @@ c***  Standard set-up:
 
       subroutine read_b2mod_user_namelist(nx,ns)
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer nx, ns
 
@@ -138,7 +139,7 @@ c***  Standard set-up:
       logical old_style, done
       integer, save :: use_eirene, neutrals_namelist
       logical, save :: hydrogen, helium, neon
-      external subini, subend, ipgeti
+      external ipgeti
 
       call subini ('readuser')
       call ipgeti ('b2mndr_eirene', use_eirene)

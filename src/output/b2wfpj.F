@@ -7,6 +7,7 @@
       use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -68,7 +69,7 @@
       integer n2, ix, iy, is, ix0, iy0, ix1, iy1
 *   ..procedures
       logical strmas
-      external subini, subend, xertst, strmas
+      external xertst, strmas
       external b2xvsg, b2xvff, b2xvps, b2xxmm, b2xppb
 
 *-----------------------------------------------------------------------

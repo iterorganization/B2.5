@@ -7,6 +7,7 @@
       use b2mod_geo_corner
       use b2mod_geo
      &   , only : hy1, hyl, hxb                 ! IYS 04.03.2019
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -46,7 +47,7 @@
       external intcor
 #endif
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

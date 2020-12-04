@@ -6,6 +6,7 @@
       use b2mod_math
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget
@@ -154,7 +155,7 @@
       intrinsic log
       real (kind=R8) ::
      *   smax
-      external subini, subend, xertst, smax, cfrure, cfruin, cfverr
+      external xertst, smax, cfrure, cfruin, cfverr
 
 *-----------------------------------------------------------------------
 *.computation

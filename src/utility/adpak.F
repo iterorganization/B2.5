@@ -151,6 +151,7 @@ C
       END SUBROUTINE ADCE
       SUBROUTINE ADSET(KNUCZ)
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       INTEGER KNUCZ
 C
@@ -165,7 +166,7 @@ C
      &                  FNM(100,5,10), FNN(100), ENN(100)
       INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK, 
      &                  NUCZ, NSPC, NVALNC(100)
-      external subini, subend, xertst
+      external xertst
 C
       COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
      &                  NVALNC, SIGMA, QN,

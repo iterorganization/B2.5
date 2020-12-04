@@ -14,6 +14,7 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

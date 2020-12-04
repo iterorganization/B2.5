@@ -16,6 +16,7 @@
       use b2mod_openmp
       use b2mod_plasma
      & , only : fac_vis                                               !srv 22.05.18
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb

@@ -10,6 +10,7 @@
       use b2mod_b2cmpa
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -41,7 +42,7 @@
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
-      external subini, subend, ipgetr, ipgeti, xertst, xerrab
+      external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
 *   ..initialization

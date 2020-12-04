@@ -6,6 +6,7 @@
       use b2mod_b2cmpa
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -37,7 +38,7 @@
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')

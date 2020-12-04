@@ -7,6 +7,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
+      use b2mod_subsys
       implicit none
       
       real (kind=R8) ::
@@ -29,7 +30,7 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
       intrinsic sqrt,sin,cos,abs,atan2
-      external chord_find, subini, subend, xertst
+      external chord_find, xertst
 
       call subini ('chord_value')
       x=xp
@@ -101,6 +102,7 @@ c
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
+      use b2mod_subsys
       implicit none
       
       real (kind=R8) ::
@@ -119,7 +121,6 @@ c
      * f,x,y,z,dl,dx,dy,dz
 
       intrinsic sqrt
-      external subini, subend
 
       call subini('chord_integral')
       chord_integral=0.0
@@ -154,6 +155,7 @@ c
      2 indchd,indix,indiy,indscl)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
       integer npoints,nx,ny
@@ -174,7 +176,6 @@ c
       real (kind=R8) ::
      * f,x,y,z,dl,dxp,dyp,dzp
       logical found
-      external subini, subend
 
       call subini('chord_compile')
       do iy=-1,ny
@@ -227,6 +228,7 @@ c
 
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 
 !DIAG      integer rectangles, triangles, chain      ! diag
@@ -268,7 +270,7 @@ c
      *   rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
-      external subini, subend, xerrab
+      external xerrab
       save covered,rmin,rmax,zmin,zmax,first,xcov,ycov,icov,ix,iy
 
       data first/.true./

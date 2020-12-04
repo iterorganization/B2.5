@@ -12,6 +12,8 @@
       use b2mod_balance
      & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
      &         tot_sna0to1, fna_tot                                  !djm Mar2019
+      use b2mod_subsys
+      use b2mod_lwmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -71,7 +73,7 @@
       save ncall, rxg, pcm0, pcm1, use_eirene
       !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, lwget
+      external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,
@@ -171,7 +173,7 @@ cdjm Jan2017 update particle source components for balance
         enddo
        enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
-      endif                                                             !srv 22.05.18
+      endif                                                           !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:nnreg(0)))) then                  !srv 22.05.18
@@ -262,4 +264,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2npc11
 
-      end                                                           !srv 02.04.18 }
+      end subroutine b2npc11                                          !srv 02.04.18 }

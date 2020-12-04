@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_b2cmrc
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -59,7 +60,7 @@
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
 *   ..procedures
       intrinsic log
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/

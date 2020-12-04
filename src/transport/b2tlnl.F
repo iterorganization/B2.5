@@ -4,6 +4,7 @@
       subroutine b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 01.07.09 {
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, icase                                             !srv 20.09.11
@@ -36,7 +37,7 @@
       !$OMP THREADPRIVATE(ncall, lambda)
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
 *   ..initialization
       data ncall/0/

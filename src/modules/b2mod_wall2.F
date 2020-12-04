@@ -81,9 +81,10 @@ cxpb element: xymap1(ix,iy)
       end subroutine alloc_b2mod_wall2_init
 
       subroutine alloc_b2mod_wall2(ns1,natm1,nmol1,nion1,ndepth1)
+      use b2mod_subsys
       implicit none
       integer ns1, natm1, nmol1, nion1, ndepth1
-      external subini, subend, xertst
+      external xertst
 
       call subini('b2mod_wall2')
       call xertst(1.le.ndepth1 .and. ndepth1.le.ndepth,

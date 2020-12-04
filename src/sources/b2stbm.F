@@ -23,6 +23,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -74,7 +75,7 @@
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
-      external subini, subend, xertst, sfill,
+      external xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 *   ..initialisation

@@ -9,6 +9,7 @@
      &  ,only : qe
       use b2mod_geo_corner
      &  , only : bzbl,bzbv
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

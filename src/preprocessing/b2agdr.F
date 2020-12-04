@@ -12,6 +12,7 @@
       use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1

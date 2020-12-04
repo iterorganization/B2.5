@@ -7,6 +7,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
@@ -149,8 +150,7 @@
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, int, log
-      external subini, subend, xertst, pagini, pagend,
-     &  dashdc, curved_d
+      external xertst, pagini, pagend, dashdc, curved_d
 
 *-----------------------------------------------------------------------
 *.computation

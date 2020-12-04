@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -77,7 +78,7 @@
       intrinsic abs, sqrt
       real (kind=R8) ::
      *  fke, fse, fal, fke_Zh
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, ipgeti
       fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
       fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)

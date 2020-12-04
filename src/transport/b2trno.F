@@ -14,6 +14,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_neoclassical
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1)
@@ -100,7 +101,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, xertst, sfill, smin, smax, b2scopy
+      external xertst, sfill, smin, smax, b2scopy
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation

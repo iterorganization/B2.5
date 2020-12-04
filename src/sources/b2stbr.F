@@ -31,6 +31,7 @@
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
@@ -160,7 +161,7 @@
       character*256, save :: filename
 #endif
 *   ..procedures
-      external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
+      external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
@@ -1247,6 +1248,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 *.end b2stbr
 
       subroutine b2stbr_neutr_scl(nx, ny, ns)
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns
       integer ncall, use_eirene, ank_mods
@@ -1286,6 +1288,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -1314,7 +1317,7 @@ c        write(*,*) 'Called neutr_scl'
       character*256 filename
 *   ..procedures
       intrinsic mod
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr
+      external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,
      *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/

@@ -15,6 +15,7 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns
       real (kind=R8) :: BoRiS

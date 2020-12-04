@@ -36,6 +36,7 @@
       contains
 
       subroutine b2mod_mdsplus_write_to_db(nwrite)
+      use b2mod_subsys
       implicit none
 #ifdef MDSPLUS
 #     include "mdslib.inc"
@@ -43,7 +44,6 @@
 #endif
       integer nwrite
       character*16 shotnumber
-      external subini, subend
 
       call subini ('b2mod_mdsplus_write_to_db')
       write(dbline,

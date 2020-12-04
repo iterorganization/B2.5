@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -81,7 +82,7 @@
       real (kind=R8) ::
      *  b2ssum, rfnax, rfnay, rfhex, rfhey,
      &  rfhix, rfhiy, rfchx, rfchy, rfnex, rfney, rfnix, rfniy
-      external subini, subend, xertst, b2ssum
+      external xertst, b2ssum
       external b2xvsg, b2xvff, b2xvgm, b2xvps
       rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
       rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)

@@ -15,6 +15,7 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -29,7 +30,6 @@ c     -------------------------------------------------------------------------
 
       integer is,ite,ine
       logical ltst0
-      external subini, subend
       intrinsic log
 
       call subini('getsa')
@@ -130,6 +130,7 @@ c     -------------------------------------------------------------------------
       subroutine callgetsa(ns,T,i)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -147,7 +148,7 @@ c     -------------------------------------------------------------------------
       integer c1,c2
       real (kind=R8) ::
      *   result
-      external subini, subend, xertst
+      external xertst
       intrinsic abs
 
       call subini('callgetsa')
@@ -212,6 +213,7 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
@@ -233,7 +235,6 @@ c     -------------------------------------------------------------------------
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('corora')
@@ -298,6 +299,7 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
@@ -325,7 +327,6 @@ c     -------------------------------------------------------------------------
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
       integer co1,co2
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('coroni')

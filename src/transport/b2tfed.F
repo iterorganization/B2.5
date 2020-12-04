@@ -8,6 +8,7 @@
       use b2mod_constants
       use b2mod_geo
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -39,7 +40,7 @@
       save ncall, drift_style, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
-      external subini, subend, ipgeti, ipgetr, xertst
+      external ipgeti, ipgetr, xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/,

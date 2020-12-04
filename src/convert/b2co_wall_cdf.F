@@ -1,6 +1,7 @@
       subroutine b2co_wall_cdf(tim)
       use b2mod_types
       use b2mod_wall
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -31,7 +32,7 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_wall_cdf')
       write(*,*) 'b2co_wall_cdf ...'

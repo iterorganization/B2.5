@@ -9,6 +9,7 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -65,7 +66,7 @@
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo          !srv 11.09.09
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialisation
       data ncall/0/

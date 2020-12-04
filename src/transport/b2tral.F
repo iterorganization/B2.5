@@ -19,6 +19,7 @@
      , , only : rza
       use b2mod_b2cmpa
       use b2mod_neoclassical
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain      !srv 23.11.10
@@ -108,7 +109,7 @@
       save ncall, pol_anom_scale, pot_eq, no_solve, solving,
      .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2saxpy
+      external xertst, ipgetr, b2saxpy
       external b2trcl, b2trql, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,

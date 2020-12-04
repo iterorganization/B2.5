@@ -21,12 +21,14 @@ module b2mod_ual_io
     use b2mod_types
     use b2mod_b2cmpa
     use b2mod_geo
+    use b2mod_work
     use b2mod_diag
     use b2mod_rates
     use b2mod_plasma
     use b2mod_elements
     use b2mod_constants
     use b2mod_sources
+    use b2mod_feedback
     use b2mod_transport
     use b2mod_anomalous_transport
     use b2mod_boundary_namelist
@@ -37,6 +39,7 @@ module b2mod_ual_io
     use b2mod_interp
     use b2mod_b2cmrc
     use b2mod_b2cmfs
+    use b2mod_b2cmpb
     use b2mod_version
     use b2mod_grid_mapping
     use b2mod_balance &
@@ -214,6 +217,7 @@ contains
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
         integer :: istrai !< Stratum iterator
+        integer :: ireg   !< Region index
         integer :: ntimes !< Number of previous timesteps in IDS
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
@@ -282,9 +286,9 @@ contains
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
             &             u, qetot, qitot, qemax, qimax, lambda, &
-            &             vtor, nisep, nasum
+            &             vtor, nisep, nasum, area
+        real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
 #ifdef B25_EIRENE
-        real(IDS_real) :: gsum, gmid, gbot, gtop
         real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
         real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
         real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
@@ -301,10 +305,13 @@ contains
         integer, save :: ismain0 = 0
         integer, save :: ue_style = 2
         integer, save :: use_eirene = 0
+        integer, save :: pfrregno1 = 0
+        integer, save :: pfrregno2 = 2
         integer, save :: ids_from_43 = 0
         integer, save :: target_offset = 1
         integer, save :: nesepm_istra = -1
         integer, save :: balance_netcdf = 0
+        real(IDS_real), save :: dtim = 0.0_IDS_real
         real(IDS_real), save :: ndes = 0.0_IDS_real
         real(IDS_real), save :: ndes_sol = 0.0_IDS_real
         real(IDS_real), save :: nesepm_pfr = 0.0_IDS_real
@@ -326,7 +333,8 @@ contains
         character*32 get_ADAS_hash
         character*32 get_SOLPS_hash
         character*256 filename
-        logical match_found, streql, exists
+        logical match_found, streql, exists, wrong_flow
+        logical at_top, at_bot, at_mid
 #ifdef B25_EIRENE
         character*8 eirene_version
         character*32 Eirene_git_version
@@ -353,8 +361,11 @@ contains
         call ipgeti ('ids_from_43', ids_from_43)
         call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgeti ('b2mwti_target_offset', target_offset)
+        call ipgetr ('b2mndr_dtim', dtim)
         call ipgetr ('b2stbc_ndes', ndes)
         call ipgetr ('b2stbc_ndes_sol', ndes_sol)
+        call ipgeti ('b2stbc_pfrregno1', pfrregno1)
+        call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
         call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
         call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
@@ -456,11 +467,28 @@ contains
             &        cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,              &
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
-            &       fllim0fhi, fllimvisc, csig_cl, calf_cl)
-#ifdef B25_EIRENE
-        call eirene_mc(nx, ny, ns, time_step, BoRiS, &
-            &          sna0, smo0, she0, shi0, .false.)
-#endif
+            &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
+!  ..compute log-log charge exchange rate coefficients
+        do k = 0, nscx-1
+           call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))
+        enddo
+!   ..compute sources  
+        call b2sral (nx, ny, ns,                                                  &
+            &        nscx, nscxmax, 0, ns, iscx, ismain, ismain0,                 &
+            &        dtim, BoRiS, facdrift, fac_ExB, fac_vis,                     &
+            &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                 &
+            &        na, ua,                                                      &
+            &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,       &
+            &        te, ti, po, ne, ni, floe_noc, floi_noc,                      &
+            &        fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,         &
+            &        fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,    &
+            &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,          &
+            &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,         &
+            &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,       &
+            &        cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,     &
+            &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,  &
+            &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,       &
+            &        wrong_flow, .false.)
         if (balance_netcdf.ne.0) call read_balance
 
         !! Preparing database for writing
@@ -4787,7 +4815,6 @@ contains
         allocate( summary%fusion%power%source(1) )
         summary%fusion%power%source = source
 
-#ifdef B25_EIRENE
         summary%gas_injection_rates%impurity_seeding%value = 0
         allocate( summary%gas_injection_rates%impurity_seeding%source(1) )
         summary%gas_injection_rates%impurity_seeding%source = source
@@ -4795,18 +4822,306 @@ contains
         gtop = 0.0_R8
         gmid = 0.0_R8
         gbot = 0.0_R8
+        do i = 1, nspecies
+          is = eb2spcr(i)
+          if (is.lt.0) cycle
+          if (.not.is_neutral(is)) cycle
+          do ib = 1, nbc
+            ireg = region(bc_list_x(1,ib),bc_list_y(1,ib),0)
+            if (ireg.eq.0) cycle
+            at_top = .false.
+            at_bot = .false.
+            at_mid = .false.
+            select case (GeometryType)
+            case (GEOMETRY_LINEAR)
+              at_mid = bcchar(ib).eq.'N'.or.bcchar(ib).eq.'W'.or.bcchar(ib).eq.'E'
+              at_bot = bcchar(ib).eq.'S'.and.LSN
+              at_top = bcchar(ib).eq.'S'.and..not.LSN
+            case (GEOMETRY_SN)
+              at_mid = bcchar(ib).eq.'N'
+              at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+              at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+            case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
+              at_mid = bcchar(ib).eq.'N'
+              at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
+              at_top = bcchar(ib).eq.'S'.and.(ireg.eq.4.or.ireg.eq.7)
+            case (GEOMETRY_CYLINDER, GEOMETRY_LIMITER, GEOMETRY_ANNULUS)
+              at_mid = bcchar(ib).eq.'N'
+            case (GEOMETRY_STELLARATORISLAND)
+              at_mid = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.4)
+            end select
+            if (.not.(at_top.or.at_bot.or.at_mid)) cycle
+            gpff = 0.0_R8
+            select case (bccon(is,ib))
+            case(5)
+              area = 0.0_R8
+              do ix = 1, bc_list_size(ib)
+                if (bcchar(ib).eq.'S') then
+                  area = area + gs(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
+                else if (bcchar(ib).eq.'N') then
+                  area = area + gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)), &
+                                 & topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+                else if (bcchar(ib).eq.'W') then
+                  area = area + gs(bc_list_x(ix,ib),bc_list_y(ix,ib),0)
+                else if (bcchar(ib).eq.'E') then
+                  area = area + gs(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)), &
+                                 & rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)
+                end if
+              end do
+              gpff = area*conpar(is,ib,1)
+            case(6, 8, 13, 16, 18, 19, 22, 23, 26, 27)
+              gpff = conpar(is,ib,1)
+            case(11, 12)
+              if (bcchar(ib).eq.'S') then
+                ix = cbirso
+                do while (ix.lt.cbirso+cbnrso-1.and.cbrbrk(ix)*nx.lt. &
+                  & maxval(bc_list_x(1:bc_list_size(ib),ib)+0.5_R8))
+                  ix = ix + 1
+                end do
+              else if (bcchar(ib).eq.'N') then
+                ix = cbirno
+                do while (ix.lt.cbirno+cbnrno-1.and.cbrbrk(ix)*nx.lt. &
+                  & maxval(bc_list_x(1:bc_list_size(ib),ib)+0.5_R8))
+                  ix = ix + 1
+                end do
+              else
+                ix = -1
+              end if
+              if (ix.ge.0.and.use_eirene.eq.0) gpff = cbsna(0,is,ix)
+            end select
+            if (gpff.eq.0.0_R8) cycle
+            gsum = gsum + gpff*zn(is)
+            if (at_top) then
+              gtop = gtop + gpff*zn(is)
+            else if (at_bot) then
+              gbot = gbot + gpff*zn(is)
+            else if (at_mid) then
+              gmid = gmid + gpff*zn(is)
+            end if
+            select case (is_codes(is))
+            case ('H')
+             if ( associated( summary%gas_injection_rates%hydrogen%value ) ) then
+               summary%gas_injection_rates%hydrogen%value( time_sind ) = &
+                & summary%gas_injection_rates%hydrogen%value( time_sind ) + gpff
+             else
+               allocate( summary%gas_injection_rates%hydrogen%value( num_time_slices ))
+               summary%gas_injection_rates%hydrogen%value( time_sind ) = gpff
+               allocate ( summary%gas_injection_rates%hydrogen%source(1) )
+               summary%gas_injection_rates%hydrogen%source = source
+             end if
+            case ('D')
+             if ( associated( summary%gas_injection_rates%deuterium%value ) ) then
+               summary%gas_injection_rates%deuterium%value( time_sind ) = &
+                & summary%gas_injection_rates%deuterium%value( time_sind ) + gpff
+             else
+               allocate( summary%gas_injection_rates%deuterium%value( num_time_slices ))
+               summary%gas_injection_rates%deuterium%value( time_sind ) = gpff
+               allocate ( summary%gas_injection_rates%deuterium%source(1) )
+               summary%gas_injection_rates%deuterium%source = source
+             end if
+            case ('T')
+             if ( associated( summary%gas_injection_rates%tritium%value ) ) then
+               summary%gas_injection_rates%tritium%value( time_sind ) = &
+                & summary%gas_injection_rates%tritium%value( time_sind ) + gpff
+             else
+               allocate( summary%gas_injection_rates%tritium%value( num_time_slices ))
+               summary%gas_injection_rates%tritium%value( time_sind ) = gpff
+               allocate ( summary%gas_injection_rates%tritium%source(1) )
+               summary%gas_injection_rates%tritium%source = source
+             end if
+            case ('He')
+             if (nint(am(is)).eq.3) then
+              if ( associated( summary%gas_injection_rates%helium_3%value ) ) then
+               summary%gas_injection_rates%helium_3%value( time_sind ) = &
+                & summary%gas_injection_rates%helium_3%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%helium_3%value( num_time_slices ))
+               summary%gas_injection_rates%helium_3%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%helium_3%source(1) )
+               summary%gas_injection_rates%helium_3%source = source
+              end if
+             else if (nint(am(is)).eq.4) then
+              if ( associated( summary%gas_injection_rates%helium_4%value ) ) then
+               summary%gas_injection_rates%helium_4%value( time_sind ) = &
+                & summary%gas_injection_rates%helium_4%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%helium_4%value( num_time_slices ))
+               summary%gas_injection_rates%helium_4%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%helium_4%source(1) )
+               summary%gas_injection_rates%helium_4%source = source
+              end if
+             end if
+            case ('Li')
+              if ( associated( summary%gas_injection_rates%lithium%value ) ) then
+               summary%gas_injection_rates%lithium%value( time_sind ) = &
+                & summary%gas_injection_rates%lithium%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%lithium%value( num_time_slices ))
+               summary%gas_injection_rates%lithium%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%lithium%source(1) )
+               summary%gas_injection_rates%lithium%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Be')
+              if ( associated( summary%gas_injection_rates%beryllium%value ) ) then
+               summary%gas_injection_rates%beryllium%value( time_sind ) = &
+                & summary%gas_injection_rates%beryllium%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%beryllium%value( num_time_slices ))
+               summary%gas_injection_rates%beryllium%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%beryllium%source(1) )
+               summary%gas_injection_rates%beryllium%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('C')
+              if ( associated( summary%gas_injection_rates%carbon%value ) ) then
+               summary%gas_injection_rates%carbon%value( time_sind ) = &
+                & summary%gas_injection_rates%carbon%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%carbon%value( num_time_slices ))
+               summary%gas_injection_rates%carbon%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%carbon%source(1) )
+               summary%gas_injection_rates%carbon%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('N')
+              if ( associated( summary%gas_injection_rates%nitrogen%value ) ) then
+               summary%gas_injection_rates%nitrogen%value( time_sind ) = &
+                & summary%gas_injection_rates%nitrogen%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%nitrogen%value( num_time_slices ))
+               summary%gas_injection_rates%nitrogen%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%nitrogen%source(1) )
+               summary%gas_injection_rates%nitrogen%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('O')
+              if ( associated( summary%gas_injection_rates%oxygen%value ) ) then
+               summary%gas_injection_rates%oxygen%value( time_sind ) = &
+                & summary%gas_injection_rates%oxygen%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%oxygen%value( num_time_slices ))
+               summary%gas_injection_rates%oxygen%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%oxygen%source(1) )
+               summary%gas_injection_rates%oxygen%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Ne')
+              if ( associated( summary%gas_injection_rates%neon%value ) ) then
+               summary%gas_injection_rates%neon%value( time_sind ) = &
+                & summary%gas_injection_rates%neon%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%neon%value( num_time_slices ))
+               summary%gas_injection_rates%neon%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%neon%source(1) )
+               summary%gas_injection_rates%neon%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Ar')
+              if ( associated( summary%gas_injection_rates%argon%value ) ) then
+               summary%gas_injection_rates%argon%value( time_sind ) = &
+                & summary%gas_injection_rates%argon%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%argon%value( num_time_slices ))
+               summary%gas_injection_rates%argon%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%argon%source(1) )
+               summary%gas_injection_rates%argon%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Xe')
+              if ( associated( summary%gas_injection_rates%xenon%value ) ) then
+               summary%gas_injection_rates%xenon%value( time_sind ) = &
+                & summary%gas_injection_rates%xenon%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%xenon%value( num_time_slices ))
+               summary%gas_injection_rates%xenon%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%xenon%source(1) )
+               summary%gas_injection_rates%xenon%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Kr')
+              if ( associated( summary%gas_injection_rates%krypton%value ) ) then
+               summary%gas_injection_rates%krypton%value( time_sind ) = &
+                & summary%gas_injection_rates%krypton%value( time_sind ) + gpff*zn(is)
+              else
+               allocate( summary%gas_injection_rates%krypton%value( num_time_slices ))
+               summary%gas_injection_rates%krypton%value( time_sind ) = gpff*zn(is)
+               allocate ( summary%gas_injection_rates%krypton%source(1) )
+               summary%gas_injection_rates%krypton%source = source
+              end if
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            end select
+          end do
+        end do
+#ifdef B25_EIRENE
         do istrai = 1, nstrai
           if (crcstra(istrai).eq.'C') then
             do iatm = 1, natmi
-              gsum = gsum + tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
+              gpff = tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
+              if (gpff.eq.0.0_R8) cycle
+              gsum = gsum + gpff
               if (istrai.eq.nesepm_istra) then
                 if (ndes.gt.0.0_R8 .or. nesepm_pfr.gt.0.0_R8 .or. &
                   & private_flux_puff.gt.0.0_R8) then
-                  gbot = gbot + tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
+                  if (.not.LSN) then
+                    gtop = gtop + gpff
+                  else
+                    if (pfrregno1.eq.0 .and. &
+                     & (pfrregno2.eq.pfrregno1 .or. &
+                     & (pfrregno2.eq.2 .and. GeometryType.eq.GEOMETRY_SN) .or. &
+                     & (pfrregno2.eq.5 .and.(GeometryType.eq.GEOMETRY_CDN .or. &
+                     &  GeometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+                     &  GeometryType.eq.GEOMETRY_DDN_TOP)))) then
+                      gbot = gbot + gpff
+                    else if (pfrregno1.eq.2 .and. pfrregno2.eq.pfrregno1 .and. &
+                     & GeometryType.eq.GEOMETRY_SN) then
+                      gbot = gbot + gpff
+                    else if ((pfrregno1.eq.2 .or. pfrregno1.eq.3).and. &
+                     & (GeometryType.eq.GEOMETRY_CDN .or. &
+                     &  GeometryType.eq.GEOMETRY_DDN_TOP .or. &
+                     &  GeometryType.eq.GEOMETRY_DDN_BOTTOM)) then
+                      gtop = gtop + gpff
+                    end if
+                  end if
                 else if (nesepm_sol.gt.0.0_R8 .or. volrec_sol.gt.0.0_R8 .or. &
                   & ndes_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8) then
-                  gmid = gmid + tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
+                  gmid = gmid + gpff
+                else if (feedback_strata(latmscl(iatm)-1).eq.istrai) then
+                  ib = na_feedback_ib(latmscl(iatm)-1)
+                  ireg = region(bc_list_x(1,ib),bc_list_y(1,ib),0)
+                  at_top = .false.
+                  at_bot = .false.
+                  at_mid = .false.
+                  select case (GeometryType)
+                  case (GEOMETRY_LINEAR)
+                    at_mid = bcchar(ib).eq.'N'.or.bcchar(ib).eq.'W'.or.bcchar(ib).eq.'E'
+                    at_bot = bcchar(ib).eq.'S'.and.LSN
+                    at_top = bcchar(ib).eq.'S'.and..not.LSN
+                  case (GEOMETRY_SN)
+                    at_mid = bcchar(ib).eq.'N'
+                    at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+                    at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+                  case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
+                    at_mid = bcchar(ib).eq.'N'
+                    at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
+                    at_top = bcchar(ib).eq.'S'.and.(ireg.eq.4.or.ireg.eq.7)
+                  case (GEOMETRY_CYLINDER, GEOMETRY_LIMITER, GEOMETRY_ANNULUS)
+                    at_mid = bcchar(ib).eq.'N'
+                  case (GEOMETRY_STELLARATORISLAND)
+                    at_mid = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.4)
+                  end select
+                  if (at_top) then
+                    gtop = gtop + gpff
+                  else if (at_bot) then
+                    gbot = gbot + gpff
+                  else if (at_mid) then
+                    gmid = gmid + gpff
+                  end if
+                else !! FIXME : assign to midplane until we know where the stratum is located
+                  gmid = gmid + gpff
                 end if
+              else !! FIXME : assign to midplane until we know where the stratum is located
+                gmid = gmid + gpff
               end if
               if (gpfc(iatm,istrai).eq.1.0_R8) then
                select case (is_codes(eb2atcr(iatm)))
@@ -4819,9 +5134,9 @@ contains
                   allocate( summary%gas_injection_rates%hydrogen%value( num_time_slices ))
                   summary%gas_injection_rates%hydrogen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%hydrogen%source(1) )
+                  summary%gas_injection_rates%hydrogen%source = source
                 end if
-                allocate ( summary%gas_injection_rates%hydrogen%source(1) )
-                summary%gas_injection_rates%hydrogen%source = source
                case ('D')
                 if ( associated( summary%gas_injection_rates%deuterium%value ) ) then
                   summary%gas_injection_rates%deuterium%value( time_sind ) = &
@@ -4831,9 +5146,9 @@ contains
                   allocate( summary%gas_injection_rates%deuterium%value( num_time_slices ))
                   summary%gas_injection_rates%deuterium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%deuterium%source(1) )
+                  summary%gas_injection_rates%deuterium%source = source
                 end if
-                allocate ( summary%gas_injection_rates%deuterium%source(1) )
-                summary%gas_injection_rates%deuterium%source = source
                case ('T')
                 if ( associated( summary%gas_injection_rates%tritium%value ) ) then
                   summary%gas_injection_rates%tritium%value( time_sind ) = &
@@ -4843,9 +5158,9 @@ contains
                   allocate( summary%gas_injection_rates%tritium%value( num_time_slices ))
                   summary%gas_injection_rates%tritium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%tritium%source(1) )
+                  summary%gas_injection_rates%tritium%source = source
                 end if
-                allocate ( summary%gas_injection_rates%tritium%source(1) )
-                summary%gas_injection_rates%tritium%source = source
                case ('He')
                 if (nint(am(is)).eq.3) then
                   if ( associated( summary%gas_injection_rates%helium_3%value ) ) then
@@ -4855,10 +5170,10 @@ contains
                   else
                     allocate( summary%gas_injection_rates%helium_3%value( num_time_slices ))
                     summary%gas_injection_rates%helium_3%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
+                      & tflux(istrai)*zn(eb2atcr(iatm))
+                    allocate ( summary%gas_injection_rates%helium_3%source(1) )
+                    summary%gas_injection_rates%helium_3%source = source
                   end if
-                  allocate ( summary%gas_injection_rates%helium_3%source(1) )
-                  summary%gas_injection_rates%helium_3%source = source
                 else if (nint(am(is)).eq.4) then
                   if ( associated( summary%gas_injection_rates%helium_4%value ) ) then
                     summary%gas_injection_rates%helium_4%value( time_sind ) = &
@@ -4867,10 +5182,10 @@ contains
                   else
                     allocate( summary%gas_injection_rates%helium_4%value( num_time_slices ))
                     summary%gas_injection_rates%helium_4%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
+                      & tflux(istrai)*zn(eb2atcr(iatm))
+                    allocate ( summary%gas_injection_rates%helium_4%source(1) )
+                    summary%gas_injection_rates%helium_4%source = source
                   end if
-                  allocate ( summary%gas_injection_rates%helium_4%source(1) )
-                  summary%gas_injection_rates%helium_4%source = source
                 end if
                case ('Li')
                 if ( associated( summary%gas_injection_rates%lithium%value ) ) then
@@ -4881,10 +5196,10 @@ contains
                   allocate( summary%gas_injection_rates%lithium%value( num_time_slices ))
                   summary%gas_injection_rates%lithium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%lithium%source(1) )
+                  summary%gas_injection_rates%lithium%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%lithium%source(1) )
-                summary%gas_injection_rates%lithium%source = source
                case ('Be')
                 if ( associated( summary%gas_injection_rates%beryllium%value ) ) then
                   summary%gas_injection_rates%beryllium%value( time_sind ) = &
@@ -4894,10 +5209,10 @@ contains
                   allocate( summary%gas_injection_rates%beryllium%value( num_time_slices ))
                   summary%gas_injection_rates%beryllium%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%beryllium%source(1) )
+                  summary%gas_injection_rates%beryllium%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%beryllium%source(1) )
-                summary%gas_injection_rates%beryllium%source = source
                case ('C')
                 if ( associated( summary%gas_injection_rates%carbon%value ) ) then
                   summary%gas_injection_rates%carbon%value( time_sind ) = &
@@ -4907,10 +5222,10 @@ contains
                   allocate( summary%gas_injection_rates%carbon%value( num_time_slices ))
                   summary%gas_injection_rates%carbon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%carbon%source(1) )
+                  summary%gas_injection_rates%carbon%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%carbon%source(1) )
-                summary%gas_injection_rates%carbon%source = source
                case ('N')
                 if ( associated( summary%gas_injection_rates%nitrogen%value ) ) then
                   summary%gas_injection_rates%nitrogen%value( time_sind ) = &
@@ -4920,10 +5235,10 @@ contains
                   allocate( summary%gas_injection_rates%nitrogen%value( num_time_slices ))
                   summary%gas_injection_rates%nitrogen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%nitrogen%source(1) )
+                  summary%gas_injection_rates%nitrogen%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%nitrogen%source(1) )
-                summary%gas_injection_rates%nitrogen%source = source
                case ('O')
                 if ( associated( summary%gas_injection_rates%oxygen%value ) ) then
                   summary%gas_injection_rates%oxygen%value( time_sind ) = &
@@ -4933,10 +5248,10 @@ contains
                   allocate( summary%gas_injection_rates%oxygen%value( num_time_slices ))
                   summary%gas_injection_rates%oxygen%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%oxygen%source(1) )
+                  summary%gas_injection_rates%oxygen%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%oxygen%source(1) )
-                summary%gas_injection_rates%oxygen%source = source
                case ('Ne')
                 if ( associated( summary%gas_injection_rates%neon%value ) ) then
                   summary%gas_injection_rates%neon%value( time_sind ) = &
@@ -4946,10 +5261,10 @@ contains
                   allocate( summary%gas_injection_rates%neon%value( num_time_slices ))
                   summary%gas_injection_rates%neon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%neon%source(1) )
+                  summary%gas_injection_rates%neon%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%neon%source(1) )
-                summary%gas_injection_rates%neon%source = source
                case ('Ar')
                 if ( associated( summary%gas_injection_rates%argon%value ) ) then
                   summary%gas_injection_rates%argon%value( time_sind ) = &
@@ -4959,10 +5274,10 @@ contains
                   allocate( summary%gas_injection_rates%argon%value( num_time_slices ))
                   summary%gas_injection_rates%argon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%argon%source(1) )
+                  summary%gas_injection_rates%argon%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%argon%source(1) )
-                summary%gas_injection_rates%argon%source = source
                case ('Xe')
                 if ( associated( summary%gas_injection_rates%xenon%value ) ) then
                   summary%gas_injection_rates%xenon%value( time_sind ) = &
@@ -4972,10 +5287,10 @@ contains
                   allocate( summary%gas_injection_rates%xenon%value( num_time_slices ))
                   summary%gas_injection_rates%xenon%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%xenon%source(1) )
+                  summary%gas_injection_rates%xenon%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%xenon%source(1) )
-                summary%gas_injection_rates%xenon%source = source
                case ('Kr')
                 if ( associated( summary%gas_injection_rates%krypton%value ) ) then
                   summary%gas_injection_rates%krypton%value( time_sind ) = &
@@ -4985,10 +5300,10 @@ contains
                   allocate( summary%gas_injection_rates%krypton%value( num_time_slices ))
                   summary%gas_injection_rates%krypton%value( time_sind ) = &
                     & tflux(istrai)*zn(eb2atcr(iatm))
+                  allocate ( summary%gas_injection_rates%krypton%source(1) )
+                  summary%gas_injection_rates%krypton%source = source
                 end if
                 summary%gas_injection_rates%impurity_seeding%value = 1
-                allocate ( summary%gas_injection_rates%krypton%source(1) )
-                summary%gas_injection_rates%krypton%source = source
                end select
               end if
             end do
@@ -5013,10 +5328,10 @@ contains
                        allocate( summary%gas_injection_rates%methane%value( num_time_slices ))
                        summary%gas_injection_rates%methane%value( time_sind ) = &
                         & tflux(istrai)*10
+                       allocate ( summary%gas_injection_rates%methane%source(1) )
+                       summary%gas_injection_rates%methane%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%methane%source(1) )
-                     summary%gas_injection_rates%methane%source = source
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.13) then ! 13CH4
                      if ( associated( summary%gas_injection_rates%methane_carbon_13%value ) ) then
@@ -5027,10 +5342,10 @@ contains
                        allocate( summary%gas_injection_rates%methane_carbon_13%value( num_time_slices ))
                        summary%gas_injection_rates%methane_carbon_13%value( time_sind ) = &
                         & tflux(istrai)*10
+                       allocate ( summary%gas_injection_rates%methane_carbon_13%source(1) )
+                       summary%gas_injection_rates%methane_carbon_13%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%methane_carbon_13%source(1) )
-                     summary%gas_injection_rates%methane_carbon_13%source = source
                   else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.12) then ! CD4
                      if ( associated( summary%gas_injection_rates%methane_deuterated%value ) ) then
@@ -5041,10 +5356,10 @@ contains
                        allocate( summary%gas_injection_rates%methane_deuterated%value( num_time_slices ))
                        summary%gas_injection_rates%methane_deuterated%value( time_sind ) = &
                         & tflux(istrai)*10
+                       allocate ( summary%gas_injection_rates%methane_deuterated%source(1) )
+                       summary%gas_injection_rates%methane_deuterated%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%methane_deuterated%source(1) )
-                     summary%gas_injection_rates%methane_deuterated%source = source
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.28) then ! SiH4
                      if ( associated( summary%gas_injection_rates%silane%value ) ) then
@@ -5055,10 +5370,10 @@ contains
                        allocate( summary%gas_injection_rates%silane%value( num_time_slices ))
                        summary%gas_injection_rates%silane%value( time_sind ) = &
                         & tflux(istrai)*18
+                       allocate ( summary%gas_injection_rates%silane%source(1) )
+                       summary%gas_injection_rates%silane%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%silane%source(1) )
-                     summary%gas_injection_rates%silane%source = source
                   end if
                 else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.2) then
                   if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
@@ -5071,10 +5386,10 @@ contains
                        allocate( summary%gas_injection_rates%ethylene%value( num_time_slices ))
                        summary%gas_injection_rates%ethylene%value( time_sind ) = &
                         & tflux(istrai)*16
+                       allocate ( summary%gas_injection_rates%ethylene%source(1) )
+                       summary%gas_injection_rates%ethylene%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%ethylene%source(1) )
-                     summary%gas_injection_rates%ethylene%source = source
                   endif
                 else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.3) then ! C2H6, C3H8, NH3, ND3
                   if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
@@ -5088,10 +5403,10 @@ contains
                        allocate( summary%gas_injection_rates%ethane%value( num_time_slices ))
                        summary%gas_injection_rates%ethane%value( time_sind ) = &
                         & tflux(istrai)*18
+                       allocate ( summary%gas_injection_rates%ethane%source(1) )
+                       summary%gas_injection_rates%ethane%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%ethane%source(1) )
-                     summary%gas_injection_rates%ethane%source = source
                     else if (nint(gpfc(iatm2,istrai)*8).eq.3) then ! C3H8
                      if ( associated( summary%gas_injection_rates%propane%value ) ) then
                        summary%gas_injection_rates%propane%value( time_sind ) = &
@@ -5101,10 +5416,10 @@ contains
                        allocate( summary%gas_injection_rates%propane%value( num_time_slices ))
                        summary%gas_injection_rates%propane%value( time_sind ) = &
                         & tflux(istrai)*26
+                       allocate ( summary%gas_injection_rates%propane%source(1) )
+                       summary%gas_injection_rates%propane%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%propane%source(1) )
-                     summary%gas_injection_rates%propane%source = source
                     end if
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.14) then ! NH3
@@ -5116,10 +5431,10 @@ contains
                        allocate( summary%gas_injection_rates%ammonia%value( num_time_slices ))
                        summary%gas_injection_rates%ammonia%value( time_sind ) = &
                         & tflux(istrai)*10
+                       allocate ( summary%gas_injection_rates%ammonia%source(1) )
+                       summary%gas_injection_rates%ammonia%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%ammonia%source(1) )
-                     summary%gas_injection_rates%ammonia%source = source
                   else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.14) then ! ND3
                      if ( associated( summary%gas_injection_rates%ammonia_deuterated%value) ) then
@@ -5130,17 +5445,17 @@ contains
                        allocate( summary%gas_injection_rates%ammonia_deuterated%value( num_time_slices ))
                        summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) = &
                         & tflux(istrai)*10
+                       allocate ( summary%gas_injection_rates%ammonia_deuterated%source(1) )
+                       summary%gas_injection_rates%ammonia_deuterated%source = source
                      end if
                      summary%gas_injection_rates%impurity_seeding%value = 1
-                     allocate ( summary%gas_injection_rates%ammonia_deuterated%source(1) )
-                     summary%gas_injection_rates%ammonia_deuterated%source = source
                   end if
                 end if
               endif
             end if
           end if
         end do
-        gtop = gsum - gmid - gbot
+#endif
         allocate( summary%gas_injection_rates%total%value( num_time_slices ) )
         summary%gas_injection_rates%total%value( time_sind ) = gsum
         allocate( summary%gas_injection_rates%total%source(1) )
@@ -5157,7 +5472,6 @@ contains
         summary%gas_injection_rates%bottom%value( time_sind ) = gbot
         allocate( summary%gas_injection_rates%bottom%source(1) )
         summary%gas_injection_rates%bottom%source = source
-#endif
 
         ib = 0
         do icnt = 1, nbc

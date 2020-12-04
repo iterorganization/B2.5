@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -15,7 +16,7 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer ix, iy
-      external subini, subend, b2xxgs
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsy')
 *   ..compute funsy

@@ -27,6 +27,7 @@
       use b2mod_residuals
       use b2mod_external
       use b2mod_rates
+      use b2mod_subsys
       implicit none
 
       integer, intent(in) :: nprt, nx, ny, ns

@@ -26,6 +26,7 @@
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -124,7 +125,7 @@
      3  neutral_sources_rescale
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, sfill, ipgeti, ipgetr
+      external sfill, ipgeti, ipgetr
 *   ..initialisation
       data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
      1  user_transport/0/, transport_inputfile/0/,
@@ -608,6 +609,7 @@ cdpc
       use b2mod_b2cmpt
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -737,6 +739,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1618,6 +1621,7 @@ c
       use b2mod_constants
       use b2mod_time
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1768,6 +1772,7 @@ c
       use b2mod_transport_models
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1893,6 +1898,7 @@ c
       use b2mod_geo
      & , only : crx, hy1
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1914,7 +1920,7 @@ c
      *  pe(-1:nx,-1:ny), pri(-1:nx,-1:ny), pp(-1:nx,-1:ny),
      *  coss(-1:nx,-1:ny), R, width(-1:nx), rzb(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, ipgetr, xerrab
+      external ipgetr, xerrab
       external b2xvsg, b2xppe, b2xppb
       intrinsic sin, log, max, min
 *   ..initialisation
@@ -2090,6 +2096,7 @@ c under development
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2410,6 +2417,7 @@ c MW working end 3
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_transport_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2423,7 +2431,7 @@ c MW working end 3
       real (kind=R8) :: dbegin, dend, fac
 *   ..procedures
       intrinsic max
-      external subini, subend, xerrab
+      external xerrab
 *   ..initialisation
       save ncall, ibegin, iend
       data ncall /0/
@@ -2514,6 +2522,7 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_b2cmpt
       use b2mod_transport_disruption
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -2655,6 +2664,7 @@ c*** We only apply this in the outer SOL region
       use b2mod_external
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

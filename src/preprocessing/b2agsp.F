@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       real (kind=R8) ::
@@ -186,7 +187,7 @@
      *   fm2, fm3, fm4, f0xa0, f0xa1, f0xb, f0xc, f0xd0, f0xd1,
      &  f0ya, f0yb, gfbz, gpsi
       complex*16 fracr, fraci
-      external subini, subend, xertst, xerrab, esseq, b2aggs
+      external xertst, xerrab, esseq, b2aggs
       fm2(t0,fa,fb) = 
      &  (fa*(1.0_R8-t0)**4+fb*t0**4)/(t0**4+(1.0_R8-t0)**4)
       fm3(t0,fa,dfa,fb) = 

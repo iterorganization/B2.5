@@ -21,6 +21,7 @@
       use b2mod_b2cmrc
       use b2mod_b2cmfs
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -90,7 +91,7 @@
       data ismain/1/
 *   ..procedures
       logical is_comment
-      external subini, subend, xertst, cfruch, b2rugm, cfruin, b2xvps
+      external xertst, cfruch, b2rugm, cfruin, b2xvps
       external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
       external ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
 

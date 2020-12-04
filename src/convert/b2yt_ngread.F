@@ -31,6 +31,7 @@ c
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_clogau
@@ -112,7 +113,6 @@ c
       external ipgeti, streql, get_B25_hash
       external convert_eirdiag, conformal_convert
 #endif
-      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//

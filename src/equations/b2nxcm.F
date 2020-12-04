@@ -4,6 +4,7 @@
       subroutine b2nxcm (nx, ny, ns, pccm, pcca)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -28,7 +29,7 @@
       integer ncall, ix, iy, is
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 

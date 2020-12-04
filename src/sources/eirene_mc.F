@@ -56,6 +56,7 @@ c  version : 26.07.2002 23:39
       use b2mod_braeir
       use b2mod_eirbra
 #endif
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns
       real (kind=R8) ::
@@ -69,7 +70,6 @@ csw 19oct2012, added save attribute!!!
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir, b2stbc_feedback
-      integer, allocatable, save :: feedback_strata(:)
       logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
@@ -234,7 +234,7 @@ csw 26feb2014
 *   ..procedures
       real (kind=R8) :: rratio
       intrinsic min, mod, abs, sqrt, log
-      external subini, subend, xertst, ipgeti, ipgetr, rratio
+      external xertst, ipgeti, ipgetr, rratio
 #ifdef B25_EIRENE
       logical streql
       external streql

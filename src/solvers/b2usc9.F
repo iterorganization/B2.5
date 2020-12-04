@@ -7,6 +7,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
@@ -65,7 +66,7 @@
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                   !srv 02.01.07
 *   ..initialization
       data ncall/0/

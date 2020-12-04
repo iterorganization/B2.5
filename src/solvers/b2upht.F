@@ -12,6 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dt, add_te_corr_to_po                ! IYS 19.12.2017, 21.09.2018
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -49,7 +50,7 @@
       integer, save :: nrings, jxi, jxa, jsep
       save ncall, stylec, pot_eq
 *   ..procedures
-      external subini, subend, xertst, ipgeti, b2xvsg
+      external xertst, ipgeti, b2xvsg
 *   ..initialisation
       data ncall/0/, stylec/0/, pot_eq/1/, nrings/0/
 *!!   (stylec is a numerical switch, needs experiments)

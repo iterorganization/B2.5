@@ -25,6 +25,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -87,7 +88,7 @@
 *   ..procedures
       integer len_of_digits
       external len_of_digits
-      external subini, subend, ipgeti
+      external ipgeti
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
 *   ..initialisation

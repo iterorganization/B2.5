@@ -39,6 +39,7 @@
       use b2mod_par_opt
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -180,7 +181,7 @@
       intrinsic abs, sqrt, mod
       real (kind=R8) ::
      *  sy, bcint, syhz                                              !srv 24.08.08
-      external subini, subend, xertst, ipgeti, bcint, eseec0
+      external xertst, ipgeti, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
       syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08

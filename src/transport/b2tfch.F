@@ -19,6 +19,7 @@
       use b2mod_geo_corner                                               !xpb
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0, guard_flows                   !xpb
@@ -90,7 +91,7 @@
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
 *   ..initialisation
       data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,    !xpb

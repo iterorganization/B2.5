@@ -18,6 +18,7 @@
       use b2mod_b2cmrc
       use b2mod_ppout
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -85,7 +86,7 @@
       data ismain/1/
 *   ..procedures
       logical streql, cfendf, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
+      external xertst, xerrab, streql, gacwk,
      &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx, ipgeti,
      &  is_comment
       external b2wgcr, b2ruzd, b2rurc, b2spel, b2sqel, b2rups, b2xvps,

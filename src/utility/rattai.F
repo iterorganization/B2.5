@@ -4,6 +4,7 @@
       subroutine rattai (nt, ndum, tailep, rtt, rtorg, rtmod)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nt, ndum
@@ -67,7 +68,7 @@
      *   t0, t1, t2, rtm, rt0, rt1, rtt0, rtt1, ds
 *   ..procedures
       intrinsic log
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation

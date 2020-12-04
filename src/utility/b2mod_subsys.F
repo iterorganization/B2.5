@@ -1,15 +1,15 @@
-      subroutine subsys (lbot, srname, srnam1)
+      module b2mod_subsys
       use b2mod_openmp
+      use b2mod_lwimai
+      use b2mod_lwmain
 #ifdef WITH_FTIMINGS
       use timings
 #endif
       implicit none
-      logical lbot
-      character srname*(*), srnam1*8
 *     ------------------------------------------------------------------
-*     SUBSYS is a group of routines (entry points in SUBSYS) that
+*     SUBSYS is a group of routines that
 *     perform certain functions related to workspace management and
-*     error handling. The entry points are subini, subend, and subxnd.
+*     error handling. The subroutines are subini, subend, and subxnd.
 *     SUBINI performs any tasks required at the start of subprogram
 *     execution.
 *     SUBEND performs any tasks required at the end of subprogram
@@ -22,15 +22,16 @@
       character chstck(0:nchmx-1)*8
       integer lcstck(0:1,0:nchmx-1)
       save nchs, chstck, lcstck
-      external lwget, lwiget, lwset, lwiset, xertst
       data nchs/0/
 *     ------------------------------------------------------------------
 *!!   Note: nchmx may be changed. nchmx=100 is more than enough to
 *     handle any nonrecursive call chain that one might meet.
 *     ------------------------------------------------------------------
-      return
+      contains
 *     ------------------------------------------------------------------
-      entry subini (srname)
+      subroutine subini (srname)
+      implicit none
+      character srname*(*)
 #ifdef PERFMON
       call perfon (srname)
 #endif
@@ -52,8 +53,10 @@
       nchs = nchs+1
 cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
       return
+      end subroutine subini
 *     ------------------------------------------------------------------
-      entry subend ()
+      subroutine subend ()
+      implicit none
 #ifdef WITH_FTIMINGS
       call timer%stop()
 #endif
@@ -77,8 +80,12 @@ cxpb      write(*,'(a,a8,i3)') 'subend: ',trim(chstck(nchs)),nchs
       call perfoff
 #endif
       return
+      end subroutine subend
 *     ------------------------------------------------------------------
-      entry subxnd (lbot, srnam1)
+      subroutine subxnd (lbot, srnam1)
+      implicit none
+      logical, intent(out) :: lbot
+      character*8, intent(out) :: srnam1
 *   ..build down the stack
       if (nchs.eq.0) then
        lbot = .true.
@@ -93,5 +100,6 @@ cxpb      write(*,'(a,a8,i3)') 'subend: ',trim(chstck(nchs)),nchs
        call lwiset (lci0)
       endif
       return
+      end subroutine subxnd
 *     ------------------------------------------------------------------
-      end
+      end module b2mod_subsys

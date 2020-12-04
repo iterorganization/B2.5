@@ -30,6 +30,7 @@
       use b2mod_external
       use b2mod_time
       use b2mod_diag
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -109,8 +110,7 @@
       intrinsic nint
       real (kind=R8) ::
      *   b2ssum
-      external subini, subend, xertst, sfill, b2ssum, b2saxpy,
-     *   ipgetr, ipgeti
+      external xertst, sfill, b2ssum, b2saxpy, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation

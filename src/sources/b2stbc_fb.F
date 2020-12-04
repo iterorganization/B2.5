@@ -14,6 +14,7 @@
       use b2mod_b2cmpb
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
@@ -52,7 +53,7 @@
      6  vacuum_corr
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/
@@ -213,6 +214,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
@@ -307,7 +309,7 @@
       save zeroslope
 *   ..procedures
       intrinsic abs, mod, nint
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,

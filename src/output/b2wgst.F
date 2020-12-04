@@ -10,6 +10,7 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -126,7 +127,7 @@
       real (kind=R8) ::
      *   scal10, samax, b2ssum
       logical strmas
-      external subini, subend, xertst, scal10, samax, b2ssum,
+      external xertst, scal10, samax, b2ssum,
      &  strmas, pagini, pagend, gsln, gpl_d
       external b2xppe, b2xpmc, b2xgxy, b2wgx2, b2wgx3, b2wgx4,
      &  b2wgx5

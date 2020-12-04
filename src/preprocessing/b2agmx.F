@@ -23,6 +23,7 @@
       use b2mod_connectivity
       use b2mod_geo2
      , , only : dist1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
@@ -156,7 +157,7 @@
       integer pbs_from_basis_mesh
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
       save pbs_from_basis_mesh

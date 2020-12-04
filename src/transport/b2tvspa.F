@@ -12,6 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -47,7 +48,7 @@
      *  , wrk0(-1:nx,-1:ny)
       save ncall, vis_par
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
       data ncall/0/, vis_par/1.0_R8/

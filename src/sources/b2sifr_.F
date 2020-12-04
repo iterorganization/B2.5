@@ -17,6 +17,7 @@
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -72,7 +73,7 @@
       integer :: zlitest
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
+      external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialisation
       !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest) 

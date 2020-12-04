@@ -3,6 +3,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
@@ -20,7 +21,7 @@
       real (kind=R8) ::
      *   qcl, qfl, tfl
       intrinsic abs
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external  b2xvsg
 *   ..initialisation
       data ncall/0/, area_fix/3/

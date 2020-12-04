@@ -14,6 +14,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1), nx, ny, ns                  !srv 22.12.09
@@ -98,8 +99,7 @@
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      external subini, subend, xertst, xerrab, sfill, streql,
-     &  cfwuch, cfwuin, is_comment
+      external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
 *  ..initialisation

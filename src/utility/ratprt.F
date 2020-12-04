@@ -5,6 +5,7 @@
      &  rtt, nt, rtn, nn, 
      &  rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nz, npart, 
@@ -153,7 +154,7 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation

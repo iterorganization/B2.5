@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_math
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput
@@ -59,7 +60,7 @@
       intrinsic log
       real (kind=R8) ::
      *   smax
-      external subini, subend, xertst, cfverw, cfwure, cfwuin
+      external xertst, cfverw, cfwure, cfwuin
       external smax
 
 *-----------------------------------------------------------------------

@@ -73,6 +73,7 @@ c 2002-09-11: logic revised
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
       integer nxd,nyd,nsd_local
@@ -196,7 +197,7 @@ c
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external open_file, streql, subini, subend,
+      external open_file, streql,
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits,
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,

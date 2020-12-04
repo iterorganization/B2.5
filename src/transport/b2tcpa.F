@@ -12,6 +12,7 @@
       use b2mod_plasma
      & , only : fch_pi_f, fch_pi_c                                       !srv 13.01.17
       use b2mod_rates
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -47,7 +48,7 @@
      *   tex
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
       data ncall/0/

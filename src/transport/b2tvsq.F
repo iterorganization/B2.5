@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -42,7 +43,7 @@
      *    tauia(-1:nx,-1:ny,0:ns-1)                                     !srv 28.03.99 11.07.99
 *   ..procedures
       intrinsic abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

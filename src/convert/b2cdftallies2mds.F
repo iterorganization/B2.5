@@ -1,4 +1,5 @@
       subroutine b2cdftallies2mds
+      use b2mod_subsys
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
@@ -29,7 +30,7 @@
       character*256 filename
       logical exist
 #endif
-      external subini, subend, xerrab
+      external xerrab
 
       call subini ('b2cdftallies2mds')
       write(*,*) 'b2cdftallies2mds ...'

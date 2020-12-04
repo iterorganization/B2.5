@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dn
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb
@@ -45,7 +46,7 @@
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
       logical too_low_density                                             ! IYS 27.11.2017
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2xxgs
+      external xertst, ipgetr, b2xxgs
 *   ..initialisation
       data ncall/0/, nrings/0/
 

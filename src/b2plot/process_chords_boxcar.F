@@ -5,6 +5,7 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+      use b2mod_subsys
       implicit none
       character*(*) filename
       character*80 dataname
@@ -16,7 +17,7 @@ c
      *   xvalues(lngarr),yvalue(lngarr),yvalues(lngarr),
      1   xmin,xmax,ymin,ymax,x1,y1,z1,x2,y2,z2,chord_integral
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_integral,xerrab,subini,subend
+      external lnblnk,chord_integral,xerrab
 
       call subini('process_chords_boxcar')
       do is=0,ndim(3,iwrk)-1

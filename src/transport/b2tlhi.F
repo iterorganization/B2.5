@@ -5,6 +5,7 @@
       use b2mod_external
       use b2mod_geo
      , , only : pitx
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -22,7 +23,7 @@
       save ncall, area_fix, model
 *   ..procedures
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvfx, ipgeti
+      external xertst, b2xvfx, ipgeti
 *   ..initialisation
       data ncall/0/, area_fix/3/, model/1/
 *     ------------------------------------------------------------------

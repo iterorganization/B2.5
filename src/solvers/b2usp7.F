@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -43,7 +44,7 @@
       real (kind=R8) :: aa7p2, aa7m2                               !srv 27.01.00
       save ncall                                                   !srv 27.01.00
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation
       data ncall/0/                                                !srv 27.01.00

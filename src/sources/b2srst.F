@@ -10,6 +10,7 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
      2          b2srst_shi0to3, balance_netcdf
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -56,7 +57,7 @@
       save ncall, rf0, rf1, rf2, rf3, use_eirene
 *   ..procedures
       intrinsic min, max
-      external subini, subend, xertst, ipgetr, b2xvsg
+      external xertst, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/,
      * use_eirene/0/

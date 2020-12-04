@@ -19,6 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
@@ -74,7 +75,7 @@
       save ncall
 *   ..procedures
       intrinsic abs, sqrt
-      external subini, subend, xertst, eseec0
+      external xertst, eseec0
       external b2xvsg, b2xvff, b2xvps
 *   ..initialisation
       data ncall/0/

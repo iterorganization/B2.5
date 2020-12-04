@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_ilutern_9
       use b2mod_numerics_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -70,7 +71,7 @@
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                 !srv 02.01.07
 *   ..initialization
       data ncall/0/

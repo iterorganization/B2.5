@@ -6,6 +6,7 @@
       use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -36,7 +37,7 @@
      *   t0, hy1_(-1:nx,-1:ny)
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialization
       data ncall/0/

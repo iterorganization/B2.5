@@ -30,6 +30,7 @@
       use b2mod_diag
       use b2mod_geo
      , , only: hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -104,7 +105,7 @@
       integer sput_dst_bulk
 *   ..procedures
       intrinsic abs, exp
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) ::
      *   smax, smin

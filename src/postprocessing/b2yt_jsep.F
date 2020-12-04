@@ -2,11 +2,12 @@
       use b2mod_types
       use b2mod_geo2
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx1,ny1,jxi1,jxa1,jsep1
       integer ix,iy
       intrinsic min
-      external subini, xerrab, xertst, ipgetr, subend
+      external xerrab, xertst, ipgetr
 
       call subini ('b2yt_jsep')
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -82,9 +83,9 @@
       subroutine b2yt_nxt(nx1, nxtl, nxtr)
       use b2mod_geo2
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx1, nxtl, nxtr
-      external subini, subend
 
       call subini ('b2yt_nxt')
 

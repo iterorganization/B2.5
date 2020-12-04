@@ -202,6 +202,7 @@ cxpb  Replaced with explicit writing of nonzero elements only
       subroutine read_sputter_data(nsd,column,sput_model,refl_model)
       use b2mod_b2cmpa
       use b2mod_elements
+      use b2mod_subsys
       implicit none
       integer nsd, column, sput_model, refl_model
       integer nfile
@@ -225,7 +226,6 @@ cxpb  Replaced with explicit writing of nonzero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
-      external subini, subend
 
       if(sputter_initialised) return
       call subini ('read_sputter_data')

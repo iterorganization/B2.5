@@ -4,6 +4,7 @@
       subroutine b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc,
      &  scal)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc
@@ -68,7 +69,7 @@
       integer ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, cpseti, gndfm2
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgyq
 
 *-----------------------------------------------------------------------

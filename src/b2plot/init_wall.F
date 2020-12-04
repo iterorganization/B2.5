@@ -8,6 +8,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_indirect
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -25,7 +26,7 @@
       data debug_init_wall/0/
 #endif
 
-      external xertst, subini, subend, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
 
       call subini('init_wall')
       allocate(imapx_tmp(nwall), imapy_tmp(nwall))
@@ -328,6 +329,7 @@ cxpb Recopy geometrical arrays into namelist defaults
       use b2mod_indirect
       use b2mod_external
       use b2mod_neutrals_namelist
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: nx, ny, ns
       real(kind=R8), intent(in) :: BoRiS

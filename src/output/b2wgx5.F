@@ -5,6 +5,7 @@
      &  wrkx, wrky)
       use b2mod_types
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc
@@ -97,7 +98,7 @@
       integer iplot, ix, iy, ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, cpseti, gndfm3
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgxb, b2wgyq
 
 *-----------------------------------------------------------------------

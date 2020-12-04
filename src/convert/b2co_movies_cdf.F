@@ -3,6 +3,7 @@
       use b2mod_geo
       use b2mod_movies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
@@ -32,7 +33,7 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'

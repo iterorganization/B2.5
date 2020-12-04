@@ -5,6 +5,7 @@
      &     wrk0, wrk1)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -55,7 +56,7 @@
       integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
       save ncall
 *   ..procedures
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
 *   ..initialisation
       data ncall/0/
 

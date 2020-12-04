@@ -4,6 +4,7 @@
       subroutine b2agcf (nx, ny, crx, cry, fpsi, ffbz)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -85,7 +86,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   rratio
-      external subini, subend, xertst, rratio
+      external xertst, rratio
       external b2agsp
 
 *-----------------------------------------------------------------------

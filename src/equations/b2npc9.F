@@ -12,6 +12,8 @@
      & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
      &         tot_sna0to1, fna_tot                                  !djm Mar2019
       use b2mod_openmp
+      use b2mod_subsys
+      use b2mod_lwmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -70,7 +72,7 @@
       save ncall, rxg, pcm0, pcm1, use_eirene
       !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, lwget
+      external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,

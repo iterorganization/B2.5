@@ -4,6 +4,7 @@ C ========== Parse extralabel for customisation =====================
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
       use f90_unix_proc      ! IGNORE
@@ -15,7 +16,7 @@ C ===================================================================
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
       logical streql
-      external lnblnk, subini, subend, xertst, xerrab, streql
+      external lnblnk, xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
 #ifdef NAGFOR

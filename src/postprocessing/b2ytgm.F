@@ -9,6 +9,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -184,7 +185,7 @@
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
 *-----------------------------------------------------------------------

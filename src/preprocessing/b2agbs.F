@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_b2cmfs
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nncutmax

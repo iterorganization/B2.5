@@ -5,6 +5,7 @@
       use b2mod_geo
       use b2mod_constants
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb

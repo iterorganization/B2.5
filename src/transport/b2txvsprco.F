@@ -10,6 +10,7 @@
       use b2mod_openmp
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -34,7 +35,6 @@
       character(3) :: chns
       !$OMP THREADPRIVATE(ncall, iout, vis_per)
 *   ..procedures
-      external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

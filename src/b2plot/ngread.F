@@ -24,6 +24,7 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_clogau
@@ -54,7 +55,7 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 *=======================================================================
 *//COMPUTATION//

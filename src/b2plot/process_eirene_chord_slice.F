@@ -6,6 +6,7 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
+      use b2mod_subsys
       use eirmod_ctrig
 #endif
       implicit none
@@ -20,7 +21,7 @@ c
      *   xvalues(lngarr),yvalues(lngarr),chord_tria_value,
      1   xmin,xmax,ymin,ymax,x1,y1,z1,dx1,dy1,dz1
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_tria_value,subini,subend,xerrab
+      external lnblnk,chord_tria_value,xerrab
 
       call subini ('process_chord_slice')
       do is=0,nedim(2,iewrk)-1

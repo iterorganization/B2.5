@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -74,7 +75,7 @@
       real (kind=R8) ::
      *   smin, smax, b2ssum
       logical strmas
-      external subini, subend, xertst, smin, smax, b2ssum, strmas
+      external xertst, smin, smax, b2ssum, strmas
       external b2xvgm
       intrinsic max
 

@@ -22,6 +22,7 @@
      & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       use b2mod_openmp
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -93,7 +94,7 @@
 #endif
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 #ifdef NO_IEEE
       logical, external :: my_isnan

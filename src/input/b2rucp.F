@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ns
@@ -277,7 +278,7 @@
 *   ..local variables
       integer ireg, idum(0:9)
 *   ..procedures
-      external subini, subend, xertst, cfruin, cfrure
+      external xertst, cfruin, cfrure
       external b2xvcp, b2ruzd
 
 *-----------------------------------------------------------------------

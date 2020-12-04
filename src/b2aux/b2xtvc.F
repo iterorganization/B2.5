@@ -5,6 +5,7 @@
      &        bottomcut, bottomcut1, topcut, topcut1, wrk1)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
@@ -31,7 +32,7 @@
       external E01BEF, E01BFF
       real (kind=R8) ::
      *   t0, t1, t2
-      external xerrab, subini, subend, interp2d
+      external xerrab, interp2d
       intrinsic min, max, real
 *     ------------------------------------------------------------------
       call subini ('b2xtvc')

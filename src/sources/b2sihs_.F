@@ -23,6 +23,7 @@
      &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
       use b2mod_external                                              !srv 05.07.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                      !srv 05.07.17
@@ -94,7 +95,7 @@
      *   t0, t1, ctaup, coef, czetap, czetae                          !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/, style/0/

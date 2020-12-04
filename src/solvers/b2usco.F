@@ -9,6 +9,7 @@
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -48,7 +49,7 @@
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux5p
 *   ..initialisation
       data ncall/0/

@@ -4,6 +4,7 @@
       subroutine b2wgx0 (nx, ny, header)
       use b2mod_types
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -72,7 +73,7 @@
      &  xlohi(0:1), ylohi(0:1)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst, pagini, pagend, gsln, gpl_d
+      external xertst, pagini, pagend, gsln, gpl_d
       external b2xgxy
 
 *-----------------------------------------------------------------------

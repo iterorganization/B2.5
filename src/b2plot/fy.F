@@ -6,6 +6,7 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
+      use b2mod_subsys
       implicit none
       character*12 hlp_frm
       character*44 tmpstring1,tmpstring2
@@ -19,7 +20,7 @@ c
       logical iniso
       integer len_of_digits
       intrinsic min,max
-      external subini, subend, xertst, lnblnk, len_of_digits
+      external xertst, lnblnk, len_of_digits
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -508,6 +509,7 @@ c      if(nidim .ne. 2) call line(2)
 c
       function y_transform(r,z)
       use b2mod_types
+      use b2mod_subsys
       real (kind=R8) ::
      *   y_transform
       real (kind=R8) ::
@@ -518,7 +520,7 @@ c
       integer n1,n2,i1,i2
       real (kind=R8) ::
      *   x, r0r
-      external subini, subend, xertst
+      external xertst
       save z1,s1,z2,s2,n1,n2,first
       data first /.true./
 

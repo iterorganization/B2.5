@@ -9,6 +9,7 @@
       use b2mod_geo_corner
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -30,7 +31,7 @@
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

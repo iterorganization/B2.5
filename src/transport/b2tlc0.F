@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_geo
      , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -33,7 +34,7 @@
       data ncall/0/, alpha/1.0_R8/, gamma/1.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr
+      external xertst, ipgetr
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlc0')

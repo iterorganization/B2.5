@@ -20,6 +20,7 @@
      &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
       use b2mod_types
       use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       character*256 filename
@@ -117,7 +118,7 @@
       save na_new, na_min
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, b2saxpy
+      external xertst, ipgetr, sfill, b2saxpy
       external b2xtvc
 
 *-----------------------------------------------------------------------

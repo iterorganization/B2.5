@@ -6,6 +6,7 @@
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
       use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
@@ -148,7 +149,7 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-      external subini, subend, xertst, b2xvsg
+      external xertst, b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation

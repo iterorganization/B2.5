@@ -7,6 +7,7 @@
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny
@@ -68,7 +69,7 @@
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
-      external subini, subend, xertst, cfwure, cfwuin, ipgeti
+      external xertst, cfwure, cfwuin, ipgeti
       external b2xvsg, b2xvgm
       real (kind=R8) ::
      *   distval

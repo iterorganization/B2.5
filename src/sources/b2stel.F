@@ -31,6 +31,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -97,7 +98,7 @@
       logical streql
       real (kind=R8) ::
      *   samax
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg, streql
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,

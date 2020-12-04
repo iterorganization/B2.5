@@ -10,6 +10,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows                                  !xpb !srv 08.09.01 !lk 02.06.11
@@ -44,7 +45,7 @@
       real (kind=R8), save :: PSch = 1.0_R8                             !srv 17.01.07
       save ncall, area_fix
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
+      external xertst, ipgeti, ipgetr                                   !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, area_fix/3/

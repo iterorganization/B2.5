@@ -5,6 +5,7 @@
      &  fpsi, ffbz, bb)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -77,7 +78,7 @@
       real (kind=R8) ::
      *   scal10, smin, smax, samax
       logical strmas
-      external subini, subend, xertst, scal10, smax, samax, strmas
+      external xertst, scal10, smax, samax, strmas
       external b2wgx0, b2wgx1, b2wgx2, b2wgx3
 
 *-----------------------------------------------------------------------

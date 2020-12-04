@@ -1,5 +1,6 @@
       subroutine rlshdw
       use b2mod_types
+      use b2mod_subsys
       implicit none
 c
 c  version : 07.11.97 13:19
@@ -42,7 +43,7 @@ c======================================================================
       real (kind=R8) :: flin
       flin(x,y)=(x-xc)*(ys-yc)-(y-yc)*(xs-xc)
       intrinsic min, max, mod, sign
-      external subini, subend, xertst
+      external xertst
 c======================================================================
 c*** Initialise the code. The base segment is at the position jb
 c*** in the structure list, we need its endpoints (xb,yb,uxe,uye).

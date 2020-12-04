@@ -22,6 +22,7 @@
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                    !xpb
@@ -94,7 +95,7 @@
 #endif
       save ncall, no_current, conduction_only, no_hybr, pot_eq
 *   ..procedures
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/,

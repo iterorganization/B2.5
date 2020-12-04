@@ -50,6 +50,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
@@ -127,7 +128,7 @@ c
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 c Function to check the correct parameters!
 c

@@ -38,6 +38,7 @@ c
 #else
       use b2mod_eirbra
 #endif
+      use b2mod_subsys
       implicit none
 
 *  -- LOCAL SCALARS --
@@ -49,7 +50,6 @@ c
 #endif
 
 *  -- PROCEDURES --
-      external subini, subend
 #ifdef B25_EIRENE
       external ipgetr, xertst
 *   ..initialisation
