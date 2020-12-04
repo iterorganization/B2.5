@@ -194,10 +194,10 @@ c     the line format common
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
      .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
-	if(.not.streql(xlabel,' ')) reserve_bottom =
-     .	 reserve_bottom+txtwdth*2*n_page
-	if(.not.streql(ylabel,' ')) reserve_left =
-     .	 reserve_left+txtwdth*2*n_page
+        if(.not.streql(xlabel,' ')) reserve_bottom =
+     .   reserve_bottom+txtwdth*2*n_page
+        if(.not.streql(ylabel,' ')) reserve_left =
+     .   reserve_left+txtwdth*2*n_page
       else
         reserve_bottom=0.0
         reserve_top=0.0
@@ -308,8 +308,8 @@ c     the line format common
       if(.not.streql(xlabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
-         CALL PLCHHQ(0.5,
-     1        1.0-42.0*txtwdth*2*n_page,
+         CALL PLCHHQ(reserve_left+(1.0-reserve_right-reserve_left)/2.0,
+     1        txtwdth*1*n_page,
      1        XLABEL(1:LNBLNK(YLABEL)),
      1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
         endif
@@ -318,8 +318,8 @@ c     the line format common
       if(.not.streql(ylabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
-         CALL PLCHHQ(0.05,
-     1        1.0-20.5*txtwdth*2*n_page,
+         CALL PLCHHQ(txtwdth*1*n_page,
+     1        reserve_bottom+(1.0-reserve_top-reserve_bottom)/2.0,
      1        YLABEL(1:LNBLNK(YLABEL)),
      1        1.0/100.0/N_PAGE*lbsz,90.0,0.0)
         endif
@@ -381,7 +381,7 @@ c     the line format common
       call gasetr('WMJ',1.)
       call gasetr('WMN',1.)
       call gstxfp(1,0)
-      call pcseti('FN',0)
+!      call pcseti('FN',0)
 #endif
       return
       end subroutine init_page
