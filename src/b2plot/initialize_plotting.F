@@ -144,6 +144,8 @@ c
 c
       extralabel=' '
       globalheader=' '
+      xlabel=' '
+      ylabel=' '
       runtime=real(time,R4)
       glsz=1.0_R4
       lbsz=1.0_R4

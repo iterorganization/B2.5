@@ -6024,6 +6024,14 @@ c
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),stmp)
           call clear_extralabel(stmp)
+        case('xlab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_xlabel(stmp)
+        case('ylab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_ylabel(stmp)
         case('cltb')     ! colour table
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))

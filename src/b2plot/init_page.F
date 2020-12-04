@@ -194,6 +194,10 @@ c     the line format common
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
      .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
+	if(.not.streql(xlabel,' ')) reserve_bottom =
+     .	 reserve_bottom+txtwdth*2*n_page
+	if(.not.streql(ylabel,' ')) reserve_left =
+     .	 reserve_left+txtwdth*2*n_page
       else
         reserve_bottom=0.0
         reserve_top=0.0
@@ -298,6 +302,26 @@ c     the line format common
      1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
      1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
      1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
+        call gsplci(1)
+      endif
+      if(.not.streql(xlabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(0.5,
+     1        1.0-42.0*txtwdth*2*n_page,
+     1        XLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
+        call gsplci(1)
+      endif
+      if(.not.streql(ylabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(0.05,
+     1        1.0-20.5*txtwdth*2*n_page,
+     1        YLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,90.0,0.0)
         endif
         call gsplci(1)
       endif

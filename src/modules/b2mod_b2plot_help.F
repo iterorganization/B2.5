@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=357,nfns=212,nsparameters=32,nelabels=36,
+      parameter(nlabels=357,nfns=212,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -879,7 +879,7 @@
      4 'uedgegrd', 'expf' , 'outp', 'pdev'    , 'mprt',
      5 'mtab'    , 'amju' , 'adas', 'wallblbl', 'trgblbl',
      6 'glbl'    , 'wlbl' , 'tlbl', 'wslbl'   , 'tranprof',
-     7 'elbl'    , 'eslbl'/
+     7 'elbl'    , 'eslbl', 'xlab', 'ylab'/
       data constant_name /
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/
