@@ -10,7 +10,7 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< -o ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f
 else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
@@ -25,7 +25,7 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< -o ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
 else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
 endif
@@ -40,7 +40,7 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< -o ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f
 else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
@@ -59,7 +59,7 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< -o ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
 else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
 endif
