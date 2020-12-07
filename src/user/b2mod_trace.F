@@ -28,7 +28,7 @@
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 c
 c  version : 29.08.2000 00:26

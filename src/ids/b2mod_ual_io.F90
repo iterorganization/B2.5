@@ -59,6 +59,7 @@ module b2mod_ual_io
     use b2mod_b2plot &
      & , only : nxtl, nxtr, jxa, jsep
 #ifdef B25_EIRENE
+    use eirmod_wneutrals
     use eirmod_comusr &
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
@@ -288,14 +289,7 @@ contains
             &             u, qetot, qitot, qemax, qimax, lambda, &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
-#ifdef B25_EIRENE
-        real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
-        real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
-        real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
-                       &        -1:ubound( na, 3) )
-        real(IDS_real) :: smo0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3, &
-                       &        -1:ubound( na, 3) )
-#endif
+
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
 

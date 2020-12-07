@@ -27,7 +27,7 @@ c
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cestim
       use eirmod_cinit

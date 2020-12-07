@@ -212,7 +212,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_subsys
       implicit none

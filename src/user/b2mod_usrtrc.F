@@ -6,7 +6,7 @@
       use b2mod_indirect
       use b2mod_user_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra

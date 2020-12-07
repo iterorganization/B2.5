@@ -17,6 +17,7 @@ c
       subroutine b2neut_ind(typ,ind,istart,iend,shift)
       use b2mod_types
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
@@ -56,7 +57,7 @@ c
       subroutine b2neut_surfcheck(s,t,n,shift)
       use b2mod_types
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
@@ -113,6 +114,7 @@ c  shift : data offset in the Eirene arrays
       subroutine b2neut_eng(wneut,wnpr,n,shift)
       use b2mod_types
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
@@ -154,6 +156,7 @@ c
       subroutine b2neut_flux(sfa,n,ia,shift)
       use b2mod_types
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
@@ -197,6 +200,7 @@ c
       use b2mod_types
       use b2mod_constants
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag

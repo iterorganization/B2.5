@@ -388,6 +388,9 @@ ifneq (${MOD},o)
 ${OBJDIR}/eirmod_extrab25.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_extrab25.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_wneutrals.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_wneutrals.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_balanced_strategy.${MOD} ${OBJDIR}
 
@@ -571,6 +574,9 @@ endif
 
 ${OBJDIR}/eirmod_extrab25.o:
 	ln -sf ${EIRDIR}/eirmod_extrab25.o ${OBJDIR}
+
+${OBJDIR}/eirmod_wneutrals.o:
+	ln -sf ${EIRDIR}/eirmod_wneutrals.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_balanced_strategy.o:
 	ln -sf ${EIRDIR}/eirmod_balanced_strategy.o ${OBJDIR}
@@ -814,6 +820,9 @@ ${OBJDIR}/eirmod_solps.${MOD}:
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
+
+${OBJDIR}/eirmod_wneutrals.${MOD}:
+	touch ${OBJDIR}/eirmod_wneutrals.${MOD}
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}

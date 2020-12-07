@@ -36,7 +36,7 @@
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
      ,          ext_sna
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb

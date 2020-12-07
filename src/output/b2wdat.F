@@ -23,7 +23,7 @@
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_subsys
       implicit none

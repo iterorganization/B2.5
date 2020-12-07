@@ -34,6 +34,7 @@
       use b2mod_xerset
       use b2mod_ipmain
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
@@ -315,7 +316,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)

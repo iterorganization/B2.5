@@ -49,7 +49,7 @@ c  version : 26.07.2002 23:39
      , , only: texts, nsph, nspa, nspam
       use eirmod_cinit
      , , only: fort_lc
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_clgin
      ,   , only : iliin
 #else

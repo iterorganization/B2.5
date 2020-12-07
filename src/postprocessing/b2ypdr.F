@@ -722,8 +722,7 @@
 *   ..produce special output
       call b2wscp (nout(2), nx, ny, ns)
       call b2wsps (nout(2), nx, ny, ns, crx, cry, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+     &  vol, hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height)
 
 * ..return
       call dealloc_b2mod_b2cmrc

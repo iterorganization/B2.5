@@ -32,7 +32,7 @@
       use b2mod_b2cmpb
       use b2mod_external
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_braeir
 #endif
 #ifdef PAR_OPT

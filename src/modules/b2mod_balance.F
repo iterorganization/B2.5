@@ -1294,7 +1294,7 @@ cdjm Jan2017 Flux arrays:
      &          (nxd,nyd,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
@@ -2149,7 +2149,7 @@ cdjm Update ion heat sources
      & , only : rpt
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else

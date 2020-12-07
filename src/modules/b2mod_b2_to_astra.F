@@ -13,6 +13,7 @@ csw 09jan2014 extra module to define some arrays
      , ,only: b2eatcr, mlcmp
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use eirdiag ! IGNORE

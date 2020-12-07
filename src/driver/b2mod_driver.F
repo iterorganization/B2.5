@@ -66,7 +66,8 @@
      , ,only: eirene_alloc_comusr
       use eirmod_braeir
       use eirmod_eirbra
-      use eirmod_extrab25
+      use eirmod_infcop
+      use eirmod_wneutrals
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #ifdef NAGFOR
@@ -1925,7 +1926,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
@@ -2941,6 +2942,7 @@ cxpb Do the recreate to a temporary location and then bring it back
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+      CALL EIRENE_DEALLOC_INFCOP
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra

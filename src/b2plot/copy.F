@@ -61,7 +61,7 @@ c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       use b2mod_b2plot
       use b2mod_b2plot_values
       use eirmod_ctrig
-      use eirmod_extrab25
+      use eirmod_wneutrals
       integer nz
       real (kind=R8) ::
      *   src(nz,1:ntrii),scale

@@ -56,7 +56,8 @@ c 2002-09-11: logic revised
       use eirmod_ctrig
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
-      use eirmod_extrab25
+      use eirmod_wneutrals
+      use eirmod_infcop
       use eirmod_braeir
       use eirmod_cestim
       use eirmod_coutau
@@ -314,7 +315,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
       call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
@@ -1478,7 +1479,9 @@ c
             CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
+            CALL EIRENE_DEALLOC_INFCOP
             CALL EIRENE_EXTRAB25_CLEANUP
+            CALL EIRENE_WNEUTRALS_DEALLOC
 #else
             call dealloc_b2mod_braeir
             call dealloc_b2mod_eirbra
@@ -1555,7 +1558,9 @@ c
           CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
+          CALL EIRENE_DEALLOC_INFCOP
           CALL EIRENE_EXTRAB25_CLEANUP
+          CALL EIRENE_WNEUTRALS_DEALLOC
 #else
           call dealloc_b2mod_braeir
           call dealloc_b2mod_eirbra

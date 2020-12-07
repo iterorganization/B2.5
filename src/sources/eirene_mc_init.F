@@ -3,6 +3,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_eirbra
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirbra

@@ -18,6 +18,9 @@ c----------------------------------------------------------------------
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
 c

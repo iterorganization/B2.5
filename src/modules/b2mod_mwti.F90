@@ -53,7 +53,7 @@ contains
     use b2mod_external
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
-    use eirmod_extrab25
+    use eirmod_wneutrals
 #endif
 #endif
     implicit none

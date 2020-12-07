@@ -13,7 +13,7 @@
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_geo
      , , only : hy1

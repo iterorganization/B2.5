@@ -67,9 +67,11 @@ c 2002-09-11: logic revised
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
+      use eirmod_infcop
+      use eirmod_wneutrals
+     , ,only: eirene_wneutrals_init, eirene_wneutrals_dealloc
       use eirmod_extrab25
      , ,only: lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_wneuinit, eirene_extrab25_cleanup,
      ,        eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
@@ -870,7 +872,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_SETPRM
       CALL EIRENE_ALLOC_CESTIM(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       CALL EIRENE_extrab25_eirpbls_init(nmol,nion,npls)
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
@@ -11928,12 +11930,14 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_CTRIG
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CESTIM
       CALL EIRENE_DEALLOC_COUTAU
       CALL EIRENE_DEALLOC_COMUSR
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
 #endif

@@ -28,7 +28,7 @@ c
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
