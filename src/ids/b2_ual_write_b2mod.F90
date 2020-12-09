@@ -427,7 +427,7 @@ contains
         !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, &
+        call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
         call xertst ( status.eq.0, 'Error opening IMAS database !')
         call ids_get(idx, "edge_profiles", edge_profiles, status)

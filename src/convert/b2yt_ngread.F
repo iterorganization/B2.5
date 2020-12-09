@@ -1371,7 +1371,7 @@ cank
             call b2yt_res_map ( NCL, NCL1, NCLM,
      .       area_res_contr, data1res)
             ewldrp1res(1:NCL1) = data1res(1:NCL1)
-            if (no_sputtering) then
+            if (no_sputtering.or.jvft44.lt.20170228) then
               wldspt1res(:) = 0.0_R8
             else
               data1res(1:NCL) = wldspt_res(1:NCL)

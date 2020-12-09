@@ -58,14 +58,15 @@ PREF_OBJDIR = couple_SOLPS-ITER
 endif
 
 # Extensions for object directories when various options are used
+ifdef USE_IMPGYRO
+EXT_IMPGYRO = .ig
+else
 ifdef USE_MPI
 EXT_MPI = .mpi
 endif
+endif
 ifdef USE_OPENMP
 EXT_OPENMP = .openmp
-endif
-ifdef USE_IMPGYRO
-EXT_IMPGYRO = .ig
 endif
 ifdef SOLPS_DEBUG
 EXT_DEBUG = .debug
@@ -93,11 +94,11 @@ endif
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
 endif
-  include ${SRCB2}/config/compile
-  MAKES += ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+include ${SRCB2}/config/compile
+MAKES += ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
 ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
   include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
-  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+  MAKES += ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
 # Add external includes first
@@ -260,8 +261,8 @@ PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
 PROG_AM = b2ar.exe
 PROG_XD = b2xd.exe
-PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe calc_atomic_data.exe
-PROG_OT = b2ah.exe b2ai.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe b2plasmastate_inspect.exe
+PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe b2plasmastate_inspect.exe calc_atomic_data.exe
+PROG_OT = b2ah.exe b2ai.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe
 PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
@@ -834,8 +835,8 @@ ${GEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
-${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
+${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${OBJDIR}/libsolps4.a ${MAKES}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${OBJDIR}/libsolps4.a ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
@@ -885,9 +886,9 @@ ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} -DSOLPS_ITER ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
@@ -994,7 +995,7 @@ ifdef USE_EIRENE
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
 	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo eirmod_*.F90 eirmod_*.f)`"; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/ \*\.F//g' -e 's/ eirmod_\*\.F90//g' -e 's/eirmod_\*\.f//g' -e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
@@ -1006,27 +1007,27 @@ else
 	for d in `echo "${FFPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/ \*\.F//g' -e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
-	@l="B2OBJS ="; \
+	@ll="B2OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
-		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
+		ll="$$ll `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F//g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
-	@l="B2F90OBJS ="; \
+	echo "$$ll" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
+	@lll="B2F90OBJS ="; \
 	for d in `echo "${FFPATH}" | tr : \ `; do \
-		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
+		lll="$$lll `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
-	E="-e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/ \*\.F90//g' -e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
+	echo "$$lll" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
 ${OBJDIR}/LISTOBJ: listobj
 

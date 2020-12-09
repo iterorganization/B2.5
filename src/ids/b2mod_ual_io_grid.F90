@@ -1690,7 +1690,6 @@ contains
             !! subroutine collectIndexListForRegionSubroutine
             !! (function collectIndexListForRegion transferred to subroutine,
             !! as array of certain dimension is required as an output)
-            ind = 0
             select case ( iType )
             case ( REGIONTYPE_CELL )
                 allocate( indextmp2d ( gmap%nCv , SPACE_COUNT ) )
@@ -1705,7 +1704,7 @@ contains
                 if (RegionsinSubset(ireg) == 0) cycle
                 call collectIndexListForRegionSubroutine( gmap, cflag, region,   &
                    &   iType, RegionsinSubset( ireg ), indexPart2d )
-                indextmp2d( ind+1 : ind+size(indexPart2d,1),:) = indexPart2d(:,:)
+                indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do
             allocate( indexList2d ( isize, SPACE_COUNT ) )
@@ -2214,7 +2213,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_INNER_STRIKEPOINT,  &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ) )
 
             nInd = 1
@@ -2255,7 +2254,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,  &
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1
@@ -2296,7 +2295,7 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
+                &   GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1

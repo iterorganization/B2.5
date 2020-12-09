@@ -1145,7 +1145,7 @@ cxpb Now for each new species, we do the space mapping
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nionm)
       integer iw, iatm, imol, iion
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
       real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)

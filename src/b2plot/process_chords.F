@@ -218,9 +218,9 @@ c
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
         ntstep=nint(tstepn(1))
         do itstep=1,ntstep,movie_skip
-          dumarr(1)=htime
           call rwcdf_settime('time',itstep)
           call rwcdf(rw,ncid,'time',imap,dumarr,iret)
+          htime=dumarr(1)
           imap(1)=1
           imap(2)=nx+2
           call rwcdf(rw,ncid,'ahal',imap,work(-1,-1,0,iwrk),iret)

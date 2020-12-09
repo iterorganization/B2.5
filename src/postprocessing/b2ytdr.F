@@ -54,7 +54,7 @@ c 2002-09-11: logic revised
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_cinit
-     , , tio => ti0, til => ti1, tel => te1
+     , , tio => ti0, til => ti1, teo => te0, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
      , ,only: NMASSA, NCHARA,
@@ -7401,9 +7401,9 @@ cxpb We now rewrite the modified block 4
      .                        ,I=1,NPLSI)
             IF (INDPRO(2).EQ.1 .OR. INDPRO(2).EQ.3) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,TIO,P0,2)
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI1,P1,2)
+     .         (nplsi,nplsi1,e_bundle_contr,TIl,P1,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI2,P2,3)
               call e_bundle_transmit_r
@@ -7414,9 +7414,9 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,TI5,P5,3)
             ELSE IF (INDPRO(2).EQ.2) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,TIO,P0,2)
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI1,P1,3)
+     .         (nplsi,nplsi1,e_bundle_contr,TIl,P1,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI2,P2,3)
               call e_bundle_transmit_r
@@ -7427,9 +7427,9 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,TI5,P5,3)
             ELSE
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI0,P0,3)
+     .         (nplsi,nplsi1,e_bundle_contr,TIO,P0,3)
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,TI1,P1,3)
+     .         (nplsi,nplsi1,e_bundle_contr,TIl,P1,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI2,P2,3)
               call e_bundle_transmit_r
@@ -7453,7 +7453,7 @@ cxpb We now rewrite the modified block 4
      .                     I=1,NPLSI)
           IF (IABS(INDPRO(3)).EQ.1 .OR. IABS(INDPRO(3)).EQ.3) THEN
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,DI0,PO,1)
+     .       (nplsi,nplsi1,e_bundle_contr,DI0,P0,1)
             call e_bundle_transmit_r
      .       (nplsi,nplsi1,e_bundle_contr,DI1,P1,1)
             call e_bundle_transmit_r
@@ -7466,7 +7466,7 @@ cxpb We now rewrite the modified block 4
      .       (nplsi,nplsi1,e_bundle_contr,DI5,P5,3)
           ELSE IF (IABS(INDPRO(3)).EQ.2) THEN
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,DI0,PO,1)
+     .       (nplsi,nplsi1,e_bundle_contr,DI0,P0,1)
             call e_bundle_transmit_r
      .       (nplsi,nplsi1,e_bundle_contr,DI1,P1,3)
             call e_bundle_transmit_r
@@ -7479,7 +7479,7 @@ cxpb We now rewrite the modified block 4
      .       (nplsi,nplsi1,e_bundle_contr,DI5,P5,3)
           ELSE
             call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,DI0,PO,3)
+     .       (nplsi,nplsi1,e_bundle_contr,DI0,P0,3)
             call e_bundle_transmit_r
      .       (nplsi,nplsi1,e_bundle_contr,DI1,P1,3)
             call e_bundle_transmit_r
@@ -7515,7 +7515,7 @@ cxpb We now rewrite the modified block 4
      .                         I=1,NPLSI)
             IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,2)
               call e_bundle_transmit_r
@@ -7528,7 +7528,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
             ELSE IF (INDPRO(4).EQ.2) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
               call e_bundle_transmit_r
@@ -7541,7 +7541,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
             ELSE
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,3)
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,P0,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
               call e_bundle_transmit_r
@@ -7562,7 +7562,7 @@ cxpb We now rewrite the modified block 4
      .                         I=1,NPLSI)
             IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,2)
               call e_bundle_transmit_r
@@ -7579,7 +7579,7 @@ cxpb We now rewrite the modified block 4
               end if
             ELSE IF (INDPRO(4).EQ.2) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
               call e_bundle_transmit_r
@@ -7593,7 +7593,7 @@ cxpb We now rewrite the modified block 4
               if (flip) P0 = -P0
             ELSE
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,3)
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,P0,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
               call e_bundle_transmit_r
@@ -7614,7 +7614,7 @@ cxpb We now rewrite the modified block 4
      .                       I=1,NPLSI)
             IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,2)
               call e_bundle_transmit_r
@@ -7627,7 +7627,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
             ELSE IF (INDPRO(4).EQ.2) THEN
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,P0,2)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
               call e_bundle_transmit_r
@@ -7640,7 +7640,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
             ELSE
               call e_bundle_transmit_r
-     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,3)
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,P0,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
               call e_bundle_transmit_r

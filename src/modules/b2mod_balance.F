@@ -2784,11 +2784,11 @@ cdjm Update ion heat sources
       vdims(3)=n4id
       call write_cdf_double(ncid,'crx',crx,vdims,3)
       call write_cdf_double(ncid,'cry',cry,vdims,3)
-*   ..bb,hx,hz,vol,gs,am:
+*   ..bb,hx,hy,hz,vol,gs,am:
       call write_cdf_double(ncid,'bb',bb,vdims,3)
       call write_cdf_double(ncid,'hx',hx,vdims,2)
-      call write_cdf_double(ncid,'hy',hx,vdims,2)
-      call write_cdf_double(ncid,'hz',hx,vdims,2)
+      call write_cdf_double(ncid,'hy',hy,vdims,2)
+      call write_cdf_double(ncid,'hz',hz,vdims,2)
       call write_cdf_double(ncid,'vol',vol,vdims,2)
       vdims(3)=n3id
       call write_cdf_double(ncid,'gs',gs,vdims,3)

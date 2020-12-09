@@ -245,6 +245,7 @@ contains
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pz( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -2461,10 +2462,11 @@ contains
                 &         temperature,                                  &
                 &   value = tmpCv,                                      &
                 &   time_sind = time_sind )
-            call write_face_scalar(                                     &
+            tmpCv(:,:) = hce0(:,:)/ne(:,:)
+            call write_quantity(                                        &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%d,                           &
-                &   value = chce,                                       &
+                &   value = tmpCv,                                      &
                 &   time_sind = time_sind )
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
@@ -2572,13 +2574,13 @@ contains
             end do
 #ifdef B25_EIRENE
             do is = 1, natmi
-              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + eneutrad(0:nx+1,0:ny+1,is,0)
+              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) - eneutrad(0:nx+1,0:ny+1,is,0)
             end do
             do is = 1, nmoli
-              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + emolrad(0:nx+1,0:ny+1,is,0)
+              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) - emolrad(0:nx+1,0:ny+1,is,0)
             end do
             do is = 1, nioni
-              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + eionrad(0:nx+1,0:ny+1,is,0)
+              tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) - eionrad(0:nx+1,0:ny+1,is,0)
             end do
 #endif
             tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
@@ -2601,10 +2603,11 @@ contains
                 &   val = edge_profiles%ggd( time_sind )%t_i_average, &
                 &   value = tmpCv,                                    &
                 &   time_sind = time_sind )
-            call write_face_scalar(                                   &
+            tmpCv(:,:) = hci0(:,:)/ni(:,:,0)
+            call write_quantity(                                      &
                 &   val = edge_transport%model(1)%ggd( time_sind )%   &
                 &         total_ion_energy%d,                         &
-                &   value = chci,                                     &
+                &   value = tmpCv,                                    &
                 &   time_sind = time_sind )
             call write_face_scalar(                                   &
                  &   val = edge_transport%model(1)%ggd( time_sind )%  &
@@ -3082,17 +3085,17 @@ contains
                 !! Neutral pressure
                 do is = 1, nspecies
                    tmpCv(:,:) = 0.0_IDS_real
-                   tmpVx(:,:) = 0.0_IDS_real
+                   totCv(:,:) = 0.0_IDS_real
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do iss = 1, natmi
                       if (latmscl(iss).eq.is) then
-                        tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + &
+                        tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +            &
                            &  dab2(0:nx+1,0:ny+1,iss,1)*tab2(0:nx+1,0:ny+1,iss,1)
-                        tmpVx(-1:nx,-1:ny) = tmpVx(-1:nx,-1:ny) + &
+                        totCv(-1:nx,-1:ny) = totCv(-1:nx,-1:ny) +            &
                            &  dab2(0:nx+1,0:ny+1,iss,1)
-                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) + &
+                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) +    &
                            &  pfluxa(0:nx+1,0:ny+1,iss,1)
-                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) + &
+                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) +    &
                            &  rfluxa(0:nx+1,0:ny+1,iss,1)
                       end if
                    end do
@@ -3101,26 +3104,11 @@ contains
                        &         neutral( is )%pressure,                     &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   do ix = -1, nx
-                      do iy = -1, ny
-                        if (tmpVx(ix,iy).gt.0.0_IDS_real) then
-                          tmpCv(ix,iy) = tmpCv(ix,iy)/tmpVx(ix,iy)/qe
-                        else
-                          tmpCv(ix,iy) = 1.0e-6_IDS_real
-                        end if
-                      end do
-                   end do
-                !! Neutral temperature
-                   call write_quantity(                                      &
-                       &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( is )%temperature,                  &
-                       &   value = tmpCv,                                    &
-                       &   time_sind = time_sind )
                 !! Neutral density
                    call write_quantity(                                      &
                       &   val = edge_profiles%ggd( time_sind )%              &
                       &         neutral( is )%density,                       &
-                      &   value = tmpVx,                                     &
+                      &   value = totCv,                                     &
                       &   time_sind = time_sind )
                 !! Neutral particle flux
                    call write_face_scalar(                                   &
@@ -3202,7 +3190,7 @@ contains
                        &   scalar = edge_sources%source(12)%ggd( time_sind )%&
                        &            neutral( is )%particles,                 &
                        &   b2CellData = tmpCv )
-                 end do
+                end do
                 do is = 1, natmi
                    js = latmscl(is)
                    ks = isstat(is)
@@ -3310,17 +3298,17 @@ contains
                 !! Molecular quantities
                 do js = nspecies+1, nneut
                    tmpCv(:,:) = 0.0_IDS_real
-                   tmpVx(:,:) = 0.0_IDS_real
+                   totCv(:,:) = 0.0_IDS_real
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do is = 1, nmoli
                       if (imneut(is).eq.js) then
-                        tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + &
+                        tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +            &
                            &  dmb2(0:nx+1,0:ny+1,is,1)*tmb2(0:nx+1,0:ny+1,is,1)
-                        tmpVx(-1:nx,-1:ny) = tmpVx(-1:nx,-1:ny) + &
+                        totCv(-1:nx,-1:ny) = totCv(-1:nx,-1:ny) +            &
                            &  dmb2(0:nx+1,0:ny+1,is,1)
-                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) + &
+                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) +    &
                            &  pfluxm(0:nx+1,0:ny+1,is,1)
-                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) + &
+                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) +    &
                            &  rfluxm(0:nx+1,0:ny+1,is,1)
                       end if
                    end do
@@ -3330,26 +3318,11 @@ contains
                        &         neutral( js )%pressure,                     &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   do ix = -1, nx
-                      do iy = -1, ny
-                         if (tmpVx(ix,iy).gt.0.0_IDS_real) then
-                             tmpCv(ix,iy) = tmpCv(ix,iy)/tmpVx(ix,iy)/qe
-                         else
-                             tmpCv(ix,iy) = 1.0e-6_IDS_real
-                         end if
-                      end do
-                   end do
-                 !! Molecular temperature
-                   call write_quantity(                                      &
-                       &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%temperature,                  &
-                       &   value = tmpCv,                                    &
-                       &   time_sind = time_sind )
                  !! Molecular density
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%density,                      &
-                       &   value = tmpVx,                                    &
+                       &   value = totCv,                                    &
                        &   time_sind = time_sind )
                  !! Molecular particular fluxes
                    call write_face_scalar(                                   &
@@ -4920,7 +4893,7 @@ contains
           match_found = .true.
           do is = 0, ns-1
             if (is_neutral(is).and.use_eirene.ne.0) cycle
-            if (bccon(ib,is).eq.9) then
+            if (bccon(is,ib).eq.9) then
               if (nibnd.eq.IDS_REAL_INVALID) then
                 nibnd = conpar(is,ib,1)
               else
