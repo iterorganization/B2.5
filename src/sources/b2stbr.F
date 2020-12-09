@@ -33,6 +33,8 @@
      &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_eirene
+     ,  , only : eirene_mc
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
      ,          ext_sna
@@ -1248,6 +1250,10 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 *.end b2stbr
 
       subroutine b2stbr_neutr_scl(nx, ny, ns)
+#ifdef B25_EIRENE
+      use b2mod_eirene
+     , , only : neutr_scl
+#endif
       use b2mod_subsys
       implicit none
       integer nx, ny, ns

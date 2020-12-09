@@ -1,8 +1,4 @@
-      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
-     1 sna0, smo0, she0, shi0, main_call)
-
-c  version : 26.07.2002 23:39
-
+      module b2mod_eirene
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -56,122 +52,13 @@ c  version : 26.07.2002 23:39
       use b2mod_braeir
       use b2mod_eirbra
 #endif
-      use b2mod_subsys
       implicit none
-      integer nx,ny,ns
-      real (kind=R8) ::
-     * dtim, BoRiS,
-     * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     & she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
-      logical main_call                                           !dpc
-csw 19oct2012, added save attribute!!!
-      logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
-      integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
-     1 nesepm_istra, use_recyceir, b2stbc_feedback
-      logical feedback_stratum
-      real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
-     * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
-     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
-      real (kind=R8), save, allocatable ::
-     1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
-     1 SSEISTAB(:),
-     1 tfl(:,:), volsumnold(:)
-      real (kind=R8), save, allocatable ::
-     * SMO_TOT(:,:,:), SNI_TOT(:,:,:)
-      real (kind=R8) ::                                           !djm Jan2017
-     * t0_a, t0_m, t0_i, t0_p,
-     * t1_apl, t1_mpl, t1_ipl, t1_ppl,
-     * t2_apl, t2_mpl, t2_ipl, t2_ppl,
-     * t3_apl, t3_mpl, t3_ipl, t3_ppl,
-     * t4_apl, t4_mpl, t4_ipl, t4_ppl
-
-cank-20020724 {
-c*** The type of source scaling is determined by the lstrascl parameter
-c*** for each stratum, each atom species:
-c***  < 0   - prehistoric treatment (left for compatibility)
-c***  = 0   - no source scaling at all
-c***  =< natmi - full treatment, on each sub-iteration
-c***  > natmi  - partial treatment, after Eirene call only
-c***
-c*** In the Eirene particle balance, we distinguish the following
-c*** components for each stratum, each atomic species:
-c***
-c***  hlp_pi  corresponding plasma species onto the surfaces
-c***  hlp_po  resulting neutrals from the surfaces (recycling)
-c***  hlp_ni  neutrals onto the surfaces
-c***  hlp_no  reflected neutrals
-c***  hlp_g   neutrals from the gas puffing sources
-c***  hlp_s   neutrals ionising in the plasma (<0 for recombination)
-c***  hlp_t   neutrals absorbed in the "time layer"
-c***  tfl     plasma onto the surfaces in B2
-c***
-c*** For a recycling stratum, first scale all the sources and fluxes by
-c*** the ratio of tfl/hlp_pi to have exact match between B2 & Eirene.
-c*** Then scale hlp_s, hlp_t, hlp_ni, hlp_no by x ~ 1:
-c***
-c***    (hlp_s + hlp_t + hlp_ni - hlp_no) * x = hlp_po
-c***
-c*** (this should only be done for the species scaled with themselves)
-c***
-c*** For a non-recycling stratum, scale hlp_s & hlp_t by x, and
-c*** hlp_ni & hlp_no by 1/x:
-c***
-c***    (hlp_s + hlp_t) * x + (hlp_ni - hlp_no) / x = hlp_g
-c***
-c*** selecting the x value positive, closest to 1.
-c***
-c*** No scaling for the "time layer"
-c***
-c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
-c*** Otherwise: take the radiation explicitly calculated in EIRENE.
-
-      real (kind=R8) :: s,x1,x2,t00,hlp_st,rec_tol
-      real (kind=R8), save, allocatable ::
-     1 hlp_pi(:),hlp_po(:),hlp_ni(:),
-     2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
-     1 hlp_scl(:),hlp_scp(:,:),
-     2 hlp_stra(:), core_flux(:)
-      real (kind=R8), save :: core_surface
-      logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      logical, allocatable, save :: hlp_pff(:,:)
-      integer i,j,k,l,js,ls,kks,n,icount
-      integer, save :: l_ddt
-      integer, save, allocatable :: ispc_ref(:), ishigh(:)
-      character*13, save, allocatable :: ion_name(:)
-      real (kind=R8), allocatable :: sum_wld(:,:)
-cank }
-      character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
-      character*256 filename
-c      integer lns_hlp
-c      parameter (lns_hlp=4)
-c      integer lis_hlp(lns_hlp)
-c      data lis_hlp / 110, 111, 112, 49 /
-      logical ex, last, saved_volrec_used, na_feedback_on
-      integer :: igpuff(NSTRAT)
-
-      integer output_style, linearisation, ank_mods, save_f31,
-     1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30, stab_corr
-      save ncall, output_style, saved_volrec_used,
-     * pfrregno1, pfrregno2, solregno, isfeedback, b2stbc_feedback,
-     * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
-     1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
-     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
-     3 stab_corr
-csw 26mar2013
-      integer, save :: iscltst=0
-csw 26feb2014
-      integer, save :: ihist=0, neutr_avg=0, nhist=1, nrelax = 0
-      integer, save :: ih_end
-      logical, save :: full_history = .false.
-      real (kind=R8) :: relax
-
+      integer, save :: ank_mods = 0, use_recyceir = 1
+      integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:,:), smo_av(:,:,:,:), sei_av(:,:,:), see_av(:,:,:)
+
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      .  sne_av_pael(:,:,:), sne_av_pmel(:,:,:),
      .  sna_av_paat(:,:,:,:), sna_av_pmat(:,:,:,:),
@@ -231,6 +118,128 @@ csw 26feb2014
      &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
      &  sei_s_eipl(:,:,:), sei_s_eppl(:,:,:)
 
+      real(kind=R8), allocatable, save :: hlp_stra(:)
+      logical, allocatable, save :: hlp_pff(:,:)
+      logical, save :: saved_volrec_used
+      data saved_volrec_used/.false./
+
+      contains
+
+      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
+     1 sna0, smo0, she0, shi0, main_call)
+      use b2mod_subsys
+      implicit none
+      integer nx,ny,ns
+      real (kind=R8) ::
+     * dtim, BoRiS,
+     * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     & she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
+      logical main_call                                           !dpc
+csw 19oct2012, added save attribute!!!
+      logical, save :: my_ltime
+
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
+      integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
+     1 nesepm_istra, b2stbc_feedback
+      logical feedback_stratum
+      real (kind=R8) ::
+     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
+     * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
+     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
+      real (kind=R8), save, allocatable ::
+     1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
+     1 SSEISTAB(:),
+     1 tfl(:,:), volsumnold(:)
+      real (kind=R8), save, allocatable ::
+     * SMO_TOT(:,:,:), SNI_TOT(:,:,:)
+      real (kind=R8) ::                                           !djm Jan2017
+     * t0_a, t0_m, t0_i, t0_p,
+     * t1_apl, t1_mpl, t1_ipl, t1_ppl,
+     * t2_apl, t2_mpl, t2_ipl, t2_ppl,
+     * t3_apl, t3_mpl, t3_ipl, t3_ppl,
+     * t4_apl, t4_mpl, t4_ipl, t4_ppl
+
+cank-20020724 {
+c*** The type of source scaling is determined by the lstrascl parameter
+c*** for each stratum, each atom species:
+c***  < 0   - prehistoric treatment (left for compatibility)
+c***  = 0   - no source scaling at all
+c***  =< natmi - full treatment, on each sub-iteration
+c***  > natmi  - partial treatment, after Eirene call only
+c***
+c*** In the Eirene particle balance, we distinguish the following
+c*** components for each stratum, each atomic species:
+c***
+c***  hlp_pi  corresponding plasma species onto the surfaces
+c***  hlp_po  resulting neutrals from the surfaces (recycling)
+c***  hlp_ni  neutrals onto the surfaces
+c***  hlp_no  reflected neutrals
+c***  hlp_g   neutrals from the gas puffing sources
+c***  hlp_s   neutrals ionising in the plasma (<0 for recombination)
+c***  hlp_t   neutrals absorbed in the "time layer"
+c***  tfl     plasma onto the surfaces in B2
+c***
+c*** For a recycling stratum, first scale all the sources and fluxes by
+c*** the ratio of tfl/hlp_pi to have exact match between B2 & Eirene.
+c*** Then scale hlp_s, hlp_t, hlp_ni, hlp_no by x ~ 1:
+c***
+c***    (hlp_s + hlp_t + hlp_ni - hlp_no) * x = hlp_po
+c***
+c*** (this should only be done for the species scaled with themselves)
+c***
+c*** For a non-recycling stratum, scale hlp_s & hlp_t by x, and
+c*** hlp_ni & hlp_no by 1/x:
+c***
+c***    (hlp_s + hlp_t) * x + (hlp_ni - hlp_no) / x = hlp_g
+c***
+c*** selecting the x value positive, closest to 1.
+c***
+c*** No scaling for the "time layer"
+c***
+c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
+c*** Otherwise: take the radiation explicitly calculated in EIRENE.
+
+      real (kind=R8) :: s,x1,x2,t00,rec_tol
+      real (kind=R8), save, allocatable ::
+     1 hlp_pi(:),hlp_po(:),hlp_ni(:),
+     2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
+     1 hlp_scl(:),hlp_scp(:,:),
+     2 core_flux(:)
+      real (kind=R8), save :: core_surface
+      logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
+      integer i,j,k,l,js,ls,kks,n,icount
+      integer, save :: l_ddt
+      integer, save, allocatable :: ispc_ref(:), ishigh(:)
+      character*13, save, allocatable :: ion_name(:)
+      real (kind=R8), allocatable :: sum_wld(:,:)
+cank }
+      character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
+      character*256 filename
+c      integer lns_hlp
+c      parameter (lns_hlp=4)
+c      integer lis_hlp(lns_hlp)
+c      data lis_hlp / 110, 111, 112, 49 /
+      logical ex, last, na_feedback_on
+      integer :: igpuff(NSTRAT)
+
+      integer output_style, linearisation, save_f31,
+     1 repeat_first_call, ionising_core, dpc_fix, eircount,
+     2 no_sseicorr, save_f30, stab_corr
+      save ncall, output_style,
+     * pfrregno1, pfrregno2, solregno, isfeedback, b2stbc_feedback,
+     * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
+     * neutral_sources_rescale, ncallfeedback, save_f31,
+     1 repeat_first_call, ionising_core, dpc_fix,
+     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
+     3 stab_corr
+csw 26mar2013
+      integer, save :: iscltst=0
+csw 26feb2014
+      integer, save :: ihist=0, neutr_avg=0
+      integer, save :: ih_end
+      logical, save :: full_history = .false.
+      real (kind=R8) :: relax
+
 *   ..procedures
       real (kind=R8) :: rratio
       intrinsic min, mod, abs, sqrt, log
@@ -240,14 +249,14 @@ csw 26feb2014
       external streql
 #endif
 *   ..initialisation
-      data ncall/0/, output_style/1/, saved_volrec_used/.false./,
+      data ncall/0/, output_style/1/,
      .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
      2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
-     5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
-     6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
+     5  ndes/0.0_R8/, save_f31/0/, repeat_first_call/1/,
+     6  volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
      7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/, stab_corr/1/
 
 *-----------------------------------------------------------------------
@@ -416,12 +425,12 @@ csw 22jul2011
         call eirene_extrab25_braeir_init(chemical_sputter_yield)
 #endif
 csw 26mar2013
-        call ipgeti ('eirene_iscltst',iscltst)
+        call ipgeti ('eirene_iscltst', iscltst)
 
 csw 26feb2013
-        call ipgeti ('eirene_neutr_avg',neutr_avg)
-        call ipgeti ('b2stbr_eir_src_nhist',nhist)
-        call ipgeti ('eirene_underrelax',nrelax)
+        call ipgeti ('eirene_neutr_avg', neutr_avg)
+        call ipgeti ('b2stbr_eir_src_nhist', nhist)
+        call ipgeti ('eirene_underrelax', nrelax)
         call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
@@ -432,8 +441,8 @@ csw 26feb2013
         call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
-        call ipgeti ('eirene_no_sseicorr',no_sseicorr)
-        call ipgeti ('eirene_stab_corr',stab_corr)
+        call ipgeti ('eirene_no_sseicorr', no_sseicorr)
+        call ipgeti ('eirene_stab_corr', stab_corr)
       end if !}
 
       if(ncall.eq.0) then
@@ -3800,12 +3809,12 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
 
 ! { IYS 12.01.2018
       sna_eir = 0.0_R8
-      if (ank_tracing .gt. 0) then    
+      if (ank_tracing .gt. 0) then
         do is = 1, nspecies
           do iy = -1, ny
             do ix = -1, nx
               sna_eir(is) = sna_eir(is) +
-     &           sna0(ix,iy,0,eb2spcr(is)+1) + 
+     &           sna0(ix,iy,0,eb2spcr(is)+1) +
      &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
             enddo
           enddo
@@ -3844,9 +3853,13 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
 * ..return
       call subend ()
       return
+      end subroutine eirene_mc
 
 * ..finalise save
-      entry eirene_mc_final(nx,ny,ns,BoRiS)
+      subroutine eirene_mc_final(nx,ny,ns,BoRiS)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real(kind=R8), intent(in) :: BoRiS
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
@@ -3856,6 +3869,7 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
       call write_f31(nx, ny)
 csw 26jan2011
       call eirene_extrab25_cleanup
+      call eirene_wneutrals_dealloc
 #ifndef B25_EIRENE
       call dealloc_b2mod_eirdiag
 #endif
@@ -3898,20 +3912,23 @@ csw 26feb2014
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
       deallocate(feedback_strata)
+      deallocate(hlp_pff,hlp_stra)
 
       return
+      end subroutine eirene_mc_final
 
 c======================================================================
-      entry neutr_scl(nx, ny, ns)
+      subroutine neutr_scl(nx, ny, ns)
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      integer :: ix, iy, is, istrai, j, k, l
+      real(kind=R8) :: s, t0, recyctmp, hlp_st
+      logical hlp_log
 c======================================================================
       if(dbg_eir_mc.gt.0) write(*,*) 'entry neutr_scl'
       if(ank_mods.ne.0) then
 c*** Calculate the basic quantities - i.e. the neutral source strengths
 c*** and total plasma sources for each stratum for subsequent rescaling
-
-c!###{
-        hlp_tt=.false.
-c!###}
 
 c*** First, initialise the accumulators.
 c***  sclstra: neutral sources
@@ -4134,8 +4151,7 @@ c!###}
 
       endif ! ank_mods
       return
-
-      contains
+      end subroutine neutr_scl
 
       subroutine alloc_hist_arrays(nhistd)      !IYS 28.03.12 {
 #ifdef B25_EIRENE
@@ -4541,4 +4557,4 @@ c!###}
       end subroutine strata_check
 #endif
 
-      end subroutine eirene_mc
+      end module b2mod_eirene

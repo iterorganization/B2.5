@@ -701,9 +701,7 @@
 *   ..write physics parameters
       call b2wfcp (nout(0), 1, ns)
 *   ..write state
-      call b2wfps (nout(0), idout, nx, ny, ns,
-     &  gs, qc, ne, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch)
+      call b2wfps (nout(0), idout, nx, ny, ns)
 *   ..activate graphics on nout(1)
       call gacwk (nout(1))
 *   ..mark contour style

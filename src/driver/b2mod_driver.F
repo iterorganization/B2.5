@@ -68,6 +68,7 @@
       use eirmod_eirbra
       use eirmod_infcop
       use eirmod_wneutrals
+      use b2mod_eirene
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #ifdef NAGFOR
