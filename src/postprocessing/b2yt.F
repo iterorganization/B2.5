@@ -88,7 +88,7 @@
       logical file_open
 *   ..procedures
       external prgini, prgfin, xertst, cfopen, cfruin
-      external b2ytdr, b2ytx0, ipsetc, ipgeti
+      external b2ytdr, b2ytx0, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
       data nout/60,61,62,63,64,65,66/

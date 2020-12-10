@@ -60,7 +60,7 @@
       intrinsic log
       real (kind=R8) ::
      *   smax
-      external xertst, cfverw, cfwure, cfwuin
+      external xertst, cfwure, cfwuin
       external smax
 
 *-----------------------------------------------------------------------

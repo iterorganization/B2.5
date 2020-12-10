@@ -17,7 +17,7 @@
       parameter (fform0='formatted')
       intrinsic len
       logical streql
-      external xertst, xerrab, xerget, chcase, streql
+      external xertst, xerrab, chcase, streql
 *     ------------------------------------------------------------------
 *!!   Note 0: set fform0 to the desired mode for un*formatted output.
 *!!   Note 1, on porting this routine to another operating system:

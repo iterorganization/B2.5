@@ -155,7 +155,7 @@
       intrinsic log
       real (kind=R8) ::
      *   smax
-      external xertst, smax, cfrure, cfruin, cfverr
+      external xertst, smax, cfrure, cfruin
 
 *-----------------------------------------------------------------------
 *.computation
