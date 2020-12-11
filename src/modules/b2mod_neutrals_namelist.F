@@ -405,8 +405,8 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
 cmb   b2species_start and end are set -100 here to check whether the field was read. If not recyc is copied into b2recyc
       b2species_start(:)=-100                            
       b2species_end(:)=-100
-      maxw(:) = 0
-      maxw_eff(:) = 0
+      maxw(:) = 1
+      maxw_eff(:) = 1
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
