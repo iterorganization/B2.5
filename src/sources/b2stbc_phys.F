@@ -180,13 +180,9 @@
 *   ..procedures
       intrinsic abs, sqrt, mod
       real (kind=R8) ::
-     *  sy, bcint, syhz                                              !srv 24.08.08
+     *  bcint
       external xertst, ipgeti, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
-      sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
-      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
-     &            hz(ix,iy)
-!     &            hz(topix(ix,iy),topiy(ix,iy))
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,

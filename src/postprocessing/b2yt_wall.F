@@ -367,7 +367,7 @@ cxpb lb and ub are lower and upper interval bounds
       character*17 numstr
       logical found
 
-      intrinsic max, min
+      intrinsic max
       logical streql
       external xertst
       external convert_bundle_r, streql

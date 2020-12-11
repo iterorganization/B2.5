@@ -120,9 +120,6 @@ c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
 c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
         real (kind=R8) :: DSEVAL, DFMIN, arg, y(0:nxd-1)
 
-        real (kind=R8) :: sy
-        sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
-
 csw 09jan2014 add extra allocates
         allocate(p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
      &           cc(0:nxd-1),cd(0:nxd-1))

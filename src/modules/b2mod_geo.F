@@ -38,7 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: diff, dist, disx, disy, distc, match
-      public :: cr, cz, hy1, pit
+      public :: cr, cz, hy1, pit, sy
 
       contains
 
@@ -308,5 +308,24 @@ c conn
       return
       end function pitx
 
+      function sy(ix,iy)
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: sy
+      sy = gs(topix(ix,iy),topiy(ix,iy),1)
+      return
+      end function sy
+
+      function syhz(ix,iy)
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: syhz
+      syhz = gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
+     &       hz(ix,iy)
+!     &       hz(topix(ix,iy),topiy(ix,iy))
+      return
+      end function syhz
 
       end module b2mod_geo
