@@ -146,12 +146,14 @@
       use b2mod_par_opt
       implicit none
       real(kind=r8) j(nncf), jd(nncf)
+      integer iv
+      character*3 str
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
       Tao tao
       PetscScalar F
-      PetscScalar x_v(0:1),g_v(0:1)
+      PetscScalar x_v(0:nnvar-1),g_v(0:nnvar-1)
       PetscOffset x_i,g_i
 
 
@@ -163,11 +165,17 @@
 !     g_v(g_i) = 2.0*(x_v(x_i)-2.0) - 2.0
 !     gx2=2*(x2-2) -2
 !     g_v(g_i+1) = 2.0*(x_v(x_i+1)-2.0) - 2.0
-      par_opt_phys(1) = x_v(x_i) !real(XX(1),kind=r8)
-      write(*,*) 'TAO: eval_F_grad_F with x= ', par_opt_phys(1)
+      do iv = 1, nnvar
+        par_opt_phys(iv) = x_v(x_i+iv-1)
+        write(str,"(I1)") iv
+        if (iv.ge.10) write(str,"(I2)") iv
+        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(iv)
+      end do
       call b2mn_step_d(j,jd)
       F = j(1)
-      g_v(g_i) = jd(1) !DBLE(jd(1))
+      do iv = 1, nnvar
+        g_v(g_i+iv-1) = jd(1)
+      end do
 
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
