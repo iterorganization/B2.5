@@ -14,12 +14,12 @@
      &  hessian_approximation 
       double precision, save :: cpu_opt=0.0, tol_opt=1.0e-7
       double precision, parameter :: inf_opt = 1.0e30
-      integer, save :: maxiter=100
+      integer, save :: maxiter=100, xtype(nvmx)
       logical :: file_ok
       private optimization
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
-     & limited_memory_update_type
+     & limited_memory_update_type, xtype
 
       contains
 
@@ -29,7 +29,7 @@
       integer nvar, ncon, nele_jac
 
       filename='b2.optimization.parameters'
-      write (*,*) 'OPTIM: max number of readablee vars and cons:',nvmx
+      write (*,*) 'OPTIM: max number of readable vars and cons:',nvmx
       write (*,*) 'OPTIM: infinity bound set to:',inf_opt
       x0 = inf_opt*10
       xl = -inf_opt*10
@@ -40,6 +40,7 @@
       jcol = 0
       jrow = 0
       jj = 0.0
+      xtype = -1
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -62,6 +63,8 @@
       call xertst(nnvar.gt.0,'b2mod_par_opt: nnvar<=0')
       call xertst(nncon.gt.0,'b2mod_par_opt: nncon<=0')
       call xertst(nnjac.gt.0,'b2mod_par_opt: nnjac<=0')
+      call xertst(any(xtype(1:nnvar).gt.0).and.any(xtype(1:nnvar).le.3),
+     &  'b2mod_par_opt: xtype<=0 or xtype>=3')
       call xertst(any(jcol(1:nnjac).gt.0),'b2mod_par_opt: jcol<=0')
       call xertst(any(jrow(1:nnjac).gt.0),'b2mod_par_opt: jrow<=0')
       call xertst(maxval(jcol(1:nnjac)).le.nncon,

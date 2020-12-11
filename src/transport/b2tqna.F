@@ -116,7 +116,7 @@
      *  t0, t1, min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp, tav
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
-      integer elm_count, transport_keps
+      integer elm_count, transport_keps, iv
       save ncall, new_df0, ixref, transport_namelist, user_transport,
      1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
      2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
@@ -233,7 +233,19 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if (flag_optim) then
-        parm_dna(1) = par_opt_phys(1)
+        do iv = 1, nnvar !loop over all design variables
+          select case (xtype(iv))
+          case (1) ! dna
+            parm_dna(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
+          case (2) ! hce
+            parm_hce = par_opt_phys(iv)
+          case (3) ! hci
+            parm_hci(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
+          case default
+            write(*,*) xtype(iv)
+            call xerrab ('xtype out of bounds')
+          end select
+        end do
       endif
       if(transport_namelist.eq.1) then
         do is=0,ns-1

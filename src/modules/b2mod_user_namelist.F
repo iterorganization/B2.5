@@ -6,7 +6,7 @@
       implicit none
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd, nncf
-      parameter (npfrgrpd=6, nntrgrpd=16, nncf=4)
+      parameter (npfrgrpd=6, nntrgrpd=16, nncf=5)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -195,10 +195,14 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.4) call xerrab ('cftype>4 not coded ')
-          if ((cftype(icf).eq.1 .or. cftype(icf).eq.2) .and.
-     &         .not.cfread(icf)) call xerrab ('cftype=1 or 2 need to'//
-     &         'read experimental profile')
+          if (cftype(icf).gt.5) call xerrab ('cftype>5 not coded ')
+          if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
+     &     'cftype(1)=0 but no other cost functions are defined')
+          if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
+     &     'only cftype(1) can be zero')
+          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
+     &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
+     &         ' read experimental profile')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -224,7 +228,8 @@ c***  Standard setup:
             enddo
             close(99)
           endif
-          if (cfstart(icf) /= 0 .and. cfend(icf) /= 0) then
+          if (cfstart(icf) /= 0 .and. cfend(icf) /= 0 .and.
+     &         cftype(icf).ne.0) then
             ncffc = 0
             m%cfFcP(icf,1) = incf +1 
             noss = cfend(icf) - cfstart(icf) + 1
@@ -238,7 +243,10 @@ c***  Standard setup:
             end do              ! iss	 
             m%cfFcP(icf,2) = ncffc
           else
-            if (.not.cfomp(icf)) call xerrab ('cfstart/cfend = 0 ')
+            if (cftype(icf).eq.0 .and. cfstart(icf).eq.0 .or.
+     &          cfend(icf).eq.0) call xerrab ('cfstart/cfend = 0 ')
+            if (cftype(icf).ne.0 .and. .not.cfomp(icf)) 
+     &        call xerrab ('cfstart/cfend = 0 ')
             m%cfFcP(icf,1) = 0
             m%cfFcP(icf,2) = 0
           endif

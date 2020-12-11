@@ -230,7 +230,6 @@
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step
-      use b2mod_plasma_diff
       use b2mod_user_namelist_diff
      , , only : nncf
       use b2mod_par_opt
@@ -240,12 +239,18 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER
+      integer IER, iv
+      character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        par_opt_phys(1) = real(XX(1),kind=r8)
-        write(*,*) 'IPOPT: eval_f with x= ', par_opt_phys(1)
+        do iv = 1, nvar
+          par_opt_phys(iv) = real(XX(iv),kind=r8)
+          write(str,"(I1)") iv
+          if (iv.ge.10) write(str,"(I2)") iv
+          write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &     par_opt_phys(iv)
+        enddo
         call b2mn_step(j)
       endif
       F = DBLE(j(1))
@@ -266,17 +271,24 @@
       real(kind=r8) j(nncf), jd(nncf), jb(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER
+      integer IER, iv
+      character*3 str
       save jd
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        par_opt_phys(1) = real(XX(1),kind=r8)
-        write(*,*) 'IPOPT: eval_grad_f with x= ', par_opt_phys(1)
+        do iv = 1, nvar
+          par_opt_phys(iv) = real(XX(iv),kind=r8)
+          write(str,"(I1)") iv
+          if (iv.ge.10) write(str,"(I2)") iv
+          write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &     par_opt_phys(iv)
+        enddo
         call b2mn_step_d(j,jd)
       endif
-      grad(1) = DBLE(jd(1))
-
+      do iv = 1, nvar
+        grad(iv) = DBLE(jd(1))
+      end do
 !      if (new_x.eq.0) then
 !        call b2mn_init_b
 !        ss = real(XX(1),kind=r8)

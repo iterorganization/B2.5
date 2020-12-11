@@ -94,6 +94,7 @@
           ifc1 = mpg%cfFcP(icf,1)
           ifc2 = ifc1 + mpg%cfFcP(icf,2) - 1
           select case (cftype(icf))
+          case (0) !sum of other cost function. It is skipped at this stage because it MUST be J(1) for optimization
           case (1) !electron density on desired CVs
             do iCv = ic1, ic2
               J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
@@ -104,16 +105,23 @@
           case (2) !electron temperature on desired CVs
             do iCv = ic1, ic2
               J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
-     &                 st%pl%te(mpg%cfCv(iCv))
+     &                 st%pl%te(mpg%cfCv(iCv))/ev
      &                 - ffdata(icf,iCv-ic1+1))**2
             enddo
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
-          case (3) !max electron temperature on desired CVs
+          case (3) !ion temperature on desired CVs
+            do iCv = ic1, ic2
+              J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
+     &                 st%pl%ti(mpg%cfCv(iCv))/ev
+     &                 - ffdata(icf,iCv-ic1+1))**2
+            enddo
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+          case (4) !max electron temperature on desired CVs
             do iCv = ic1, ic2
               J(icf) = max(J(icf),st%pl%te(mpg%cfCv(iCv)))
             enddo
             J(icf) = J(icf)/ev
-          case (4) !max heat flux on desired FCs
+          case (5) !max heat flux on desired FCs
             do iFc = ifc1, ifc2
               qq = 0.0
               iCv = mpg%fcCv(mpg%cfFc(iFc),1)
@@ -133,6 +141,12 @@
             call xerrab ('cftype out of bounds')
           end select
         enddo
+        ! now sum of cost functions for cftype=0
+        if (cftype(1).eq.0) then
+          do icf = cfstart(1), cfend(1)
+            J(1) = J(1) + J(icf)
+          end do
+        endif
       endif     
       call subend ()
       return
