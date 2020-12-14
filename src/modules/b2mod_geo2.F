@@ -140,6 +140,478 @@
       if (map1Initialized) call deallocateB2GridMap(gmap1)
       end subroutine dealloc_b2mod_geo2
 
+  !> Computes the standard B2 connectivity information
+  !! Code taken from b2agfs.F.
+  !! @note  A note on the cut arrays:
+  !!        leftcut(i) holds the left boundary index of a region which is cut
+  !!        rightcut(i) holds the right boundary index + 1 of a region which is cut
+  !!        This means the region range in the x direction is
+  !!        (leftcut(i):rightcut(i))
+      subroutine init_connectivity( nx1, ny1, cflag,
+     &     periodic_bc, nncut, inseltop, inselbot, istyle )
+
+      use b2mod_types
+      implicit none
+#include <DIMENSIONS.F>
+
+    !!   ..input arguments (unchanged on exit)
+      integer, intent(in) :: nx1, ny1, istyle, periodic_bc
+      integer cflag(-1:nx1,-1:ny1,CARREOUT_NCELLFLAGS)
+    !!   .. output arguments
+      integer, intent(out) ::
+     & nncut, inseltop, inselbot
+
+    !! internal
+
+      integer :: ic, ix, iy, i, ixNb, iyNb, rightcut, leftcut
+      integer :: xstep, ystep, nNb
+      logical :: cutFound, cellFound, fullGrid
+
+      nncut=0
+      bottomcut1(:)=ny1+1
+      topcut1(:)=-2
+      rightcut1(:)=-2
+      leftcut1(:)=nx1+1
+      ic=0 !! cut counter
+
+      rightix1 = NO_CONNECTIVITY
+      rightiy1 = NO_CONNECTIVITY
+      leftix1 = NO_CONNECTIVITY
+      leftiy1 = NO_CONNECTIVITY
+      topix1 = NO_CONNECTIVITY
+      topiy1 = NO_CONNECTIVITY
+      bottomix1 = NO_CONNECTIVITY
+      bottomiy1 = NO_CONNECTIVITY
+      inseltop = NO_CONNECTIVITY
+      inselbot = NO_CONNECTIVITY
+
+    !! First step: find cell connectivity
+
+      do iy=-1,ny1
+        do ix=-1,nx1
+
+            !! unused cells have no connectivity, skip
+            if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+
+            !! Look for the left/right connectivity
+            if (distc1(ix,iy,0,ix,iy,2) > 0.0_R8) then
+              ixNb = ix
+              iyNb = iy
+              cellFound = .false.
+
+              do ystep =  1, ny1 + 2
+                do xstep = 1, nx1 + 2
+                  ixNb = ixNb - 1
+                  if (ixNb < -1) ixNb = nx1
+
+                  if (isUnusedCell(cflag(ixNb,iyNb,CELLFLAG_TYPE)))
+     .             cycle
+                  cellFound = matchLeft(ixNb,iyNb,ix,iy)
+                  if (cellFound) exit
+                end do
+                if (cellFound) exit
+                iyNb = iyNb - 1
+                if (iyNb < -1) iyNb = ny1
+              end do
+
+              if (cellFound) then
+                !! set connectivity in both directions
+                leftix1(ix,iy)=ixNb
+                leftiy1(ix,iy)=iyNb
+                rightix1( ixNb, iyNb ) = ix
+                rightiy1( ixNb, iyNb ) = iy
+              end if
+            end if
+
+            !! Look for the top/bottom connectivity
+            if (distc1(ix,iy,0,ix,iy,1) > 0.0_R8) then
+              ixNb = ix
+              iyNb = iy
+              cellFound = .false.
+
+              do xstep = 1, nx1 + 2
+                do ystep =  1, ny1 + 2
+                  iyNb = iyNb - 1
+                  if (iyNb < -1) iyNb = ny1
+
+                  if (isUnusedCell(cflag(ixNb,iyNb,CELLFLAG_TYPE)))
+     .             cycle
+                  cellFound = matchBottom(ixNb,iyNb,ix,iy)
+                  if (cellFound) exit
+                end do
+                if (cellFound) exit
+                ixNb = ixNb - 1
+                if (ixNb < -1) ixNb = nx1
+              end do
+
+              if (cellFound) then
+                !! set connectivity in both directions
+                bottomix1(ix,iy)=ixNb
+                bottomiy1(ix,iy)=iyNb
+                topix1(ixNb,iyNb)=ix
+                topiy1(ixNb,iyNb)=iy
+              else
+                !write (*,*) "No bottom neighbour for ", ix, iy
+              end if
+            end if
+
+        end do
+      end do
+
+    !! Fix connectivity to match B2 convention
+      do iy=-1,ny1
+        do ix=-1,nx1
+          if (leftix1(ix, iy) == NO_CONNECTIVITY) then
+            leftix1(ix, iy) = -2
+            leftiy1(ix, iy) = iy
+          end if
+          if (rightix1(ix, iy) == NO_CONNECTIVITY) then
+            rightix1(ix, iy) = nx1 + 1
+            rightiy1(ix, iy) = iy
+          end if
+          if (bottomix1(ix, iy) == NO_CONNECTIVITY) then
+            bottomix1(ix, iy) = ix
+            bottomiy1(ix, iy) = -2
+          end if
+          if (topix1(ix, iy) == NO_CONNECTIVITY) then
+            topix1(ix, iy) = ix
+            topiy1(ix, iy) = ny1 + 1
+          end if
+        end do
+      end do
+
+    !! second step (only for "classical" grids with no cell type information):
+    !! identify ghost cells
+
+      if ( count(isGhostCell(cflag(:,:,CELLFLAG_TYPE))) == 0 ) then
+
+       !! find guard cells
+        do iy=-1,ny1
+          do ix=-1,nx1
+
+            nNb = 0
+            if (isInDomain(nx1, ny1,
+     .           leftix1(ix, iy), leftiy1(ix, iy))) nNb = nNb + 1
+            if (isInDomain(nx1, ny1,
+     .           rightix1(ix, iy), rightiy1(ix, iy))) nNb = nNb + 1
+            if (isInDomain(nx1, ny1,
+     .           topix1(ix, iy), topiy1(ix, iy))) nNb = nNb + 1
+            if (isInDomain(nx1, ny1,
+     .           bottomix1(ix, iy), bottomiy1(ix, iy))) nNb = nNb + 1
+
+            if (nNb < 4) cflag(ix, iy, CELLFLAG_TYPE) = GRID_GUARD
+
+          end do
+        end do
+
+       !! mark boundary cells
+        do iy=-1,ny1
+          do ix=-1,nx1
+
+            if (.not. isGhostCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+
+            if (isInDomain(nx1, ny1,
+     .           leftix1(ix, iy), leftiy1(ix, iy))) then
+              if ( isRealCell(cflag(leftix1(ix, iy),
+     .                        leftiy1(ix, iy), CELLFLAG_TYPE)) ) then
+                cflag(leftix1(ix, iy),
+     .                leftiy1(ix, iy), CELLFLAG_TYPE) = GRID_BOUNDARY
+                cflag(ix, iy, CELLFLAG_LEFTFACE) = BOUNDARY_NOSTRUCTURE
+                cflag(leftix1(ix, iy),
+     .                leftiy1(ix, iy), CELLFLAG_RIGHTFACE) =
+     .                                             BOUNDARY_NOSTRUCTURE
+              end if
+            end if
+
+            if (isInDomain(nx1, ny1,
+     .           rightix1(ix, iy), rightiy1(ix, iy))) then
+              if ( isRealCell(cflag(rightix1(ix, iy),
+     .                         rightiy1(ix, iy), CELLFLAG_TYPE)) ) then
+                cflag(rightix1(ix, iy),
+     .                rightiy1(ix, iy), CELLFLAG_TYPE) = GRID_BOUNDARY
+                cflag(ix, iy, CELLFLAG_RIGHTFACE) = BOUNDARY_NOSTRUCTURE
+                cflag(rightix1(ix, iy),
+     .                rightiy1(ix, iy), CELLFLAG_LEFTFACE) =
+     .                                              BOUNDARY_NOSTRUCTURE
+              end if
+            end if
+
+            if (isInDomain(nx1, ny1,
+     .           topix1(ix, iy), topiy1(ix, iy))) then
+              if ( isRealCell(cflag(topix1(ix, iy),
+     .                         topiy1(ix, iy), CELLFLAG_TYPE)) ) then
+                cflag(topix1(ix, iy),
+     .                topiy1(ix, iy), CELLFLAG_TYPE) = GRID_BOUNDARY
+                cflag(ix, iy, CELLFLAG_TOPFACE) = BOUNDARY_NOSTRUCTURE
+                cflag(topix1(ix, iy),
+     .                topiy1(ix, iy), CELLFLAG_BOTTOMFACE) =
+     .                                            BOUNDARY_NOSTRUCTURE
+              end if
+            end if
+
+            if (isInDomain(nx1, ny1,
+     .           bottomix1(ix, iy), bottomiy1(ix, iy))) then
+              if ( isRealCell(cflag(bottomix1(ix, iy),
+     .                         bottomiy1(ix, iy), CELLFLAG_TYPE)) ) then
+                cflag(bottomix1(ix, iy),
+     .                bottomiy1(ix, iy), CELLFLAG_TYPE) = GRID_BOUNDARY
+                cflag(ix, iy, CELLFLAG_BOTTOMFACE) =
+     .                                             BOUNDARY_NOSTRUCTURE
+                cflag(bottomix1(ix, iy),
+     .                bottomiy1(ix, iy), CELLFLAG_TOPFACE) =
+     .                                             BOUNDARY_NOSTRUCTURE
+              end if
+            end if
+
+          end do
+        end do
+
+      else
+
+    !! second step (for "extended" grids with no cell face information):
+    !! make sure ghost cells are not connected across different walls
+    !! for full grids, we wish to allow corner cells to be connected
+
+        fullGrid =
+     .   (count(isUnusedCell(cflag(0:nx1-1,0:ny1-1,CELLFLAG_TYPE)))
+     .     == 0)
+
+        do ix = -1, nx1
+         do iy = -1, ny1
+          if(.not. isGhostCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+          if(cflag(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
+            if(isInDomain(nx1,ny1,topix1(ix,iy),topiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_LEFTFACE).ne.
+     .           cflag(topix1(ix,iy),topiy1(ix,iy),CELLFLAG_LEFTFACE)
+     .         .and. (((cflag(ix,iy,CELLFLAG_LEFTFACE).gt.0 .or.
+     .                  cflag(topix1(ix,iy),topiy1(ix,iy),
+     .                              CELLFLAG_LEFTFACE).gt.0) .and.
+     .         .not.fullGrid) .or.
+     .          (cflag(topix1(ix,iy),topiy1(ix,iy),CELLFLAG_LEFTFACE)
+     .            /= GRID_UNDEFINED .and. fullGrid))) then
+                bottomix1(topix1(ix,iy),topiy1(ix,iy)) = ix
+                bottomiy1(topix1(ix,iy),topiy1(ix,iy)) = -2
+                topix1(ix,iy) = ix
+                topiy1(ix,iy) = ny1+1
+              end if
+            end if
+            if(isInDomain(nx1,ny1,bottomix1(ix,iy),
+     .                            bottomiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_LEFTFACE).ne.
+     .           cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_LEFTFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_LEFTFACE).gt.0 .or.
+     .           cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_LEFTFACE).gt.0) .and.
+     .         .not.fullGrid) .or.
+     .          (cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
+     .         .and. fullGrid))) then
+                topix1(bottomix1(ix,iy),bottomiy1(ix,iy)) = ix
+                topiy1(bottomix1(ix,iy),bottomiy1(ix,iy)) = ny1+1
+                bottomix1(ix,iy) = ix
+                bottomiy1(ix,iy) = -2
+              end if
+            end if
+          end if
+          if(cflag(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+            if(isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_BOTTOMFACE).ne.
+     .           cflag(leftix1(ix,iy),
+     .                 leftiy1(ix,iy),CELLFLAG_BOTTOMFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_BOTTOMFACE).gt.0 .or.
+     .           cflag(leftix1(ix,iy),leftiy1(ix,iy),
+     .                       CELLFLAG_BOTTOMFACE).gt.0) .and.
+     .          .not.fullGrid) .or.
+     .          (cflag(leftix1(ix,iy),leftiy1(ix,iy),
+     .                       CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     .          .and. fullGrid))) then
+                rightix1(leftix1(ix,iy),leftiy1(ix,iy)) = nx1+1
+                rightiy1(leftix1(ix,iy),leftiy1(ix,iy)) = iy
+                leftix1(ix,iy) = -2
+                leftiy1(ix,iy) = iy
+              end if
+            end if
+            if(isInDomain(nx1,ny1,rightix1(ix,iy),rightiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_BOTTOMFACE).ne.
+     .           cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_BOTTOMFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_BOTTOMFACE).gt.0 .or.
+     .           cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_BOTTOMFACE).gt.0) .and.
+     .          .not.fullGrid) .or.
+     .          (cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED
+     .          .and. fullGrid))) then
+                leftix1(rightix1(ix,iy),rightiy1(ix,iy)) = -2
+                leftiy1(rightix1(ix,iy),rightiy1(ix,iy)) = iy
+                rightix1(ix,iy) = nx1+1
+                rightiy1(ix,iy) = -2
+              end if
+            end if
+          end if
+          if(cflag(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+            if(isInDomain(nx1,ny1,topix1(ix,iy),topiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_RIGHTFACE).ne.
+     .           cflag(topix1(ix,iy),topiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_RIGHTFACE).gt.0 .or.
+     .           cflag(topix1(ix,iy),topiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE).gt.0) .and.
+     .           .not.fullGrid) .or.
+     .          (cflag(topix1(ix,iy),topiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     .           .and. fullGrid))) then
+                bottomix1(topix1(ix,iy),topiy1(ix,iy)) = ix
+                bottomiy1(topix1(ix,iy),topiy1(ix,iy)) = -2
+                topix1(ix,iy) = ix
+                topiy1(ix,iy) = ny1+1
+              end if
+            end if
+            if(isInDomain(nx1,ny1,bottomix1(ix,iy),
+     .                            bottomiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_RIGHTFACE).ne.
+     .           cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_RIGHTFACE).gt.0 .or.
+     .           cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE).gt.0) .and.
+     .           .not.fullGrid) .or.
+     .          (cflag(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                       CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED
+     .           .and. fullGrid))) then
+                topix1(bottomix1(ix,iy),bottomiy1(ix,iy)) = ix
+                topiy1(bottomix1(ix,iy),bottomiy1(ix,iy)) = ny1+1
+                bottomix1(ix,iy) = ix
+                bottomiy1(ix,iy) = -2
+              end if
+            end if
+          end if
+          if(cflag(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
+            if(isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_TOPFACE).ne.
+     .           cflag(leftix1(ix,iy),leftiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_TOPFACE).gt.0 .or.
+     .           cflag(leftix1(ix,iy),leftiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE).gt.0) .and.
+     .           .not.fullGrid) .or.
+     .          (cflag(leftix1(ix,iy),leftiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     .           .and. fullGrid))) then
+                rightix1(leftix1(ix,iy),leftiy1(ix,iy)) = nx1+1
+                rightiy1(leftix1(ix,iy),leftiy1(ix,iy)) = iy
+                leftix1(ix,iy) = -2
+                leftiy1(ix,iy) = iy
+              end if
+            end if
+            if(isInDomain(nx1,ny1,rightix1(ix,iy),
+     .                            rightiy1(ix,iy))) then
+              if(cflag(ix,iy,CELLFLAG_TOPFACE).ne.
+     .           cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE) .and.
+     .        (((cflag(ix,iy,CELLFLAG_TOPFACE).gt.0 .or.
+     .           cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE).gt.0) .and.
+     .           .not.fullGrid) .or.
+     .          (cflag(rightix1(ix,iy),rightiy1(ix,iy),
+     .                       CELLFLAG_TOPFACE) /= GRID_UNDEFINED
+     .           .and. fullGrid))) then
+                leftix1(rightix1(ix,iy),rightiy1(ix,iy)) = -2
+                leftiy1(rightix1(ix,iy),rightiy1(ix,iy)) = iy
+                rightix1(ix,iy) = nx1+1
+                rightiy1(ix,iy) = -2
+              end if
+            end if
+          end if
+         end do
+        end do
+
+      end if
+
+
+    !! third step: find cuts
+
+      do iy=-1,ny1
+        do ix=-1,nx1
+
+          !! unused cells have no connectivity, skip
+          if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+
+          !! Get left neighbour
+          ixNb = leftix1(ix,iy)
+          iyNb = leftiy1(ix,iy)
+
+          if (.not. isInDomain(nx1, ny1, ixNb, iyNb)) cycle
+
+          if ((periodic_bc == 1) .and.
+     &        (ixNb == nx1-1) .and. (ix == 0)) cycle  !! Limiter connectivity case
+
+          !! if neither this nor neighbour cell is a ghost cell
+          !! and cells on same horizontal line but not next to each other
+          !! do bookkeeping for cut
+          if ( ( (iy /= iyNb) .or. (ix /= ixNb +1) ) .and.
+     &           .not.isGhostCell(cflag(ix,iy,CELLFLAG_TYPE)) .and.
+     &           .not.isGhostCell(cflag(ixNb,iyNb,CELLFLAG_TYPE)) ) then
+
+             !! Found a left neighbour inside the domain on same line but not directly
+             !! left of the cell -> there is a cut at the left face of the cell
+             !! Figure out right and left end of cut region
+             if (ixNb<ix) then
+                !! jump to the left
+                rightcut = ix
+                leftcut = ixNb+1
+             else
+                !! jump to the right
+                rightcut = ixNb+1
+                leftcut = ix
+             end if
+
+             cutFound=.false.
+             do i = 1, ic
+                if(rightcut.eq.rightcut1(i) .or.
+     .             leftcut.eq.leftcut1(i)) then
+                   cutFound = .true.
+                   exit
+                endif
+             end do
+             if (.not.cutFound) then
+                ic = ic + 1
+                write(*,*) 'ic',ic
+                i = ic
+             endif
+             bottomcut1(i)=min(iy,bottomcut1(i))
+             topcut1(i)=max(iy+1,topcut1(i))
+             leftcut1(i)=leftcut
+             rightcut1(i)=rightcut
+          endif
+
+        end do
+
+        nncut=max(nncut,ic)
+        if(nncut.gt.DEF_NCUT) then
+          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
+          write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
+#ifdef BUILDING_CARRE
+          stop 'faulty parameter DEF_NCUT'
+#else
+          call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
+#endif
+
+        end if
+      end do
+
+      write(*,*) 'istyle',istyle,'nncut',nncut
+      if(nncut.eq.0) write(*,*) 'No cuts found'
+      if(nncut.ge.1) write(*,'(1x,a,4i5)')
+     & 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ',
+     & leftcut1(1), rightcut1(1), topcut1(1), bottomcut1(1)
+      if(nncut.ge.2) write(*,'(1x,a,4i5)')
+     & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ',
+     & leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
+
+      end subroutine init_connectivity
+
       function b2gavg1 (nx1, ny1, fun)
 cxpb  This performs an average over the whole domain of valid cells on the secondary grid
       use b2mod_types
@@ -278,5 +750,25 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
      .              cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))
       return
       end function distc1
+
+    !! Matches right face of cell (ix1,iy1) to left face of cell (ix2,iy2)
+      logical function matchLeft(ix1,iy1,ix2,iy2)
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      matchLeft =
+     & (distc1(ix1,iy1,1,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,2)).lt.
+     & geom_match_dist
+      return
+      end function matchLeft
+
+    !! Matches top face of cell (ix1,iy1) to bottom face of cell (ix2,iy2)
+      logical function matchBottom(ix1,iy1,ix2,iy2)
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      matchBottom =
+     & (distc1(ix1,iy1,2,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,1)).lt.
+     & geom_match_dist
+      return
+      end function matchBottom
 
       end module b2mod_geo2
