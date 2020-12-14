@@ -4,6 +4,7 @@
       subroutine b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc,
      &  scal)
       use b2mod_types
+      use b2mod_gnmap2
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

@@ -1,24 +1,29 @@
-      subroutine gnmap2 (xinp, yinp, xotp, yotp)
+      module b2mod_gnmap2
       use b2mod_types
       implicit none
-      integer nxmp, nymp
-      real (kind=R8) ::
-     *   xmp(0:nxmp), ymp(0:nymp)
-      real (kind=R4) :: xinp, yinp, xotp, yotp
-*     ------------------------------------------------------------------
-*     GNMAP2 (together with the alternate entry GNDFM2) is a service
-*     routine for use with the CONPACK routines in the NCARG graphics
-*     package. It defines a rectangular map for CONPACK. The map is
-*     specified by a call to the entry gndfm2.
-*     ------------------------------------------------------------------
-      integer nmax, nxmap, nymap, kx, ky
+
+      integer nmax, nxmap, nymap
+      save nxmap, nymap
       parameter (nmax=300)
       real (kind=R8) ::
      *   xmap(0:nmax), ymap(0:nmax)
-      save nxmap, nymap, xmap, ymap
+      save xmap, ymap
+      data nxmap/-1/, nymap/-1/
+
+      contains
+
+      subroutine gnmap2 (xinp, yinp, xotp, yotp)
+      implicit none
+      real (kind=R4) :: xinp, yinp, xotp, yotp
+*     ------------------------------------------------------------------
+*     GNMAP2 (together with the subroutine GNDFM2) is a service
+*     routine for use with the CONPACK routines in the NCARG graphics
+*     package. It defines a rectangular map for CONPACK. The map is
+*     specified by a call to the subroutine gndfm2.
+*     ------------------------------------------------------------------
+      integer kx, ky
       intrinsic nint, min, max
       external xertst
-      data nxmap/-1/, nymap/-1/
 *     ------------------------------------------------------------------
 *!!   Note: nmax must be set to a reasonable upper bound for the number
 *     of mesh points in any coordinate direction.
@@ -55,12 +60,18 @@
      &        (yinp-ky)*real(ymap(ky+1),R4)
       endif
       return
+      end subroutine gnmap2
 *     ------------------------------------------------------------------
-      entry gndfm2 (xmp, nxmp, ymp, nymp)
+      subroutine gndfm2 (xmp, nxmp, ymp, nymp)
+      implicit none
+      integer nxmp, nymp
+      real (kind=R8) ::
+     *   xmp(0:nxmp), ymp(0:nymp)
+      integer kx, ky
       call xertst (-1.le.nxmp.and.-1.le.nymp,
-     &  'xndfm2--faulty argument nxmp, nymp')
+     &  'gndfm2--faulty argument nxmp, nymp')
       call xertst (nxmp.le.nmax.and.nymp.le.nmax,
-     &  'xndfm2--insufficient internal memory')
+     &  'gndfm2--insufficient internal memory')
       nxmap = nxmp
       do kx = 0, nxmp
        xmap(kx) = xmp(kx)
@@ -70,5 +81,6 @@
        ymap(ky) = ymp(ky)
       enddo
       return
+      end subroutine gndfm2
 *     ------------------------------------------------------------------
-      end subroutine gnmap2
+      end module b2mod_gnmap2

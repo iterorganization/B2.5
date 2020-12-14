@@ -32,7 +32,7 @@
         endif
        endif
        if (i.lt.naia) then
-        call lbfill (1, acrx, acry, nacra, iaia(i))
+        call lbfill (acrx, acry, nacra, iaia(i))
        endif
       endif
       return
