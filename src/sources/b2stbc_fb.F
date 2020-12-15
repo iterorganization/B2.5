@@ -194,7 +194,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti,
+     1  vol, gs, na, ne, ni, te, ti, kinrgy,
      &  fna, fna_mdf, fna_fcor, fna_nodrift,
      &  fna_he, fnaPSch, fna_eir, fna_32, fna_52,
      &  fhe, fhi, fhm, fch,
@@ -215,6 +215,9 @@
       use eirmod_wneutrals
 #endif
       use b2mod_subsys
+      use b2mod_plasma
+     , ,only: na0, ne0, fna0, kinrgy0, ni0,
+     ,        nap, nep, fnap, kinrgyp
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
@@ -223,7 +226,7 @@
      *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
+     &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
@@ -1248,6 +1251,8 @@
 
                   do is = is_start, is_end
                     na(:,:,is) = na(:,:,is) * na_feedback_rescale
+                    kinrgy(:,:,is) =
+     &               kinrgy(:,:,is) * na_feedback_rescale
                     ne(:,:)=ne(:,:)+(na_feedback_rescale-1.0_R8)*
      &               na(:,:,is)*rza(:,:,is)
                     fna(:,:,0:1,is) =
@@ -1268,7 +1273,20 @@
      &               fna_32(:,:,0:1,is)*na_feedback_rescale
                     fna_52(:,:,0:1,is) =
      &               fna_52(:,:,0:1,is)*na_feedback_rescale
-                 end do
+                  end do
+*   ..initialise previous state and fluxes
+                  call b2scopy (n2*ns, na, 1, na0, 1)
+                  call b2scopy (n2, ne, 1, ne0, 1)
+                  call b2scopy (n2*2*ns, fna, 1, fna0, 1)
+                  call b2scopy (n2*ns, kinrgy, 1, kinrgy0, 1)
+                  call b2scopy (n2*ns, na, 1, nap, 1)
+                  call b2scopy (n2, ne, 1, nep, 1)
+                  call b2scopy (n2*2*ns, fna, 1, fnap, 1)
+                  call b2scopy (n2*ns, kinrgy, 1, kinrgyp, 1)
+*   ..compute initial ni
+                  call b2xpni (nx, ny, ns, na, ni)
+*   ..compute ni0
+                  call b2xpni (nx, ny, ns, na0, ni0)
 
                case (3) ! core boundary flux condition
 

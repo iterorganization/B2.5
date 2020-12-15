@@ -4,7 +4,7 @@
       subroutine b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, floe_noc, floi_noc,                         !srv 28.10.02
+     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
      &  fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,        !srv 25.02.00 13.10.06
@@ -38,7 +38,7 @@
      *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
      2  vedia(-1:nx,-1:ny,0:1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  veecrb(-1:nx,-1:ny,0:1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -382,7 +382,7 @@
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1      vol, gs, na, ne, ni, te, ti,
+     1      vol, gs, na, ne, ni, te, ti, kinrgy,
      &      fna, fna_mdf, fna_fcor, fna_nodrift,
      &      fna_he, fnaPSch, fna_eir, fna_32, fna_52,
      &      fhe, fhi, fhm, fch,

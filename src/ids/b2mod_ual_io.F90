@@ -473,7 +473,7 @@ contains
             &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                 &
             &        na, ua,                                                      &
             &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,       &
-            &        te, ti, po, ne, ni, floe_noc, floi_noc,                      &
+            &        te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,              &
             &        fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,         &
             &        fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,    &
             &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,          &

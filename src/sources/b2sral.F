@@ -6,7 +6,7 @@
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
      &  vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                     !srv 09.01.01 02.04.18
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &  te, ti, po, ne, ni, floe_noc, floi_noc,                          !srv 28.10.02
+     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
      &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
@@ -57,7 +57,7 @@
      2  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  wedia(-1:nx,-1:ny,0:1),
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
@@ -299,7 +299,7 @@ csw 30sep2013, added cdpa in call, uadia
        call b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     .  te, ti, po, ne, ni, floe_noc, floi_noc,
+     .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
      &  fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,        !srv 25.02.00 13.10.06
