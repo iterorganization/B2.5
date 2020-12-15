@@ -3,6 +3,7 @@
 
       subroutine b2agcf (nx, ny, crx, cry, fpsi, ffbz)
       use b2mod_types
+      use b2mod_aggs
       use b2mod_math
       use b2mod_subsys
       implicit none
@@ -87,7 +88,6 @@
       real (kind=R8) ::
      *   rratio
       external xertst, rratio
-      external b2agsp
 
 *-----------------------------------------------------------------------
 *.computation

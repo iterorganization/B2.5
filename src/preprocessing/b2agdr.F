@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_aggs
       use b2mod_version
       use b2mod_indirect
       use b2mod_b2cmfs
@@ -107,7 +108,7 @@
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
+      external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------

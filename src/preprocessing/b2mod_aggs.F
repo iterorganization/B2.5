@@ -1,11 +1,40 @@
+      module b2mod_aggs
+      use b2mod_types
+      use b2mod_b2cmgs
+      use b2mod_constants
+      use b2mod_subsys
+      implicit none
+
+      private
+
+      public :: b2agsp, b2agsi
+
+      integer, save :: istyle
+      real (kind=R8), save :: xm, ym, w0y,
+     *  axm, wid,
+     *  sdiva0, sdiva1, sdivd0, sdivd1,
+     *  dxb, dxc, dxm, dya, dyb, dym, dxa0, dxa1, dxd0, dxd1
+      complex*16, save :: w0, w1, wm0, wm1
+*     (Following data are meant to fit some Sonnet equilibrium for
+*     Asdex-Upgrade.  The fit is only approximate.)
+      real (kind=R8) :: cpsi, xmid, btmid, snl, ycore,
+     *  xslo, yslo, xshi, yshi, sqz
+      parameter (cpsi=0.41_R8, xmid=1.65_R8, btmid=2.00_R8,
+     *  snl=0.94_R8, ycore=4.0e-1_R8, xslo=1.53_R8, yslo=-0.83_R8,
+     *  xshi=1.65_R8, yshi=1.32_R8, sqz=0.0_R8)
+      complex*16 :: ii, shift1, shift2
+      parameter (ii=(0.0_R8,1.0_R8),
+     *  shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8))
+      logical, save :: init
+
+*   ..initialisation
+      data init/.false./
+
+      contains
 *-----------------------------------------------------------------------
 *.specification
 
       subroutine b2agsp (ax, ay, kx, ky, crx0, cry0, psi0, fbz0)
-      use b2mod_types
-      use b2mod_constants
-      use b2mod_b2cmgs
-      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       real (kind=R8) ::
@@ -14,14 +43,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   crx0, cry0, psi0, fbz0
-      integer ostyle
-*   ..input arguments (unchanged on exit) for entry b2agsi
-      integer nx, ny
-      real (kind=R8) ::
-     *   parg(0:*)
-*   ..output arguments (unspecified on entry) for entry b2agsi
-      integer isymm
-      character lblgm1*60
 *   ..common block
 *-----------------------------------------------------------------------
 *.documentation
@@ -45,7 +66,7 @@
 *     on the unit square (boundary cells are handled differently, see
 *     the calling routine). This routine implements that function.
 *     The transformation may depend on certain numerical parameters
-*     that have been passed to the alternate entry b2agsi in the array
+*     that have been passed to the subroutine b2agsi in the array
 *     parg.
 *
 *     The principal input argument to b2agsp is the representation
@@ -102,7 +123,7 @@
 *     In the case of cylindrical symmetry,
 *       bz = fbz0/(2*pi*cry0) .
 *
-*     (parameters for alternate entry b2agsi)
+*     (parameters for subroutine b2agsi)
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -159,64 +180,14 @@
 *.declarations
 
 *   ..local variables
-      logical init, iscut0, iscut1, iscut2
-      integer istyle, type
-      real (kind=R8) ::
-     *   xmid, btmid, cpsi, xslo, yslo, xshi, yshi, snl, sqz, wid,
-     &  sdiva0, sdiva1, sdivd0, sdivd1,
-     &  xm, dxa0, dxa1, dxb, dxm, dxc, dxd0, dxd1,
-     &  ycore, ym, dya, dym, dyb, t0, ta, tb, fa, fb, dfa, dfb,
-     &  w0x, w0y, axm
-      complex*16 ii, shift1, shift2, s0, w0, w1, w2, w3, w4, w5, w6,
-     &  wm0, wm1
-*     (Following data are meant to fit some Sonnet equilibrium for
-*     Asdex-Upgrade.  The fit is only approximate.)
-      parameter (ii=(0.0_R8,1.0_R8), xmid=1.65_R8, btmid=2.00_R8,
-     1  cpsi=0.41_R8, xslo=1.53_R8, yslo=-0.83_R8,
-     2  xshi=1.65_R8, yshi=1.32_R8,
-     3  shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8),
-     &  snl=0.94_R8, sqz=0.0_R8, ycore=4.0e-1_R8)
-      save init, istyle, wm0, wm1, xm, ym, dxa0, dxa1, dxb, dxm,
-     &  dxc, dxd0, dxd1, dya, dym, dyb, wid,
-     &  sdiva0, sdiva1, sdivd0, sdivd1
+      logical iscut0, iscut1, iscut2
+      integer type
+      real (kind=R8) :: w0x
+      complex*16 w2, w3, w4, w5, w6
 *   ..procedures
-      intrinsic nint, real, cmplx, conjg, sqrt, exp, log,
-     &  aimag
+      intrinsic real, cmplx, sqrt, exp, log, aimag
       logical esseq
-      real (kind=R8) ::
-     *   fm2, fm3, fm4, f0xa0, f0xa1, f0xb, f0xc, f0xd0, f0xd1,
-     &  f0ya, f0yb, gfbz, gpsi
-      complex*16 fracr, fraci
       external xertst, xerrab, esseq, b2aggs
-      fm2(t0,fa,fb) = 
-     &  (fa*(1.0_R8-t0)**4+fb*t0**4)/(t0**4+(1.0_R8-t0)**4)
-      fm3(t0,fa,dfa,fb) = 
-     &  fa + (fb-fa)*dfa*t0/(dfa*t0+(fb-fa)*(1.0_R8-t0))
-      fm4(t0,ta,fa,dfa,tb,fb,dfb) = fm2 ((t0-ta)/(tb-ta),
-     &  fm3((t0-ta)/(tb-ta),fa,dfa*(tb-ta),fb),
-     &  fm3((tb-t0)/(tb-ta),fb,-dfb*(tb-ta),fa))
-      f0xa0(t0) = fm4(t0, 0.0_R8, -sdiva0, dxa0, 0.125_R8,
-     1 -sdiva1, dxa1)
-      f0xa1(t0) = fm4(t0, 0.125_R8, -sdiva1, dxa1, 0.25_R8,
-     1 0.0_R8, dxb)
-      f0xb(t0) = fm4(t0, 0.25_R8, 0.0_R8, dxb, 0.5_R8,
-     1 xm, dxm)
-      f0xc(t0) = fm4(t0, 0.5_R8, xm, dxm, 0.75_R8,
-     1 4.0_R8, dxc)
-      f0xd1(t0) = fm4(t0, 0.75_R8, 4.0_R8, dxc, 0.875_R8,
-     1 4.0_R8+sdivd1, dxd1)
-      f0xd0(t0) = fm4(t0, 0.875_R8, 4.0_R8+sdivd1, dxd1,
-     1 1.0_R8, 4.0_R8+sdivd0, dxd0)
-      f0ya(t0) = fm4(t0, 0.0_R8, -ycore, dya, 0.375_R8,
-     1 0.0_R8, dym)
-      f0yb(t0) = fm4(t0, 0.375_R8, 0.0_R8, dym, 1.0_R8,
-     1 1.0_R8, dyb)
-      fracr(w0,s0) = (w0+s0)/(conjg(s0)*w0+1.0_R8)
-      fraci(w0,s0) = (w0+s0)/(1.0_R8-s0*w0)
-      gfbz(w0y) = 2.0_R8*pi*btmid*xmid
-      gpsi(w0y) = 2.0_R8*pi*cpsi*w0y
-*   ..initialisation
-      data init/.false./
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -224,7 +195,7 @@
 *     Description of some local variables:
 *
 *     init - logical.
-*     init is true iff the initialisation entry b2agsi has been called.
+*     init is true iff the initialisation subroutine b2agsi has been called.
 *
 *     The values of shift2 and sqz are computed in order to get the
 *     correct shape of the separatrix. The parameters shift1 and cpsi
@@ -416,11 +387,20 @@
 * ..return
       call subend ()
       return
+      end subroutine b2agsp
 
 *-----------------------------------------------------------------------
-*.entry b2agsi
+*.end b2agsp
 
-      entry b2agsi (nx, ny, parg, isymm, lblgm1, ostyle)
+      subroutine b2agsi (nx, ny, parg, isymm, lblgm1, ostyle)
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx, ny
+      real (kind=R8) ::
+     *   parg(0:*)
+*   ..output arguments (unspecified on entry)
+      integer isymm, ostyle
+      character lblgm1*60
 
 *-----------------------------------------------------------------------
 *.computation
@@ -493,9 +473,122 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2agsi/b2agsp
+*.end b2agsi
 
-      end subroutine b2agsp
+      end subroutine b2agsi
+
+      function fm2(t0,fa,fb)
+      implicit none
+      real (kind=R8) :: fm2
+      real (kind=R8) :: t0, fa, fb
+      fm2 = (fa*(1.0_R8-t0)**4+fb*t0**4)/(t0**4+(1.0_R8-t0)**4)
+      return
+      end function fm2
+
+      function fm3(t0,fa,dfa,fb)
+      implicit none
+      real (kind=R8) :: fm3
+      real (kind=R8) :: t0, fa, dfa, fb
+      fm3 = fa + (fb-fa)*dfa*t0/(dfa*t0+(fb-fa)*(1.0_R8-t0))
+      return
+      end function fm3
+
+      function fm4(t0,ta,fa,dfa,tb,fb,dfb)
+      implicit none
+      real (kind=R8) :: fm4
+      real (kind=R8) :: t0, ta, tb, fa, fb, dfa, dfb
+      fm4 = fm2 ((t0-ta)/(tb-ta),
+     &  fm3((t0-ta)/(tb-ta),fa,dfa*(tb-ta),fb),
+     &  fm3((tb-t0)/(tb-ta),fb,-dfb*(tb-ta),fa))
+      return
+      end function fm4
+
+      complex*16 function fracr(w0,s0)
+      implicit none
+      complex*16 w0, s0
+      intrinsic conjg
+      fracr = (w0+s0)/(conjg(s0)*w0+1.0_R8)
+      return
+      end function fracr
+
+      complex*16 function fraci(w0,s0)
+      implicit none
+      complex*16 w0, s0
+      fraci = (w0+s0)/(1.0_R8-s0*w0)
+      return
+      end function fraci
+
+      function f0xa0(t0)
+      implicit none
+      real (kind=R8) :: f0xa0, t0
+      f0xa0 = fm4(t0, 0.0_R8, -sdiva0, dxa0, 0.125_R8, -sdiva1, dxa1)
+      return
+      end function f0xa0
+
+      function f0xa1(t0)
+      implicit none
+      real (kind=R8) :: f0xa1, t0
+      f0xa1 = fm4(t0, 0.125_R8, -sdiva1, dxa1, 0.25_R8, 0.0_R8, dxb)
+      return
+      end function f0xa1
+
+      function f0xb(t0)
+      implicit none
+      real (kind=R8) :: f0xb, t0
+      f0xb = fm4(t0, 0.25_R8, 0.0_R8, dxb, 0.5_R8, xm, dxm)
+      return
+      end function f0xb
+
+      function f0xc(t0)
+      implicit none
+      real (kind=R8) :: f0xc, t0
+      f0xc = fm4(t0, 0.5_R8, xm, dxm, 0.75_R8, 4.0_R8, dxc)
+      return
+      end function f0xc
+
+      function f0xd0(t0)
+      implicit none
+      real (kind=R8) :: f0xd0, t0
+      f0xd0 = fm4(t0, 0.875_R8, 4.0_R8+sdivd1, dxd1,
+     .                  1.0_R8, 4.0_R8+sdivd0, dxd0)
+      return
+      end function f0xd0
+
+      function f0xd1(t0)
+      implicit none
+      real (kind=R8) :: f0xd1, t0
+      f0xd1 =
+     . fm4(t0, 0.75_R8, 4.0_R8, dxc, 0.875_R8, 4.0_R8+sdivd1, dxd1)
+      return
+      end function f0xd1
+
+      function f0ya(t0)
+      implicit none
+      real (kind=R8) :: f0ya, t0
+      f0ya = fm4(t0, 0.0_R8, -ycore, dya, 0.375_R8, 0.0_R8, dym)
+      return
+      end function f0ya
+
+      function f0yb(t0)
+      implicit none
+      real (kind=R8) :: f0yb, t0
+      f0yb = fm4(t0, 0.375_R8, 0.0_R8, dym, 1.0_R8, 1.0_R8, dyb)
+      return
+      end function f0yb
+
+      function gfbz(w0y)
+      implicit none
+      real (kind=R8) :: gfbz, w0y
+      gfbz = 2.0_R8*pi*btmid*xmid
+      return
+      end function gfbz
+
+      function gpsi(w0y)
+      implicit none
+      real (kind=R8) :: gpsi, w0y
+      gpsi = 2.0_R8*pi*cpsi*w0y
+      return
+      end function gpsi
 
       subroutine dummyz (z)
       use b2mod_types
@@ -506,3 +599,5 @@
 *     ------------------------------------------------------------------
       return
       end subroutine dummyz
+
+      end module b2mod_aggs
