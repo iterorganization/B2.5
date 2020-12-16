@@ -6810,12 +6810,12 @@ cxpb          endif
              if (conpar(is,ib,2).gt.0.0_R8)
      &        t1 = t1 + enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
      &          pl%na(iCv1,is)
-             t4 = t4 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
+             t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
             endif
            enddo
            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
      &      t0*cs*abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
-     &      t4*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           endif
           if(mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
