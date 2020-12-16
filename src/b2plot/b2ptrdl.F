@@ -34,11 +34,11 @@ c     ,             'lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
 c     ,                   l2pwinp,lppp,nwldprt,lytg,nytg,nadsrc,add_rad
 c        print '(a/(16i5))','Shadowing structure',
 c     ,                                   (lwldlis(i,1),i=1,nwldlis(1))
-c        print '(a/(5(2f8.3,1x)))','West target',
-c     ,                  (pp1(1,lppp+i),pp1(2,lppp+i),i=1,nytg)
-c        print '(a/(5(2f8.3,1x)))','East target',
-c     ,                (pp1(1,lppp+nytg+i),pp1(2,lppp+nytg+i),i=1,nytg)
-c
+c        do j=1,ntrgts !{
+c          print '(a,i2/(5(2f8.3,1x)))','Target',j,
+c     ,     (pp1(1,lppp+(j-1)*nytg+i),pp1(2,lppp+(j-1)*nytg+i),i=1,nytg),
+c     ,      pp2(1,lppp+j*nytg),pp2(2,lppp+j*nytg)
+c        end do !}
 c>>>
         if(.not.l2pwinp) then !{
           write(*,*) '**** b2ptrdl: error detected in the input data ',
@@ -88,10 +88,10 @@ c*** Calculate the load
 #endif
         l2rdldt=.true.
 #ifdef DBG
-        print '(a/(1p,5e17.4))','West target: load',
-     ,    (wldrdld(lppp+i+1),i=0,ny-1)
-        print '(a/(1p,5e17.4))','East target: load',
-     ,    (wldrdld(lppp+ny+i+1),i=0,ny-1)
+        do j=1,ntrgts !{
+          print '(a,i2,a/(1p,5e17.4))','Target',j,': load',
+     ,     (wldrdld(lppp+(j-1)*ny+i+1),i=0,ny-1)
+        end do !}
 #endif
       end if !}
 c----------------------------------------------------------------------

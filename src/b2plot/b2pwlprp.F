@@ -52,7 +52,7 @@ c
 c*** wsrttol : a tolerance parameter for defining coinciding segments
       real (kind=R8) ::
      *   wsrttol
-      parameter (wsrttol=2.0e-4_R8)
+      parameter (wsrttol=1.0e-6_R8)
 c<<<
       integer lun_w, lfn_hlp
       parameter (lun_w=76, lfn_hlp=mlblprtx+9)
@@ -262,10 +262,11 @@ c*** Prepare the list of grid indices for the target flux faces
         lpfrpos(k)=nx/4
       endif
 #ifdef DBG
-      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
-      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
-      print *,'%% lseppos : ',(lseppos(i),i=1,k)              !###
-      print *,'%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
+      print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
+      print '(a,8i6)','mtrgedge: ',((mtrgedge(i,j),i=1,2),j=1,ntrgts) !###
+      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
+      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,k)              !###
+      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
 #endif
 
 c*** Sort the segments in the lists of the "wall zones"
@@ -359,7 +360,7 @@ cc>>>
           pp1(1,i+lppp+2*nytg)=crx(nxtr,ny-i,3)
           pp1(2,i+lppp+2*nytg)=cry(nxtr,ny-i,3)
           pp2(1,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
-          pp2(2,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
+          pp2(2,i+lppp+2*nytg)=cry(nxtr,ny-i,1)
         end do !}
       end if !}
 c<<<
@@ -381,23 +382,23 @@ c
 c*** Modify the target edges for continuity with B2 grid edges
 c
 c      if (nnreg(0).lt.8) then
-c        print *,'Before modification: ', jedge(1:4)
+c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
 c        print '((2(1x,a3,1p,4e12.4)))',
-c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
-c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
-c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
-c     ,          'o2',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2)
+c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
 c      else
-c        print *,'Before modification: ', jedge(1:8)
+c        print '(a,8i6)','Before modification: ', (ltrgedge(1:2,j),j=1,4)
 c        print '((2(1x,a3,1p,4e12.4)))',
-c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
-c     ,          'o1',(pp1(j,jedge(5)),pp2(j,jedge(5)),j=1,2),
-c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
-c     ,          'o2',(pp1(j,jedge(6)),pp2(j,jedge(6)),j=1,2)
-c     ,          'i3',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
-c     ,          'o3',(pp1(j,jedge(7)),pp2(j,jedge(7)),j=1,2),
-c     ,          'i4',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2),
-c     ,          'o4',(pp1(j,jedge(8)),pp2(j,jedge(8)),j=1,2)
+c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2),
+c     ,          'i3',(pp1(j,ltrgedge(1,3)),pp2(j,ltrgedge(1,3)),j=1,2),
+c     ,          'o3',(pp1(j,ltrgedge(2,3)),pp2(j,ltrgedge(2,3)),j=1,2),
+c     ,          'i4',(pp1(j,ltrgedge(1,4)),pp2(j,ltrgedge(1,4)),j=1,2),
+c     ,          'o4',(pp1(j,ltrgedge(2,4)),pp2(j,ltrgedge(2,4)),j=1,2)
 c      end if
 
       do i=1,ntrgts !{
@@ -922,7 +923,7 @@ c*** Calculate the segment areas and related quantities
           segm_area(i) = pi*(pp1(2,i)+pp2(2,i))*segm_len(i)
         end if
       end do !}
-      do il=2,nwldprt
+      do il=1,nwldprt
         d=0.5_R8*segm_len(iabs(lwldlis(1,il)))
         x=d
         wldrfdst(1,il)=x
