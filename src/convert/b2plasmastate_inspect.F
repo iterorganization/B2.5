@@ -17,7 +17,6 @@
 #endif
       use b2mod_xerset
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *     b2plasmastate_inspect reads in a formatted plasmastate file, and

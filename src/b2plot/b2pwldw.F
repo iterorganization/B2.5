@@ -1449,6 +1449,7 @@ c      print *,'About to write a line:',k,' values'   !###
       deallocate(w_line)
 c      print *,'TEXTMN*',adjustl(TEXTMN),'*'
 c      print *,'TEXTIN*',adjustl(TEXTIN),'*'
+      return
 
 c=======================================================================
       end subroutine b2pwldw

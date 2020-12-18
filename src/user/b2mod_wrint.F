@@ -603,7 +603,7 @@ c>>>
       end if
 
       if (nfl_tmp.gt.0) then
-        write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
+        write(hlp_frm,'(10h(1p,e16.7,,i4,12h(1h'//tab//',e12.4)))')
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
      +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
      +          (nsp_tmp+1)*nfl_tmp*nb_tmp

@@ -52,9 +52,10 @@
 ! parameters needed by uinp
 !
 
-#define DEF_NREAC 60
-#define DEF_NREI 70
+#define DEF_NREI DEF_NATM+DEF_NMOL+DEF_NION+DEF_NFL
 #define DEF_NREC DEF_NATM
+#define DEF_NRCX DEF_NATM*(DEF_NION+DEF_NFL)
 #define DEF_NREL (DEF_NATM+DEF_NMOL)*(DEF_NATM+DEF_NMOL)
+#define DEF_NREAC DEF_NREI+DEF_NREC+DEF_NRCX+DEF_NREL
 
 #endif
