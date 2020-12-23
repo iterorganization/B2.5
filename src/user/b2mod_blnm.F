@@ -256,7 +256,7 @@ c
 c*** ... or just print out the data - if not a limiter configuration
 c
         write(*,*) 'Parallel momentum balance in divertors:'
-        write(*,hlp_frf) (hlp_hdv(i),i=1,nqudiv)
+        write(*,hlp_frf) 'div',(hlp_hdv(i),i=1,nqudiv)
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}
       return
@@ -282,7 +282,7 @@ c
       implicit none
       integer i, j, nv
       real (kind=R8), save :: stim = 0.0_R8
-      character f*(lenfnm), tab, hlp_c
+      character f*(lenfnm), hlp_c
       logical :: ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
@@ -290,7 +290,6 @@ c*** Only called with filedata(ntrc_blm)=.true.
 c----------------------------------------------------------------------
 c
       ndiv=ndivx
-      tab=char(9)
       call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -357,13 +356,13 @@ c*** New file
         nd_tmp=nqudiv
         ndv_tmp=ndiv
         write(lun,700) lv,nd_tmp,ndv_tmp,label
-        hlp_frf='(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))'
-        write(hlp_frm,hlp_frf) nd_tmp*ndv_tmp
-        write(lun,hlp_frm)
-     -                 ((hlp_hdv(i),hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
+        write(hlp_frf,'(a,i3,a)')
+     ,   '(a6,12x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
+        write(lun,hlp_frf) '# time',
+     -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                                   nd_tmp*ndv_tmp
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnm: cannot open file ',trim(f)
@@ -378,7 +377,7 @@ c*** Prepare the formats for the printout
    98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
-  710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
+  710 format('(1x,a3,',i3,'(2x,a8,1x))')
   720 format('(1p,1x,a2,1x,',i3,'e11.3)')
 c======================================================================
       end subroutine b2blnmi

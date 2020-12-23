@@ -93,10 +93,10 @@ c
       print '(20i4)',(ltrg(i),i=1,ntrg)
 
       open(lun_w,file='layout-w.dat')
-      write(lun_w,'(6a)') '#Wall layout : ',label
-      write(lun_w,'(6a)') '#R',tab,'Z'
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
       do i=1,nplgs
-        write(lun_w,*) xp(i),tab,yp(i)
+        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
       end do
       close(lun_w)
 #endif

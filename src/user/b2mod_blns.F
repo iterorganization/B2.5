@@ -864,7 +864,7 @@ c
       implicit none
       integer i, j, nv
       real (kind=R8), save :: stim = 0.0_R8
-      character f*(lenfnm), hlp_c, tab
+      character f*(lenfnm), hlp_c
       logical :: ex
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
@@ -898,7 +898,6 @@ c*** from 20190627 on
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
-      tab=char(9)
       nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
@@ -958,25 +957,23 @@ c*** It was a major change of the file format - impossible to continue
         go to 50
    55   backspace lun
 
-      else ! file 'blnc.trc' does not exist
+      else ! file 'blnn_SPb.trc' does not exist
 
         nc = np_tmp
 
-        write(lun,700) lv, nspecies, np_tmp, label
-        write(hlp_frm,
-     &      '(18h(1h#,7x,4htime,4x,i3,17h(1h'//tab//',a16,1h_,a2)))')
-     &                                                  np_tmp*nspecies
-
+        write(lun,700) lv, nspecies, np_tmp, trim(label)
+        write(hlp_frm,'(a,i3,a)')
+     &   '(a1,6x,a4,4x,',np_tmp*nspecies,'(2x,a19))'
 c       print *,'b2blns: nspecies= ',nspecies                       !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
 
-        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     &                                                    j=1,nspecies)
+        write(lun,hlp_frm) '#','time',
+     &   ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
 
       end if
 
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e16.7)))')
-     &                                                  np_tmp*nspecies
+      write(hlp_frm,'(a,i3,a)')
+     &  '(1p,e16.7,',np_tmp*nspecies,'(3x,e16.7,2x))'
       return
 c======================================================================
    90 write(*,*) 'b2blns: cannot open file ',trim(f)

@@ -62,6 +62,6 @@ c*** Write the next line to the output file
    20 continue !}
 
       print *,'Leaving b2pwldl...' !###
-
+      return
 c=======================================================================
-      end
+      end subroutine b2pwldl

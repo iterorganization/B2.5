@@ -26,8 +26,8 @@ c***     totenre_  tesum      total plasma energy \int 3/2 n_e T_e dV plus
 c***                          \int 3/2 n_i T_i dV plus \int 1/2 m_a n_a u_{a||}^2 dV
 c***
 c***..........................................................(regions)
-c***     totamom_  ang_mom_sum   total angular momentum 
-c***                            \int m_a n_a u_a h_z dV 
+c***     totamom_  ang_mom_sum   total angular momentum
+c***                            \int m_a n_a u_a h_z dV
 c***
 c***..........................................................(species)
 c***     SSNItot_  ssni_tmp   neutral-related source of ions
@@ -212,13 +212,12 @@ c
       integer, intent(in) :: nregionv
       integer i, j, k, nv
       real (kind=R8), save :: stim = 0.0_R8
-      character tab, hlp_c, hlp_frf*400
+      character hlp_c
       logical ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
-      tab=char(9)
       call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -228,7 +227,7 @@ c*** f     :  the associated file name
 
 !      write(*,*) 'Inside b2wrsrt: lun = ',lun
 !      write(*,*) 'Inside b2wrsrt: f = ', trim(f)
-   
+
 c
       call find_file(f,ex)
       open(lun,file=f,err=90)
@@ -345,25 +344,19 @@ c*** New file
      ,                      label
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,'//
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'            //
-     /          'i3,12h(1h'//tab//',a8,a2),,'              //
-     /          'i3,17h(1h'//tab//',a8,i2.2,a2))'          //
-     /          ')'
-
-       if (nfl_tmp.gt.0) then
-         write(hlp_frm,hlp_frf) nr_tmp*nrg_tmp, ns_tmp*nsp_tmp,
-     ,                          na_tmp*nrg_tmp*nsp_tmp
-       endif
-
-c<<<
-c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
-        print *,'hlp_frm:'
-        print *,trim(hlp_frm)
-c>>>
-
         if (nfl_tmp.gt.0) then
-          write(lun,hlp_frm)
+          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,5x,',
+     ,             nr_tmp*nrg_tmp,'(4x,a8,i2.2),',
+     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),',
+     ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
+#ifdef DBG
+c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
+         print *,'hlp_frm:'
+         print *,trim(hlp_frm)
+#endif
+        endif
+        if (nfl_tmp.gt.0) then
+          write(lun,hlp_frm) '#','time',
      ,          ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
      ,          ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,         (((hlp_ha(k),j,species_list(i),j=1,nrg_tmp),
@@ -373,13 +366,14 @@ c>>>
       end if
 
       if (nfl_tmp.gt.0) then
-        write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
-     +        nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +        na_tmp*nrg_tmp*nsp_tmp
+        write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
+     +   nr_tmp*nrg_tmp + ns_tmp*nsp_tmp + na_tmp*nrg_tmp*nsp_tmp,
+     +  '(2x,e12.4))'
       end if
+#ifdef DBG
       print *,'hlp_frm:'       !###
       print *,trim(hlp_frm)    !###
-
+#endif
       return
 c=======================================================================
    90 write(*,*) 'b2wrsrt: cannot open file ',trim(f)

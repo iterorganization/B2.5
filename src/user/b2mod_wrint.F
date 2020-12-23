@@ -177,7 +177,7 @@ c*** Values by species and regions
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
      *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
-      equivalence 
+      equivalence
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
 c
@@ -189,7 +189,7 @@ c*** Values by species and strata
       real (kind=R8) ::
      *     equb_tmp(0:DEF_NATM,DEF_NSTRA,nssb_tmp)
       real (kind=R8) ::
-     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA), 
+     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA),
      *     rtio_tmp(0:DEF_NATM,DEF_NSTRA),
      *     Na_stra_tmp(0:DEF_NATM,DEF_NSTRA),
      *     ssna_stra_tmp(0:DEF_NATM,DEF_NSTRA)
@@ -400,15 +400,16 @@ c
       subroutine b2wrinti(nregionv)
       implicit none
       integer, intent(in) :: nregionv
-      integer i, j, k, nv
+      integer i, j, k, nv, nfields
       real (kind=R8), save :: stim = 0.0_R8
-      character hlp_c, tab, hlp_frf*400
+      character hlp_c, hlp_frf*400
       logical ex, warn_tmp
+      integer len_of_digits
+      external len_of_digits
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
-      tab=char(9)
       call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -531,7 +532,6 @@ c Check the number quantities computed for each species and for each stratum
      ,     ' differs from that in the file ',trim(f),' : ',nb_tmp
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
-c
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
@@ -556,40 +556,35 @@ c*** New file
         nfl_tmp = nstrat
         nb_tmp  = nssb_tmp
         write(lun,700) lv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                      nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
-     ,                      label
+     ,                 nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
+     ,                 trim(label)
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
-     /          'i3, 9h(1h'//tab//',a8),,'             //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,12h(1h'//tab//',a8,a2),,'          //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2)'          //
-     /          '))'
-
+        hlp_frf='(a,7(i3,a))'
         if (nfl_tmp.gt.0) then
-         write(hlp_frm,hlp_frf) ng_tmp, nr_tmp*nrg_tmp, ns_tmp*nsp_tmp,
-     ,                          na_tmp*nrg_tmp*nsp_tmp, nf_tmp*nfl_tmp,
-     ,                          nb_tmp*nsp_tmp*nfl_tmp, nb_tmp*nfl_tmp
+         write(hlp_frm,hlp_frf)
+     ,    '(a1,7x,a4,7x,',ng_tmp,'(2x,a8,4x),',
+     ,            nr_tmp*nrg_tmp,'(1x,a8,i2.2,3x),',
+     ,            ns_tmp*nsp_tmp,'(1x,a8,a2,3x),',
+     ,    na_tmp*nrg_tmp*nsp_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nf_tmp*nfl_tmp,'(1x,a8,i2.2,3x),',
+     ,    nb_tmp*nsp_tmp*nfl_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nb_tmp*nfl_tmp,'(1x,a8,i2.2,3x))'
         else
           write(*,*)
      &     'Unexpected inconsistency: number of strata NSTRAI = ',
      &      nfl_tmp
-          write(*,*) 'Impossible to write into ', f
+          write(*,*) 'Impossible to write into ', trim(f)
         endif
-
 c<<<
-c        print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
-c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
-c        print *,'hlp_frm:'
-c        print *,hlp_frm
+c       print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
+c     ,                      nb_tmp,nsp_tmp,nfl_tmp
+c       print *,'hlp_frm:'
+c       print *,trim(hlp_frm)
 c>>>
-
         if (nfl_tmp.gt.0) then
-          write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+          write(lun,hlp_frm) '#','time',
+     ,           (hlp_hg(i),i=1,ng_tmp),
      ,          ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
      ,          ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,         (((hlp_ha(k),j,species_list(i),j=1,nrg_tmp),
@@ -603,13 +598,15 @@ c>>>
       end if
 
       if (nfl_tmp.gt.0) then
-        write(hlp_frm,'(10h(1p,e16.7,,i4,12h(1h'//tab//',e12.4)))')
+        nfields =
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
-     +          (nsp_tmp+1)*nfl_tmp*nb_tmp
+     +       na_tmp*nrg_tmp*nsp_tmp + nf_tmp*nfl_tmp +
+     +                    (nsp_tmp+1)*nb_tmp*nfl_tmp
+        write(hlp_frf,'(a,i1,a)') '(a,i',len_of_digits(nfields),',a)'
+        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4))'
       end if
-c      print *,'hlp_frm:' !###
-c      print *,hlp_frm    !###
+c      print *,'hlp_frm:'       !###
+c      print *,trim(hlp_frm)    !###
 
       return
 c=======================================================================

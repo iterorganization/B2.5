@@ -683,7 +683,6 @@ c======================================================================
 c
       subroutine b2blnci
       implicit none
-      character, save :: tab
       integer :: i, j, nv
       character :: hlp_c
       logical :: ex
@@ -711,7 +710,6 @@ c*** from 960808 on
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
-      tab=char(9)
       nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
@@ -772,16 +770,16 @@ c*** It was a major change of the file format - impossible to continue
    55   backspace lun
       else
         nc=np_tmp
-        write(lun,700) lv,nspecies,np_tmp,label
-        write(hlp_frm,'(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))')
-     ,                                                  np_tmp*nspecies
+        write(lun,700) lv,nspecies,np_tmp,trim(label)
+        write(hlp_frm,'(a,i3,a)')
+     ,   '(a6,12x,',np_tmp*nspecies,'(2x,a11,1x))'
 c       print *,'b2blnc: nspecies= ',nspecies                   !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
-        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     ,                                                    j=1,nspecies)
+        write(lun,hlp_frm) '# time',
+     ,    ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     ,                                                  np_tmp*nspecies
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnc: cannot open file ',trim(f)

@@ -533,7 +533,7 @@ c
       integer :: i, j, k, l, n, is, nv, ns_tmp
       real (kind=R8), save :: stim = 0.0_R8
       character hlp_c
-      character f*(lenfnm), tab, hlp_frf*160
+      character f*(lenfnm)
       logical :: ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
@@ -546,7 +546,6 @@ c
       allocate(hlp_spc(nspecies))
       call ipgetr ('b2mndr_stim', stim)
 c
-      tab=char(9)
       nimp_tmp=0
       do is = 1, nspecies !{
         if(nfluids(is).gt.1) then !{
@@ -741,17 +740,16 @@ c*** New file
         n=max(ni_tmp,1)
         ns_tmp=nspc_tmp
         write(lun,700) lv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp,label
-        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,' //
-     /                       'i3,12h(1h'//tab//',a8,a2),,' //
-     /                       'i3,16h(1h'//tab//',a8,1h_,a2)))'
-        write(hlp_frm,hlp_frf) ng_tmp,ns_tmp*n,nt_tmp*nz_tmp
-        write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+        write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
+     ,   '(a6,9x,',ng_tmp,'(6x,a8),',n*ns_tmp,'(4x,a8,a2),2x,',
+     ,                          nt_tmp*nz_tmp,'(3x,a11))'
+        write(lun,hlp_frm) '# time',(hlp_hg(i),i=1,ng_tmp),
      ,                  ((hlp_hs(i),hlp_spc(j),i=1,ns_tmp),j=1,n),
-     ,                  ((hlp_ht(i),hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
+     ,            ((hlp_ht(i)//'_'//hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
       end if !}
       n=max(ni_tmp,1)
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                    ng_tmp+ns_tmp*n+nt_tmp*nz_tmp
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3))'
       return
 c=======================================================================
    90 write(*,*) 'b2blne: cannot open file ',trim(f)

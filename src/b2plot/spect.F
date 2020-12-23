@@ -2160,10 +2160,10 @@ C
 CX  I/O   : (C*6)  USERID   = USERID UNDER WHICH ADAS DATA IS STORED
 CX                           (IF BLANK DEFAULTS TO DEFUID)
 CX
-CX         (C*6)  DEFUID   = PARAMETER = DEFAULT USER ID FOR ADAS DATA
-CX                                      SOURCE
+CX          (C*6)  DEFUID   = PARAMETER = DEFAULT USER ID FOR ADAS DATA
+CX                                        SOURCE
 CX
-CX         (C*6)  ADASID   = CURRENT ADAS DATA SOURCE USER ID
+CX          (C*6)  ADASID   = CURRENT ADAS DATA SOURCE USER ID
 C
 C  I/O   : (C*80)  USERID   = USERID UNDER WHICH ADAS DATA IS STORED
 C                           (IF BLANK DEFAULTS TO DEFUID)

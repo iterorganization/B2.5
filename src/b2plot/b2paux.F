@@ -196,23 +196,25 @@ c-----------------------------------------------------------------------
         n=nspecies+2*(natmi+nmoli)+1
         open(lun,file='particle.flx')
         write(lun,'(2a)')
-     ,    '#Total fluxes of neutrals and plasma onto, ',
+     ,    '# Total fluxes of neutrals and plasma onto, ',
      ,    'and of neutrals and sputtered material from the targets'
-        write(lun,'(2a)') '#',label
-        write(frm,720) n,tab
-  720   format('(2h# ,',i3,'(1h',a1,',a8))')
+        write(lun,'(2a)') '# ',trim(label)
+        write(frm,720) n
+  720   format('(a2,',i3,'(a1,a8))')
         if (nmoli.gt.0) then
-          write(lun, frm) (textsp(i),i=0,nspecies-1),
-     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
-     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
-     ,                  'sput.'
+          write(lun, frm) '# ',
+     ,     (tab,textsp(i),i=0,nspecies-1),
+     ,     (tab,textan(i),i=0,natmi-1),(tab,textmn(i),i=0,nmoli-1),
+     ,     (tab,textan(i),i=0,natmi-1),(tab,textmn(i),i=0,nmoli-1),
+     ,      tab,'sput.'
         else
-          write(lun, frm) (textsp(i),i=0,nspecies-1),
-     ,                  (textan(i),i=0,natmi-1),(textan(i),i=0,natmi-1),
-     ,                  'sput.'
+          write(lun, frm) '# ',
+     ,     (tab,textsp(i),i=0,nspecies-1),
+     ,     (tab,textan(i),i=0,natmi-1),(tab,textan(i),i=0,natmi-1),
+     ,      tab,'sput.'
         end if
-        write(frm,730) n,tab
-  730   format('((1p,1x,a5,',i3,'(1h',a1,',e11.4)))')
+        write(frm,730) n
+  730   format('(1p,1x,a5,',i3,'(a1,e11.4))')
         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(1),i,0)+wldpa(nlim+ltns(1),i,0)
         end do
@@ -222,16 +224,16 @@ c-----------------------------------------------------------------------
         trg_lbl = 'inner'
         if (.not.LSN) trg_lbl = 'outer'
         if (nmoli.gt.0) then
-          write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,      (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
-     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,      wldspt(nlim+ltns(1),0)
+          write(lun, frm) trg_lbl,(tab,hlp_pi(i),i=1,nspecies),
+     ,      (tab,wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (tab,wldnm(nlim+ltns(1),i,0),i=1,nmoli),
+     ,      (tab,hlp_at(i),i=1,natmi),(tab,hlp_ml(i),i=1,nmoli),
+     ,       tab,wldspt(nlim+ltns(1),0)
         else
-          write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,      (hlp_at(i),i=1,natmi),
-     ,      wldspt(nlim+ltns(1),0)
+          write(lun, frm) trg_lbl,(tab,hlp_pi(i),i=1,nspecies),
+     ,      (tab,wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (tab,hlp_at(i),i=1,natmi),
+     ,       tab,wldspt(nlim+ltns(1),0)
         end if
         if (ltns(2).ne.0) then
          do i=1,natmi
@@ -243,16 +245,16 @@ c-----------------------------------------------------------------------
          trg_lbl = 'outer'
          if (.not.LSN) trg_lbl = 'inner'
          if (nmoli.gt.0) then
-           write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,      (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
-     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,      wldspt(nlim+ltns(2),0)
+           write(lun, frm) trg_lbl,(tab,hlp_po(i),i=1,nspecies),
+     ,      (tab,wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (tab,wldnm(nlim+ltns(2),i,0),i=1,nmoli),
+     ,      (tab,hlp_at(i),i=1,natmi),(tab,hlp_ml(i),i=1,nmoli),
+     ,       tab,wldspt(nlim+ltns(2),0)
          else
-           write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,      (hlp_at(i),i=1,natmi),
-     ,      wldspt(nlim+ltns(2),0)
+           write(lun, frm) trg_lbl,(tab,hlp_po(i),i=1,nspecies),
+     ,      (tab,wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (tab,hlp_at(i),i=1,natmi),
+     ,       tab,wldspt(nlim+ltns(2),0)
          end if
         end if
         deallocate(hlp_pi,hlp_po)
@@ -370,12 +372,12 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='pr.dat')
-        write(lun,'(2a)') '#  Plasma pressure:  ',label
-        write(frm,700) nx+2,tab
-  700   format('(2h# ,i3,',i3,'(1h',a1,',i3))')
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
-  710   format('((1p,1x,i3,',i3,'(1h',a1,',e11.4)))')
+        write(lun,'(2a)') '#  Plasma pressure:  ',trim(label)
+        write(frm,700) nx
+  700   format('(a2,4x,',i3,'(3x,i3,7x))')
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
+  710   format('((1p,2x,i3,1x,',i3,'(e11.4,2x)))')
         write(lun,frm) (j,(mach(i,j,1),i=0,nx-1),j=0,ny-1)
 
         do i=-1,nx
@@ -394,16 +396,16 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='prn.dat')
-        write(lun,'(2a)') '#  Neutral pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Neutral pressure:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
         open(lun,file='prt.dat')
-        write(lun,'(2a)') '#  Total pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Total pressure:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,1)+mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
         do i=-1,nx
@@ -420,10 +422,10 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='sm.dat')
-        write(lun,'(2a)') '#  Neutral momentum source:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Neutral momentum source:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
         close(lun)
@@ -433,7 +435,7 @@ c-----------------------------------------------------------------------
       else if(ig.eq.-9) then
 c-----------------------------------------------------------------------
         open(lun,file='nuclei.tot')
-        write(lun,'(2a)') '# Case: ',label
+        write(lun,'(2a)') '# Case: ',trim(label)
         write(lun,'(2a)') '# Total number of nuclei, including those ',
      ,                          'in plasma ions, atoms, and molecules:'
         do i = 1, nspecies
@@ -567,7 +569,7 @@ c-----------------------------------------------------------------------
           if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
         end do
         open(lun,file='diagno.dat')
-        write (lun,'(a)') label
+        write (lun,'(a)') '# '//trim(label)
         write (lun,'(a)')
      ,  '# ix, iy   : poloidal and radial indices in the grid;'
         write (lun,'(a)')
@@ -579,11 +581,12 @@ c-----------------------------------------------------------------------
         write (lun,'(a)')
      ,  '# n...     : densities of the ion species [m^-3];'
         write (lun,*)
-        write (hlp_frmr,2010) ns
- 2010   format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,',
-     ,    '2hne,10x,2hTe,10x,2hTi,4x,',
-     ,    i3,'(4x,1hn,a2,i2.2,3x))')
-        write (lun,hlp_frmr) (hlp_al(i),mz_hlp(i),i=0,ns-1)
+        write (hlp_frmr,'(a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,4x,',
+     ,     ns,'(4x,a3,i2.2,3x))'
+        write (lun,hlp_frmr)
+     ,    '#  ix  iy','R','Z','ne','Te','Ti',
+     ,     ('n'//hlp_al(i),mz_hlp(i),i=0,ns-1)
         write (hlp_frmr,'(a,i3,a)') '(1x,1p,2i4,',ns+5,'e12.4)'
         do iy = 0, ny-1
           do ix = 0, nx-1

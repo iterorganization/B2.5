@@ -1475,7 +1475,7 @@ c*** f     :  the associated file name
         xdum(1)=0.0_R8
         call combfile(lun,f,lenfnm,hlp_hdr,ntrc_tmp,label,.false.,
      ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
-     ,                n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
+     ,                n_pad_str,7,4,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
 
 c        print *,'b2usrtrc: after combfile. irt,m,f=',          !###
 c     ,                                     irt,m,'  ',trim(f)  !###
@@ -1490,7 +1490,9 @@ c     ,                                     irt,m,'  ',trim(f)  !###
           end if !}
           fn_ntrc(ltrc)=f
         end if !}
-c        print *,'hlp_frm=',trim(hlp_frm)  !###
+#ifdef DBG
+        print *,'hlp_frm=',trim(hlp_frm)  !###
+#endif
         first_out=.false.
       end if !}
 c=======================================================================
@@ -1536,7 +1538,7 @@ c=======================================================================
       integer, intent(in) :: nx, ny, ns
       integer i, j, k, l, i0, nv, na_tmp, np_tmp, ns_tmp
       real (kind=R8) :: stim = 0.0_R8
-      character hlp_c, hlp_frf*240, f*(lenfnm), hlp_hb*8
+      character hlp_c, f*(lenfnm), hlp_hb*8
       integer lnh_tmp
       parameter (lnh_tmp=20)
       character hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
@@ -1651,20 +1653,20 @@ c*** New file
         end do !}
         write(lun,700) lv,ng_tmp,np_tmp,ns_tmp,na_tmp
         write(lun,'(2a)') '#  ',label
-c       hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a),,'//
-c     /                                      'i3,8h(1h'//tab//',a)))'
-        hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a)))'
-        write(hlp_frm,hlp_frf) ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
+        write(hlp_frm,'(a,i3,a)')
+     ,   '(''# time'',',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,a))'
+#ifdef DBG
+        print *,'b2usrtrc frm:',trim(hlp_frm)  !###
+#endif
         if(npfrgrp.gt.0) then !{
           write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp),
      ,        (((hlp_ha(i,j,k),i=i0,npfrgrp),j=1,nspecies),k=1,npff_tmp)
         else !}{
           write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp)
         end if !}
-c        print *,'b2usrtrc frm:',hlp_frm  !###
       end if !}
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
+      write(hlp_frm,'(a,i3,a)')
+     - '(1p,e16.7,',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,e12.4))'
       return
 c=======================================================================
    90 write(*,*) 'b2usrtrc: cannot open file ',trim(f)
@@ -1881,7 +1883,7 @@ c*** Limiter case
       mrks_hlp(7)=ngl2_tmp
       call combfile(lun,f,lenfnm,hlp_hdr,ntrc_tmp,label,.false.,
      ,              fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
-     ,              n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
+     ,              n_pad_str,7,4,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
       print *,'b2usrtrcc: after combfile. irt,m,f=',          !###
      ,                                    irt,m,'  ',trim(f)  !###
       if(irt.lt.0) then !{

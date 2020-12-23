@@ -57,7 +57,7 @@ c
       integer, save :: i, j, k, l, m, n, lf_tmp
       integer :: mh_tmp(0:ns-1)
       logical, save :: ex
-      character, save :: tab, hlp_c, f*(lenfnm), hlp_s(3)
+      character, save :: hlp_c, f*(lenfnm), hlp_s(3)
       character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
       real (kind=R8), save :: stim = 0.0_R8
 c
@@ -75,7 +75,6 @@ c----------------------------------------------------------------------
       call subini('b2filei')
 c
       write(*,*) 'b2file: nstrai, nnatmi = ', nstrai, nnatmi
-      tab=char(9)
       lf_tmp=ntrc_used
 c
 c*** check the number of units specified in ntrc
@@ -122,40 +121,45 @@ c*** Old file to be appended - check it
 c*** New file - write the headers
         l=4
         write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nnatmi
-        write(ntrc(ntrc_tst),710,err=900) '## ',label
+        write(ntrc(ntrc_tst),710,err=900) '## ',trim(label)
 
         if(nstrai.gt.0) then
-c          write(hlp_frmt,'(7h(3h#it,,i3,21h(1h'//tab//
-c     /     ',a8,i2.2,1h_,a2)))')
-c     -                          nstrai*5*(nnatmi+1)
-c          write(hlp_frmt,'(a,i3,a)')
-c     /         '(''#it'',',
-c     -                          nstrai*5*(nnatmi+1),
-c     /         '('''//tab//''',a8,i2.2,''_'',a2))'
-          write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''#it'',',nstrai*5,
-     /         '('''//tab//''',a8,i2.2,a3,',
-     /          nnatmi,'('''//tab//''',a8,i2.2,''_'',a2)))'
-c<<<
+          if (nnatmi.gt.0) then
+            write(hlp_frmt,'(a,i3,a,i2,a)')
+     /         '(''# it'',3x,',nstrai*5,
+     /         '(1x,a8,i2.2,a3,',nnatmi,'(a8,i2.2,a1,a2,1x)))'
+          else
+            write(hlp_frmt,'(a,i3,a,i2,a)')
+     /         '(''# it'',3x,',nstrai*5,'(1x,a8,i2.2,a3))'
+          end if
+#ifdef DBG
           print *,'%%% b2file: header format'   !###
           print *,trim(hlp_frmt)                !###
-c>>>
-          write(ntrc(ntrc_tst),hlp_frmt,err=900)
-     -     ('sclstra_',i,'   ',
-     ,     ('sclstra_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclalph_',i,'   ',
-     ,     ('sclalph_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclbase_',i,'   ',
-     ,     ('sclbase_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclrtio_',i,'   ',
-     ,     ('sclrtio_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclsrcn_',i,'   ',
-     ,     ('sclsrcn_',i,atoms_list(k),k=1,nnatmi),i=1,nstrai)
+#endif
+          if (nnatmi.gt.0) then
+            write(ntrc(ntrc_tst),hlp_frmt,err=900)
+     -       ('sclstra_',i,'   ',
+     ,       ('sclstra_',i,'_',atoms_list(k),k=1,nnatmi),
+     ,        'sclalph_',i,'   ',
+     ,       ('sclalph_',i,'_',atoms_list(k),k=1,nnatmi),
+     ,        'sclbase_',i,'   ',
+     ,       ('sclbase_',i,'_',atoms_list(k),k=1,nnatmi),
+     ,        'sclrtio_',i,'   ',
+     ,       ('sclrtio_',i,'_',atoms_list(k),k=1,nnatmi),
+     ,        'sclsrcn_',i,'   ',
+     ,       ('sclsrcn_',i,'_',atoms_list(k),k=1,nnatmi),i=1,nstrai)
+          else
+            write(ntrc(ntrc_tst),hlp_frmt,err=900)
+     -       ('sclstra_',i,'   ',
+     ,        'sclalph_',i,'   ',
+     ,        'sclbase_',i,'   ',
+     ,        'sclrtio_',i,'   ',
+     ,        'sclsrcn_',i,'   ',i=1,nstrai)
+          end if
         end if
       end if
-      if (nstrai.gt.0)
-     > write(hlp_frmt,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -                          nstrai*5*(nnatmi+1)
+      if (nstrai.gt.0) write(hlp_frmt,'(a,i3,a)')
+     -      '(1x,i3.3,1p,',nstrai*5*(nnatmi+1),'(2x,e12.4))'
       filedata(ntrc_tst)=.true.
       go to 1000
 c
@@ -212,29 +216,25 @@ c*** New file - write the headers
         nis_tmp=k
 
         write(ntrc(ntrc_res),700,err=5) '#',lvr,nregionv,nis_tmp
-        write(ntrc(ntrc_res),710,err=5) '## ',label
+        write(ntrc(ntrc_res),710,err=5) '## ',trim(label)
 
-c       write(hlp_frmr,'(7h(3h#it,,i3,17h(1h'//tab//
-c     /  ',a3,a2,i2.2),,i3,29h(1h'//tab//
-c     /  ',a3,a2,i2.2,1h_,i2.2,a2)))') nregionv*2,nregionv*ns*2
         write(hlp_frmr,'(a,i3,a,i3,a)')
-     /        '(''#it'',',
+     /        '(''# it'',3x,',
      -         nregionv*2,
-     /        '('''//tab//''',a3,a2,i2.2),',
+     /        '(2x,a3,a2,i2.2,5x),',
      -         nregionv*(nis_tmp)*2,
-     /        '('''//tab//''',a3,a2,i2.2,''_'',i2.2,a2))'
-c<<<
+     /        '(a3,a2,i2.2,''_'',i2.2,''_'',a2,1x))'
+#ifdef DBG
         print *,'%%% b2file: header format'   !###
         print *,trim(hlp_frmr)                !###
-c>>>
-
+#endif
         write(ntrc(ntrc_res),hlp_frmr,err=5)
-     ,   (('res',hlp_h(i),j,j=1,nregionv),i=1,2),
+     ,    (('res',hlp_h(i),j,j=1,nregionv),i=1,2),
      ,   ((('res',hlp_h(i),j,mh_tmp(k),hlp_al(k),j=1,nregionv),
-     ,   i=3,4),k=1,nis_tmp)
+     ,                                           i=3,4),k=1,nis_tmp)
       end if
-      write(hlp_frmr,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -  nregionv*2*(nis_tmp+1)
+      write(hlp_frmr,'(a,i3,a)')
+     - '(1x,i3.3,1p,',nregionv*2*(nis_tmp+1),'(2x,e12.4))'
       filedata(ntrc_res)=.true.
       go to 10
 c
@@ -278,31 +278,25 @@ c
 c*** New file - write the headers
         l=4
         write(ntrc(ntrc_src),700,err=30) '#',lvs,nregionv,nspecies
-        write(ntrc(ntrc_src),710,err=30) '## ',label
+        write(ntrc(ntrc_src),710,err=30) '## ',trim(label)
 
-c        write(hlp_frms,'(7h(3h#it,,i3,20h(1h'//tab//
-c     /          ',a3,a2,i2.2,a1),,i3,27h(1h'//tab//
-c     /          ',a3,a2,i2.2,a1,1h_,a2)))')
-c     -                          (nregionv+1)*12,(nregionv+1)*nspecies*6
         write(hlp_frms,'(a,i3,a,i3,a)')
-     /        '(''#it'',',
-     -                          (nregionv+1)*12,
-     /        '('''//tab//''',a3,a2,i2.2,a1),',
-     -                          (nregionv+1)*nspecies*6,
-     /        '('''//tab//''',a3,a2,i2.2,a1,''_'',a2))'
-
-c<<<
+     /        '(''# it'',2x,',
+     -         (nregionv+1)*12,
+     /        '(3x,a3,a2,i2.2,a1,3x),',
+     -         (nregionv+1)*nspecies*6,
+     /        '(2x,a3,a2,i2.2,a1,''_'',a2,1x))'
+#ifdef DBG
         print *,'%%% b2file: header format'
         print *,trim(hlp_frms)
-c>>>
+#endif
         write(ntrc(ntrc_src),hlp_frms,err=30)
-     ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nregionv),i=-1,2),
+     ,    ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nregionv),i=-1,2),
      ,   (((('src',hlp_h(i),j,hlp_s(l),species_list(k),l=1,3),
-     ,   j=0,nregionv),i=5,6),k=1,nspecies)
+     ,                           j=0,nregionv),i=5,6),k=1,nspecies)
       end if
-      write(hlp_frms,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -                                      (nregionv+1)*6*(nspecies+2)
-
+      write(hlp_frms,'(a,i3,a)')
+     - '(1x,i3.3,1p,',(nregionv+1)*6*(nspecies+2),'(2x,e12.4))'
       filedata(ntrc_src)=.true.
       go to 35
 

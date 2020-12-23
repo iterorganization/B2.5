@@ -21,6 +21,8 @@ c
       integer ic
       integer lun,m_hlp,m_hlpa
       parameter (lun=96, m_hlp=9, m_hlpa=1)
+      integer, save :: shot = 0, run = 0
+      character*12 case_number
       integer i,j,k,l,m,n,ix,ixx,isep,lv_hlp,n_hlp
       real (kind=R8) ::
      ,  hlp_pwr_in(2),hlp_rad_div(2),hlp_rad_trg(2),hlp_area(2),
@@ -37,7 +39,7 @@ c
      ,  (hlp_rdfr,equ_hlp(1,7)),    (hlp_rad_tot,equ_hlp(1,8)),
      ,  (hlp_area_t,equ_hlp(1,9))
       logical ex
-      character tab,hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
+      character hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
      ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8
       data hlp_fn / 'spec_pwr.dat' /
       data hlp_c / 'i', 'o' /
@@ -46,7 +48,6 @@ c
       data hlp_hda / 'Pin' /
 c======================================================================
 
-      tab=char(9)
       n_hlp=2*m_hlp+m_hlpa
       isep=jsep+1
 
@@ -150,8 +151,8 @@ c*** Produce the output
 
       call find_file(hlp_fn,ex)
       open(lun,file=hlp_fn,err=900)
-      write(hlp_frm,'(a10,i3,a9)') '(1x,i4,1p,',n_hlp,'e12.4,i5)'
-c      print *,'hlp_frm: ',hlp_frm
+      write(hlp_frm,'(a14,i3,a9)') '(1x,a12,1x,1p,',n_hlp,'e12.4,i5)'
+c      print *,'hlp_frm: ',trim(hlp_frm)
       if(ex) then
 
 c*** read the file
@@ -177,32 +178,41 @@ c*** read the file
 c*** Write the header
 
         rewind(lun)
-        write(hlp_frh,'(16h(1p,6h#case'//tab//
-     /                       ',a4,,i3, 12h(1h'//tab//',a4,a1)))') n_hlp
+        write(hlp_frh,'(a,i1,a,i3,a)')
+     .   '(a5,14x,',m_hlpa,'a4,7x,',2*m_hlp,'(a4,a1,7x))'
 c        print *,'hlp_frh: ',hlp_frh
-        write(lun,hlp_frh) (hlp_hda(i),i=1,m_hlpa),
-     -                           ((hlp_hdr(i),hlp_c(j),i=1,m_hlp),j=1,2)
+        write(lun,hlp_frh) '#case',(hlp_hda(i),i=1,m_hlpa),
+     -    ((hlp_hdr(i),hlp_c(j),i=1,m_hlp),j=1,2)
       end if
 
 c*** Extract the case number
 
-      l=index(label,'#')
-      m=index(label,'_')
-      if(m.gt.l+1) then
-        hlp_inp=label(l+1:m-1)
-        read(hlp_inp,'(i8)') lv_hlp
+      call ipgeti('b2mndr_shot_number', shot )
+      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
+      call ipgeti('b2mndr_run_number', run )
+      call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+      if (shot.gt.0) then
+        write(case_number,'(i6,a1,i5.5)') shot,'/',run
       else
         lv_hlp=0
+        l=index(label,'#')
+        m=index(label,'_')
+        if(m.gt.l+1) then
+          hlp_inp=label(l+1:m-1)
+          read(hlp_inp,'(i8)',err=99) lv_hlp
+        end if
+   99   continue
+        write(case_number,'(i4)') lv_hlp
       end if
 
 c*** Write the data
 
-      write(lun,hlp_frm) lv_hlp,(eqa_hlp(j),j=1,m_hlpa),
+      write(lun,hlp_frm) case_number,(eqa_hlp(j),j=1,m_hlpa),
      ,                            ((equ_hlp(i,j),j=1,m_hlp),i=1,2),1234
       close(lun)
       return
 c======================================================================
   900 write(0,*) 'b2paspwr: unable to open ',hlp_fn
-      stop
+      call xerrab ('Unable to open spec_pwr.dat file!')
 c======================================================================
-      end
+      end subroutine b2paspwr

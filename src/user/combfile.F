@@ -342,7 +342,7 @@ cc!###}
       if(ex) then !{
         if(iret.gt.0) then !{
 
-c*** Find a free i/o unit for re-writing the file
+c*** Find a free I/O unit for re-writing the file
 
           op=.true.
           lrd=0
@@ -394,14 +394,14 @@ c*** Produce the header
           do i=1,ltrl !{
             chdw(i+nhdr)=chdf(int_hlp(i))
           end do !}
-c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
+c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lnrw) !###
           if(nmrk.gt.0) then !{
             write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
             write(lun,frmhdr) mrks
-            write(lun,'(2a)') '#  ',titel
+            write(lun,'(2a)') '#  ',trim(titel)
           end if !}
-          write(frmhdr,'(a5,i4,a2)') '(1h#,',2*lnrw,'a)'
-          write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
+          write(frmhdr,'(a,i4,a2)') '(''# '',',2*lnrw,'a)'
+          write(lun,frmhdr) (trim(chdw(i)),csep,i=1,lnrw)
 
 c*** re-write the existing file
 
@@ -411,8 +411,9 @@ c*** re-write the existing file
           l=nhdr*48
           nrec=0
           first=.true.
-          write(frmdat,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
-     .                     lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
+          write(frmdat,700)
+     .         '(1p,1x,e',lwfs+8,'.',lwfs,',a,',
+     .        lnrw-1,'(e',lwfr+8,'.',lwfr,',a))'
 c          print *,trim(frmdat)  !###
           do while (.true.) !{
             read(lrd,frmhdr,end=45) (cline(j),j=1,ncln)
@@ -477,7 +478,7 @@ c*** non-space on both sides of the section borders - the field is split
               end do !}
               call xtrn(roww,chdw,lvrw,mrkr,nmr,first)
               first=.false.
-              write(lun,frmdat) (roww(i),i=1,lnrw)
+              write(lun,frmdat) (roww(i),csep,i=1,lnrw)
               nrec=nrec+1
             else !}{ Probably, the line is too short - add a section
               ncln=ncln+1
@@ -519,10 +520,10 @@ c*** Write the header
         if(nmrk.gt.0) then !{
           write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
           write(lun,frmhdr) mrks
-          write(lun,'(2a)') '#  ',titel
+          write(lun,'(2a)') '#  ',trim(titel)
         end if !}
-        write(frmhdr,'(a5,i4,a2)') '(1h#,',2*nhdr,'a)'
-        write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)
+        write(frmhdr,'(a,i4,a2)') '(''# '',',2*nhdr,'a)'
+        write(lun,frmhdr) (trim(chdr(i)),csep,i=1,nhdr)
         ntrl=0
         iret=0
       end if !}
@@ -531,24 +532,24 @@ c*** Write the header
       if(allocated(chdw)) deallocate(chdw,roww,rowr)
       if(allocated(cline)) deallocate(cline)
 
-      write(frmd,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
-     .               lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
-  700 format(a8,i2,a1,i2,a3,a1,a1,i4,a2,i2,a1,i2,a3,a1,a2)
+      write(frmd,700) '(1p,1x,e',lwfs+8,'.',lwfs,','//csep//',',
+     .               lnrw-1,'(e',lwfr+8,'.',lwfr,','//csep//'))'
 c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
+      return
+  700 format(a8,i2,a1,i1,a,i4,a2,i2,a1,i1,a)
 c=======================================================================
-      end
-
+      end subroutine combfile
 
 c*** Dummy data transformation routine
 
-      subroutine xtrn_dum(data,chdr,nhdr,mrks,nmrk,first)
-      use b2mod_types
-      use b2mod_diag
-      implicit none
-      integer :: nmrk, nhdr 
-      real (kind=R8) :: data(nhdr)
-      integer :: mrks(nmrk)
-      character*(mhdr) chdr(nhdr)
-      logical first
-      return
-      end
+c$$$      subroutine xtrn_dum(data,chdr,nhdr,mrks,nmrk,first)
+c$$$      use b2mod_types
+c$$$      use b2mod_diag
+c$$$      implicit none
+c$$$      integer :: nmrk, nhdr
+c$$$      real (kind=R8) :: data(nhdr)
+c$$$      integer :: mrks(nmrk)
+c$$$      character*(mhdr) chdr(nhdr)
+c$$$      logical first
+c$$$      return
+c$$$      end subroutine xtrn_dum
