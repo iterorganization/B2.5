@@ -1162,14 +1162,20 @@ c     &   'faulty internal parameter density_rescale')
 cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(switch%use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(switch%use_eirene.ne.0) then
+c when using kinetic neutrals, volume recombination is fully handled on the EIRENE side.
+c The recombination rate depends on the ion density and not on the neutral density, so the neutral rescaling is not sufficient to turn it off on the B2.5 side
+c and hence the reaction rates have to be rescaled here.
          if (neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(neutral_sources_rescale),
-     *         ' to relevant rtlra'
+     *         ' to relevant rtlra and rtlqa_ra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
+     *             log(neutral_sources_rescale)
+                write(*,*) is,zamax(is),rtlqa_ra(0,0,is+1)
              endif
            enddo
          else
