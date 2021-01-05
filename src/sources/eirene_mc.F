@@ -554,7 +554,7 @@ c*** recyc     : fudge factors for the sources in B2
 
         if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
-            if(.not.is_neutral(is).or.lneustra) then !{          !! SH_TODO difference for E W S N in structured code !!
+            if(.not.is_neutral(is).or.lneustra) then !{    
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
