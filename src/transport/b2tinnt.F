@@ -359,10 +359,8 @@
               fnan(:,0,is0) = fna(:,0,is0)/(geo%fcS*geo%fcQalf(:,0)+eps)
               fnan(:,1,is0) = fna(:,1,is0)/(geo%fcS*geo%fcQalf(:,1)+eps)
 *       ..get fluxes in the cell centre
-              call intcell(nFc,nCv,mpg,mpg%intcellP,fnac(:,0,is0),
-     &          fnac(:,0,is0))
-              call intcell(nFc,nCv,mpg,mpg%intcellR,fnac(:,1,is0),
-     &          fnac(:,1,is0))
+              call intcell(nFc,nCv,mpg,mpg%intcellP,wrk2,fnac(:,0,is0))
+              call intcell(nFc,nCv,mpg,mpg%intcellR,wrk2,fnac(:,1,is0))
 *      ..get velocities in the cell centre
               vntrc(:,0) = fnac(:,1,is0)/na(:,is0)
               vntrc(:,1) = fnac(:,0,is0)/na(:,is0)

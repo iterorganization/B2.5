@@ -1,9 +1,6 @@
   ratamjhyd.F
   eirene_mc
   tallies
-  b2ux5p_dd
-  b2ux7p_dd
-  b2ux9p_dd
   slv5pt_dv
   slv5pt_d
   slv5pt
@@ -46,7 +43,19 @@
   pagdef
   b2mod_b2_to_astra
   ilutern_us_solps
+  ilutern_us_solps
   b2uxus
   b2uxus_d
   b2mod_ma28_for_us
-
+  b2ux5p
+  b2ux7p
+  b2ux9p
+  b2ux11p
+  illtern_7_solps  
+  iluter       
+  ilutern_9_solps 
+  ilutern_7_solps
+  ilutern_solps
+  ma28
+  ma28copy
+  ma28copy3
