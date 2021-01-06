@@ -4431,7 +4431,7 @@ contains
         summary%local%separatrix%n_e%source = source
         do is = 1, nspecies
           is1 = eb2spcr(is)
-          if (nint(zamax(is1)).eq.0) is1 = is1+1
+          if (nint(zamax(is1)).eq.0) is1 = is1 + 1
           is2 = is1 + nfluids(is) - 1
           nisep = 0.0_R8
           nasum = 0.0_R8
@@ -4473,7 +4473,7 @@ contains
             allocate ( summary%local%separatrix%velocity_tor%tritium%source(1) )
             summary%local%separatrix%velocity_tor%tritium%source = source
           case ('He')
-            if (nint(am(is)).eq.3) then
+            if (nint(am(eb2spcr(is))).eq.3) then
               allocate( summary%local%separatrix%n_i%helium_3%value( num_time_slices ))
               summary%local%separatrix%n_i%helium_3%value( time_sind ) = nisep
               allocate ( summary%local%separatrix%n_i%helium_3%source(1) )
@@ -4482,7 +4482,7 @@ contains
               summary%local%separatrix%velocity_tor%helium_3%value( time_sind ) = vtor
               allocate ( summary%local%separatrix%velocity_tor%helium_3%source(1) )
               summary%local%separatrix%velocity_tor%helium_3%source = source
-            else if (nint(am(is)).eq.4) then
+            else if (nint(am(eb2spcr(is))).eq.4) then
               allocate( summary%local%separatrix%n_i%helium_4%value( num_time_slices ))
               summary%local%separatrix%n_i%helium_4%value( time_sind ) = nisep
               allocate ( summary%local%separatrix%n_i%helium_4%source(1) )
@@ -4586,6 +4586,125 @@ contains
         allocate ( summary%local%separatrix%zeff%source(1) )
         summary%local%separatrix%zeff%source = source
 
+! Data at limiter tangency point
+        if (geometryType.eq.GEOMETRY_LIMITER) then
+          allocate( summary%local%limiter%t_e%value( num_time_slices ))
+          summary%local%limiter%t_e%value( time_sind ) = &
+           & 0.25_R8 * ( te(0,jsep) + te(0,jsep+1) + &
+           &             te(nx-1,jsep) + te(nx-1,jsep+1) )/ev
+          allocate( summary%local%limiter%t_e%source(1) )
+          summary%local%limiter%t_e%source(1) = source
+          allocate( summary%local%limiter%t_i_average%value( num_time_slices ))
+          summary%local%limiter%t_i_average%value( time_sind ) = &
+           & 0.25_R8 * ( ti(0,jsep) + ti(0,jsep+1) + &
+           &             ti(nx-1,jsep) + ti(nx-1,jsep+1) )/ev
+          allocate( summary%local%limiter%t_i_average%source(1) )
+          summary%local%limiter%t_i_average%source(1) = source
+          allocate( summary%local%limiter%n_e%value( num_time_slices ))
+          summary%local%limiter%n_e%value( time_sind ) = &
+           & 0.25_R8 * ( ne(0,jsep) + ne(0,jsep+1) + &
+           &             ne(nx-1,jsep) + ne(nx-1,jsep+1) )
+          allocate( summary%local%limiter%n_e%source(1) )
+          summary%local%limiter%n_e%source(1) = source
+          do is = 1, nspecies
+            is1 = eb2spcr(is)
+            if (nint(zamax(is1)).eq.0) is1 = is1 + 1
+            is2 = is1 + nfluids(is) - 1
+            nisep = 0.0_R8
+            do i = is1, is2
+              nisep = nisep + &
+                &  0.25_R8 * ( na(0,jsep,i) + na(0,jsep+1,i) + &
+                &              na(nx-1,jsep,i) + na(nx-1,jsep+1,i) )
+            end do
+            select case (is_codes(eb2spcr(is)))
+            case ('H')
+              allocate( summary%local%limiter%n_i%hydrogen%value( num_time_slices ))
+              summary%local%limiter%n_i%hydrogen%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%hydrogen%source(1) )
+              summary%local%limiter%n_i%hydrogen%source(1) = source
+            case ('D')
+              allocate( summary%local%limiter%n_i%deuterium%value( num_time_slices ))
+              summary%local%limiter%n_i%deuterium%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%deuterium%source(1) )
+              summary%local%limiter%n_i%deuterium%source(1) = source
+            case ('T')
+              allocate( summary%local%limiter%n_i%tritium%value( num_time_slices ))
+              summary%local%limiter%n_i%tritium%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%tritium%source(1) )
+              summary%local%limiter%n_i%tritium%source(1) = source
+            case ('He')
+              if (nint(am(eb2spcr(is))).eq.3) then
+                allocate( summary%local%limiter%n_i%helium_3%value( num_time_slices ))
+                summary%local%limiter%n_i%helium_3%value( time_sind ) = nisep
+                allocate( summary%local%limiter%n_i%helium_3%source(1) )
+                summary%local%limiter%n_i%helium_3%source(1) = source
+              else if (nint(am(eb2spcr(is))).eq.4) then
+                allocate( summary%local%limiter%n_i%helium_4%value( num_time_slices ))
+                summary%local%limiter%n_i%helium_4%value( time_sind ) = nisep
+                allocate( summary%local%limiter%n_i%helium_4%source(1) )
+                summary%local%limiter%n_i%helium_4%source(1) = source
+              end if
+            case ('Li')
+              allocate( summary%local%limiter%n_i%lithium%value( num_time_slices ))
+              summary%local%limiter%n_i%lithium%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%lithium%source(1) )
+              summary%local%limiter%n_i%lithium%source(1) = source
+            case ('Be')
+              allocate( summary%local%limiter%n_i%beryllium%value( num_time_slices ))
+              summary%local%limiter%n_i%beryllium%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%beryllium%source(1) )
+              summary%local%limiter%n_i%beryllium%source(1) = source
+            case ('C')
+              allocate( summary%local%limiter%n_i%carbon%value( num_time_slices ))
+              summary%local%limiter%n_i%carbon%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%carbon%source(1) )
+              summary%local%limiter%n_i%carbon%source(1) = source
+            case ('N')
+              allocate( summary%local%limiter%n_i%nitrogen%value( num_time_slices ))
+              summary%local%limiter%n_i%nitrogen%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%nitrogen%source(1) )
+              summary%local%limiter%n_i%nitrogen%source(1) = source
+            case ('O')
+              allocate( summary%local%limiter%n_i%oxygen%value( num_time_slices ))
+              summary%local%limiter%n_i%oxygen%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%oxygen%source(1) )
+              summary%local%limiter%n_i%oxygen%source(1) = source
+            case ('Ne')
+              allocate( summary%local%limiter%n_i%neon%value( num_time_slices ))
+              summary%local%limiter%n_i%neon%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%neon%source(1) )
+              summary%local%limiter%n_i%neon%source(1) = source
+            case ('Ar')
+              allocate( summary%local%limiter%n_i%argon%value( num_time_slices ))
+              summary%local%limiter%n_i%argon%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%argon%source(1) )
+              summary%local%limiter%n_i%argon%source(1) = source
+            case ('Xe')
+              allocate( summary%local%limiter%n_i%xenon%value( num_time_slices ))
+              summary%local%limiter%n_i%xenon%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%xenon%source(1) )
+              summary%local%limiter%n_i%xenon%source(1) = source
+            case ('W')
+              allocate( summary%local%limiter%n_i%tungsten%value( num_time_slices ))
+              summary%local%limiter%n_i%tungsten%value( time_sind ) = nisep
+              allocate( summary%local%limiter%n_i%tungsten%source(1) )
+              summary%local%limiter%n_i%tungsten%source(1) = source
+            end select
+          end do
+          allocate( summary%local%limiter%n_i_total%value( num_time_slices ))
+          summary%local%limiter%n_i_total%value( time_sind ) = &
+           & 0.25_R8 * ( ni(0,jsep,1) + ni(0,jsep+1,1) + &
+           &             ni(nx-1,jsep,1) + ni(nx-1,jsep+1,1) )
+          allocate( summary%local%limiter%n_i_total%source(1) )
+          summary%local%limiter%n_i_total%source(1) = source
+          allocate( summary%local%limiter%zeff%value( num_time_slices ))
+          summary%local%limiter%zeff%value( time_sind ) = &
+           & 0.25_R8 * ( zeff(0,jsep) + zeff(0,jsep+1) + &
+           &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) )
+          allocate( summary%local%limiter%zeff%source(1) )
+          summary%local%limiter%zeff%source(1) = source
+        end if
+
 ! Summary divertor plate data
         if (nncut.eq.0) then
           if (geometryType.eq.GEOMETRY_LINEAR) then
@@ -4683,12 +4802,12 @@ contains
                 allocate ( summary%local%divertor_plate(i)%n_i%tritium%source(1) )
                 summary%local%divertor_plate(i)%n_i%tritium%source = source
               case ('He')
-                if (nint(am(is)).eq.3) then
+                if (nint(am(eb2spcr(is))).eq.3) then
                   allocate( summary%local%divertor_plate(i)%n_i%helium_3%value( num_time_slices ))
                   summary%local%divertor_plate(i)%n_i%helium_3%value( time_sind ) = nisep
                   allocate ( summary%local%divertor_plate(i)%n_i%helium_3%source(1) )
                   summary%local%divertor_plate(i)%n_i%helium_3%source = source
-                else if (nint(am(is)).eq.4) then
+                else if (nint(am(eb2spcr(is))).eq.4) then
                   allocate( summary%local%divertor_plate(i)%n_i%helium_4%value( num_time_slices ))
                   summary%local%divertor_plate(i)%n_i%helium_4%value( time_sind ) = nisep
                   allocate ( summary%local%divertor_plate(i)%n_i%helium_4%source(1) )

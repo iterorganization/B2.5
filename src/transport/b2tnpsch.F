@@ -91,7 +91,7 @@
       fnbPSch = 0.0_R8                                                   !srv 13.10.06
 
 *   ..compute P.Sch x-flux                                               !srv 13.10.06 {
-       if(PSch_style.eq.0) then                                          !srv 12.11.08
+      if(PSch_style.eq.0) then                                          !srv 12.11.08
         nbti=nb*ti
         call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
         do iy = 0, ny-1
@@ -121,7 +121,7 @@
           endif
          enddo
         enddo
-       else if(PSch_style.eq.1) then
+      else if(PSch_style.eq.1) then
         weight = 1.0e0_R8                                               !lk
         nbti=nb*ti
         call intcor(nx,ny,weight,nbti,nbtic)                            !lk 12.12.07
@@ -149,28 +149,28 @@
           endif
          enddo
         enddo
-        else                                                            !nn
-          nbti=nb*ti
-          weight = 1.0e0_R8  
-          call intcor(nx,ny,weight,nbti,nbtic)
-          do iy = -1, ny
-           do ix = -1, nx
+      else                                                              !nn
+        nbti=nb*ti
+        weight = 1.0e0_R8
+        call intcor(nx,ny,weight,nbti,nbtic)
+        do iy = -1, ny
+          do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then
-             fnbPSch(ix,iy,0)= 0.0e0_R8
+              fnbPSch(ix,iy,0)= 0.0e0_R8
             else
-            fnbPSch(ix,iy,0) = PSch*                                    !
+              fnbPSch(ix,iy,0) = PSch*                                  !
      &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*bzbl(ix,iy)/
      &      (qe*zb(ix,iy))*hzl(ix,iy)
             endif
-         enddo
+          enddo
         enddo
-       endif
+      endif
 
 *   ..compute P.Sch y-flux
-       iy = -1
-       fnbPSch(:,iy,1)=0.0e0_R8
-       if(PSch_style.eq.0) then                                         !srv 12.11.08
+      iy = -1
+      fnbPSch(:,iy,1)=0.0e0_R8
+      if(PSch_style.eq.0) then                                          !srv 12.11.08
         do iy = 0, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
@@ -200,7 +200,7 @@
           endif
          enddo
         enddo
-       else if(PSch_style.eq.1) then
+      else if(PSch_style.eq.1) then
         do iy = 0, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
@@ -223,25 +223,26 @@
           endif
          enddo
         enddo
-        else                                                            !nn
-          do iy = -1, ny
-           do ix = -1, nx
+      else                                                              !nn
+        do iy = -1, ny
+          do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-             fnbPSch(ix,iy,1)= 0.0e0_R8
+              fnbPSch(ix,iy,1)= 0.0e0_R8
             else
-            fnbPSch(ix,iy,1) = -PSch*                                    !
+              fnbPSch(ix,iy,1) = -PSch*                                    !
      &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
      &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
             endif
-         enddo
-        enddo
-       endif
-
-        do iy = -1, ny                                                  !srv 02.01.07 {
-          do ix = -1, nx
-            fnbPSch(ix,iy,0:1) = fnbPSch(ix,iy,0:1)*facdrift(ix,iy)
           enddo
-        enddo                                                           !srv 02.01.07 }
+        enddo
+      endif
+
+      do iy = -1, ny                                                    !srv 02.01.07 {
+        do ix = -1, nx
+          fnbPSch(ix,iy,0:1) = fnbPSch(ix,iy,0:1)*facdrift(ix,iy)
+        enddo
+      enddo                                                             !srv 02.01.07 }
+
       if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
@@ -253,14 +254,25 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fnbPSch(ix,-1,0) = 0.0_R8
-          endif
-        enddo
-       elseif(guard_flows.eq.1) then                                    !srv 20.06.08 {
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fnbPSch(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fnbPSch(ix,-1,0) = 0.0_R8
+            endif
+          enddo
+        endif
+
+      elseif(guard_flows.eq.1) then                                     !srv 20.06.08 {
 *   .. do nothing
-       elseif(guard_flows.eq.2) then
+      elseif(guard_flows.eq.2) then
 *     turn off flows between boundary cells in west and east
         do iy = -1, ny
          do ix = -1, nx
@@ -270,22 +282,22 @@ cxpb turn off poloidal flows in core boundary
          enddo
         enddo
 *     turn off flows between boundary cells in south and in north
-         do iy = -1, ny, ny+1
+        do iy = -1, ny, ny+1
           fnbPSch(:,iy,0)         = 0.0_R8
-         enddo                                                          !srv 20.06.08 }
+        enddo                                                           !srv 20.06.08 }
       endif                                                             !xpb
 
 csw 18feb2014 remove fluxes between guard cells
-        do ix=-1,nx
-         do iy=-1,ny
+      do ix=-1,nx
+        do iy=-1,ny
           if(iffboundx(ix,iy).ne.0) then
             fnbPSch(ix,iy,0)=0.0_R8
           endif
           if(iffboundy(ix,iy).ne.0) then
             fnbPSch(ix,iy,1)=0.0_R8
           endif
-         enddo
         enddo
+      enddo
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
@@ -300,7 +312,7 @@ csw 18feb2014 remove fluxes between guard cells
        write (chns,'(i3.3)') isb
        call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tnpsch_fnbPSchx'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tnpsch_fnbPSchy'//chns)
-       endif                                                             !srv 18.06.08 }
+      endif                                                             !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

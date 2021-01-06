@@ -5959,9 +5959,12 @@
 			</switch>
 			<switch>
 				<name>LCBS</name>
+				<default>0</default>
 				<type>integer array of size (NBC)</type>
 				<description>
-					Indices of the core boundary segments in B2 for passing to EIRENE. Defaults to the list of 'S' boundaries in regions 1 and 5.
+					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.
+					For limiter, SN, and DN topologies, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
+					For linear cases, in case a "core" type boundary condition is desired, then LCBS must be specified explicitly.
 				</description>
 			</switch>
 			<switch>

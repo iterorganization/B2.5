@@ -118,6 +118,7 @@ c-----------------------------------------------------------------------
       use b2mod_indirect
       use b2mod_external
       use b2mod_constants
+      use b2mod_boundary_namelist
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
@@ -201,7 +202,7 @@ c-----------------------------------------------------------------------
 c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
-      integer i, j, k, ir, is, ix, iy
+      integer i, j, k, ib, ir, is, ix, iy
 #ifdef B25_EIRENE
       integer iatm ! IYS 29.09.2017
       integer imol
@@ -328,30 +329,100 @@ csw 20sep2013 added
       hlp_zv  = 0.0_R8
       hlp_zn1 = 0.0_R8
       hlp_zn2 = 0.0_R8
-      do ix=0, nx-1
-        if(on_closed_surface(ix,0)) then
-          hlp_s=hlp_s+gs(ix,0,1)
-          hlp_v=hlp_v+vol(ix,0)
-          zeff=0.0_R8
-          do is=0,ns-1
-            zeff = zeff + rz2(ix,0,is)*na(ix,0,is)
-          end do
-          do is=0,ns_ext-1
-            zeff = zeff + za2_ext(ix,0,is)*na_ext(ix,0,is)
-          end do
-          zeff=zeff/ne(ix,0)
-          hlp_zs = hlp_zs + gs(ix,0,1)*zeff
-          hlp_zv = hlp_zv + vol(ix,0)*zeff
-          do is=0,ns-1
-            hlp_zn1 = hlp_zn1 + vol(ix,0)*na(ix,0,is)*rz2(ix,0,is)
-            hlp_zn2 = hlp_zn2 + vol(ix,0)*na(ix,0,is)*rza(ix,0,is)
-          end do
-          do is=0,ns_ext-1
-            hlp_zn1 = hlp_zn1+vol(ix,0)*na_ext(ix,0,is)*za2_ext(ix,0,is)
-            hlp_zn2 = hlp_zn2+vol(ix,0)*na_ext(ix,0,is)*za_ext(ix,0,is)
-          end do
-        end if
-      end do
+      if (boundary_namelist.eq.1) then
+        do ib = 1, nbc
+          if(core_boundary(ib)) then
+            do ix = 1, bc_list_size(ib)
+              hlp_s=hlp_s+gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+              hlp_v=hlp_v+vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+              zeff=0.0_R8
+              do is=0,ns-1
+                zeff = zeff +
+     .           rz2(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .            na(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+              end do
+              do is=0,ns_ext-1
+                zeff = zeff +
+     .           za2_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .            na_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+              end do
+              zeff=zeff/ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+              hlp_zs = hlp_zs +
+     .         gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .            topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*zeff
+              hlp_zv = hlp_zv +
+     .         vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*zeff
+              do is=0,ns-1
+                hlp_zn1 = hlp_zn1 +
+     .           vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
+     .            na(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .           rz2(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+                hlp_zn2 = hlp_zn2 +
+     .           vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
+     .            na(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .           rza(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+              end do
+              do is=0,ns_ext-1
+                hlp_zn1 = hlp_zn1 +
+     .               vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
+     .            na_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .           za2_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+                hlp_zn2 = hlp_zn2 +
+     .               vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
+     .            na_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)*
+     .            za_ext(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
+              end do
+            end do
+          end if
+        end do
+      else
+        do ix = -1, nx
+          if (on_closed_surface(ix,-1)) then
+            hlp_s = hlp_s + gs(ix,0,1)
+            hlp_v = hlp_v + vol(ix,0)
+            zeff = 0.0_R8
+            do is = 0, ns-1
+              zeff = zeff + rz2(ix,0,is)*na(ix,0,is)
+            end do
+            do is = 0, ns_ext-1
+              zeff = zeff + za2_ext(ix,0,is)*na_ext(ix,0,is)
+            end do
+            zeff = zeff/ne(ix,0)
+            hlp_zs = hlp_zs + gs(ix,0,1)*zeff
+            hlp_zv = hlp_zv + vol(ix,0)*zeff
+            do is = 0, ns-1
+              hlp_zn1 = hlp_zn1 + vol(ix,0)*na(ix,0,is)*rz2(ix,0,is)
+              hlp_zn2 = hlp_zn2 + vol(ix,0)*na(ix,0,is)*rza(ix,0,is)
+            end do
+            do is = 0, ns_ext-1
+              hlp_zn1 = hlp_zn1 + vol(ix,0)*na_ext(ix,0,is)*
+     .                                     za2_ext(ix,0,is)
+              hlp_zn2 = hlp_zn2 + vol(ix,0)*na_ext(ix,0,is)*
+     .                                      za_ext(ix,0,is)
+            end do
+          end if
+        end do
+      end if
       if (hlp_v .gt. 0.0_R8) hlp_zeff = hlp_zv / hlp_v
       if (hlp_s .gt. 0.0_R8) hlp_zefs = hlp_zs / hlp_s
       if (hlp_zn2 .gt. 0.0_R8) hlp_zefn = hlp_zn1 / hlp_zn2

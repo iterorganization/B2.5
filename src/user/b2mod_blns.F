@@ -398,8 +398,7 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
               end if
 
 !             Check whether this is part of the core boundary
-              if (on_closed_surface(BC_LIST_X(1,ic),BC_LIST_Y(1,ic))
-     &            .and.BCCHAR(ic).eq.'S') then
+              if (core_boundary(ic)) then
 ! Count fluid neutrals if not coupled to Eirene
                 if (is_neutral(is).and.use_eirene.eq.0) then
                   flxnc(ls) = flxnc(ls) + bsign*fna(ixf,iyf,idir,is)
@@ -481,8 +480,9 @@ c<<<
                   flxnt_sput(ls) = flxnt_sput(ls) +
      &                                    sna_stbr_sput(ls,ic)
 
-              elseif ( BCCHAR(ic).EQ.'N' .or. (BCCHAR(ic).EQ.'S' .and.
-     & .not. on_closed_surface(BC_LIST_X(1,ic),BC_LIST_Y(1,ic))) ) then
+              elseif ( BCCHAR(ic).EQ.'N' .or.
+     &                (BCCHAR(ic).EQ.'S' .and. .not.core_boundary(ic) )
+     &                   ) then
 
 !FIXME
                     flxnw_rec(ls) = flxnw_rec(ls) + sna_stbr_neut(ls,ic)

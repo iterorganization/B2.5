@@ -308,8 +308,8 @@ cpxb  In the PFR, we apply the value at the relevant separatrix.
         if (core.eq.sol) then
           cfl(-1:nx,-1:ny) = core
         else
-          do iy=-1, ny
-            do ix=-1, nx
+          do iy=-1,ny
+            do ix=-1,nx
               if (on_closed_surface(ix,iy).or.
      &            mod(region(ix,iy,0),4).eq.2) then
                 cfl(ix,iy)=core+(sol-core)*0.5_R8*

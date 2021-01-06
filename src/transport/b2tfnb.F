@@ -1783,35 +1783,74 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fnb(ix,-1,0) = 0.0_R8
-            fnb_32(ix,-1,0) = 0.0_R8
-            fnb_52(ix,-1,0) = 0.0_R8
-            fnb_nodrift(ix,-1,0) = 0.0_R8
-            fnb_32nd(ix,-1,0) = 0.0_R8
-            fnb_52nd(ix,-1,0) = 0.0_R8
-            flob(ix,-1,0) = 0.0_R8
-            conb(ix,-1,0,:)=0.0_R8
-            fllim0fnb(ix,-1,0) = 1.0_R8
-            vbecrb(ix,-1,0) = 0.0_R8
-            vbdia(ix,-1,0) = 0.0_R8
-            wbdia(ix,-1,0) = 0.0_R8
-            ubdia(ix,-1,0) = 0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,-1,0,isb)=0.0_R8
-               fna_pll(ix,-1,0,isb)=0.0_R8
-               fna_drift(ix,-1,0,isb)=0.0_R8
-               fna_nanom(ix,-1,0,isb)=0.0_R8
-               fna_panom(ix,-1,0,isb)=0.0_R8
-               fna_ch(ix,-1,0,isb)=0.0_R8
-               fna_pschused(ix,-1,0,isb)=0.0_R8
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fnb(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fnb_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fnb_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fnb_nodrift(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                fnb_32nd(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fnb_52nd(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                flob(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                conb(bc_list_x(ix,ib),bc_list_y(ix,ib),0,:)=0.0_R8
+                fllim0fnb(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 1.0_R8
+                vbecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                vbdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                wbdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                ubdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+                  fna_pinch(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                  fna_pll(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                  fna_drift(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                  fna_nanom(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                  fna_panom(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                  fna_ch(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=0.0_R8
+                  fna_pschused(bc_list_x(ix,ib),bc_list_y(ix,ib),0,isb)=
+     .                                                           0.0_R8
+                endif
+              enddo
             endif
-          endif
-        enddo
-       elseif(guard_flows.eq.1) then                                    !srv 20.06.08 {
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fnb(ix,-1,0) = 0.0_R8
+              fnb_32(ix,-1,0) = 0.0_R8
+              fnb_52(ix,-1,0) = 0.0_R8
+              fnb_nodrift(ix,-1,0) = 0.0_R8
+              fnb_32nd(ix,-1,0) = 0.0_R8
+              fnb_52nd(ix,-1,0) = 0.0_R8
+              flob(ix,-1,0) = 0.0_R8
+              conb(ix,-1,0,:)=0.0_R8
+              fllim0fnb(ix,-1,0) = 1.0_R8
+              vbecrb(ix,-1,0) = 0.0_R8
+              vbdia(ix,-1,0) = 0.0_R8
+              wbdia(ix,-1,0) = 0.0_R8
+              ubdia(ix,-1,0) = 0.0_R8
+              if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+                fna_pinch(ix,-1,0,isb)=0.0_R8
+                fna_pll(ix,-1,0,isb)=0.0_R8
+                fna_drift(ix,-1,0,isb)=0.0_R8
+                fna_nanom(ix,-1,0,isb)=0.0_R8
+                fna_panom(ix,-1,0,isb)=0.0_R8
+                fna_ch(ix,-1,0,isb)=0.0_R8
+                fna_pschused(ix,-1,0,isb)=0.0_R8
+              endif
+            endif
+          enddo
+        endif
+
+      elseif(guard_flows.eq.1) then                                     !srv 20.06.08 {
 *   .. do nothing
-       elseif(guard_flows.eq.2) then
+      elseif(guard_flows.eq.2) then
 *     turn off flows between boundary cells in west and east
         do iy = -1, ny
          do ix = -1, nx

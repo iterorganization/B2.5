@@ -629,7 +629,7 @@ c old style
        call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)                 !xpb
        call xertst (-2.le.iy_nocoreExB .and. ny.ge.iy_nocoreExB,         !xpb
      &   'faulty parameter iy_nocoreExB')                                !xpb
-       do iy=-1, iy_nocoreExB
+       do iy=-1,iy_nocoreExB
          do ix=-1,nx
            if(on_closed_surface(ix,iy)) then
              fac_ExB_profile(ix,iy)=0.0_R8
@@ -700,8 +700,8 @@ c old style
        call ipgetr ('b2news_facdrift_tanh_a', facdrift_tanh_a)
        call ipgetr ('b2news_facdrift_tanh_b', facdrift_tanh_b)
        if(facdrift_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
+          do iy=-1,ny
+             do ix=-1,nx
                 if(on_closed_surface(ix,iy)) then
                    facdrift_profile(ix,iy)=facdrift_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+
@@ -718,8 +718,8 @@ c old style
        if (facExB_tanh_b.eq.0.0_R8)
      >  call ipgetr ('b2news_facExB_tanh_b', facExB_tanh_b)
        if(facExB_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
+          do iy=-1,ny
+             do ix=-1,nx
                 if(on_closed_surface(ix,iy)) then
                    fac_ExB_profile(ix,iy)=fac_ExB_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+
@@ -736,8 +736,8 @@ c old style
        if (facvis_tanh_b.eq.0.0_R8)
      >  call ipgetr ('b2news_facvis_tanh_b', facvis_tanh_b)
        if(facvis_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
+          do iy=-1,ny
+             do ix=-1,nx
                 if(on_closed_surface(ix,iy)) then
                    fac_vis_profile(ix,iy)=fac_vis_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+

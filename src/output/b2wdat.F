@@ -472,14 +472,27 @@
         write(70,"(1x,2(es14.6))") crdy_c_cell(nmdpl,iy), ti(nmdpl,iy)
       enddo
       close(70)
-*   ..calculate total energy flux
-      iy = 0
-      power=0.0_R8
-      do ix = -1, nx
-        if(on_closed_surface(ix,iy)) then                     ! for CORE
-          power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
-        endif
-      enddo
+*   ..calculate total core energy flux
+      power = 0.0_R8
+      if (boundary_namelist.eq.1) then
+        do ib = 1, nbc
+          if(core_boundary(ib)) then
+            do ix = 1, bc_list_size(ib)
+              power = power +
+     .         (fhe(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)+
+     .          fhi(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
+            enddo
+          endif
+        enddo
+      else
+        do ix = -1, nx
+          if (on_closed_surface(ix,0)) then
+            power = power + (fhe(ix,0,1)+fhi(ix,0,1))
+          endif
+        enddo
+      endif
       open(70,file=trim(folder)//'exppw.dat')                   !srv 26.09.17
       write(70,"(es14.6)") power
       close(70)
@@ -1062,14 +1075,27 @@
      *     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
        enddo
        close(70)
-*   ..calculate total energy flux
-       iy = 0
-       power=0.0_R8
-       do ix = -1, nx
-         if(on_closed_surface(ix,iy)) then                ! for CORE
-           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
-         endif
-       enddo
+*   ..calculate total core energy flux
+       power = 0.0_R8
+       if (boundary_namelist.eq.1) then
+         do ib = 1, nbc
+           if(core_boundary(ib)) then
+             do ix = 1, bc_list_size(ib)
+               power = power +
+     .          (fhe(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)+
+     .           fhi(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
+             enddo
+           endif
+         enddo
+       else
+         do ix = -1, nx
+           if (on_closed_surface(ix,0)) then
+             power = power + (fhe(ix,0,1)+fhi(ix,0,1))
+           endif
+         enddo
+       endif
        open(70,file=trim(folder)//'power.dat')                    !srv 26.09.17
        write(70,"('Power =',es14.6)") power
        close(70)
@@ -1325,7 +1351,7 @@
        wrk1=0.0e0_R8
        wrk2=0.0e0_R8
        do iy = 0,mintopcut-1
-         do ix=0,nx
+         do ix = 0,nx
            if(on_closed_surface(ix,iy)) then
              uvbtot=uvbtot+
      &              ua(ix,iy,ismain)*vol(ix,iy)*bb(ix,iy,3)
@@ -1340,7 +1366,7 @@
          enddo
        enddo
        do iy = 0,mintopcut-1
-         do ix=0,nx
+         do ix = 0,nx
            if(on_closed_surface(ix,iy)) then
              wrk2(ix,iy) = -uvbtot/voltot*bb(ix,iy,0)/bb(ix,iy,3)+
      &           (ti(ix,iy)/ne(ix,iy)*

@@ -633,8 +633,7 @@
      .        bccon(isfeedback,ib).eq.12
            end if
          else if (bcchar(ib).eq.'S') then
-           if (on_closed_surface(bc_list_x(1,ib),bc_list_y(1,ib)))
-     >      then
+           if (core_boundary(ib)) then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
      .          bccon(isfeedback,ib).eq.11
@@ -934,15 +933,14 @@
                   endif
                   na_feedback_current = 0.0_R8
                   sum_e = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
+                  is_start = -1
+                  is_end = -1
+                  do is = 0, ns-1
                     if(b2espcr(is).eq.ispecies+1) then
                       if(is_start.eq.-1) is_start=is
                       if(is_neutral(is).and.use_eirene.ne.0) cycle
                       do ix = 0, nx-1
-                        if(on_closed_surface(ix,jsep))
-     >                      then
+                        if(on_closed_surface(ix,jsep)) then
                           na_feedback_current =
      &                           na_feedback_current + (na(ix,jsep,is) +
      &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
@@ -954,7 +952,7 @@
                           end if
                         endif
                       enddo
-                      is_end=is
+                      is_end = is
                     endif
                   enddo
                   na_feedback_current = na_feedback_current/sum_e
@@ -1363,10 +1361,14 @@
 * DPC special treatment of core boundary condition
       if(fnaycore.ne.-1.0e30_R8) then
         fnaycurr=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,-1)) then
-            fnaycurr=fnaycurr+
-     1       fna(topix(ix,-1),topiy(ix,-1),1,isfeedback)
+        do ib = 1, nbc
+          if(core_boundary(ib)) then
+            do ix = 1, bc_list_size(ib)
+              fnaycurr=fnaycurr+
+     1         fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     2             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,
+     3             isfeedback)
+            end do
           endif
         enddo
         if(ncall.eq.0) then
@@ -1405,18 +1407,30 @@
         neave2=0.0_R8
 #endif
         fheycurr=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,-1)) then
+        do ib = 1, nbc
+          if(core_boundary(ib)) then
+            do ix = 1, bc_list_size(ib)
 #ifdef COMPLICATED
-            teave1=teave1+te(ix,-1)*ne(ix,-1)*vol(ix,-1)
-            neave1=neave1+ne(ix,-1)*vol(ix,-1)
-            teave2=teave2+te(topix(ix,-1),topiy(ix,-1))*
-     .                    ne(topix(ix,-1),topiy(ix,-1))*
-     .                   vol(topix(ix,-1),topiy(ix,-1))
-            neave2=neave2+ne(topix(ix,-1),topiy(ix,-1))*
-     .                   vol(topix(ix,-1),topiy(ix,-1))
+              teave1=teave1+te(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     .                      ne(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     .                     vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
+              neave1=neave1+ne(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     .                     vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
+              teave2=teave2+te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+     .                     *ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+     .                    *vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+              neave2=neave2+ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+     .                    *vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
 #endif
-            fheycurr=fheycurr+fhe(topix(ix,-1),topiy(ix,-1),1)
+              fheycurr=fheycurr+
+     .                 fhe(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+            enddo
           endif
         enddo
 #ifdef COMPLICATED
@@ -1469,24 +1483,39 @@
         niave2=0.0_R8
 #endif
         fhiycurr=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,-1)) then
+        do ib=1,nbc
+          if(core_boundary(ib)) then
+            do ix=1,bc_list_size(ib)
 #ifdef COMPLICATED
-            tiave1=tiave1+ti(ix,-1)*ni(ix,-1,0)*vol(ix,-1)
-            niave1=niave1+ni(ix,-1,0)*vol(ix,-1)
-            tiave2=tiave2+ti(topix(ix,-1),topiy(ix,-1))*
-     .                    ni(topix(ix,-1),topiy(ix,-1),0)*
-     .                   vol(topix(ix,-1),topiy(ix,-1))
-            niave2=niave2+ni(topix(ix,-1),topiy(ix,-1),0)*
-     .                   vol(topix(ix,-1),topiy(ix,-1))
+              tiave1=tiave1+ti(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     .                      ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0)*
+     .                     vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
+              niave1=niave1+ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0)*
+     .                     vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
+              tiave2=tiave2+
+     .               ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                  topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+     .              *ni(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                  topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)
+     .             *vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                  topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+              niave2=niave2+
+     .               ni(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                  topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)*
+     .              vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                  topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
 #endif
-            fhiycurr=fhiycurr+fhi(topix(ix,-1),topiy(ix,-1),1)
-            if (fhiycore_kinetic_energy.eq.1) then
-              do is = 0, ns-1
-                fhiycurr=fhiycurr+(1.0_R8-BoRiS)*
-     .           fhm(topix(ix,-1),topiy(ix,-1),1,is)
-              enddo
-            endif
+              fhiycurr=fhiycurr+
+     .                 fhi(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+              if (fhiycore_kinetic_energy.eq.1) then
+                do is = 0, ns-1
+                  fhiycurr=fhiycurr+(1.0_R8-BoRiS)*
+     .             fhm(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is)
+                enddo
+              endif
+            enddo
           endif
         enddo
 #ifdef COMPLICATED
@@ -1538,9 +1567,14 @@
 cxpb current feedback not yet tested!
       if(fchycore.ne.-1.0e30_R8) then
         fchycurr=0.0_R8
-        do ix=-1,nx
-          if(on_closed_surface(ix,-1))
-     >     fchycurr=fchycurr+fch(topix(ix,-1),topiy(ix,-1),1)
+        do ib=1,nbc
+          if(core_boundary(ib)) then
+            do ix = 1, bc_list_size(ib)
+              fchycurr=fchycurr+
+     .                 fch(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+            enddo
+          endif
         enddo
         if(ncall.eq.0) then
           if(saved_cbsch_core.ne.0.0_R8) then

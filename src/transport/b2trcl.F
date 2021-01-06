@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain, 
+      subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain,
      &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
      2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
@@ -32,9 +32,9 @@
       integer nx, ny, ns, nscx, ismain
       integer iscx(0:nscx-1)
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), 
+     *  bb(-1:nx,-1:ny,0:3),
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), 
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -87,37 +87,37 @@
 
 *   ..local variables
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
-      integer, save :: conductive_limit = 1                            !srv 16.06.08
-      integer, save :: style = 2                                       !srv 13.01.17
-      integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
+      integer, save :: conductive_limit = 1                              !srv 16.06.08
+      integer, save :: style = 2                                         !srv 13.01.17
+      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
      &                 integral_modeling = 1
-      character(3) chns, chns0                                        !srv 17.06.08
-      integer mintopcut                                               !lk 19.09.07  
+      character(3) chns, chns0                                           !srv 17.06.08
+      integer mintopcut                                                  !lk 19.09.07
       integer mode
       real (kind=R8) ::
-     *  cthiv, cthev, vis_par, jemax                                  !srv 13.01.17
-      real (kind=R8) ::                                               !srv 03.06.03
+     *  cthiv, cthev, vis_par, jemax                                     !srv 13.01.17
+      real (kind=R8) ::                                                  !srv 03.06.03
      *   t0, dte, dti, flomx
-      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),  !lk 19.09.07
-     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)        !lk 19.09.07
-      real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),           !lk 12.05.11
-     &    k1(-1:nx,-1:ny), t1, t2                                     !lk 12.05.11
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8  !iyv 06.12.13
+      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
+     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)           !lk 19.09.07
+      real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
+     &    k1(-1:nx,-1:ny), t1, t2                                        !lk 12.05.11
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                            !srv 01.07.99 09.01.01
+     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                               !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax                                                    !srv 22.04.16
+     *  smin, smax                                                       !srv 22.04.16
       external xertst, xerrab, sfill, smin, smax
-      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
-     &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
+      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,           !xpb
+     &  ipgeti, ipgetr, b2ttia                                           !lk 19.09.07
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
@@ -154,20 +154,20 @@ csw 13mar2012
         call ipgetr ('b2trcl_cthe', cthev)
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
-        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
-        call ipgetr ('b2trcl_csig_mltpl', csig_mltpl)                !iyv 06.12.13
-        call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
-        call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
+        call ipgetr ('b2trcl_csig_mltpl', csig_mltpl)                    !iyv 06.12.13
+        call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08
+        call ipgeti ('b2trcl_iout', iout)                                !srv 17.06.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
+        call ipgeti ('b2nppo_iout', iout_b2nppo)                         !srv 11.09.09 }
 csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
-        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
-        call ipgeti ('b2sigp_style', style)                          !srv 13.01.17
+        call ipgeti ('b2trcl_integral_modeling', integral_modeling)      !srv 01.11.11
+        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -179,10 +179,10 @@ csw 13mar2012
         call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test range of qz
         call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &               smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &               smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &               'faulty argument range qz(,,0)')
         call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &               smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &               smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &               'faulty argument range qz(,,1)')
 *    ..test sign of na, te, ti
         call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
@@ -192,25 +192,25 @@ csw 13mar2012
 
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
-      call b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2, vsa, hci)  !srv 01.07.09 20.09.11
-      call b2tqce (nx, ny, lnlam, te, ti, ne, ne2, hce, sig, alf)     !srv 01.07.09 20.09.11
-      call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
+      call b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2, vsa, hci)     !srv 01.07.09 20.09.11
+      call b2tqce (nx, ny, lnlam, te, ti, ne, ne2, hce, sig, alf)        !srv 01.07.09 20.09.11
+      call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)            !xpb
       call sfill (n2*ns, cthev, cthe,1)
       call sfill (n2*ns, cthiv, cthi,1)
-      call sfill (n2, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
+      call sfill (n2, 1.0_R8, fllim_ki, 1)                               !srv 13.01.17 {
       call sfill (n2, 1.0_R8, fllim_ke, 1)
       call sfill (n2, 1.0_R8, fllim_al, 1)
       call sfill (n2, 1.0_R8, fllim_al_c, 1)
-      alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
-      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
-*   ..incorporate geometry with hz                                    !srv 09.01.01
+      alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))             !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
+      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))             !             }               !srv 13.01.17
+*   ..incorporate geometry with hz                                       !srv 09.01.01
       wrk = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, wrk, gs, hx, qz, vsa(-1,-1,0,is),   !srv 01.07.05 {
+       call b2txcx (nx, ny, mode, wrk, gs, hx, qz, vsa(-1,-1,0,is),      !srv 01.07.05 {
      &   cvsahz(-1,-1,0,is))
        call b2txcy (nx, ny, mode, wrk, gs, hy, qz, vsa(-1,-1,1,is),
-     &   cvsahz(-1,-1,1,is))                                          !srv 01.07.05 }
-      enddo                                                           !srv 09.01.01
+     &   cvsahz(-1,-1,1,is))                                             !srv 01.07.05 }
+      enddo                                                              !srv 09.01.01
 *   ..incorporate geometry
       call sfill (n2*2*ns*ns, 0.0_R8, csigin(-1,-1,0,0,0), 1)
       do is = 0, ns-1
@@ -221,35 +221,35 @@ csw 13mar2012
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nx, ny, mode, vol, gs, hx, qz,                !sv
-     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))             !sv 01.07.99
-           call b2txcy (nx, ny, mode, vol, gs, hy, qz,                !sv
-     &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))             !sv
+           call b2txcx (nx, ny, mode, vol, gs, hx, qz,                   !sv
+     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))                !sv 01.07.99
+           call b2txcy (nx, ny, mode, vol, gs, hy, qz,                   !sv
+     &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))                !sv
         endif
        enddo
       enddo
 
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce(-1,-1,0), 
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce(-1,-1,0),
      & chce(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce(-1,-1,1),
      & chce(-1,-1,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci(-1,-1,0), 
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci(-1,-1,0),
      & chci(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci(-1,-1,1),
      & chci(-1,-1,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig(-1,-1,0), 
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig(-1,-1,0),
      & csig(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig(-1,-1,1),
      & csig(-1,-1,1))
-      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf(-1,-1,0), 
+      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf(-1,-1,0),
      & calf(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf(-1,-1,1), 
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf(-1,-1,1),
      & calf(-1,-1,1))
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
-        if (.not. is_neutral(is)) 
+        write (chns,'(i3.3)') is
+        if (.not. is_neutral(is))
      &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_cvsahzx'//chns)
        enddo
       endif
@@ -259,7 +259,7 @@ csw 13mar2012
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_calfy')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
+        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                     !srv 05.07.17
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_chciy')
       endif
@@ -267,22 +267,22 @@ csw 13mar2012
      &                   .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_csigy')
-        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
+        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                     !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
 #ifndef NO_21
-      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,     !srv 01.07.09
+      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,      !srv 01.07.09
      1 pbs, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
-      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                  !srv 01.07.09
+      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                   !srv 01.07.09
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
 *   ..luciani
-      f_luc_ke = 1.0_R8                                                 !srv 13.01.17 {
+      f_luc_ke = 1.0_R8                                                  !srv 13.01.17 {
       f_luc_ki = 1.0_R8
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
-      f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
+      f_luc_al = 1.0_R8                                                  !srv 13.01.17 }
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -303,7 +303,7 @@ csw 13mar2012
                   if(.not.is_neutral(is)) then
                     cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
                     cvsahz(ix,iy,0,is)=
-     .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
+     .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                  !srv 02.07.08
                   endif
                 enddo
                 chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
@@ -345,9 +345,9 @@ csw 13mar2012
           enddo
         enddo
       else if (lluciani.eq.3) then  ! new formulation
-*   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
-        call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                   !srv 01.07.09
-*   .. calculate inverse aspect ratio and collisionality parameter nu_star   
+*   .. plateau and banana correction for ion heat conduction             !lk 19.09.07 {
+        call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                  !srv 01.07.09
+*   .. calculate inverse aspect ratio and collisionality parameter nu_star
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
         eps1 = 1.0e0_R8
@@ -357,27 +357,27 @@ csw 13mar2012
         mintopcut = -2
         if (nncut > 0) mintopcut = minval(topcut(1:nncut))
 
-        do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16
+        do iy = -1,mintopcut-1    ! for inner surfaces                   !srv 22.04.16
          do ix = -1,nx
           if(on_closed_surface(ix,iy)) then
            tt0(iy) = tt0(iy) + hx(ix,iy)
-           tt1(iy) = tt1(iy) + vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
+           tt1(iy) = tt1(iy) + vol(ix,iy)/hy1(ix,iy)                     !srv 22.04.16
           endif
          enddo
         enddo
 
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
+        do iy = -1,mintopcut-1                                           !srv 22.04.16
           eps1(iy) = tt0(iy)**2/tt1(iy)
         enddo
 
-        nu1 = 0.0e0_R8                                                    !lk 12.05.11{
+        nu1 = 0.0e0_R8                                                   !lk 12.05.11{
         k1 = 0.58e0_R8
         nu2 = 0.0e0_R8
         k2 = 1.6e0_R8
         t1 = (4.0_R8*pi*eps0/qe)/qe
         t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
-     
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
+
+        do iy = -1,mintopcut-1                                           !srv 22.04.16
          do ix = -1,nx
           if(on_closed_surface(ix,iy)) then
            tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
@@ -390,11 +390,11 @@ csw 13mar2012
      &      +1.53e0_R8*nu1(ix,iy))
      &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
      &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
-          
+
            nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
      &      *sqrt(ti(ix,iy)/(mp*am(ismain)))
      &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-  
+
            k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
      &      -1.54e0_R8*eps1(iy))
      &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
@@ -402,10 +402,10 @@ csw 13mar2012
      &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
           endif
          enddo
-        enddo                                                             !lk 19.09.07 }
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
+        enddo                                                            !lk 19.09.07 }
+        do iy = -1,mintopcut-1                                           !srv 22.04.16
          do ix = 0,nx
-          if(on_closed_surface(ix,iy)) then                               !srv 26.11.02
+          if(on_closed_surface(ix,iy)) then                              !srv 26.11.02
            f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
            f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
            f_luc_et(ix,iy)=cvsa_mltpl/
@@ -419,36 +419,36 @@ csw 13mar2012
            f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
            f_luc_al(ix,iy)=f_luc_ke(ix,iy)
            do is=0,ns-1
-            if(.not.is_neutral(is)) then                                  !srv 10.07.02
+            if(.not.is_neutral(is)) then                                 !srv 10.07.02
              cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
              cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
-            endif                                                         !srv 10.07.02
+            endif                                                        !srv 10.07.02
            enddo
 ! May need to use flux limiting factors calculated on cell faces
            chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
            csig(ix,iy,0)=csig(ix,iy,0)*f_luc_sg(ix,iy)
            calf(ix,iy,0)=calf(ix,iy,0)*f_luc_al(ix,iy)
-           chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)                    !lk 20.11.07
+           chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)                   !lk 20.11.07
            sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
            alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
            if( bottomiy(ix,iy).eq.-2 ) then
-            csig(ix,iy,0) = csig_mltpl*csig(ix,iy,0)              !iyv
+            csig(ix,iy,0) = csig_mltpl*csig(ix,iy,0)                     !iyv
             sigx_c(ix,iy) = csig_mltpl*sigx_c(ix,iy)
-           endif 
-          endif                                                           !lk 12.05.11}
+           endif
+          endif                                                          !lk 12.05.11}
          enddo
         enddo
       endif
 #ifdef ASTRA
-      bbaverage2 = 0.0e0_R8                                               !srv 28.07.11 {
+      bbaverage2 = 0.0e0_R8                                              !srv 28.07.11 {
       chci_koeff = 0.0e0_R8
       tt0 = 0.0e0_R8
       tt1 = 0.0e0_R8
       if(integral_modeling.ne.0) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
-     &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))  
-        do ix=0,nx                                                  
+     &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
           tt1(iy) = tt1(iy) +vol(ix,iy)
@@ -456,32 +456,32 @@ csw 13mar2012
         enddo
         bbaverage2(iy) = tt0(iy)/tt1(iy)
         tt0(iy) = 0.0e0_R8
-        do ix=0,nx                                                  
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +vol(ix,iy)/bb(ix,iy,3)/bb(ix,iy,3)*
-     &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2 
+     &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2
          endif
         enddo
-        do ix=0,nx                                                  
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
-          chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
-     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2      !srv 22.04.16
+          chci_koeff(ix,iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
+     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2     !srv 22.04.16
      &     *vol(ix,iy)+(bb(leftix(ix,iy),iy,2)/bb(leftix(ix,iy),iy,3)
-     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2                !srv 22.04.16
-     &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy) 
+     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2               !srv 22.04.16
+     &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy)
          endif
         enddo
        enddo
 !       do iy = 0, iy_Ratb    ! for the region of overlap with ASTRA
-       do iy =0,mintopcut-1    
-        do ix=0,nx                                                  
+       do iy=0,mintopcut-1
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
-          chci(ix,iy,0) = chci_koeff(ix, iy)* 
+          chci(ix,iy,0) = chci_koeff(ix, iy)*
      &     0.5_R8*((ti(ix,iy)*na(ix,iy,ismain))**2
      &     +(ti(leftix(ix,iy),iy)*na(leftix(ix,iy),iy,ismain))**2)
          endif
         enddo
-       enddo                                   !srv 28.07.11 }
+       enddo                                                             !srv 28.07.11 }
       endif
 #endif
 *   ..set strange velocities chve, chvi
@@ -490,8 +490,8 @@ csw 13mar2012
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
-        if(.not. is_neutral(is)) 
+        write (chns,'(i3.3)') is
+        if(.not. is_neutral(is))
      &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_luciani_cvsahzx'
      &              //chns)
 !        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trcl_luciani_cvsahzy'
@@ -503,7 +503,7 @@ csw 13mar2012
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_luciani_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_calfx')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
+        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_alfx_c')             !srv 05.07.17
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_luciani_calfy')
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_chciy')
@@ -512,20 +512,20 @@ csw 13mar2012
      &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_luciani_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
-        call my_out(70,nx,ny,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
+        call my_out(70,nx,ny,sigx_c,'b2trcl_luciani_sigx_c')             !srv 05.07.17
       endif
 
 *   .. save chce(:,:,0) after applying Luciani
-      wrk = chce(:,:,0)                                                   !srv 13.01.17
+      wrk = chce(:,:,0)                                                  !srv 13.01.17
 
-      if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
-*   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
+      if(conductive_limit.ne.0) then                                     !srv 16.06.08 {
+*   .. apply the conductive limit of parallel electron heat flux         !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
+c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.05.07
            if(core_cond_limit.ne.0.or.
      &        .not.on_closed_surface(ix,iy)) then
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -546,7 +546,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
+c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.05.07
            if(core_cond_limit.ne.0.or.
      &        .not.on_closed_surface(ix,iy)) then
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
@@ -561,8 +561,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          enddo
         enddo
        endif
-      endif                                                               !srv 16.06.08 }
-*   ..apply flux limit to calf                                            !srv 13.01.17 {
+      endif                                                              !srv 16.06.08 }
+*   ..apply flux limit to calf                                           !srv 13.01.17 {
       if(style.eq.1) then
        if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
@@ -575,8 +575,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
                t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
      &              te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
-               alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)                !iyv 19.11.13 !srv 08.10.14
+               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)               !srv 13.01.17
+               alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)               !iyv 19.11.13 !srv 08.10.14
              endif
            endif
          enddo
@@ -596,7 +596,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &           abs(pbs(ix,iy,0))
                t0 = abs(calf(ix,iy,0)*dte)/(cflim(3)*jemax)
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
+               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)               !srv 13.01.17
              endif
            endif
          enddo
@@ -625,7 +625,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &               qe*ne(ix,iy)*abs(bb(ix,iy,0)/bb(ix,iy,3))
              t0 = abs(alfx_c(ix,iy))*abs(dte)/(cflim(3)*jemax)
              fllim_al_c(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-             alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)                !iyv 19.11.13 !srv 08.10.14
+             alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)               !iyv 19.11.13 !srv 08.10.14
            endif
          enddo
         enddo
@@ -635,7 +635,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       call cfl_tanh_profile(nx, ny, cflim(2),
      .  cflmv_core, cflmv_sol, cflmv_tanh_a, cflmv_tanh_b, cfl)
       do is = 0, ns-1
-       call b2tlmv (nx, ny, is, cfl, pbs(-1,-1,0), qc, na(-1,-1,is),      !srv 12.04.08
+       call b2tlmv (nx, ny, is, cfl, pbs(-1,-1,0), qc, na(-1,-1,is),     !srv 12.04.08
      &   ti, ua(-1,-1,is), cvsa(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   fllimvisc(-1,-1,is))
       enddo
@@ -643,11 +643,11 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       csig_cl = csig
       calf_cl = calf
       cvsa_cl = cvsa
-      cvsahz_cl = cvsahz                                                  !srv 09.01.01
+      cvsahz_cl = cvsahz                                                 !srv 09.01.01
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
-       write (chns,'(i3.3)') is 
+       write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsahz(-1,-1,0,is),
      &              'b2trcl_luciani_fllim_cvsahzx'//chns)
 !        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),
@@ -660,14 +660,14 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_fllim_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_fllim_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_luciani_fllim_calfy')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
+        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_fllim_alfx_c')       !srv 05.07.17
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_fllim_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_fllim_chciy')
       endif
-                                         
-      if(iout.ne.0) then                             !srv 17.06.08 {
+
+      if(iout.ne.0) then                                                 !srv 17.06.08 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'cl_cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'cl_cvsay'//chns)
         call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'cl_cvsahzx'//chns)
@@ -681,7 +681,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         call my_out(70,nx,ny,cthe(-1,-1,is),'cl_cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'cl_cthi'//chns)
         do is0=0,ns-1
-         write (chns0,'(i3.3)') is0 
+         write (chns0,'(i3.3)') is0
          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'cl_csiginx'//
      &        chns//'_'//chns0)
          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'cl_csiginy'//
@@ -700,9 +700,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        call my_out(70,nx,ny,csig(-1,-1,1),'cl_csigy')
        call my_out(70,nx,ny,calf(-1,-1,0),'cl_calfx')
        call my_out(70,nx,ny,calf(-1,-1,1),'cl_calfy')
-       call my_out(70,nx,ny,sigx_c,'cl_sigx_c')                      !srv 05.07.17
-       call my_out(70,nx,ny,alfx_c,'cl_alfx_c')                      !srv 05.07.17
-      endif                                                          !srv 17.06.08 }
+       call my_out(70,nx,ny,sigx_c,'cl_sigx_c')                          !srv 05.07.17
+       call my_out(70,nx,ny,alfx_c,'cl_alfx_c')                          !srv 05.07.17
+      endif                                                              !srv 17.06.08 }
 
 * ..return
       ncall = ncall+1
@@ -717,4 +717,4 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *-----------------------------------------------------------------------
 *.end b2trcl
 
-      end
+      end subroutine b2trcl

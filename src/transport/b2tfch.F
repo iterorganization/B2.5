@@ -376,20 +376,39 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            conc(ix,-1,0) = 0.0_R8
-            fch(ix,-1,0) = 0.0_R8
-            fch_32(ix,-1,0) = 0.0_R8
-            fch_52(ix,-1,0) = 0.0_R8
-            fch_p(ix,-1,0) = 0.0_R8                                  !srv 10.06.08
-            fchdia(ix,-1,0) = 0.0_R8
-            fchin(ix,-1,0) = 0.0_R8
-            fchvispar(ix,-1,0) = 0.0_R8
-            fchvisper(ix,-1,0) = 0.0_R8
-            fchvisq(ix,-1,0) = 0.0_R8
-          endif
-        enddo
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                conc(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fch(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fch_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fch_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fch_p(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8      !srv 10.06.08
+                fchdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchin(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchvispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchvisper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchvisq(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              conc(ix,-1,0) = 0.0_R8
+              fch(ix,-1,0) = 0.0_R8
+              fch_32(ix,-1,0) = 0.0_R8
+              fch_52(ix,-1,0) = 0.0_R8
+              fch_p(ix,-1,0) = 0.0_R8
+              fchdia(ix,-1,0) = 0.0_R8
+              fchin(ix,-1,0) = 0.0_R8
+              fchvispar(ix,-1,0) = 0.0_R8
+              fchvisper(ix,-1,0) = 0.0_R8
+              fchvisq(ix,-1,0) = 0.0_R8
+            endif
+          enddo
+        endif
       endif                                                              !xpb
 
 cxpb turn off current terms if requested

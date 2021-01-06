@@ -1124,7 +1124,7 @@ c
 
           step = 0.  ! no step
           do iy = -1, mintopcut-1   ! for inner surfaces
-           do ix=-1,nx
+           do ix = -1, nx
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
@@ -1205,7 +1205,7 @@ c
 
           step = maxval(hy(nmdpl,-1:mintopcut-1))
           do iy = -1, mintopcut-1   ! for inner surfaces
-           do ix=-1,nx
+           do ix = -1, nx
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
@@ -1340,11 +1340,11 @@ c
             t0 = 0.0e0_R8
             t1 = 0.0e0_R8
             mintopcut=min(topcut(1)-1,topcut(2)-1)
-            do iy = 0,mintopcut    ! for inner surfaces
-             do ix=0,nx
+            do iy = 0, mintopcut    ! for inner surfaces
+             do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
-               t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
-               t1 = t1 +vol(ix,iy)/hy1(ix,iy)
+               t0 = t0 + bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
+               t1 = t1 + vol(ix,iy)/hy1(ix,iy)
               endif
              enddo
             enddo
@@ -1370,10 +1370,10 @@ c
              t1 = 0.0e0_R8
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
-              do ix=0,nx
+              do ix = 0, nx
                if(on_closed_surface(ix,iy)) then
-                t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-                t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+                t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+                t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
                endif
               enddo
              enddo
@@ -1447,7 +1447,7 @@ c
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)  =    alfa3
+               fdnc(ix,iy,is) =    alfa3
                fvsc(ix,iy,is) = vs_alfa3
                ftic(ix,iy,is) = ti_alfa3
                fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
@@ -1463,13 +1463,13 @@ c
             if(mod(region(ix,iy,0),4).eq.2) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)  = alfa2
+               fdnc(ix,iy,is) = alfa2
                fvsc(ix,iy,is) = vs_alfa2
                ftic(ix,iy,is) = ti_alfa2
                fvlc(ix,iy,1,is) = vl_alfa2                        !srv 19.04.10
               endif
              enddo
-             ftec(ix,iy)    = te_alfa2
+             ftec(ix,iy) = te_alfa2
             endif
            enddo
           enddo
@@ -1512,17 +1512,17 @@ c
            t0 = 0.0e0_R8
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces
-            do ix=0,nx
+            do ix = 0, nx
              if(on_closed_surface(ix,iy)) then
-              t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-              t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+              t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+              t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
              endif
             enddo
            enddo
            bbaverage = (t0/t1)**(-1.0e0_R8/alf)
 
            do iy = topdelta2+1, ny                    ! for SOL region
-            do ix = -1,nx
+            do ix = -1, nx
              if(mod(region(ix,iy,0),4).eq.2) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -1542,7 +1542,7 @@ c
            enddo
 
            do iy = -1, bottomdelta1-1                 ! for inner surfaces
-            do ix = -1,nx
+            do ix = -1, nx
              if(on_closed_surface(ix,iy)) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -3060,7 +3060,7 @@ c      enddo
           ilpb=thet
           do ix=-1,nx
            if (on_closed_surface(ix,iy)) then
-            theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
+            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
         enddo

@@ -116,18 +116,18 @@
 !pbwdk          mintopcut = ny
           mintopcut = -2
           if (nncut > 0) mintopcut = minval(topcut(1:nncut))
-          do iy = 0,mintopcut-1    ! for inner surfaces
-            do ix=0,nx
+          do iy = 0, mintopcut-1    ! for inner surfaces
+            do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
-                tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
-                tt1(iy) = tt1(iy) +vol(ix,iy)
-                tt2(iy) = tt2(iy) +hx(ix,iy)
-                tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
+                tt0(iy) = tt0(iy) + bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
+                tt1(iy) = tt1(iy) + vol(ix,iy)
+                tt2(iy) = tt2(iy) + hx(ix,iy)
+                tt3(iy) = tt3(iy) + vol(ix,iy)/hy1(ix,iy)
               endif
             enddo
           enddo
 
-          do iy = 0,mintopcut-1
+          do iy = 0, mintopcut-1
             bbaverage2(iy) = tt0(iy)/tt1(iy)
             eps1(iy) = tt2(iy)**2/tt3(iy)
           enddo
@@ -138,8 +138,8 @@
             qip0a = 0.0e0_R8
             qip0b = 0.0e0_R8
 
-            do iy = 0,mintopcut-1    ! for inner surfaces
-              do ix = 0,nx
+            do iy = 0, mintopcut-1    ! for inner surfaces
+              do ix = 0, nx
                 if(on_closed_surface(ix,iy)) then
                   qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
@@ -152,8 +152,8 @@
               enddo
             enddo
 
-            do iy = 0,mintopcut-1
-              do ix = -1,nx
+            do iy = 0, mintopcut-1
+              do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >             qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
@@ -163,8 +163,8 @@
               enddo
             enddo
 
-            do iy = 0,mintopcut-1
-              do ix = -1,nx
+            do iy = 0, mintopcut-1
+              do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >             qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
@@ -214,8 +214,8 @@
           nu1 = 0.0e0_R8
           alpha1 = 0.0e0_R8
           kt_neo = 0.0e0_R8                                         !iyv 02.12.13
-          do iy = 0,mintopcut-1
-            do ix=0,nx
+          do iy = 0, mintopcut-1
+            do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
                 if (lluciani.eq.3) then
                   tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
