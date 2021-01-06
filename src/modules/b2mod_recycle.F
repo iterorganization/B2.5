@@ -1538,7 +1538,8 @@ c     local variables
       integer :: istra, i, iRc1, isn
       integer, save :: ncall = 0, style_visc = 0
       real(kind=R8) :: dumm0(nFc,0:1), dumm1(nFc,0:1), nnVx(nVx),
-     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv)
+     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv), 
+     &                 dumm2(nFc,0:1)
 
       if (ncall.eq.0) then
         call ipgeti ('b2sihs_style_visc', style_visc)
@@ -1547,13 +1548,14 @@ c     local variables
               !! For now KUL AFN models have only been developed for single species cases.
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
+      dumm2 = 0.0_R8
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
       if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
         call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
+     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm1,dumm2)
       else
         call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
+     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm1,dumm2)
       endif
       cvsf(:,0) = cvsf(:,0)/geo%fcHz
       cvsf(:,1) = cvsf(:,1)/geo%fcHz
