@@ -50,17 +50,16 @@ c      use b2mod_keps
 *   ..local variables
       integer ncall, ic
       integer, save :: iout = 0
+      integer, save :: style = 0
       integer, save :: solve_keps = 0
       integer, save :: model = 1, keps_local = 1, fac_sheath_local=1
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
-     &  pz(nCv), cs(nCv), t0, t1,
+     &  pz(nCv), cs(nCv), t0, t1, t2, wrk0(nCv), wrk1(nCv), wrk2(nCv),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
-     &  rhol, css, fac_diss, delta, fac_sheath, csfs, connfs
-      real (kind=R8), save :: delta_om = 0.0e-1_R8,
-     &  fac_theta = 1.0e0_R8, fac_gamma_diss = 0.00e0_R8, 
-     &  delta_om_core = 0.0-1_R8, fac_gamma_diss_core = 0.00e0_R8,
+     &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv)
+      real (kind=R8), save ::
      &  fac_sheath_rest=1.0_r8, fac_sheath_core=0.0_r8,
-     &  fac_aniso=0.0_R8
+     &  fac_aniso=1.0_R8
       character chk*1
       save ncall
 *   ..procedures
@@ -79,24 +78,21 @@ c      use b2mod_keps
       if (ncall.eq.0) then
 !       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2sikt_iout', iout)
+       call ipgeti ('b2sikt_style', style)
        call ipgeti ('b2sikt_model', model)
-       call ipgetr ('b2sikt_fac_gamma_diss', fac_gamma_diss)
-       call ipgetr ('b2sikt_fac_gamma_diss_core', fac_gamma_diss_core)
-       call ipgetr ('b2sikt_fac_theta', fac_theta)
-       call ipgetr ('b2sikt_delta_om', delta_om)
-       call ipgetr ('b2sikt_delta_om_core', delta_om_core)
        call ipgeti ('b2sikt_keps_local', keps_local)
-       if (keps_local.ne.1) then
-        call xertst(nomp.gt.0,
-     &    'No CVs in omp list, check rzomp in b2.user.parameters')
-        call xertst(icsep.gt.0,
-     &    'Invalid icsep value, check rzomp in b2.user.parameters')
-       endif
+       call ipgetr ('b2sikt_aniso', fac_aniso)
        call ipgeti ('b2mndr_solve_keps', solve_keps)
        call ipgetr ('b2sikt_fac_sheath', fac_sheath_rest)
        call ipgetr ('b2sikt_fac_sheath_core', fac_sheath_core)
        call ipgeti ('b2sikt_fac_sheath_local', fac_sheath_local)
        call ipgetr ('b2sikt_anisothermal', fac_aniso)
+       if ((keps_local.ne.1).or.(fac_sheath_local.ne.1)) then
+        call xertst(nomp.gt.0,
+     &    'No CVs in omp list, check rzomp in b2.user.parameters')
+        call xertst(icsep.gt.0,
+     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+       endif
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv')
@@ -127,68 +123,61 @@ c      use b2mod_keps
       call sfill (nCv, 0.0e0_R8, dtic, 1)
       if (model.eq.1) then
 cwdk  KU Leuven k model
-cwdk  source : driven by ExB particle flux
-cwdk  sink   : add hoc term, k^2 scaling, controled by delta_om
-cwdk  model adaptations based on T2D simulations: 
-cwdk           strong direct local dissipation of the source term,  
-cwdk           with factor fac_gamma_diss (~97%)
+cwdk  source : driven by ExB energy flux
+cwdk  sink   : 
+cwdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
+cwdk     parallel transport due to parallel current fluctuations
         call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
         call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
         cs  = sqrt(pz/rz)
+        if (fac_sheath_local.eq.1) then
+          csfs = cs
+          connfs = geo%ftConn
+        else
+          csfs = cs(omp(icsep))
+          connfs = geo%ftConn(omp(icsep))
+        endif
+        call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
+     .    ' connfs in b2sikt <=0!!')
 *   ..compute wrk arrays
-*     ..logarithm of magnetic field in cell center
-        wrks(:) = 2.0_R8*log(geo%cvBb(:,3))
-*     ..gradients na and log(bb) in poloidal and radial direction
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, 
-     &     pl%na(:,ismain), wrkv, dnac)
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dtec)
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dtic)
+        if (style.eq.0) then
+*      ..logarithm of magnetic field in cell center
+         wrks(:) = 2.0_R8*log(geo%cvBb(:,3))
+*      ..gradients na and log(bb) in poloidal and radial direction
+         call gradc(nCv, nFc, nVx, 0, geo, mpg, 
+     &      pl%na(:,ismain), wrkv, dnac)
+         call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
+         call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dtec)
+         call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dtic)
+*      ..individual source contributions
+         wrk0 = geo%cvVol*(pl%ti*co%dna_ExB*
+     &      (dnac(:,0)*dlbc(:,0) + dnac(:,1)*dlbc(:,1)) +
+     &       fac_aniso*2.0_R8/3.0_R8*co%hci_ExB*
+     &      (dtic(:,0)*dlbc(:,0) + dtic(:,1)*dlbc(:,1)))
+         wrk1 = geo%cvVol*(pl%te*co%dna_ExB*
+     &      (dnac(:,0)*dlbc(:,0) + dnac(:,1)*dlbc(:,1)) +
+     &       fac_aniso*2.0_R8/3.0_R8*co%hce_ExB*
+     &      (dtec(:,0)*dlbc(:,0) + dtec(:,1)*dlbc(:,1)))
+         wrk2 = dv%ni(:,1)*pl%kt*geo%cvVol*csfs/connfs
+        else
+         call xerrab('wrong value of b2sikt_style')
+        endif
 
 *     ..sources
         do ic = 1, mpg%nCi
          if (mod(mpg%cvReg(ic),4) .eq. 1) then
-          fac_diss = fac_gamma_diss_core
-          delta    = delta_om_core
           fac_sheath = fac_sheath_core
          else
-          fac_diss = fac_gamma_diss
-          delta    = delta_om
           fac_sheath = fac_sheath_rest
          endif
-         if (keps_local.eq.1) then
-          rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(ic)/(am(ismain)*mp))/
-     &       abs(rza(ic,ismain)*qe*geo%cvBb(ic,3))
-          css = cs(ic)
-         else
-          rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
-     &       (am(ismain)*mp))/abs(rza(omp(icsep),ismain)*
-     &       qe*geo%cvBb(omp(icsep),3))
-          css = cs(omp(icsep))
-         endif
-         if (fac_sheath_local.eq.1) then
-          csfs = cs(ic)
-          connfs = geo%ftConn(ic)
-         else
-          csfs = cs(omp(icsep))
-          connfs = geo%ftConn(omp(icsep))
-         endif
-         call xertst(connfs.gt.0.0_R8,' connfs in b2sikt <=0!!')
-         t0 = geo%cvVol(ic)*(
-     &     (pl%ti(ic)+pl%te(ic))*co%dna_ExB(ic)*
-     &     (dnac(ic,0)*dlbc(ic,0) + dnac(ic,1)*dlbc(ic,1)) +
-     &      co%hce_ExB(ic)*fac_aniso*
-     &     (dtec(ic,0)*dlbc(ic,0) + dtec(ic,1)*dlbc(ic,1)) +
-     &      co%hci_ExB(ic)*fac_aniso*
-     &     (dtic(ic,0)*dlbc(ic,0) + dtic(ic,1)*dlbc(ic,1)))
-         t1 = delta*geo%cvVol(ic)*dv%ni(ic,1)*pl%kt(ic)**2/
-     &       (mp*am(ismain)*css*rhol) + fac_sheath*dv%ni(ic,1)*
-     &       pl%kt(ic)*geo%cvVol(ic)*csfs/connfs
-         she0(ic,0)   =  fac_diss*t0 + t1
+         t0 = wrk0(ic)
+         t1 = wrk1(ic)
+         t2 = fac_sheath*wrk2(ic)
+         she0(ic,0)   = -t1 + t2
          shi0(ic,0)   = -t0
-         skt0(ic,0)   =  (1.0_R8 - fac_diss)*t0 - t1
-         skt_prod(ic) =  (1.0_R8 - fac_diss)*t0
-         skt_diss(ic) =  t1
+         skt0(ic,0)   =  t0 + t1 - t2
+         skt_prod(ic) =  t0 + t1
+         skt_diss(ic) =  t2
         enddo
       else
         call xerrab('wrong value of b2sikt_model')
