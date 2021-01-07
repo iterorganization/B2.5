@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0, dna_ExB, 
+      subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
+     &   geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0,
+     &   hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0, dna_ExB, 
      &   hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_transport_namelist
@@ -24,7 +24,8 @@
       use b2mod_par_opt
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
+      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
+     *  ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -542,8 +543,8 @@ c ank added blobby transport
 #endif
 c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(transport_keps.ne.0) then
-        call set_transport_keps(transport_keps, nCv, ns, geo, mpg, pl,
-     &    dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB, 
+        call set_transport_keps(transport_keps, nCv, ns, ismain, geo,
+     &    mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB,
      &    hce_ExB, hci_ExB)
       endif
 
@@ -3659,8 +3660,8 @@ c recompute hci0 and hcn0
       return
       end subroutine set_transport_kul
 
-      subroutine set_transport_keps(transport_keps, nCv, ns, geo, 
-     &     mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
+      subroutine set_transport_keps(transport_keps, nCv, ns, ismain,
+     &     geo, mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
      &     dkt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_constants
@@ -3672,7 +3673,7 @@ c recompute hci0 and hcn0
      , , only : nomp, omp, icsep
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer transport_keps, nCv, ns
+      integer transport_keps, nCv, ns, ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -3684,11 +3685,11 @@ c recompute hci0 and hcn0
      &   hci0(nCv), hcib(nCv,0:ns-1),
      &   hce0(nCv), dkt0(nCv),
      &   dna_ExB(nCv), hce_ExB(nCv),
-     &   hci_ExB(nCv)
+     &   hci_ExB(nCv), rhol(nCv)
 *   ..local variables
-      integer :: ic, is, ncall, keps_local
+      integer :: is, ncall, keps_local
       real(kind=R8) ::
-     1   rhol, keps_cd, keps_heat,
+     1   keps_cd, keps_heat,
      2   dna_min, keps_heat_i, keps_visc,
      3   keps_dkt, keps_inc, keps_fac
       integer, save :: solve_keps = 0
@@ -3725,60 +3726,59 @@ c recompute hci0 and hcn0
      &      transport_keps,' should go together'
         endif
       endif
-      do ic = 1, nCv
-        do is=0,ns-1
-          rhol = 0.0_R8
-          if(.not.is_neutral(is)) then
-            if(keps_local.eq.1) then
+      hci_ExB = 0.0_R8
+      do is=0,ns-1
+        if(.not.is_neutral(is)) then
+          if(keps_local.eq.1) then
 *   ..compute local larmor radius
-              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(ic)/am(is)/mp)/
-     &         abs(rt%rza(ic,is)*qe*geo%cvBb(ic,3))
-            else
-              rhol = am(is)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
-     &               am(is)/mp)/abs(rt%rza(omp(icsep),is)*qe*
-     &               geo%cvBb(omp(icsep),3))
-            endif
-            if(transport_keps.eq.1) then
-*   ..compute D according to KUL, using kt
-              dna_ExB(ic)= keps_cd*rhol*sqrt(pl%kt(ic)/am(is)/mp)
-              dna0(ic,is)= (dna_ExB(ic) + dna_min)*keps_fac
-     &          +(1.0_R8-keps_fac)*dna0(ic,is)
-            else
-              write(*,*) 'b2tqna_transport_keps = ',
-     &          transport_keps,' not coded'
-              call xerrab ('b2tqna_transport_keps value not coded')
-            endif
-            if (keps_visc.gt.0.0_R8) then
-              vsa0(ic,is) = keps_visc*am(is)*mp*pl%na(ic,is)*
-     &          dna0(ic,is)*keps_fac +
-     &          (1.0_R8-keps_fac)*vsa0(ic,is)
-            endif
-            if (keps_heat.gt.0.0_R8) then
-              hce_ExB(ic) = keps_heat*dna_ExB(ic)*dv%ne(ic)
-              hce0(ic)=keps_heat*dna0(ic,is)*dv%ne(ic)*keps_fac
-     &          + (1.0_R8-keps_fac)*hce0(ic)
-            endif
-            if (keps_heat_i.gt.0.0_R8) then
-              !wdk to be generalized for multiple ion species!
-              hci_ExB(ic) = keps_heat_i*dna_ExB(ic)*pl%na(ic,is)
-              hcib(ic,is)=keps_heat_i*dna0(ic,is)*pl%na(ic,is)*
-     &          keps_fac+ (1.0_R8-keps_fac)*hcib(ic,is)
-            endif
-            if (keps_dkt.le.0.0) then
-              write(*,*) 'b2tqna_keps_dkt = ',
-     &          keps_dkt,' not implemented/possible' 
-             call xerrab
-     &           ('k diffusion coefficient .le. 0.0')
-            else
-              dkt0(ic) = keps_dkt*dna0(ic,1)*pl%na(ic,1)
-            endif
+            rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
+     &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
+          else
+            rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
+     &            (am(ismain)*mp))/abs(rt%rza(omp(icsep),is)*qe*
+     &             geo%cvBb(omp(icsep),3))
           endif
-        enddo
+          if(transport_keps.eq.1) then
+*   ..compute D according to KUL, using kt
+cwdk at the moment: assumption that kt is related to main ion species;
+cwdk same dna_ExB for all ion species
+            dna_ExB = keps_cd*rhol*sqrt(pl%kt/am(ismain)/mp)
+            dna0(:,is) = (dna_ExB + dna_min)*keps_fac
+     &        +(1.0_R8-keps_fac)*dna0(:,is)
+          else
+            write(*,*) 'b2tqna_transport_keps = ',
+     &        transport_keps,' not coded'
+            call xerrab ('b2tqna_transport_keps value not coded')
+          endif
+          if (keps_visc.gt.0.0_R8) then
+            vsa0(:,is) = keps_visc*am(is)*mp*pl%na(:,is)*
+     &        dna0(:,is)*keps_fac + (1.0_R8-keps_fac)*vsa0(:,is)
+          endif
+          if (keps_heat.gt.0.0_R8) then
+            hce_ExB = keps_heat*dna_ExB*dv%ne
+            hce0 = keps_heat*dna0(:,ismain)*dv%ne*keps_fac
+     &          + (1.0_R8-keps_fac)*hce0
+          endif
+          if (keps_heat_i.gt.0.0_R8) then
+            hci_ExB = hci_ExB + keps_heat_i*dna_ExB*pl%na(:,is)
+            hcib(:,is) = keps_heat_i*dna0(:,ismain)*pl%na(:,is)*
+     &        keps_fac + (1.0_R8-keps_fac)*hcib(:,is)
+          endif
+          if (keps_dkt.le.0.0) then
+            write(*,*) 'b2tqna_keps_dkt = ',
+     &        keps_dkt,' not implemented/possible' 
+           call xerrab
+     &         ('k diffusion coefficient .le. 0.0')
+          else
+            dkt0 = keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
+          endif
+        endif
       enddo
       hci0 = 0.0_R8
       do is = 0, ns-1
         hci0 = hci0 + hcib(:,is)
-      enddo 
+      enddo
+ 
 *   ..increase percentage of coefficients from k-eps
       keps_fac = min(keps_fac*keps_inc,1.0_R8)
       if (keps_inc.gt.1.0_R8) 
