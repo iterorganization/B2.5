@@ -1,5 +1,7 @@
       subroutine b2yt_jsep(nx1,ny1,jxi1,jxa1,jsep1)
       use b2mod_types
+      use b2mod_geo
+     , ,only: geom_match_dist
       use b2mod_geo2
       use b2mod_indirect
       use b2mod_subsys

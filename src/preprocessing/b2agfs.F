@@ -4,6 +4,8 @@
       subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
      1 cflag,lblgm,periodic_bc,nncut,nncutmax)
 
+      use b2mod_geo
+     . ,only: geom_match_dist
       use b2mod_geo2
       use b2mod_types
       use b2mod_constants
