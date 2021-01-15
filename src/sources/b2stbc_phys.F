@@ -7666,12 +7666,10 @@ cxpb          endif
                    TIS = TIS +
      .                   TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
      .                   NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .            VOL(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     .                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     .                  VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                    NIVS = NIVS +
      .                   NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .            VOL(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     .                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     .                  VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                  END DO
                endif
              END DO
