@@ -440,6 +440,7 @@ cxpb Corrected for dimensionality
          if(model_sig.eq.0) then                !srv 02.12.04 {
            sig0(iCv) = dfsig*qe*dv%ne(iCv)
          else
+           call xerrab('b2tqna_model_sig =/ 0 not available for WG.')
 !          sig0(iCv) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
 !WG_TODO           sig0(iCv) = dfsig*qe*ne(nmdpl,-1)  !srv 10.06.09 ! use constant density as core region
          endif                                  !srv 02.12.04 }
