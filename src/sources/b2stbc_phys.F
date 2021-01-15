@@ -63,7 +63,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iCv1, iCv2, iFc, is, js, ib, ibc, 
+      integer ncall, iCv, iCv1, iCv2, iFc, is, js, ib, ibc, ib0, ibc0,
      &  ireg, coreregno, coreregn2,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
@@ -107,7 +107,7 @@
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
      1  t3, t4, totflux, weight, dsh, vt,
      1  naave, volave, teave, neave, tiave, niave, poave,
-     2  vwest, veast, vbnd, totfluxn, totfluxi
+     2  vwest, veast, vbnd, totfluxn, totfluxi, totpar
      &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
      &  ,naua2sum(0:ns-1), naua2average(0:ns-1)
      &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
@@ -344,8 +344,6 @@
          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-         call xertst(mpg%cvOnClosedSurface(iCv1),
-     .    'BCPOT=12 intended for core boundaries only!')
          !wdk weighting following computation of fchdia
 *      ..accumulate the average pressure for inner flux surface
          pzsum    = pzsum  + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
@@ -2783,30 +2781,116 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ENDIF                                                        !IYS 04.03.2013 }
 #endif
 
-* -- BCCON=28 -- PUT SOURCE TERMS TO ZERO
+* -- BCCON=28  Prescribe the flux surface averaged density, with poloidal
+*              perturbation taken from flux tube just inside domain
 
           case (28)
           if(ncall.eq.0) then
-            IF(BCCHAR(iB).EQ.'S') THEN
+            do ibc = 1, mpg%bcCvP(ib,2)
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+             call xertst(mpg%cvOnClosedSurface(iCv1),
+     .        'BCCON=28 intended for core boundaries only!')
+            enddo
             if(is.eq.ismain.and.use_astra.ne.0) then
               conpar(is,iB,1) = neb_astra                               !srv 28.07.11
             endif
-            ENDIF
             if (conpar(is,iB,1).eq.0.0_R8) then
               conpar(is,iB,1) = na_min
               write(*,*) 'Zero density B.C. no longer allowed!'
               write(*,*) 'Changed to na_min.'
             endif
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'constant density ',conpar(is,iB,1),' on ',
+     .       'constant density + perturbation',conpar(is,iB,1),' on ',
      1       BCCHAR(iB),boundary_location(iB),' for species ',is
             call xertst(conpar(is,iB,1).gt.0.0_R8,
-     1       'BCCON = 1, conpar(,,1) !> 0')
+     1       'BCCON = 28, conpar(,,1) !> 0')
           endif
+*       ..compute average density on core boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          do ib0 = 1, nbc
+           ! identify core boundaries; assume all core boundaries
+           ! form single flux surface
+           ! implicit assumption at the moment: first ring in the
+           ! core is a 'structured grid' ring with quad cells
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+           if (mpg%cvOnClosedSurface(iCv1)) then
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                               ! loop over number of cells in the boundary
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                 ! number of the guard cell
+             iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                 ! number of the domain cell
+             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+             t0 = t0 + geo%cvVol(iCv2)
+             t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv2,is)
+            enddo
+           endif
+          enddo
+          t1 = t1/t0
+*       ..impose density with perturbation
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = 0.0_R8
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                 ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%sna0(iCv1,0,is) =
+     .        VBIG*geo%fcS(iFc)*(pl%na(iCv2,is) + conpar(is,iB,1) - t1)
+            srw%sna0(iCv1,1,is) =
+     .       -VBIG*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+
+* -- BCCON=29  Feedback on the total particle flux, by imposing a flux surface
+*              averaged density, with poloidal perturbation taken from flux
+*              tube just inside domain
+
+          case (29)
+          if(ncall.eq.0) then
+            do ibc = 1, mpg%bcCvP(ib,2)
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+             call xertst(mpg%cvOnClosedSurface(iCv1),
+     .        'BCCON=29 intended for core boundaries only!')
+            enddo
+          endif
+*       ..compute average density on core boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          t2 = 0.0e0_R8
+          totflux = 0.0e0_R8 
+          totpar  = 0.0e0_R8
+          do ib0 = 1, nbc
+           ! identify core boundaries; assume all core boundaries
+           ! form single flux surface
+           ! implicit assumption at the moment: first ring in the
+           ! core is a 'structured grid' ring with quad cells
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+           if (mpg%cvOnClosedSurface(iCv1)) then
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                               ! loop over number of cells in the boundary
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                 ! number of the guard cell
+             iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                 ! number of the domain cell
+             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+             t0 = t0 + geo%cvVol(iCv2)
+             t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv1,is)
+             t2 = t2 + geo%cvVol(iCv2)*pl%na(iCv2,is)
+             totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
+     &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            enddo
+            totpar = totpar + conpar(is,ib,1)
+           endif
+          enddo
+          t1 = t1/t0
+          t2 = t2/t0
+          if (conpar(is,ib,2).ge.0.0_R8) t3 = conpar(is,ib,2)
+          if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar,1.0e10_R8))*t1
+*       ..impose density with perturbation
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%sna0(iCv1,0,is) =
+     .        VBIG*geo%fcS(iFc)*(pl%na(iCv2,is) + t4 - t2)
+            srw%sna0(iCv1,1,is) =
+     .       -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
@@ -3548,46 +3632,48 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=16 -- PRESCRIBE THE AVERAGE VALUE OF THE PARALLEL VELOCITY   !lk 12.12.12 {
 
           case (16)
-          call xerrab ('b2stbc_phys -- BCMOM = 16 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified average parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
+           do ibc = 1, mpg%bcCvP(ib,2)
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            call xertst(mpg%cvOnClosedSurface(iCv1),
+     .       'BCMOM=16 intended for core boundaries only!')
+           enddo
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         VBIG*NE00*AM(IS)*
-     .         MOMPAR(IS,IB,1)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))  !srv 24.08.08
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .        -VBIG*NE00*AM(IS)*
-     .         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))                  !srv 24.08.08
-            END DO
-            t0=0.0e0_R8
-            t1=0.0e0_R8
-            do ix = -1,nx
-              if (on_closed_surface(ix,0)) then
-                t0=t0 + vol(ix,0)
-                t1=t1 + UA(IX,0,IS)*vol(ix,0)
-              endif
+*       ..compute average parallel velocity on core boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          do ib0 = 1, nbc
+           ! identify core boundaries; assume all core boundaries
+           ! form single flux surface
+           ! implicit assumption at the moment: first ring in the
+           ! core is a 'structured grid' ring with quad cells
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+           if (mpg%cvOnClosedSurface(iCv1)) then
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                               ! loop over number of cells in the boundary
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                 ! number of the guard cell
+             iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                 ! number of the domain cell
+             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+             t0 = t0 + geo%cvVol(iCv2)
+             t1 = t1 + geo%cvVol(iCv2)*pl%ua(iCv2,is)
             enddo
-            t1=t1/t0
-            do ix = 1, BC_LIST_SIZE(IB)
-              if(on_closed_surface(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-     >         then
-                SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .           SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+
-     .             VBIG*NE00*AM(IS)*
-     .         (UA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .             TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)-t1)*
-     .              SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              endif
-            END DO                        !lk 12.12.12 }
-          ELSE
-            CALL XERRAB ('B2STBC -- BCMOM=16, IS VALID FOR CORE ONLY')
-          ENDIF
-#endif
+           endif
+          enddo
+          t1 = t1/t0
+*       ..impose velocity
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%smo0(iCv1,0,is)=
+     .         VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc)*
+     .         (mompar(is,ib,1) + pl%ua(iCv2,is) - t1)
+            srw%smo0(iCv1,1,is)=
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc) 
+          enddo
+
 * -- BCMOM=17 -- leakage option for parallel momentum
 
           case (17)
@@ -5588,6 +5674,116 @@ cwdk     * need to correct this BC for hybrid scheme
      &       ENEPAR(iB,1)*geo%fcS(iFc)*vte*dv%ne(iCv1))
         enddo
 
+
+* -- BCENE=23 -- Prescribe the value of the electron temperature, with poloidal
+*                perturbation taken from flux tube just inside domain
+
+        case (23)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENE=23 intended for core boundaries only!')
+          enddo
+          IF(use_astra.ne.0) THEN
+          ENEPAR(IB,1) = teb_astra*1.0e3_R8
+          ENDIF
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified electron temp. + perturbation',ENEPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENEPAR(IB,1).gt.0.0_R8,
+     1     'BCENE = 23, ENEPAR(,1) !> 0')
+        endif
+*     ..compute average temperature on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%te(iCv2)
+          enddo
+         endif
+        enddo
+        t1 = t1/t0
+*     ..impose temperature with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%te(iCv2) + enepar(iB,1)*EV - t1)
+          srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+
+* -- BCENE=24 -- Feedback on the total electron energy flux, by imposing a flux surface
+*                averaged temperature, with poloidal perturbation taken from flux
+*                tube just inside domain
+
+        case (24)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENE=24 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified electron heat flux',ENEPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENEPAR(IB,1).gt.0.0_R8,
+     1     'BCENE = 24, ENEPAR(,1) !> 0')
+        endif
+*     ..compute average temperature on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        t2 = 0.0e0_R8
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%te(iCv1)
+           t2 = t2 + geo%cvVol(iCv2)*pl%te(iCv2)
+           totflux = totflux - (dv%fhe(iFc,0) + dv%fhe(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + enepar(ib,1)
+         endif
+        enddo
+        t1 = t1/t0
+        t2 = t2/t0
+        if (enepar(ib,2).ge.0.0_R8) t3 = enepar(ib,2)
+        if (enepar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+        t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar))*t1
+*     ..impose temperature with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%te(iCv2) + t4 - t2)
+          srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
         case default
           write(*,*) BCENE(IB)
           call xerrab ('BCENE out of bounds')
@@ -6793,8 +6989,6 @@ cxpb          endif
      &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
      &      enipar(ib,2)*t1*geo%fcS(iFc)                                !srv 19.04.13
           else
-           if(maxval(dv%facdrift) .ne. 0.0_R8)
-     &       call xerrab ('bceni_15_style > 0 not ready for drifts')
            !wdk sheath transmission factor consistent with truncated
            !    Maxwellian distribution on Eirene side (NEMODS=7)
            !    See eirene manual for details.
@@ -8002,6 +8196,115 @@ cwdk     * need to correct this BC for hybrid scheme
      1     ('B2STBC -- BCENI=27 IS AVAILABLE FOR CORE ONLY')
         ENDIF
 #endif
+
+* -- BCENI=28 -- Prescribe the value of the ion temperature, with poloidal
+*                perturbation taken from flux tube just inside domain
+
+        case (28)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENI=28 intended for core boundaries only!')
+          enddo
+          IF(use_astra.ne.0) THEN
+          ENIPAR(IB,1) = teb_astra*1.0e3_R8
+          ENDIF
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified ion temperature + perturbation',ENIPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENIPAR(IB,1).gt.0.0_R8,
+     1     'BCENI = 28, ENIPAR(,1) !> 0')
+        endif
+*     ..compute average temperature on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%ti(iCv2)
+          enddo
+         endif
+        enddo
+        t1 = t1/t0
+*     ..impose temperature with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%ti(iCv2) + enipar(iB,1)*EV - t1)
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+* -- BCENI=29 -- Feedback on the total ion energy flux, by imposing a flux surface
+*                averaged temperature, with poloidal perturbation taken from flux
+*                tube just inside domain
+
+        case (29)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENI=29 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified ion heat flux',ENIPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENIPAR(IB,1).gt.0.0_R8,
+     1     'BCENI = 29, ENIPAR(,1) !> 0')
+        endif
+*     ..compute average temperature on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        t2 = 0.0e0_R8
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%ti(iCv1)
+           t2 = t2 + geo%cvVol(iCv2)*pl%ti(iCv2)
+           totflux = totflux - (dv%fhi(iFc,0) + dv%fhi(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + enipar(ib,1)
+         endif
+        enddo
+        t1 = t1/t0
+        t2 = t2/t0
+        if (enipar(ib,2).ge.0.0_R8) t3 = enipar(ib,2)
+        if (enipar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+        t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar))*t1
+*     ..impose temperature with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%ti(iCv2) + t4 - t2)
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
         case default
           write(*,*) BCENI(IB)
           call xerrab ('BCENI out of bounds')
@@ -8810,6 +9113,106 @@ c end of implementation
           CALL XERRAB ('B2STBC -- BCPOT=21, NOT AVAILABLE FOR W,E')
         ENDIF
 #endif
+
+
+* -- BCPOT=22 -- Prescribe the value of the potential, with perturbation taken
+*                from first flux tube in the domain
+        case(22)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCPOT=22 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+*     ..compute average potential on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%po(iCv2)
+          enddo
+         endif
+        enddo
+        t1 = t1/t0
+*     ..impose potential with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
+     &      (pl%po(iCv2) + potpar(iB,1) - t1)
+          srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+        enddo
+
+* -- BCPOT=23 -- Feedback on the total current, by imposing a flux surface
+*                averaged potential, with poloidal perturbation taken from flux
+*                tube just inside domain
+
+        case(23)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCPOT=23 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+*     ..compute average potential on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        t2 = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%po(iCv1)
+           t2 = t2 + geo%cvVol(iCv2)*pl%po(iCv2)
+           totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + potpar(ib,1)
+         endif
+        enddo
+        t1 = t1/t0
+        t2 = t2/t0
+        if (potpar(ib,2).ge.0.0_R8) t3 = potpar(ib,2)
+        if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+        t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar,1.0e-10_R8))*t1
+*     ..impose potential with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
+     &      (pl%po(iCv2) + t4 - t2)
+          srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+        enddo
+
         case default
           write(*,*) BCPOT(IB)
           call xerrab ('BCPOT out of bounds')
@@ -9122,9 +9525,54 @@ c end of implementation
         case (5)
         CALL XERRAB ('B2STBC -- BCENK=5, NOT AVAILABLE')
 
-* -- BCENK=6 -- not implemented
+* -- BCENK=6 -- Prescribe the total flux of kt, following the 
+*               profile of fhi + fhe
+
         case (6)
-        CALL XERRAB ('B2STBC -- BCENK=6, NOT AVAILABLE')
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENK=6 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'turb. kin. energy flux ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+*     ..compute total ion+electron heat flux, and total kt flux
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           totflux = totflux - 
+     &      (dv%fhe(iFc,0) + dv%fhe(iFc,1) + 
+     &       dv%fhi(iFc,0) + dv%fhi(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + enkpar(ib,1)
+         endif
+        enddo
+*     ..impose the flux
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          srw%skt0(iCv1,0) = -totpar/totflux*
+     &      (dv%fhe(iFc,0) + dv%fhe(iFc,1) + 
+     &       dv%fhi(iFc,0) + dv%fhi(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          srw%skt0(iCv1,1) = 0.0_R8
+        enddo  
 
 * -- BCENK=7 -- not implemented
         case (7)
@@ -9216,15 +9664,19 @@ c end of implementation
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
+          t1 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
               t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              if (conpar(is,ib,2).gt.0.0_R8)
+     &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif
           enddo
-          srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -                         !srv 11.03.09 {
-     &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))
+          srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -
+     &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
+     &      enkpar(ib,2)*t1*geo%fcS(iFc)          
 cwdk    Todo: corrections for BCCON.ne.14
-        enddo                                                           !srv 01.02.09 }
+        enddo
 
         case default
           write(*,*) BCENK(IB)
