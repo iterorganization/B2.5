@@ -129,7 +129,7 @@
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
      *  tn_style = 0, kul_recycle = 0, user_transport = 0,
-     *  solve_keps = 0, transport_namelist
+     *  solve_keps = 0, transport_namelist = 0
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
@@ -1773,6 +1773,7 @@ c   --> better way doing this is necessary)
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
       endif
+      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
