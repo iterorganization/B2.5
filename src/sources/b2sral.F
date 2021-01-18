@@ -156,7 +156,6 @@
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        call alloc_b2mod_numerics(nCv,ns,mpg%nnreg)
         if(numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
      .      mpg%cvOnClosedSurface)
