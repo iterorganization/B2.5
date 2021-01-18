@@ -88,6 +88,8 @@
 *.computation
 
 * ..preliminaries
+      icv1 = 1 !csc needed for correct initialization in adjoint AD
+      icv2 = 1
 *   ..subprogram start-up calls
       call subini ('b2usht')
       if (ncall.eq.0) then
