@@ -205,19 +205,19 @@ cwdk     parallel transport due to parallel current fluctuations
      &     (dnac(:,1)*dlbc(:,1)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_na_y')
         wrks = geo%cvVol(:)*(
-     &      co%hce_ExB(:)*fac_aniso*
+     &      2.0_R8/3.0_R8*co%hce_ExB(:)*fac_aniso*
      &     (dtec(:,0)*dlbc(:,0)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_te_x')
         wrks = geo%cvVol(:)*(
-     &      co%hce_ExB(:)*fac_aniso*
+     &      2.0_R8/3.0_R8*co%hce_ExB(:)*fac_aniso*
      &     (dtec(:,1)*dlbc(:,1)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_te_y')
         wrks = geo%cvVol(:)*(
-     &      co%hci_ExB(:)*fac_aniso*
+     &      2.0_R8/3.0_R8*co%hci_ExB(:)*fac_aniso*
      &     (dtic(:,0)*dlbc(:,0)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_ti_x')
         wrks = geo%cvVol(:)*(
-     &      co%hci_ExB(:)*fac_aniso*
+     &      2.0_R8/3.0_R8*co%hci_ExB(:)*fac_aniso*
      &     (dtic(:,1)*dlbc(:,1)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_ti_y')
       endif
