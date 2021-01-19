@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+      subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
 !      use b2mod_anomalous_transport
@@ -14,7 +14,8 @@
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
+      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
+     *  ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -155,10 +156,10 @@
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, mpg,
-     &  pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
-     &  co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, 
-     &  hve0, co%dkt0, co%dna_ExB, co%hce_ExB, co%hci_ExB)
+      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain, geo,
+     &  mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0,
+     &  co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0, co%alf0,
+     &  hvi0, hve0, co%dkt0, co%dna_ExB, co%hce_ExB, co%hci_ExB)
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -188,6 +189,10 @@
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1,is), chcib(1,is))
       enddo
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     & co%dna_ExB, co%cdna_ExB(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     & co%dna_ExB, co%cdna_ExB(1,1))
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
       wrk = geo%fcS*geo%fcHz
@@ -248,7 +253,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%hce0, co%chce(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce0,  co%chce(1,1))
+     &  co%hce0, co%chce(1,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%sig0, co%csig(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
@@ -261,6 +266,14 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  co%dkt0, co%cdkt(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%dkt0, co%cdkt(1,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  co%hce_ExB, co%chce_ExB(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  co%hce_ExB, co%chce_ExB(1,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  co%hci_ExB, co%chci_ExB(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  co%hci_ExB, co%chci_ExB(1,1))
 
 *   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
@@ -453,8 +466,6 @@ c the logic statements below could be simplfied but for now we go for readabilit
 *-----------------------------------------------------------------------
 *.scribbles
 
-*!!   Consider to apply a flux limit to the anomalous particle transport.
-*!!   Still must consider how to deal with a non-orthogonal grid.
 
 *-----------------------------------------------------------------------
 *.end b2trno
