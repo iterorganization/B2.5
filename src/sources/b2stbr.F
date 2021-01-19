@@ -68,7 +68,9 @@
       real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
-     &                  shitmp(nCv,0:3)
+     &                  shitmp(nCv,0:3),
+     &                  fluid_frac_hyb(nFc),
+     &                  kin_frac_hyb(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -452,7 +454,7 @@ c   --> better solution wanted here..
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr)
+     4  recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
@@ -634,7 +636,8 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call, switch, geo, mpg, pl, dv)
+     &                 main_call, switch, geo, mpg, pl, dv,
+     &                 kin_frac_hyb)
 
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1

@@ -1,5 +1,5 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm, 
-     &                           pl, dv, BoRiS)
+     &                           pl, dv, BoRiS, kin_frac_hyb)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -66,6 +66,7 @@
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8), allocatable, save :: wght(:,:)
+      real (kind=R8), intent(in) :: kin_frac_hyb(nFc)
 
       call subini ('copy_background')
       if(ncall.eq.0) then
@@ -421,6 +422,7 @@ c we derive the guard cell value from its neighbouring interior cell
         call alloc_target_data(istra,ntrgdat,nflai)
 #endif
 
+
         do i = 1, ntrgdat
           iFc = mpg%rcFc(ian+i-1)
           trgt(istra)%faces(i) = iFc
@@ -444,7 +446,8 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)
+            trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)*
+     &                                kin_frac_hyb(iFc)
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !!'
               trgt(istra)%flux(i,ifl) = 0.0_R8
