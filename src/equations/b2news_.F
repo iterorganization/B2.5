@@ -448,6 +448,16 @@ c b2npmo with rxf = 0 and recompute fluxes.
         do iCv = 1, nCv
           pl%na(iCv,is)=max(pl%na(iCv,is),switch%b2mndr_na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
         enddo
+
+!! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
+        if (switch%spatial_hybrid.ne.0.and.is_neutral(is)) then 
+          do iCv = 1, nCv
+            pl%ua(iCv,is)=sign(
+     &                  min(abs(pl%ua(iCv,is)),switch%b2mndr_ua_max),
+     &                  pl%ua(iCv,is))
+          enddo   
+        endif
+
 *    ..compute partial pressure
         call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, 
      &    pl%ti, pl%tn, is, dv%pa(1,is))

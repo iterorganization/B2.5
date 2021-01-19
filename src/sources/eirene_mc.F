@@ -1,6 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
      1 BoRiS, sna0, smo0, she0, shi0, main_call, switch, geo, mpg, 
-     & pl, dv, rt)
+     & pl, dv, rt, kin_frac_hyb)
 
 c  version : 26.07.2002 23:39
 
@@ -72,7 +72,8 @@ csw 19oct2012, added save attribute!!!
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
-     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
+     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
+     * kin_frac_hyb(nFc)
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
      1 SSEISTAB(:),
@@ -418,9 +419,14 @@ csw 26feb2013
 
 !! set logical lneustra
       lneustra = switch%ineustra > 0
+!! make sure to keep standard behaviour if generalized spatially hybrid is not used.
+      if (switch%use_auto_spatial_hyb.eq.0) then 
+          kin_frac_hyb = 1.0_R8
+      endif
 
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS)
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS,
+     &                       kin_frac_hyb)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -558,12 +564,15 @@ c*** recyc     : fudge factors for the sources in B2
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
+!!                iCv = mpg%rcCv(mpg%rcCvP(
                 tflux(istrai)=tflux(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
+     &              kin_frac_hyb(ifc)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
+     &              kin_frac_hyb(ifc)
               end do !}
             end if !}
           end do   
@@ -715,7 +724,8 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg, 
-     &                          geo, pl, dv, BoRiS)
+     &                          geo, pl, dv, BoRiS,
+     &                          kin_frac_hyb)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -3328,7 +3338,8 @@ C           call xerrab ('eirene_mc: bccon <> 13')
         call dealloc_b2mod_neutrals_save
       end if
       call copy_background(nCv, nFc, ns, switch, 
-     &                     mpg, geo, pl, dv, BoRiS)
+     &                     mpg, geo, pl, dv, BoRiS,
+     &                     kin_frac_hyb)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011
