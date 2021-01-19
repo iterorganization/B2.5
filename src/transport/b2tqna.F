@@ -544,8 +544,9 @@ c ank added blobby transport
 #endif
 c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(transport_keps.ne.0) then
-        call set_transport_keps(transport_keps, nCv, ns, ismain, geo,
-     &    mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB,
+        call set_transport_keps(transport_keps, 
+     &    nCv, nFc, nVx, ns, ismain, geo, mpg,
+     &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB,
      &    hce_ExB, hci_ExB)
       endif
 
@@ -3661,8 +3662,9 @@ c recompute hci0 and hcn0
       return
       end subroutine set_transport_kul
 
-      subroutine set_transport_keps(transport_keps, nCv, ns, ismain,
-     &     geo, mpg, pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
+      subroutine set_transport_keps(transport_keps,
+     &     nCv, nFc, nVx, ns, ismain, geo, mpg,
+     &     pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
      &     dkt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_constants
@@ -3674,7 +3676,7 @@ c recompute hci0 and hcn0
      , , only : nomp, omp, icsep
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer transport_keps, nCv, ns, ismain
+      integer transport_keps, nCv, nFc, nVx, ns, ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -3692,15 +3694,19 @@ c recompute hci0 and hcn0
       real(kind=R8) ::
      1   keps_cd, keps_heat,
      2   dna_min, keps_heat_i, keps_visc,
-     3   keps_dkt, keps_inc, keps_fac
+     3   keps_dkt, keps_inc, keps_fac,
+     4   keps_shear, eps
+      real(kind=R8) ::
+     1   wrkf(nFc), wrkc(nCv), shear(nCv)
       integer, save :: solve_keps = 0
       save ncall, keps_cd, keps_heat,
-     1     keps_heat_i, keps_visc, keps_dkt, dna_min
-      save keps_local, keps_inc, keps_fac
+     1     keps_heat_i, keps_visc, keps_dkt, dna_min, keps_shear
+      save keps_local, keps_inc, keps_fac, eps
       data ncall/0/, keps_cd/1.0_R8/,
-     2     keps_heat/2.0_R8/, keps_local/0/,
+     2     keps_heat/2.0_R8/, keps_local/1/,
      3     keps_heat_i/2.0_R8/, keps_visc/0.2_R8/, keps_dkt/0.01_R8/
-     4     dna_min/1.0e-2_R8/, keps_inc/1.0_R8/, keps_fac/1.0_R8/
+     4     dna_min/1.0e-2_R8/, keps_inc/1.0_R8/, keps_fac/1.0_R8/,
+     5     keps_shear/1.0e1_R8/, eps/1.0e-10/
 
 *   ..subprogram start-up calls
       call subini ('set_transport_keps')
@@ -3739,11 +3745,18 @@ c recompute hci0 and hcn0
      &            (am(ismain)*mp))/abs(rt%rza(omp(icsep),is)*qe*
      &             geo%cvBb(omp(icsep),3))
           endif
+*       ..compute radial shear of diamagnetic ExB velocity
+          wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
+          call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrkc)
+          call gradc_div_r(nCv, nFc, nVx, 1, geo, mpg, wrkc, wrkf,
+     &      shear)
           if(transport_keps.eq.1) then
 *   ..compute D according to KUL, using kt
 cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
-            dna_ExB = keps_cd*rhol*sqrt(pl%kt/am(ismain)/mp)
+            dna_ExB = keps_cd*(pl%kt/(am(ismain)*mp))/
+     &      (sqrt(pl%kt/(am(ismain)*mp))/rhol + keps_shear*abs(shear) +
+     &       eps)
             dna0(:,is) = (dna_ExB + dna_min)*keps_fac
      &        +(1.0_R8-keps_fac)*dna0(:,is)
           else
