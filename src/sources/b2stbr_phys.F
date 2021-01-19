@@ -13,7 +13,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr)
+     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -46,6 +46,8 @@
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
+      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc), 
+     &                                  kin_frac_hyb(nFc)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -270,9 +272,29 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
 *   ..loop over boundary cells
           do i = 1, mpg%rcCvP(istra,2)
             iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
             call CalcMinMfp(iRc1,isn,istra,
      &          pl,dv,rt,min_mfp,mfp)
             mfp_out(iRc1) = mfp
+            if (switch%use_auto_spatial_hyb.and.
+     &                                  HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
+!! temporary, we might not want kinetic treatment below separatrix DO NOT COMMIT AS SUCH
+              if (mfp.le.switch%auto_spatial_hyb_mfp_1.or.i.le.10) then !! fluid treatment
+                fluid_frac_hyb(iFc) = 1.0_R8
+                kin_frac_hyb(iFc) = 0.0_R8
+              elseif (mfp.ge.switch%auto_spatial_hyb_mfp_2) then  !! kinetic treatment 
+                fluid_frac_hyb(iFc) = 0.0_R8
+                kin_frac_hyb(iFc) = 1.0_R8
+              else
+!! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_mpf_1 and auto_mfp_2
+                kin_frac_hyb(iFc) = (mfp-switch%auto_spatial_hyb_mfp_1)/
+     &     (switch%auto_spatial_hyb_mfp_2-switch%auto_spatial_hyb_mfp_1)
+                fluid_frac_hyb(iFc) = 1.0_R8 - kin_frac_hyb(iFc)
+              endif
+            else !! keep scaling factors both equal to 1.
+              fluid_frac_hyb(iFc) = 1.0_R8
+              kin_frac_hyb(iFc) = 1.0_R8
+            endif
           enddo
 
 c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
@@ -594,7 +616,7 @@ c new variables for advanced fluid neutral reflection/recycling model
       real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,
      &     fmomrefl, 
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
-     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,q_conv2,
+     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa
 
 
@@ -916,7 +938,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
 
-
 !! end of preliminary calculations
            if(erecyc(is,istra)>0.0_R8.or.
      2      mrecyc(is,istra)>0.0_R8)
@@ -926,7 +947,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            if (is.ne.is0) then !! ion species, recycling
 
 cmb   particle recycling
-             snan = b2recyc(is,istra)*t0  !! conservation of particles: t0 = incident ion flux
+             snan = b2recyc(is,istra)*fluid_frac_hyb(iFc)*t0  !! conservation of particles: t0 = incident ion flux
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
 
 cmb   net momentum sources from neutral particle recombination
@@ -935,7 +956,8 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
    
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tef,pof,
+     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
+     &              pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
@@ -988,7 +1010,6 @@ c          while B2.5 uses internal energy equations.
      &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
      &             neutral_sources_rescale
 
-
              if (switch%tn_style.eq.0) then
                srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
              elseif (switch%tn_style.eq.1) then
@@ -1028,7 +1049,8 @@ c          while B2.5 uses internal energy equations.
              endif
 
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
-     &             (b2recyc(is,istra)-1)*fnni*neutral_sources_rescale
+     &             (b2recyc(is,istra)*fluid_frac_hyb(iFc)-1)*
+     &             fnni*neutral_sources_rescale
 
 
 cmb   net momentum sources from neutral particle reflection
@@ -1036,7 +1058,8 @@ cmb   net momentum sources from neutral particle reflection
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
+     &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
@@ -1044,7 +1067,8 @@ cmb   net momentum sources from neutral particle reflection
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
-     &              istra,iwall,farea,b2recyc(is,istra),pl,tnf,
+     &              istra,iwall,farea,b2recyc(is,istra),
+     &              fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.2) then
@@ -1052,7 +1076,8 @@ cmb   net momentum sources from neutral particle reflection
      &              switch%mfp_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),
+     &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
@@ -1060,7 +1085,8 @@ cmb   net momentum sources from neutral particle reflection
                else
                  call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),pl,tif,tnf,
+     &              Phi_app,farea,b2recyc(is,istra),
+     &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,

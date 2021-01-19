@@ -54,6 +54,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: user_transport
       integer :: spatial_hybrid
       integer :: ineustra
+      integer :: use_auto_spatial_hyb
 
 
   
@@ -76,6 +77,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       real (kind=R8) :: integral_current
       real (kind=R8) :: b2stbc_fchy_dia
       real (kind=R8) :: b2mndr_na_min
+      real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
       real (kind=R8) :: cfc0
       real (kind=R8) :: prl_cur
@@ -110,6 +112,8 @@ c consistency checks for combinations of different switches (check_consistency_s
       real (kind=R8) :: mfp_b1
       real (kind=R8) :: mfp_b2
       real (kind=R8) :: pol_anom_scale
+      real (kind=R8) :: auto_spatial_hyb_mfp_1
+      real (kind=R8) :: auto_spatial_hyb_mfp_2
 
 
 
@@ -375,6 +379,7 @@ c Eirene coupling
       s % user_transport = 0
       s % spatial_hybrid = 0
       s % ineustra = 0
+      s % use_auto_spatial_hyb = 0
 
 
       s % fhe_vis_per = 0.0e0_R8
@@ -396,6 +401,7 @@ c Eirene coupling
       s % integral_current = 0.0e0_R8
       s % b2stbc_fchy_dia = 0.0e0_R8
       s % b2mndr_na_min = 1.0e4_R8
+      s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
       s % cfc0 = 1.0e0_R8
       s % prl_cur = 1.0e0_R8
@@ -430,6 +436,8 @@ c Eirene coupling
       s % mfp_b1         = 0.003e0_R8
       s % mfp_b2         = 0.004e0_R8
       s % pol_anom_scale = 1.0_R8
+      s % auto_spatial_hyb_mfp_1 = 0.0_R8
+      s % auto_spatial_hyb_mfp_2 = 100.0_R8
 
 
 
@@ -683,7 +691,8 @@ c eirene coupling
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
-      call ipgeti ('eirene_neutr_strata', s % ineustra)   
+      call ipgeti ('eirene_neutr_strata', s % ineustra)  
+      call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)    
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
@@ -704,6 +713,7 @@ c eirene coupling
       call ipgetr ('b2stbc_integral_current', s % integral_current)         !dpc
       call ipgetr ('b2stbc_fchy_dia', s % b2stbc_fchy_dia)                  !xpb
       call ipgetr ('b2mndr_na_min', s%b2mndr_na_min)
+      call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
@@ -738,9 +748,8 @@ c eirene coupling
       call ipgetr ('b2stbr_mfp_b1',s % mfp_b1)
       call ipgetr ('b2stbr_mfp_b2',s % mfp_b2)
       call ipgetr ('b2trno_pol_anom_scale', s % pol_anom_scale)
-
-
-
+      call ipgetr ('auto_spatial_hyb_mfp_1', s % auto_spatial_hyb_mfp_1)
+      call ipgetr ('auto_spatial_hyb_mfp_2', s % auto_spatial_hyb_mfp_2)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)                    
@@ -1260,6 +1269,10 @@ c spatially hybrid neutrals
 
       if(s%spatial_hybrid.ne.0.and.s%ineustra.eq.0) then
         call xerrab('spatial hybrid needs neutral strata')
+      endif
+
+      if(s%use_auto_spatial_hyb.ne.0.and.s%spatial_hybrid.eq.0) then
+        call xerrab('automatic spatial hybrid needs spatial hybrid')
       endif
 
 
