@@ -209,7 +209,6 @@
      &                         rf0*t1n/((dv%ni(iCv,0)-dv%ni(iCv,1))*
      &                         pl%tn(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
-           !! neutrals that ionize have energy according to Tn, but source scaling is still based on ti and ni.
            endif
 
 !WG_TODO           rsahi(iCv,is) = t1
