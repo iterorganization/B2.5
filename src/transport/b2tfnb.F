@@ -83,7 +83,7 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
-     *   dumm0(nFc,0:1), dumm1(nFc,0:1)
+     *   zeros(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1), 
      *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
@@ -179,7 +179,7 @@
       endif
 
 *   ..set dummy array
-      dumm0 = 0.0_R8
+      zeros = 0.0_R8
 
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
@@ -267,7 +267,7 @@ cwdk                   (original code: simple averaging)
 *     ..linearization coefficients for P.Sch flows
         cddb(:,0) = -PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk1 
         cddb(:,1) =  PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk1
-        call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddb,flob0,conb0)
+        call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
           dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
      &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
@@ -606,6 +606,12 @@ c csc To be added contribution of ubdia
       dv%fna_52nd(:,1,isb) = dv%fna_52nd(:,1,isb) - 
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
+*   ..compute ExB fluxes for k-model
+      if (isb .eq. ismain) then
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),zeros,
+     &    co%cdna_ExB,dv%fna_ExB,dumm0,dumm1)
+      endif
+
 *   ..compute flob, conb
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,
      &    flo_mdf,co%cdna(:,:,isb),flob0,conb0)
@@ -637,7 +643,7 @@ c csc To be added contribution of ubdia
 
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cdpb,flob0,conb0)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cdpb,flob0,conb0)
       dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
       dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?

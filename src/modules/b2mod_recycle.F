@@ -1552,10 +1552,10 @@ c     local variables
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
       if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
         call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm1,dumm2)
+     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
       else
         call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm1,dumm2)
+     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
       endif
       cvsf(:,0) = cvsf(:,0)/geo%fcHz
       cvsf(:,1) = cvsf(:,1)/geo%fcHz

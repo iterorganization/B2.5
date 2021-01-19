@@ -121,7 +121,7 @@
 
 * ..compute transport coefficients
 *   ..compute anomalous terms
-      call b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+      call b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  geo, mpg, pl, dv, rt, st_ext, co)
 *   ..compute classical terms
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10

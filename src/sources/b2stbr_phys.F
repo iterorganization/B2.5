@@ -105,8 +105,7 @@ c for KUL advanced fluid neutral boundary conditions
      &  remove_FC_el = 0
       real (kind=R8), save :: mfp_b1 = 0.003_R8, mfp_b2 = 0.004_R8
       real (kind=R8) :: wrkv(nVx),
-     &                  dnndy, dnndz,
-     &                  cvsf(nFc,0:1), dnn(nFc,0:1)
+     &                  dnndy, dnndz, dnn(nFc,0:1), cvsf(nFc,0:1)
 c     output for analysis/debugging
       integer, save ::  AFN_out = 0
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
@@ -169,7 +168,6 @@ c     output for analysis/debugging
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
        call ipgeti ('b2mn_tn_style', tn_style)         
        call ipgeti ('b2stbr_remove_FC_el', remove_FC_el)    
-       call ipgeti ('b2sihs_style_visc', style_visc)
        call ipgetr ('b2stbr_mfp_b1',mfp_b1)
        call ipgetr ('b2stbr_mfp_b2',mfp_b2)
        call ipgeti ('b2stbr_AFN_out',AFN_out)
@@ -285,8 +283,8 @@ c     initialize debugging/analysis arrays
           call xerrab('KUL recycling model not yet developed for'//
      &                    'multi-species cases')
         endif
-        cvsf = 0.0_R8
         dnn = 0.0_R8
+        cvsf = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, geo, mpg, pl, dv,
      &   co, rt, mfp_b1, mfp_b2, afn_out, cvsf, dnn)
       endif !! end pre-computations KUL fluid neutrals
@@ -405,7 +403,7 @@ c for KUL recycling/reflection model
             call recycle(
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
-     &           Phi_app, lcore, dnndy, dnndz, cvsf)
+     &           Phi_app, lcore, dnndy, dnndz)
           enddo      ! end loop over boundary cells
 
 
@@ -561,7 +559,7 @@ c for KUL recycling/reflection model
       contains
 
       subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore,
-     &                   dnndy, dnndz, cvsf0)
+     &                   dnndy, dnndz)
 c iCv             number of the guard cell
 c iCn             number of the neighbour cell
 c iFc             number of the guard cell face
@@ -580,8 +578,7 @@ c dnndz           the gradient of the main neutral species density across the bo
       real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
      &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
      &     eself, sput_frac_chem_sum, be_frac, 
-     &     be_suppression_factor, ytmp, ztmp, wrk(ndepth_nml),t0,
-     &     cvsf0(nFc,0:1)
+     &     be_suppression_factor, ytmp, ztmp, wrk(ndepth_nml),t0
       real (kind=R8) mass_density, local_reflection
       character*13 hlp_frm
       external mass_density
@@ -971,15 +968,11 @@ c          while B2.5 uses internal energy equations.
 
 
              q_conv =
-     &             (isign*(tnf*pl%ua(iCv,is0)*geo%fcpbs(iFc)*
-     &             pl%na(iCv,is0)+
-     &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
-     &             *0.5_R8*am(is0)*mp*
-     &             pl%ua(iCv,is0)**2 +
-     &             (cvsf0(iFc,0)+cvsf0(iFc,1))))*
+     &             (isign*
+     &             (tnf*pl%ua(iCv,is0)*geo%fcpbs(iFc)*
+     &             pl%na(iCv,is0) +
+     &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
      &             neutral_sources_rescale
-
-
 
 
              if (tn_style.eq.0) then

@@ -59,12 +59,14 @@
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8), save :: fflokt = 0.0_R8, fconkt = 0.0_R8
+      real (kind=R8), save :: fkt_hie = 0.0_R8
       real (kind=R8) ::
      *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), vdia_par,     !srv 17.05.99
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1),
-     *   flokt0(nFc,0:1), conkt0(nFc,0:1)
+     *   flokt0(nFc,0:1), conkt0(nFc,0:1),
+     *   flo0_ExB(nFc,0:1)
 cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
@@ -119,6 +121,7 @@ cpax
        call ipgeti ('b2mn_tn_style', tn_style)
        call ipgetr ('b2tfhi_fflokt', fflokt)
        call ipgetr ('b2tfhi_fconkt', fconkt)
+       call ipgetr ('b2tfhi_fkt_hie', fkt_hie)
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -279,8 +282,6 @@ cpax
         flon0(:,0) = 1.5e0_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
         flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
-      flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
-      flokt0(:,1) = dv%fna(:,1,ismain) 
 
       if (tn_style.eq.0) then !! default combined ion-neutral energy equation
       
@@ -339,15 +340,37 @@ cpax
      &    dv%flon,dv%conn)
 
       endif
+
+*   ..compute ExB heat fluxes (ion and electron (!))
+      flo0_ExB = 1.5_R8*dv%fna_ExB
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,flo0_ExB,
+     &  co%chci_ExB,dv%fhi_ExB,dumm0,dumm1)
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,flo0_ExB,
+     &  co%chce_ExB,dv%fhe_ExB,dumm0,dumm1)
+
+*   ..fluxes for k-equation
+cwdk  fflokt and fconkt: fudge factors to approximate enhanced parallel
+cwdk  transport of k due to term
+cwdk  related to (fluctuations in parallel current) * (fluctuations in potential)
+cwdk  in principle: models same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0)
+      flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
+      flokt0(:,1) = dv%fna(:,1,ismain) 
       cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
       cdkt0(:,1) = co%cdkt(:,1)
+
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
      &  cdkt0,dv%fkt,dumm0,dumm1)
+
+*   ..contribution from ExB heat fluxes
+cwdk  at the moment: experimental; it is expected that this contriution
+cwdk  is at least partially compensated by the (divergence of the) term
+cwdk  related to (fluctuations in diamagnetic current) * (fluctuations in potential)
+      dv%fkt = dv%fkt + fkt_hie*2.0_R8/3.0_R8*(dv%fhi_ExB + dv%fhe_ExB)
+
 *   ..compute flokt, conkt
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &  dv%flokt,dv%conkt)
-
 
 
 #ifdef WG_TODO

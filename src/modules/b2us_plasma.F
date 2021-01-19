@@ -36,14 +36,16 @@
      .                           fna_52nd(:,:,:), fna_32nd(:,:,:),
      .                           fna_nodrift(:,:,:), fna_he(:,:,:),
      .                           fnaPSch(:,:,:), fna_fcor(:,:,:),
-     .                           fna_eir(:,:,:),
+     .                           fna_eir(:,:,:), fna_ExB(:,:),
      .                           fmo(:,:,:)
         real(R8), allocatable :: fne(:,:), fne_he(:,:), fne_32(:,:), 
      .                           fne_52(:,:), fne_eir(:,:), fne_53(:,:),
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
-     .                           fhePSch(:,:), fhe_eir(:,:)
+     .                           fhePSch(:,:), fhe_eir(:,:),
+     .                           fhe_ExB(:,:)
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
-     .                           fhiPSch(:,:), fhi_eir(:,:)
+     .                           fhiPSch(:,:), fhi_eir(:,:),
+     .                           fhi_ExB(:,:)
         real(R8), allocatable :: fnn (:,:), fnn_32(:,:), fnn_52(:,:),
      .                           fhn(:,:)
         real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:), 
@@ -104,10 +106,12 @@
      .                                           calf_an, csig_cl, 
      .                                           calf_cl
         real(R8), dimension(:,:,:,:), allocatable :: csigin
-        real(R8), dimension(:,:), allocatable :: chve, chce
-        real(R8), dimension(:,:), allocatable :: chvi, chci, chcn, cdkt
+        real(R8), dimension(:,:), allocatable :: chve, chce, chce_ExB
+        real(R8), dimension(:,:), allocatable :: chvi, chci, chci_ExB,
+     .                                           chcn, cdkt
         real(R8), dimension(:), allocatable :: chvemx, chvimx
-        real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:), 
+        real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:),
+     .                           cdna_ExB(:,:),
      .                           cdpa(:,:,:), cvsa(:,:,:),
      .                           cvlahz(:,:,:), cdnahz(:,:,:), 
      .                           cdpahz(:,:,:), cvsahz(:,:,:),
@@ -123,8 +127,8 @@
         real(R8), allocatable :: vsaf_cl(:,:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, hcn0,
-     .                                         alf0, dkt0, dna_ExB,
-     .                                           hce_ExB, hci_ExB
+     .                                         alf0, dkt0,
+     .                                         dna_ExB, hce_ExB, hci_ExB
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
      .                                           hcib
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
@@ -369,10 +373,12 @@ cwdk move to dv
       
       allocate( coeff % chve( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chce( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chce_ExB( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chvemx( nFc ), SOURCE=0._R8 )
       
       allocate( coeff % chvi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chci( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chci_ExB( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcn( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % chvimx( nFc ), SOURCE=0._R8 )
@@ -380,6 +386,7 @@ cwdk move to dv
       
       allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdna_ExB( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -453,10 +460,12 @@ cwdk move to dv
       
       deallocate( coeff % chve )
       deallocate( coeff % chce )
+      deallocate( coeff % chce_ExB )
       deallocate( coeff % chvemx )
       
       deallocate( coeff % chvi )
       deallocate( coeff % chci )
+      deallocate( coeff % chci_ExB )
       deallocate( coeff % chcn )
       deallocate( coeff % chcb )
       deallocate( coeff % chvimx )
@@ -464,6 +473,7 @@ cwdk move to dv
       
       deallocate( coeff % cvla )
       deallocate( coeff % cdna )
+      deallocate( coeff % cdna_ExB )
       deallocate( coeff % cdpa )
       deallocate( coeff % cvsa )
       deallocate( coeff % cvsa_cl )
@@ -570,6 +580,7 @@ cwdk move to dv
       allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_fcor( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )        
       allocate( dv % fna_eir( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_ExB( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fne_eir( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -581,11 +592,13 @@ cwdk move to dv
       allocate( dv % fhePSch( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( dv % fhet( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fhe_eir( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhe_ExB( nFc, 0:1 ), SOURCE=0._R8 ) 
       allocate( dv % fhi( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( dv % fhi_mdf( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( dv % fhiPSch( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( dv % fhit( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fhi_eir( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhi_ExB( nFc, 0:1 ), SOURCE=0._R8 ) 
       allocate( dv % fhn( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( dv % fhm( nFc, 0:1, 0:ns-1), SOURCE=0._R8 ) 
       allocate( dv % fhp( nFc, 0:1, 0:ns-1), SOURCE=0._R8 ) 
@@ -722,6 +735,7 @@ cwdk move to dv
       deallocate( dv % fna_fcor )
       deallocate( dv % fna_nodrift )
       deallocate( dv % fna_eir )
+      deallocate( dv % fna_ExB )
       deallocate( dv % fne_eir )
       
       deallocate( dv % fmo )
@@ -757,12 +771,14 @@ cwdk move to dv
       deallocate( dv % fhiPSch )
       deallocate( dv % fhit )
       deallocate( dv % fhi_eir )
+      deallocate( dv % fhi_ExB ) 
       deallocate( dv % fhe )
       deallocate( dv % fhn )
       deallocate( dv % fhe_mdf )
       deallocate( dv % fhePSch )
       deallocate( dv % fhet )
       deallocate( dv % fhe_eir )
+      deallocate( dv % fhe_ExB ) 
 
       deallocate( dv % fhm )
       deallocate( dv % fhp )
