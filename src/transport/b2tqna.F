@@ -3699,6 +3699,7 @@ c recompute hci0 and hcn0
       real(kind=R8) ::
      1   wrkf(nFc), wrkc(nCv), shear(nCv)
       integer, save :: solve_keps = 0
+      integer, save :: keps_iout = 0
       save ncall, keps_cd, keps_heat,
      1     keps_heat_i, keps_visc, keps_dkt, dna_min, keps_shear
       save keps_local, keps_inc, keps_fac, eps
@@ -3716,7 +3717,9 @@ c recompute hci0 and hcn0
         call ipgetr ('b2tqna_keps_dkt', keps_dkt)
         call ipgetr ('b2tqna_keps_heat', keps_heat)
         call ipgetr ('b2tqna_keps_heat_i', keps_heat_i)
+        call ipgetr ('b2tqna_keps_shear', keps_shear)
         call ipgeti ('b2tqna_keps_local', keps_local)
+        call ipgeti ('b2tqna_keps_iout', keps_iout)
         if (keps_local.ne.1) then
          call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
@@ -3742,7 +3745,7 @@ c recompute hci0 and hcn0
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
-     &            (am(ismain)*mp))/abs(rt%rza(omp(icsep),is)*qe*
+     &            (am(ismain)*mp))/abs(rt%rza(omp(icsep),ismain)*qe*
      &             geo%cvBb(omp(icsep),3))
           endif
 *       ..compute radial shear of diamagnetic ExB velocity
@@ -3770,12 +3773,12 @@ cwdk same dna_ExB for all ion species
           endif
           if (keps_heat.gt.0.0_R8) then
             hce_ExB = keps_heat*dna_ExB*dv%ne
-            hce0 = keps_heat*dna0(:,ismain)*dv%ne*keps_fac
+            hce0 = keps_heat*dna0(:,is)*dv%ne*keps_fac
      &          + (1.0_R8-keps_fac)*hce0
           endif
           if (keps_heat_i.gt.0.0_R8) then
             hci_ExB = hci_ExB + keps_heat_i*dna_ExB*pl%na(:,is)
-            hcib(:,is) = keps_heat_i*dna0(:,ismain)*pl%na(:,is)*
+            hcib(:,is) = keps_heat_i*dna0(:,is)*pl%na(:,is)*
      &        keps_fac + (1.0_R8-keps_fac)*hcib(:,is)
           endif
           if (keps_dkt.le.0.0) then
@@ -3797,6 +3800,11 @@ cwdk same dna_ExB for all ion species
       keps_fac = min(keps_fac*keps_inc,1.0_R8)
       if (keps_inc.gt.1.0_R8) 
      > write(*,*) 'b2tqna_keps_fac = ',keps_fac
+
+      if (keps_iout.eq.1) then
+        call my_out_us(70,nCv,0,rhol,'b2tqna_keps_rhol')
+        call my_out_us(70,nCv,0,shear,'b2tqna_keps_shear')
+      endif
 
 *   ..return
       ncall = ncall +1
