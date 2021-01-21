@@ -4839,7 +4839,8 @@ cghgh
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
-          srw%she0(iCv1,0) = 0.0_R8
+          srw%she0(iCv1,0) = geo%fcS(iFc)*cs*dv%ne(iCv1)*
+     &      enepar(ib,1)*enepar(ib,2)*pl%po(iCv1)*qe
           srw%she0(iCv1,3) = geo%fcS(iFc)*cs*enepar(ib,1)
           if(mdf_fhe.ne.0) then
             srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -9502,7 +9503,7 @@ c end of implementation
           call xertst(ENKPAR(IB,1).gt.0.0_R8,
      1     'BCENK = 1, ENKPAR(,1) !> 0')
         endif
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enkpar(iB,1)*EV
@@ -9551,7 +9552,6 @@ c end of implementation
          if (mpg%cvOnClosedSurface(iCv1)) then
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
            totflux = totflux - 
      &      (dv%fhe(iFc,0) + dv%fhe(iFc,1) + 
@@ -9562,9 +9562,10 @@ c end of implementation
          endif
         enddo
 *     ..impose the flux
+        write (*,*) 'BCENK=6, totflux = ',totflux,
+     &                     ', totpar = ',totpar
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%skt0(iCv1,0) = -totpar/totflux*
@@ -9574,13 +9575,74 @@ c end of implementation
           srw%skt0(iCv1,1) = 0.0_R8
         enddo  
 
-* -- BCENK=7 -- not implemented
-        case (7)
-        CALL XERRAB ('B2STBC -- BCENK=7, NOT AVAILABLE')
+* -- BCENK=7 -- Prescribe the total flux of kt, following the 
+*               profile of fna
 
-* -- BCENK=8 -- not implemented
+        case (7)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENK=7 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'turb. kin. energy flux ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+*     ..compute total particle flux, and total kt flux
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           totflux = totflux - 
+     &      (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + enkpar(ib,1)
+         endif
+        enddo
+*     ..impose the flux
+        write (*,*) 'BCENK=7, totflux = ',totflux,
+     &                     ', totpar = ',totpar
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          srw%skt0(iCv1,0) = -totpar/totflux*
+     &      (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          srw%skt0(iCv1,1) = 0.0_R8
+        enddo  
+
+* -- BCENK=8 -- PRESCRIBE THE TOTAL FLUX OF KT WITH CONSTANT
+*               FLUX DENSITY
+
         case (8)
-        CALL XERRAB ('B2STBC -- BCENK=8, NOT AVAILABLE')
+        if(ncall.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'total turb. kin. energy flux ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        US = 0.0_R8
+        do ibc = 1, mpg%bcCvP(ib,2)
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          US   = US + geo%fcS(iFc)
+        enddo
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%skt0(iCv1,0) = enkpar(iB,1)/US*geo%fcS(iFc)
+          srw%skt0(iCv1,1) = 0.0_R8
+        enddo
 
 * -- BCENK=9 -- not implemented
         case (9)
@@ -9677,6 +9739,53 @@ c end of implementation
      &      enkpar(ib,2)*t1*geo%fcS(iFc)          
 cwdk    Todo: corrections for BCCON.ne.14
         enddo
+
+* -- BCENK=16 -- Prescribe the value of the turb. kin. energy, with poloidal
+*                perturbation taken from flux tube just inside domain
+
+        case (16)
+        if(ncall.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENK=16 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified turb. kin. energy + perturbation',ENKPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENKPAR(IB,1).gt.0.0_R8,
+     1     'BCENK = 16, ENKPAR(,1) !> 0')
+        endif
+*     ..compute average kt on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%kt(iCv2)
+          enddo
+         endif
+        enddo
+        t1 = t1/t0
+*     ..impose kt with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%kt(iCv2) + enkpar(iB,1)*EV - t1)
+          srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
 
         case default
           write(*,*) BCENK(IB)
