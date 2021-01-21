@@ -220,6 +220,16 @@ cwdk     parallel transport due to parallel current fluctuations
      &      2.0_R8/3.0_R8*co%hci_ExB(:)*fac_aniso*
      &     (dtic(:,1)*dlbc(:,1)))
         call my_out_us(70,nCv,0,wrks,'b2sikt_prod_ti_y')
+        call my_out_us(70,nCv,0,connfs,'b2sikt_connfs')
+        call my_out_us(70,nCv,0,csfs,'b2sikt_csfs')
+        call my_out_us(70,nCv,0,dnac(:,0),'b2sikt_dnac0')
+        call my_out_us(70,nCv,0,dnac(:,1),'b2sikt_dnac1')
+        call my_out_us(70,nCv,0,dtec(:,0),'b2sikt_dtec0')
+        call my_out_us(70,nCv,0,dtec(:,1),'b2sikt_dtec1')
+        call my_out_us(70,nCv,0,dtic(:,0),'b2sikt_dtic0')
+        call my_out_us(70,nCv,0,dtic(:,1),'b2sikt_dtic1')
+        call my_out_us(70,nCv,0,dlbc(:,0),'b2sikt_dlbc0')
+        call my_out_us(70,nCv,0,dlbc(:,1),'b2sikt_dlbc1')
       endif
 
 * ..return
