@@ -1,11 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwq0 (nput, ns)
+      subroutine b2mwq0 (nput, ns, switch)
       use b2mod_types
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, ns
+      type (switches), intent (in) :: switch
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,14 +38,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, idum(0:9), nfld, k, is, iix, iiy, ll(0:1)
-      save ncall, style
+      integer idum(0:9), nfld, k, is, iix, iiy, ll(0:1)
       character chtit*60, chlab*12, id*3, idr*7
 *   ..procedures
       external subini, subend, xertst, ipgeti, cfwuin, cfwuch
-*   ..initialisation
-      data ncall/0/, style/1/
-
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -59,27 +57,22 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mwq0')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2mwqt_style', style)
-       call xertst (0.le.style, 'faulty internal parameter style')
-      endif
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..set nfld
       nfld = 0
-      if (1.le.style) then
+      if (1.le.switch%b2mwqt_style) then
        nfld = nfld+2+2*(2*ns+6)
       endif
-      if (2.le.style) then
+      if (2.le.switch%b2mwqt_style) then
        nfld = nfld+36*(ns+3)
       endif
-      if (3.le.style) then
+      if (3.le.switch%b2mwqt_style) then
        nfld = nfld+40*(ns+3)
       endif
-      if (4.le.style) then
+      if (4.le.switch%b2mwqt_style) then
        nfld = nfld+72*(ns+3)
       endif
 *   ..set ll
@@ -92,7 +85,7 @@
 
 * ..write titles and labels
       k = 0
-      if (1.le.style) then
+      if (1.le.switch%b2mwqt_style) then
 *    ..iteration counters
        chtit = 'time step counter'
        chlab = 'itim'
@@ -222,7 +215,7 @@
        call cfwuch (nput, 12, chlab, 'label')
        k = k+1
       endif
-      if (2.le.style) then
+      if (2.le.switch%b2mwqt_style) then
 *    ..total content on regions
        do is = 0, ns-1
         write (id,'(i3)') is
@@ -273,7 +266,7 @@
         enddo
        enddo
       endif
-      if (3.le.style) then
+      if (3.le.switch%b2mwqt_style) then
 *    ..integrated fluxes
        do is = 0, ns-1
         write (id,'(i3)') is
@@ -369,7 +362,7 @@
         enddo
        enddo
       endif
-      if (4.le.style) then
+      if (4.le.switch%b2mwqt_style) then
 *    ..min and max on regions
        do is = 0, ns-1
         write (id,'(i3)') is
@@ -447,7 +440,6 @@
       call xertst (k.eq.nfld, 'faulty parameter nfld')
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

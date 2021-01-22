@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srst (nCv, ns, mpg, na, ua, te, ti, po,   !srv 01.07.08
+      subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, tn, po,   !srv 01.07.08
      &  ne, ni, kt, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_map
       use b2us_plasma
 !WG_TODO      use b2mod_balance !djm Jan2017
@@ -14,10 +15,11 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
+      type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
-     &  te(nCv), ti(nCv), po(nCv),
+     &  te(nCv), ti(nCv), tn(nCv), po(nCv),
      &  ne(nCv), ni(nCv,0:1), kt(nCv)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
@@ -35,11 +37,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, k, use_eirene
-      integer, save :: iout = 0, !iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2wdat = 0
-!     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+      integer ncall, iCv, is, k
       real (kind=R8) ::
      *  snast(nCv,0:1,0:ns-1), smost(nCv,0:3,0:ns-1), 
      &  shest(nCv,0:3), shist(nCv,0:3),
@@ -49,13 +47,12 @@
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
       real (kind=R8), save :: kt_eps = 1.0e-60_R8
-      save ncall, rf0, rf1, rf2, rf3, use_eirene
+      save ncall, rf0, rf1, rf2, rf3
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
 *   ..initialisation
-      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/,
-     * use_eirene/0/
+      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/
 *     (rf0/1/2/3 for numerical stabilisation)
 
 *-----------------------------------------------------------------------
@@ -73,16 +70,6 @@
        call xertst (0.0_R8.le.rf0.and.0.0_R8.le.rf1.and.
      &              0.0_R8.le.rf2.and.0.0_R8.le.rf3,
      &              'faulty internal parameter rf0/1/2/3')
-       call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
-!       call ipgeti ('b2npc9_iout', iout_b2npc9)                    !srv 11.09.09 {
-!       call ipgeti ('b2npco_iout', iout_b2npco)
-!       call ipgeti ('b2npmo_iout', iout_b2npmo)
-!       call ipgeti ('b2npp7_iout', iout_b2npp7)
-!       call ipgeti ('b2nppo_iout', iout_b2nppo)
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)                     !srv 11.09.09 }
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
@@ -169,16 +156,15 @@
      &    min(sr%shi(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 
 *     ..modify shn(,,0:1)
-        t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*ti(iCv)
+        t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*tn(iCv)
         sr%shn(iCv,0) = max(sr%shn(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
-        sr%shn(iCv,1) = (1.0_R8/ti(iCv))*
-     &    min(sr%shn(iCv,1)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+        sr%shn(iCv,1) = (1.0_R8/tn(iCv))*
+     &    min(sr%shn(iCv,1)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 *     ..modify shn(,,2:3)
-        t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*ti(iCv)
+        t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*tn(iCv)
         sr%shn(iCv,2) = max(sr%shn(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
-        sr%shn(iCv,3) = (1.0_R8/ti(iCv))*
-     &    min(sr%shn(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
-
+        sr%shn(iCv,3) = (1.0_R8/tn(iCv))*
+     &    min(sr%shn(iCv,3)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
 *     ..modify skt(,,0:1)
 c        t0 = sr%skt(iCv,0)+sr%skt(iCv,1)*kt(iCv)
 c        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
@@ -238,8 +224,8 @@ cdjm Jan2017 Store for balance
 !	  call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
-      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
-     &          then
+      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1 .or. 
+     &                              switch%iout_b2wdat.eq.4)   then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne
 	call my_out_us(70,nCv,0,wrk0,'b2srst_shest')
@@ -253,7 +239,7 @@ cdjm Jan2017 Store for balance
 !	 call my_out_us(70,nCv,0,wrk0,'b2srst_schst')
 !      endif
 
-      if (iout.eq.1) then                       !srv 11.09.09 {
+      if (switch%b2srst_iout.eq.1) then                       !srv 11.09.09 {
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 	  do k=0,3

@@ -1,18 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trql (nCv, nFc, ns, geo, mpg, pl, dv, st_ext, 
+      subroutine b2trql (nCv, nFc, ns, switch, geo, mpg, pl, dv, st_ext, 
      .  chvemx, chvimx)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -110,11 +112,11 @@
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
       cflme = cflim(0)
-      call b2tlhe (nCv, nFc, me, cflme, geo, mpg, dv%ne, pl%te, 
-     &  chvemx)
+      call b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, dv%ne, 
+     &  pl%te, chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
-      call b2tlhi (nCv, nFc, mp, cflmi, geo, mpg, dv%ni,
+      call b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, dv%ni,
      &  nirm, st_ext%ni, pl%ti, pl%tn, chvimx)
 
 * ..return

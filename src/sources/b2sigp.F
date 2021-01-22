@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sigp (nCv, nFc, nVx, isb, geo, mpg, rzb, nb, ti,
-     &  tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
+      subroutine b2sigp (nCv, nFc, nVx, isb, switch, geo, mpg, rzb, 
+     &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_constants                                         !srv 23.03.10
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2mod_b2cmpa
@@ -13,6 +14,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -42,14 +44,9 @@
 
 *   ..local variables
       integer ncall, iCv, k
-      integer, save :: style = 2                                     !srv 13.01.17
-      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
-      integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
-      real (kind=R8) :: phm0 = 1.0_R8                                 !srv 26.06.18
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)
-      integer, save :: tn_style = 0
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -64,19 +61,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sigp')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2sigp_iout', iout)                             !srv 17.06.02
-       call ipgetr ('b2sigp_phm0', phm0)                             !srv 26.06.18
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
-       call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
-       call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
-       call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
-       call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2mn_tn_style',tn_style)
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-      endif
 *   ..test nCv, nFv
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
@@ -91,16 +75,16 @@
       endif
 
 * ..choose the correct temperature
-      if (tn_style.eq.2.and.is_neutral(isb)) then
+      if (switch%tn_style.eq.2.and.is_neutral(isb)) then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti
       endif
 
-      if (phm0.ne.0.0_R8) then                                     !srv 26.06.18
+      if (switch%b2sigp_phm0.ne.0.0_R8) then                         !srv 26.06.18
 * ..compute pressure gradient term
 *   ..compute smbgp
-      if(style.eq.0) then                                            !srv 02.07.08
+      if(switch%b2sigp_style.eq.0) then                              !srv 02.07.08
         call xerrab('b2sigp_style=0 not available for WG')
 #ifdef WG_TODO
         do iy = -1, ny
@@ -229,7 +213,7 @@
           enddo
         enddo
 #endif
-      elseif(style.eq.1) then                                         !srv 02.07.08 {
+      elseif(switch%b2sigp_style.eq.1) then                           !srv 02.07.08 {
 *   ..  compute gradients in cell centers
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*tb, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk1)
@@ -277,7 +261,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         endif
 #endif
       else                                                            !srv 23.03.10 {
-        call xertst(pot_eq.eq.1,
+        call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
@@ -355,17 +339,17 @@ cxpb apply restriction to pressure gradient for minority ions
         wrk6 = 0.0_R8       
       endif                                                           !srv 26.06.18 }
       
-      if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
+      if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then         !srv 17.06.02 {
        write (chns,'(i3.3)') isb
 !      do k=0,3
 !        write (chk,'(i1)') k
 !        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
        call my_out_us(70,nCv,0,smbgp(1,0),'b2sigp_smogp'//chns)
-       if(style.eq.0 .or. style.eq.1 ) then
+       if(switch%b2sigp_style.eq.0 .or. switch%b2sigp_style.eq.1 ) then
           call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
           call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
-       elseif(style.eq.2) then
+       elseif(switch%b2sigp_style.eq.2) then
           call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
           call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
        endif

@@ -1,11 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tlnl (nCv, icase, te, ti, ne, lnlam)                 !srv 01.07.09 {
+      subroutine b2tlnl (nCv, switch, icase, te, ti, ne, lnlam)                 !srv 01.07.09 {
       use b2mod_types
       use b2mod_constants
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
+      type (switches), intent (in) :: switch
       integer nCv, icase                                                !srv 20.09.11
       real (kind=R8) ::
      &   te(nCv), ti(nCv), ne(nCv)                                      !srv 20.09.11
@@ -31,8 +33,8 @@
 *   ..global named constants
       
 *   ..local variables
+      real (kind=R8) :: lambda
       integer ncall, iCv
-      real (kind=R8), save :: lambda=-5.0e0_R8
       save ncall
 *   ..procedures
       intrinsic sqrt
@@ -56,10 +58,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tlnl')
-      if (ncall.eq.0) then
-       call ipgetr('b2trcl_lambda', lambda)
-       call xertst(0.0_R8.ne.lambda, 'faulty internal parameter lambda') !srv 02.07.13
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
@@ -68,7 +66,7 @@
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
-
+      lambda = switch%b2trcl_lambda
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
 	select case(icase)

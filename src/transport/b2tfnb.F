@@ -1,13 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, geo, mpg, pl, dv,
-     &  co, rt, balance)
+      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg, 
+     &  pl, dv, co, rt, balance)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -17,6 +18,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, ismain
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -44,33 +46,17 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, ib, no_hybr                               !srv 13.10.06
-      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
-      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
-      integer, save :: pflux_cor = 1                                     !srv 05.03.16
-      integer, save :: PSch_style = 1                                    !srv 12.11.08
+      integer ncall, iCv, iFc, ib, no_hybr, meth                         !srv 13.10.06
+
+
       integer, save :: style_int_vel = 0
-      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
-      integer, save :: vlct_diagno = 1
-      integer, save :: meth = 2
-      integer, save :: tn_style = 0
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: drift_hyb = 1.0_R8
-      real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
-      real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
-      real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
-      real (kind=R8), save ::  
-     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                             !srv 25.04.00
-     &   PSch = 1.0_R8                                                   !srv 17.01.07
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti, pcm1, term(nFc), termhz(nFc),
+     *   flux_limit_min_ti, term(nFc), termhz(nFc),
      *   flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
@@ -83,7 +69,7 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
-     *   zeros(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
+     *   zeros(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1), 
      *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
@@ -97,14 +83,18 @@
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                              !lk
       integer :: xcount, ycount
-      save ncall, pcm1, alpha, gamma, flux_limit_min_ti, no_hybr
+      save ncall, flux_limit_min_ti, no_hybr
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
+c      integer, save :: pflux_cor = 1                                     !srv 05.03.16
+c      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
+c      integer, save :: vlct_diagno = 1
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intface, diff
       intrinsic abs, max, min, mod, sqrt, sign
 *   ..initialisation
-      data ncall/0/, pcm1/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/, 
-     *     flux_limit_min_ti/0.0_R8/, no_hybr/0/
+      data ncall/0/, flux_limit_min_ti/0.0_R8/, no_hybr/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -116,14 +106,6 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call ipgetr ('b2npco_pcm1', pcm1)
-        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-        call ipgetr ('b2tfnb_alpha', alpha)
-        call xertst (0.0_R8.le.alpha,
-     &   'faulty internal parameter alpha')
-        call ipgetr ('b2tfnb_gamma', gamma)
-        call xertst (0.0_R8.lt.gamma,
-     &   'faulty internal parameter gamma')
         call ipgetr ('b2tfnb_flux_limit_min_ti', flux_limit_min_ti)
         flux_limit_min_ti=flux_limit_min_ti*ev
         call xertst (0.0_R8.le.flux_limit_min_ti,
@@ -131,36 +113,7 @@
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
           if (no_hybr .eq.1) meth = 0
         call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
-        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
-        call ipgetr ('b2tfnb_poleldr', poleldr)                          !srv 25.04.00 {
-        call ipgetr ('b2tfnb_radeldr', radeldr)
-        call ipgetr ('b2tfnb_poldidr', poldidr)
-        call ipgetr ('b2tfnb_raddidr', raddidr)                          !srv 25.04.00 }
-        call ipgeti ('b2tfnb_iout', iout)                                !srv 16.09.02
-        call ipgetr ('b2tlc0_alpha', alpha_)                             !srv 09.07.03 {
-        call xertst (0.0_R8.le.alpha_,
-     &   'faulty internal parameter alpha')
-        call xertst (.not.(0.0_R8.ne.alpha .and. 0.0_R8.ne.alpha_),      !srv 14.10.09
-     &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
-     &   'from zero ')                                                   !srv 09.07.03 }
-        call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
-        call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
-        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
-        call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
-        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
-        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
-        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
-        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
-        call ipgeti ('b2tfnb_discr_meth', meth)
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
-        call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -176,7 +129,17 @@
      &   'cdpa0','.ge.')
        call b2xvsg (nFc, co%cdpa(:,1,isb)*geo%fcQalf(:,1), 1,
      &   'cdna1','.ge.')
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
+c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
+c        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
+c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
+c        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
       endif
+
+      meth = switch%b2tfnb_discr_meth
+      alpha = switch%b2tfnb_alpha
+      gamma = switch%b2tfnb_gamma
 
 *   ..set dummy array
       zeros = 0.0_R8
@@ -190,7 +153,7 @@
       call intvertex(nCv,nVx,mpg,geo%vxVol,kmpr,kmprv)
 
       write(chns,'(i3.3)') isb
-      if(mdf_fnb .ne. 0 .and.
+      if(switch%mdf_fnb .ne. 0 .and.
      &  (maxval(dv % facdrift)   .ne. 0.0_R8  .or. 
      &   maxval(dv % fac_ExB )   .ne. 0.0_R8) .and.
      &   minval(rt % rza(:,isb)) .gt. 0.0_R8) then
@@ -233,8 +196,8 @@ cwdk                   (original code: simple averaging)
      &   geo%vxOnedBsq, dOnedBsq)
 *     ..computation of ExB drift
         wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
-        dv%vaecrb(:,0,isb) = -poleldr*dv%fac_ExB*wrk0*dpo(:,1)
-        dv%vaecrb(:,1,isb) =  radeldr*dv%fac_ExB*wrk0*dpo(:,0)
+        dv%vaecrb(:,0,isb) = -switch%poleldr*dv%fac_ExB*wrk0*dpo(:,1)
+        dv%vaecrb(:,1,isb) =  switch%radeldr*dv%fac_ExB*wrk0*dpo(:,0)
 *     ..computation of grad-B drift
 cwdk    use (na*Ti)_f/na_f for consistency with fchdia
 cwdk    check treatment of rza for consistency with other drifts
@@ -245,9 +208,11 @@ cwdk                   now consistent between x and y faces
 cwdk                   (and consistent with treatment of other drifts)
 cwdk                   (implicitly through grad-routine)
         dv%vadia(:,0,isb) = 
-     &    poldidr*dv%facdrift*wrk1*dOnedBsq(:,1)*geo%fcBb(:,2)/nbf
+     &    switch%poldidr*
+     &    dv%facdrift*wrk1*dOnedBsq(:,1)*geo%fcBb(:,2)/nbf
         dv%vadia(:,1,isb) = 
-     &   -raddidr*dv%facdrift*wrk1*dOnedBsq(:,0)*geo%fcBb(:,2)/nbf
+     &   -switch%raddidr*
+     &    dv%facdrift*wrk1*dOnedBsq(:,0)*geo%fcBb(:,2)/nbf
 *     ..computation of diamagnetic drift
 cwdk    to be checked: now we use inverse volume weighting in wkr0
 cwdk                   (original code: simple averaging)
@@ -260,13 +225,13 @@ cwdk                   (original code: simple averaging)
 *     ..computation of P.Sch flows
         call diff(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
         call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk1)
-        dv%fnaPSch(:,0,isb) =  PSch*dv%facdrift*co%cddi(:,0,isb)*
+        dv%fnaPSch(:,0,isb) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)*
      &    dnbti(:,1)!*nbf/wrk1
-        dv%fnaPSch(:,1,isb) = -PSch*dv%facdrift*co%cddi(:,1,isb)*
+        dv%fnaPSch(:,1,isb) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)*
      &    dnbti(:,0)!*nbf/wrk1
 *     ..linearization coefficients for P.Sch flows
-        cddb(:,0) = -PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk1 
-        cddb(:,1) =  PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk1
+        cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk1 
+        cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk1
         call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
           dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
@@ -462,7 +427,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      if (.not.is_neutral(isb).or.tn_style.eq.0) then
+      if (.not.is_neutral(isb).or.switch%tn_style.eq.0) then
         flo_he(:,0) = geo%fcPbs*wrk0 +
      &    5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
      &    drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
@@ -489,11 +454,11 @@ c csc To be added contribution of ubdia
       if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
         scur(:,0) = 
      &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
-     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*xcur/(qe*nbf)
+     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%xcur/(qe*nbf)
         scur(:,1) = 
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &      vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
-     &      vis_q*dv%fchvisq(:,1))*ycur/(qe*nbf)
+     &      switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
+     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur/(qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz
@@ -509,7 +474,7 @@ c csc To be added contribution of ubdia
 
 *   ..compute Rhie-Chow term
       do iFc = 1, nFc
-        cdpb(iFc,0) = pcm1*0.5_R8*geo%fcPbs(iFc)*
+        cdpb(iFc,0) = switch%b2npco_pcm1*0.5_R8*geo%fcPbs(iFc)*
      &   (dv%pcca(mpg%fcCv(iFc,1),1,isb)*pl%na(mpg%fcCv(iFc,1),isb) +
      &    dv%pcca(mpg%fcCv(iFc,2),1,isb)*pl%na(mpg%fcCv(iFc,2),isb))/
      &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
@@ -609,7 +574,7 @@ c csc To be added contribution of ubdia
 *   ..compute ExB fluxes for k-model
       if (isb .eq. ismain) then
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),zeros,
-     &    co%cdna_ExB,dv%fna_ExB,dumm0,dumm1)
+     &    co%cdna_ExB,dv%fna_ExB,zeros,dumm1)
       endif
 
 *   ..compute flob, conb
@@ -619,7 +584,7 @@ c csc To be added contribution of ubdia
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))
       flob0(:,1) = flob0(:,1) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))
-      if (mdf_fnb .eq. 0) then
+      if (switch%mdf_fnb .eq. 0) then
         flob0 = flob0 + flo - flo_mdf
       endif
       do iFc = 1, nFc
@@ -652,7 +617,7 @@ c csc To be added contribution of ubdia
 
 *   ..flux limit
       if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.          !srv 20.11.08
-     *     alpha_.eq.0.0_R8 ) then                                   ! neutral flux limit
+     *     switch%b2tlc0_alpha.eq.0.0_R8 ) then                                   ! neutral flux limit
        call xerrab('Flux limit to be adapted for WG')
 cwdk try to introduce a common flux limit here?
        do iFc = 1,nFc
@@ -702,8 +667,9 @@ cwdk try to introduce a common flux limit here?
 
 
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+      if(switch%b2npc9_iout.ne.0 .or. switch%b2npco_iout.ne.0
+     &                     .or. switch%b2tfnb_iout .eq. 1 .or. 
+     &                               switch%iout_b2wdat.eq.4) then                   !srv 11.09.09 {
 cwdk to be considered: con_mdf, con_2dia not easily recoverable? 
 cwdk should this be conb in general? (but without the rescaling for pressure)
        call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb) 
@@ -728,20 +694,21 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nFc,1,wrk2,'b2tfnb_dpccornax'//chns)
        call my_out_us(70,nFc,1,dpb(1,0),'b2tfnb_dpb'//chns)
        call my_out_us(70,nFc,1,dpbm,'b2tfnb_dpbm'//chns)
-       if (iout_b2wdat .ne. 4) 
+       if (switch%iout_b2wdat .ne. 4) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
-       if (iout.eq.1) 
+       if (switch%b2tfnb_iout.eq.1) 
      &  call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 .or. 
+     &                                  switch%b2tfnb_iout.eq.1) then
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianax'//chns)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*geo%fcHz
-       if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+       if(.not. is_neutral(isb) .and. switch%iout_b2wdat.ne.4)
      &   call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzx'//chns)
        call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
      &              'b2tfnb_fnb_fcorx'//chns)
@@ -754,8 +721,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      1   ' mb = ',am(isb),' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &       .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+      if(switch%b2npc9_iout.ne.0 .or. switch%b2npco_iout.ne.0
+     & .or. switch%b2tfnb_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then               !srv 11.09.09 {
        wrk3 = dv%vaecrb(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
 !       wrk4 = -con_2dia*dnb(:,1)
        wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)
@@ -775,13 +742,14 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 !       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out_us(70,nFc,1,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 
+     &                         .or. switch%b2tfnb_iout.eq.1) then
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianay'//chns)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*geo%fcHz
-       if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+       if(.not. is_neutral(isb) .and. switch%iout_b2wdat.ne.4)
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzy'//chns)
       call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),
      &  'b2tfnb_fnb_fcory'//chns)
@@ -796,7 +764,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 *   ..flux correction
 *   ..we rescale the fnb fluxes to have the same integral over the boundaries
 *   ..as the fnb_mdf fluxes
-      if(pflux_cor.ne.0 .and. mdf_fnb.ne.0) then                        !srv 05.03.16 {
+      if(pflux_cor.ne.0 .and. switch%mdf_fnb.ne.0) then                        !srv 05.03.16 {
         if(.not. is_neutral(isb)) then
           call b2tbfl(nx, ny,.false.,fnb, tbfl_fnb, div_fnb)
           call b2tbfl(nx, ny,.false.,fnb_mdf, tbfl_fnb_mdf, div_fnb_mdf)
@@ -807,7 +775,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
             if (ncall.eq.0) write(*,"(a,i4)")
      >       ' Boundary flux correction not attempted for is = ',isb
           endif
-          if(iout.ne.0) then
+          if(switch%b2tfnb_iout.ne.0) then
             write(*,*)
             write(*,*) 'Before flux correction in b2tfnb, is = ', isb
             write(*,fmt=
@@ -828,7 +796,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         endif
       endif                                                             !srv 05.03.16 }
 #endif
-      if (iout_b2wdat .eq. 4) then
+      if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)
        call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
@@ -856,7 +824,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nCv,0,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
       endif
 
-      if(iout.ne.0) then                                                !srv 18.06.08 {
+      if(switch%b2tfnb_iout.ne.0) then                                                !srv 18.06.08 {
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)

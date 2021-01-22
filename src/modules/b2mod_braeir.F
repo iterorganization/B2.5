@@ -5,7 +5,7 @@ c
 c*** Plasma data: ni,te,ti,vv,uu,pr,up,rr,fnix,fniy (Braams ---> Eirene)
 c
       real (kind=R8), allocatable ::
-     &  dnib(:,:), teb(:), tib(:), pob(:), prb(:), neb(:),
+     &  dnib(:,:), teb(:), tib(:), tnb(:), pob(:), prb(:), neb(:),
      &  vvb(:,:), uub(:,:), wwb(:,:), upb(:,:),
      &  rrb(:), volb(:), bfeldb(:),
      &  bbxb(:), bbyb(:), bbzb(:),
@@ -25,7 +25,7 @@ c
         integer, allocatable :: faces(:)
         real (kind=R8), allocatable :: fcori(:), flength(:)
         real (kind=R8), allocatable :: 
-     &    tet(:), tit(:), fe(:), fsh(:),
+     &    tet(:), tit(:), tnt(:), fe(:), fsh(:),
      &    flux(:,:), dnit(:,:), vxt(:,:), vyt(:,:), vzt(:,:),
      &    fi(:,:), fel(:,:), vpart(:,:), mach(:,:), usr(:,:)
       end type targetdata
@@ -42,6 +42,7 @@ c
       allocate(neb(nCv))
       allocate(teb(nCv))
       allocate(tib(nCv))
+      allocate(tnb(nCv))
       allocate(pob(nCv))
       allocate(prb(nCv))
       allocate(vvb(nCv,nsd))
@@ -79,6 +80,7 @@ c
       neb=0.0_R8
       teb=0.0_R8
       tib=0.0_R8
+      tnb=0.0_R8
       pob=0.0_R8
       prb=0.0_R8
       vvb=0.0_R8
@@ -125,6 +127,7 @@ c
           allocate (trgt(ist)%flength(ndat))
           allocate (trgt(ist)%tet(ndat))
           allocate (trgt(ist)%tit(ndat))
+          allocate (trgt(ist)%tnt(ndat))
           allocate (trgt(ist)%fe(ndat))
           allocate (trgt(ist)%fsh(ndat))
           allocate (trgt(ist)%flux(ndat,nfl))
@@ -144,6 +147,7 @@ c
         trgt(ist)%flength = 0.0_R8
         trgt(ist)%tet = 0.0_R8
         trgt(ist)%tit = 0.0_R8
+        trgt(ist)%tnt = 0.0_R8
         trgt(ist)%fe = 0.0_R8
         trgt(ist)%fsh = 0.0_R8
         trgt(ist)%flux = 0.0_R8
@@ -170,6 +174,7 @@ c
       deallocate(neb)
       deallocate(teb)
       deallocate(tib)
+      deallocate(tnb)
       deallocate(pob)
       deallocate(vvb)
       deallocate(uub)
@@ -210,6 +215,7 @@ c
             DEALLOCATE (TRGT(I)%FLENGTH)
             DEALLOCATE (TRGT(I)%TET)
             DEALLOCATE (TRGT(I)%TIT)
+            DEALLOCATE (TRGT(I)%TNT)
             DEALLOCATE (TRGT(I)%FE)
             DEALLOCATE (TRGT(I)%FSH)
             DEALLOCATE (TRGT(I)%FLUX)

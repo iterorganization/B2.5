@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
-     1  geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
+     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
      4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
@@ -10,6 +10,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -20,6 +21,7 @@
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
       integer iscx(0:nscx-1)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -78,33 +80,26 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer ncall, k, is, is0, lthf21, lvis21, lluciani, iCv, iFc
-      integer, save :: conductive_limit = 1                            !srv 16.06.08
-      integer, save :: style = 2                                       !srv 13.01.17
-      integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
-     &                 integral_modeling = 1, tn_style = 0
+      integer ncall, k, is, is0, iCv, iFc, mode
       character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
-      integer mode
       real (kind=R8) ::
-     *  cflmv, cthiv, cthev, vis_par, jemax                           !srv 13.01.17
+     *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
      &    k2(nCv), tt0(mpg%nFs), tt1(mpg%nFs), eps1(mpg%nFs)          !lk 19.09.07
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
+
       real (kind=R8), save :: cutlo = 1.0e-10_R8
       real (kind=R8) ::
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
      3  wrk(nFc), wrk1(nFc,2), wrkv(nVx)                              !srv 01.07.99 09.01.01
-csw 13mar2012
-      integer, save :: core_cond_limit=0
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
@@ -112,10 +107,8 @@ csw 13mar2012
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation
-      save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
-      data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
-     1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/0.0_R8/,
-     1  lluciani/3/
+      save ncall
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -128,37 +121,19 @@ csw 13mar2012
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call ipgeti ('b2tral_mode',mode)
-        call ipgeti ('b2trcl_lthf21',lthf21)
-        call ipgeti ('b2trcl_lvis21',lvis21)
-#ifdef NO_21
-        call xertst (lthf21.eq.0.and.lvis21.eq.0,
-     &   'Recompile without NO_21 option for 21-moment approach!')
-#endif
-        call ipgetr ('b2tfhe_vis_par',vis_par)
-        call xertst (.not.(lvis21.ne.0.and.vis_par.ne.0.0_R8),
-     &   '21-moment viscosity already includes parallel viscosity!')
-        call ipgeti ('b2trcl_lluciani',lluciani)
-        call ipgetr ('b2trcl_cthi', cthiv)
-        call xertst (0.0_R8.le.cthiv,
-     &	 'faulty internal parameter cthiv')
-        call ipgetr ('b2trcl_cthe', cthev)
-        call xertst (0.0_R8.le.cthev,
-     &   'faulty internal parameter cthev')
-        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
-        call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
-        call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
-csw 13mar2012
-        call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
-        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
-        call ipgeti ('b2sigp_style', style)                          !srv 13.01.17
-        call ipgeti ('b2mn_tn_style', tn_style)                         
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgetr ('b2tfhe_vis_par',vis_par)
+c        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
+c        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
+c        call ipgeti ('b2trcl_lthf21',lthf21)
+c       call ipgeti ('b2trcl_lvis21',lvis21)
+c#ifdef NO_21
+c        call xertst (lthf21.eq.0.and.lvis21.eq.0,
+c     &   'Recompile without NO_21 option for 21-moment approach!')
+c#endif
+c        call xertst (.not.(lvis21.ne.0.and.vis_par.ne.0.0_R8),
+c     &   '21-moment viscosity already includes parallel viscosity!')
+c        call ipgeti ('b2trcl_lluciani',lluciani)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -185,13 +160,15 @@ csw 13mar2012
         call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
       endif
 
+      mode = switch%b2tral_mode
+
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
-      call b2tqca (nCv, ns, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
-      call b2tqce (nCv, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
-      call b2tqin (nCv, ns, nscx, iscx, geo, pl, rt, sigin)           !xpb
-      call sfill (nFc*ns, cthev, cthe,1)
-      call sfill (nFc*ns, cthiv, cthi,1)
+      call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
+      call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
+      call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
+      call sfill (nFc*ns, switch%cthev, cthe,1)
+      call sfill (nFc*ns, switch%cthiv, cthi,1)
       call sfill (nFc, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
       call sfill (nFc, 1.0_R8, fllim_ke, 1)
       call sfill (nFc, 1.0_R8, fllim_al, 1)
@@ -260,7 +237,7 @@ csw 13mar2012
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  alf(1,1), calf(1,1))
 
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if (.not. is_neutral(is)) then
@@ -269,8 +246,8 @@ csw 13mar2012
         endif
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                   .or. iout_b2wdat.eq.4) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &                   .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_chcex')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_calfx')
@@ -279,8 +256,8 @@ csw 13mar2012
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_chciy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
-     &                   .or. iout_b2wdat.eq.4) then
+      if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
+     &                   .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_csigx')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_csigy')
         call my_out_us(70,nFc,1,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
@@ -509,7 +486,7 @@ csw 13mar2012
       call sfill (nFc*2, 0.0_R8, chve, 1)
       call sfill (nFc*2, 0.0_R8, chvi, 1)
 
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if(.not. is_neutral(is)) 
@@ -519,8 +496,8 @@ csw 13mar2012
 !     &              //chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chcex')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calfx')
@@ -529,8 +506,8 @@ csw 13mar2012
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_chciy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
+      if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
+     &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csigx')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_luciani_csigy')
         call my_out_us(70,nFc,1,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
@@ -539,7 +516,7 @@ csw 13mar2012
 *   .. save chce(:,0) after applying Luciani
       wrk = chce(:,0)                                                   !srv 13.01.1
 
-      if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
+      if(switch%conductive_limit.ne.0) then                                      !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
@@ -548,7 +525,7 @@ csw 13mar2012
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
-         if(core_cond_limit.ne.0.or.
+         if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
@@ -565,7 +542,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-         if(core_cond_limit.ne.0.or.
+         if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
@@ -579,7 +556,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        endif
       endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to calf                                            !srv 13.01.17 {
-      if(style.ne.2) then
+      if(switch%b2sigp_style.ne.2) then
        if(cflim(0).ne.0.0e0_R8) then
         do iFc = 1, nFc
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
@@ -643,7 +620,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1
-       call b2tlmv (nCv, nFc, nVx, is, cflmv, geo, mpg, pl%na(1,is),
+       call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg, 
+     &   pl%na(1,is),
      &   pl%ti, pl%ua(1,is), co%vsaf_cl(1,0,is), cvsa(1,0,is),
      &   cvsahz(1,0,is), fllimvisc(1,is))
       enddo
@@ -653,7 +631,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       cvsa_cl=cvsa
       cvsahz_cl=cvsahz                                                    !srv 09.01.01
 
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
        write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,cvsahz(1,0,is),
@@ -662,8 +640,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !     &              'b2trcl_luciani_fllim_cvsahzy'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &       .or. iout_b2wdat.eq.4) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &       .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),
      &             'b2trcl_luciani_fllim_chcex')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_fllim_chcey')
@@ -676,7 +654,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
                                          
-      if(iout.ne.0) then                             !srv 17.06.08 {
+      if(switch%b2trcl_iout.ne.0) then                             !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsax'//chns)
