@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
-     . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, geo, mpg, 
-     . st, st_ext, ierr)
+     . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch, 
+     . geo, mpg, st, st_ext, ierr)
       use b2mod_types
 !      use b2mod_anomalous_transport
 !      use b2mod_plasma
@@ -29,6 +29,7 @@
       use b2mod_running_average
       use b2mod_batch_average
      & , only : batch_av_all
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
@@ -40,6 +41,7 @@
      *  dtim
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
@@ -184,9 +186,9 @@
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
-       call ipgeti ('b2mndr_eirene', use_eirene)
-       if (use_eirene) then
-         call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi)
+       if (switch%use_eirene) then
+         call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi,
+     &                         switch)
        endif
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
@@ -344,16 +346,16 @@ ctmp.dpc
           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, 
      .      st%dv%ne2)
 *   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nCv, nFc, ns, geo, mpg, st%pl, st%dv, st_ext, 
-     .      st%co%chvemx, st%co%chvimx)
+          call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv, 
+     .      st_ext, st%co%chvemx, st%co%chvimx)
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
-     1      geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
 !WG_TODO         newneo=.true.
-           call b2tanml (nCv, nFc, ns, geo, mpg, st%co%csig_an,
+           call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
      &                    st%pl%po, st%dv%fchanml)
-          call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, st%pl%ua,
+          call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
      &       st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-          call b2tiner (nCv, nFc, nVx, ns, geo, mpg, st%pl%na,
+          call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
      &       st%pl%ua, st%dv%facdrift, st%dv%fchinert)
 #ifdef WG_TODO
           src_ni=0.0_R8
@@ -373,8 +375,8 @@ ctmp.dpc
           main_call = ntim.ne.0
           call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr, nscx, 
      &      nscxmax, nsmin, nsmax, iscx, ismain, ismain0, dtim, BoRiS,
-     &      geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%sr,
-     &      st%srw, wrong_flow, main_call)
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, 
+     &      st_ext, st%sr, st%srw, wrong_flow, main_call)
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -382,7 +384,7 @@ ctmp.dpc
 !WG_TODO     &     dtim, vol, na, ua, te, ti, ne, ni,
 !WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
 *     ..include contributions due to timestep
-          call b2srdt (nCv, ns, dtim, BoRiS, geo, mpg,
+          call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
      &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
      &    st%psnc%kt, st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, 
@@ -413,8 +415,9 @@ ctmp.dpc
           endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
-     &     call b2srst (nCv, ns, mpg, st%pl%na, st%pl%ua, st%pl%te,   !srv 01.07.08
-     &      st%pl%ti, st%pl%po, st%dv%ne, st%dv%ni, st%pl%kt, st%sr)
+     &     call b2srst (nCv, ns, switch, mpg, st%pl%na, st%pl%ua,    !srv 01.07.08
+     &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
+     &       st%pl%kt, st%sr)
 *       (smq is inherently stable.)
 *     ..inner iteration
           istg(2) = 0
@@ -424,9 +427,9 @@ ctmp.dpc
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
            call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
-     &       nscxmax, ismain, ismain0, dtim, rxf, geo, mpg, st%pl,
-     &       st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, st_ext,
-     &       st%psnc, ier0)
+     &       nscxmax, ismain, ismain0, dtim, rxf, switch, geo, mpg,
+     &       st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, st%srw, 
+     &       st_ext, st%psnc, ier0)
            flush(6)
            if(ier0.eq.10) then
              ierr=ier0
@@ -447,8 +450,8 @@ ctmp.dpc
      &      st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn, 
      &      st%dv%respo, st%dv%reskt)
 *      ..compute norms of the residuals
-           call b2mxar (nCv, ns, nnreg(0), BoRiS, geo, mpg, st%pl, 
-     &      st%dv, st%diag)
+           call b2mxar (nCv, ns, nnreg(0), BoRiS, switch, geo, mpg, 
+     &      st%pl, st%dv, st%diag)
            quit_residual=test_residual .and.
      &      ((st%diag%areshe*nstg_areshe).le.(nstg_areshe*nstg_areshe)
      &       .or.nstg_areshe.eq.0.0_R8).and.
@@ -478,7 +481,7 @@ ctmp.dpc
            if (domoqt) then
             if (mod(ncall,ntim_step_out) .eq. 0) then                    !srv 31.01.07
              call b2mwqt (nout(4), nCv, ns, itim, itcnt, BoRiS, 
-     &        geo, st%pl, st%dv, st%diag)
+     &        switch, geo, st%pl, st%dv, st%diag)
              flush(nout(4))
 ! csc UNCOMMENT WITH AD
 !              CALL B2MWQT_DIFF(nout(10), ncv, ns, itim, itcnt, boris, &
@@ -549,8 +552,8 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-        call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
+        call b2tfed (nCv, nFc, nVx, switch, geo, mpg, dv%facdrift,
+     &       dv%fac_ExB, dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
      1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,

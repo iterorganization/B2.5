@@ -1,24 +1,19 @@
-      subroutine set_exact_solution(nCv, ns, pl, dv)                         !srv 26.02.18 {
+      subroutine set_exact_solution(nCv, ns, switch, pl, dv)                         !srv 26.02.18 {
        use b2mod_types
        use b2us_plasma
+       use b2mod_switches
        implicit none
        integer nCv, ns
+       type (switches), intent (in) :: switch
        type (B2Plasma), intent (inout) :: pl
        type (B2Derivatives), intent (inout) :: dv
 
        integer is, iCv
-       integer, save :: set_na_numerical = 0, set_ua_numerical = 0,
-     *                  set_te_numerical = 0, set_ti_numerical = 0,
-     *                  set_po_numerical = 0
        logical l_exist
 
-       call ipgeti ('b2mndr_set_na_numerical', set_na_numerical)
-       call ipgeti ('b2mndr_set_ua_numerical', set_ua_numerical)
-       call ipgeti ('b2mndr_set_te_numerical', set_te_numerical)
-       call ipgeti ('b2mndr_set_ti_numerical', set_ti_numerical)
-       call ipgeti ('b2mndr_set_po_numerical', set_po_numerical)
 
-       if(set_na_numerical.ne.0) then 
+
+       if(switch%set_na_numerical.ne.0) then 
         inquire(file='../exact_na_us.dat',exist=l_exist)
         call xertst(l_exist,'No '//'../exact_na_us.dat')
         open(70,file='../exact_na_us.dat')
@@ -31,7 +26,7 @@
         close(70)
        endif
 
-       if(set_ua_numerical.ne.0) then
+       if(switch%set_ua_numerical.ne.0) then
         inquire(file='../exact_ua_us.dat',exist=l_exist)
         call xertst(l_exist,'No '//'../exact_ua_us.dat')
         open(70,file='../exact_ua_us.dat')
@@ -39,7 +34,7 @@
         close(70)
        endif
 
-       if(set_te_numerical.ne.0) then
+       if(switch%set_te_numerical.ne.0) then
         inquire(file='../exact_te_us.dat',exist=l_exist)
         call xertst(l_exist,'No '//'../exact_te_us.dat')
         open(70,file='../exact_te_us.dat')
@@ -47,7 +42,7 @@
         close(70)
        endif
 
-       if(set_ti_numerical.ne.0) then
+       if(switch%set_ti_numerical.ne.0) then
         inquire(file='../exact_ti_us.dat',exist=l_exist)
         call xertst(l_exist,'No ../exact_ti_us.dat')
         open(70,file='../exact_ti_us.dat')
@@ -55,7 +50,7 @@
         close(70)
        endif
 
-       if(set_po_numerical.ne.0) then
+       if(switch%set_po_numerical.ne.0) then
         inquire(file='../exact_po_us.dat',exist=l_exist)
         call xertst(l_exist,'No ../exact_po_us.dat')
         open(70,file='../exact_po_us.dat')

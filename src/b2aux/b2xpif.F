@@ -1,9 +1,11 @@
-      subroutine b2xpif (nCv, nFc, geo, mpg, fch_pi_c, fch_pi_f)      !srv 13.01.17
+      subroutine b2xpif (nCv, nFc, switch, geo, mpg, fch_pi_c, fch_pi_f)      !srv 13.01.17
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
       integer nCv, nFc
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -16,17 +18,14 @@
 *     ------------------------------------------------------------------
       integer iFc
       integer, save :: ncall = 0
-      real (kind=R8), save  :: prl_cur = 1.0_R8
 *     ------------------------------------------------------------------
-      if (ncall.eq.0) then
-       call ipgetr ('b2tfhe_prl_cur', prl_cur)
-      endif
 
 *  .. interpolate fch_pi_c(,0) to faces
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,fch_pi_c, fch_pi_f)
 
 *  .. multiply with poloidal face area
-      fch_pi_f(:,0) = fch_pi_f(:,0)*geo%fcS(:)*geo%fcQalf(:,0)*prl_cur
+      fch_pi_f(:,0) = fch_pi_f(:,0)*geo%fcS(:)*geo%fcQalf(:,0)
+     &                                         *switch%prl_cur
 
 *  .. set radial component zero
       fch_pi_f(:,1) = 0.0_R8

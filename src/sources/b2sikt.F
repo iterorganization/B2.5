@@ -51,7 +51,6 @@ c      use b2mod_keps
       integer ncall, ic
       integer, save :: iout = 0
       integer, save :: style = 0
-      integer, save :: solve_keps = 0
       integer, save :: model = 1, keps_local = 1, fac_sheath_local=1
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
      &  pz(nCv), cs(nCv), t0, t1, t2, wrk0(nCv), wrk1(nCv), wrk2(nCv),
@@ -82,7 +81,6 @@ c      use b2mod_keps
        call ipgeti ('b2sikt_model', model)
        call ipgeti ('b2sikt_keps_local', keps_local)
        call ipgetr ('b2sikt_aniso', fac_aniso)
-       call ipgeti ('b2mndr_solve_keps', solve_keps)
        call ipgetr ('b2sikt_fac_sheath', fac_sheath_rest)
        call ipgetr ('b2sikt_fac_sheath_core', fac_sheath_core)
        call ipgeti ('b2sikt_fac_sheath_local', fac_sheath_local)

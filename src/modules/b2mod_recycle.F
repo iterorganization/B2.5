@@ -52,7 +52,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       character*2 target_code(0:nbnd-1)
 
       character*2 recycle_code(0:nsd-1)
-      external open_file, ipgeti
+      external open_file
       external subini, subend, cfrure, cfruin, machsfr
       real (kind=R8) ::
      *  machsfr
@@ -357,13 +357,12 @@ c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
 
 
-c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), set all outputs to zero
+c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
       if (fnni.lt.0) then
-	fnni   = 0.0_R8 
-	fmomni = 0.0_R8
-	nni    = 0.0_R8
-	nnwwni = 0.0_R8
-	feneni = 0.0_R8
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fmomni,
+     &            nni,nnwwni,feneni)
       endif
 
       call subend ()
@@ -470,7 +469,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_rates
@@ -607,7 +606,8 @@ c     Convert energy flux densities in net energy flux contributions
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
      &             isign,
      &            isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tef,pof,nif,nef,
      &            geo,mpg,t0, cosa, sina, use_uy_uz_0,
      &            fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
@@ -628,7 +628,11 @@ c     nif = plasma density on face, isn neutral species index
      &     isn, iscx0, isi,iwall,istra,
      &     use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
-     2    pof,nif,nef,t0,isign, tif, tef, cosa, sina
+     2    pof,nif,nef,t0,isign, tif, tef, cosa, sina,
+     &    fluid_frac_hyb
+!! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
+!! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
+!! on a single target stratum, this value can deviate from 1.
 c     Output variables: 
 c     fmomni: momentum flux of incident neutrals.
       real (kind=R8),intent(out):: fmomrec,nnrec,nnwwnrec,fenerec
@@ -755,13 +759,20 @@ c     Calculate recycled poloidal momentum flux of neutrals
       fmomrec = pit*fmomrecp + pit2*fmomrect         
 c     Convert energy flux densities in energy fluxes
       fenerec = fenec*area
+
+c finally: fluid fraction multiplier for generalized spatially hybrid models:
+      fenerec = fenerec*fluid_frac_hyb
+      fmomrec = fmomrec*fluid_frac_hyb
+      nnrec = nnrec*fluid_frac_hyb
+      nnwwnrec = nnwwnrec*fluid_frac_hyb
       call subend ()
       return
       end subroutine CalcRecycledFluxes
 
       subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
@@ -782,7 +793,11 @@ c     This routine calculates the reflected neutral particle,momentum and energy
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy, dnndz
+     &    sina,cosa, dnndy, dnndz,
+     &    fluid_frac_hyb
+!! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
+!! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
+!! on a single target stratum, this value can deviate from 1.
 c     Output variables:
 c     fmomni: momentum flux of 
 c     incident neutrals.
@@ -968,14 +983,21 @@ c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el =  fene_el*area
 
-!!    zero out if incident flux has wrong sign
+c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
+c (here we have to pass fluid_frac_hyb as 1.0_R8 to avoid double counting its effect)
       if (fnni.lt.0) then
-        fmomrefl = 0.0_R8
-        nnrefl = 0.0_R8
-        nnwwnrefl = 0.0_R8
-        fenerefl = 0.0_R8
-        fene_el = 0.0_R8
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,area,recyc0,1.0_R8,                        
+     &            pl,tnf, geo, mpg,cosa, sina,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
+
+c finally, fluid multiplier for generalized spatially hybrid approach.
+      fmomrefl = fmomrefl*fluid_frac_hyb
+      fenerefl = fenerefl*fluid_frac_hyb
+      nnrefl = nnrefl*fluid_frac_hyb
+      nnwwnrefl = nnwwnrefl*fluid_frac_hyb
+      
 
       call subend ()
       return
@@ -983,8 +1005,9 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
      &             iCv,iCn,nCi,iFc,
-     &            isign,isn,isi,iscx0,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            isign,isn,iscx0,isi,istra,iwall,
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
@@ -1004,7 +1027,7 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy, dnndz, mfp_b1 , mfp_b2 
+     &    sina,cosa, dnndy, dnndz, mfp_b1 , mfp_b2, fluid_frac_hyb
 c     Output variables: 
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
@@ -1038,24 +1061,25 @@ c     Calculate rate coefficients at boundary
       if (mfp.lt.mfp_b1) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       elseif (mfp.gt.mfp_b2) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
-     &            geo, mpg,cosa, sina,
+     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,
+     &            pl,tnf,geo, mpg,cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tnf,                         
      &            geo, mpg,cosa, sina,
      &            fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM)
 
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            Phi_app,area,recyc0,fluid_frac_hyb,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD)
@@ -1069,19 +1093,21 @@ c     Calculate rate coefficients at boundary
      &                     fenerefl)
           call CalcLinComb(mfp,mfp_b1,mfp_b2,fene_elD,fene_elM,fene_el)
       endif
+
       call subend ()
       return
       end subroutine CalcReflectedFluxesMfp
 
       subroutine CalcReflectedFluxesMinMfp(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFlusexMfp), additional convergence problems may arise.
+c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_b2cmpa
@@ -1099,7 +1125,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy, dnndz
+     &    sina,cosa, dnndy, dnndz, fluid_frac_hyb
 c     Output variables: 
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
@@ -1112,23 +1138,26 @@ c     Output variables:
       if (maxw_eff(istra).eq.0) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
+     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,pl,tnf,                         
+     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tnf,                         
      &            geo, mpg,cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
+
+
       call subend ()
       return
       end subroutine CalcReflectedFluxesMinMfp
 
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,pl,tf,                         
+     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tf,                         
      &            geo, mpg,cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !nh   11.06.18
@@ -1144,7 +1173,8 @@ c     for the incident neutrals.
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
-      real (kind=R8),intent(in):: area, recyc0, isign, tf, sina, cosa
+      real (kind=R8),intent(in):: area, recyc0, isign, tf, sina, cosa,
+     &                            fluid_frac_hyb
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &                             fene_el
@@ -1289,6 +1319,13 @@ c     Calculate reflected poloidal momentum flux of neutrals
 c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el = fene_el*area
+
+
+c finally, fluid multiplier for generalized spatially hybrid approach.
+      fmomrefl = fmomrefl*fluid_frac_hyb
+      fenerefl = fenerefl*fluid_frac_hyb
+      nnrefl = nnrefl*fluid_frac_hyb
+      nnwwnrefl = nnwwnrefl*fluid_frac_hyb
       call subend ()
       return
       end subroutine CalcReflectedFluxesMaxwellian
@@ -1517,25 +1554,28 @@ c     Calculate rate coefficients at boundary
       return
       end subroutine dealloc_recycle_fnn
 
-      subroutine precompute_kul_quant(nCv, nFc, nVx, geo, mpg, pl, dv,
-     &  co, rt, mfp_b1, mfp_b2, afn_out, cvsf, dnn)
+      subroutine precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
+     &  pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       use b2mod_types
       use b2mod_neutrals_namelist
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_switches
       implicit none
-      integer, intent(in) :: nCv, nFc, nVx, afn_out
+      integer, intent(in) :: nCv, nFc, nVx
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Rates), intent (in) :: rt
-      real (kind=R8), intent(in) :: mfp_b1 , mfp_b2
-      real (kind=R8), intent(inout) :: cvsf(nFc,0:1), dnn(nFc,0:1)
+      real (kind=R8), intent(inout) :: dnn(nFc,0:1)
+      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc), 
+     &                                  kin_frac_hyb(nFc)
 c     local variables
-      integer :: istra, i, iRc1, isn
+      integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
       real(kind=R8) :: dumm0(nFc,0:1), dumm1(nFc,0:1), nnVx(nVx),
      &                 min_mfp(1:nstrat), mfp, mfp_out(nCv), 
@@ -1550,39 +1590,48 @@ c     local variables
       dumm1 = 0.0_R8
       dumm2 = 0.0_R8
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
-      if (ncall.ne.0.and.style_visc.eq.1) then !! on the first call co%cvsahz_eff will still be zero...
-        call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz_eff(:,:,isn),cvsf,dumm0,dumm1)
-      else
-        call calcflow(nCv,nFc,nVx,2,geo,mpg,pl%ua(:,isn)**2,dumm0,
-     &    0.5_R8*co%cvsahz(:,:,isn),cvsf,dumm0,dumm1)
-      endif
-      cvsf(:,0) = cvsf(:,0)/geo%fcHz
-      cvsf(:,1) = cvsf(:,1)/geo%fcHz
       call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
 
       mfp_out = 0.0_R8
 c     pre-computation of the minimal mean-free path along a boundary stratum
       min_mfp(:) = 1.0_R8
-      do istra = 1, nstrat
-        if (crcstra(istra) == 'A') then
+      do istra = 1, nstrai
 *   ..loop over boundary cells
-          do i = 1, mpg%rcCvP(istra,2)
-            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
-            call CalcMinMfp(iRc1,isn,istra,pl,dv,rt,min_mfp,mfp)
-            mfp_out(iRc1) = mfp
-          enddo
-c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
-          if (min_mfp(istra).lt.mfp_b1) then
-            maxw_eff(istra) = 0
-          elseif (min_mfp(istra).gt.mfp_b2) then
-            maxw_eff(istra) = 1
-          else
-c           do nothing to prevent oscillations if minimum mfp is just around mfp_b1
+        do i = 1, mpg%rcCvP(istra,2)
+          iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
+          call CalcMinMfp(iRc1,isn,istra,
+     &        pl,dv,rt,min_mfp,mfp)
+          mfp_out(iRc1) = mfp
+          if (switch%use_auto_spatial_hyb.and.
+     &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
+            if (mfp.le.switch%auto_spatial_hyb_mfp_1) then !! fluid treatment
+              fluid_frac_hyb(iFc) = 1.0_R8
+              kin_frac_hyb(iFc) = 0.0_R8
+            elseif (mfp.ge.switch%auto_spatial_hyb_mfp_2) then  !! kinetic treatment 
+              fluid_frac_hyb(iFc) = 0.0_R8
+              kin_frac_hyb(iFc) = 1.0_R8
+            else
+!! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_mpf_1 and auto_mfp_2
+              kin_frac_hyb(iFc) = (mfp-switch%auto_spatial_hyb_mfp_1)/
+     &     (switch%auto_spatial_hyb_mfp_2-switch%auto_spatial_hyb_mfp_1)
+              fluid_frac_hyb(iFc) = 1.0_R8 - kin_frac_hyb(iFc)
+            endif
+          else !! keep scaling factors both equal to 1.
+            fluid_frac_hyb(iFc) = 1.0_R8
+            kin_frac_hyb(iFc) = 1.0_R8
           endif
+        enddo
+c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
+        if (min_mfp(istra).lt.switch%mfp_b1) then
+          maxw_eff(istra) = 0
+        elseif (min_mfp(istra).gt.switch%mfp_b2) then
+          maxw_eff(istra) = 1
+        else
+c         do nothing to prevent oscillations if minimum mfp is just around mfp_b1
         endif
       enddo
-      if (AFN_out.ne.0) then
+      if (switch%AFN_out.ne.0) then
         call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
       endif
 

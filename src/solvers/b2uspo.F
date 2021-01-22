@@ -1,17 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, geo,
+      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, 
+     &  switch, geo,
      &  mpg, ne, te, conc, sch, respo, corpo, aa, name)                  !srv 18.03.10
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
       character*(*) name                                             !srv 18.03.10
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -37,7 +40,6 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg, k
-      integer, save :: iout = 0
       character chark*1
       real (kind=R8) :: t1, t2, t3, t11, t22
       logical lnonzero
@@ -55,10 +57,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2uspo')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2uspo_iout', iout)
-      endif  
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
@@ -188,7 +186,7 @@
       write(*,*) 'Calling b2uxus from '//trim(name)
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
 
-      if (iout.ne.0) then                                          !srv 08.07.08 {
+      if (switch%b2uspo_iout.ne.0) then                                          !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
           call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)

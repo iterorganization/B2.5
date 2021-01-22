@@ -64,7 +64,8 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), recyceir(:),
+     *   RECYC(:,:), B2RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), 
+     *   recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
@@ -95,10 +96,10 @@ cank }
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:),
      *   accel_ion(:),
-     *   maxw(:)                                 !nh 11.07.18
-     *   maxw_eff(:)
+     *   maxw(:),                                 !nh 11.07.18
+     *   maxw_eff(:),
       real (kind=R8), allocatable, save ::
-     *   RCFE(:), RCFI(:), e_fc   
+     *   RCFE(:), RCFI(:), e_fc
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -106,7 +107,7 @@ cank }
      *   ARCSTRA(:),
      *   RC_LIST_CHAR(:,:)
       character*2, allocatable, save ::
-     *   SURF_MAT(:)
+     *   SURF_MAT(:), STRAT_TYPE(:), HYB_TYPE(:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
@@ -144,6 +145,7 @@ cank }
       logical, save :: TIME_DEP_PUFF(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
+      integer, save :: b2species_start(NSTRAID), b2species_end(NSTRAID)
       integer, save :: b2eatcr(0:nsdmax-1)
       integer, save :: b2espcr(0:nsdmax-1)
       integer, save :: eb2atcr(1:natmid)
@@ -155,6 +157,8 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
       character*2, save :: SURF_MAT(NSTRAID)
+      character*1, save :: STRAT_TYPE(NSTRAID)
+      character*1, save :: HYB_TYPE(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
      ,  lcns(nstsid), ltns(nstsid),
@@ -194,15 +198,16 @@ cank }
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      .  rcfe, rcfi,
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
-     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
-     .  rf_neut, phys_sput, chem_sput, surf_mat,
+     4  recyc, b2recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, 
+     .  crcstra,
+     .  rf_neut, phys_sput, chem_sput, surf_mat, strat_type, hyb_type,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
      .  itsput_chemical, issput_chemical,
 #endif
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
-     .  species_start, species_end,
+     .  species_start, species_end, b2species_start, b2species_end,
      .  maxw, maxw_eff,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
@@ -252,6 +257,7 @@ csw 21feb2012
       NSTSID=nsts_in
       NATMID=natm_in
       allocate(RECYC(0:nsd-1,NSTRAID))
+      allocate(B2RECYC(0:nsd-1,NSTRAID))
       allocate(ERECYC(0:nsd-1,NSTRAID))
       allocate(MRECYC(0:nsd-1,NSTRAID))
       allocate(RCION(0:nsd-1,NSTRAID))
@@ -282,8 +288,12 @@ csw 21feb2012
       allocate(CRCSTRA(NSTRAID))
       allocate(ARCSTRA(NSTRAID))
       allocate(SURF_MAT(NSTRAID))
+      allocate(STRAT_TYPE(NSTRAID))
+      allocate(HYB_TYPE(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
+      allocate(b2species_start(NSTRAID))
+      allocate(b2species_end(NSTRAID))
       allocate(maxw(NSTRAID))
       allocate(maxw_eff(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
@@ -322,6 +332,8 @@ csw 21feb2012
       CRCSTRA=' '
       ARCSTRA=' '
       SURF_MAT='C' !! default material Carbon
+      STRAT_TYPE='P' !! default stratum type plasma 
+      HYB_TYPE='M' !! default hybrid stratum type manual (M)
       SPS_ID=' '
       SPS_MTRL=' '
       NSTRAI=0
@@ -358,6 +370,8 @@ cxpb The default recycling model is 100% particle recycling and
 cxpb 30% energy recycling for all ionised species except carbon.
 cwdk 0% momentum recycling, for backwards compatibility
       RECYC=0.0_R8
+cmb   b2recyc is set negative here to check whether the field was read. If not recyc is copied into b2recyc
+      B2RECYC = -1.0_R8
       ERECYC=0.0_R8
       MRECYC=0.0_R8
       do is = 1, nsd-1
@@ -391,8 +405,11 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       volrecwt=0.1_R8
       species_start(:)=0
       species_end(:)=nsd-1
-      maxw(:) = 0
-      maxw_eff(:) = 0
+cmb   b2species_start and end are set -100 here to check whether the field was read. If not recyc is copied into b2recyc
+      b2species_start(:)=-100                            
+      b2species_end(:)=-100
+      maxw(:) = 1
+      maxw_eff(:) = 1
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -479,6 +496,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 #ifdef ALLOCATE_AND_NAMELIST
       if (.not.allocated(recyc)) return
       deallocate(RECYC)
+      deallocate(B2RECYC)
       deallocate(ERECYC)
       deallocate(MRECYC)
       deallocate(RCION)
@@ -509,8 +527,12 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(CRCSTRA)
       deallocate(ARCSTRA)
       deallocate(SURF_MAT)
+      deallocate(STRAT_TYPE)
+      deallocate(HYB_TYPE)
       deallocate(species_start)
       deallocate(species_end)
+      deallocate(b2species_start)
+      deallocate(b2species_end)
       deallocate(maxw)
       deallocate(maxw_eff)
       deallocate(b2eatcr)
@@ -650,9 +672,25 @@ c
       end do
 
 *   ..set additional variables
-      do is = 1, nstrat
-        if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
-     &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
+      do istra = 1, nstrat
+        if (crcstra(istra).ne.'N' .and. crcstra(istra).ne.'S' .and.
+     &      crcstra(istra).ne.'W' .and. crcstra(istra).ne.'E') 
+     &      targsp(istra,:)=-1
+cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
+!   to decouple these variables for the EIRENE side and the fluid neutral side.
+!   If these fields have not been set in the namelist they are made equal to their 
+!   variants without 'b2' in the field name.
+        if (b2species_start(istra).eq.-100) then
+        b2species_start(istra) = species_start(istra)
+        endif
+        if (b2species_end(istra).eq.-100) then
+        b2species_end(istra) = species_end(istra)
+        endif
+        do is = 0, ns-1
+          if (b2recyc(is,istra).lt.0.0_R8) then
+            b2recyc(is,istra) = recyc(is,istra)
+          endif
+        enddo
       end do
 
       arcstra = crcstra
@@ -1144,7 +1182,7 @@ c.. Test consistency with physical edges within the computational domain
  999  call xerrab ('Error while reading NEUTRALS namelist!')
       end subroutine read_neutrals_namelist_st
 
-      subroutine read_neutrals_namelist_us(ns, m, dotest)
+      subroutine read_neutrals_namelist_us(ns, m, switch, dotest)
       use b2mod_wall
      & ,only : track_index, ntrack, track_species, track_chem_sput
       use b2mod_indirect
@@ -1153,11 +1191,13 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       use b2us_map
+      use b2mod_switches
       implicit none
       type(mapping), intent(inout) :: m
+      type(switches), intent(in) :: switch
       integer ns
       logical dotest
-      integer is, ic, ix, istra, i, j, k, n, ii(1), itrack,
+      integer is, ist, ic, ix, istra, i, j, k, n, ii(1), itrack,
      >        noss, instra, iss, indss, idb, nrcl
       logical found, side
       intrinsic mod
@@ -1202,9 +1242,13 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai
 #endif
         endif
+        if (switch%spatial_hybrid.eq.0) then !! default, no spatial hybrid
+          m%mxnRc = count(m%fcLbl /= 0)
+        else 				     !! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
+          m%mxnRc = 2*count(m%fcLbl /= 0)
+        endif
 
         m%nRc = nstrat
-        m%mxnRc = count(m%fcLbl /= 0)
         call alloc_mapping_rc (m)
         m%rcFcP = 0
         
@@ -1287,9 +1331,26 @@ c
       end do
 
 *   ..set additional variables
-      do is = 1, nstrat
-        if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
-     &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
+      do ist = 1, nstrat
+        if (crcstra(ist).ne.'N' .and. crcstra(ist).ne.'S' .and.
+     &      crcstra(ist).ne.'W' .and. crcstra(ist).ne.'E') then
+          targsp(ist,:)=-1
+        endif
+cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid neutral runs
+!   to decouple these variables for the EIRENE side and the fluid neutral side.
+!   If these fields have not been set in the namelist they are made equal to their 
+!   variants without 'b2' in the field name.
+        if (b2species_start(ist).eq.-100) then
+        b2species_start(ist) = species_start(ist)
+        endif
+        if (b2species_end(ist).eq.-100) then
+        b2species_end(ist) = species_end(ist)
+        endif
+        do is = 0, ns-1
+          if (b2recyc(is,ist).lt.0.0_R8) then
+            b2recyc(is,ist) = recyc(is,ist)
+          endif
+        enddo
       end do
 
 *   ..test input
@@ -2125,6 +2186,11 @@ cwdk also need to correct for degenerate faces?
 
       do istra = 1, m%nRc
         write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+     .    'b2recyc(0,',istra,')= ',(b2recyc(is,istra),',',is=0,ns-1)
+      end do
+
+      do istra = 1, m%nRc
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
      .    'erecyc(0,',istra,')= ',(erecyc(is,istra),',',is=0,ns-1)
       end do
 
@@ -2222,6 +2288,11 @@ cwdk also need to correct for degenerate faces?
      .    'species_start= ',(species_start(is),',',is=1,m%nRc)
       write (iout,'(1x,a,(10(i5,a1,1x)))') 
      .    'species_end= ',(species_end(is),',',is=1,m%nRc)
+
+      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+     .    'b2species_start= ',(b2species_start(is),',',is=1,m%nRc)
+      write (iout,'(1x,a,(10(i5,a1,1x)))') 
+     .    'b2species_end= ',(b2species_end(is),',',is=1,m%nRc)
 
       write (iout,'(1x,5a)') 'NEUTRALS_FILENAME=',ap,
      .                       trim(neutrals_filename),ap,','

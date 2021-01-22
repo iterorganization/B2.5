@@ -3,7 +3,7 @@
 
       subroutine b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0, dtim, BoRiS,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
      &  wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
@@ -19,6 +19,7 @@
       use b2mod_b2cmfs
 !      use b2mod_external
       use b2mod_b2_to_astra
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -28,6 +29,7 @@
      *  nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0, nsmin, nsmax
       real (kind=R8) ::                                                  !xpb
      *  dtim, BoRiS
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -59,11 +61,7 @@
 *   ..local variables
       integer ncall, iCv, k, is, sources_inputfile
       integer numerics_namelist
-      integer use_astra
       integer, save :: elm_count
-      integer, save :: style = 2                                        !srv 28.06.08
-      integer, save :: iout = 0, iout_b2wdat = 0                        !srv 30.06.08, IYS 06.11.2017
-      integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -77,7 +75,6 @@
       logical catch_up
       character*32 hlp_frm
       save ncall, sources_inputfile, numerics_namelist
-      save use_astra
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -85,9 +82,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
-      data ncall/0/, sources_inputfile/0/, use_astra/0/,
-     *  numerics_namelist/0/
-
+      data ncall/0/, sources_inputfile/0/, numerics_namelist/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -116,15 +111,8 @@
       if (ncall.eq.0) then
         call ipgeti ('b2sral_inputfile', sources_inputfile)
         call alloc_input_profile(nCv,ns)
-        call ipgeti ('b2sral_style', style)                              !srv 28.07.08
-        call ipgeti ('b2sral_iout', iout)                                !srv 30.06.08
-        call ipgeti ('b2mndr_astra', use_astra)
-        call ipgeti ('b2mndr_eirene', use_eirene)                        !srv 14.07.10 {
-        call ipgeti ('eirene_savef30', save_f30)
-        call ipgeti ('eirene_savef31', save_f31)                         !srv 14.07.10 }
         call ipgeti ('b2sral_no_fluid_neutral_sources',
      .                                       no_fluid_neutral_sources)
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 06.11.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -198,26 +186,30 @@
       call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
      &     1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
 
-      if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
+      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then          !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
+       call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an, pl%po,
      &   dv%fchanml)
-       call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
-     &   dv%fac_vis, dv%fchvispar)
-       call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+       call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua, 
+     &   co%vsaf_cl, dv%fac_vis, dv%fchvispar)
+       call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
      &      dv%facdrift, dv%fchinert)
-       call b2tfrn (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt, st_ext)
+       call b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg, pl, dv, co, rt, 
+     &              st_ext)
       endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients
 *   ..compute electron rate coefficients
-      call b2sqel (nCv, ns, ismain, ev, pl%te, rt, rtw)
+      call b2sqel (nCv, ns, ismain, switch, ev, pl%te, rt, rtw)
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.                                              !xpb
-      if(style.eq.0 .or. style.eq.2) then                               !srv 28.07.08 03.11.17
-       if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
-       call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS, geo,
-     &   mpg, pl, dv, co, rt, rtw, st_ext, srw, wrong_flow, main_call)
+      if(switch%b2sral_style.eq.0 .or. switch%b2sral_style.eq.2) then   !srv 28.07.08 03.11.17
+       if(ncall.eq.0) then 
+         write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
+       endif
+       call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS, switch,
+     &    geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, wrong_flow, 
+     &    main_call)
 *   .. store contributions from BCs
        sr%sna = srw%sna0
        sr%smo = srw%smo0
@@ -232,9 +224,11 @@
 
 
 #ifdef WG_TODO
-      elseif(style.eq.1) then
+      elseif(switch%b2sral_style.eq.1) then
 !! FIXME : Need to add sne in argument list here ???
-       if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc_spb called'
+       if(ncall.eq.0) then
+         write(*,*) ' style=',switch%b2sral_style,' b2stbc_spb called'
+       endif
        call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
      &  pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po, ne,   !srv 14.10.99 12.05.00 09.01.01 28.10.02
      1  ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,       !srv 13.10.06
@@ -245,11 +239,12 @@
      &  'b2sral [2]: wrong_flow returned from b2stbc_spb'
 #endif
       else
-       call xertst (0.le.style.and.style.le.2,                          !srv 03.11.17
+       call xertst (0.le.switch%b2sral_style.and.
+     .                                        switch%b2sral_style.le.2, !srv 03.11.17
      .  'invalid switch b2sral_style')
       endif                                                             !srv 28.07.08 }
 #ifdef WG_TODO
-      if (use_astra.ne.0) then
+      if (switch%use_astra.ne.0) then
         se  =0.0_R8                                                     !srv 28.07.11
         seh =0.0_R8                                                     !srv 11.06.13
         sih =0.0_R8                                                     !srv 11.06.13
@@ -271,18 +266,18 @@
       call sfill (nCv*4*ns, 0.0_R8, sr%smq, 1)
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr, 
-     &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
+     &  nscx, nscxmax, iscx, ismain, dtim, BoRiS, switch, 
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
-        call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
-        call b2xzdd (nCv, 3, mpg, srw%smo0(1,0,is))
+        call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
+        call b2xzdd (nCv, 3, switch, mpg, srw%smo0(1,0,is))
       enddo
-      call b2xzdd (nCv, 1, mpg, srw%sne0)
-      call b2xzdd (nCv, 3, mpg, srw%she0)
-      call b2xzdd (nCv, 3, mpg, srw%shi0)
-      call b2xzdd (nCv, 3, mpg, srw%shn0)
-      call b2xzdd (nCv, 3, mpg, srw%sch0)
+      call b2xzdd (nCv, 1, switch, mpg, srw%sne0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%she0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shn0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%sch0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
       call b2saxpy (nCv*4*ns, 1.0_R8, srw%smo0, 1, sr%smo, 1)
@@ -310,14 +305,14 @@
 #ifdef WG_TODO
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
-        call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
-        call b2xzdd (nCv, 3, mpg, srw%smo0(1,0,is))
+        call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
+        call b2xzdd (nCv, 3, switch, mpg, srw%smo0(1,0,is))
       enddo
-      call b2xzdd (nCv, 1, mpg, srw%sne0)
-      call b2xzdd (nCv, 3, mpg, srw%she0)
-      call b2xzdd (nCv, 3, mpg, srw%shi0)
-      call b2xzdd (nCv, 3, mpg, srw%shn0)
-      call b2xzdd (nCv, 3, mpg, srw%sch0)
+      call b2xzdd (nCv, 1, switch, mpg, srw%sne0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%she0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shn0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%sch0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
       call b2saxpy (nCv*4*ns, 1.0_R8, srw%smo0, 1, sr%smo, 1)
@@ -335,13 +330,13 @@
      &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
-          call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
-          call b2xzdd (nCv, 3, mpg, srw%smo0(1,0,is))
+          call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
+          call b2xzdd (nCv, 3, switch, mpg, srw%smo0(1,0,is))
         enddo
-        call b2xzdd (nCv, 1, mpg, srw%sne0)
-        call b2xzdd (nCv, 3, mpg, srw%she0)
-        call b2xzdd (nCv, 3, mpg, srw%shi0)
-        call b2xzdd (nCv, 3, mpg, srw%sch0)
+        call b2xzdd (nCv, 1, switch, mpg, srw%sne0)
+        call b2xzdd (nCv, 3, switch, mpg, srw%she0)
+        call b2xzdd (nCv, 3, switch, mpg, srw%shi0)
+        call b2xzdd (nCv, 3, switch, mpg, srw%sch0)
 *   ..add to previous contributions
         call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
         call b2saxpy (nCv*4*ns, 1.0_R8, srw%smo0, 1, sr%smo, 1)
@@ -356,15 +351,15 @@
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
       call b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
-     &  geo, mpg, pl, dv, rt, rtw, srw) !srv 11.09.09 {
+     &  switch, geo, mpg, pl, dv, rt, rtw, srw) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
-        call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
-        call b2xzdd (nCv, 3, mpg, srw%smq0(1,0,is))
+        call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
+        call b2xzdd (nCv, 3, switch, mpg, srw%smq0(1,0,is))
       enddo
-      call b2xzdd (nCv, 3, mpg, srw%she0)
-      call b2xzdd (nCv, 3, mpg, srw%shi0)
-      call b2xzdd (nCv, 3, mpg, srw%shn0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%she0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shi0)
+      call b2xzdd (nCv, 3, switch, mpg, srw%shn0)
 *   ..add to previous contributions
       call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
       call b2saxpy (nCv*4*ns, 1.0_R8, srw%smq0, 1, sr%smq, 1)
@@ -382,7 +377,7 @@
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
 
-      if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+      if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
           write(*,*) 'Allocating arrays for cx'
           allocate (shi0_cx(nCv,0:3))
@@ -396,27 +391,27 @@
 
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
-        call b2sqcx (nCv, ns, ev, am(iscx(k)), pl%ti, pl%tn,
-     &   rt%rlcx(1,0,0,k), rtw%rcx)
+        call b2sqcx (nCv, ns, ev, switch, am(iscx(k)), pl%ti, 
+     &   pl%tn, rt%rlcx(1,0,0,k), rtw%rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
-        call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, geo, mpg,
-     &    pl%na, pl%ua, pl%ti, pl%tn,  dv%ni, rtw%rcx, srw%sna0, 
-     &    srw%smq0, srw%shi0, srw%shn0)       !srv 07.07.09
+        call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, switch, 
+     &    geo, mpg, pl%na, pl%ua, pl%ti, pl%tn,  dv%ni, rtw%rcx, 
+     &    srw%sna0, srw%smq0, srw%shi0, srw%shn0)       !srv 07.07.09
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
-         call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
-         call b2xzdd (nCv, 3, mpg, srw%smq0(1,0,is))
+         call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
+         call b2xzdd (nCv, 3, switch, mpg, srw%smq0(1,0,is))
         enddo
-        call b2xzdd (nCv, 3, mpg, srw%shi0)
-        call b2xzdd (nCv, 3, mpg, srw%shn0)
+        call b2xzdd (nCv, 3, switch, mpg, srw%shi0)
+        call b2xzdd (nCv, 3, switch, mpg, srw%shn0)
 *    ..add to previous contributions
         call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
         call b2saxpy (nCv*4*ns, 1.0_R8, srw%smq0, 1, sr%smq, 1)
         call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
 *      (no contribution to she, sne or sch)
-        if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+        if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
           write(*,*) 'Summing cx sources over hydrogenic neutrals'
           call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sna0_cx, 1)
           call b2saxpy (nCv*4*ns, 1.0_R8, srw%smq0, 1, smo0_cx, 1)
@@ -425,7 +420,7 @@
       enddo
 
 
-      if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+      if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         write(*,*) 'Writing cx sources'
         do is = 0,ns-1
           write (chns,'(i3.3)') is
@@ -449,7 +444,7 @@
         endif
       endif
 
-      if(iout.ne.0) then                                                 !srv 30.06.08 {
+      if(switch%b2sral_iout.ne.0) then                                   !srv 30.06.08 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           do k=0,1
@@ -472,7 +467,7 @@
           call my_out_us(70,nCv,0,sr%shn(1,k),'b2sral_shn'//chk)
           call my_out_us(70,nCv,0,sr%sch(1,k),'b2sral_sch'//chk)
 #ifdef WG_TODO
-          if (use_astra.ne.0) then
+          if (switch%use_astra.ne.0) then
             call my_out_us(70,nCv,0,sheNb_astra(1,k),
      &       'b2sral_sheNb_astra'//chk)
             call my_out_us(70,nCv,0,shiNb_astra(1,k),
