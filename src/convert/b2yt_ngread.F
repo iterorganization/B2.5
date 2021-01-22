@@ -163,7 +163,9 @@ C
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
       call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
+#ifdef WG_TODO
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
+#endif
       n2 = nx1*ny1
       filename='input.dat'
       call find_file(filename,ex)

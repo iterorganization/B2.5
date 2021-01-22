@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  wrong_flow, main_call, diagno,
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix)
@@ -17,6 +17,7 @@
       use b2mod_b2cmpb
       use b2mod_external
       use b2mod_boundary_sources                                        !srv 26.02.18
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -34,6 +35,7 @@
       integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
       real (kind=R8) ::
      *  BoRiS, b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -77,32 +79,19 @@
       integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 iout_b2npmo = 0, iout_b2wdat = 0
-      integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
-      integer, save :: pot_eq = 1                                       !srv 27.02.13
-      integer, save :: use_astra
       integer, save :: drift_style
-      integer, save :: tn_style = 0
-      integer, save :: kul_recycle
       real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
-      real (kind=R8) , save :: Qalfmin = 1.0e-3_R8
-      real (kind=R8) , save :: delpo = 3.1e0_R8
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
       real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
      * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
-      integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
      1  t3, t4, totflux, weight, dsh, vt,
@@ -126,10 +115,7 @@
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
-      real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
-     &                        phm2 = 1.0e0_R8,
-     &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
+      real (kind=R8), save :: corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
@@ -141,14 +127,13 @@
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      integer, save :: use_eirene, no_current 
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
-     1 bc_type13_norm, bc_type13_fac, na_min, na_new
+     1 bc_type13_norm, bc_type13_fac
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
-     2  na_min, na_new, bc_type21_ref, ndes_sol,
+     2  bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
@@ -166,12 +151,10 @@
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, 
-     2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & bc_type21_ref/1/, no_current/0/,
-     & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
+     & bc_type21_ref/1/, drift_style/1/, ndes_sol/0.0_R8/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
@@ -180,10 +163,10 @@
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
+!      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
+!      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
       pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
+!      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -196,83 +179,49 @@
       call subini ('b2stbc_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2stbc_phm0', phm0)                                  !srv 17.01.07
-       call ipgetr ('b2stbc_phm1', phm1)                                  !srv 17.01.07
-       call ipgetr ('b2stbc_phm2', phm2)                                  !srv 17.01.07
-        call ipgeti ('b2stbc_coreregno', coreregno)
-        call xertst (cbirso.le.coreregno.and.
-     1   coreregno.le.cbirso+cbnrso-1,
-     2   'faulty internal parameter coreregno')
-        if (nncut.ge.2) then
-          call ipgeti ('b2stbc_coreregn2', coreregn2)
-          call xertst (cbirso.le.coreregn2.and.
-     1     coreregn2.le.cbirso+cbnrso-1,
-     2     'faulty internal parameter coreregn2')
-        endif
-        call ipgeti ('b2tfhe_conduction_only', conduction_only)
-        call ipgeti ('b2tfhe_no_hybr', no_hybr_e)
-        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
-        call ipgeti ('b2mndr_eirene', use_eirene)
-        call ipgeti ('b2mndr_astra', use_astra)
-        call ipgeti ('b2tfnb_drift_style', drift_style)
-        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
-        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
-        call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
-        call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
-        call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
-        call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
-        call ipgetr ('b2stbc_Qalfmin', Qalfmin)
-        call ipgetr ('b2stbc_delpo', delpo)
-        call ipgetr ('b2mndr_na_min', na_min)
-        call ipgetr ('b2mndr_na_new', na_new)
-        call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
-        call xertst (na_new.gt.0.0_R8, 'faulty parameter na_new')
-        call xertst (na_new.gt.na_min,
-     &  'na_new must be larger than na_min!')
-        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
-     1   fix_fch_in_fhe_sheath)
-        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
-     1   fix_sx_in_fhe_sheath)                                       !srv 08.05.09
-        call ipgeti ('b2stbc_type16_kinetic_energy',
-     1   bc_type16_kinetic_energy)
-        call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
-        call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-        call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
-        call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
-        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
-        call ipgeti ('b2stbc_iout', iout)                            !srv 11.07.05
-        call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !srv 13.10.06
-        call ipgeti ('b2tfhe_mdf', mdf_fhe)                          !srv 13.10.06
-        call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
-        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
-        call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
-     &                       istyle_cur_contr_on_S_and_N)            !srv 01.02.09
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
-        call ipgetr ('b2stbc_bc_ref', bc_ref)
-        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
-        call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
         call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
-        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
-        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
-        call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
-        call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
-        call ipgetr ('b2tfhi_ycur', ycur)
-        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
-        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
-        call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
-        call ipgeti ('b2mn_tn_style',tn_style)
-        call ipgeti ('b2stbr_kul_recycle',kul_recycle)               ! for consistency with b2stbr recycling model for narrow grids from KU Leuven.
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgetr ('b2tfhi_ycur', ycur)
+c        call ipgeti ('b2tfhe_conduction_only', conduction_only)
+c        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
+c        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
+c        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
+c        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
+c        call ipgeti ('b2stbc_coreregno', coreregno)
+c        call xertst (cbirso.le.coreregno.and.
+c     1   coreregno.le.cbirso+cbnrso-1,
+c     2   'faulty internal parameter coreregno')
+c        if (nncut.ge.2) then
+c          call ipgeti ('b2stbc_coreregn2', coreregn2)
+c          call xertst (cbirso.le.coreregn2.and.
+c     1     coreregn2.le.cbirso+cbnrso-1,
+c     2     'faulty internal parameter coreregn2')
+c        endif
+c        call ipgeti ('b2tfhe_no_hybr', no_hybr_e)
+c        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
+c        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
+c        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
+c        call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
+c        call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
+c        call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
+c        call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
+c        call ipgeti ('b2tfnb_drift_style', drift_style)
+c        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
+c     1   fix_fch_in_fhe_sheath)
+c        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
+c     1   fix_sx_in_fhe_sheath)                                       !srv 08.05.09
+c        call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
+c        call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
+c        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
+c        call ipgeti ('b2stbc_type16_kinetic_energy',
+c     1   bc_type16_kinetic_energy)
+c        call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
+c        call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
+c        call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
+c        call ipgetr ('b2stbc_bc_ref', bc_ref)
+c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
+
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -571,12 +520,12 @@ cwdk  now need to recompute full diamagnetic component for ud
           case (1)
           if(ncall.eq.0) then
             IF(BCCHAR(iB).EQ.'S') THEN
-            if(is.eq.ismain.and.use_astra.ne.0) then
+            if(is.eq.ismain.and.switch%use_astra.ne.0) then
               conpar(is,iB,1) = neb_astra                               !srv 28.07.11
             endif
             ENDIF
             if (conpar(is,iB,1).eq.0.0_R8) then
-              conpar(is,iB,1) = na_min
+              conpar(is,iB,1) = switch%b2mndr_na_min
               write(*,*) 'Zero density B.C. no longer allowed!'
               write(*,*) 'Changed to na_min.'
             endif
@@ -779,7 +728,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             srw%sna0(iCv1,1,is) = 0.0_R8
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
-            if (mdf_fnb.ne.0) then
+            if (switch%mdf_fnb.ne.0) then
               !wdk Added correction to make mdf_fnb options equivalent
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
@@ -892,7 +841,8 @@ cghgh
 
           case (8)
           if(ncall.eq.0) then
-            if(is.eq.ismain.and.BCCHAR(IB).eq.'S'.and.use_astra.ne.0)
+            if(is.eq.ismain.and.BCCHAR(IB).eq.'S'
+     &                                   .and.switch%use_astra.ne.0)
      >       CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
             write(*,'(a20,1p,g14.7,a4,a1,a,a13,i3)')
      .       'total particle flux ', CONPAR(IS,IB,1),' on ',
@@ -918,7 +868,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      .        srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = sna0_no_mdf(iCv1,1,is) + 
      .        srw%sna0(iCv1,1,is)
-            if (mdf_fnb.ne.0) then
+            if (switch%mdf_fnb.ne.0) then
               !wdk Correction now involves vadia instead of ExB velocity
               !wdk This makes implementation equivalent to mdf_fnb = 0 option
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -943,7 +893,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).ne.0.0_R8,
      1       'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
-          if (mdf_fhi.ne.0) then
+          if (switch%mdf_fhi.ne.0) then
             call xerrab('BCCON = 9 not yet imlemented for mdf')
           endif
           endif
@@ -976,7 +926,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      .         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)            !srv 23.09.08
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)            !srv 23.09.08
-              if(mdf_fnb.ne.0) then                                    !srv 08.09.08 {
+              if(switch%mdf_fnb.ne.0) then                                    !srv 08.09.08 {
                 t0 =
      .           -fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
@@ -1072,7 +1022,7 @@ cwdk      compatibility for E/W boundaries
      &         (am(is)*mp))*conpar(is,ib,1)
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
-            if (mdf_fnb.eq.0) then
+            if (switch%mdf_fnb.eq.0) then
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
      &          max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*
@@ -1400,7 +1350,7 @@ c dpc
      .          co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
             endif
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
-            if (mdf_fnb.ne.0) then
+            if (switch%mdf_fnb.ne.0) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
      &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
@@ -1478,7 +1428,7 @@ cwdk       * need to correct this BC for hybrid scheme
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
-              if (use_astra.ne.0) then
+              if (switch%use_astra.ne.0) then
 #ifdef ASTRA
                 SCONPAR(IS) = fneb_astra
 #else
@@ -1512,7 +1462,7 @@ cwdk       * need to correct this BC for hybrid scheme
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                  if(mdf_fnb.ne.0) then
+                  if(switch%mdf_fnb.ne.0) then
                     DO IX = 1, BC_LIST_SIZE(IBW)
                       totflux = totflux +
      &        fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -1604,7 +1554,7 @@ cwdk       * need to correct this BC for hybrid scheme
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)           !srv 23.09.08
-              if(mdf_fnb.ne.0) then                                   !srv 12.09.08 {
+              if(switch%mdf_fnb.ne.0) then                                   !srv 12.09.08 {
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) -
      &           fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -1632,6 +1582,9 @@ cwdk       * need to correct this BC for hybrid scheme
 
           case (19)
           call xerrab ('b2stbc_phys -- BCCON = 19 not adapted for WG')
+          if (switch%spatial_hybrid.ne.0) then
+            call xerrab ('BCCON = 19 not compatible with spatial hybr')
+          endif
 #ifdef WG_TODO
           if(ncall.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
@@ -1661,7 +1614,7 @@ cwdk       * need to correct this BC for hybrid scheme
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
-              if (use_astra.ne.0) then
+              if (switch%use_astra.ne.0) then
 #ifdef ASTRA
                 SCONPAR(IS) = fSeNBI_astra
 #else
@@ -1722,8 +1675,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
 ! Note that for neutrals fna = fna_mdf
                     do isb = 0, ns-1
                       if(b2espcr(is).eq.b2espcr(isb).and.is.ne.isb) then
-                        if(.not.is_neutral(isb).or.use_eirene.eq.0) then
-                          if(mdf_fnb.ne.0) then
+                        if(.not.is_neutral(isb).or.
+     &                                      switch%use_eirene.eq.0) then
+                          if(switch%mdf_fnb.ne.0) then
                             totfluxn = totfluxn +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1,isb)
@@ -1736,7 +1690,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                       endif
                     enddo
 ! totfluxi here means the flux of the ion in the highest ionization stage.
-                    if(mdf_fnb.ne.0) then
+                    if(switch%mdf_fnb.ne.0) then
                       totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1,is)
@@ -1908,7 +1862,7 @@ cxpb Careful here because of BC number clash
           IF(BCCHAR(IB).EQ.'S' .and.
      &       on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
             if (.not.once_bccon(is)) then
-              if(is.eq.ismain.and.use_astra.ne.0) then
+              if(is.eq.ismain.and.switch%use_astra.ne.0) then
 #ifdef ASTRA
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
@@ -2791,11 +2745,11 @@ cxpb  Add contribution from Eirene core boundary fluxes
              call xertst(mpg%cvOnClosedSurface(iCv1),
      .        'BCCON=28 intended for core boundaries only!')
             enddo
-            if(is.eq.ismain.and.use_astra.ne.0) then
+            if(is.eq.ismain.and.switch%use_astra.ne.0) then
               conpar(is,iB,1) = neb_astra                               !srv 28.07.11
             endif
             if (conpar(is,iB,1).eq.0.0_R8) then
-              conpar(is,iB,1) = na_min
+              conpar(is,iB,1) = switch%b2mndr_na_min
               write(*,*) 'Zero density B.C. no longer allowed!'
               write(*,*) 'Changed to na_min.'
             endif
@@ -3514,7 +3468,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
             if (abs(geo%fcQalf(iFc,0)*geo%cvBb(iCv1,0)/geo%cvBb(iCv1,3))
-     &          .lt.Qalfmin) then
+     &          .lt.switch%Qalfmin) then
               srw%smo0(iCv1,0,is) = 0.0_R8
               srw%smo0(iCv1,1,is) = 0.0_R8
               if (conpar(is,ib,2).gt.0.0_R8) then
@@ -3766,7 +3720,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 
         case (1)
         if(ncall.eq.0) then
-          IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
+          IF(BCCHAR(IB).EQ.'S'.and.switch%use_astra.ne.0) THEN
           ENEPAR(IB,1) = teb_astra*1.0e3_R8                        !srv 14.06.12
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -3977,7 +3931,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .          SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .          ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
             endif                                                       !xpb
-            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(switch%mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &         fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
@@ -4086,7 +4040,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
      .         /ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
             endif                                                      !xpb
-            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(switch%mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
      &         fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0)
@@ -4261,7 +4215,7 @@ cxpb code segment analog to b2tfhe
      .       (ne(bc_list_x(ix,ib),bc_list_y(ix,ib))+
      &       ne(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .          bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8
-              if(mdf_fhe.eq.0) then
+              if(switch%mdf_fhe.eq.0) then
                 flo = flo+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
               else
                 flo = flo+1.5_R8*flo_veecrb
@@ -4398,7 +4352,7 @@ cxpb code segment analog to b2tfhe
      &        (ne(bc_list_x(ix,ib),bc_list_y(ix,ib))+
      &         ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .            topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8
-              if(mdf_fhe.eq.0) then
+              if(switch%mdf_fhe.eq.0) then
                 flo = flo+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
               else
                 flo = flo+1.5_R8*flo_veecrb
@@ -4497,7 +4451,7 @@ cghgh
 
         case (8)
         if(ncall.eq.0) then
-          if (use_astra.ne.0) ENEPAR(IB,1) = fheb_astra           !srv 28.07.11
+          if (switch%use_astra.ne.0) ENEPAR(IB,1) = fheb_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total electron energy flux ',ENEPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -4514,7 +4468,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%she0(iCv1,0) = enepar(iB,1)/US*geo%fcS(iFc)
           srw%she0(iCv1,1) = 0.0_R8
-          if(mdf_fhe.ne.0) then
+          if(switch%mdf_fhe.ne.0) then
             !wdk Correction now involves vedia instead of ExB velocity
             !wdk This makes implementation equivalent to mdf_f = 0 option
             srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4560,7 +4514,7 @@ cghgh
      &         'Please ensure that this boundary condition '//
      &         'is consistent with density boundary conditions'  !srv 21.09.12
             end if
-            if(mdf_fhe.ne.0) then                              
+            if(switch%mdf_fhe.ne.0) then                              
               call xerrab('BCENE=9 not yet for mdf')
             endif
           enddo
@@ -4599,7 +4553,7 @@ cghgh
      .         SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)*
      .         na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)
             ENDDO
-            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(switch%mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &         fhePSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -4632,7 +4586,7 @@ cghgh
      .         SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)*
      .         na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)
             ENDDO
-            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(switch%mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      .         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhePSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
@@ -4692,7 +4646,7 @@ cghgh
             vte = sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
             s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            if(mdf_fhe.ne.0) then                                    !srv 21.03.09 {
+            if(switch%mdf_fhe.ne.0) then                                    !srv 21.03.09 {
               she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &          fhePSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -4714,7 +4668,7 @@ cghgh
             vte = sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
             s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            if(mdf_fhe.ne.0) then                                    !srv 21.03.09 {
+            if(switch%mdf_fhe.ne.0) then                                    !srv 21.03.09 {
               she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhePSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
@@ -4841,7 +4795,7 @@ cghgh
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%she0(iCv1,0) = 0.0_R8
           srw%she0(iCv1,3) = geo%fcS(iFc)*cs*enepar(ib,1)
-          if(mdf_fhe.ne.0) then
+          if(switch%mdf_fhe.ne.0) then
             srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &       (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
@@ -4916,18 +4870,18 @@ cghgh
             t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -           !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))  !srv 25.12.06 11.01.13 20.09.17
             t1 = t1*geo%fcS(iFc)
-            if(pot_eq.eq.1) then                                      !srv 27.02.13 {
+            if(switch%pot_eq.eq.1) then                               !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
      &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -              !srv 19.04.13
      &           enepar(ib,2)*t1                                      !wdk to check: correct for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
-     &           qe*pl%po(iCv1)*(t0 + t1)                             !srv 07.11.12
-            else                                                      !srv 27.02.13
-              srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+delpo)*t0 -      !srv 19.04.13
-     &          (enepar(ib,2) + delpo)*t1                             !wdk to check: correct for gammae?
-            endif                                                     !srv 27.02.13 }
-            if(mdf_fhe.ne.0) then
+     &           qe*pl%po(iCv1)*(t0 + t1)                               !srv 07.11.12
+            else                                                        !srv 27.02.13
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
+     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+switch%delpo)*t0 - !srv 19.04.13
+     &          (enepar(ib,2) + switch%delpo)*t1                       !wdk to check: correct for gammae?
+            endif                                                       !srv 27.02.13 }
+            if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &         (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
@@ -4972,7 +4926,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &          expu2(max(-50.0_R8,
      &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
      &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-              if(pot_eq.eq.1) then                                      !srv 27.02.13 {
+              if(switch%pot_eq.eq.1) then                               !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &            (1.0e0_R8+GAMMAE)*t0
@@ -4990,7 +4944,7 @@ cwdk    Todo: corrections for BCCON.ne.14
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
               endif                                                     !srv 27.02.13 }
-              if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
+              if(switch%mdf_fhe.ne.0) then                                     !srv 01.06.06 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &           fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
@@ -5017,7 +4971,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &          expu2(max(-50.0_R8,
      &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
      &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-              if(pot_eq.eq.1) then                                      !srv 27.02.13 {
+              if(switch%pot_eq.eq.1) then                                !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               (1.0e0_R8+GAMMAE)*t0
@@ -5035,7 +4989,7 @@ cwdk    Todo: corrections for BCCON.ne.14
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
               endif                                                     !srv 27.02.13 }
-              if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
+              if(switch%mdf_fhe.ne.0) then                                     !srv 01.06.06 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
      &           fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0)         !srv 20.09.17 }
@@ -5129,7 +5083,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bcene) then
-              if (use_astra.ne.0) then
+              if (switch%use_astra.ne.0) then
 #ifdef ASTRA
                 SENEPAR = fheb_astra
 #else
@@ -5163,7 +5117,7 @@ cwdk    Todo: corrections for BCCON.ne.14
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    if(mdf_fhe.ne.0) then
+                    if(switch%mdf_fhe.ne.0) then
                       totflux = totflux +
      &           fhe_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1)
@@ -5685,7 +5639,7 @@ cwdk     * need to correct this BC for hybrid scheme
            call xertst(mpg%cvOnClosedSurface(iCv1),
      .      'BCENE=23 intended for core boundaries only!')
           enddo
-          IF(use_astra.ne.0) THEN
+          IF(switch%use_astra.ne.0) THEN
           ENEPAR(IB,1) = teb_astra*1.0e3_R8
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -5800,7 +5754,7 @@ cwdk     * need to correct this BC for hybrid scheme
 
         case (1)
         if(ncall.eq.0) then
-          IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
+          IF(BCCHAR(IB).EQ.'S'.and.switch%use_astra.ne.0) THEN
             ENIPAR(IB,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -5972,7 +5926,7 @@ cwdk     * need to correct this BC for hybrid scheme
                 endif
               end do
             ENDIF
-            if(mdf_fhi.ne.0) then                                        !srv 12.09.08 {
+            if(switch%mdf_fhi.ne.0) then                                        !srv 12.09.08 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &         fhiPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
@@ -6055,7 +6009,7 @@ cwdk     * need to correct this BC for hybrid scheme
                 endif
               end do
             ENDIF
-            if(mdf_fhi.ne.0) then                                        !srv 12.09.08 {
+            if(switch%mdf_fhi.ne.0) then                                        !srv 12.09.08 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
      &         fhiPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0)
@@ -6221,7 +6175,7 @@ cxpb code segment analog to b2tfhi
      &         (ni(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)+
      &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8
-              if (mdf_fhi.eq.0) then
+              if (switch%mdf_fhi.eq.0) then
                 flo = flo + 2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
               else
                 flo = flo + 1.5_R8*cum_flo_vaecrb
@@ -6370,7 +6324,7 @@ cxpb code segment analog to b2tfhi
      &         (ni(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)+
      &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8
-              if (mdf_fhi.eq.0) then
+              if (switch%mdf_fhi.eq.0) then
                 flo = flo + 2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
               else
                 flo = flo + 1.5_R8*cum_flo_vaecrb
@@ -6491,7 +6445,7 @@ cghgh
 
         case (8)
         if(ncall.eq.0) then
-          if (use_astra.ne.0) ENIPAR(IB,1) = fhib_astra           !srv 28.07.11
+          if (switch%use_astra.ne.0) ENIPAR(IB,1) = fhib_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total ion energy flux',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6508,7 +6462,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%shi0(iCv1,0) = enipar(iB,1)/US*geo%fcS(iFc)
           srw%shi0(iCv1,1) = 0.0_R8
-          if(mdf_fhi.ne.0) then
+          if(switch%mdf_fhi.ne.0) then
             !wdk Correction now involves vedia instead of ExB velocity
             !wdk This makes implementation equivalent to mdf_fhi = 0 option
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -6543,7 +6497,7 @@ cghgh
           do is = 0, ns-1
             decay_length_ok = decay_length_ok .and.
      1       (bccon(is,ib).eq.9 .or. bccon(is,ib).eq.0 .or.
-     2       (is_neutral(is) .and. use_eirene.eq.1))
+     2       (is_neutral(is) .and. switch%use_eirene.eq.1))
             if (bccon(is,ib).eq.1) then
               write(0,*)
      &         'Should use BCENI=19 in conjunction with BCCON=1'
@@ -6558,7 +6512,7 @@ cghgh
      &                 'Please ensure that this boundary condition '//
      &                 'is consistent with density boundary condition'  !srv 21.09.12
           endif
-          if (mdf_fhi.ne.0) then
+          if (switch%mdf_fhi.ne.0) then
             call xerrab('BCENI = 9 not yet imlemented for mdf')
           endif
         endif
@@ -6567,7 +6521,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
-          if (tn_style.eq.0.and.kul_recycle.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
+          if (switch%tn_style.eq.0.and.switch%kul_recycle.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
           srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
      &                    sy
           else
@@ -6575,7 +6529,7 @@ cghgh
      &                    sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. tn_style.eq.0) then
+            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
@@ -6603,7 +6557,7 @@ cxpb          if (.not.is_neutral(is)) then   ! dpc --- need to check
      &                    na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)
 cxpb          endif
             ENDDO
-            if(mdf_fhi.ne.0) then                                       !srv 12.09.08 {
+            if(switch%mdf_fhi.ne.0) then                                       !srv 12.09.08 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &        shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &        fhiPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -6649,7 +6603,7 @@ cxpb          endif
      .         SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)*     !srv 23.09.08
      &                  na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)
             ENDDO
-            if(mdf_fhi.ne.0) then                                       !srv 12.09.08 {
+            if(switch%mdf_fhi.ne.0) then                                       !srv 12.09.08 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      .         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhiPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
@@ -6908,7 +6862,7 @@ cxpb          endif
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%shi0(iCv1,0) = 0.0_R8
           srw%shi0(iCv1,3) = geo%fcS(iFc)*cs*enipar(ib,1)
-          if(mdf_fhi.ne.0) then
+          if(switch%mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
@@ -7011,7 +6965,7 @@ cxpb          endif
      &      t0*cs*abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
      &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           endif
-          if(mdf_fhi.ne.0) then
+          if(switch%mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
@@ -7122,7 +7076,7 @@ cwdk    Todo: corrections for BCCON.ne.14
          endif
          IF(BCCHAR(IB).EQ.'S') THEN
            if(.not.once_bceni) then
-             if (use_astra.ne.0) then
+             if (switch%use_astra.ne.0) then
 #ifdef ASTRA
                SENIPAR = fhib_astra
 #else
@@ -7158,7 +7112,7 @@ cwdk    Todo: corrections for BCCON.ne.14
              DO IBW=IB,NBC
                IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
-                   if(mdf_fhi.ne.0) then
+                   if(switch%mdf_fhi.ne.0) then
                       totflux = totflux +
      &          fhi_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1)
@@ -7479,7 +7433,7 @@ cxpb Careful here because of BC number clash
           DO IX = 1, BC_LIST_SIZE(IB)
             s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            if(mdf_fhi.ne.0) then                                    !srv 21.03.09 {
+            if(switch%mdf_fhi.ne.0) then                                    !srv 21.03.09 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &         fhiPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -7509,7 +7463,7 @@ cxpb Careful here because of BC number clash
           DO IX = 1, BC_LIST_SIZE(IB)
             s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            if(mdf_fhi.ne.0) then                                    !srv 21.03.09 {
+            if(switch%mdf_fhi.ne.0) then                                    !srv 21.03.09 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhiPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
@@ -7594,7 +7548,7 @@ cwdk     * need to correct this BC for hybrid scheme
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
      .                                      BC_LIST_Y(1,IBW)),
      .         'BCENI = 23 only applicable to core boundaries !')
-              call xertst(use_astra.ne.0.or.
+              call xertst(switch%use_astra.ne.0.or.
      .         ENIPAR(IB,1).eq.ENIPAR(IBW,1),
      1         'BCENI = 23, inconsistent ENIPAR(,1) values!')
               if (.not.(bccon(ismain,ib).eq.21 .or. 
@@ -7623,12 +7577,12 @@ cwdk     * need to correct this BC for hybrid scheme
      .           ('BCENI types 16, 23, 24, 26 and 27 cannot be mixed!')
             endif
           ENDDO
-          call xertst(use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
+          call xertst(switch%use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
      1     'BCENI = 23, ENIPAR(,1) !> 0')
         endif
 
         if(.not.once_bceni) then
-          if (use_astra.ne.0) THEN
+          if (switch%use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
@@ -7754,7 +7708,7 @@ cwdk     * need to correct this BC for hybrid scheme
         endif
 
         if(.not.once_bceni) then
-          if (use_astra.ne.0) then
+          if (switch%use_astra.ne.0) then
 #ifdef ASTRA
             SENIPAR = fhib_astra
 #else
@@ -7805,7 +7759,7 @@ cwdk     * need to correct this BC for hybrid scheme
                   t3=t3 + ne(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
      &              *vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  if(mdf_fhi.ne.0) then
+                  if(switch%mdf_fhi.ne.0) then
                     totflux = totflux +
      &        fhi_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1)
@@ -7992,9 +7946,10 @@ cwdk     * need to correct this BC for hybrid scheme
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
      .                                      BC_LIST_Y(1,IBW)),
      .         'BCENI = 26 only applicable to core boundaries !')
-              call xertst(use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
+              call xertst(switch%use_astra.ne.0.or.
+     .                                   ENIPAR(IBW,1).gt.0.0_R8,
      1         'BCENI = 26, ENIPAR(,1) !> 0')
-              call xertst(use_astra.ne.0.or.
+              call xertst(switch%use_astra.ne.0.or.
      .         ENIPAR(IB,1).eq.ENIPAR(IBW,1),
      1         'BCENI = 26, inconsistent ENIPAR(,1) values!')
             endif
@@ -8008,7 +7963,7 @@ cwdk     * need to correct this BC for hybrid scheme
         endif
 
         if(.not.once_bceni) then
-          if (use_astra.ne.0) THEN
+          if (switch%use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
@@ -8099,7 +8054,7 @@ cwdk     * need to correct this BC for hybrid scheme
         IF(BCCHAR(IB).EQ.'S' .and.
      $    on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
           if(.not.once_bceni) then
-            if (use_astra.ne.0) then
+            if (switch%use_astra.ne.0) then
 #ifdef ASTRA
               SENIPAR = fhib_astra
 #else
@@ -8137,7 +8092,7 @@ cwdk     * need to correct this BC for hybrid scheme
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  if(mdf_fhi.ne.0) then
+                  if(switch%mdf_fhi.ne.0) then
                     totflux = totflux +
      &        fhi_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1)
@@ -8207,7 +8162,7 @@ cwdk     * need to correct this BC for hybrid scheme
            call xertst(mpg%cvOnClosedSurface(iCv1),
      .      'BCENI=28 intended for core boundaries only!')
           enddo
-          IF(use_astra.ne.0) THEN
+          IF(switch%use_astra.ne.0) THEN
           ENIPAR(IB,1) = teb_astra*1.0e3_R8
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -8352,7 +8307,7 @@ cwdk          normal/radial/poloidal direction ???
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-          if (eirene_sheath_pot.eq.1) then
+          if (switch%eirene_sheath_pot.eq.1) then
             delta_sheathb(iFc) = 
      &           qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
           endif
@@ -8443,7 +8398,7 @@ c              fchi=0.0_R8
      .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (eirene_sheath_pot.eq.1) then
+            if (switch%eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
               delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
      .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
@@ -8518,7 +8473,7 @@ c              fchi=0.0_R8
      .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (eirene_sheath_pot.eq.1) then
+            if (switch%eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
               delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) = 
      .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
@@ -8762,7 +8717,7 @@ c              fchi=0.0_R8
           srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
-            if (eirene_sheath_pot.eq.1) then
+            if (switch%eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
 !pb              delta_sheathb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
 !pb     &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
@@ -8782,8 +8737,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from diamagnetic and inertial currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
-          if(istyle_cur_contr_on_S_and_N.eq.0 .or.
-     &       istyle_cur_contr_on_S_and_N.eq.1) then
+          if(switch%istyle_cur_contr_on_S_and_N.eq.0 .or.
+     &       switch%istyle_cur_contr_on_S_and_N.eq.1) then
             write(*,*) ' BCPOT=12 cannot be used when ',
      &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
@@ -8803,7 +8758,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
             fchy_dia = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
+     &        switch%b2stbc_phm0*
+     &        pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
      &        dOnedBsq(iFc,0)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
             srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_dia
             fchy_inertia = 0.0_R8
@@ -8811,7 +8767,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
              if(.not.is_neutral(is))then
               fchy_inertia = fchy_inertia -
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          phm1*0.5e0_R8*am(is)*mp*naua2average(is)*
+     &          switch%b2stbc_phm1*
+     &          0.5e0_R8*am(is)*mp*naua2average(is)*
      &          dv%facdrift(iFc)*geo%fcBb(iFc,2)*dOnedBsq(iFc,0)*
      &          geo%fcS(iFc)*geo%fcQalf(iFc,1)
              endif
@@ -8828,8 +8785,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from all currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
-          if(istyle_cur_contr_on_S_and_N.eq.0 .or.
-     &       istyle_cur_contr_on_S_and_N.eq.1) then
+          if(switch%istyle_cur_contr_on_S_and_N.eq.0 .or.
+     &       switch%istyle_cur_contr_on_S_and_N.eq.1) then
             write(*,*) ' BCPOT=13 cannot be used when ',
      &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
@@ -9709,8 +9666,8 @@ cwdk    Todo: corrections for BCCON.ne.14
           end do
         end do
       end do
-#endif
-      if (iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+#endif 
+      if (switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then               !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         wrk0=srw%smo0(:,0,is)+
@@ -9720,16 +9677,16 @@ cwdk    Todo: corrections for BCCON.ne.14
         call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .or.
-     &                           iout_b2wdat.eq.4) then
+      if ((switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1) .or.
+     &                           switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         wrk0=srw%sna0(:,0,is)+srw%sna0(:,1,is)*pl%na(:,is)
         call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_sna'//chns)
        enddo
       endif
-      if ((iout_b2npht.eq.1 .or. iout_b2nph9.eq.1) .or. 
-     &                           iout_b2wdat.eq.4) then
+      if ((switch%b2npht_iout.eq.1 .or. switch%b2nph9_iout.eq.1) .or. 
+     &                           switch%iout_b2wdat.eq.4) then
        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &      srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
        call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_she')
@@ -9737,14 +9694,14 @@ cwdk    Todo: corrections for BCCON.ne.14
      &      srw%shi0(:,2)*dv%ni(:,0)+srw%shi0(:,3)*pl%ti*dv%ni(:,0)
        call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_shi')
       endif
-      if ((iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) .or. 
-     &                           iout_b2wdat.eq.4) then
+      if ((switch%b2npp7_iout.eq.1 .or. switch%b2nppo_iout.eq.1) .or. 
+     &                           switch%iout_b2wdat.eq.4) then
        wrk0=srw%sch0(:,0)+srw%sch0(:,1)*pl%po+
      &      srw%sch0(:,2)*dv%ne+srw%sch0(:,3)*pl%po*dv%ne
        call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_sch')
       endif
       
-      if (iout.eq.1) then
+      if (switch%b2stbc_iout.eq.1) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         do k=0,3

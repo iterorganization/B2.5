@@ -1,15 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usmo (nCv, nFc, nVx, isb, geo, mpg, 
+      subroutine b2usmo (nCv, nFc, nVx, isb, switch, geo, mpg, 
      &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,        !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)  !srv 06.04.07
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchaninvged on exit)
       integer nCv, nFc, nVx, isb, nregionv, itcnt
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       character*(*) name                                             !srv 18.05.02
@@ -44,19 +46,17 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
-      integer, save :: iout = 0                                       !srv 17.06.02
-      integer, save :: meth = 2
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
+     *  t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
      *  t11, t22
       logical lnonzero
-      save ncall, cfc0
+      save ncall
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
-      data ncall/0/, cfc0/1.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -64,13 +64,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usmo')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2usmo_cfc0', cfc0)
-       call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
-       call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
-       call ipgeti ('b2npmo_discr_meth', meth)
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
@@ -87,7 +80,8 @@
       endif
 
 * ..apply discretization scheme
-      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flcb,cvsb,flcb0,cvsb0)
+      call calccoef(nCv,nFc,nVx,switch%b2npmo_discr_meth,
+     &                                geo,mpg,flcb,cvsb,flcb0,cvsb0)
 
 * ..compute the correction
       aa = 0.0_R8
@@ -99,7 +93,7 @@
          csb1 = sqrt(ub(iCv)**2+csb**2)
          aad0(iCv) = -smb(iCv,1)-
      &    smb(iCv,3)*rob(iCv)+
-     &    cfc0*abs(geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
+     &    switch%cfc0*abs(geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb)*rob(iCv)
          aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
         else
@@ -228,7 +222,7 @@
       write(*,'(a,a)') 'Calling b2uxus from ', name
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
 
-      if (iout.ne.0) then                                             !srv 17.06.02 {
+      if (switch%b2usmo_iout.ne.0) then                               !srv 17.06.02 {
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
        call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')

@@ -1,16 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt)
+      subroutine b2tfcc (nCv, nFc, nVx, ns, switch, geo, mpg, pl, 
+     &                   dv, co, rt)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -24,20 +27,17 @@
 
 *   ..local variables
       integer ncall, is, iFc
-      integer, save :: tn_style = 0
-      real (kind=R8) ::
-     *   xfac, pcm1
       real (kind=R8) ::
      *   nw(nCv), nwf(nFc),
      *   dnw(nFc,0:1), tef(nFc), tif(nFc), tnf(nFc),
      *   wght(nFc,2), wrkVx(nVx),
      *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
-      save ncall, xfac, pcm1
+      save ncall
 *   ..procedures
-      external subini, subend, xertst, ipgetr
+      external subini, subend, xertst
       external b2xvsg, b2xvff, diff, intface
 *   ..initialisation
-      data ncall/0/, xfac/1.0_R8/, pcm1/1.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -45,14 +45,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfcc')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2tfcc_xfac', xfac)
-       call xertst (0.le.xfac, 'faulty internal parameter xfac')
-       call ipgetr ('b2npht_pcm1', pcm1)
-       call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2mn_tn_style', tn_style)
-      endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -85,10 +77,10 @@
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-       flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tef
-       flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tef
-       con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tef
-       con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tef
+       flo(:,0) = -switch%xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tef
+       flo(:,1) = -switch%xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tef
+       con(:,0) =  switch%xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tef
+       con(:,1) =  switch%xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tef
 
 *    ..compute coefficients for stencil
        call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
@@ -108,7 +100,7 @@
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwf)
 
       do iFc = 1, nFc
-        con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
+        con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -142,15 +134,15 @@
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
        if (.not.is_neutral(is)) then
-         flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tif
-         flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tif
-         con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tif
-         con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tif
+         flo(:,0) = -switch%xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tif
+         flo(:,1) = -switch%xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tif
+         con(:,0) =  switch%xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tif
+         con(:,1) =  switch%xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tif
        else
-         flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tnf !! in case of default energy equation Tn = Ti
-         flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tnf
-         con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tnf
-         con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tnf
+         flo(:,0) = -switch%xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tnf !! in case of default energy equation Tn = Ti
+         flo(:,1) = -switch%xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tnf
+         con(:,0) =  switch%xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tnf
+         con(:,1) =  switch%xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tnf
        endif
 
 *    ..compute coefficients for stencil
@@ -158,15 +150,15 @@
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
-       if (tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
+       if (switch%tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
          dv%floi        = dv%floi        + flo0
          dv%coni(:,:,0) = dv%coni(:,:,0) + con0
-       elseif (tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
+       elseif (switch%tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
          if (.not.is_neutral(is)) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
-       elseif (tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
+       elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
          if (.not.is_neutral(is)) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
@@ -174,8 +166,6 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%flon        = dv%flon        + flo0
            dv%conn(:,:,0) = dv%conn(:,:,0) + con0
          endif
-       else
-         call xerrab('invalid tn_style switch number')
        endif
 
 *  ..add contributions from Rhie-Chow term
@@ -188,7 +178,7 @@ c the logic statements could be simplified but for now this is not done to impro
 
        if (.not.is_neutral(is)) then
         do iFc = 1, nFc
-          con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),is)*pl%ti(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -197,7 +187,7 @@ c the logic statements could be simplified but for now this is not done to impro
         enddo
        else
         do iFc = 1, nFc
-          con(:,0) = pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),0)*pl%tn(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -218,15 +208,15 @@ c the logic statements could be simplified but for now this is not done to impro
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
-       if (tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
+       if (switch%tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
          dv%floi        = dv%floi        + flo0
          dv%coni(:,:,0) = dv%coni(:,:,0) + con0
-       elseif (tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
+       elseif (switch%tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
          if (.not.is_neutral(is)) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
-       elseif (tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
+       elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
          if (.not.is_neutral(is)) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
@@ -234,8 +224,6 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%flon        = dv%flon        + flo0
            dv%conn(:,:,0) = dv%conn(:,:,0) + con0
          endif
-       else
-         call xerrab('invalid tn_style switch number')
        endif
 
       enddo

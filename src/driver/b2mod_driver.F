@@ -50,6 +50,7 @@
      &          balance_average!WG_TODO, update_average_balance
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
+      use b2mod_switches
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -99,8 +100,6 @@
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: b2mndr_redef_pbs = 0
-      integer, save :: pot_eq = 1
-      integer, save :: boundary_namelist = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
@@ -121,23 +120,22 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer itim, ierr, edition, b2time, coronal, use_eirene,
-     *  tally, ismain, ismain0, natmi, no_solve, use_astra,
-     *  save_f30, save_f31, external_species, no_current
+      integer itim, ierr, edition, b2time, coronal,
+     *  tally, ismain, ismain0, natmi, no_solve,
+     *  external_species
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
-     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
-     *  tn_style = 0, kul_recycle = 0, user_transport = 0,
-     *  solve_keps = 0, transport_namelist = 0
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps, sput_frc, 
-     2  sput_phys, delta_min, dt_change_inc, delta_max, dt_change_dec,
-     3  dt_min, dt_max, max_delta
+     1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, 
+     2  sput_frc, sput_phys,
+     3  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     4  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
       integer ncid
@@ -174,13 +172,13 @@
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
-     2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
+     2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
-     4  use_astra, BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, po_eps, ua_eps, kt_eps,
+     4  BoRiS, density_rescale,
+     .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
-     6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
-     7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
+     6  dt_change_dec, no_solve, dt_min, dt_max,
+     7  te_hot, ne_hot_frac, external_species,
      8  b2mndr_elapsed
 #ifdef JET
       save delta_tran_time, save_tran_time, tran_num
@@ -190,19 +188,20 @@
       save min_areshe, min_areshi, min_aresco, res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
-     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
+     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
-     2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
+     2     coronal/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
-     *     no_solve/0/, no_current/0/,
+     *     no_solve/0/,
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
+     4     tn_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
      5     kt_eps/1.0e-2_R8/,
      6     ua_eps/1.0e+4_R8/,
@@ -213,7 +212,7 @@
      2     dt_min/1.0e-30_R8/,
      3     dt_max/1.0e+01_R8/,
      4     BoRiS/0.0_R8/,
-     5     save_f30/0/, save_f31/0/, external_species/0/
+     5     external_species/0/
 #ifdef JET
       data delta_tran_time/0.0_R8/, save_tran_time/0.0_R8/,
      1     tran_num/0/
@@ -227,8 +226,8 @@
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0, geo, mpg, state, 
-     &  state_ext)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo, 
+     &  mpg, state, state_ext)
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
@@ -237,6 +236,7 @@
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
+      type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
@@ -907,7 +907,7 @@
       nFc = mpg%nFc
       nVx = mpg%nVx
 *   ..initialise files and common
-      call b2mnds (ninp, nout, nCv, nFc, ns, ns0)
+      call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
 *   ..set internal parameters on first (and only) call
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
@@ -933,7 +933,6 @@
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
@@ -1039,7 +1038,6 @@
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_ntim_run', ntim_run)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       call ipgeti ('b2mndr_solve_keps', solve_keps)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1060,6 +1058,8 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.te_eps,'faulty internal parameter te_eps')
        call ipgetr ('b2mndr_ti_eps',ti_eps)
        call xertst (0.0_R8.lt.ti_eps,'faulty internal parameter ti_eps')
+       call ipgetr ('b2mndr_tn_eps',tn_eps)
+       call xertst (0.0_R8.lt.tn_eps,'faulty internal parameter tn_eps')
        call ipgetr ('b2mndr_po_eps',po_eps)
        call xertst (0.0_R8.lt.po_eps,'faulty internal parameter po_eps')
        call ipgetr ('b2mndr_ua_eps',ua_eps)
@@ -1164,17 +1164,16 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.plate_temp, 'faulty b2stbr_plate_temp')
        call ipgetr ('b2stbr_plate_thick', plate_thick)
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
-       call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
-       call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
-       call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
 cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
-       if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
-       if(use_eirene.ne.0) then
+       if(switch%use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+       if(switch%use_eirene.ne.0) then
+c when using kinetic neutrals, volume recombination is fully handled on the EIRENE side.
+c The recombination rate depends on the ion density and not on the neutral density, so the neutral rescaling is not sufficient to turn it off on the B2.5 side
+c and hence the reaction rates have to be rescaled here.
          if (neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(neutral_sources_rescale),
      *         ' to relevant rtlra and rtlqa_ra'
@@ -1223,14 +1222,13 @@ cwdk for now, dummy external state is created in b2mod_main
        do k = state%rt%nscx, state%rt%nscxmax-1
         state%rt%iscx(k) = -1
        enddo
-       call ipgetr ('b2tfnb_ycur', ycur)
-       call ipgetr ('b2tfnb_xcur', xcur)
        k = 0
        do is = 0, ns-1
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-       call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
+       call xertst (k.eq.1.or.(switch%xcur.eq.0.0_R8 .and.
+     &                                      switch%ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
@@ -1249,24 +1247,8 @@ cwdk for now, dummy external state is created in b2mod_main
        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
-       call ipgeti ('b2news_poteq', pot_eq)
-       call ipgeti ('b2tfhe_no_current', no_current)
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
-       call ipgeti ('b2mn_tn_style', tn_style)
-       call xertst(tn_style.ge.0 .and. tn_style.le.2 ,
-     &   'tn_style value not supported')
-       call ipgeti ('b2stbr_kul_recycle', kul_recycle)
-       call ipgeti ('b2tqna_user_transport', user_transport)
-c       if (kul_recycle.eq.1 .XOR. user_transport.eq.10) call xerrab(
-c     &   'Must use user_transport=10 and kul_recycle=1 together')
-       if (tn_style.gt.0 .and. ns.gt.2) call xerrab(
-     &   'tn_style=1,2 not supported for multispecies plasma')
-       if (tn_style.gt.0 .and. kul_recycle.eq.0) call xerrab(
-     &   'Must use kul_recycle=1 with tn_style>0')
-       call ipgeti ('b2tqna_transport_namelist', transport_namelist)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1278,7 +1260,7 @@ c     &   'Must use user_transport=10 and kul_recycle=1 together')
       call impgyro_init (nx, ny, ns, ismain) !yamoto
       write(*,*) 'b2ig: set ns_ext', ns_ext
 #endif
-      if(use_eirene.ne.0) then
+      if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
@@ -1331,7 +1313,7 @@ c     &   'Must use user_transport=10 and kul_recycle=1 together')
 
 *   ..read geometry and metric
       call read_map_geo (ninp(1), mpg, geo)
-      call init_geometry(mpg, geo)
+      call init_geometry(mpg, geo, switch)
 
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
@@ -1456,7 +1438,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 #endif
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
-      if (solve_keps.gt.0 .and. .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
+      if (switch%solve_keps.gt.0 .and. 
+     &   .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
      .  state%pl%kt = state%pl%ti*0.1_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
@@ -1483,7 +1466,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       write (*,*) 'Starting conversion to unstructured format...'
 
 !WG_TODO: move this back to original location...
-      if (boundary_namelist.ge.1) then
+      if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else 
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
@@ -1540,7 +1523,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       enddo
 !      if(use_mms.ne.0) then                                          !srv 26.02.18 {
 *   ..reset initial state using exact solution 
-       call set_exact_solution(nCv, ns, state % pl, state % dv)
+       call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
 !      endif                                                          !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
@@ -1549,7 +1532,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..compute electron rate coefficients
       call xertst (0.le.ismain.and.ismain.lt.ns0,
      . 'invalid main plasma species index ismain')
-      call b2sqel (nCv, ns0, ismain, ev, state%pl%te, state%rt, 
+      call b2sqel (nCv, ns0, ismain, switch, ev, state%pl%te, state%rt, 
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
@@ -1700,8 +1683,8 @@ c   --> better way doing this is necessary)
 *    ..compute log-log electron rate coefficients
           call b2spel (nCv, ns, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
-          call b2sqel (nCv, ns, ismain, ev, state % pl % te, state % rt, 
-     .      state % rtw)
+          call b2sqel (nCv, ns, ismain, switch, ev, state % pl % te, 
+     .      state % rt, state % rtw)
           call b2xpne (nCv, ns, state % rt % rza, state % pl % na, 
      .       state_ext % ne, state % dv % ne)
           max_delta = max(
@@ -1769,15 +1752,15 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
-      if(transport_namelist.eq.1) then
+      if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
       endif
-      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg)
+      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
-      call b2stbr_init (ns, mpg, BoRiS)
+      call b2stbr_init (ns, switch, mpg, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 !      call read_neutrals_namelist(nx, ny, ns, .true.)
@@ -1796,7 +1779,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
-        if (use_eirene.ne.0) then
+        if (switch%use_eirene.ne.0) then
           open(unit=44,file=filename)
           call ngread(ismain,iflag)
         endif
@@ -1806,7 +1789,7 @@ cxpb for neutral fluxes used in b2stbc_phys
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
-        if(use_eirene.eq.0) then
+        if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
 #ifdef WG_TODO
           call cdfmovie(ncid,nx,ny,ns)
@@ -1826,7 +1809,7 @@ c new CDF movie option (1st frame at t=0)
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, geo, mpg, state, 
+      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state, 
      &  state_ext, J)
       use b2mod_user_namelist
      , , only: nncf, ncf
@@ -1843,7 +1826,8 @@ c new CDF movie option (1st frame at t=0)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      real(kind=R8) :: J(nncf)
+      type(switches), intent (inout)      :: switch
+      real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc)
       integer nCv, nFc, nVx
       integer i, is, js, icf
       character*256 filename, fort31name
@@ -1955,9 +1939,9 @@ cwdk  set some integers
         state%psnc%fkt = state%dv%fkt
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
-        if (pot_eq.eq.0) then                                          !srv 13.07.05 {
+        if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
           state%pl%po   =0.0e0_R8
-        else if (pot_eq.eq.2) then
+        else if (switch%pot_eq.eq.2) then
           state%pl%po=3.1_R8*state%pl%te/qe
         endif
 
@@ -1970,7 +1954,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
      .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
      .      state%rt%iscx, itim, dtim, ntim, 
-     .      geo, mpg, state, state_ext, ierr)
+     .      switch, geo, mpg, state, state_ext, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2045,6 +2029,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%te+te_eps*ev)))
         write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
+        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+     &    (state%pl%tn+tn_eps*ev)))
         write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps)))
         write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
@@ -2061,6 +2047,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (state%pl%te+te_eps*ev))),
      &     maxval(abs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
+     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &    (state%pl%tn+tn_eps*ev))),
      &     maxval(abs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
      &     maxval(abs((state%pl%kt-state%psnc%kt)/
@@ -2093,7 +2081,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      1                itim,dtim,ntim,stack_ptr
         end do
 *    ..produce time dependent file
-        if (save_f31.lt.0) then
+        if (switch%save_f31.lt.0) then
 #ifndef HPUX
           write(fort31name,'(a,i8.8)') 'fort.31.', itim
 #else
@@ -2101,8 +2089,8 @@ csw 09oct2012 set default potential already at this point (BCs)
 #endif
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
-          call copy_background(nCv, nFc, ns, mpg, geo, 
-     .                         state%pl, state%dv,BoRiS)
+          call copy_background(nCv, nFc, ns, switch, mpg, geo, 
+     .                         state%pl, state%dv,BoRiS,kin_frac_hyb) ! FIXME progapage somehow kint_frac_hyb
           call write_f31(mpg)
           close(31)
         end if
@@ -2175,7 +2163,8 @@ c new CDF movie option
 #endif
         if (first_time_step) then
           if(.not.allocated(iz))
-     >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm)
+     >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
+     .                           switch)
           call b2trci(70,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,state)
           if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
         endif
@@ -2227,9 +2216,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &    res_max = max(res_max,state%diag%areshe)
         if (any(solveei))
      &    res_max = max(res_max,state%diag%areshi)
-        if (any(solveen).and.tn_style.eq.2)
+        if (any(solveen).and.switch%tn_style.eq.2)
      &    res_max = max(res_max,state%diag%areshn)
-        if (any(solvekt).and.solve_keps.eq.1)
+        if (any(solvekt).and.switch%solve_keps.eq.1)
      &    res_max = max(res_max,state%diag%areskt)
         
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
@@ -2305,7 +2294,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (ank_tracing.ne.0) call b2filef(0,ns,nnreg)
 #endif
 #ifdef B25_EIRENE
-          if (use_eirene.ne.0) then
+          if (switch%use_eirene.ne.0) then
             call write_f44(savefile(13:16))
 #ifndef HPUX
             inquire(file='fort.13',exist=found)
@@ -2372,13 +2361,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, ns, geo, mpg, state, state_ext)
+      subroutine b2mndr_2(nout, ns, switch, geo, mpg, state, state_ext)
+      use b2mod_switches
       implicit none
 #ifdef JET
       integer nout(0:11), nx, ny, ns
 #else
       integer nout(0:10), nx, ny, ns
 #endif
+      type (switches), intent (in) :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
@@ -2456,7 +2447,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state % pl, state % dv)
+        call calc_err(nCv, ns, switch, state % pl, state % dv)
       endif                                                              !srv 26.02.18 }
       if(iout.ne.0) then 
         if(use_mms.eq.0) then                                              !srv 29.11.18 {
@@ -2476,15 +2467,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif                                                              !srv 29.11.18 }
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
-      if (use_astra.ne.0) then
+      if (switch%use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
        close(nout(8))
       end if
 *   ..write out fort.30 and fort.31 files if not yet done
-      if (use_eirene.eq.0) then
-       if (save_f30.ne.0) call write_f30(nx, ny)
-       if (save_f31.ne.0) then
+      if (switch%use_eirene.eq.0) then
+       if (switch%save_f30.ne.0) call write_f30(nx, ny)
+       if (switch%save_f31.ne.0) then
         call copy_background(nx, ny, ns, BoRiS)
         call write_f31(nx, ny)
        end if
@@ -2550,7 +2541,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
 
 * finalise eirene_mc
-      if(use_eirene.ne.0.and.itim.gt.0) then
+      if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
          call eirene_mc_final(nx,ny,ns,BoRiS)
 #else

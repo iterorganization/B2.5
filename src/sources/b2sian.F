@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian (nCv, nFc, isb, geo, mpg, fchanml, smban)
+      subroutine b2sian(nCv, nFc, isb, switch, geo, mpg, fchanml, smban)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
 !WG_TODO      use b2mod_balance !djm Jan2017
@@ -12,6 +13,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, isb
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -32,17 +34,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, k
-      integer, save :: iout = 0
+      integer iCv, k
       character chns*3, chark*1
       real (kind=R8) ::
-     *    phm0, eps, wrk(nCv), wrkf(nFc)
-      save ncall, phm0, eps
+     *    eps, wrk(nCv), wrkf(nFc)
+      save eps
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr
+      external subini, subend, xertst
       external b2xvff, b2xvsg
 *   ..initialization
-      data ncall/0/, phm0/1.0e0_R8/, eps/1.0e-60_R8/
+      data eps/1.0e-60_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -51,10 +52,6 @@
 *   ..subprogram start-up calls
       call subini ('b2sian')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2sian_phm0', phm0)
-       call ipgeti ('b2sian_iout', iout)
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       smban = 0.0_R8
@@ -63,7 +60,8 @@
         wrkf = fchanml(:,1)/(geo%fcS*geo%fcQalf(:,1) + eps)
         call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrk)
         do iCv = 1, mpg%nCi
-            smban(iCv,0) = -phm0*geo%cvHz(iCv)*geo%cvVol(iCv)*
+            smban(iCv,0) = -switch%b2sian_phm0*
+     &          geo%cvHz(iCv)*geo%cvVol(iCv)*
      &          geo%cvBb(iCv,0)/geo%cvBb(iCv,2)*geo%cvBb(iCv,3)*wrk(iCv)
         enddo
       endif
@@ -72,7 +70,7 @@ cdjm Store linearised source for balance
 !WG_TODO        b2sian_smo0to3(-1:nx,-1:ny,0:3,isb)=smban
 !WG_TODO      endif
 
-      if (iout.ne.0) then
+      if (switch%b2sian_iout.ne.0) then
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
@@ -82,7 +80,6 @@ cdjm Store linearised source for balance
       endif
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

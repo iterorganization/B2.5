@@ -1,15 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
+      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
      &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
      &   rescb, corpb, aa, name)                              !srv 18.05.02
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, itcnt, isb, nregionv
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       logical solvereg(0:nregionv)      
@@ -55,8 +57,8 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-      integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
      *   t1, t2, t3, t11, t22, wrk0(nFc), tr
       character chns*3
@@ -81,10 +83,9 @@
       call subini ('b2usco')
 *   ..set internal parameters on first call                              !srv 25.08.99
       if (ncall.eq.0) then                                               !srv 06.07.06 {
-       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
-       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 13.10.06
-       call ipgeti ('b2usco_iout', iout)                                 !srv 13.10.06
+c       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
+c       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
+c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 13.10.06
       endif                                                              !srv 06.07.06 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -232,7 +233,7 @@
       do iCv = 1, nCv
         corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
-      if (iout.ne.0) then                                              !srv 17.06.02 {
+      if (switch%b2usco_iout.ne.0) then                                     !srv 17.06.02 {
         write (chns,'(i3.3)') isb
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-6),name//'_aam6'//chns)
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-5),name//'_aam5'//chns)

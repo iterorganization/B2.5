@@ -1,15 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfc (nCv, nFc, nVx, isb, geo, mpg, rob, ub, flub,
-     &  cvsb, flcb, cvcb, wrkf)
+      subroutine b2nxfc (nCv, nFc, nVx, isb, switch, geo, mpg, rob, 
+     &  ub, flub, cvsb, flcb, cvcb, wrkf)
       use b2mod_types
       use b2mod_boundary_namelist
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -34,15 +36,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, iFc, ncallout, ib
-      integer, save :: iout = 0                                     !srv 17.06.02
+      integer ncall, iFc, ncallout, ib
       character charns*3                                            !srv 17.06.02
-      save ncall, style, ncallout
+      save ncall, ncallout
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
-      data ncall/0/, style/1/, ncallout/-1/
+      data ncall/0/, ncallout/-1/
 *!!   (style is a numerical switch; needs experiments)
 
 *-----------------------------------------------------------------------
@@ -62,11 +63,7 @@
       call subini ('b2nxfc')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2nxfc_style', style)
-       call xertst (0.le.style.and.style.lt.2,
-     &   'faulty internal parameter style')
        call ipgeti ('b2news_ncallout', ncallout)
-       call ipgeti ('b2nxfc_iout', iout)                             !srv 17.06.02
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -82,13 +79,13 @@
       endif
 
 *   ..compute flcbx, cvcbx
-      if (style.eq.0) then
+      if (switch%b2nxfc_style.eq.0) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub*rob,wrkf)
 *     ..compute flcbx, cvcbx
         flcb(:,0) = flub(:,0) + geo%fcPbshz*wrkf
         cvcb(:,0) = cvsb(:,0)
-      elseif (style.eq.1) then
+      elseif (switch%b2nxfc_style.eq.1) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
 *     ..compute flcbx, cvcbx        
@@ -97,14 +94,12 @@
      &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5e0_R8
         enddo
         cvcb(:,0) = cvsb(:,0)
-      else
-        call xerrab ('Only style 0 or 1 in b2nxfc are included')
       endif
 *   ..compute flcby, cvcby
       flcb(:,1) = flub(:,1)
       cvcb(:,1) = cvsb(:,1)
 
-      if (iout.ne.0) then                                              !sv 17.06.02 {
+      if (switch%b2nxfc_iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb    
         call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flubx'//charns)
         call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_fluby'//charns)
