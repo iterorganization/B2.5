@@ -54,6 +54,8 @@
 !!        !< run summary data
 !!      type (ids_numerics) :: numerics !< IDS designed to store
 !!        !< run numerics data
+!!      type (ids_divertors) :: divertors !< IDS designed to store
+!!        !< divertor data
 !!
 !!-----------------------------------------------------------------------------
 
@@ -70,6 +72,10 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 21
     use b2mod_ual    &
      & , only : ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use b2mod_ual    &
+     & , only : ids_divertors
 #endif
 #ifdef B25_EIRENE
     use eirmod_comusr
@@ -230,6 +236,9 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 25
       &  numerics, run_start_time, run_end_time, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+      &  divertors, &
+#endif
       &  tim, dtim, shot, run, database, version )
 
     !! Create/Write the set data to IDSs
@@ -242,6 +251,9 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
         &   idx )
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
@@ -251,6 +263,9 @@ program b2_ual_rewrite
 #endif
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
 #endif
         &   idx )
     call close_ual(idx)

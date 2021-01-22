@@ -18,14 +18,12 @@ c=======================================================================
       integer i,j,k,l,is,iy,jj
       real (kind=R8) :: u
       real (kind=R8), allocatable :: hlp_flx(:,:,:)
-      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80,tab
+      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80
       data ftrg /
      ,       'fi_tg_i.dat','fi_tg_iu.dat','fi_tg_ou.dat','fi_tg_o.dat'/
       data trg_label /'inner','inner_top','outer_top','outer'/
 c=======================================================================
 c      print *,'Starting b2pgeier...'      !###
-
-      tab=char(9)
 
 c*** Determine topology and calculate some indices
 

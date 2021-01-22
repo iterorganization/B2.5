@@ -915,6 +915,16 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
         call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
 
+*   ..zero out contributions in dead cells
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
+
 * ..sources
       b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
      1 sna0(-1:nx,-1:ny,0,0:ns-1)+

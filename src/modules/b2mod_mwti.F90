@@ -103,8 +103,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), tpmxip(nncutmax), &
-         tpmxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         tpmxip(nncutmax), tpmxap(nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &

@@ -174,6 +174,9 @@
 #if IMAS_MINOR_VERSION > 25
       type(ids_numerics) :: numerics
 #endif
+#if IMAS_MINOR_VERSION > 30
+      type(ids_divertors) :: divertors
+#endif
       integer :: num_time_slices, time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
@@ -1219,7 +1222,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
          call xertst (nscx.lt.nscxmax,
-     1    'too many neutral hydrogen species')
+     1    'too many neutral hydrogenic species')
          iscx(nscx) = is
          nscx = nscx+1
         endif
@@ -2508,6 +2511,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &              numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &              divertors,
+#endif
      &              tim, dtim, shot, run, database, version,
      &              time_slice_index, num_time_slices )
                   write_ids = .false.
@@ -2533,6 +2539,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &        numerics, run_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
      &        tim, dtim, shot, run, database, version )
             old_start_time = run_start_time
             write_ids = .false.
@@ -2549,6 +2558,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &        numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
      &        tim, dtim, shot, run, database, version,
      &        time_slice_index, num_time_slices )
             write_ids = .false.
@@ -2560,6 +2572,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #endif
 #if IMAS_MINOR_VERSION > 25
      &      numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
 #endif
      &      treename, shot, run, idx, username, database, version )
 #endif
@@ -2757,6 +2772,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &      numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
      &      tim, dtim, shot, run, database, version,
      &      time_slice_index, num_time_slices )
         else if (continued) then
@@ -2845,6 +2863,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &            numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &            divertors,
+#endif
      &            tim, dtim, shot, run, database, version,
      &            time_slice_index, num_time_slices )
               else
@@ -2869,6 +2890,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #if IMAS_MINOR_VERSION > 25
      &      numerics, run_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
      &      tim, dtim, shot, run, database, version )
         end if
         call put_ids_edge( edge_profiles, edge_sources,
@@ -2878,6 +2902,9 @@ cxpb Do the recreate to a temporary location and then bring it back
 #endif
 #if IMAS_MINOR_VERSION > 25
      &    numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &    divertors,
 #endif
      &    treename, shot, run, idx, username, database, version )
         call close_ual(idx)

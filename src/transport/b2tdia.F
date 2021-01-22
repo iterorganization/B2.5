@@ -6,7 +6,11 @@
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_geo
-     &   , only : hy1, hyl, hxb                 ! IYS 04.03.2019
+     &   , only : hyl, hxb                       ! IYS 04.03.2019
+#ifdef CLASSICAL_CURRENT
+      use b2mod_geo
+     &   , only : hy1
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -194,7 +198,7 @@ crfs inertia terms
      &       .and. leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &       .and. region(ix,iy,0).ne.0) then
 cxpb  Must check for case of the island X-point
-                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
+                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then        !xpb
 cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,is)+
@@ -208,7 +212,7 @@ cxpb  Island X-point cells
      2               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   endif
-                endif                                           	 !xpb
+                endif                                                    !xpb
               enddo
             enddo
           endif

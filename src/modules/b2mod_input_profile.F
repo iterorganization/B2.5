@@ -354,6 +354,16 @@
    99 write (*,*) 'Error in reading the dsp file'
   100 continue
 
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
+
       ext_sna(:,:,:)=sna0(:,:,0,:)
       ext_smo(:,:,:)=smo0(:,:,0,:)
       ext_sne(:,:)=sne0(:,:,0)

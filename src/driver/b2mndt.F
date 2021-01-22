@@ -340,6 +340,7 @@ ctmp.dpc
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
+          wrong_flow = .false.
           main_call = ntim.ne.0
           call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,

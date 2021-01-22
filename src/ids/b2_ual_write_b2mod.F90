@@ -241,6 +241,8 @@
 !!        !< run summary data
 !!      type (ids_numerics) :: numerics !< IDS designed to store
 !!        !< run numerics data
+!!      type (ids_divertors) :: divertors !< IDS designed to store
+!!        !< divertor data
 !!      integer num_time_slices, time_slice_index
 !!      real(IDS_real) :: old_start_time, old_end_time, ids_end_time
 !!      logical continued
@@ -259,6 +261,10 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 21
     use b2mod_ual    &
      & , only : ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use b2mod_ual    &
+     & , only : ids_divertors
 #endif
     use b2mod_grid_mapping
 #if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
@@ -475,6 +481,9 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 25
              &  numerics, old_start_time, run_end_time, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+             &  divertors, &
+#endif
              &  tim, dtim, shot, run, database, version, &
              &  time_slice_index, num_time_slices )
         else
@@ -495,6 +504,9 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 25
          &  numerics, run_start_time, run_end_time, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+         &  divertors, &
+#endif
          &  tim, dtim, shot, run, database, version )
     end if
 
@@ -507,6 +519,9 @@ program b2_ual_write_b2mod
 #endif
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
 #endif
         &   treename, shot, run, idx, username, database, version )
     call close_ual(idx)
