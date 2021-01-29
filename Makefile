@@ -260,7 +260,10 @@ OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
-ADEXTRA = ${CONTEXTAD} ${STACKAD}
+ADEXTRA = ${CONTEXTAD}
+ifdef DIFF_B
+ADEXTRA += ${STACKAD}
+endif
 ifdef AD_DEBUG
 ADEXTRA = ${DBGAD} ${STACKAD}
 endif

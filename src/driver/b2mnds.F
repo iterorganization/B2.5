@@ -324,7 +324,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !  idum(0) = ns
 !  call cfwuin(nout(10), 1, idum, 'ns')
 !  call cfwuch(nout(10), 120, lblmn, 'label')
-!  call b2mwq0(nout(10), ns)
+!  call b2mwq0_nodiff(nout(10), ns, switch)
 
 
 * ..return
