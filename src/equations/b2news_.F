@@ -372,9 +372,9 @@ c   extra call at this place within internal iteration)
      &    pl%te, pl%ti, dv%ne, dv%ni, sr, .false.)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
-     &    psnc%na, psnc%ua, psnc%te, psnc%ti, 
+     &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
      &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt,
-     &    pl%na, pl%ua, pl%te, pl%ti, dv%ne, 
+     &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
      &    dv%ni, dv%kinrgy, pl%kt, sr, .false.)
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08

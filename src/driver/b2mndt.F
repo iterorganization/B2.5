@@ -464,8 +464,8 @@ ctmp.dpc
            call b2mxac (nCv, ns, st%dv, st%diag)
 ! csc UNCOMMENT WITH AD
 !!*      ..compute norms of the differentiated residuals
-!          CALL B2MXAR_DIFF(ncv, ns, nnreg(0), boris, geo, mpg, std%pl, &
-!&                      std%dv, std%diag)
+!           call B2MXAR_DIFF(nCv, ns, nnreg(0), BoRiS, switch, geo, mpg, &
+!&                      std%pl, std%dv, std%diag)
 !!*      ..compute norms of the differentiated corrections
 !          CALL B2MXAC_DIFF(ncv, ns, std%dv, std%diag)
 *      ..decide what output
@@ -485,7 +485,7 @@ ctmp.dpc
              flush(nout(4))
 ! csc UNCOMMENT WITH AD
 !              CALL B2MWQT_DIFF(nout(10), ncv, ns, itim, itcnt, boris, &
-!&                          geo, std%pl, std%dv, std%diag)
+!&               switch, geo, std%pl, std%dv, std%diag)
 !              FLUSH(nout(10)) 
             endif
            endif
