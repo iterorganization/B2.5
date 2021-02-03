@@ -114,7 +114,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       real (kind=R8) :: pol_anom_scale
       real (kind=R8) :: auto_spatial_hyb_mfp_1
       real (kind=R8) :: auto_spatial_hyb_mfp_2
-
+      real (kind=R8) :: neutral_sources_rescale
 
 
 c iout switches
@@ -275,6 +275,7 @@ c diagnostics switches
       integer :: b2stbc_diagno
       integer :: b2npmo_diagno
       integer :: vlct_diagno
+      integer :: b2tqna_diagno
 
 c MMS
       integer:: set_na_numerical
@@ -318,8 +319,38 @@ c Eirene coupling
 
 
 c k-enstrophy model
+      integer :: transport_keps
       integer :: solve_keps
- 
+      integer :: keps_local
+      real(kind=R8) :: keps_cd
+      real(kind=R8) :: keps_heat
+      real(kind=R8) :: dna_min
+      real(kind=R8) :: keps_heat_i
+      real(kind=R8) :: keps_visc
+      real(kind=R8) :: keps_dkt
+      real(kind=R8) :: keps_inc
+      real(kind=R8) :: keps_fac
+      real(kind=R8) :: keps_shear
+      real(kind=R8) :: keps_eps
+
+c b2tqna
+      real (kind=R8) :: b2tqna_ballooning
+      real (kind=R8) :: b2tqna_bb_ref
+      real (kind=R8) :: b2tqna_ballooning_rescale
+      real (kind=R8) :: b2tqna_pfr_rescale
+      real (kind=R8) :: b2tqna_divsol_rescale
+      real (kind=R8) :: b2tqna_min_df0
+      real (kind=R8) :: b2tqna_max_df0
+      real (kind=R8) :: b2tqna_cfvma
+      integer :: b2tqna_new_df0
+      integer :: b2tqna_ixref
+      integer :: b2tqna_transport_inputfile
+
+c b2tanml
+      real (kind=R8) :: fch_anomalous
+
+c b2stel
+      integer :: fix_recomb_energy
 
       end type switches
 
@@ -442,7 +473,7 @@ c k-enstrophy model
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_mfp_1 = 0.0_R8
       s % auto_spatial_hyb_mfp_2 = 100.0_R8
-
+      s % neutral_sources_rescale = 1.0_R8
 
 
       s % iout_b2wdat = 0
@@ -588,6 +619,7 @@ c k-enstrophy model
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
       s % vlct_diagno = 1
+      s % b2tqna_diagno = 0
 
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
@@ -626,8 +658,38 @@ c eirene coupling
       s % eir_ua_min = -1.0e30_R8
       s % eir_ua_max = 1.0e30_R8
 
-
+c k-enstrophy model
+      s % transport_keps = 0
       s % solve_keps = 0
+      s % keps_local = 1
+      s % keps_cd = 1.0_R8
+      s % keps_heat = 2.0_R8
+      s % keps_heat_i = 2.0_R8
+      s % dna_min = 1.0e-2_R8
+      s % keps_visc = 0.2_R8
+      s % keps_dkt = 0.01_R8
+      s % keps_inc = 1.0_R8
+      s % keps_fac = 1.0_R8
+      s % keps_shear = 1.0e1_R8
+      s % keps_eps = 1.0e-10
+
+c b2tqna
+      s % b2tqna_ballooning = 0.0_R8
+      s % b2tqna_bb_ref = 0.0_R8
+      s % b2tqna_ballooning_rescale = 1.0_R8
+      s % b2tqna_pfr_rescale = 1.0_R8
+      s % b2tqna_divsol_rescale = 1.0_R8
+      s % b2tqna_min_df0 = 0.0_R8
+      s % b2tqna_max_df0 = 1.0e30_R8
+      s % b2tqna_cfvma = 0.0e0_R8                   !srv 15.12.05
+      s % b2tqna_new_df0 = 0
+      s % b2tqna_ixref = 1
+      s % b2tqna_transport_inputfile = 0
+
+c fch_anomalous
+      s % fch_anomalous = 1.0e0_R8
+
+      s % fix_recomb_energy = 0
 
       return
       end subroutine set_defaults_switches
@@ -754,6 +816,8 @@ c eirene coupling
       call ipgetr ('b2trno_pol_anom_scale', s % pol_anom_scale)
       call ipgetr ('auto_spatial_hyb_mfp_1', s % auto_spatial_hyb_mfp_1)
       call ipgetr ('auto_spatial_hyb_mfp_2', s % auto_spatial_hyb_mfp_2)
+      call ipgetr ('b2mndr_rescale_neutrals_sources',
+     &                s % neutral_sources_rescale)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)                    
@@ -912,6 +976,7 @@ c diagnostic switches
       call ipgeti ('b2stbc_diagno',s % b2stbc_diagno)                              !xpb
       call ipgeti ('b2npmo_diagno',s % b2npmo_diagno)
       call ipgeti ('b2npmo_vlct_diagno',s % vlct_diagno)
+      call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
 
 c MMS
       call ipgeti ('b2mndr_set_na_numerical', s%set_na_numerical)
@@ -954,6 +1019,41 @@ c Eirene coupling
 
 c k-enstrophy model
       call ipgeti ('b2mndr_solve_keps',s % solve_keps)
+      call ipgeti ('b2tqna_transport_keps', s % transport_keps)
+      call ipgetr ('b2tqna_keps_cd', s % keps_cd)
+      call ipgetr ('b2tqna_keps_visc', s % keps_visc)
+      call ipgetr ('b2tqna_keps_dkt', s % keps_dkt)
+      call ipgetr ('b2tqna_keps_heat', s % keps_heat)
+      call ipgetr ('b2tqna_keps_heat_i', s % keps_heat_i)
+      call ipgeti ('b2tqna_keps_local', s % keps_local)
+      call ipgetr ('b2tqna_keps_eps', s % keps_eps)
+      call ipgetr ('b2tqna_keps_dna_min', s % dna_min)
+      call ipgetr ('b2tqna_keps_inc', s % keps_inc)
+      call ipgetr ('b2tqna_keps_init', s % keps_fac)
+      call ipgetr ('b2tqna_keps_shear', s % keps_shear)
+
+c b2tqna
+      call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
+      call ipgetr ('b2tqna_min_df0', s%b2tqna_min_df0)
+      call ipgetr ('b2tqna_max_df0', s%b2tqna_max_df0)
+      call ipgeti ('b2tqna_ixref', s%b2tqna_ixref)
+      call ipgeti ('b2tqna_inputfile', s%b2tqna_transport_inputfile)
+      call ipgetr ('b2tqna_ballooning', s%b2tqna_ballooning)
+      call ipgetr ('b2tqna_bb_ref', s%b2tqna_bb_ref)
+      call ipgetr ('b2tqna_ballooning_rescale',
+     & s%b2tqna_ballooning_rescale)
+      call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
+      call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
+      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                       !srv 15.12.05
+
+c fch anomalous
+      call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
+       if (s%fch_anomalous.eq.1.0_R8)
+     &  call ipgetr ('b2tanml_anomalous', s%fch_anomalous) ! for backward compatibility
+
+c b2stel
+      call ipgeti ('b2stel_fix_recomb_energy',
+     & s%fix_recomb_energy)
 
       return
       end subroutine read_switches
@@ -1216,8 +1316,24 @@ c b2mwqt
      &                              'faulty parameter b2mwqt style')
 
 
+c k-enstrophy model
+       call xertst (0.le.s%transport_keps .and. s%transport_keps.le.1,
+     &  'b2tqna_transport_keps value not coded')
+       call xertst (0.0_R8.le.s%keps_dkt,
+     &  'keps_dkt must be .gt. 0.0')
 
+c eirene_mc
+        call xertst (0.0_R8.le.s%neutral_sources_rescale,
+     1   'faulty input neutral_sources_rescale')
 
+c b2tqna
+        call xertst (0.0_R8.le.s%b2tqna_min_df0.and.s%b2tqna_min_df0.le.
+     &   s%b2tqna_max_df0.and.s%b2tqna_max_df0.gt.0.0_R8,
+     &   'Invalid range for b2tqna_min_df0 and/or b2tqna_max_df0')
+      call xertst (s%b2tqna_pfr_rescale.gt.0.0_R8,
+     &  'faulty input pfr_rescale')
+      call xertst (s%b2tqna_divsol_rescale.gt.0.0_R8,
+     &   'faulty input divsol_rescale')
 
       return
       end subroutine check_values_switches
@@ -1225,24 +1341,25 @@ c b2mwqt
 ***********************************************************************
 
       subroutine check_consistency_switches (s)
-
+      use b2mod_b2cmrc
+     & , only : adpak_used
 c check the inter-consistency of different switches (e.g. certain combinations of swithces may not (yet) be allowed or developed)
 
       implicit none
       type(switches), intent(in out) :: s
 
        if (s % tn_style.ne.0.and.s % mdf_fhi.eq.1) then
-         call xerrab('mdf_fhi not yet available for',
+         call xerrab('mdf_fhi not yet available for'//
      &               'non-default energy equation')
        endif
 
        if (s%pot_eq.ne.1.and.s%no_current.ne.1) then
-         call xerrab ('If b2news_poteq.ne.1,', 
+         call xerrab ('If b2news_poteq.ne.1,'// 
      &                  'then b2tfhe_no_current must be 1!')
        endif
 
       if (s%tn_style.ne.0.and.s%stylec.ne.0) then
-        call xerrab('b2upht stylec =/= 0 not yet available for',
+        call xerrab('b2upht stylec =/= 0 not yet available for'//
      &                  'non-default energy equation')
       endif
 
@@ -1269,7 +1386,7 @@ c spatially hybrid neutrals
       endif
 
       if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
-        call xerrab('spatial hybrid neutrals not yet developed',
+        call xerrab('spatial hybrid neutrals not yet developed'//
      &               'with drifts and currents')
       endif
 
@@ -1281,6 +1398,20 @@ c spatially hybrid neutrals
         call xerrab('automatic spatial hybrid needs spatial hybrid')
       endif
 
+c k-enstrophy model
+      if (s%solve_keps.eq.0 .and. s%transport_keps.gt.0) then
+        write(*,*) 'WARNING! b2mndr_solve_keps = ',
+     &    s%solve_keps,' and b2tqna_transport_keps =',
+     &    s%transport_keps,' should go together'
+      endif
+
+c b2stel
+       call xertst(.not.(adpak_used.and.s%fix_recomb_energy.ne.0),
+     &   'fix_recomb_energy should not be used with ADPAK rates!')
+       if(s%fix_recomb_energy.ne.0) then
+         write(*,*)
+     &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
+       endif
 
       return
       end subroutine check_consistency_switches

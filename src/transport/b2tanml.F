@@ -37,36 +37,27 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, iCv, iFc
+      integer iCv, iFc
       integer, save :: guard_flows
-      real (kind=R8) :: fch_anomalous, dpo(nFc,0:1),
+      real (kind=R8) :: dpo(nFc,0:1),
      *  wght(nCv), pov(mpg%nVx)
-      save ncall, fch_anomalous
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, diff_r
 *   ..initialization
-      data ncall/0/, fch_anomalous/1.0e0_R8/, guard_flows/2/
+      data guard_flows/2/
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tanml')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)
-       if (fch_anomalous.eq.1.0_R8) 
-     >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..extensive tests on first few calls
-      if (ncall.lt.3) then
-      endif
 
-      if(switch%no_current.ne.0.or.fch_anomalous.eq.0.0e0_R8) then                !srv 27.02.13
+      if(switch%no_current.ne.0.or.
+     &   switch%fch_anomalous.eq.0.0e0_R8) then                !srv 27.02.13
         fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
 
@@ -80,7 +71,6 @@
       endif                                                   !srv 27.02.13
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

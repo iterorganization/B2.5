@@ -71,7 +71,7 @@ csw 19oct2012, added save attribute!!!
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
-     * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
+     * ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
      * kin_frac_hyb(nFc)
       real (kind=R8), save, allocatable ::
@@ -158,7 +158,7 @@ c      data lis_hlp / 110, 111, 112, 49 /
       save ncall, output_style, saved_volrec_used,
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * neutral_sources_rescale, ncallfeedback, ank_mods,
+     * ncallfeedback, ank_mods,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
      2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol,
      3 stab_corr
@@ -225,7 +225,7 @@ csw 26feb2014
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
      .  linearisation/1/, solregno/3/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
-     2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
+     2  rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
      5  ndes/0.0_R8/, ank_mods/0/, repeat_first_call/1/,
@@ -351,10 +351,6 @@ c not sure this is the right place
      1     solregno.le.cbirno+cbnrno-1,
      2     'faulty internal parameter solregno')
         endif
-        call ipgetr ('b2mndr_rescale_neutrals_sources',
-     *       neutral_sources_rescale)
-        call xertst (0.0_R8.le.neutral_sources_rescale,
-     1   'faulty input neutral_sources_rescale')
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
         call ipgeti ('eirene_ionising_core', ionising_core)
         if (ionising_core.eq.0)     ! for backward compatibility
@@ -583,10 +579,12 @@ c*** recyc     : fudge factors for the sources in B2
      &      private_flux_puff.gt.0.0_R8)) then !{
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
-     1         cbsna(0,isfeedback,pfrregno2))/neutral_sources_rescale
+     1         cbsna(0,isfeedback,pfrregno2))/
+     2         switch%neutral_sources_rescale
             else !}{
               tflux(istrai)=
-     1         cbsna(0,isfeedback,pfrregno1)/neutral_sources_rescale
+     1         cbsna(0,isfeedback,pfrregno1)/
+     2         switch%neutral_sources_rescale
             end if !}
             if(ncall.eq.0) then
               if(nesepm_pfr.gt.0.0_R8) then
@@ -601,25 +599,29 @@ c*** recyc     : fudge factors for the sources in B2
           else if (ncall.ge.ncallfeedback.and.nesepm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
           else if (time_dep_puff(istrai)) then !}{

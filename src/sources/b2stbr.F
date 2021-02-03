@@ -47,12 +47,17 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_recycle
+     & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
+     &          int5r, int5l, int1r, int1l, int4r, int4l
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS      
-      type (switches), intent (in) :: switch
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -122,7 +127,7 @@
      4  sput_mixed_alpha, sput_mixed_beta, redep_alpha
       real (kind=R8) ::
      *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,neutral_rescale,neutral_sources_rescale,
+     *  sum_start,sum_end,neutral_rescale,
      *  sum_strti,sum_ndi,sum_nde,core_sources_rescale,
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  work(nCv,0:1), wrk2(nCv), wrk3(nCv),
@@ -153,7 +158,7 @@
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
      *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
-     1     neutral_rescale, neutral_sources_rescale,
+     1     neutral_rescale,
      2     coreregno, coreregn2, core_sources_rescale, alpha,
      3     therm_evap, sput_res,
      5     sput_chem_model,
@@ -168,7 +173,6 @@
      *     in_dl/0.001_R8/, in_no_of_angles/9/, alpha/0.25_R8/,
      *     in_size_of_table/200000/,
      1     neutral_rescale/1.0_R8/,
-     *     neutral_sources_rescale/1.0_R8/
      1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     therm_evap/0.0_R8/, sput_res/0.0_R8/,
      7     sput_chem_model/0/,
@@ -290,10 +294,8 @@
         call ipgeti ('b2stbr_reflection_on', reflection_on)
         call ipgeti ('b2stbr_sputter_energy_on', sputter_energy_on)
         call ipgetr ('b2mndr_rescale_neutrals', neutral_rescale)
-        call ipgetr ('b2mndr_rescale_neutrals_sources',
-     *       neutral_sources_rescale)
         if(switch%use_eirene.eq.0) neutral_rescale=1.0_R8
-        if(switch%use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+        if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
         call ipgeti ('b2stbc_coreregno', coreregno)
         call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
@@ -443,7 +445,7 @@ c   --> better solution wanted here..
      &  srw, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, 
      &  switch%b2stbc_boundary_namelist,
-     &  neutral_sources_rescale, core_sources_rescale,  
+     &  switch%neutral_sources_rescale, core_sources_rescale,  
      &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &  sput_chem_model, therm_evap, sput_res,  
      &  reflection_on, sputter_energy_on, main_call, 
@@ -478,7 +480,7 @@ c   --> better solution wanted here..
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   coreregno, coreregn2, output,
-     &   neutral_sources_rescale, core_sources_rescale,
+     &   switch%neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_frc, sput_phys,
      &   sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res,

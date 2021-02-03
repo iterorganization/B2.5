@@ -131,7 +131,6 @@
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
-     *  neutral_sources_rescale,
      1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, 
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
@@ -173,7 +172,7 @@
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal,
-     3  natmi, neutral_rescale, neutral_sources_rescale, tally,
+     3  natmi, neutral_rescale, tally,
      4  BoRiS, density_rescale,
      .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
@@ -195,7 +194,7 @@
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
      2     coronal/0/, neutral_rescale/1.0_R8/,
-     *     neutral_sources_rescale/1.0_R8/, tally/1/,
+     *     tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
      *     no_solve/0/,
      2     na_eps/1.0e19_R8/,
@@ -1166,24 +1165,22 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
-       call ipgetr ('b2mndr_rescale_neutrals_sources',
-     *       neutral_sources_rescale)
 cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
-       if(switch%use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+       if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
        if(switch%use_eirene.ne.0) then
 c when using kinetic neutrals, volume recombination is fully handled on the EIRENE side.
 c The recombination rate depends on the ion density and not on the neutral density, so the neutral rescaling is not sufficient to turn it off on the B2.5 side
 c and hence the reaction rates have to be rescaled here.
-         if (neutral_sources_rescale.ne.1.0_R8) then
-           write(*,*) 'Adding ',log(neutral_sources_rescale),
+         if (switch%neutral_sources_rescale.ne.1.0_R8) then
+           write(*,*) 'Adding ',log(switch%neutral_sources_rescale),
      *         ' to relevant rtlra and rtlqa_ra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
-     *             log(neutral_sources_rescale)
+     *             log(switch%neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
                 rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
-     *             log(neutral_sources_rescale)
+     *             log(switch%neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlqa_ra(0,0,is+1)
              endif
            enddo
@@ -1813,6 +1810,11 @@ c new CDF movie option (1st frame at t=0)
      &  state_ext, J)
       use b2mod_user_namelist
      , , only: nncf, ncf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_recycle
+     & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
+     &          int5r, int5l, int1r, int1l, int4r, int4l
       implicit none
 #ifdef JET
       integer nout(0:11), nx, ny, ns

@@ -25,13 +25,37 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_tallies
+     & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
+     &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
+     &          rsamoreg
+      use b2mod_eirdiag
+     & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
+     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+      use b2mod_transport_namelist
+     & , only : parm_hce, parm_hci, parm_dna
+      use b2mod_recycle
+     & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
+     &          int5r, int5l, int1r, int1l, int4r, int4l
+      use b2mod_boundary_namelist
+     & , only : conpar, enepar, enipar
+      use b2mod_neutrals_namelist
+     & , only : maxw_eff
+      use b2mod_b2cmpt
+     &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
+     &           cfhce, cfhci
+      use b2mod_input_profile
+     & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
+     &          tr_ip_elm_count, no_div, addspec
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr
       integer nscx, nscxmax, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
-      type (switches), intent (in) :: switch
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
 *   ..input/output arguments

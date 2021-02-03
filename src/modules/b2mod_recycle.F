@@ -33,6 +33,11 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
      &  M_dummy(:), T_dummy(:), shpottau_dummy(:)        !nh 21.02.2020
 
+      real (kind=R8),save::int0l,int0r,
+     &    int1l,int1r,int2l,int2r,
+     &    int3l,int3r,int4l,int4r,
+     &    int5l,int5r,int6l,int6r 
+
       contains
 
       subroutine read_recycle_fnn(nsd,nbnd)
@@ -1355,10 +1360,6 @@ c m = mass of a particle
      &    i5l,i5r,i6l,i6r  
       !internal variables
       real (kind=R8),save::uold=0.0_R8,told=0.0_R8,mold=0.0_R8
-      real (kind=R8),save::int0l,int0r,
-     &    int1l,int1r,int2l,int2r,
-     &    int3l,int3r,int4l,int4r,
-     &    int5l,int5r,int6l,int6r 
       real (kind=R8):: vth,arg
 c      real (kind=R8):: S15AEC
       intrinsic erf
