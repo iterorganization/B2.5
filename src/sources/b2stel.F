@@ -55,10 +55,10 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, iCv, is, js, fix_recomb_energy, k
+      integer ncall, iCv, is, js, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       character chns*3, chk*1                                           !srv 30.06.08
-      save ncall, fix_recomb_energy
+      save ncall
       real (kind=R8) ::
      *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
@@ -78,7 +78,7 @@
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
-      data ncall/0/, fix_recomb_energy/0/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -87,14 +87,6 @@
 *   ..subprogram start-up calls
       call subini ('b2stel')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2stel_fix_recomb_energy', fix_recomb_energy)
-       call xertst (.not.(adpak_used.and.fix_recomb_energy.ne.0),
-     &   'fix_recomb_energy should not be used with ADPAK rates!')
-       if(fix_recomb_energy.ne.0) then
-         write(*,*)
-     &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
-       endif
 *   ..identify impurity homonuclear sequences
 !WG_TODO       nimp_tmp=0
 !WG_TODO       jimp_tmp=0
@@ -104,7 +96,6 @@
 !WG_TODO           jimp_tmp(is)=nimp_tmp
 !WG_TODO         end if !}
 !WG_TODO       end do !}
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -336,7 +327,7 @@
 
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(fix_recomb_energy.ne.0) then
+           if(switch%fix_recomb_energy.ne.0) then
 c the default treatment is to have the entire ionization potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung

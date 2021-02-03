@@ -171,8 +171,6 @@ c 2002-09-11: logic revised
       integer indx, indy, indx1, indy1
       integer coriolis
       integer nncut1, nnreg1(0:2), periodic_bc1
-      integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
@@ -439,10 +437,8 @@ c 2002-09-11: logic revised
       integer :: nCv, nFc
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
-     .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
@@ -510,8 +506,7 @@ c 2002-09-11: logic revised
       logical averaging
       logical first_pass, do_scale
       logical wall_namelist_used
-      logical region_flags(NNREGMAX,nkind_coeff), no_pflux
-      logical poloidal_scaling(nscale), prdone, axdone, spdone
+      logical prdone, axdone, spdone
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
@@ -555,16 +550,15 @@ c 2002-09-11: logic revised
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
-      namelist /transport/ ndata, tdata, addspec,
-     1   transport_filename, transport_time_mod, transport_time_switch,
-     2   scaling_ix_begin, scaling_ix_end, scaling_strength,
-     3   region_flags, no_pflux, poloidal_scaling, scaling_width,
-     4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-
+      namelist /transport/ ndata, tdata, addspec,
+     1   transport_ip_filename, transport_ip_time_mod, 
+     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end, 
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling, 
+     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
+     5   elm_ix_begin, elm_ix_end, no_div
       cr(ix,iy)=0.25_R8*
      1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
       cz(ix,iy)=0.25_R8*

@@ -13,11 +13,18 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_transport_namelist
+     & , only : parm_hce, parm_hci, parm_dna
+      use b2mod_input_profile
+     & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
+     &          tr_ip_elm_count, no_div, addspec
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
      *  ismain
-      type (switches), intent (in) :: switch
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl

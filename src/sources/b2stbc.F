@@ -5,7 +5,6 @@
      &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  wrong_flow, main_call)
       use b2mod_types
-!      use b2mod_boundary_namelist
 !      use b2mod_geo_corner
       use b2mod_constants
 !      use b2mod_sources
@@ -21,6 +20,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_boundary_namelist
+     & , only : conpar, enepar, enipar
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
