@@ -5,18 +5,27 @@
      1 switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
       use b2mod_constants
-      use b2mod_input_profile
       use b2mod_b2cmpa
 !WG_TBD      use b2mod_neoclassical
       use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_b2cmpt
+     &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
+     &           cfhce, cfhci
+      use b2mod_transport_namelist
+     & , only : parm_hce, parm_hci, parm_dna
+      use b2mod_input_profile
+     & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
+     &          tr_ip_elm_count, no_div, addspec, alloc_input_profile
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
      &  ismain
-      type (switches), intent (in) :: switch
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -67,16 +76,15 @@
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
      4  chce0(nFc,0:1), chve0(nFc,0:1),
      1	ft,                                                             !srv 16.10.17
-     *  wrk(nFc), wrkmin, fch_anomalous
+     *  wrk(nFc), wrkmin
       character*72 message
       logical solving(4)
-      save ncall, solving, 
-     .  fch_anomalous
+      save ncall, solving
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
 *   ..initialisation
-      data ncall/0/, fch_anomalous/1.0_R8/
+      data ncall/0/
       intrinsic huge
 *-----------------------------------------------------------------------
 *.computation
@@ -89,9 +97,6 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall.eq.0) then
-        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
-        if (fch_anomalous.eq.1.0_R8)
-     >   call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
         solving(1:4)=switch%no_solve.eq.0
         do is=1,4
           solving(is)=solving(is).or.
@@ -124,11 +129,11 @@
         co%cvsahz(:,:,is) =  co%cvsahz_cl(:,:,is) + co%cvsahz(:,:,is)
        end if
       end do                                                      !srv 16.10.17 }
-      if (fch_anomalous.ne.1.0_R8) then
-        co%csig = co%csig * fch_anomalous
-        co%calf = co%calf * fch_anomalous
-        co%csig_an = co%csig_an * fch_anomalous
-        co%calf_an = co%calf_an * fch_anomalous
+      if (switch%fch_anomalous.ne.1.0_R8) then
+        co%csig = co%csig * switch%fch_anomalous
+        co%calf = co%calf * switch%fch_anomalous
+        co%csig_an = co%csig_an * switch%fch_anomalous
+        co%calf_an = co%calf_an * switch%fch_anomalous
       end if
       call b2saxpy (nFc*2, 1.0_R8, chce0, 1, co%chce, 1)
       call b2saxpy (nFc*2, 1.0_R8, chve0, 1, co%chve, 1)
