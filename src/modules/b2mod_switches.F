@@ -7,6 +7,8 @@ c Finally, consistency checks on the provided switches are performed. Both the v
 c consistency checks for combinations of different switches (check_consistency_switches) are performed here.
 
       use b2mod_types
+      use b2mod_constants
+     & , only : ev
       implicit none
       
       private
@@ -269,6 +271,7 @@ c namelist switches
       integer :: b2stbc_boundary_namelist
       integer :: b2stbr_neutrals_namelist
       integer :: b2tqna_transport_namelist
+      integer :: b2srdt_numerics_namelist
 
 
 c diagnostics switches
@@ -331,7 +334,6 @@ c k-enstrophy model
       real(kind=R8) :: keps_inc
       real(kind=R8) :: keps_fac
       real(kind=R8) :: keps_shear
-      real(kind=R8) :: keps_eps
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -351,6 +353,67 @@ c b2tanml
 
 c b2stel
       integer :: fix_recomb_energy
+
+c b2stbm
+      integer :: b2stbm_impgyro_mod
+      integer :: b2stbm_internal_energy_sources
+      real (kind=R8) :: b2stbm_linearisation
+
+c b2stbr
+      integer :: b2stbr_potential_at_guard_cell
+      integer :: b2stbr_temperature_at_guard_cell
+      integer :: b2stbr_sput_frac_flag
+      integer :: b2stbr_b2wall_netcdf
+      integer :: b2stbr_coreregno
+      integer :: b2stbr_first_flight
+      real (kind=R8) :: b2stbr_core_sources_rescale
+      real (kind=R8) :: b2stbr_sput_frc
+      real (kind=R8) :: b2stbr_alpha
+      real (kind=R8) :: b2stbr_redep_alpha
+      real (kind=R8) :: b2stbr_sput_mixed_beta
+      real (kind=R8) :: b2stbr_sput_mixed_alpha
+      real (kind=R8) :: b2stbr_sput_chem_cutoff_alpha
+      real (kind=R8) :: b2stbr_sput_chem_cutoff_beta
+      real (kind=R8) :: b2stbr_therm_evap
+      real (kind=R8) :: b2stbr_sput_res
+      real (kind=R8) :: b2stbr_sput_phys
+      real (kind=R8) :: b2stbr_sput_chem_alpha
+
+c b2sihs_
+      real (kind=R8) :: b2sihs__rf0
+      real (kind=R8) :: b2sihs__rf1
+      real (kind=R8) :: b2sihs__rf2
+      real (kind=R8) :: b2sihs__rf3
+      real (kind=R8) :: b2sihs__rf4
+
+c b2news_
+      integer :: b2news_ncallout
+
+c b2srst
+      real (kind=R8) :: b2srst_rf0
+      real (kind=R8) :: b2srst_rf1
+      real (kind=R8) :: b2srst_rf2
+      real (kind=R8) :: b2srst_rf3
+
+c b2tfnb
+      integer :: b2tfnb_no_hybr
+      real (kind=R8) :: b2tfnb_flux_limit_min_ti
+
+c b2srsm
+      integer :: b2srsm_enable
+
+c b2mndt
+      integer :: density_control
+      integer :: nstg(0:2)
+      integer :: b2mndt_moqtlv
+      real (kind=R8) :: nstg_aresco
+      real (kind=R8) :: nstg_areshe
+      real (kind=R8) :: nstg_areshi
+      real (kind=R8) :: BoRiS
+      real (kind=R8) :: b2mndt_rxf
+      real (kind=R8) :: facvis_start
+      real (kind=R8) :: facdrift_start
+      real (kind=R8) :: facExB_start
 
       end type switches
 
@@ -615,6 +678,7 @@ c b2stel
       s % b2stbc_boundary_namelist = 0
       s % b2stbr_neutrals_namelist = 0
       s % b2tqna_transport_namelist = 0
+      s % b2srdt_numerics_namelist = 0
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
@@ -671,7 +735,6 @@ c k-enstrophy model
       s % keps_inc = 1.0_R8
       s % keps_fac = 1.0_R8
       s % keps_shear = 1.0e1_R8
-      s % keps_eps = 1.0e-10
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -689,7 +752,71 @@ c b2tqna
 c fch_anomalous
       s % fch_anomalous = 1.0e0_R8
 
+c b2stel
       s % fix_recomb_energy = 0
+
+c b2stbm
+      s % b2stbm_impgyro_mod = 0
+      s % b2stbm_internal_energy_sources = 0
+      s % b2stbm_linearisation = 1.0_R8
+
+c b2stbr
+      s % b2stbr_potential_at_guard_cell = 1
+      s % b2stbr_temperature_at_guard_cell = 1
+      s % b2stbr_sput_frac_flag = 0
+      s % b2stbr_b2wall_netcdf = 0
+      s % b2stbr_coreregno = 1
+      s % b2stbr_first_flight = 0
+      s % b2stbr_core_sources_rescale = 1.0_R8
+      s % b2stbr_sput_frc = 0.0_R8
+      s % b2stbr_alpha = 0.25_R8
+      s % b2stbr_redep_alpha = 0.0_R8
+      s % b2stbr_sput_mixed_beta = 1.0_R8
+      s % b2stbr_sput_mixed_alpha = 1.0_R8
+      s % b2stbr_sput_chem_cutoff_alpha = 1.0_R8
+      s % b2stbr_sput_chem_cutoff_beta = 3.0_R8
+      s % b2stbr_therm_evap = 0.0_R8
+      s % b2stbr_sput_res = 0.0_R8
+      s % b2stbr_sput_phys = 0.0_R8
+      s % b2stbr_sput_chem_alpha = 1.0e-2_R8
+
+c b2sihs_
+      s % b2sihs__rf0 = 1.0_R8
+      s % b2sihs__rf1 = 1.0_R8
+      s % b2sihs__rf2 = 1.0_R8
+      s % b2sihs__rf3 = 1.0_R8
+      s % b2sihs__rf4 = 1.0_R8
+
+c b2news_
+      s % b2news_ncallout = -1
+
+c b2sihs_
+      s % b2srst_rf0 = 1.0_R8
+      s % b2srst_rf1 = 1.0_R8
+      s % b2srst_rf2 = 1.0_R8
+      s % b2srst_rf3 = 1.0_R8
+
+c b2tfnb
+      s % b2tfnb_no_hybr = 0
+      s % b2tfnb_flux_limit_min_ti = 0.0_R8
+
+c b2srsm
+      s % b2srsm_enable = 0
+
+c b2mndt
+      s % density_control = 0
+      s % nstg(0) = 1
+      s % nstg(1) = 1
+      s % nstg(2) = 1
+      s % b2mndt_moqtlv = 3
+      s % nstg_aresco = 0.0_R8
+      s % nstg_areshe = 0.0_R8
+      s % nstg_areshi = 0.0_R8
+      s % BoRiS = 0.0_R8
+      s % b2mndt_rxf = 0.5_R8
+      s % facvis_start = 0.0_R8
+      s % facdrift_start = 0.0_R8
+      s % facExB_start = 0.0_R8
 
       return
       end subroutine set_defaults_switches
@@ -971,6 +1098,8 @@ c namelist switches
       call ipgeti('b2stbr_neutrals_namelist',s%b2stbr_neutrals_namelist)
       call ipgeti('b2tqna_transport_namelist',
      &                                      s%b2tqna_transport_namelist)
+      call ipgeti ('b2srdt_numerics_namelist',
+     &  s%b2srdt_numerics_namelist)
 
 c diagnostic switches
       call ipgeti ('b2stbc_diagno',s % b2stbc_diagno)                              !xpb
@@ -1026,7 +1155,6 @@ c k-enstrophy model
       call ipgetr ('b2tqna_keps_heat', s % keps_heat)
       call ipgetr ('b2tqna_keps_heat_i', s % keps_heat_i)
       call ipgeti ('b2tqna_keps_local', s % keps_local)
-      call ipgetr ('b2tqna_keps_eps', s % keps_eps)
       call ipgetr ('b2tqna_keps_dna_min', s % dna_min)
       call ipgetr ('b2tqna_keps_inc', s % keps_inc)
       call ipgetr ('b2tqna_keps_init', s % keps_fac)
@@ -1054,6 +1182,85 @@ c fch anomalous
 c b2stel
       call ipgeti ('b2stel_fix_recomb_energy',
      & s%fix_recomb_energy)
+
+c b2stbm
+      call ipgetr ('b2stbm_linearisation', s % b2stbm_linearisation)
+      if (s%b2stbm_linearisation.eq.1.0_R8)   ! for backward compatibility
+     &  call ipgetr ('b2stbm_linearization', s % b2stbm_linearisation)
+      call ipgeti ('b2stbm_impgyro_mod', s % b2stbm_impgyro_mod)
+      call ipgeti ('b2stbm_internal_energy_sources', 
+     &  s % b2stbm_internal_energy_sources)
+
+c b2stbr
+      call ipgeti ('b2stbr_potential_at_guard_cell',
+     &  s % b2stbr_potential_at_guard_cell)
+      call ipgeti ('b2stbr_temperature_at_guard_cell',
+     &  s % b2stbr_temperature_at_guard_cell)
+      call ipgeti ('b2stbc_coreregno', s % b2stbr_coreregno)
+      call ipgeti ('b2stbr_first_flight', s % b2stbr_first_flight)
+      call ipgeti ('b2stbr_sput_frac_flag', s % b2stbr_sput_frac_flag)
+      call ipgeti ('b2stbr_b2wall_netcdf', s % b2stbr_b2wall_netcdf)
+      call ipgetr ('b2stbr_core_sources_rescale',
+     &  s % b2stbr_core_sources_rescale)
+      call ipgetr ('b2stbr_sput_frc', s % b2stbr_sput_frc)
+      call ipgetr ('b2stbr_alpha', s % b2stbr_alpha)
+      if(s%b2stbr_sput_frac_flag.ne.0) then
+        call ipgetr ('b2stbr_sput_mixed_alpha', 
+     &    s % b2stbr_sput_mixed_alpha)
+        call ipgetr ('b2stbr_sput_mixed_beta',
+     &    s % b2stbr_sput_mixed_beta)
+      endif
+      if(s%b2stbr_sput_frc.ne.0.0_R8) then
+        call ipgetr ('b2stbr_sput_chem_alpha', s%b2stbr_sput_chem_alpha)
+        call ipgetr ('b2stbr_sput_chem_cutoff_alpha',
+     &   s%b2stbr_sput_chem_cutoff_alpha)
+        call ipgetr ('b2stbr_sput_chem_cutoff_beta',
+     &   s%b2stbr_sput_chem_cutoff_beta)
+      endif
+      call ipgetr ('b2stbr_therm_evap', s%b2stbr_therm_evap)
+      call ipgetr ('b2stbr_sput_res', s%b2stbr_sput_res)
+      call ipgetr ('b2stbr_sput_phys', s%b2stbr_sput_phys)
+      call ipgetr ('b2stbr_redep_alpha', s%b2stbr_redep_alpha)
+
+c b2sihs_
+      call ipgetr ('b2sihs_rf0', s%b2sihs__rf0)
+      call ipgetr ('b2sihs_rf1', s%b2sihs__rf1)
+      call ipgetr ('b2sihs_rf2', s%b2sihs__rf2)
+      call ipgetr ('b2sihs_rf3', s%b2sihs__rf3)
+      call ipgetr ('b2sihs_rf4', s%b2sihs__rf4)
+
+c b2news_
+      call ipgeti ('b2news_ncallout', s%b2news_ncallout)
+
+c b2srst
+      call ipgetr ('b2srst_rf0', s%b2srst_rf0)
+      call ipgetr ('b2srst_rf1', s%b2srst_rf1)
+      call ipgetr ('b2srst_rf2', s%b2srst_rf2)
+      call ipgetr ('b2srst_rf3', s%b2srst_rf3)
+
+c b2tfnb
+      call ipgetr ('b2tfnb_flux_limit_min_ti', 
+     &  s%b2tfnb_flux_limit_min_ti)
+      s%b2tfnb_flux_limit_min_ti=s%b2tfnb_flux_limit_min_ti*ev
+      call ipgeti ('b2tfnb_no_hybr', s%b2tfnb_no_hybr)
+
+c b2srsm
+      call ipgeti ('b2srsm_enable', s%b2srsm_enable)
+
+c b2mndt
+      call ipgeti ('b2mndt_density_control',s%density_control)
+      call ipgeti ('b2mndt_nstg0', s%nstg(0))
+      call ipgeti ('b2mndt_nstg1', s%nstg(1))
+      call ipgeti ('b2mndt_nstg2', s%nstg(2))
+      call ipgeti ('b2mndt_moqtlv', s%b2mndt_moqtlv)
+      call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
+      call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
+      call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
+      call ipgetr ('b2news_BoRiS', s%BoRiS)
+      call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
+      call ipgetr ('b2news_facExB_start',   s%facExB_start)
+      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
+      call ipgetr ('b2news_facvis_start',   s%facvis_start)
 
       return
       end subroutine read_switches
@@ -1317,23 +1524,82 @@ c b2mwqt
 
 
 c k-enstrophy model
-       call xertst (0.le.s%transport_keps .and. s%transport_keps.le.1,
+      call xertst (0.le.s%transport_keps .and. s%transport_keps.le.1,
      &  'b2tqna_transport_keps value not coded')
-       call xertst (0.0_R8.le.s%keps_dkt,
+      call xertst (0.0_R8.le.s%keps_dkt,
      &  'keps_dkt must be .gt. 0.0')
 
 c eirene_mc
-        call xertst (0.0_R8.le.s%neutral_sources_rescale,
+      call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
 
 c b2tqna
-        call xertst (0.0_R8.le.s%b2tqna_min_df0.and.s%b2tqna_min_df0.le.
+      call xertst (0.0_R8.le.s%b2tqna_min_df0.and.s%b2tqna_min_df0.le.
      &   s%b2tqna_max_df0.and.s%b2tqna_max_df0.gt.0.0_R8,
      &   'Invalid range for b2tqna_min_df0 and/or b2tqna_max_df0')
       call xertst (s%b2tqna_pfr_rescale.gt.0.0_R8,
      &  'faulty input pfr_rescale')
       call xertst (s%b2tqna_divsol_rescale.gt.0.0_R8,
      &   'faulty input divsol_rescale')
+
+c b2stbm
+      call xertst (s%b2stbm_linearisation.le.1.0_R8 .and. 
+     &  s%b2stbm_linearisation.ge.0.0_R8,
+     &  'faulty input parameter b2stbm_linearisation')
+      call xertst (s%b2stbm_internal_energy_sources.eq.0,
+     &  'b2stbm internal_energy_sources =/ 0 not coded yet')
+
+c b2stbr
+      call xertst (0.0_R8.le.s%b2stbr_core_sources_rescale,
+     &  'faulty internal parameter core_sources_rescale')
+      call xertst (0.0_R8.le.s%b2stbr_alpha,'faulty b2stbr_alpha')
+      call xertst (0.0_R8.le.s%b2stbr_sput_frc,'faulty b2stbr_sput_frc')
+      call xertst (s%b2stbr_sput_mixed_alpha.ge.0.0_R8,
+     &  'faulty parameter sput_mixed_alpha')
+      call xertst (s%b2stbr_sput_mixed_beta.gt.0.0_R8,
+     &  'faulty parameter sput_mixed_beta')
+      call xertst (0.0_R8.le.s%b2stbr_sput_chem_alpha,
+     &  'faulty b2stbr_sput_chem_alpha')
+      call xertst (0.0_R8.le.s%b2stbr_sput_chem_cutoff_alpha,
+     &  'faulty b2stbr_sput_chem_cutoff_alpha')
+      call xertst (0.0_R8.le.s%b2stbr_sput_chem_cutoff_beta,
+     &  'faulty b2stbr_sput_chem_cutoff_beta')
+      call xertst (0.0_R8.le.s%b2stbr_therm_evap, 
+     &  'faulty b2stbr_therm_evap')
+      call xertst (0.0_R8.le.s%b2stbr_sput_res, 
+     &  'faulty b2stbr_sput_res')
+      call xertst (0.0_R8.le.s%b2stbr_sput_phys,
+     &  'faulty input b2stbr_sput_phys')
+      call xertst (0.0_R8.le.s%b2stbr_redep_alpha,
+     &  'faulty internal parameter redep_alpha')
+
+c b2sihs_
+      call xertst (0.le.min(s%b2sihs__rf0,s%b2sihs__rf1,
+     &  s%b2sihs__rf2,s%b2sihs__rf3,s%b2sihs__rf4),
+     &  'faulty internal parameter rf0/1/2/3/4')
+
+c b2srst
+      call xertst (0.0_R8.le.s%b2srst_rf0.and.0.0_R8.le.s%b2srst_rf1
+     & .and.0.0_R8.le.s%b2srst_rf2.and.0.0_R8.le.s%b2srst_rf3,
+     & 'faulty internal parameter rf0/1/2/3')
+
+c b2tfnb
+      call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
+     &  'faulty internal parameter flux_limit_min_ti')
+
+c b2mndt
+      call xertst (1.le.s%nstg(0).and.1.le.s%nstg(1).and.1.le.s%nstg(2),
+     &  'faulty internal parameter nstg(0:2)')
+      call xertst (-1.le.s%b2mndt_moqtlv.and.s%b2mndt_moqtlv.le.3,
+     &  'faulty internal parameter moqtlv')
+      call xertst (s%nstg_areshe.ge.0.0_R8,
+     &  'faulty internal parameter nstg_areshe')
+      call xertst (s%nstg_areshi.ge.0.0_R8,
+     &  'faulty internal parameter nstg_areshi')
+      call xertst (s%nstg_aresco.ge.0.0_R8,
+     &  'faulty internal parameter nstg_aresco')
+      call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
+     &  'faulty internal parameter rxf')
 
       return
       end subroutine check_values_switches

@@ -44,11 +44,15 @@
       use b2mod_neutrals_namelist
      & , only : maxw_eff
       use b2mod_b2cmpt
-     &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
-     &           cfhce, cfhci
+     & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
+     &          cfhce, cfhci
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec
+      use b2mod_ad
+     & , only : ntstep_b2wall, old_deposition, old_erosion,
+     &          b2sral_elm_count, b2sian_eps, b2npmo_solvedum,
+     &          b2news_solving
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr
@@ -103,7 +107,6 @@
 *.declarations
 
 *   ..local variables
-      integer nsmin, nsmax
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       real (kind=R8), save :: cutlo = 1.0e-60_R8
       integer ncall, is, ier0, i, iCv, ireg
@@ -118,11 +121,9 @@
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  respo0(nCv), corpo0(nCv)
-      logical solving(4), solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
+      logical solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
       logical inverted_ua, new_matrix
       save ncall                                               !srv 09.07.99
-     &     , solving                                            !srv 06.07.00
-     &     , nsmin, nsmax
 *   ..procedures
       intrinsic mod
       real (kind=R8) ::
@@ -162,8 +163,6 @@ c     ingeger, save :: nstg2 = 0
       call subini ('b2news_')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       nsmin=0
-       nsmax=ns
        call ipgetr ('b2news_BoRiS', BoRiS)
 *    ..the table below shows which combination of equations will be solved
 *      depending on the value of switch 'b2news_no_solve'
@@ -207,19 +206,19 @@ c     ingeger, save :: nstg2 = 0
 * SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
 * Please consult the code documentation.
 
-       solving(1:4)=switch%no_solve.eq.0
+       b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
-         solving(i)=solving(i).or.
+         b2news_solving(i)=b2news_solving(i).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
        enddo
-       if(.not.solving(1)) 
+       if(.not.b2news_solving(1)) 
      >   write(*,*) 'Not solving parallel momentum equations!'
-       if(.not.solving(2)) 
+       if(.not.b2news_solving(2)) 
      >   write(*,*) 'Not solving continuity equations!'
-       if(.not.solving(3)) 
+       if(.not.b2news_solving(3)) 
      >   write(*,*) 'Not solving potential equation!'
-       if(.not.solving(4)) 
+       if(.not.b2news_solving(4)) 
      >   write(*,*) 'Not solving heat equations!'
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgeti ('b2mndt_nstg2', nstg2)
@@ -335,7 +334,7 @@ csw 01oct2012 initialize potential if necessary
 #endif
                                                            !iyv 06.02.14
 !        do is=0,ns-1                                                    !srv 01.10.99
-        do is = nsmin, nsmax-1
+        do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
           call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
      &      pl%ti, pl%tn, is, dv%pa(1,is))                                   !srv 01.10.99
@@ -354,9 +353,9 @@ c   extra call at this place within internal iteration)
         write(*,*) ' re-compute source '
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
-     &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0, dtim,
-     &    BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, 
-     &    sr, srw, wrong_flow, .false.)
+     &    nscx, nscxmax, switch%nsmin, switch%nsmax, iscx, ismain,
+     &    ismain0, dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw,
+     &    st_ext, sr, srw, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
@@ -439,9 +438,9 @@ c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy 
 c b2npmo with rxf = 0 and recompute fluxes.
       if (ncall.eq.0) then
         call b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    ncall, solving(1), 0.0_R8, pl, dv, rt, co, sr, st_ext,
+     &    ncall, b2news_solving(1), 0.0_R8, pl, dv, rt, co, sr, st_ext,
      &    ier0)
-        do is = nsmin, nsmax-1
+        do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
           call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
      &      pl%ti, pl%tn, is, dv%pa(1,is))                                  
@@ -451,7 +450,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
         enddo 
       endif
       call b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
+     &  ncall, b2news_solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 *   ..set nep
@@ -466,7 +465,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &  dv%facdrift, dv%fchinert)
 *     ..iterate on particle balance
 !      do is = 0, ns-1
-      do is = nsmin, nsmax-1
+      do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
           pl%na(iCv,is)=max(pl%na(iCv,is),switch%b2mndr_na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
@@ -501,9 +500,9 @@ csw 16oct2012 init ier0
      &       solveco(is,ireg).neqv.last_solve_9(ireg)
           end do
           if(new_matrix.or..true.) call restart_ma28_for_us
-          call b2npco (nCv, nFc, nVx, mpg%nnreg(0), solving(2),solvedum,  !srv 22.05.18
-     &      solving(1),  solvedm2, ncall, is, rxf0, switch, geo, mpg,
-     &       pl, dv, sr, ier0)
+          call b2npco (nCv, nFc, nVx, mpg%nnreg(0), b2news_solving(2),    !srv 22.05.18
+     &      solvedum, b2news_solving(1),  solvedm2, ncall, is, rxf0, 
+     &      switch, geo, mpg, pl, dv, sr, ier0)
           call xertst (ier0.eq.0, 'error return from b2npco')
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                            !srv 13.10.06 } 22.05.18
@@ -561,7 +560,7 @@ csw 16oct2012 init ier0
         pl%po = 3.1_R8*pl%te/qe
       else                                                               !srv 13.07.05 }
 *   ..correct po
-        if (solving(3)) then
+        if (b2news_solving(3)) then
           call b2nxdp (nCv, mpg, mpg%nnreg(0), solvepo, qe, pl%te, nep, 
      &       dv%ne, wrk0)
           call b2saxpy (nCv, 1.0_R8, wrk0, 1, pl%po, 1)
@@ -572,7 +571,7 @@ csw 16oct2012 init ier0
 *   ..compute currents                                                   !srv 29.01.20 {
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
      &     geo, mpg, pl, dv, co, rt)
-        if (solving(3)) then
+        if (b2news_solving(3)) then
 *   ..solve the potential equation
           if (switch%fhe_vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
             new_matrix = .false.
@@ -581,15 +580,16 @@ csw 16oct2012 init ier0
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
             if (new_matrix.or..true.) call restart_ma28_for_us
-              call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solving(3),      !srv 22.05.18
-     &        solvepo, ncall, rxf2, switch, geo, mpg, pl, dv, sr, ier0)
+              call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                  !srv 22.05.18
+     &        b2news_solving(3), solvepo, ncall, rxf2, switch, geo, mpg,
+     &        pl, dv, sr, ier0)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
           else
              call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
-            call b2npp7 (nx, ny, mpg%nnreg(0), solving(3), solvepo,      !srv 27.01.00 22.05.18
-     &       ncall, rxf2, ne, te, conc, avisper, bvisper, cvisper,       !srv 27.01.00
-     &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
+            call b2npp7 (nx, ny, mpg%nnreg(0), b2news_solving(3),        !srv 27.01.00 22.05.18
+     &       solvepo, ncall, rxf2, ne, te, conc, avisper, bvisper,       !srv 27.01.00
+     &       cvisper, sch, po, fch, respo, corpo, ier0)                  !srv 27.01.00
 #endif
           endif                                                          !srv 06.07.00
           t0 = b2sasum(nCv,dv%respo,1)
@@ -702,9 +702,9 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0),
-     &  ncall, ismain, solving, solveee, solveei, solveen, solveet,       !srv 22.05.18
-     &  solvepo, solvemo, solvekt, rxf3, BoRiS, pl, dv, co, rt, sr,
-     &  st_ext, ier0)
+     &  ncall, ismain, b2news_solving, solveee, solveei, solveen,        !srv 22.05.18
+     &  solveet, solvepo, solvemo, solvekt, rxf3, BoRiS, pl, dv, co,
+     &  rt, sr, st_ext, ier0)
 csw 16aug2011 init potential 
       if(switch%pot_eq.eq.0) pl%po=0.0_R8                                 !srv 13.07.05
       if(switch%pot_eq.eq.2) pl%po=3.1_R8*pl%te/qe 
@@ -739,10 +739,10 @@ c   recompute particle fluxes
      &         solveco(is,ireg).neqv.last_solve_5(ireg)
             end do
             if(new_matrix) call restart_ma28
-            call b2npco (nx, ny, mpg%nnreg(0), solving(2), solvedum,     !srv 22.05.18 
-     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,conb, !srv 22.01.02 01.07.05
-     &       sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
-     &       ua(-1,-1,is), fna(-1,-1,0,0,is),
+            call b2npco (nx, ny, mpg%nnreg(0), b2news_solving(2),         !srv 22.05.18 
+     &       solvedum, b2news_solving(1), solvedm2, ncall, is, rxf0,      !srv 22.01.02 01.07.05
+     &       vol, pbs, flob,conb, sna(-1,-1,0,is), pcca(-1,-1,0,0,is),
+     &       pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
             last_solve_5(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !          endif                                                         !srv 22.05.18
@@ -759,7 +759,7 @@ cwdk      need a master-switch to decide to use 9-point stencil...
               end do
               if(new_matrix.or..true.) call restart_ma28_for_9
               call b2npc9 (nx, ny, mpg%nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0,
+     &         b2news_solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
@@ -771,8 +771,8 @@ cwdk      need a master-switch to decide to use 9-point stencil...
      &           solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, mpg%nnreg(0),  solving(2), solvedum,  !srv 22.05.18  
-     &         solving(1), solvedm2, ncall, is, rxf0,
+              call b2npco (nx, ny, mpg%nnreg(0),  b2news_solving(2),     !srv 22.05.18  
+     &         solvedum, b2news_solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),

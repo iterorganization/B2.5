@@ -55,9 +55,7 @@
       integer ncall, iCv, iFc, is, isb, k
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
-     *  vti32(nCv)
-      real (kind=R8) ::
-     *  rf0, rf1, rf2, rf3, rf4,
+     *  vti32(nCv),
      &  wrkc(nCv), wrkf(nFc,0:1),
      &  wrkv(nVx),                      !srv 02.06.99
      &  wrkc1(nCv),                                         !srv 28.08.02
@@ -82,7 +80,7 @@
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
       character chk*1                                                   !srv 11.09.09 } !srv 05.07.17
-      save ncall, rf0, rf1, rf2, rf3, rf4
+      save ncall
       real (kind=R8) ::
      *   t0, t1, ctaup, coef, czetap, czetae                            !srv 05.07.17
       real (kind=R8) ::
@@ -93,8 +91,6 @@
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/
-      data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
-     &   rf4/1.0e0_R8/
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
@@ -110,16 +106,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sihs_')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2sihs_rf0', rf0)
-       call ipgetr ('b2sihs_rf1', rf1)
-       call ipgetr ('b2sihs_rf2', rf2)
-       call ipgetr ('b2sihs_rf3', rf3)
-       call ipgetr ('b2sihs_rf4', rf4)
-       call xertst (0.le.min(rf0,rf1,rf2,rf3,rf4),
-     &   'faulty internal parameter rf0/1/2/3/4')
-      endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -209,8 +195,9 @@
       do iCv = 1, mpg%nCi
          t0 = -switch%b2sihs_phm0*(1.0_R8-BoRiS)*wrkc(iCv)
          shedu(iCv,0) = shedu(iCv,0)+
-     &    (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(iCv)*te(iCv)
-         shedu(iCv,3) = shedu(iCv,3)+min(0.0e0_R8,t0)-rf0*abs(t0)
+     &    (max(0.0e0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
+         shedu(iCv,3) = shedu(iCv,3)+min(0.0e0_R8,t0)-
+     &                  switch%b2sihs__rf0*abs(t0)
 !WG_TODO         b2divue(mpg%cvReg(iCv))=b2divue(mpg%cvReg(iCv))+
 !WG_TODO     1     t0*ne(iCv)*te(iCv)
 !WG_TODO         b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
@@ -235,13 +222,17 @@
      &                                      *(1.0_R8-BoRiS)*wrkc(iCv)  !srv 21.07.05 {
           if (.not.is_neutral(is).or.switch%tn_style.eq.0) then
             shidu(iCv,0) = shidu(iCv,0)+
-     &        (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
-            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
+     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &         ti(iCv)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+     &                     -switch%b2sihs__rf1*abs(t0)
           else
             t0 = t0*tn(iCv)/ti(iCv) 
             shidun(iCv,0) = shidun(iCv,0)+
-     &        (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
-            shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
+     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &         ti(iCv)
+            shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-
+     &         switch%b2sihs__rf1*abs(t0)
           endif
 
 
@@ -282,8 +273,9 @@
         fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
         t0 = switch%b2sihs_phm5*fac_ExB_c*wrkc(iCv)                    !srv 07.06.00 02.06.99
         shedd(iCv,0) = shedd(iCv,0)+
-     &    (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(iCv)*te(iCv)
-        shedd(iCv,3) = shedd(iCv,3)+min(0.0e0_R8,t0)-rf0*abs(t0)
+     &    (max(0.0e0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
+        shedd(iCv,3) = shedd(iCv,3)+min(0.0e0_R8,t0)-
+     &                 switch%b2sihs__rf0*abs(t0)
 !WG_TODO        b2exbe(mpg%cvReg(iCv))=b2exbe(mpg%cvReg(iCv))+
 !WG_TODO     1      t0*ne(iCv)*te(iCv)
 !WG_TODO        b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
@@ -303,11 +295,13 @@
            t0=switch%b2sihs_phm6*fac_ExB_c*
      &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                    !srv 07.06.00 02.06.99
            shidd(iCv,0) = shidd(iCv,0)+
-     &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
+     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &       ti(iCv)
 !          shi0(iCv,0) = shi0(iCv,0)+
-!     &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
-           shidd(iCv,3) = shidd(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
-!          shi0(iCv,3) = shi0(iCv,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
+!     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
+           shidd(iCv,3) = shidd(iCv,3)+min(0.0e0_R8,t0)-
+     &                    switch%b2sihs__rf1*abs(t0)
+!          shi0(iCv,3) = shi0(iCv,3)+min(0.0e0_R8,t0)-switch%b2sihs__rf1*abs(t0)
 !WG_TODO           b2exba(mpg%cvReg(iCv))=b2exba(mpg%cvReg(iCv))+
 !WG_TODO     1          t0*ni(iCv,0)*ti(iCv)
 !WG_TODO           b2sihs_exba(iCv)=b2sihs_exba(iCv)+
@@ -345,15 +339,23 @@
            t0 = switch%b2sihs_phm2*(1.0_R8-BoRiS)*visc(iCv,0)
            t1 = switch%b2sihs_phm8*(1.0_R8-BoRiS)*visc(iCv,1)
            if (.not.is_neutral(is)) then
-             shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
-             shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
-             shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
-             shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
+             shivc(iCv,0) = shivc(iCv,0)+
+     &                      (1.0e0_R8+switch%b2sihs__rf2)*t0
+             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
+     &                      (ni(iCv,0)*ti(iCv))
+             shiva(iCv,0) = shiva(iCv,0)+
+     &                      (1.0e0_R8+switch%b2sihs__rf2)*t1
+             shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
+     &                      (ni(iCv,0)*ti(iCv))
            else
-             shivcn(iCv,0) = shivcn(iCv,0) + (1.0e0_R8+rf2)*t0
-             shivcn(iCv,3) = shivcn(iCv,3) - rf2*t0/(ni(iCv,0)*ti(iCv))
-             shivan(iCv,0) = shivan(iCv,0) + (1.0e0_R8+rf2)*t1
-             shivan(iCv,3) = shivan(iCv,3) - rf2*t1/(ni(iCv,0)*ti(iCv))
+             shivcn(iCv,0) = shivcn(iCv,0) + 
+     &                       (1.0e0_R8+switch%b2sihs__rf2)*t0
+             shivcn(iCv,3) = shivcn(iCv,3) - switch%b2sihs__rf2*t0/
+     &                       (ni(iCv,0)*ti(iCv))
+             shivan(iCv,0) = shivan(iCv,0) + 
+     &                       (1.0e0_R8+switch%b2sihs__rf2)*t1
+             shivan(iCv,3) = shivan(iCv,3) - switch%b2sihs__rf2*t1/
+     &                       (ni(iCv,0)*ti(iCv))
            endif
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
@@ -447,18 +449,21 @@
          if(mpg%cvReg(iCv).ne.0) then
            t0 = switch%b2sihs_phm3*geo%cvVol(iCv)*shefr(iCv,0)
 !          shefr(iCv,0) = t0
-           shefr(iCv,0) = max(0.0e0_R8,t0)+rf3*abs(t0)
+           shefr(iCv,0) = max(0.0e0_R8,t0)+switch%b2sihs__rf3*abs(t0)
            shefr(iCv,3) =
-     &      (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(iCv)*te(iCv))
+     &      (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
+     &      (ne(iCv)*te(iCv))
            b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
            b2sihs_joule(iCv)=t0
-           t0 = -switch%b2sihs_phm4*(1.0_R8-BoRiS)*geo%cvVol(iCv)*shifr(iCv,0)
+           t0 = -switch%b2sihs_phm4*(1.0_R8-BoRiS)*geo%cvVol(iCv)*
+     &           shifr(iCv,0)
 !          shifr(iCv,0) = t0
-!           shifr(iCv,0) = (2.5e0_R8+rf4)*t0
-!           shifr(iCv,3) = -(1.5e0_R8+rf4)*t0/(ni(iCv,0)*ti(iCv))
-           shifr(iCv,0) = max(0.0e0_R8,t0)+rf4*abs(t0)
+!           shifr(iCv,0) = (2.5e0_R8+switch%b2sihs__rf4)*t0
+!           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+           shifr(iCv,0) = max(0.0e0_R8,t0)+switch%b2sihs__rf4*abs(t0)
            shifr(iCv,3) =
-     &      (min(0.0e0_R8,t0)-rf4*abs(t0))/(ni(iCv,0)*ti(iCv))
+     &      (min(0.0e0_R8,t0)-switch%b2sihs__rf4*abs(t0))/
+     &      (ni(iCv,0)*ti(iCv))
            b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
            b2sihs_fraa(iCv)=t0
          endif
@@ -493,9 +498,11 @@
        do iCv = 1, mpg%nCi
          if(mpg%cvReg(iCv).ne.0) then
           t0 = switch%b2sihs_phm3*geo%cvVol(iCv)*wrkc(iCv)
-          shefr(iCv,0) = shefr(iCv,0)+max(0.0e0_R8,t0)+rf3*abs(t0)
+          shefr(iCv,0) = shefr(iCv,0)+max(0.0e0_R8,t0)+
+     &                   switch%b2sihs__rf3*abs(t0)
           shefr(iCv,3) = shefr(iCv,3)+
-     &    (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(iCv)*te(iCv))
+     &    (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
+     &    (ne(iCv)*te(iCv))
 !WG_TODO          b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
 !WG_TODO          b2sihs_joule(iCv)=t0
         endif                                                        !srv 26.11.02
@@ -524,9 +531,10 @@
      &          (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*            !srv 11.01.12
      &           na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
      &           ((ua(ix,iy,is)-ua(ix,iy,isb))**2)                    !srv 22.07.05
-             shifr(ix,iy,0) = shifr(ix,iy,0)+(2.5e0_R8+rf4)*t0
+             shifr(ix,iy,0) = shifr(ix,iy,0)+
+     &                        (2.5e0_R8+switch%b2sihs__rf4)*t0
              shifr(ix,iy,3) = shifr(ix,iy,3)-
-     &        (1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+     &        (1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
              b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
              b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
             endif                                                     !srv 26.11.02

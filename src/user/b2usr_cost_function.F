@@ -5,6 +5,10 @@
       use b2us_map
       use b2us_plasma
       use b2us_geo
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : vold, cfnorm, ffdata
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
@@ -14,10 +18,8 @@
       integer :: icf, ic1, ic2, iCv, ncall, ndata1, ndata2, ii,
      &           ifc, ifc1, ifc2, is
       logical, save :: first_call=.true.
-      real (kind=R8), allocatable, save :: ffdata(:,:)
       real (kind=R8), allocatable ::  xx1(:), yy1(:)
       real (kind=R8) :: xcheck(2), ycheck(2), eps, machsfr, qq
-      real (kind=R8), save :: cfnorm(nncf), vold(nncf)
       external machsfr, subini, subend
 
       call subini('b2usr_cost_function')

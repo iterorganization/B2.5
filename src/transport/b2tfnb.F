@@ -46,7 +46,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, ib, no_hybr, meth                         !srv 13.10.06
+      integer ncall, iCv, iFc, ib, meth                         !srv 13.10.06
 
 
       integer, save :: style_int_vel = 0
@@ -56,8 +56,7 @@
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti, term(nFc),
-     *   flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
+     *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
      &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                         !srv 21.10.10
@@ -83,7 +82,7 @@
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                              !lk
       integer :: xcount, ycount
-      save ncall, flux_limit_min_ti, no_hybr
+      save ncall
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
 c      integer, save :: pflux_cor = 1                                     !srv 05.03.16
@@ -94,7 +93,7 @@ c      integer, save :: vlct_diagno = 1
       external b2xvsg, b2xvff, intface, diff
       intrinsic abs, max, min, mod, sqrt, sign
 *   ..initialisation
-      data ncall/0/, flux_limit_min_ti/0.0_R8/, no_hybr/0/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -106,12 +105,7 @@ c      integer, save :: vlct_diagno = 1
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call ipgetr ('b2tfnb_flux_limit_min_ti', flux_limit_min_ti)
-        flux_limit_min_ti=flux_limit_min_ti*ev
-        call xertst (0.0_R8.le.flux_limit_min_ti,
-     &   'faulty internal parameter flux_limit_min_ti')
-        call ipgeti ('b2tfnb_no_hybr', no_hybr)
-          if (no_hybr .eq.1) meth = 0
+        if (switch%b2tfnb_no_hybr .eq.1) meth = 0
         call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
       endif
@@ -609,7 +603,7 @@ c csc To be added contribution of ubdia
        call xerrab('Flux limit to be adapted for WG')
 cwdk try to introduce a common flux limit here?
        do iFc = 1,nFc
-        t2 = max(flux_limit_min_ti,
+        t2 = max(switch%b2tfnb_flux_limit_min_ti,
      *        pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
         vbar = sqrt(8.0_R8 * t2 / (pi * am(isb)*mp))
         t0 = (1.0_R8 + (abs(dv%fna(iFc,0,isb) / (0.5_R8*

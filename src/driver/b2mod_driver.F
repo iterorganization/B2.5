@@ -1815,6 +1815,7 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
+      use b2mod_ad
       implicit none
 #ifdef JET
       integer nout(0:11), nx, ny, ns

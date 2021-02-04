@@ -3652,6 +3652,10 @@ c recompute hci0 and hcn0
       use b2mod_switches
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : b2tqna_keps_eps
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -3708,7 +3712,7 @@ cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%kt/(am(ismain)*mp))/rhol + switch%keps_shear*
-     &       abs(shear) +switch%keps_eps)
+     &       abs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           endif

@@ -21,6 +21,8 @@
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, alloc_input_profile
+      use b2mod_ad
+     & , only : b2news_solving
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
@@ -78,8 +80,7 @@
      1	ft,                                                             !srv 16.10.17
      *  wrk(nFc), wrkmin
       character*72 message
-      logical solving(4)
-      save ncall, solving
+      save ncall
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
@@ -97,9 +98,9 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall.eq.0) then
-        solving(1:4)=switch%no_solve.eq.0
+        b2news_solving(1:4)=switch%no_solve.eq.0
         do is=1,4
-          solving(is)=solving(is).or.
+          b2news_solving(is)=b2news_solving(is).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
@@ -172,12 +173,14 @@ cwdk combined check for poloidal or radial diffusion
           write(message,'(a, i3)') 
      .     'No particle diffusion for species ',is
           call xertst (wrkmin.gt.0.0_R8 .or. 
-     .    switch%pol_anom_scale.eq.0.0_R8 .or. .not.solving(2),message)
+     .     switch%pol_anom_scale.eq.0.0_R8 .or. .not.b2news_solving(2),
+     .     message)
 *  ..check that we have some anomalous ion heat transport
           wrkmin = minval(co%hcib(:,is))
           write(message,'(a, i3)')
      .     'No ion heat diffusivity for species ',is
-          call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(4), message)
+          call xertst (wrkmin.gt.0.0_R8 .or. .not.b2news_solving(4),
+     .      message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
 !WG_TODO
@@ -188,7 +191,7 @@ cwdk combined check for poloidal or radial diffusion
 !WG_TODO              wrkmin = min(wrkmin, wrk(iFc))
 !WG_TODO        enddo
 !WG_TODO        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
-!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.solving(3) .or. 
+!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or. 
 !WG_TODO     .   no_current.eq.1, 'No anomalous perpendicular currents')
       endif                                                           !srv 12.03.12 }
 

@@ -47,7 +47,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, iCv, ncall, diagno, enable
+      integer is, iCv, ncall, diagno
       integer k                           
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
@@ -60,8 +60,8 @@
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
-      save ncall, diagno, enable
-      data ncall/0/, diagno/0/, enable/0/
+      save ncall, diagno
+      data ncall/0/, diagno/0/
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *-----------------------------------------------------------------------
 *.computation
@@ -86,10 +86,9 @@
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
 *   ..obtain input
       if (ncall.eq.0) then
-        call ipgeti ('b2srsm_enable', enable)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2srsm_diagno', diagno)
-        if(enable.eq.0) then
+        if(switch%b2srsm_enable.eq.0) then
           write(*,*) 'b2srsm disabled'
         endif
         if(eirene_mod.le.0) eirene_mod=1
@@ -101,7 +100,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       shetmp = sr%she
       shitmp = sr%shi
 
-      if(enable.ne.0) then
+      if(switch%b2srsm_enable.ne.0) then
         call xerrab ('b2srsm not adapted for WG')
 #ifdef WG_TODO
 c*** calculate the integral sources for all regions:
