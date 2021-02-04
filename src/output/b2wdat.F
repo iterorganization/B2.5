@@ -726,14 +726,17 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(1)
-      if (js.gt.0) then
-        ind=eirdiag_nds_ind(js)
-        ias=ind+1
-        do iy=0,ny-1 !{
+      do iy=0,ny-1 !{
+        do js=1,nsts !{
+          if (eirdiag_nds_typ(js).ne.2) cycle
+          if (eirdiag_nds_srf(js).ne.0) cycle
+          if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+          if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1-(eirdiag_nds_start(js)-1)
           wrk0(5,iy)=wrk0(5,iy)+ewldt_res(iy+ias)
         enddo !}
-      end if
+      enddo !}
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
@@ -744,14 +747,17 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut*2)
-      if (js.gt.0) then
-        ind=eirdiag_nds_ind(js)
-        ias=ind+1
-        do iy=0,ny-1 !{
+      do iy=0,ny-1 !{
+        do js=1,nsts !{
+          if (eirdiag_nds_typ(js).ne.2) cycle
+          if (eirdiag_nds_srf(js).ne.nx) cycle
+          if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+          if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1-(eirdiag_nds_start(js)-1)
           wrk0(6,iy)=wrk0(6,iy)+ewldt_res(iy+ias)
         enddo !}
-      endif
+      enddo !}
 #endif
 
 ! for double_null geometry     !iyv 04.02.11
@@ -768,14 +774,17 @@
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(3)
-        if (js.gt.0) then
-          ind=eirdiag_nds_ind(js)
-          ias=ind+1
-          do iy=0,ny-1 !{
+        do iy=0,ny-1 !{
+          do js=1,nsts !{
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ix2+1) cycle
+            if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+            if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+            ind=eirdiag_nds_ind(js)
+            ias=ind+1-(eirdiag_nds_start(js)-1)
             wrk0(14,iy)=wrk0(14,iy)+ewldt_res(iy+ias)
           enddo !}
-        endif
+        enddo !}
 #endif
 ! inner upper target
         hlp_s=0.0_R8
@@ -787,14 +796,17 @@
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(2)
-        if (js.gt.0) then
-          ind=eirdiag_nds_ind(js)
-          ias=ind+1
-          do iy=0,ny-1 !{
+        do iy=0,ny-1 !{
+          do js=1,ntns !{
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ix1) cycle
+            if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+            if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+            ind=eirdiag_nds_ind(js)
+            ias=ind+1-(eirdiag_nds_start(js)-1)
             wrk0(13,iy)=wrk0(13,iy)+ewldt_res(iy+ias)
           enddo !}
-        end if
+        end do !}
 #endif
       end if !}
 

@@ -38,6 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: diff, dist, disx, disy, distc, match
+      public :: divide_by_areas
       public :: cr, cz, hy1, pit, sy
 
       contains
@@ -2516,6 +2517,29 @@ c conn
      & leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       end subroutine init_connectivity
+
+      subroutine divide_by_areas(nx,ny,field,result)
+      implicit none
+      integer, intent(in) :: nx, ny
+      real(kind=R8), intent(in) :: field(-1:nx,-1:ny,0:1)
+      real(kind=R8), intent(out) :: result(-1:nx,-1:ny,0:1)
+      integer ix, iy
+      do iy = -1, ny
+        do ix = -1, nx
+          if (gs(ix,iy,0).gt.0.0_R8) then
+            result(ix,iy,0) = field(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
+          else
+            result(ix,iy,0) = 0.0_R8
+          end if
+          if (gs(ix,iy,1).gt.0.0_R8) then
+            result(ix,iy,1) = field(ix,iy,1)/gs(ix,iy,1)
+          else
+            result(ix,iy,1) = 0.0_R8
+          end if
+        end do
+      end do
+      return
+      end subroutine divide_by_areas
 
       function cr(ix,iy)
       implicit none

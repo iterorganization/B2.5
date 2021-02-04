@@ -49,8 +49,16 @@ c
 c
 c*** Set up the input routine
 c
+      lena=8
+      lfin=72
+      jmess=2
       immed=.false.
       mimp=lun
+      keylen=8
+      fixkey=.false.
+      finish = repeat(' ',8)
+      promp(1) = repeat(' ',8)
+      promp(2) = repeat(' ',8)
       ufile='param.dg'
       call find_file(ufile,file_ok)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then

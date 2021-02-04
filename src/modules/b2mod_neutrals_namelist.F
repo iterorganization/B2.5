@@ -22,6 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
+c*  ktns          : index of the target to which the Eirene surface belongs
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
@@ -84,7 +85,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
-     *   lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
@@ -135,7 +136,7 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid), micmp(natmid,nionid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),
+     ,  lcns(nstsid), ktns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
@@ -257,6 +258,7 @@ csw 21feb2012
       allocate(micmp(natm_in,nion_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
+      allocate(ktns(nsts_in))
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
@@ -356,6 +358,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       micmp=0
       lcns=0
       ltns=0
+      ktns=0
       ncns=0
       ntns=0
       ksns=0
@@ -472,6 +475,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(ltns)
       deallocate(lsns)
       deallocate(ksns)
+      deallocate(ktns)
       deallocate(msns)
       deallocate(textan)
       if (allocated(textmn)) deallocate(textmn)

@@ -20,7 +20,8 @@ c
      ,  lseppos(ntrgsx), lpfrpos(ntrgsx),
      ,  ntrgts, ntrgs,
      ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel, lytg, nytg
-      integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
+      integer itrg(ntrgsx)
+      integer, allocatable :: indwll(:), lewrk(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
@@ -33,8 +34,7 @@ c
       real (kind=R8), allocatable :: segm_area(:), segm_len(:),
      ,  wldrfdst(:,:), wldrdld(:), co_data(:), wldrdlsp(:,:)
       character*8 :: pltzlbl(nwldprtx)
-      character mtrtrgsg(ntrgsx)*(lnwlmtrl),
-     ,          lblwldpt(nwldprtx)*(mlblprtx)
+      character mtrtrgsg(ntrgsx)*(lnwlmtrl)
       character, allocatable :: mtrwldsg(:)*(lnwlmtrl)
 c======================================================================
 c*** nwldprtx : max. number of the "plot zones" + 1 for shadowing
@@ -50,6 +50,7 @@ c*** pltzlbl  : list of labels for the "plot zones"
 c*** nwldlis  : list of lengths of the "plot zones"
 c*** ntrgs    : number of targets to be treated
 c*** ntrgts   : number of targets in the grid (from cuts)
+c*** itrg     : list of target indices
 c*** lwlddir  : orientation of the "plot zones" (true = CCW)
 c*** lwldlis  : list of segments belonging to the "plot zones" (DG numbering)
 c*** leirlis  : list of segments belonging to the "plot zones" (Eirene numbering)
@@ -64,7 +65,6 @@ c*** lcspwll  : chemical sputtering flag for wall nsegments
 c*** lpspwll  : physical sputtering flag for wall nsegments
 c*** lwlddir  : orientation of the "plot zones" (true = CCW)
 c*** lvdg20   : file created with DG v. 2.0 or later
-c*** lblwldpt : plot zone labels to appear in the output file names
 c*** lnwlmtrl : maximum length of surface material name
 c*** mtrwldsg : material of the wall segment
 c*** mtrtrgsg : material of the target
@@ -103,7 +103,8 @@ c*** l2rdldw  : radiation load was calculated for the walls
 c*** l2rdldt  : radiation load was calculated for the targets
 c*** lrdlsp   : radiation load split was calculated
 c*** lrdlcr   : radiation load from core sources was calculated
-c*** luwrk    : working array
+c*** luwrk    : working array for wall elements (DG numbering)
+c*** lewrk    : working array for wall elements (Eirene numbering)
 c*** co_data  : working array (originally, for average energy)
 c======================================================================
 
@@ -112,8 +113,9 @@ c======================================================================
       subroutine alloc_b2plot_wall_loading(nlim,nsgmx)
       implicit none
       integer nlim, nsgmx
-      
-      allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
+
+      allocate(indwll(nsgmx), lwldrad(nsgmx))
+      allocate(lewrk(nsgmx), luwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(leirlis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))
@@ -128,8 +130,8 @@ c======================================================================
 
       subroutine dealloc_b2plot_wall_loading
       implicit none
-      
-      deallocate(indwll, luwrk, lwldrad)
+
+      deallocate(indwll, lewrk, luwrk, lwldrad)
       deallocate(lwldlis)
       deallocate(leirlis)
       deallocate(lpumplis)

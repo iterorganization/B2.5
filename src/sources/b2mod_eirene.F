@@ -294,7 +294,7 @@ c not sure this is the right place
         volsumnold=-1.0_R8
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
-        allocate(sum_wld(2,2+NATM))
+        allocate(sum_wld(4,2+NATM))
         allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
@@ -894,26 +894,23 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'Eirene output in eirene_mc :'
         sum_wld(1:2,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
-          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          if (ltns(2).ne.0)
-     >     sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
-          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          if (ltns(2).ne.0)
-     >     sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
-          do is = 1, nnatmi
-            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
-     .       is,istrai)
-            if (ltns(2).ne.0)
-     >       sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .        is,istrai)
+          do i=1,ntns
+            sum_wld(ktns(i),1)=sum_wld(ktns(i),1)+
+     .                         wldnek(nnlimi+ltns(i),istrai)
+            sum_wld(ktns(i),2)=sum_wld(ktns(i),2)+
+     .                         wldnep(nnlimi+ltns(i),istrai)
+            do is = 1, nnatmi
+              sum_wld(ktns(i),2+is)=sum_wld(ktns(i),2+is)+
+     .                                  wldna(nnlimi+ltns(i),is,istrai)
+            end do
           end do
         end do
-        write(*,*) 'Summed Western target data : '
-        write(*,*)
-     .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nnatmi)
-        write(*,*) 'Summed Eastern target data : '
-        write(*,*)
-     .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nnatmi)
+        write(*,*) 'Summed target data : '
+        write(hlp_frm,'(a,i2,a)') '(a,i1,a,a,',2+nnatmi,'e14.6)'
+        do i = 1, 2*max(1,nncut)
+          write(*,hlp_frm) 'Target ',i,' : ',
+     .     'wldnek, wldnep, wldna = ', sum_wld(i,1:2+nnatmi)
+        end do
       endif
 cxpb
 

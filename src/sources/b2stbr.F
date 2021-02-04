@@ -766,9 +766,13 @@ c   --> better solution wanted here..
           endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
