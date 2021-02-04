@@ -8311,11 +8311,13 @@ cxpb Careful here because of BC number clash
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     &                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  NIVS = NIVS +
-     &               NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .              VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  NIVS=NIVS +
+     &                     ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t2=t2 +
      &                ne(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
@@ -8354,7 +8356,7 @@ cxpb Careful here because of BC number clash
                 ENDDO
               ENDIF
             ENDDO
-            TIS = TIS/NIVS
+            TIS=TIS/NIVS
             t1=t1/t0
             t2=t2/t0
             t3=t3/t0
@@ -8626,12 +8628,14 @@ cxpb Careful here because of BC number clash
             DO IBW=IB,NBC
               if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
-                  TIS = TIS + TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
-     .                        NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                       VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  NIVS = NIVS +
-     .                   NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                  VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  NIVS=NIVS +
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t0=t0 +
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
@@ -8670,7 +8674,7 @@ cxpb Careful here because of BC number clash
                 END DO
               endif
             END DO
-            TIS = TIS/NIVS
+            TIS=TIS/NIVS
             t1=t1/t0
             TIS=TIS*
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/

@@ -113,4 +113,4 @@
 *-----------------------------------------------------------------------
 *.end b2ttia
 
-      end subroutine b2ttia                                             !srv 16.06.08 }
+      end subroutine b2ttia                                          !srv 16.06.08 }
