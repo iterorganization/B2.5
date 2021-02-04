@@ -44,17 +44,14 @@
      &  schst(nCv,0:3), snest(nCv,0:1),
      &  sktst(nCv,0:3), wrk0(nCv)
       character chns*3, chk*1                                        !srv 11.09.09 }
-      real (kind=R8) ::
-     *   rf0, rf1, rf2, rf3, t0
+      real (kind=R8) :: t0
       real (kind=R8), save :: kt_eps = 1.0e-60_R8
-      save ncall, rf0, rf1, rf2, rf3
+      save ncall
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
 *   ..initialisation
-      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/
-*     (rf0/1/2/3 for numerical stabilisation)
-
+      data ncall/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -62,15 +59,6 @@
 *   ..subprogram start-up calls
       call subini ('b2srst')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2srst_rf0', rf0)
-       call ipgetr ('b2srst_rf1', rf1)
-       call ipgetr ('b2srst_rf2', rf2)
-       call ipgetr ('b2srst_rf3', rf3)
-       call xertst (0.0_R8.le.rf0.and.0.0_R8.le.rf1.and.
-     &              0.0_R8.le.rf2.and.0.0_R8.le.rf3,
-     &              'faulty internal parameter rf0/1/2/3')
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -102,9 +90,11 @@
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
          t0 = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na(iCv,is)
          sr%sna(iCv,0,is) =
-     &     max(sr%sna(iCv,0,is),(1.0_R8+rf0)*t0,-rf0*t0)
+     &     max(sr%sna(iCv,0,is),(1.0_R8+switch%b2srst_rf0)*t0,
+     &     -switch%b2srst_rf0*t0)
          sr%sna(iCv,1,is) = (1.0_R8/na(iCv,is))*
-     &     min(sr%sna(iCv,1,is)*na(iCv,is),-rf0*t0,(1.0_R8+rf0)*t0)
+     &     min(sr%sna(iCv,1,is)*na(iCv,is),-switch%b2srst_rf0*t0,
+     &     (1.0_R8+switch%b2srst_rf0)*t0)
        enddo
 !WG_TODO       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
 !WG_TODO     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
@@ -136,45 +126,57 @@
       do iCv = 1, nCv
 *     ..modify she(,,0:1)
         t0 = sr%she(iCv,0)+sr%she(iCv,1)*te(iCv)
-        sr%she(iCv,0) = max(sr%she(iCv,0),(1.0_R8+rf1)*t0,-rf1*t0)
+        sr%she(iCv,0) = max(sr%she(iCv,0),(1.0_R8+switch%b2srst_rf1)*t0,
+     &                  -switch%b2srst_rf1*t0)
         sr%she(iCv,1) = (1.0_R8/te(iCv))*
-     &    min(sr%she(iCv,1)*te(iCv),-rf1*t0,(1.0_R8+rf1)*t0)
+     &    min(sr%she(iCv,1)*te(iCv),-switch%b2srst_rf1*t0,
+     &    (1.0_R8+switch%b2srst_rf1)*t0)
 *     ..modify she(,,2:3)
         t0 = sr%she(iCv,2)+sr%she(iCv,3)*te(iCv)
-        sr%she(iCv,2) = max(sr%she(iCv,2),(1.0_R8+rf1)*t0,-rf1*t0)
+        sr%she(iCv,2) = max(sr%she(iCv,2),(1.0_R8+switch%b2srst_rf1)*t0,
+     &                  -switch%b2srst_rf1*t0)
         sr%she(iCv,3) = (1.0_R8/te(iCv))*
-     &    min(sr%she(iCv,3)*te(iCv),-rf1*t0,(1.0_R8+rf1)*t0)
+     &    min(sr%she(iCv,3)*te(iCv),-switch%b2srst_rf1*t0,
+     &    (1.0_R8+switch%b2srst_rf1)*t0)
 *     ..modify shi(,,0:1)
         t0 = sr%shi(iCv,0)+sr%shi(iCv,1)*ti(iCv)
-        sr%shi(iCv,0) = max(sr%shi(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shi(iCv,0) = max(sr%shi(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
         sr%shi(iCv,1) = (1.0_R8/ti(iCv))*
-     &    min(sr%shi(iCv,1)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+     &    min(sr%shi(iCv,1)*ti(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify shi(,,2:3)
         t0 = sr%shi(iCv,2)+sr%shi(iCv,3)*ti(iCv)
-        sr%shi(iCv,2) = max(sr%shi(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shi(iCv,2) = max(sr%shi(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
         sr%shi(iCv,3) = (1.0_R8/ti(iCv))*
-     &    min(sr%shi(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+     &    min(sr%shi(iCv,3)*ti(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 
 *     ..modify shn(,,0:1)
         t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*tn(iCv)
-        sr%shn(iCv,0) = max(sr%shn(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shn(iCv,0) = max(sr%shn(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
         sr%shn(iCv,1) = (1.0_R8/tn(iCv))*
-     &    min(sr%shn(iCv,1)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+     &    min(sr%shn(iCv,1)*tn(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify shn(,,2:3)
         t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*tn(iCv)
-        sr%shn(iCv,2) = max(sr%shn(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shn(iCv,2) = max(sr%shn(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
         sr%shn(iCv,3) = (1.0_R8/tn(iCv))*
-     &    min(sr%shn(iCv,3)*tn(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+     &    min(sr%shn(iCv,3)*tn(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify skt(,,0:1)
 c        t0 = sr%skt(iCv,0)+sr%skt(iCv,1)*kt(iCv)
-c        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
+c        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
 c        sr%skt(iCv,1) = (1.0_R8/(kt(iCv)+kt_eps))*
-c     &    min(sr%skt(iCv,1)*kt(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+c     &    min(sr%skt(iCv,1)*kt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify skt(,,2:3)
 c        t0 = sr%skt(iCv,2)+sr%skt(iCv,3)*kt(iCv)
-c        sr%skt(iCv,2) = max(sr%skt(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
+c        sr%skt(iCv,2) = max(sr%skt(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
 c        sr%skt(iCv,3) = (1.0_R8/(kt(iCv)+kt_eps))*
-c     &    min(sr%skt(iCv,3)*kt(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+c     &    min(sr%skt(iCv,3)*kt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
 
 *     ..make sch(,,1) negative
         sr%sch(iCv,0) = sr%sch(iCv,0)+max(0.0_R8,sr%sch(iCv,1))*po(iCv)
@@ -184,9 +186,11 @@ c     &    min(sr%skt(iCv,3)*kt(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
         sr%sch(iCv,3) = min(sr%sch(iCv,3),0.0_R8)
 *     ..modify sne
         t0 = sr%sne(iCv,0)+sr%sne(iCv,1)*ne(iCv)
-        sr%sne(iCv,0) = max(sr%sne(iCv,0),(1.0_R8+rf3)*t0,-rf3*t0)
+        sr%sne(iCv,0) = max(sr%sne(iCv,0),(1.0_R8+switch%b2srst_rf3)*t0,
+     &                  -switch%b2srst_rf3*t0)
         sr%sne(iCv,1) = (1.0_R8/ne(iCv))*
-     &   min(sr%sne(iCv,1)*ne(iCv),-rf3*t0,(1.0_R8+rf3)*t0)
+     &   min(sr%sne(iCv,1)*ne(iCv),-switch%b2srst_rf3*t0,
+     &   (1.0_R8+switch%b2srst_rf3)*t0)
       enddo
 
 *   ..calculate the source coefficients of numerical stabilisation.

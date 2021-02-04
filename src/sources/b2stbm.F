@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
+      subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
      &  main_call)
       use b2mod_types
@@ -24,6 +24,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -32,6 +33,7 @@
       integer nCv, nFc, nVx, ns, ismain
       logical main_call
       real (kind=R8) :: dtim
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -67,18 +69,13 @@
      *  ua0(nCv,0:ns-1), fna0(nFc,0:1,0:ns-1),
      *  fhi0(nFc,0:1), ti0(nCv),
      *  fhe0(nFc,0:1), fch0(nFc,0:1)
-      integer, save :: ncall, impgyro_mod
-      real (kind=R8), save :: linearisation
-      logical, save :: internal_energy_sources
+      integer, save :: ncall = 0
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
       external subini, subend, xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
-*   ..initialisation
-      data ncall/0/, linearisation/1.0_R8/, impgyro_mod/0/, 
-     * internal_energy_sources/.false./
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -92,16 +89,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbm')
-*   ..set internal parameters on first call
-      if(ncall.eq.0) then !{
-        call ipgetr ('b2stbm_linearisation', linearisation)
-        if (linearisation.eq.1.0_R8)   ! for backward compatibility
-     >   call ipgetr ('b2stbm_linearization', linearisation)
-        call xertst 
-     .   (linearisation.le.1.0_R8 .and. linearisation.ge.0.0_R8,
-     .    'faulty input parameter linearisation')
-        call ipgeti ('b2stbm_impgyro_mod', impgyro_mod)
-      endif !}
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -156,7 +143,7 @@
       srw%b2stbm_sch = 0.0_R8
 
 * ..obtain sources from IMPGYRO
-      if (impgyro_mod.eq.0) goto 999
+      if (switch%b2stbm_impgyro_mod.eq.0) goto 999
 
 cxpb First provide plasma background (include neutral quantities)
 cxpb Must convert fluxes to flux densities
@@ -253,7 +240,7 @@ cxpb Must convert fluxes to flux densities
       end do
 
       if (ncall.eq.0 .or.
-     & (main_call .and. mod(ncall,impgyro_mod).eq.0)) then
+     & (main_call .and. mod(ncall,switch%b2stbm_impgyro_mod).eq.0)) then
 cxpb The call below obtains the following quantities from IMPGYRO
 cxpb Main W data: na_ext, ua_ext, ta_ext
 cxpb Sources due to W: sne_ext, smo_ext, she_ext, shi_ext
@@ -361,7 +348,7 @@ cxpb
 * ..linearise external sources
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (linearisation.gt.0.0_R8) then
+        if (switch%b2stbm_linearisation.gt.0.0_R8) then
 *  ...electron particle source
           t0 = st_ext%sne(iCv)
           if (t0.ge.0.0_R8) then
@@ -369,9 +356,10 @@ cxpb
           else
             srw%sne0(iCv,1) = t0/dv%ne(iCv)
           end if
-          srw%sne0(iCv,0) = srw%sne0(iCv,0)+linearisation*abs(t0)
+          srw%sne0(iCv,0) = srw%sne0(iCv,0)+
+     .       switch%b2stbm_linearisation*abs(t0)
           srw%sne0(iCv,1) = srw%sne0(iCv,1)-
-     .       linearisation*abs(t0)/dv%ne(iCv)
+     .       switch%b2stbm_linearisation*abs(t0)/dv%ne(iCv)
           do is = 0, ns-1
 *  ...heavy particles sources
             t0 = st_ext%sna(iCv,is)
@@ -381,18 +369,18 @@ cxpb
               srw%sna0(iCv,1,is) = t0/pl%na(iCv,is)
             end if
             srw%sna0(iCv,0,is) = srw%sna0(iCv,0,is)+
-     .         linearisation*abs(t0)
+     .         switch%b2stbm_linearisation*abs(t0)
             srw%sna0(iCv,1,is) = srw%sna0(iCv,1,is)-
-     .         linearisation*abs(t0)/pl%na(iCv,is)
+     .         switch%b2stbm_linearisation*abs(t0)/pl%na(iCv,is)
 *  ...parallel momentum sources
             vthe=sqrt(pl%te(iCv)/me)
             vthe=vthe/sqrt(am(is)*mp/me)
             t0 = st_ext%smo(iCv,is)*
      .         sign(1.0_R8,geo%cvBb(iCv,0))
             srw%smo0(iCv,0,is) = srw%smo0(iCv,0,is)+
-     .         t0+linearisation*abs(t0)*pl%ua(iCv,is)/vthe
+     .         t0+switch%b2stbm_linearisation*abs(t0)*pl%ua(iCv,is)/vthe
             srw%smo0(iCv,1,is) = srw%smo0(iCv,1,is)-
-     .         linearisation*abs(t0)/vthe
+     .         switch%b2stbm_linearisation*abs(t0)/vthe
           end do
 *  ...electron energy source
           t0 = st_ext%she(iCv)
@@ -401,12 +389,13 @@ cxpb
           else
             srw%she0(iCv,1) = t0/pl%te(iCv)
           end if
-          srw%she0(iCv,0) = srw%she0(iCv,0)+linearisation*abs(t0)
+          srw%she0(iCv,0) = srw%she0(iCv,0)+
+     .       switch%b2stbm_linearisation*abs(t0)
           srw%she0(iCv,1) = srw%she0(iCv,1)-
-     .       linearisation*abs(t0)/pl%te(iCv)
+     .       switch%b2stbm_linearisation*abs(t0)/pl%te(iCv)
 *  ...ion energy source
           t0 = st_ext%shi(iCv)
-          if (.not.internal_energy_sources) then
+          if (switch%b2stbm_internal_energy_sources.eq.0) then
             do is = 0, ns-1
               if (st_ext%smo(iCv,is).eq.0.0_R8 .and.
      .            st_ext%sna(iCv,is).eq.0.0_R8) cycle
@@ -426,9 +415,10 @@ cxpb
           else
             srw%shi0(iCv,1) = t0/pl%ti(iCv)
           end if
-          srw%shi0(iCv,0) = srw%shi0(iCv,0)+linearisation*abs(t0)
+          srw%shi0(iCv,0) = srw%shi0(iCv,0)+
+     .       switch%b2stbm_linearisation*abs(t0)
           srw%shi0(iCv,1) = srw%shi0(iCv,1)-
-     .       linearisation*abs(t0)/pl%ti(iCv)
+     .       switch%b2stbm_linearisation*abs(t0)/pl%ti(iCv)
 *  ...electric charge source
           t0 = st_ext%sch(iCv)
           if (t0.ge.0.0_R8) then
@@ -436,9 +426,10 @@ cxpb
           else
             srw%sch0(iCv,1) = t0/pl%po(iCv)
           end if
-          srw%sch0(iCv,0) = srw%sch0(iCv,0)+linearisation*abs(t0)
+          srw%sch0(iCv,0) = srw%sch0(iCv,0)+
+     .      switch%b2stbm_linearisation*abs(t0)
           srw%sch0(iCv,1) = srw%sch0(iCv,1)-
-     .       linearisation*abs(t0)/pl%po(iCv)
+     .       switch%b2stbm_linearisation*abs(t0)/pl%po(iCv)
         else
 *  ...raw sources: no linearisation
           srw%sne0(iCv,0) = st_ext%sne(iCv)
@@ -448,7 +439,7 @@ cxpb
           srw%she0(iCv,0) = st_ext%she(iCv)
           srw%sch0(iCv,0) = st_ext%sch(iCv)
           srw%shi0(iCv,0) = st_ext%shi(iCv)
-          if (.not.internal_energy_sources) then
+          if (switch%b2stbm_internal_energy_sources.eq.0) then
             do is = 0, ns-1
               if (st_ext%smo(iCv,is).eq.0.0_R8 .and.
      .            st_ext%sna(iCv,is).eq.0.0_R8) cycle

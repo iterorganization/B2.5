@@ -36,14 +36,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc, ncallout, ib
+      integer ncall, iFc, ib
       character charns*3                                            !srv 17.06.02
-      save ncall, ncallout
+      save ncall
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
-      data ncall/0/, ncallout/-1/
+      data ncall/0/
 *!!   (style is a numerical switch; needs experiments)
 
 *-----------------------------------------------------------------------
@@ -62,14 +62,11 @@
 *   ..subprogram start-up calls
       call subini ('b2nxfc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2news_ncallout', ncallout)
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-       if (ncall.eq.ncallout) then
+       if (ncall.eq.switch%b2news_ncallout) then
         write(*,*) 'ncall',ncall
 !WG_TODO        call hbout('b2nxfc_xvsg ',nx,ny,2,rob,'rob',ub,'ub',cvsb,
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')

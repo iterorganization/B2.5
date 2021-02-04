@@ -25,6 +25,10 @@
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
 !WG_TODO      use b2mod_external
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : b2npmo_solvedum
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, itcnt                                !srv 13.01.17
@@ -112,8 +116,8 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)             !srv 13.01.17 05.07.17
-      logical new_matrix, solvedum(0:CVREGMAX), main_lightest
-      save ncall, solvedum
+      logical new_matrix, main_lightest
+      save ncall
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -403,7 +407,7 @@ cdjm Jan2017 update momentum source components for balance
        endif                                                           !srv 12.07.02 }
 
        if (solving.and.any(solvemo(is,0:mpg%nnreg(0)))) then           !srv 06.07.10 22.05.18
-         solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
+         b2npmo_solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c     ..compare matrices
          new_matrix = .false.
          do ireg = 0, mpg%nnreg(0)
@@ -413,7 +417,7 @@ c     ..compare matrices
          if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
          call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
-     &     solvedum, itcnt, switch%b2npmo_rxg, rob, rob, pb, pb,
+     &     b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob, pb, pb,
      &     pl%ua(1,is), smb,
      &     flcb, cvcb, dv%resmo(1,is),  ctcfb, dv%corua(1,is),
      &     dv%pcca(1,0,is), aa, wrk1, 'b2usmo_'//chns)
