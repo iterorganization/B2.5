@@ -32,6 +32,8 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar
+      use b2mod_ad
+     & , only : b2sral_elm_count
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr,
@@ -70,7 +72,6 @@
 *   ..local variables
       integer ncall, iCv, k, is, sources_inputfile
       integer numerics_namelist
-      integer, save :: elm_count
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -152,16 +153,15 @@
 
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
-        call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        if(numerics_namelist.ge.1) then
+        if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
      .      mpg%cvOnClosedSurface)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
-          elm_count=tim/numerics_time_mod
+          b2sral_elm_count=tim/numerics_time_mod
         else
-          elm_count=0
+          b2sral_elm_count=0
         endif
         catch_up=numerics_time_mod.gt.0.0_R8
         do while(catch_up)
@@ -179,11 +179,11 @@
       else
         if(numerics_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3e12.4,2i6)')
-     .     'ELM: ',tim,mod(tim,numerics_time_mod),
-     1     numerics_time_switch,int(tim/numerics_time_mod),elm_count
+     .     'ELM: ',tim,mod(tim,numerics_time_mod), numerics_time_switch,
+     .     int(tim/numerics_time_mod),b2sral_elm_count
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
-     1     int(tim/numerics_time_mod).gt.elm_count) then
-            elm_count=tim/numerics_time_mod
+     1     int(tim/numerics_time_mod).gt.b2sral_elm_count) then
+            b2sral_elm_count=tim/numerics_time_mod
             call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
      .        mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
@@ -308,7 +308,7 @@
 
 
 *   ..compute more special contributions
-      call b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
+      call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
      &  main_call)
 #ifdef WG_TODO

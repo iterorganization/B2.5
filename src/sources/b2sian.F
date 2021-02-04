@@ -10,6 +10,10 @@
       use b2us_map
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2sian_smo0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : b2sian_eps
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, isb
@@ -37,13 +41,11 @@
       integer iCv, k
       character chns*3, chark*1
       real (kind=R8) ::
-     *    eps, wrk(nCv), wrkf(nFc)
-      save eps
+     *    wrk(nCv), wrkf(nFc)
 *   ..procedures
       external subini, subend, xertst
       external b2xvff, b2xvsg
 *   ..initialization
-      data eps/1.0e-60_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -57,7 +59,7 @@
       smban = 0.0_R8
       if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
 *   ..  compute smban
-        wrkf = fchanml(:,1)/(geo%fcS*geo%fcQalf(:,1) + eps)
+        wrkf = fchanml(:,1)/(geo%fcS*geo%fcQalf(:,1) + b2sian_eps)
         call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrk)
         do iCv = 1, mpg%nCi
             smban(iCv,0) = -switch%b2sian_phm0*
