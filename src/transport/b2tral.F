@@ -22,7 +22,7 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, alloc_input_profile
       use b2mod_ad
-     & , only : b2news_solving
+     & , only : my_out_folder, my_out_sf, b2news_solving
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 

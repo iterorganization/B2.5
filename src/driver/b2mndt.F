@@ -50,7 +50,8 @@
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
      &          b2sral_elm_count, b2sian_eps, b2npmo_solvedum,
-     &          b2news_solving, test_residual
+     &          b2news_solving, test_residual, b2mndt_itcnt, 
+     &          my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
