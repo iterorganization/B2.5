@@ -24,6 +24,8 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar
+      use b2mod_ad
+     & , only : my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0

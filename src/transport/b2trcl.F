@@ -17,6 +17,10 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain

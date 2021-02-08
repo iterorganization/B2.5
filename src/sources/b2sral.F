@@ -33,7 +33,7 @@
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar
       use b2mod_ad
-     & , only : b2sral_elm_count
+     & , only : b2sral_elm_count, my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr,

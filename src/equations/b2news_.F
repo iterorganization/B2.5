@@ -52,7 +52,7 @@
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
      &          b2sral_elm_count, b2sian_eps, b2npmo_solvedum,
-     &          b2news_solving
+     &          b2news_solving, my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr
