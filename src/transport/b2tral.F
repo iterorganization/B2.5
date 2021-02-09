@@ -90,7 +90,9 @@
 *   ..local variables
       integer ix, iy, is, is0, n2
       integer ncall, pot_eq, no_current, no_solve, style, elm_count
+      integer :: nnucl, zmaxmax                                         !som 09.02.21
       integer, save :: transport_namelist = 0
+      integer, save :: Zhdanov_closure = 0                              !som 25.01.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -157,6 +159,7 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(nx,ny,ns)
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
+        call ipgeti ('b2tqna_Zhdanov_closure', Zhdanov_closure)   !som 25.01.20
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
@@ -211,6 +214,13 @@
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
      5  csig_cl, calf_cl)
+*   ..compute Zhdanov closure coefficients
+      if(Zhdanov_closure.eq.1) then                                !som 09.02.21
+        if (ncall.eq.0) then
+          call b2trnu (ns, nnucl, zmaxmax)
+        endif
+        call b2trzh (nx, ny, ns, nnucl, zmaxmax, na, ti)
+      endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
       if (style.eq.1) then
