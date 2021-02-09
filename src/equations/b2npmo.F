@@ -134,6 +134,9 @@
       integer, save :: get_residuals = 0                               !srv 22.05.18
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
+      integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
+      real (kind=R8) :: mm(0:ns-1),  am1(0:ns-1)                       !som 13.11.20
+      real (kind=R8), save ::  mass_multiplicator                      !som 13.11.20
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, czetap, czetae                                    !srv 13.01.17
@@ -154,10 +157,13 @@
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny),                          !srv 13.01.17 {
-     4  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),
-     5  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     4  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),     
+     5  cimp1(-1:nx,-1:ny,0:ns-1), cimp2(-1:nx,-1:ny,0:ns-1),          !som 13.11.20
      6  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
-     7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)                             !srv 13.01.17 }
+     7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),                             !srv 13.01.17 }
+     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                            !som 13.11.20
+     9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
+     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
@@ -228,6 +234,13 @@
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+
+        impr_form_tf = 0                                               !som 13.11.20        
+        impr_form_fr = 0
+        mass_multiplicator = 1.0_R8
+        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf) 
+        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)   
+        call ipgeti ('b2npmo_mass_multiplicator', mass_multiplicator)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -273,16 +286,90 @@
       call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
-      call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
+      if ((impr_form_tf.eq.0) .and. (impr_form_fr.eq.0)) then
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+      elseif ((impr_form_tf.eq.1) .and.
+     &        (impr_form_fr.eq.1)) then
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1=mm*am
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)        
+      else
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1=mm*am           
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+      endif
+      
       do iy = -1, ny
         do ix = -1, nx
           ce1(ix,iy)=fce1(zeff(ix,iy))
           ce2(ix,iy)=fce2(zeff(ix,iy))
-          cimp1(ix,iy)=fce1(zmff(ix,iy))
-          cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
-      enddo                                                            !srv 13.01.17 }
+      enddo
+      
+      if (impr_form_fr.eq.0) then
+        do iy = -1, ny
+          do ix = -1, nx
+            cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
+          enddo
+        enddo
+      else
+        do iy = -1, ny
+          do ix = -1, nx
+            do is = 0, ns-1
+              cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
+     & z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+            enddo 
+          enddo
+        enddo       
+      endif
+!     write (*, *) 'checkpoint impr_form_fr'
+!     write (*, *) impr_form_fr
+!     write (*, *) 'checkpoint impr_form_tf'
+!     write (*, *) impr_form_tf
+!     write (*, *) 'checkpoint mm'
+!     write (*, *) mm
+!     write (*, *) 'checkpoint cimp1 rel 1'
+!     write (*, *) cimp1(5,5,4)/cimp1(5,5,7)
+      if (impr_form_tf.eq.0) then
+        do iy = -1, ny
+          do ix = -1, nx
+            cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
+          enddo
+        enddo       
+      else
+        do iy = -1, ny
+          do ix = -1, nx
+            do is = 0, ns-1
+              cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
+     & z11(ix,iy),z12(ix,iy),z22(ix,iy))
+            enddo         
+          enddo
+        enddo       
+      endif                                                          !som 13.11.20 }    
+      if (iout.ne.0 .or. iout_b2wdat .eq. 4) then 
+        call my_out(70,nx,ny,cimp1(:,:,4),'b2test_cimp1')              !som 02.12.20       
+        call my_out(70,nx,ny,cimp2(:,:,4),'b2test_cimp2')              !som 02.12.20
+        call my_out(70,nx,ny,zmc(:,:),'b2test_zc')              !som 02.12.20 
+        call my_out(70,nx,ny,z11(:,:),'b2test_z11')              !som 02.12.20    
+        call my_out(70,nx,ny,z12(:,:),'b2test_z12')              !som 02.12.20   
+        call my_out(70,nx,ny,z22(:,:),'b2test_z22')              !som 02.12.20 
+        call my_out(70,nx,ny,zf1(:,:),'b2test_zf1')              !som 02.12.20   
+        call my_out(70,nx,ny,zf2(:,:),'b2test_zf2')              !som 02.12.20     
+      endif
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

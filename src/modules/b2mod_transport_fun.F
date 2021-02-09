@@ -147,4 +147,35 @@
       return
       end function h315e
 
+      function fcim1(ismain,is,ns,am1,z11,z12,z22,zf1,zf2)
+      implicit none
+      integer :: ismain,is,ns
+      real (kind=R8) ::  am1(0:ns-1),z11,z12,z22,zf1,zf2, fcim1
+*   1-15.*sqrt(2)/16.*mu(i,j)./m(i).*Z_star_f1(i,i_el).*(3/2-1/2*mu(i,j)./m(i)+433*sqrt(2)/240.*Z_star_22(i,i_el)-23*sqrt(2)/16*mu(i,j)./m(i).*Z_star_12(i,i_el))./delta_k_my_im(i,i_el)-5.*sqrt(2)/16.*mu(i,j)./m(i).*Z_star_f2(i,i_el).*(5/2.*mu(i,j)./m(i)-3/2+65*sqrt(2)./16.*mu(i,j)./m(i).*Z_star_11(i,i_el)-69*sqrt(2)./16.*Z_star_12(i,i_el))./delta_k_my_im(i,i_el);         
+      fcim1 =1.0_R8-(am1(is)/(am1(ismain)+am1(is)))*
+     &(1.3258_R8*zf1*(1.5_R8-0.5_R8*(am1(is)/(am1(ismain)+am1(is)))+
+     &2.5515_R8*z22-2.0329_R8*(am1(is)/(am1(ismain)+am1(is)))*z12)+
+     &0.4419_R8*zf2*(2.5_R8*(am1(is)/(am1(ismain)+am1(is)))-1.5_R8+
+     &5.7452_R8*(am1(is)/(am1(ismain)+am1(is)))*z11-6.0988_R8*z12))
+     &/delta_mdf(z11,z12,z22)
+      end function fcim1
+ 
+      function fcim2(ismain,is,ns,am1,zmc,z11,z12,z22)
+      implicit none
+      integer :: ismain,is,ns
+      real (kind=R8) ::  am1(0:ns-1),zmc,z11,z12,z22, fcim2
+*   25/16.*mu(i,j)./m(i).*(3/2-1/2*mu(i,j)./m(i)+433*sqrt(2)/240.*Z_star_22(i,i_el)-23*sqrt(2)/16*mu(i,j)./m(i).*Z_star_12(i,i_el)).*(1+sqrt(2).*Z_star_c(i,i_el))./delta_k_my_im(i,i_el);
+      fcim2 = 1.5625_R8*(am1(is)/(am1(ismain)+am1(is)))*
+     &((1.5_R8-0.5_R8*(am1(is)/(am1(ismain)+am1(is)))+2.5515_R8*z22-
+     &2.0329_R8*(am1(is)/(am1(ismain)+am1(is)))*z12)*
+     &(1.0_R8+1.4142_R8*zmc))/delta_mdf(z11,z12,z22)
+      end function fcim2
+      
+      function delta_mdf(z11,z12,z22)
+      implicit none
+      real (kind=R8) :: z11,z12,z22, delta_mdf
+*   (5629/1152.*Z_star_11(i,i_el).*Z_star_22(i,i_el)-529/128.*Z_star_12(i,i_el).^2+65/32*sqrt(2).*Z_star_11(i,i_el)+433/288*sqrt(2).*Z_star_22(i,i_el)-23/16*sqrt(2).*Z_star_12(i,i_el)+1);      
+      delta_mdf = 4.8863_R8*z11*z22-4.1328_R8*z12**2+
+     &2.8726_R8*z11+2.1262_R8*z22-2.0329_R8*z12+1.0_R8
+      end function delta_mdf
       end module b2mod_transport_fun                                     !srv 13.01.17

@@ -64,6 +64,9 @@
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
+      integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
+      real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
+      real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -82,12 +85,16 @@
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
-     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     4  ce2(-1:nx,-1:ny),  cimp1(-1:nx,-1:ny,0:ns-1), 
+     *  cimp2(-1:nx,-1:ny,0:ns-1),                                    !som 13.11.20
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)            !srv 13.01.17 05.07.17 }
+     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),            !srv 13.01.17 05.07.17 }
+     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                            !som 13.11.20
+     9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
+     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       character chk*1                                                 !srv 11.09.09 } !srv 05.07.17
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
@@ -152,6 +159,12 @@
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
+        impr_form_tf = 0                                               !som 13.11.20        
+        impr_form_fr = 0
+        mass_multiplicator = 1.0_R8
+        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf) 
+        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)   
+        call ipgeti ('b2npmo_mass_multiplicator', mass_multiplicator)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -475,16 +488,80 @@
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                    !srv 13.01.17 {
-       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
-       do iy = -1, ny
-         do ix = -1, nx
-           ce1(ix,iy)=fce1(zeff(ix,iy))
-           ce2(ix,iy)=fce2(zeff(ix,iy))
-           cimp1(ix,iy)=fce1(zmff(ix,iy))
-           cimp2(ix,iy)=fce2(zmff(ix,iy))
-         enddo
-       enddo                                                          !srv 13.01.17 }
+       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
+      if ((impr_form_tf.eq.0) .and. (impr_form_fr.eq.0)) then
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+      elseif ((impr_form_tf.eq.1) .and.
+     &        (impr_form_fr.eq.1)) then
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1=mm*am
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)        
+      else
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1=mm*am           
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+      endif
+      
+      do iy = -1, ny
+        do ix = -1, nx
+          ce1(ix,iy)=fce1(zeff(ix,iy))
+          ce2(ix,iy)=fce2(zeff(ix,iy))
+        enddo
+      enddo
+      
+      if (impr_form_fr.eq.0) then
+        do iy = -1, ny
+          do ix = -1, nx
+            cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
+          enddo
+        enddo
+      else
+        do iy = -1, ny
+          do ix = -1, nx
+            do is = 0, ns-1
+              cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
+     & z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+            enddo 
+          enddo
+        enddo       
+      endif
+!     write (*, *) 'checkpoint2 impr_form_fr'
+!     write (*, *) impr_form_fr
+!     write (*, *) 'checkpoint2 impr_form_tf'
+!     write (*, *) impr_form_tf
+!     write (*, *) 'checkpoint2 mm'
+!     write (*, *) mm
+!     write (*, *) 'checkpoint2 cimp1 rel 1'
+!     write (*, *) cimp1(5,5,4)/cimp1(5,5,7)
+      if (impr_form_tf.eq.0) then
+        do iy = -1, ny
+          do ix = -1, nx
+            cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
+          enddo
+        enddo       
+      else
+        do iy = -1, ny
+          do ix = -1, nx
+            do is = 0, ns-1
+              cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
+     & z11(ix,iy),z12(ix,iy),z22(ix,iy))
+            enddo         
+          enddo
+        enddo       
+      endif                                                          !som 13.11.20 }    
 *   ..compute the Coulomb logarithm
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

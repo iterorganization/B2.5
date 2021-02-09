@@ -40,7 +40,8 @@
      &  ne2(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),        !srv 13.01.17
      &  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),                             !srv 13.01.17
-     &  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny), zeff(-1:nx,-1:ny)       !srv 13.01.17
+     &  cimp1(-1:nx,-1:ny,0:ns-1), cimp2(-1:nx,-1:ny,0:ns-1),           !som 13.11.20
+     &  zeff(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
@@ -386,8 +387,8 @@ c   .. apply flux limit
         call my_out(70,nx,ny,f_luc_sg,'b2sifrtf_f_luc_sg')
         call my_out(70,nx,ny,ce1,'b2sifrtf_ce1')
         call my_out(70,nx,ny,ce2,'b2sifrtf_ce2')
-        call my_out(70,nx,ny,cimp1,'b2sifrtf_cimp1')
-        call my_out(70,nx,ny,cimp2,'b2sifrtf_cimp2')
+        call my_out(70,nx,ny,cimp1(:,:,isb),'b2sifrtf_cimp1'//chns)              !som 13.11.20       
+        call my_out(70,nx,ny,cimp2(:,:,isb),'b2sifrtf_cimp2'//chns)              !som 13.11.20
         call my_out(70,nx,ny,alfx_c,'b2sifrtf_alfx_c')
         call my_out(70,nx,ny,sigx_c,'b2sifrtf_sigx_c')
         call my_out(70,nx,ny,zetae,'b2sifrtf_zetae')
@@ -409,10 +410,10 @@ c   .. apply flux limit
       real (kind=R8) :: fkabvp(-1:nx,-1:ny)
       if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp=cimp1
+        fkabvp=cimp1(-1:nx,-1:ny,b)                                 !som 13.11.20 
       elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp=cimp1
+        fkabvp=cimp1(-1:nx,-1:ny,a)                                 !som 13.11.20 
       elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=1.0_R8
@@ -431,7 +432,7 @@ c   .. apply flux limit
       real (kind=R8) :: fkabtf(-1:nx,-1:ny)
       if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabtf=cimp2
+        fkabtf=cimp2(-1:nx,-1:ny,a)                                 !som 13.11.20 
       elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=0.0_R8
