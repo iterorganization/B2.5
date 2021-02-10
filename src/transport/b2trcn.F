@@ -4,7 +4,7 @@
       subroutine b2trcn (nnucl, amnucl, N2, N5, N6, N8, N9, N10, 
      & N11, N12, mu, rmu, mum, mdm)                               !som 05.02.2021
       use b2mod_types
-      use b2mod_b2cmpa
+!     use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
       integer nnucl

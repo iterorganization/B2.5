@@ -216,10 +216,14 @@
      5  csig_cl, calf_cl)
 *   ..compute Zhdanov closure coefficients
       if(Zhdanov_closure.eq.1) then                                !som 09.02.21
-        if (ncall.eq.0) then
+      print *, 'checkpoint_1'
+!       if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
-        endif
+          print *, 'checkpoint_2'
+!       endif
+        print *, 'checkpoint_3'
         call b2trzh (nx, ny, ns, nnucl, zmaxmax, na, ti)
+        print *, 'checkpoint_4'
       endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
