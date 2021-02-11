@@ -10,6 +10,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tqce
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -63,13 +67,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv
+      integer iCv
       character(23) hlp_frm                                             !srv 11.03.13
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
       parameter (ce = 3.16e0_R8)
-      save ncall
 *   ..procedures
       intrinsic abs, sqrt, max, log
       real (kind=R8) ::
@@ -87,7 +90,6 @@
       real (kind=R8) h135e, h153e, h315e
       real (kind=R8) f135e
 *   ..initialisation
-      data ncall/0/
       pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
       fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
       fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
@@ -136,7 +138,7 @@
 *   ..test nCv
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tqce.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
@@ -270,7 +272,7 @@
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tqce = ncall_b2tqce+1
       call subend ()
       return
 

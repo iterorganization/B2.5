@@ -8,6 +8,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfed
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
@@ -30,17 +34,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
       real (kind=R8) ::
      * pof(nFc), pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
      * wrk(nCv), wrk0(nFc), wght(nFc,2)
-      save ncall
 *   ..procedures
       intrinsic min
       external subini, subend, xertst
       external b2xvsg
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -51,7 +52,7 @@
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfed.lt.3) then
 *    ..test sign of te
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -91,7 +92,7 @@ cwdk                   (implicitly through grad-routine)
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tfed = ncall_b2tfed+1
       call subend ()
       return
 

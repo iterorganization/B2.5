@@ -14,6 +14,10 @@
 !WG_TODO     & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
 !WG_TODO     &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
 !WG_TODO     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfhi
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -46,7 +50,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, ib, meth
+      integer iCv, iFc, is, ib, meth
       real (kind=R8) ::
      *   floi0(nFc,0:1), flomx, coni0(nFc,0:1),
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
@@ -69,7 +73,6 @@ cpax
       real (kind=R8) :: upfac, hybfac, scur(nFc,0:1) !djm Jan2017
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
-      save ncall                                          
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
 c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
@@ -82,7 +85,6 @@ c      integer, save :: lim_flux = 0                                    !srv 04.
       external subini, subend, xertst
       external b2xvsg, b2xvff
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -91,7 +93,7 @@ c      integer, save :: lim_flux = 0                                    !srv 04.
 *   ..subprogram start-up calls
       call subini ('b2tfhi_')
 *   ..set internal parameters on first call                             !srv 17.05.99
-      if (ncall.eq.0) then                                              !srv
+      if (ncall_b2tfhi.eq.0) then                                              !srv
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
 c       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
@@ -110,7 +112,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfhi.lt.3) then
 *    ..test sign of ni, ti, chci
        call b2xvsg (nCv, dv%ni, 1, 'ni', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
@@ -867,7 +869,7 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhn(1,1),'b2tfhi__fhny')
       endif                                                             !srv 18.06.08 }
 * ..return
-      ncall = ncall+1
+      ncall_b2tfhi = ncall_b2tfhi+1
       call subend ()
       return
 

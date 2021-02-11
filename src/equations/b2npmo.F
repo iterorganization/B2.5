@@ -28,7 +28,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2npmo_solvedum
+     & , only : b2npmo_solvedum, ncall_b2npmo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, itcnt                                !srv 13.01.17
@@ -81,7 +81,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, ireg, k
+      integer iCv, iFc, is, ireg, k
 c      integer, save :: b2sifr_ver = 1                                  !srv 04.07.08 26.10.08
 c      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer :: vcount(0:ns-1)
@@ -117,7 +117,6 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)             !srv 13.01.17 05.07.17
       logical new_matrix, main_lightest
-      save ncall
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -130,7 +129,6 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -139,7 +137,7 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
 *   ..subprogram start-up calls
       call subini ('b2npmo')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2npmo.eq.0) then
 c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
 c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         write(*,*) 'nsmin, nsmax = ', switch%nsmin, switch%nsmax
@@ -162,7 +160,7 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
      . 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2npmo.lt.3) then
 *    ..test sign of na, te, ti
        do is = 0, ns-1
         call b2xvsg (nCv, pl%na(1,is), 1, 'na', '.gt.')
@@ -567,7 +565,7 @@ c     ..compare 9-pt stencil matrices
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
 * ..return
-      ncall = ncall+1
+      ncall_b2npmo = ncall_b2npmo+1
       call subend ()
       return
 

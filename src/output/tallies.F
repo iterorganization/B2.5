@@ -21,7 +21,7 @@
       real (kind=R8), save :: potave(0:nsdecl-1)
 #ifndef NO_CDF
 #     include <netcdf.inc>
-      integer status, ncid, xtypev, ndims, nvars, natts, unlimid, tid
+      integer status, ncid, xtypev, ndims, nvars, natts, unlimid, timd
       integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
       real (kind=R8) :: tim_arr(1)
       real (kind=R8) :: naregtmp(0:nnreg(0),0:ns-1)
@@ -587,9 +587,9 @@
               call check_cdf_status(status)
               status=nf_inq(ncid,ndims,nvars,natts,unlimid)
               call check_cdf_status(status)
-              status=nf_inq_varid(ncid,'times',tid)
+              status=nf_inq_varid(ncid,'times',timd)
               call check_cdf_status(status)
-              status=nf_inq_var(ncid,tid,varname,xtypev,
+              status=nf_inq_var(ncid,timd,varname,xtypev,
      *                          ndims,dimids,natts)
               call check_cdf_status(status)
               call xertst(ndims.eq.1,

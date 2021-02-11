@@ -12,6 +12,10 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
 !WG_TODO     2          b2srst_shi0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2srst
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
@@ -37,7 +41,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, k
+      integer iCv, is, k
       real (kind=R8) ::
      *  snast(nCv,0:1,0:ns-1), smost(nCv,0:3,0:ns-1), 
      &  shest(nCv,0:3), shist(nCv,0:3),
@@ -46,12 +50,10 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0
       real (kind=R8), save :: kt_eps = 1.0e-60_R8
-      save ncall
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
 *   ..initialisation
-      data ncall/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -63,7 +65,7 @@
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test sign of na, ni, ne, te, ti
-      if(ncall.lt.3) then
+      if(ncall_b2srst.lt.3) then
         call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
         call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
@@ -266,7 +268,7 @@ cdjm Jan2017 Store for balance
       endif                                                 !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2srst = ncall_b2srst+1
       call subend ()
       return
 

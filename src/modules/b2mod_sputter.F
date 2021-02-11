@@ -3,7 +3,9 @@
       use b2mod_constants
       use b2mod_wall
       use b2mod_layer
-
+      use b2mod_ad
+     & , only : nsdmax
+      implicit none
       integer, save :: sput_dst, sput_dst2, sput_dst3
       integer, save :: target_intcode(3+6), target_index(92)
       integer, save :: zwall(6)
@@ -33,9 +35,8 @@
      *  sputter_yield(:,:,:,:), sputter_yield2(:,:,:,:)
 #else
 #     include "DIMENSIONS.F"
-      integer nxmax, nymax, nsdmax
-      parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD,NSDMAX=DEF_NSD)
-      private :: nsdmax
+      integer nxmax, nymax
+      parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD)
       real (kind=R8), save ::
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2), 
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)      

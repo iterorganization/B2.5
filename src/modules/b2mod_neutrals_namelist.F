@@ -34,6 +34,8 @@ cank }
       use b2mod_version
       use b2us_map
       use b2us_geo
+      use b2mod_ad
+     & , only : nsdmax
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -56,9 +58,8 @@ cank }
 #ifndef SOLPS4_3
 #     include "COUPLE/EIRSRT.F"
 #endif
-      integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
-      parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
-      private :: nsdmax
+      integer nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
+      parameter (NSTRAID=DEF_NSTRA)
       parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nionid=DEF_NION)
       parameter (nstsid=DEF_NSTS)
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)

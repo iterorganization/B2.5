@@ -13,6 +13,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfrn
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -43,7 +47,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, isb, ib, meth
+      integer iCv, iFc, is, isb, ib, meth
 
       integer, save :: no_hybr = 0
       character chns*3                                                   !srv 16.09.02
@@ -59,7 +63,6 @@
 !pb     *   zeff(nCv), c071(nCv), c071f(nCv)                                !srv 13.01.17
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
       real (kind=R8) :: t0,t1,t2
-      save ncall
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0              !srv 06.07.06
@@ -69,7 +72,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 0
       external b2xvsg, b2xvff, intface
       intrinsic abs, max, min, mod, sqrt
 *   ..initialisation
-      data ncall/0/ 
 
 *-----------------------------------------------------------------------
 *.computation
@@ -80,7 +82,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 0
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2tfrn.eq.0) then
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
           if (no_hybr .eq.1) meth = 0
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -92,7 +94,7 @@ c        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 0
 c        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
       endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfrn.lt.3) then
 *    ..test sign of ne
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
       endif
@@ -296,7 +298,7 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
       endif                                                              !srv 18.06.08 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tfrn = ncall_b2tfrn+1
       call subend ()
       return
 

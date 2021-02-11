@@ -26,14 +26,16 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
-     & , only : maxw_eff
+     & , only : maxw_eff, nstraid
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar
+     & , only : conpar, enepar, enipar, nbcd
       use b2mod_ad
-     & , only : b2sral_elm_count, my_out_folder, my_out_sf
+     & , only : b2sral_elm_count, my_out_folder, my_out_sf,
+     &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
+     &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr,
@@ -70,7 +72,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, k, is, sources_inputfile
+      integer iCv, k, is, sources_inputfile
       integer numerics_namelist
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
@@ -84,7 +86,7 @@
      &  shi0_cx(:,:)
       logical catch_up
       character*32 hlp_frm
-      save ncall, sources_inputfile, numerics_namelist
+      save sources_inputfile, numerics_namelist
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -92,7 +94,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
-      data ncall/0/, sources_inputfile/0/, numerics_namelist/0/
+      data sources_inputfile/0/, numerics_namelist/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -111,21 +113,21 @@
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..test facdrift (not on first call)
-      if (ncall.gt.0) then
+      if (ncall_b2sral.gt.0) then
         call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      &       1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
         call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
      &       1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
        endif
 *   ..inputfile for profile sources
-      if (ncall.eq.0) then
+      if (ncall_b2sral.eq.0) then
         call ipgeti ('b2sral_inputfile', sources_inputfile)
         call alloc_input_profile(nCv,ns)
         call ipgeti ('b2sral_no_fluid_neutral_sources',
      .                                       no_fluid_neutral_sources)
       endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sral.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -152,7 +154,7 @@
       call b2xpfi (nFc, ns, dv%fna, dv%fni)
 
 *   ..test facdrift and fac_ExB
-      if (ncall.eq.0) then                                              !xpb
+      if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
      .      mpg%cvOnClosedSurface)
@@ -213,7 +215,7 @@
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.                                              !xpb
       if(switch%b2sral_style.eq.0 .or. switch%b2sral_style.eq.2) then   !srv 28.07.08 03.11.17
-       if(ncall.eq.0) then 
+       if(ncall_b2sral.eq.0) then 
          write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS, switch,
@@ -235,7 +237,7 @@
 #ifdef WG_TODO
       elseif(switch%b2sral_style.eq.1) then
 !! FIXME : Need to add sne in argument list here ???
-       if(ncall.eq.0) then
+       if(ncall_b2sral.eq.0) then
          write(*,*) ' style=',switch%b2sral_style,' b2stbc_spb called'
        endif
        call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
@@ -336,7 +338,7 @@
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
-     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall)
+     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall_b2sral)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
           call b2xzdd (nCv, 1, switch, mpg, srw%sna0(1,0,is))
@@ -502,7 +504,7 @@ csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
       endif
 
 * ..return
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      if(ncall_b2sral.eq.0 .or. main_call) ncall_b2sral = ncall_b2sral+1
       call subend ()
       return
 

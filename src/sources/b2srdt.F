@@ -16,6 +16,10 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
 !WG_TODO     2          b2srdt_shi0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2srdt
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -47,11 +51,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, k
+      integer iCv, is, k
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv)
-      save ncall                                                     !xpb
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
      &  shetmp(nCv,0:3), shitmp(nCv,0:3), shntmp(nCv,0:3)
@@ -59,7 +62,6 @@
       external subini, subend, xertst
       external b2xvsg
 *   ..initialisation
-      data ncall/0/                         		             !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -73,7 +75,7 @@
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2srdt.lt.3) then
 *    ..test old state
        call b2xvsg (nCv*ns, na0, 1, 'na0', '.gt.')
        call b2xvsg (nCv, te0, 1, 'te0', '.gt.')
@@ -285,7 +287,7 @@ cdjm Store the total change in linearised sources for balance
       endif                                                           !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2srdt = ncall_b2srdt+1
       call subend ()
       return
 

@@ -12,6 +12,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfch
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
@@ -40,7 +44,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is, is0
+      integer is, is0
       character(3) :: charns, charns0
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 
       real (kind=R8) ::
@@ -48,8 +52,6 @@
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
-      save ncall                      !srv 07.07.99
-                                                     !srv 17.05.99 11.07.99 22.11.99
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
 c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
@@ -58,8 +60,6 @@ c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
-      data ncall/0/                                          !srv 07.07.99
-
 
 *-----------------------------------------------------------------------
 *.computation
@@ -75,7 +75,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfch.lt.3) then
 *    ..test sign of ne, te, csig, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
@@ -233,7 +233,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       endif                                                              !srv 11.09.09 }
 #endif
 * ..return
-      ncall = ncall+1
+      ncall_b2tfch = ncall_b2tfch+1
       call subend ()
       return
 

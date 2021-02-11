@@ -5,6 +5,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlmv
       implicit none
       integer nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
@@ -16,16 +20,14 @@
 *     ------------------------------------------------------------------
 *     B2TLMV applies a flux limit to the viscosity.
 *     ------------------------------------------------------------------
-      integer ncall, iFc
+      integer iFc
       character charns*3                                             !srv 12.04.04
-      save ncall
       real (kind=R8) ::
      *   qcl, qfl, tfl, ubv(nVx), dub(nFc)
       intrinsic abs
       external subini, subend, xertst
       external  b2xvsg
 *   ..initialisation
-      data ncall/0/
 *     ------------------------------------------------------------------
       call subini ('b2tlmv')
 *   ..test nCv, nFc
@@ -33,7 +35,7 @@
 *   ..test cflmv
       call xertst (0.0_R8.le.cflmv, 'faulty argument cflmv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tlmv.lt.3) then
 *    ..test sign of nb, tb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, tb, 1, 'tb', '.gt.')
@@ -91,7 +93,7 @@ c       fl = 1.0_R8
        call my_out_us(70,nFc,1,fl,'cflmv-1'//charns)
       endif                                                          !srv 12.04.04 }
 
-      ncall = ncall+1
+      ncall_b2tlmv = ncall_b2tlmv+1
       call subend ()
       return
 *     ------------------------------------------------------------------

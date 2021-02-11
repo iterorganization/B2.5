@@ -10,6 +10,8 @@
       use b2us_map
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2sicf_smo0to3, balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2sicf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb                                      !srv 28.01.02
@@ -36,10 +38,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, k
+      integer iCv, iFc, k
       character chns*3, chark*1                                       !srv 17.06.02
       real (kind=R8) :: wrkf(nFc), wrkv(nVx), wrks(nCv)
-      save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvff, b2xvsg
@@ -56,7 +57,7 @@
 *   ..test mb
       call xertst (0.le.mb, 'faulty argument mb')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sicf.lt.3) then
 *    ..test sign of nb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
       endif
@@ -140,7 +141,7 @@ cdjm Store linearised source for balance
       endif                                                              !srv 17.06.02 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sicf = ncall_b2sicf+1
       call subend ()
       return
 

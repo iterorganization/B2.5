@@ -9,6 +9,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tqin
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nscx
@@ -54,16 +58,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, is0, k
+      integer iCv, is, is0, k
       real (kind=R8) ::
      *   rcx, expu, t0, tav
-      save ncall
 *   ..procedures
       intrinsic sqrt, log, exp, max, dim
       external subini, subend, xertst, sfill, expu
       external b2xvsg
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal 
@@ -81,7 +83,7 @@
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tqin.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
@@ -117,7 +119,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tqin = ncall_b2tqin + 1
       call subend ()
       return
 
