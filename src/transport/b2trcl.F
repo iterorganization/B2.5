@@ -20,7 +20,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf
+     & , only : my_out_folder, my_out_sf, ncall_b2trcl, ncall_b2tlnl
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
@@ -84,7 +84,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer ncall, k, is, is0, iCv, iFc, mode
+      integer k, is, is0, iCv, iFc, mode
       character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
       real (kind=R8) ::
@@ -111,8 +111,6 @@ c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.1
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation
-      save ncall
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -124,7 +122,6 @@ c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.1
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
 c        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
@@ -138,9 +135,8 @@ c#endif
 c        call xertst (.not.(lvis21.ne.0.and.vis_par.ne.0.0_R8),
 c     &   '21-moment viscosity already includes parallel viscosity!')
 c        call ipgeti ('b2trcl_lluciani',lluciani)
-      endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2trcl.lt.3) then
 *    ..test bb
         call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test sign of vol
@@ -698,7 +694,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       endif                                                          !srv 17.06.08 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2trcl = ncall_b2trcl+1
       call subend ()
       return
 

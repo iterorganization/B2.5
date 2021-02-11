@@ -8,6 +8,10 @@
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2treq
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -42,11 +46,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv
+      integer iCv
       real (kind=R8) ::
      *  cfeqp
       parameter (cfeqp=4.8e-15_R8)
-      save ncall
 *     lnlam is the log of the plasma parameter.
 *     cfeqp is a numerical coefficient in the energy transfer rate.
 *   ..procedures
@@ -54,7 +57,6 @@
       external subini, subend, xertst
       external b2xvsg
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -64,7 +66,7 @@
 *   ..test nCv
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2treq.lt.3) then
 *    ..test vol, state
        call b2xvsg (nCv, vol, 1, 'vol', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -82,7 +84,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2treq = ncall_b2treq+1
       call subend ()
       return
 

@@ -1,5 +1,7 @@
       module b2mod_numerics_namelist
       use b2mod_types
+      use b2mod_ad
+     & , only : nsdmax, cvregmax
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -23,9 +25,6 @@
      *   last_solve_9(:)
 #else
 #     include "DIMENSIONS.F"
-      integer NSDMAX, CVREGMAX
-      parameter (NSDMAX=DEF_NSD)
-      parameter (CVREGMAX=8)
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtee(0:CVREGMAX)

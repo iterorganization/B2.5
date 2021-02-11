@@ -13,6 +13,10 @@
       use b2us_map
 !WG_TODO      use b2mod_balance                                               !djm Jan2017
 !WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2siav
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb
@@ -48,7 +52,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc, k
+      integer iFc, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       character chns*3, chk*1                                       !srv 17.06.02
@@ -68,8 +72,6 @@
 !WG_TODO     &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
 !WG_TODO     &                , nu1(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
-      save ncall
-      data ncall/0/
 *   ..procedures
       intrinsic abs, sqrt
 !WG_TODO      real (kind=R8) :: hy1
@@ -81,7 +83,7 @@
 *   ..subprogram start-up calls
       call subini ('b2siav')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2siav.eq.0) then
        call ipgetr ('b2siav_addvis', addvis)                        !srv 23.07.99
        call ipgetr ('b2siav_addvis1', addvis1)                      !srv 04.10.99
        call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
@@ -362,7 +364,7 @@ cdjm Jan2017 Store linearised sources for balance
 !WG_TODO      endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2siav = ncall_b2siav+1
       call subend ()
       return
 

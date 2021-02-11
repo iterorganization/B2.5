@@ -10,6 +10,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2nppo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
@@ -52,15 +56,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv)
-      save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2ursd, b2uspo, b2uppo
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -74,7 +75,7 @@
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      . 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2nppo.lt.3) then
 *    ..test sign of ne, te
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
@@ -129,7 +130,7 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
 *     (at present all errors cause an abort through xertst)
       ierr = 0
 * ..return
-      ncall = ncall+1
+      ncall_b2nppo = ncall_b2nppo+1
       call subend ()
       return
 

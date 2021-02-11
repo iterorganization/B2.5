@@ -23,6 +23,10 @@
       use b2us_map
       use b2us_plasma
       use b2mod_par_opt
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tqna
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
@@ -102,7 +106,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, ic, k,
+      integer iCv, iFc, is, ic, k,
      2  jsep, jxi, jxa
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
@@ -113,13 +117,12 @@
      *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
       integer elm_count, iv
-      save ncall, jxi, jxa, jsep
+      save jxi, jxa, jsep
       logical catch_up
 *   ..procedures
       intrinsic sqrt, dim, max, exp
       external subini, subend, xertst, sfill, ipgeti, ipgetr, expu
 *   ..initialisation
-      data ncall/0/
 *   ..statement functions
       real (kind=R8) ::
      *  expu, addup
@@ -131,7 +134,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tqna')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2tqna.eq.0) then
 !WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
 !WG_TODO        switch%b2tqna_ixref=jxa
 !WG_TODO        call xertst (-1.le.switch%b2tqna_ixref.and.switch%b2tqna_ixref.le.nx,
@@ -178,7 +181,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tqna.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%fcBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
@@ -421,7 +424,7 @@ cxpb Corrected for dimensionality
 
       if(switch%b2tqna_transport_inputfile.eq.1) then
         call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
-     &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
+     &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna)
         do iCv = 1, nCv
           hci0(iCv)=0.0_R8
           do is=0,ns-1
@@ -499,7 +502,7 @@ c mw end
      1   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      2   na, ne, te, ti, crx, hy1)
       elseif(user_transport.eq.8) then
-        if(ncall.eq.0) then
+        if(ncall_b2tqna.eq.0) then
           call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
         endif
         call set_transport_neo(nx, ny, ns, hx, hy, vol, crx, cry,
@@ -623,7 +626,7 @@ cdpc
       endif                                                           !srv 10.11.09 }
 cdpc
 * ..return
-      ncall = ncall+1
+      ncall_b2tqna = ncall_b2tqna+1
       call subend ()
       return
 
@@ -3655,7 +3658,7 @@ c recompute hci0 and hcn0
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2tqna_keps_eps
+     & , only : b2tqna_keps_eps, ncall_transp_keps
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -3673,15 +3676,13 @@ c recompute hci0 and hcn0
      &   dna_ExB(nCv), hce_ExB(nCv),
      &   hci_ExB(nCv), rhol(nCv)
 *   ..local variables
-      integer :: is, ncall
+      integer :: is
       real(kind=R8) ::
      1   wrkf(nFc), wrkc(nCv), shear(nCv)
-      save ncall
-      data ncall/0/
 
 *   ..subprogram start-up calls
       call subini ('set_transport_keps')
-      if(ncall.eq.0) then
+      if(ncall_transp_keps.eq.0) then
         if (switch%keps_local.ne.1) then
          call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
@@ -3745,7 +3746,7 @@ cwdk same dna_ExB for all ion species
      > write(*,*) 'b2tqna_keps_fac = ',switch%keps_fac
 
 *   ..return
-      ncall = ncall +1
+      ncall_transp_keps = ncall_transp_keps +1
       call subend ()
       return
 

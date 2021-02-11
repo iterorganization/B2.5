@@ -230,7 +230,7 @@
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step
-      use b2mod_user_namelist_diff
+      use b2mod_ad
      , , only : nncf
       use b2mod_par_opt
       implicit none
@@ -262,7 +262,7 @@
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step_d
-      use b2mod_user_namelist_diff
+      use b2mod_ad
      , , only : nncf
       use b2mod_par_opt
       implicit none

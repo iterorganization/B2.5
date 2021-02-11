@@ -227,6 +227,8 @@
 
       subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo, 
      &  mpg, state, state_ext)
+      use b2mod_ad
+     & , only : old_erosion, old_deposition
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
@@ -1754,6 +1756,8 @@ c   --> better way doing this is necessary)
         call read_b2mod_transport_namelist
       endif
       call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
+      allocate(
+     *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -1809,7 +1813,7 @@ c new CDF movie option (1st frame at t=0)
       subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state, 
      &  state_ext, J)
       use b2mod_user_namelist
-     , , only: nncf, ncf
+     & , only: ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_recycle
@@ -2366,6 +2370,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
       subroutine b2mndr_2(nout, ns, switch, geo, mpg, state, state_ext)
       use b2mod_switches
+      use b2mod_ad
+     & , only : old_erosion, old_deposition
       implicit none
 #ifdef JET
       integer nout(0:11), nx, ny, ns
@@ -2567,6 +2573,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
+      deallocate(old_erosion, old_deposition)
 !WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
 !WG_RM      call dealloc_b2mod_ma28

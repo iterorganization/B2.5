@@ -5,6 +5,10 @@
      &                  rcx)
       use b2mod_switches
       use b2mod_types
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sqcx
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -44,17 +48,15 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, iCv, is
+      integer n2, iCv, is
       real (kind=R8) :: t_av
       real (kind=R8) ::
      *   wrk0(nCv), expu
-      save ncall
 *   ..procedures
       intrinsic log, exp, max, dim
       external subini, subend, xertst, expu
       external b2xvsg
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -70,7 +72,7 @@
       call xertst (1.0_R8.le.amh0.and.amh0.le.3.0_R8,
      &  'faulty argument range amh0')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sqcx.lt.3) then
 *    ..test th0
        call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
       endif
@@ -96,7 +98,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sqcx = ncall_b2sqcx+1
       call subend ()
       return
 

@@ -15,6 +15,10 @@
 !      use b2mod_balance                                                  !djm Jan2017
 !     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
 !     &          fna_ch, fna_pschused, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfnb
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, ismain
@@ -46,9 +50,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, ib, meth                         !srv 13.10.06
-
-
+      integer iCv, iFc, ib, meth                         !srv 13.10.06
       integer, save :: style_int_vel = 0
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: drift_hyb = 1.0_R8
@@ -82,7 +84,6 @@
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                              !lk
       integer :: xcount, ycount
-      save ncall
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
 c      integer, save :: pflux_cor = 1                                     !srv 05.03.16
@@ -93,7 +94,6 @@ c      integer, save :: vlct_diagno = 1
       external b2xvsg, b2xvff, intface, diff
       intrinsic abs, max, min, mod, sqrt, sign
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -104,13 +104,13 @@ c      integer, save :: vlct_diagno = 1
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2tfnb.eq.0) then
         if (switch%b2tfnb_no_hybr .eq.1) meth = 0
         call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
       endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfnb.lt.3) then
 *    ..test sign of nb, ne, pb, cdnb, cdpb
        call b2xvsg (nCv, pl % na(:,isb), 1, 'nb', '.gt.')
        call b2xvsg (nCv, dv % ne       , 1, 'ne', '.gt.')
@@ -697,7 +697,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
       endif                                                     !srv 11.09.09 }
 
       if (alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8 
-     > .and. ncall.lt.100) then 
+     > .and. ncall_b2tfnb.lt.100) then 
        write(*,'(a,1p,e12.5,a,e12.5,a,2e12.5)') 
      .   'b2tfnb: maxfluxlimit for zb = ',maxval(rt%rza(:,isb)),
      1   ' mb = ',am(isb),' are ',maxfluxlimit
@@ -754,7 +754,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
             rdiv= div_fnb_mdf/div_fnb
             fnb = rdiv*fnb
           else
-            if (ncall.eq.0) write(*,"(a,i4)")
+            if (ncall_b2tfnb.eq.0) write(*,"(a,i4)")
      >       ' Boundary flux correction not attempted for is = ',isb
           endif
           if(switch%b2tfnb_iout.ne.0) then
@@ -902,7 +902,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
       endif                                                             !srv 18.06.08 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tfnb = ncall_b2tfnb+1
       call subend ()
       return
 

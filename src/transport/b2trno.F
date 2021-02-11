@@ -19,9 +19,11 @@
      & , only : parm_hce, parm_hci, parm_dna
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
-     &          tr_ip_elm_count, no_div, addspec
+     &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
+     &          nkind_coeff
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf
+     & , only : my_out_folder, my_out_sf, ncall_b2trno, ncall_b2tqna,
+     &          ncall_transp_keps, nsdmax, cvregmax
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
@@ -74,7 +76,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is, mode
+      integer iCv, iFc, is, mode
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
       real (kind=R8), save :: alpha_stoch = 1.0e0_R8                  !srv 17.12.13
@@ -87,7 +89,6 @@
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
      4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
-      save ncall
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -95,7 +96,6 @@
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -107,11 +107,11 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall.eq.0) then
+      if (ncall_b2trno.eq.0) then
         call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
       end if
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2trno.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test sign of vol
@@ -445,7 +445,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
       endif                                                          !srv 17.06.08 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2trno = ncall_b2trno+1
       call subend ()
       return
 

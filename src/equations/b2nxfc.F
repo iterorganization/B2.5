@@ -8,6 +8,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2nxfc
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -36,14 +40,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc, ib
+      integer iFc, ib
       character charns*3                                            !srv 17.06.02
-      save ncall
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
-      data ncall/0/
 *!!   (style is a numerical switch; needs experiments)
 
 *-----------------------------------------------------------------------
@@ -65,9 +67,9 @@
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
-       if (ncall.eq.switch%b2news_ncallout) then
-        write(*,*) 'ncall',ncall
+      if (ncall_b2nxfc.lt.3) then
+       if (ncall_b2nxfc.eq.switch%b2news_ncallout) then
+        write(*,*) 'ncall',ncall_b2nxfc
 !WG_TODO        call hbout('b2nxfc_xvsg ',nx,ny,2,rob,'rob',ub,'ub',cvsb,
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
        endif
@@ -107,7 +109,7 @@
         call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
       endif                                                            !sv 17.06.02 }
 * ..return
-      ncall = ncall+1
+      ncall_b2nxfc = ncall_b2nxfc+1
       call subend ()
       return
 

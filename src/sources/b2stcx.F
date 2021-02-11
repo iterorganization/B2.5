@@ -17,6 +17,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2stcx
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, is0, ismain
@@ -44,12 +48,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, js, k
+      integer iCv, is, js, k
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1, tkin, t1n
       real (kind=R8) :: wrk0(nCv)
-      save ncall
 *   ..procedures
       intrinsic abs
       logical lnext
@@ -61,9 +64,6 @@
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
-      data ncall/0/
-
-
 *-----------------------------------------------------------------------
 *.computation
 
@@ -78,7 +78,7 @@
       call xertst (lnext(is0,is0+1),
      &  'faulty argument is0: not related to species is0+1')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stcx.lt.3) then
 *    ..test sign of vol, na, ti, ni
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
@@ -353,7 +353,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !WG_TODO      endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2stcx = ncall_b2stcx+1
       call subend ()
       return
 

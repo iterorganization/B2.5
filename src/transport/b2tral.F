@@ -20,9 +20,13 @@
      & , only : parm_hce, parm_hci, parm_dna
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
-     &          tr_ip_elm_count, no_div, addspec, alloc_input_profile
+     &          tr_ip_elm_count, no_div, addspec, alloc_input_profile,
+     &          nss, nrr, nkind_coeff, nkind_data
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, b2news_solving
+     & , only : my_out_folder, my_out_sf, b2news_solving, ncall_b2tral,
+     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
+     &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
+     &          ncall_transp_keps, nsdmax, cvregmax
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
@@ -71,7 +75,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ncall, is0
+      integer iCv, iFc, is, is0
       character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
@@ -80,12 +84,10 @@
      1	ft,                                                             !srv 16.10.17
      *  wrk(nFc), wrkmin
       character*72 message
-      save ncall
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
 *   ..initialisation
-      data ncall/0/
       intrinsic huge
 *-----------------------------------------------------------------------
 *.computation
@@ -97,7 +99,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall.eq.0) then
+      if (ncall_b2tral.eq.0) then
         b2news_solving(1:4)=switch%no_solve.eq.0
         do is=1,4
           b2news_solving(is)=b2news_solving(is).or.
@@ -159,7 +161,7 @@
        endif 
       enddo                                                           !srv 13.10.06 }
 *  ..check that we have some particle diffusion
-      if (ncall.le.3) then                                            !srv 12.03.12 {
+      if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
 cwdk combined check for poloidal or radial diffusion
           wrk(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
@@ -313,7 +315,7 @@ cwdk combined check for poloidal or radial diffusion
       endif                                                          !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tral = ncall_b2tral+1
       call subend ()
       return
 

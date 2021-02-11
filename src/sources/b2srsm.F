@@ -16,6 +16,10 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
 !WG_TODO     2          b2srsm_shi0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2srsm
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -47,7 +51,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, iCv, ncall, diagno
+      integer is, iCv, diagno
       integer k                           
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
@@ -60,8 +64,8 @@
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
-      save ncall, diagno
-      data ncall/0/, diagno/0/
+      save diagno
+      data diagno/0/
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *-----------------------------------------------------------------------
 *.computation
@@ -85,7 +89,7 @@
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
 *   ..obtain input
-      if (ncall.eq.0) then
+      if (ncall_b2srsm.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2srsm_diagno', diagno)
         if(switch%b2srsm_enable.eq.0) then
@@ -133,7 +137,8 @@ c check particles
                   endif
                   sr%sna(ix,iy,0,is) = sr%sna(ix,iy,0,is)/hlp
                   sr%sna(ix,iy,1,is) = sr%sna(ix,iy,1,is)/hlp
-                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                  if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                     src_ni(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_ni(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
@@ -174,7 +179,8 @@ c check parallel momentum
                   sr%smo(ix,iy,1,is) = sr%smo(ix,iy,1,is)/hlp
                   sr%smo(ix,iy,2,is) = sr%smo(ix,iy,2,is)/hlp
                   sr%smo(ix,iy,3,is) = sr%smo(ix,iy,3,is)/hlp
-                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                  if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                     src_mo(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_mo(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
@@ -220,7 +226,8 @@ c check ion energy
                 sr%shi(ix,iy,1) = sr%shi(ix,iy,1)/hlp
                 sr%shi(ix,iy,2) = sr%shi(ix,iy,2)/hlp
                 sr%shi(ix,iy,3) = sr%shi(ix,iy,3)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ei(region(ix,iy,0),2) = 
      &              src_ei(region(ix,iy,0),2) +
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -262,7 +269,8 @@ c check electron energy
                 sr%she(ix,iy,1) = sr%she(ix,iy,1)/hlp
                 sr%she(ix,iy,2) = sr%she(ix,iy,2)/hlp
                 sr%she(ix,iy,3) = sr%she(ix,iy,3)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ee(region(ix,iy,0),2) = 
      &              src_ee(region(ix,iy,0),2) +
      &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -295,7 +303,8 @@ c check electron particle number
                 endif
                 sr%sne(ix,iy,0) = sr%sne(ix,iy,0)/hlp
                 sr%sne(ix,iy,1) = sr%sne(ix,iy,1)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ne(region(ix,iy,0),2) = 
      &              src_ne(region(ix,iy,0),2) +
      &              cor_ne(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -366,7 +375,8 @@ cdjm Store the total change in linearised sources for balance
       endif                                                          !srv 11.09.09 }
 
 * ..return
-      if (ncall.eq.0 .or. main_call) ncall = ncall+1
+      if (ncall_b2srsm.eq.0 .or. main_call) 
+     &  ncall_b2srsm = ncall_b2srsm+1
       call subend ()
       return
 

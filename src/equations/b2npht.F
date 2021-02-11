@@ -18,7 +18,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf
+     & , only : my_out_folder, my_out_sf, ncall_b2npht, ncall_b2sikt,
+     &          ncall_b2xehx, ncall_b2xehy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain               !srv 05.07.17
@@ -68,7 +69,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
@@ -80,13 +81,11 @@
      7 deni(nCv), denn(nCv)                              
       character chns*3                                                  !srv 17.07.05
       character chncall*5                                          
-      save ncall
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, ipgetr, lwget, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -117,7 +116,7 @@
 *   ..test rxf
       call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2npht.lt.3) then
 *    ..test sign of transport coefficients
        call b2xvsg (nCv, co%ceqp, 1, 'ceqp', '.ge.')
 *    ..test sign of she, shi
@@ -356,7 +355,7 @@ c residuals for separate neutral energy equation
 
 
 * ..return
-      ncall = ncall+1
+      ncall_b2npht = ncall_b2npht+1
       call subend ()
       return
 

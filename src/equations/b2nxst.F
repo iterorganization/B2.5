@@ -24,12 +24,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv
-      save ncall
+      integer iCv
 *   ..procedures
       external subini, subend, xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -43,7 +41,6 @@
       smt(:,3) = smt(:,3) + smb(:,3)*rob/ro
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

@@ -9,6 +9,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tqca
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -64,13 +68,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, js
+      integer iCv, is, js
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
      *  t, t0, t1, tau(nCv), tnp, w                             !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
-      save ncall
 *   ..procedures
       intrinsic abs, sqrt, log, max
       real (kind=R8) ::
@@ -79,7 +82,6 @@
       external b2xvsg
       pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -105,7 +107,7 @@
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tqca.lt.3) then
 *    ..test bb
         call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
@@ -223,7 +225,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
       endif                                                          !srv 16.06.08 30.01.10 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tqca = ncall_b2tqca+1
       call subend ()
       return
 

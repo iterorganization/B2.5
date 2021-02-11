@@ -12,6 +12,10 @@
       use b2us_plasma
 !WG_TODO      use b2mod_balance
 !WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2npco, ncall_b2upco
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
@@ -54,16 +58,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
-      save ncall
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -93,7 +94,7 @@
 *   ..test rxf
       call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
        call b2xvsg (nFc, dv%conb(1,0,0), 1, 'conb00', '.ge.')
        call b2xvsg (nFc, dv%conb(1,0,1), 1, 'conb01', '.ge.')
@@ -158,7 +159,7 @@ cdjm Jan2017 update particle source components for balance
       ierr = 0
 
 * ..return
-      ncall = ncall+1
+      ncall_b2npco = ncall_b2npco+1
       call subend ()
       return
 

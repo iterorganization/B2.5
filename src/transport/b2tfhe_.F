@@ -16,6 +16,10 @@
 !WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
 !WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
 !WG_TODO      use b2mod_transport_fun                                            !srv 13.01.17
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfhe
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -55,7 +59,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is
+      integer is
 csw 10oct2012
       character(3) :: charns, charns0
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
@@ -72,7 +76,6 @@ csw 10oct2012
      *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
-      save ncall                                                         !srv 17.05.99 11.07.99 22.11.99
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: b2_upwind = 0
 c      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -85,7 +88,6 @@ c      integer, save :: conductive_limit = 1                              !srv 1
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
-      data ncall/0/                                                      !srv 17.05.99
 
 *-----------------------------------------------------------------------
 *.computation
@@ -94,7 +96,6 @@ c      integer, save :: conductive_limit = 1                              !srv 1
 *   ..subprogram start-up calls
       call subini ('b2tfhe_')
 *   ..set internal parameters on first call                              !srv
-      if (ncall.eq.0) then                                               !srv
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgeti ('b2tfhe_upwind', b2_upwind)
 c       call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
@@ -104,11 +105,10 @@ c       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 0
 c       call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
 c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
-       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfhe.lt.3) then
 *    ..test sign of ne, te, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
@@ -728,7 +728,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 
 #endif
 * ..return
-      ncall = ncall+1
+      ncall_b2tfhe = ncall_b2tfhe+1
       call subend ()
       return
 

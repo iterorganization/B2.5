@@ -8,7 +8,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : vold, cfnorm, ffdata
+     & , only : vold, cfnorm, ffdata, nncf
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
@@ -28,9 +28,7 @@
 
       if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
-        ndata1 = maxval(mpg%cfCvP(1:ncf,2),1)
         eps = machsfr()
-        allocate(ffdata(ncf,ndata1))
         ffdata = 0.0_R8
         cfnorm = 0.0_R8
         vold = 0.0_R8

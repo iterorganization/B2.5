@@ -8,6 +8,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2usmo
       implicit none
 *   ..input arguments (unchaninvged on exit)
       integer nCv, nFc, nVx, isb, nregionv, itcnt
@@ -45,18 +49,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
+      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
       real (kind=R8) ::
      *  t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
      *  t11, t22
       logical lnonzero
-      save ncall
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -69,7 +71,7 @@
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2usmo.lt.3) then
 *    ..test sign of rob, rzb, pb, pz, smb1, smb3, cvsb
        call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.gt.')
@@ -250,7 +252,7 @@
       endif                                                           !srv 17.06.02 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2usmo = ncall_b2usmo+1
       call subend ()
       return
 

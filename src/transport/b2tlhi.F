@@ -16,17 +16,15 @@
 *     B2TLHI computes the all atom heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ncall, iCv, iFc
+      integer iCv, iFc
       real (kind=R8) ::
      *   t0,t1
-      save ncall
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
       external subini, subend, xertst, b2xvfx
       pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlhi')
@@ -60,7 +58,6 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
      &     ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))*max(t0,t1))
        enddo
       endif
-      ncall = ncall+1
       call subend ()
       return
 *     ------------------------------------------------------------------

@@ -5,6 +5,10 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2nxdu
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -30,13 +34,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
-      save ncall
+      integer iCv, is
 *   ..procedures
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvfx
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -47,7 +49,7 @@
 *   ..test nCv
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2nxdu.lt.3) then
 *    ..test sign of smq
        do is = 0, ns-1
         call b2xvsg (nCv, smq(1,1,is), 1, 'smq1', '.le.')
@@ -76,7 +78,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2nxdu = ncall_b2nxdu+1
       call subend ()
       return
 

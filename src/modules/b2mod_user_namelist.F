@@ -3,10 +3,12 @@
       use b2mod_diag
       use b2us_geo
       use b2us_map
+      use b2mod_ad
+     & , only : nncf, ffdata
       implicit none
 #     include "DIMENSIONS.F"
-      integer npfrgrpd, nntrgrpd, nncf
-      parameter (npfrgrpd=6, nntrgrpd=16, nncf=5)
+      integer npfrgrpd, nntrgrpd
+      parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -141,6 +143,7 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      deallocate(ffdata)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -255,6 +258,11 @@ c***  Standard setup:
       end if
 
       call cf_to_struct(m)
+
+! now allocate vectors that will be used to interpolate data
+      ndata = maxval(m%cfCvP(1:ncf,2),1)
+      allocate(ffdata(ncf,ndata))
+      ffdata = 0.0_R8
 
 #ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
@@ -435,7 +443,7 @@ c*** Set default values according to current species list
 
       call subend ()
       return
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+ 999  call xerrab ('Error while reading USER namelist!')
       end subroutine read_b2mod_user_namelist
 
       subroutine write_b2mod_user_namelist(nx,ns)

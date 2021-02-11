@@ -29,6 +29,10 @@
       use b2mod_par_opt
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2stbc_phys
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -65,7 +69,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iCv1, iCv2, iFc, is, js, ib, ibc, ib0, ibc0,
+      integer iCv, iCv1, iCv2, iFc, is, js, ib, ibc, ib0, ibc0,
      &  ireg, coreregno, coreregn2,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
@@ -131,7 +135,7 @@
      1 bc_type13_norm, bc_type13_fac
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
-      save ncall, coreregno, coreregn2,  bc_type13_ref,
+      save coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
@@ -149,7 +153,7 @@
 !     &            hz(ix,iy)
 !!     &            hz(topix(ix,iy),topiy(ix,iy))
 *   ..initialisation
-      data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
+      data coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, 
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
@@ -178,7 +182,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stbc_phys')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2stbc_phys.eq.0) then
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
         call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -235,11 +239,11 @@ c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..test facdrift (not on first call)                                  !xpb
-      if (ncall.gt.0)                                                    !xpb
+      if (ncall_b2stbc_phys.gt.0)                                                    !xpb
      > call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      &       1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stbc_phys.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -452,7 +456,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      1   sig0(nx/2,ny)
       endif                                                           !xpb
 #endif
-      if(ncall.eq.0) write(*,*) 'Doing B2-style bc'
+      if(ncall_b2stbc_phys.eq.0) write(*,*) 'Doing B2-style bc'
       once_bccon = .false.                                            !srv 16.02.12 {
       once_bcene = .false.
       once_bceni = .false.                                            !srv 16.02.12 }
@@ -472,7 +476,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- Must be done only once!
 
 #ifdef WG_TODO
-        IF (ncall.eq.0 .and. bc_type16_ref.gt.1) THEN
+        IF (ncall_b2stbc_phys.eq.0 .and. bc_type16_ref.gt.1) THEN
           IF (BCCHAR(IB).EQ.'S' .AND.
      &     (BCENE(IB).EQ.16.or.BCENE(IB).EQ.17.or.BCENE(IB).EQ.20.or.
      &      BCENI(IB).EQ.16.or.BCENI(IB).EQ.17.or.BCENI(IB).EQ.20)) THEN
@@ -518,7 +522,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=1 -- PRESCRIBE THE VALUE OF THE DENSITY
 
           case (1)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             IF(BCCHAR(iB).EQ.'S') THEN
             if(is.eq.ismain.and.switch%use_astra.ne.0) then
               conpar(is,iB,1) = neb_astra                               !srv 28.07.11
@@ -551,7 +555,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           case (2)
           call xerrab ('b2stbc_phys -- BCCON = 2 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -624,7 +628,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=3 -- SHEATH CONDITIONS
 
           case (3)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,a,a,i3)')
      .       'sheath density bc on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -648,7 +652,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           case (4)
           call xerrab ('b2stbc_phys -- BCCON = 4 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'weak density ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -709,7 +713,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=5 -- PRESCRIBE THE PARTICLE FLUX PER UNIT AREA
 
           case (5)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'particle flux per area ',CONPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -750,7 +754,7 @@ cghgh
           case (6)
           call xerrab ('b2stbc_phys -- BCCON = 6 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .      'total particle flux ',CONPAR(IS,IB,1),
      1      ' with const density on ',BCCHAR(IB),
@@ -820,7 +824,7 @@ cghgh
 * -- BCCON=7 -- PRESCRIBE THE GIVEN PROFILE OF DENSITY
 
           case (7)
-          if(ncall.eq.0) then                                       !srv 26.02.18 {
+          if(ncall_b2stbc_phys.eq.0) then                              !srv 26.02.18 {
             write(*,'(a,a,a,a,a,i3)')
      .       'profile of density ',' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -840,7 +844,7 @@ cghgh
 *                 CONSTANT FLUX DENSITY
 
           case (8)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             if(is.eq.ismain.and.BCCHAR(IB).eq.'S'
      &                                   .and.switch%use_astra.ne.0)
      >       CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
@@ -887,7 +891,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
 * -- BCCON=9 -- PRESCRIBE THE DECAY LENGTH FOR THE DENSITY
 
           case (9)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density decay length ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1004,7 +1008,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
 * -- BCCON=10 -- leakage option for density, recommended for cases with drifts
 
           case (10)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -1053,7 +1057,7 @@ cwdk      compatibility for E/W boundaries
           case (11)
           call xerrab ('b2stbc_phys -- BCCON = 11 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,a,a,a,i3)')
      .      'particle flux feedback boundary condition on ',
      1      BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1145,7 +1149,7 @@ cwdk      compatibility for E/W boundaries
           case (12)
           call xerrab ('b2stbc_phys -- BCCON = 12 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,a,a,a,i3)')
      .      'particle density feedback boundary condition on ',
      1      BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1230,7 +1234,7 @@ cwdk      compatibility for E/W boundaries
           case (13)
           call xerrab ('b2stbc_phys -- BCCON = 13 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,a,a,i3,a,1p,2g14.7)')
      .       'particle density to achieve specified total flux on ',
      1       BCCHAR(IB),boundary_location(ib),
@@ -1328,7 +1332,7 @@ c dpc
 * -- BCCON=14 -- Sound speed flux
 
           case (14)
-          if (ncall.eq.0) then
+          if (ncall_b2stbc_phys.eq.0) then
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             call xertst(CONPAR(IS,IB,2).ge.0.0_R8,
@@ -1366,7 +1370,7 @@ c dpc
 * -- BCCON=15 -- prescribe a radial leakage velocity, as a multiplier to the local thermal velocity
 
           case (15)                                                  !srv 25.09.09 16.02.12{
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(2a,1p,g14.7,a,a,a,a,i3)')
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
@@ -1398,7 +1402,7 @@ cwdk       * need to correct this BC for hybrid scheme
           case (16)
           call xerrab ('b2stbc_phys -- BCCON = 16 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
 #ifdef ASTRA
             ! IYS 08.04.2014 temporary solution while we do not have impurities in ASTRA
             call xertst(is.eq.ismain,
@@ -1518,7 +1522,7 @@ cwdk       * need to correct this BC for hybrid scheme
 * -- BCCON=18 -- PRESCRIBE THE MODIFIED TOTAL PARTICLE FLUX
 
           case (18)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,a,a,i3)') 'modified total particle flux on ',
      1         BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(is.eq.ismain,
@@ -1536,7 +1540,7 @@ cwdk       * need to correct this BC for hybrid scheme
             END DO
             CONPAR(IS,IB,1) = (fSeNBI_astra - t0)                     !srv 29.11.11
 
-!            if(ncall.eq.0) then
+!            if(ncall_b2stbc_phys.eq.0) then
                write (*,'(a,a,i3,1p,3(a,g11.4))')
      &        ' BCCON=18', ' IS =', IS,
      &        ' CONPAR=',CONPAR(IS,IB,1), ' fSeNBI_astra=',fSeNBI_astra,
@@ -1586,7 +1590,7 @@ cwdk       * need to correct this BC for hybrid scheme
             call xerrab ('BCCON = 19 not compatible with spatial hybr')
           endif
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
      1       'BCCON = 19 can only be applied to ions in their '//
      2       'highest ionization stage')
@@ -1737,7 +1741,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           case (20)
           call xerrab ('b2stbc_phys -- BCCON = 20 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density (neo) ',
      1       CONPAR(IS,IB,1),' on ',
@@ -1814,7 +1818,7 @@ cxpb Careful here because of BC number clash
           case (21)
           call xerrab ('b2stbc_phys -- BCCON = 21 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             if (boundary_version.ge.'01.001.030' .and.
      &          boundary_version.lt.'02.000.000') then
               write(*,*) 'BCCON=21 type B.C. moved to 24 ',
@@ -1930,7 +1934,7 @@ cxpb Careful here because of BC number clash
           case (22)
           call xerrab ('b2stbc_phys -- BCCON = 22 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             call xertst(is.eq.ismain,
      1       'BCCON = 22 is applied for main ion only ')
             write(*,'(a,a,i3)') 
@@ -2065,7 +2069,7 @@ cxpb Careful here because of BC number clash
           case (23)
           call xerrab ('b2stbc_phys -- BCCON = 23 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             call xertst(is.eq.ismain,
      1       'BCCON = 23 is applied for main ion only ')
             write(*,'(a,a,i3)') 
@@ -2218,7 +2222,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           case (24)
           call xerrab ('b2stbc_phys -- BCCON = 24 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density (modified by nearby ring) ',
      1       CONPAR(IS,IB,1),' on ',
@@ -2334,7 +2338,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           case (25)
           call xerrab ('b2stbc_phys -- BCCON = 25 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7)')
      .       'constant average density',CONPAR(IS,IB,1)
             DO IBW=IB,NBC
@@ -2442,7 +2446,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           case (26)
           call xerrab ('b2stbc_phys -- BCCON = 26 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,i3)')                                     !IYS 21.01.2016
      .       'given total particle flux with constant',             !IYS 21.01.2016
      &       ' average density for ion is =', is                    !IYS 21.01.2016
@@ -2474,7 +2478,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
-          endif  ! ncall == 0
+          endif  ! ncall_b2stbc_phys == 0
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then
               if (use_astra.ne.0) then
@@ -2570,7 +2574,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           case (27)
           call xerrab ('b2stbc_phys -- BCCON = 27 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
      1       'BCCON = 27 is applied to highest ionisation stages only')
             write(*,'(a,a,i3)')
@@ -2739,7 +2743,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              perturbation taken from flux tube just inside domain
 
           case (28)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             do ibc = 1, mpg%bcCvP(ib,2)
              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
              call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -2797,7 +2801,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              tube just inside domain
 
           case (29)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             do ibc = 1, mpg%bcCvP(ib,2)
              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
              call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -2864,7 +2868,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCMOM=1 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY
 
           case (1)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -2883,7 +2887,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCMOM=2 -- PRESCRIBE THE GRADIENT OF THE PARALLEL VELOCITY
 
           case (2)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel velocity gradient ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -2908,7 +2912,7 @@ cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           case (3)
           call xerrab ('b2stbc_phys -- BCMOM = 3 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'sheath velocity bc ',MOMPAR(IS,IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3067,7 +3071,7 @@ cxpb  and max(,,) statement for stability
           case (4)
           call xerrab ('b2stbc_phys -- BCMOM = 4 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'weak velocity ',MOMPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3123,7 +3127,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=5 -- PRESCRIBE THE PARALLEL MOMENTUM FLUX PER UNIT AREA
 
           case (5)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum flux per unit area ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3151,7 +3155,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
 
           case (7)
-          if(ncall.eq.0) then                                           !srv 26.02.18 {
+          if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
             write(*,'(4a,i3)') 'specified parallel velocity on ',
      .       BCCHAR(IB), boundary_location(ib), ' for species ',IS
           endif
@@ -3170,7 +3174,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (8)
           call xerrab ('b2stbc_phys -- BCMOM = 8 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,a,a,i3)')
      .       'limited shear velocity on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3217,7 +3221,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (9)
           call xerrab ('b2stbc_phys -- BCMOM = 9 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'total parallel momentum flux ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3301,7 +3305,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (10)
           call xerrab ('b2stbc_phys -- BCMOM = 10 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum decay length ',MOMPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3352,7 +3356,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (11)
           call xerrab ('b2stbc_phys -- BCMOM = 11 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'ROZ parallel momentum bc on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -3391,7 +3395,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (12)
           call xerrab ('b2stbc_phys -- BCMOM = 12 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall_b2stbc_phys.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -3442,7 +3446,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=13 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
 
           case (13)
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall_b2stbc_phys.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -3483,7 +3487,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
 
           case (14)
-          if(ncall.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall_b2stbc_phys.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -3563,7 +3567,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (15)
           call xerrab ('b2stbc_phys -- BCMOM = 15 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity as a function of',
      &       ' poloidal coordinate ',MOMPAR(IS,IB,1),
@@ -3586,7 +3590,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=16 -- PRESCRIBE THE AVERAGE VALUE OF THE PARALLEL VELOCITY   !lk 12.12.12 {
 
           case (16)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified average parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3633,7 +3637,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           case (17)
           call xerrab ('b2stbc_phys -- BCMOM = 17 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum leakage ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3690,7 +3694,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCMOM=18 -- PRESCRIBE ZERO SOURCE TERMS (-> no flux)
 
           case (18)
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3719,7 +3723,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCENE=1 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE
 
         case (1)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           IF(BCCHAR(IB).EQ.'S'.and.switch%use_astra.ne.0) THEN
           ENEPAR(IB,1) = teb_astra*1.0e3_R8                        !srv 14.06.12
           ENDIF
@@ -3742,7 +3746,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (2)
           call xerrab ('b2stbc_phys -- BCENE = 2 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature gradient ',ENEPAR(IB,1),
      1     ' on',BCCHAR(IB),boundary_location(ib)
@@ -3813,7 +3817,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (3)
           call xerrab ('b2stbc_phys -- BCENE = 3 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
      .     'sheath electron with MOMPAR(ismain,IB,2) =',
      1     MOMPAR(ismain,IB,2),' and MOMPAR(ismain,IB,1) =',
@@ -4056,7 +4060,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (4)
           call xerrab ('b2stbc_phys -- BCENE = 4 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak electron temperature ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4110,7 +4114,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (5)
           call xerrab ('b2stbc_phys -- BCENE = 5 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron energy flux per area ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4152,7 +4156,7 @@ cghgh
         case (6)
           call xerrab ('b2stbc_phys -- BCENE = 6 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total electron energy flux ',ENEPAR(IB,1),
      1     ' with const Te on ',BCCHAR(IB),boundary_location(ib)
@@ -4433,7 +4437,7 @@ cghgh
 * -- BCENE=7 -- PRESCRIBE THE ELECTRON TEMPERATURE PROFILE
 
         case (7)
-        if(ncall.eq.0) then                                             !srv 26.02.18 {
+        if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
           write(*,'(3a)')
      .     'specified electron temperature on ',
      1     BCCHAR(IB), boundary_location(ib)
@@ -4450,7 +4454,7 @@ cghgh
 !wdk BC not recommended for drifts!
 
         case (8)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           if (switch%use_astra.ne.0) ENEPAR(IB,1) = fheb_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total electron energy flux ',ENEPAR(IB,1),' on ',
@@ -4490,7 +4494,7 @@ cghgh
 
         case (9)
 
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature decay length ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4607,7 +4611,7 @@ cghgh
         case (10)
           call xerrab ('b2stbc_phys -- BCENE = 10 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'electron heat flux feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -4634,7 +4638,7 @@ cghgh
         case (11)
           call xerrab ('b2stbc_phys -- BCENE = 11 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+        if(ncall_b2stbc_phys.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     ' from b2stbc_spb with ENEPAR(,1) =',ENEPAR(IB,1),
      1     ' and ENEPAR(,2) =',ENEPAR(IB,2),
@@ -4692,7 +4696,7 @@ cghgh
         case (12)
           call xerrab ('b2stbc_phys -- BCENE = 12 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'sheath (12) el on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -4741,7 +4745,7 @@ cghgh
         case (13)
           call xerrab ('b2stbc_phys -- BCENE = 13 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      1     'electron energy flux per area proportional to temperature ',
      2     ENEPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -4783,7 +4787,7 @@ cghgh
 * -- BCENE=14 -- leakage option for electron energy
 
         case (14)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron energy leakage ',ENEPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -4814,7 +4818,7 @@ cghgh
 * -- BCENE=15 -- FROM B2STBC_SPB                                        !srv 01.02.09 {
 
         case (15)
-        if(ncall.eq.0) then                                             !srv 20.09.17 {
+        if(ncall_b2stbc_phys.eq.0) then                                 !srv 20.09.17 {
             write(*,*) 'BCENE=15 - assuming BCCON=14 for all ions'
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -4848,7 +4852,7 @@ cghgh
 #endif
         endif                                                           !srv 20.09.17 }
         if(bcene_15_style.eq.0) then
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall_b2stbc_phys.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,a,a)')
      .       'bcene_15_style = 0 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4900,7 +4904,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
         call xerrab ('BCENE_15_STYLE 1 not adapted for WG')
 #ifdef WG_TODO
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall_b2stbc_phys.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,a,a)')
      &       'bcene_15_style = 1 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -5012,7 +5016,7 @@ cwdk    Todo: corrections for BCCON.ne.14
 #ifdef WG_TODO
         if(bcene_16_style.eq.0) then
 
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'electron temperature feedback by flux ',
      1       ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5065,7 +5069,7 @@ cwdk    Todo: corrections for BCCON.ne.14
 
         elseif(bcene_16_style.eq.1)then
 
-          if(ncall.eq.0) then
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,*)
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
@@ -5180,7 +5184,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (17)
         call xerrab ('b2stbc_phys -- BCENE = 17 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'shared temperature feedback by flux ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5272,7 +5276,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (18)
         call xerrab ('b2stbc_phys -- BCENE = 18 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature fractional drop ',
      1     ENEPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -5332,7 +5336,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (19)
         call xerrab ('b2stbc_phys -- BCENE = 19 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature decay length (new) ',
      .     ENEPAR(IB,1), ' on ',
@@ -5412,7 +5416,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (20)
         call xerrab ('b2stbc_phys -- BCENE = 20 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'electron temperature feedback by flux ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5497,7 +5501,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (21)
         call xerrab ('b2stbc_phys -- BCENE = 21 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed electron temperature (modified by nearby ring) ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5603,7 +5607,7 @@ cwdk    Todo: corrections for BCCON.ne.14
 *                UNITS OF THE ELECTRON THERMAL VELOCITY
 
         case (22)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     ' BCENE=22 with ENEPAR(IB,1)=',ENEPAR(IB,1),
      1     ' on',BCCHAR(IB),boundary_location(ib)
@@ -5633,7 +5637,7 @@ cwdk     * need to correct this BC for hybrid scheme
 *                perturbation taken from flux tube just inside domain
 
         case (23)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -5684,7 +5688,7 @@ cwdk     * need to correct this BC for hybrid scheme
 *                tube just inside domain
 
         case (24)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -5753,7 +5757,7 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCENI=1 -- PRESCRIBE THE VALUE OF THE ION TEMPERATURE
 
         case (1)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           IF(BCCHAR(IB).EQ.'S'.and.switch%use_astra.ne.0) THEN
             ENIPAR(IB,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
           ENDIF
@@ -5775,7 +5779,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (2)
         call xerrab ('b2stbc_phys -- BCENI = 2 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature gradient ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -5846,7 +5850,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (3)
         call xerrab ('b2stbc_phys -- BCENI = 3 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
      .     'sheath ion with MOMPAR(ismain,IB,2) =',
      1     MOMPAR(ismain,IB,2),' and MOMPAR(ismain,IB,1) =',
@@ -6025,7 +6029,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (4)
         call xerrab ('b2stbc_phys -- BCENI = 4 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak ion temperature ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6077,7 +6081,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (5)
         call xerrab ('b2stbc_phys -- BCENI = 5 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion energy flux per area ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6119,7 +6123,7 @@ cghgh
         case (6)
         call xerrab ('b2stbc_phys -- BCENI = 6 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total ion energy flux ',ENIPAR(IB,1),
      1     ' with const Ti on ',BCCHAR(IB),boundary_location(ib)
@@ -6429,7 +6433,7 @@ cghgh
 * -- BCENI=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
 
        case (7)
-       if(ncall.eq.0) then                                   !srv 26.02.18 {
+       if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
           write(*,'(3a)') 'specified ion temperature on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
@@ -6444,7 +6448,7 @@ cghgh
 *                 FLUX DENSITY
 
         case (8)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           if (switch%use_astra.ne.0) ENIPAR(IB,1) = fhib_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total ion energy flux',ENIPAR(IB,1),' on ',
@@ -6487,7 +6491,7 @@ cghgh
 
         case (9)
 
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature decay length ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6627,7 +6631,7 @@ cxpb          endif
         case (10)
         call xerrab ('b2stbc_phys -- BCENI = 10 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion heat flux feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6656,7 +6660,7 @@ cxpb          endif
         case (11)
         call xerrab ('b2stbc_phys -- BCENI = 11 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'sheath (11) ion on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -6751,7 +6755,7 @@ cxpb          endif
         case (12)
         call xerrab ('b2stbc_phys -- BCENI = 12 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'sheath (12) ion on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -6808,7 +6812,7 @@ cxpb          endif
         case (13)
         call xerrab ('b2stbc_phys -- BCENI = 13 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      1     'ion energy flux per area proportional to temperature ',
      2     ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -6850,7 +6854,7 @@ cxpb          endif
 * -- BCENI=14 -- leakage option for ion energy
 
         case (14)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion energy leakage ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6885,7 +6889,7 @@ cxpb          endif
 
         case (15)
 
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
             write(*,*) 'BCENI=15 - assuming BCCON=14 for all ions'
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -6991,7 +6995,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         call xerrab ('b2stbc_phys -- BCENI = 16 not adapted for WG')
 #ifdef WG_TODO
         if(bceni_16_style.eq.0) then
-         if(ncall.eq.0) then
+         if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'ion temperature feedback by flux ',
      1       ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7052,7 +7056,7 @@ cwdk    Todo: corrections for BCCON.ne.14
 
         elseif(bceni_16_style.eq.1)then                                 !srv 16.02.12 {
 
-         if(ncall.eq.0) then
+         if(ncall_b2stbc_phys.eq.0) then
            write(*,*) 'Given integrated ion heat flux',
      &                 ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -7175,7 +7179,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         case (17)
         call xerrab ('b2stbc_phys -- BCENI = 17 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'ion temperature feedback by flux ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7199,7 +7203,7 @@ c see label 2980
         case (18)
         call xerrab ('b2stbc_phys -- BCENI = 18 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'Ion temperature fractional drop',
      1     ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -7259,7 +7263,7 @@ c see label 2980
         case (19)
         call xerrab ('b2stbc_phys -- BCENI = 19 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature decay length (new) ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -7324,7 +7328,7 @@ c see label 2980
         case (20)
         call xerrab ('b2stbc_phys -- BCENI = 20 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'ion temperature feedback by flux (neo) ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7416,7 +7420,7 @@ cxpb Careful here because of BC number clash
         case (21)
         call xerrab ('b2stbc_phys -- BCENI = 21 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           if (boundary_version.ge.'01.001.030' .and.
      &        boundary_version.lt.'02.000.000') then
             write(*,*) 'BCENI=21 type B.C. moved to 25 ',
@@ -7497,7 +7501,7 @@ cxpb Careful here because of BC number clash
 *                UNITS OF THE COLLECTIVE ION THERMAL VELOCITY
 
         case (22)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      &     ' BCENI=22 with ENIPAR(IB,1) =',ENIPAR(IB,1),
      &     ' on ', BCCHAR(IB),boundary_location(ib)
@@ -7537,7 +7541,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (23)
         call xerrab ('b2stbc_phys -- BCENI = 23 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7)')
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
@@ -7667,7 +7671,7 @@ cwdk     * need to correct this BC for hybrid scheme
         call xerrab ('b2stbc_phys -- BCENI = 24 not adapted for WG')
 #ifdef WG_TODO
 !IYS 04.03.2013 {
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,*) 'Given integrated ion heat flux',
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -7826,7 +7830,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (25)
         call xerrab ('b2stbc_phys -- BCENI = 25 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)') 
      .     'fixed ion temperature (modified by nearby ring) ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7935,7 +7939,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (26)
         call xerrab ('b2stbc_phys -- BCENI = 26 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7)')
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
@@ -8029,7 +8033,7 @@ cwdk     * need to correct this BC for hybrid scheme
         case (27)
         call xerrab ('b2stbc_phys -- BCENI = 27 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,*) 'Given integrated ion heat flux',
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -8156,7 +8160,7 @@ cwdk     * need to correct this BC for hybrid scheme
 *                perturbation taken from flux tube just inside domain
 
         case (28)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -8206,7 +8210,7 @@ cwdk     * need to correct this BC for hybrid scheme
 *                tube just inside domain
 
         case (29)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -8274,7 +8278,7 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=1 -- PRESCRIBE THE VALUE OF THE POTENTIAL
 
         case (1)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified potential ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8289,7 +8293,7 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCPOT=2 -- PRESCRIBE THE GRADIENT OF THE POTENTIAL
 
         case (2)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'potential gradient ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8319,7 +8323,7 @@ cwdk          normal/radial/poloidal direction ???
         case (3)
         call xerrab ('b2stbc_phys -- BCPOT = 3 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,1p,g14.7,a)')
      .     'sheath potential bc on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -8491,7 +8495,7 @@ c              fchi=0.0_R8
         case (4)
         call xerrab ('b2stbc_phys -- BCPOT = 4 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak potential ',POTPAR(IB,1),' on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -8542,7 +8546,7 @@ c              fchi=0.0_R8
        case (5)
        call xerrab ('b2stbc_phys -- BCPOT = 5 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'current flux density per area ',POTPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -8581,7 +8585,7 @@ c              fchi=0.0_R8
 *                 CONSTANT POTENTIAL
 
         case (6)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total current flux density',POTPAR(IB,1),
      1     ' with const potential on ',BCCHAR(IB),boundary_location(ib)
@@ -8591,11 +8595,11 @@ c              fchi=0.0_R8
 * -- BCPOT=7 -- PRESCRIBE THE GIVEN PROFILE OF POTENTIAL
 
         case (7)
-        if(ncall.eq.0) then                                             !srv 26.02.18 {
+        if(ncall_b2stbc_phys.eq.0) then                              !srv 26.02.18 {
           write(*,'(3a)') 'specified potential on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*bv_po(iCv1)
@@ -8606,7 +8610,7 @@ c              fchi=0.0_R8
 *                 FLUX DENSITY
 
         case (8)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total current ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8617,7 +8621,7 @@ c              fchi=0.0_R8
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           US   = US + geo%fcS(iFc)
         enddo
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%sch0(iCv1,0) = potpar(iB,1)/US*geo%fcS(iFc)
@@ -8630,7 +8634,7 @@ c              fchi=0.0_R8
         case (9)
         call xerrab ('b2stbc_phys -- BCPOT = 9 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'potential decay length ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8664,7 +8668,7 @@ c              fchi=0.0_R8
         case (10)
         call xerrab ('b2stbc_phys -- BCPOT = 10 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)') 'current feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
           write(*,*) 'NOT YET TESTED !!!!!!!!!!'
@@ -8689,7 +8693,7 @@ c              fchi=0.0_R8
 * -- BCPOT=11 -- SHEATH CONDITIONS, CURRENT CONTINUITY; FROM b2stbc_spb !srv 01.02.09 {
 
         case (11)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a)')
      &     'sheath potential bc from b2stbc_spb',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
@@ -8733,7 +8737,7 @@ cwdk Todo: seecmodel
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
         case (12)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from diamagnetic and inertial currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
@@ -8781,7 +8785,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
         case (13)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from all currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
@@ -8818,7 +8822,7 @@ cwdk    Intended use: core boundary, total PF boundary,...
 cwdk    For testing purposes, use with care!
 
         case (14)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total current ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8851,7 +8855,7 @@ cwdk    For testing purposes, use with care!
         case (16)
         call xerrab ('b2stbc_phys -- BCPOT = 16 not adapted for WG')
 #ifdef WG_TODO
-        if (ncall.eq.0) then
+        if (ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'electric potential feedback by current on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8898,11 +8902,11 @@ c************************************************************* } Solovyev 01.05.
             enddo
 c The implementation is based on one step of Newton's method
             cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
-            if (ncall.eq.0) then
+            if (ncall_b2stbc_phys.eq.0) then
               write (72, *) '# Newton'
               prev_cur_delta = cur_delta
             else
-              if (ncall.eq.1) then                                      ! Solovyev 23.05.14
+              if (ncall_b2stbc_phys.eq.1) then                          ! Solovyev 23.05.14
                 po_curr = 0.0_R8                                        !srv 29.09.15
                 VS  = 0.0_R8
                 DO IBW=IB,NBC
@@ -8917,7 +8921,7 @@ c The implementation is based on one step of Newton's method
                 ENDDO
                 po_curr=po_curr/VS                                      !srv 29.09.15 }
               endif                                                     !Solovyev 23.05.14
-              if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
+              if (mod(ncall_b2stbc_phys,bcpot_16_step).eq.0) then       !Solovyev 23.05.14
                 if (abs(cur_delta-prev_cur_delta).gt.1.0e-20_R8) then   !{ Solovyev 24.05.14
                   coeff_16 = (po_prev - po_curr)/
      &              (cur_delta - prev_cur_delta)
@@ -8927,11 +8931,12 @@ c The implementation is based on one step of Newton's method
                 prev_cur_delta = cur_delta
                 po_prev = po_curr
                 po_curr = POS
-                write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
+                write (72, *) ncall_b2stbc_phys, totflux, POS           ! Solovyev 29.04.14 - test output to b2fdebug
               endif                                                             ! Solovyev 23.05.14
             endif                                                               ! } Solovyev 03.05.14
 c end of implementation
-            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS   !Solovyev 29.04.14 - test output to b2fdebug
+            write (*, *) 'ncall, totflux, POS',
+     &        ncall_b2stbc_phys,totflux, POS                                !Solovyev 29.04.14 - test output to b2fdebug
             do ibw=ib,nbc
               if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
                 do ix=1, BC_LIST_SIZE(IBW)
@@ -8973,7 +8978,7 @@ c end of implementation
         case (21)
         call xerrab ('b2stbc_phys -- BCPOT = 21 not adapted for WG')
 #ifdef WG_TODO
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed potential (modified by nearby ring) ',
      1     POTPAR(IB,1),' with ',POTPAR(IB,2),' on ',
@@ -9075,7 +9080,7 @@ c end of implementation
 * -- BCPOT=22 -- Prescribe the value of the potential, with perturbation taken
 *                from first flux tube in the domain
         case(22)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -9120,7 +9125,7 @@ c end of implementation
 *                tube just inside domain
 
         case(23)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -9183,7 +9188,7 @@ c end of implementation
 !xpb  Special attention is paid to the case where there is a discontinuity in B
 !xpb
          IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
+          if (ncall_b2stbc_phys.eq.0) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential is imposed by BCPOT=',BCPOT(IB)
          ELSE IF(BCCHAR(IB).EQ.'S') THEN
@@ -9208,7 +9213,7 @@ c end of implementation
      &              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))      !sv
                 else
-      if(ncall.eq.0)
+      if(ncall_b2stbc_phys.eq.0)
      > write(*,*) 'b2stbc: special treatment for cell ix,iy = ',
      . bc_list_x(ix,ib),bc_list_y(ix,ib)
                   fchy_dia = -praverage(1)
@@ -9242,7 +9247,7 @@ c end of implementation
      .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))*
      .              b2stbc_fchy_dia
                 else
-                  if (ncall.eq.0) write(*,*)
+                  if (ncall_b2stbc_phys.eq.0) write(*,*)
      .             'b2stbc: special treatment for cell ix,iy = ',
      .              bc_list_x(ix,ib),bc_list_y(ix,ib)
                   fchy_dia = -bcint(wdia,nx,ny,ix,ib)
@@ -9344,7 +9349,7 @@ c end of implementation
         elseif(istyle_cur_contr_on_S_and_N.eq.1) then                   !srv 01.02.09 { 27.03.14
 
          IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
+          if (ncall_b2stbc_phys.eq.0) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential there is imposed by BCPOT=',
      &          BCPOT(IB)
@@ -9420,7 +9425,7 @@ c end of implementation
          ENDIF
         else if (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)
      &   then                                                        !srv 27.03.14
-         if(ncall.eq.0) then
+         if(ncall_b2stbc_phys.eq.0) then
            IF (BCCHAR(IB).EQ.'S') THEN
              IF (on_closed_surface(bc_list_x(1,ib),
      &                             bc_list_y(1,ib))) THEN
@@ -9452,7 +9457,7 @@ c end of implementation
 * -- BCENK=1 -- PRESCRIBE THE VALUE OF KT
 
         case (1)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified kt ',ENKPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -9486,7 +9491,7 @@ c end of implementation
 *               profile of fhi + fhe
 
         case (6)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
            call xertst(mpg%cvOnClosedSurface(iCv1),
@@ -9561,7 +9566,7 @@ c end of implementation
 
 * -- BCENK=14 -- Leakage option for turbulent kinetic energy
         case (14)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. kin. energy leakage ',ENKPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -9577,7 +9582,7 @@ c end of implementation
 
 * -- BCENK=15 -- Sheath tranmission factor
         case (15)
-        if(ncall.eq.0) then
+        if(ncall_b2stbc_phys.eq.0) then
             write(*,*) 'BCENK=15 - assuming BCCON=14 for all ions'
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -9724,7 +9729,8 @@ cwdk    Todo: corrections for BCCON.ne.14
       endif                                                           !srv 11.09.09 }
 
 * ..return
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      if(ncall_b2stbc_phys.eq.0 .or. main_call)
+     &  ncall_b2stbc_phys = ncall_b2stbc_phys+1
       call subend ()
       return
 

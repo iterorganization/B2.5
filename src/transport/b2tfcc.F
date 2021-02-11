@@ -10,6 +10,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfcc
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -26,18 +30,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is, iFc
+      integer is, iFc
       real (kind=R8) ::
      *   nw(nCv), nwf(nFc),
      *   dnw(nFc,0:1), tef(nFc), tif(nFc), tnf(nFc),
      *   wght(nFc,2), wrkVx(nVx),
      *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
-      save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg, b2xvff, diff, intface
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -49,7 +51,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfcc.lt.3) then
 *    ..test sign of cdpa
        do is = 0, ns-1
         call b2xvsg (nFc, co%cdpa(:,0,is)*geo%fcQalf(:,0),1,'cdpa0',
@@ -229,7 +231,7 @@ c the logic statements could be simplified but for now this is not done to impro
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tfcc = ncall_b2tfcc+1
       call subend ()
       return
 

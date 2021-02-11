@@ -11,6 +11,10 @@
       use b2mod_b2cmpa
 !WG_TODO      use b2mod_balance                                           !djm Jan2017
 !WG_TODO     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sigp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -43,17 +47,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, k
+      integer iCv, k
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)
-      save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg
       intrinsic abs
 *   ..initialisation
-      data ncall/0/
+
 
 *-----------------------------------------------------------------------
 *.computation
@@ -64,7 +67,7 @@
 *   ..test nCv, nFv
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sigp.lt.3) then
 *    ..test sign of nb, ti, ne, te, rzb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
@@ -136,7 +139,7 @@
               if (balance_netcdf.ne.0) then !djm Jan2017
 !     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
 !                      THIS REGION, USE B2SIGP_STYLE = 1
-                if (ncall.lt.3) then
+                if (ncall_b2sigp.lt.3) then
                  write(*,'(a,i4,a,i4)')
      &       'warning, tot. press. balance will not be exact at ix=',
      &            ix,',iy=',iy
@@ -361,7 +364,7 @@ cdjm Jan2017 Store linearised source for balance
 !WG_TODO      endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sigp = ncall_b2sigp+1
       call subend ()
       return
 

@@ -6,6 +6,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlh0
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -23,16 +27,15 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, ncall, c3                                 
+      integer iFc, is, c3                                 
       real (kind=R8), allocatable :: w1(:)                        !srv 13.01.04 {
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dtn, vthi, maxfluxlimit(0:1),
      *  tnv(nVx), dtnf(nFc,0:1)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
-      save ncall, alpha, gamma
+      save alpha, gamma
 *   ..initialisation
-      data ncall/0/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst, ipgetr, ipgeti
@@ -43,11 +46,9 @@
       call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read input on first call
-      if (ncall.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_tn) !! do not change name of switch for compatibility with existing input files?
 c        flux_limit_min_tn=flux_limit_min_tn*ev
-      endif
 
       alpha = switch%b2tlh0_alpha
       gamma = switch%b2tlh0_gamma
@@ -113,7 +114,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
 
  100  continue
 
-       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+       if (ncall_b2tlh0.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
        if (switch%b2tlh0_iout.ne.0) then
@@ -131,7 +132,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
        endif
 
 *   ..return
-      ncall = ncall + 1
+      ncall_b2tlh0 = ncall_b2tlh0 + 1
       call subend ()
       return
 *     ------------------------------------------------------------------

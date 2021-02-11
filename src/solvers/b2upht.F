@@ -11,6 +11,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2upht
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv
@@ -43,11 +47,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, ireg
+      integer iCv, is, ireg
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), t0, t1, t2,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
-      save ncall
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -55,8 +58,6 @@
       external subini, subend, xertst, b2xvsg, xerrab
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/
-
 
 *-----------------------------------------------------------------------
 *.computation
@@ -72,7 +73,7 @@
      & 'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
-      if(ncall.lt.3) then
+      if(ncall_b2upht.lt.3) then
         call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
         call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
         call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
@@ -157,7 +158,7 @@
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2upht = ncall_b2upht+1
       call subend ()
       return
 

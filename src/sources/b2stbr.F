@@ -54,7 +54,8 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
-     &          my_out_folder, my_out_sf
+     &          my_out_folder, my_out_sf, ncall_b2stbr,
+     &          ncall_b2stbr_phys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr
@@ -116,7 +117,7 @@
      &  fatm_eir(nFc,0:1,nnatmi), datm_eir(nCv,nnatmi), !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli), dmol_eir(nCv,nnmoli), !IYS 27.01.17
      &  flxtmp(nCv)
-      integer ncall, sput_src,
+      integer sput_src,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  coreregn2,
      2  sput_chem_model,
@@ -150,11 +151,11 @@
       real (kind=R8) :: smax, smin
       intrinsic abs, mod, cpu_time
 *   ..initialisation
-      save ncall, sput_src, sput_phys_alpha, in_dl,
+      save sput_src, sput_phys_alpha, in_dl,
      *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1     neutral_rescale, coreregn2, sput_chem_model,
      7     reflection_on, sputter_energy_on
-      data ncall/0/, sput_src/1/,
+      data sput_src/1/,
      *     sput_phys_alpha/1.0e-2_R8/,
      *     in_dl/0.001_R8/, in_no_of_angles/9/,
      *     in_size_of_table/200000/,
@@ -176,7 +177,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stbr')
       new_sputter_namelist=.false.
-      if (ncall.eq.0) then
+      if (ncall_b2stbr.eq.0) then
 !WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.eq.1) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
@@ -256,8 +257,6 @@
         endif
 #endif
         call ipgeti ('b2stbr_no_b2stbr_phys_call', no_b2stbr_phys_call)
-        allocate(
-     *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
         if(neutrals_time_mod.gt.0.0_R8) then
 #ifdef WG_TODO
@@ -280,7 +279,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if(ncall.lt.3) then
+      if(ncall_b2stbr.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -367,7 +366,7 @@ c   --> better solution wanted here..
        endif
        if (switch%b2stbr_neutrals_namelist.eq.1 
      &                          .or. switch%use_eirene.ne.0) then
-        if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
@@ -406,7 +405,7 @@ c   --> better solution wanted here..
 #endif
        else
 #ifdef WG_TODO
-        if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
+        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
           snatmp=sna0
@@ -582,10 +581,10 @@ c   --> better solution wanted here..
      &                 main_call, switch, geo, mpg, pl, dv,
      &                 kin_frac_hyb)
 
-        if(ncall.le.999. and. ncall.le.ncall_iout) then
+        if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
           write (chns,'(i3.3)') is
-          write (ch3 ,'(i3.3)') ncall
+          write (ch3 ,'(i3.3)') ncall_b2stbr
           if(.not.is_neutral(is)) then
            wrk0=sna0_eir(:,0,is)+
      &          sna0_eir(:,1,is)*pl%na(:,is)
@@ -718,7 +717,8 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
 cxpb  This only has meaning if we are following multiple mixed species and
 cxpb  this is not the first timestep
               t0 = 0.0_R8
-              equilibrium(itrack) = ntargsp.gt.1 .and. ncall.gt.0 .and.
+              equilibrium(itrack) = 
+     &         ntargsp.gt.1 .and. ncall_b2stbr.gt.0 .and.
      &         switch%b2stbr_sput_frac_flag.ne.0
             endif
             if (t0.lt.0.0_R8) then  ! we have over-eroded, so we correct
@@ -796,7 +796,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       if(switch%b2stbr_b2wall_netcdf.ne.0 .and. ntargsp.gt.0) then
 #ifndef NO_CDF
-        if(ncall.eq.0) then
+        if(ncall_b2stbr.eq.0) then
           filename='b2wall.nc'
           call find_file(filename,ex)
           call ipgetr ('b2mndr_stim', stim)
@@ -837,7 +837,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           end if
         endif
         if(main_call .and. 
-     *     mod(ncall,switch%b2stbr_b2wall_netcdf).eq.0) then
+     *     mod(ncall_b2stbr,switch%b2stbr_b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
           status=nf_open(filename,NF_WRITE,ncid)
           call check_cdf_status(status)
@@ -990,7 +990,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       endif                                                           !srv 11.09.09 }
 
 * ..return
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      if(ncall_b2stbr.eq.0 .or. main_call) ncall_b2stbr = ncall_b2stbr+1
       call subend ()
       return
       end subroutine b2stbr

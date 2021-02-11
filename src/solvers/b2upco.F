@@ -6,6 +6,10 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2upco
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv
@@ -30,8 +34,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, ireg
-      save ncall
+      integer iCv, iFc, ireg
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nFc), wrk(nCv), wrkv(nVx)
@@ -42,7 +45,6 @@
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2xxgs
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -51,7 +53,7 @@
 *   ..subprogram start-up calls
       call subini ('b2upco')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2upco.eq.0) then
        call ipgetr ('b2upco_c_corr_core_dn', c_corr_core_dn)              !lk 30.06.2017
       endif
 *   ..test nCv, nFc
@@ -119,7 +121,7 @@
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2upco = ncall_b2upco+1
       call subend ()
       return
 

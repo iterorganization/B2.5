@@ -20,6 +20,10 @@
 !WG_TODO     &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
 !WG_TODO      use b2mod_external                                              !srv 05.07.17
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sihs_
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
@@ -52,7 +56,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, iCv, iFc, is, isb, k
+      integer iCv, iFc, is, isb, k
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *  vti32(nCv),
@@ -80,7 +84,6 @@
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
       character chk*1                                                   !srv 11.09.09 } !srv 05.07.17
-      save ncall
       real (kind=R8) ::
      *   t0, t1, ctaup, coef, czetap, czetae                            !srv 05.07.17
       real (kind=R8) ::
@@ -90,7 +93,6 @@
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
-      data ncall/0/
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
@@ -110,7 +112,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sihs_.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test sign of na, te, ti, ne, ni
@@ -634,7 +636,7 @@
           call my_out_us(70,nCv,0,wrks,'b2sihs__shivcn')
         endif
       endif
-      ncall = ncall+1
+      ncall_b2sihs_ = ncall_b2sihs_+1
       call subend ()
       return
 

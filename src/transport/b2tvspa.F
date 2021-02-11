@@ -39,17 +39,15 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, ib, is
+      integer ib, is
       real (kind=R8) ::
      *   dvpar(nFc),
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)
-      save ncall
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
-      data ncall/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -92,7 +90,6 @@
      &    *geo%fcS*geo%fcQalf(:,1)
       endif                                                              !srv
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 
