@@ -23,9 +23,10 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar
+     & , only : conpar, enepar, enipar, nbcd
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf
+     & , only : my_out_folder, my_out_sf, ncall_b2stbc,
+     &          ncall_b2stbc_phys, nsdmax
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
@@ -58,7 +59,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, regcnt, ixx
+      integer iCv, is, regcnt, ixx
       real (kind=R8) ::
      *   t0, testqe, testqi,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
@@ -69,8 +70,7 @@
      1   sum_sch0, sum_vol
 !WG_TODO      integer element_done(-1:nx)
       integer b2stbc_feedback
-      save ncall,
-     1   b2stbc_feedback
+      save b2stbc_feedback
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
@@ -80,7 +80,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation
-      data ncall/0/, b2stbc_feedback/0/
+      data b2stbc_feedback/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -88,7 +88,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stbc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2stbc.eq.0) then
        call xertst (.not.(switch%integral_current.ne.0.0_R8.and.
      .  ((maxval(dv%facdrift).gt.0.0_R8.and.
      .                         switch%b2stbc_fchy_dia.gt.0.0_R8)
@@ -112,7 +112,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stbc.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -127,7 +127,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and. 
      & 1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
-!      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
+!      if (ncall_b2stbc.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
 !        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
 !          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
 !        else                                                             !xpb
@@ -135,7 +135,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
 !        endif                                                            !xpb
 !      endif
 *   ..check kinetic secondary electron emission model
-      if (ncall.eq.0 .and. switch%secmodel.eq.1) then
+      if (ncall_b2stbc.eq.0 .and. switch%secmodel.eq.1) then
         call xertst (nint(zn(ismain)).eq.1, 
      &   'Kinetic secondary emission model only for hydrogen plasmas!')
         write (*,*) 'Kinetic secondary emission model turned on'
@@ -324,7 +324,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
         tiave(2)=tisum(2)/gssum(2)
         naave(:,2)=nasum(:,2)/gssum(2)
       endif
-      if (ncall.eq.0) lbndusr=.false.                                    !xpb
+      if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
 
@@ -335,7 +335,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
      &        sna0, smo0, she0, shi0, sch0, sne0, 
      &        main_call, diagno)
 #endif
-        if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
+        if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
      &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &    wrong_flow, main_call, switch%b2stbc_diagno,
@@ -346,7 +346,7 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
 #ifdef WG_TODO
         if(lbndusr) then
-          if(ncall.eq.0) write(*,*) 'BNDUSR called'
+          if(ncall_b2stbc.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
      1     facdrift, vol, hx, hy, qz, qc, gs,
      1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
@@ -548,14 +548,14 @@ c if we want the integral current to be 0
             endif
             ix=ix+1
           enddo
-          if (ncall.eq.0 .or. diagno.ge.2)
+          if (ncall_b2stbc.eq.0 .or. diagno.ge.2)
      >     write(*,'(i5/(10(1x,10i1)))') iy,element_done
         enddo
       endif
 #endif
 * ..return
 #ifdef WG_TODO
-      if((ncall.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
+      if((ncall_b2stbc.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
         do ix=-1,nx
           write(*,'(a,i4,1p,6(1x,e14.7))') 'S:ix,ti,ni,shi0 ',
      1     ix,ti(ix,-1)/ev,ni(ix,-1,0),(shi0(ix,-1,is),is=0,3)
@@ -622,7 +622,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbc_shi0to3 = shi0
       endif
 #endif
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      if(ncall_b2stbc.eq.0 .or. main_call) ncall_b2stbc = ncall_b2stbc+1
       call subend ()
       return
 

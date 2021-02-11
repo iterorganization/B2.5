@@ -25,6 +25,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2stel
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -55,10 +59,9 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, iCv, is, js, k
+      integer iCv, is, js, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       character chns*3, chk*1                                           !srv 30.06.08
-      save ncall
       real (kind=R8) ::
      *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
@@ -78,7 +81,6 @@
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -100,7 +102,7 @@
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stel.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'vol', '.gt.')
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
@@ -544,7 +546,7 @@ cdjm Jan2017 Keep linearised sources for balance
 #endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2stel = ncall_b2stel+1
       call subend ()
       return
 

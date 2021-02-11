@@ -5,6 +5,10 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_switches
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlnl
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -34,14 +38,12 @@
       
 *   ..local variables
       real (kind=R8) :: lambda
-      integer ncall, iCv
-      save ncall
+      integer iCv
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, sfill
       external b2xvsg
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -61,7 +63,7 @@
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tlnl.lt.3) then
 *    ..test state
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
@@ -122,7 +124,7 @@
         lnlam = lambda
       endif
 * ..return
-      ncall = ncall+1
+      ncall_b2tlnl = ncall_b2tlnl+1
       call subend ()
       return
 

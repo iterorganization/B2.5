@@ -4,6 +4,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlhe
       implicit none
       integer nCv, nFc
       type (switches), intent (in) :: switch
@@ -15,17 +19,15 @@
 *     B2TLHE computes the electron heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ncall, iCv, iFc
+      integer iCv, iFc
       real (kind=R8) ::
      *   t0, t1
-      save ncall
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
       external subini, subend, xertst, b2xvsg
       pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlhe')
@@ -35,7 +37,7 @@
       call xertst (0.0_R8.lt.me, 'faulty argument me')
       call xertst (0.0_R8.le.cflme, 'faulty argument cflme')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tlhe.lt.3) then
 *    ..test sign of ne, te
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -63,7 +65,7 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
      .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))  
         enddo
       endif
-      ncall = ncall+1
+      ncall_b2tlhe = ncall_b2tlhe+1
       call subend ()
       return
 *     ------------------------------------------------------------------

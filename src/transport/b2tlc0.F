@@ -26,15 +26,15 @@
 *     B2TLC0 computes the neutral diffusion flux limit.              !srv 09.07.03
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, ncall
+      integer iFc, is
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
       character charns*3                                      
-      save ncall, alpha, gamma
+      save alpha, gamma
 *   ..initialization
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
+      data alpha/0.0_R8/, gamma/2.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst
@@ -139,7 +139,6 @@ cwdk    or radial contributions, since neutral transport is isotropic
        endif
 
 *   ..return
-      ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------

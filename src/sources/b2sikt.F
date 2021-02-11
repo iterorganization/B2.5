@@ -22,6 +22,10 @@ c      use b2mod_keps
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sikt
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -48,7 +52,7 @@ c      use b2mod_keps
 *.declarations
       
 *   ..local variables
-      integer ncall, ic
+      integer ic
       integer, save :: iout = 0
       integer, save :: style = 0
       integer, save :: model = 1, keps_local = 1, fac_sheath_local=1
@@ -60,12 +64,10 @@ c      use b2mod_keps
      &  fac_sheath_rest=1.0_r8, fac_sheath_core=0.0_r8,
      &  fac_aniso=1.0_R8
       character chk*1
-      save ncall
 *   ..procedures
       intrinsic min, max, sqrt
       external subini, subend, xertst, ipgeti, ipgetr, sfill
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -74,7 +76,7 @@ c      use b2mod_keps
 *   ..subprogram start-up calls
       call subini ('b2sikt')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2sikt.eq.0) then
 !       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2sikt_iout', iout)
        call ipgeti ('b2sikt_style', style)
@@ -96,7 +98,7 @@ c      use b2mod_keps
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sikt.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test sign of na, te, ti, ne, ni
@@ -221,7 +223,7 @@ cwdk     parallel transport due to parallel current fluctuations
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sikt = ncall_b2sikt+1
       call subend ()
       return
 

@@ -6,6 +6,10 @@
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sqel
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, ismain
@@ -45,15 +49,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) :: tnorm, art_rad
       real (kind=R8) :: wrk0(1:nCv), expu
-      save ncall
 *   ..procedures
       intrinsic log, exp, min, max, dim
       external subini, subend, xertst, expu
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -67,7 +69,7 @@
 *   ..test ev
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sqel.lt.3) then
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 *   ..compute wrk0()=log(te()/ev)
@@ -112,7 +114,7 @@
 * ..artificial radiation                DPC 2000.08.25
       art_rad = switch%art_rad
       if(art_rad.ne.0.0_R8) then
-        if(ncall.eq.0) then
+        if(ncall_b2sqel.eq.0) then
           art_rad=abs(art_rad)
           write(*,*)
      1    'Artificial radiation model active, art_rad =',switch%art_rad
@@ -129,7 +131,7 @@
       endif
       
 * ..return
-      ncall = ncall+1
+      ncall_b2sqel = ncall_b2sqel+1
       call subend ()
       return
 

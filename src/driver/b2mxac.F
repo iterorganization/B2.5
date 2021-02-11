@@ -30,15 +30,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is
-      save ncall
+      integer is
 *   ..procedures
       real (kind=R8) ::
      *   samax
       external subini, subend, xertst, samax
       external b2xvfx
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -66,7 +64,6 @@
       diag%acorkt = samax(nCv,dv%corkt,1)
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

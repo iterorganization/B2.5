@@ -43,17 +43,15 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
-      save ncall
 *   ..procedures
       intrinsic sqrt, abs
       real (kind=R8) ::
      *  b2sasum
       external subini, subend, xertst, b2sasum
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -188,7 +186,6 @@
       diag%reshireg = diag%reshireg/((1.5_R8+BoRiS)*prvi)
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

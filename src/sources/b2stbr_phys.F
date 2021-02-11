@@ -29,6 +29,10 @@
       use b2us_map
       use b2us_plasma
       use b2mod_recycle
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2stbr_phys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
@@ -79,7 +83,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iRc1, iRc2, iFc, is, ib, istra, ncall, k,
+      integer i, iRc1, iRc2, iFc, is, ib, istra, k,
      * iwall, itargsp, zbulk
       character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
@@ -115,8 +119,6 @@ c     output for analysis/debugging
       real (kind=R8) :: 
      *   smax, smin
 *   ..initialisation
-      save ncall
-      data ncall/0/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -147,14 +149,14 @@ c     output for analysis/debugging
 *   ..subprogram start-up calls
       call subini ('b2stbr_phys')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then                                          !srv 22.08.08 {
+      if (ncall_b2stbr_phys.eq.0) then                              !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if(ncall.lt.3) then
+      if(ncall_b2stbr_phys.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -209,7 +211,8 @@ c     output for analysis/debugging
       if((main_call.and.output.ge.1).or.output.gt.1)
      *     write(*,*) 'b2stbr_phys_sna(start): ',b2stbr_phys_sna
 
-      if(ncall.eq.0.and.sput_dst.ge.0.and.sput_dst.lt.ns) then
+      if(ncall_b2stbr_phys.eq.0.and.sput_dst.ge.0.and.
+     &   sput_dst.lt.ns) then
         do itargsp=1,ntargsp
           deposition_error(itargsp)=0.0_R8
           lnorm=am(target_intcode(itargsp))/tgdns(itargsp)/
@@ -277,7 +280,7 @@ c     initialize debugging/analysis arrays
           l_chem_sput=(sput_dst_bulk.eq.sput_dst.or.chemsp(istra)).and.
      &       zbulk.eq.6
         endif
-        if(ncall.eq.0) then
+        if(ncall_b2stbr_phys.eq.0) then
           if(sput_frac_flag.gt.0 .and. istra.eq.1) write(*,*) 
      &      'Mixed materials sputtering model is active!'
           if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N' .or.
@@ -528,7 +531,7 @@ c for KUL recycling/reflection model
      . write(*,*) 'Maximum self-sputtering coefficient ', yself_max
 #endif
 * ..return
-      ncall = ncall + 1
+      ncall_b2stbr_phys = ncall_b2stbr_phys + 1
       call subend ()
       return
 
@@ -808,7 +811,7 @@ cdpc
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
          endif
          if(is0.ne.is1) then
-            if(ncall.eq.0)
+            if(ncall_b2stbr_phys.eq.0)
      1           write(*,*) 'b2stbr: setting is0 to is1 ',is0,is1
             is0=is1
          endif
@@ -1142,7 +1145,8 @@ c chemical sputtering
                   chemical_sputtering(iwall,is) = 
      &                 chemical_sputtering(iwall,is)*sput_frac_chem_sum
                endif
-               if(ncall.ne.0 .or. sputter_namelist_used) then
+               if(ncall_b2stbr_phys.ne.0 .or. 
+     &            sputter_namelist_used) then
                   t1=(sputter_yield(ix,iy,is,1)+sput_chem_alpha*t1)/
      *                 (1+sput_chem_alpha)
                endif
@@ -1190,7 +1194,8 @@ cxpb  with mixed materials model
                   endif
                endif
                if(sputter_energy_on.ne.0) then
-                  if(ncall .ne. 0 .or. sputter_namelist_used) then
+                  if(ncall_b2stbr_phys .ne. 0 .or. 
+     &               sputter_namelist_used) then
                      t2=(sputter_yield2(ix,iy,is,1)+sput_chem_alpha*t2)/
      *                    (1+sput_chem_alpha)
                   endif
@@ -1244,7 +1249,8 @@ cxpb We first treat the bulk material
 ! primary sputtered particles will be multiplied by this factor just below
                   endif                    
                   t1=t0 * ytmp
-                  if(ncall.ne.0 .or. sputter_namelist_used) then
+                  if(ncall_b2stbr_phys.ne.0 .or. 
+     &               sputter_namelist_used) then
                      t1=(sputter_yield(ix,iy,is,2)+sput_phys_alpha*t1)/
      *                 (1.0_R8+sput_phys_alpha)
                   endif
@@ -1378,7 +1384,8 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
      2                 (1.0_R8-
      3                  f_redep(ixn,iyn,sput_dst_bulk)*yself)
                      physical_sputtering_energy(iwall,is) = ztmp
-                     if(ncall .ne. 0 .or. sputter_namelist_used) then
+                     if(ncall_b2stbr_phys .ne. 0 .or. 
+     &                  sputter_namelist_used) then
                         t2=(sputter_yield2(ix,iy,is,2)+
      *                   sput_phys_alpha*t2)/(1.0_R8+sput_phys_alpha)
                      endif
@@ -1619,7 +1626,7 @@ cxpb
      .         'b2stbr problem: is, is0, is1 ',is,is0,is1
             endif
             if(is0.ne.is1) then
-               if(ncall.eq.0)
+               if(ncall_b2stbr_phys.eq.0)
      1          write(*,'(a,2i3)') 'b2stbr: setting is0 to is1 ',is0,is1
                is0=is1
             endif

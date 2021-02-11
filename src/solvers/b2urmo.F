@@ -9,6 +9,10 @@
       use b2us_map
 !WG_TODO      use b2mod_balance                                                 !djm Jan2017
 !WG_TODO     & , only : fmo_flua, fmo_cvsa, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2urmo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -57,10 +61,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc
+      integer iFc
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       character chns*3                                                  !srv 02.06.11
-      save ncall
       real (kind=R8) ::
      *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
@@ -70,7 +73,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       external subini, subend, xertst
       external b2xvsg, b2xvff, calcflow, calccoef
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -81,12 +83,12 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2urmo.eq.0) then
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
       endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2urmo.lt.3) then
 *    ..test sign of rob, smb1, smb3
        call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
        call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
@@ -142,7 +144,7 @@ cwdk store effective viscosity, for use in viscous heating
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2urmo = ncall_b2urmo+1
       call subend ()
       return
 

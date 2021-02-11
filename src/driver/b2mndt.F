@@ -42,16 +42,13 @@
      &          cfhce, cfhci
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
-     &          tr_ip_elm_count, no_div, addspec
+     &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
+     &          nkind_data
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
      &          rsamoreg
       use b2mod_ad
-     & , only : ntstep_b2wall, old_deposition, old_erosion,
-     &          b2sral_elm_count, b2sian_eps, b2npmo_solvedum,
-     &          b2news_solving, test_residual, b2mndt_itcnt, 
-     &          my_out_folder, my_out_sf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
@@ -107,13 +104,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, moitlv,                                             !xpb
+      integer moitlv,                                                    !xpb
      *  ramp_slow, ier0, iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0, tn_style = 0                             !iyv 06.02.14
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-      save ncall, moitlv, ramp_slow                                      !xpb 
+      save moitlv, ramp_slow                                             !xpb 
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical quit_residual, main_call
       logical solving(4)
@@ -145,7 +142,7 @@
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
-      data ncall/0/, moitlv/-1/
+      data moitlv/-1/
       data ramp_slow/0/
 
 *
@@ -156,7 +153,7 @@
 *   ..subprogram start-up calls
       call subini ('b2mndt')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2mndt.eq.0) then
        if (ntim.eq.0) then
          switch%nstg(0) = 1
          switch%nstg(1) = 1
@@ -223,7 +220,7 @@
 *   ..test present state
       call b2xvps (nCv, nFc, ns, st%pl, st%dv)
 *   ..test facdrift and fac_ExB (not on first call)                      !xpb
-      if (ncall.gt.0) then                                               !xpb
+      if (ncall_b2mndt.gt.0) then                                        !xpb
         call xertst (0.0_R8.le.minval(st%dv%facdrift) .and.
      &    1.0_R8.ge.maxval(st%dv%facdrift), 'faulty argument facdrift')
         call xertst (0.0_R8.le.minval(st%dv%fac_ExB) .and.
@@ -450,7 +447,7 @@ ctmp.dpc
      &      (3.le.moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
            if (domoqt) then
-            if (mod(ncall,ntim_step_out) .eq. 0) then                    !srv 31.01.07
+            if (mod(ncall_b2mndt,ntim_step_out) .eq. 0) then             !srv 31.01.07
              call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &         switch%BoRiS, switch, geo, st%pl, st%dv, st%diag)
              flush(nout(4))
@@ -471,7 +468,7 @@ ctmp.dpc
            endif
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
-             if (ncall.eq.0.and.istg(2).eq.0) then
+             if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
                call b2filei(1,ns,nnreg)
              end if
@@ -562,8 +559,8 @@ ctmp.dpc
            call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp) !srv 01.07.09 20.09.11
 *      ..compute energy sources
            solving = .false.
-           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
-     &      solveee, solveei, solveen, solvepo, solvemo,
+           call b2npht (nx, ny, ns, nnreg(0), ncall_b2mndt, ismain,     !srv 05.07.17
+     &      solving, solveee, solveei, solveen, solvepo, solvemo,
      &      switch%b2mndt_rxf, switch%BoRiS, fac_ExB, hx, hy, qz, qs,
      &      vol, bb, pbs, lnlam, floe, cone, floi, coni, ceqp, pccm,   !srv 01.07.09
      &      she, shi, fne, fch, cvsa, fchdia, uadia, wadia, vadia,     !srv 09.07.08 07.07.09
@@ -585,7 +582,7 @@ ctmp.dpc
 
 * ..return
 99999 continue
-      ncall = ncall+1
+      ncall_b2mndt = ncall_b2mndt+1
       call subend ()
       return
 

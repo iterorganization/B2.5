@@ -37,13 +37,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is, iCv
-      save ncall
+      integer is, iCv
 *   ..procedures
       external subini, subend, xertst, sfill
       external b2xvfx, b2xxgs
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -121,7 +119,6 @@
 #endif
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

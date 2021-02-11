@@ -26,15 +26,13 @@
 *     B2TLV0 computes the neutral viscosity flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, ncall
+      integer iFc, is
       character charns*3                                      
       real (kind=R8) ::
      *  alpha, gamma, qcl, qfl, tfl, maxfluxlimit(0:1),
      *  dubf(nFc,0:1), ubv(nVx)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
-      save ncall
 *   ..initialization
-      data ncall/0/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst
@@ -130,7 +128,6 @@ cwdk    or radial contributions, since neutral transport is isotropic
       endif
 
 *   ..return
-      ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------

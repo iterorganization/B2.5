@@ -14,6 +14,10 @@
       use b2us_map
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2usht
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt
@@ -65,14 +69,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv
+      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                      !srv 02.01.07
       integer, save :: last_ion
       integer ireg
       logical lnonzero
-      save ncall
       real (kind=R8) ::
      *   t0, t1, t2, t3, t11, t22
       logical new_matrix
@@ -81,7 +84,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2uxus, b2uxm9                 !srv 02.01.07
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -98,7 +100,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2usht.lt.3) then
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, ni, 1, 'ni', '.gt.')
@@ -935,7 +937,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 
 *   ..return
-      ncall = ncall+1
+      ncall_b2usht = ncall_b2usht+1
       call subend ()
       return
 

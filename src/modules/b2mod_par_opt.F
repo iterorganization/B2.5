@@ -46,7 +46,7 @@
         open(99,file=filename)
         write(*,*) 'Reading namelist optimization from ',trim(filename)
 #ifdef USE_MPI
-        read(99,optimization,err=999)
+        read(99,optimization)
 #else
         read(99,optimization)
 #endif

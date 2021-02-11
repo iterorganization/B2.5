@@ -5,6 +5,10 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2ursd
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc
@@ -50,13 +54,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc
-      save ncall
+      integer iFc
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg, b2xvff
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -67,7 +69,7 @@
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2ursd.lt.3) then
 *    ..test sign of den, sdf
        call b2xvsg (nCv, den, 1, 'den', '.ge.')
        call b2xvsg (nCv, sdf(1,1), 1, 'sdf1', '.le.')
@@ -88,7 +90,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2ursd = ncall_b2ursd+1
       call subend ()
       return
 

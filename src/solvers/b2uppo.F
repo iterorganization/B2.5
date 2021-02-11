@@ -3,6 +3,10 @@
 
       subroutine b2uppo (nCv, rxf, corpo, po)
       use b2mod_types
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2uppo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -23,12 +27,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
-      save ncall
 *   ..procedures
       external subini, subend, xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -41,7 +42,7 @@
 *   ..test rxf
       call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2uppo.lt.3) then
       endif
 
 * ..implement the correction
@@ -49,7 +50,7 @@
       po = po + rxf*corpo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2uppo = ncall_b2uppo+1
       call subend ()
       return
 
