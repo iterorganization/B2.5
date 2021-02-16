@@ -19,8 +19,8 @@
       real (kind=R8) ::
      *  fac_vis(-1:nx,-1:ny), rxf, pbs(-1:nx,-1:ny,0:1),
      &  flob(-1:nx,-1:ny,0:1), conb(-1:nx,-1:ny,0:1,0:4),               !srv 13.10.06
-     &  snb(-1:nx,-1:ny,0:1), pccb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny),
-     &  ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
+     &  snb(-1:nx,-1:ny,0:1), pccb(-1:nx,-1:ny,0:1),
+     &  vol(-1:nx,-1:ny), ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
       logical solving, solvcreg(0:nregionv), ua_solve,                  !srv 22.05.18
      &  solvmreg(0:nregionv)
 *   ..input/output arguments
@@ -177,7 +177,7 @@ csw 11dec2012, check for solv flags
 *   ..compute correction
        call b2usc7 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,
      &  itcnt, rxg, pcm1, vol, pbs, ti, nb, pb, snb(-1,-1,1), flob,
-     &  conb, pccb(-1,-1,1), rescb, corpb, aa7, 'b2usc7_'//chns)        !srv 02.04.18
+     &  conb, pccb(-1,-1,1), rescb, corpb, aa7, '_b2usc7_'//chns)       !srv 02.04.18
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                     ! IYS 19.12.2017
@@ -220,7 +220,7 @@ csw 11dec2012, check for solv flags
       if (iout.ne.0) then                                            !srv 12.07.02 {
        if (in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         write(*,*) 'B2NPC7 will not write to file in parallel mode'
          !$OMP END MASTER
        else
         call my_out(70,nx,ny,pb,'b2npc7_pa'//chns)
@@ -239,7 +239,7 @@ csw 11dec2012, check for solv flags
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         write(*,*) 'B2NPC7 will not write to file in parallel mode'
          !$OMP END MASTER
        else
         call my_out(70,nx,ny,nb,'b2npc7_na'//chns)

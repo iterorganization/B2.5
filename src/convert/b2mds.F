@@ -68,17 +68,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::
-     3   energy_balance(-1:nxd,-1:nyd),
-     3   pr(-1:nxd,-1:nyd), energy_balance2(-1:nxd,-1:nyd),
-     4   energy_balance_old(-1:nxd,-1:nyd)
-      real (kind=R8) ::
-     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
-     4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
+      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 
@@ -340,171 +330,6 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
             endif
-          enddo
-        enddo
-      enddo
-c calculate divergences of the various fluxes
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              div_fna(ix,iy,is)=
-     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,is)-fna(ix,iy,0,is)
-     2         +fna(topix(ix,iy),topiy(ix,iy),1,is)-fna(ix,iy,1,is)
-              div_fmo(ix,iy,is)=
-     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,is)-fmo(ix,iy,0,is)
-     2         +fmo(topix(ix,iy),topiy(ix,iy),1,is)-fmo(ix,iy,1,is)
-              div_fhm(ix,iy,is)=
-     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,is)-fhm(ix,iy,0,is)
-     2         +fhm(topix(ix,iy),topiy(ix,iy),1,is)-fhm(ix,iy,1,is)
-              div_fhp(ix,iy,is)=
-     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,is)-fhp(ix,iy,0,is)
-     2         +fhp(topix(ix,iy),topiy(ix,iy),1,is)-fhp(ix,iy,1,is)
-            else
-              div_fna(ix,iy,is)=0.0_R8
-              div_fmo(ix,iy,is)=0.0_R8
-              div_fhm(ix,iy,is)=0.0_R8
-              div_fhp(ix,iy,is)=0.0_R8
-            endif
-          enddo
-        enddo
-      enddo
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            div_fhet(ix,iy)=
-     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0)-fhet(ix,iy,0)
-     2       +fhet(topix(ix,iy),topiy(ix,iy),1)-fhet(ix,iy,1)
-            div_fhit(ix,iy)=
-     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0)-fhit(ix,iy,0)
-     2       +fhit(topix(ix,iy),topiy(ix,iy),1)-fhit(ix,iy,1)
-            div_fch(ix,iy)=
-     1       +fch(rightix(ix,iy),rightiy(ix,iy),0)-fch(ix,iy,0)
-     2       +fch(topix(ix,iy),topiy(ix,iy),1)-fch(ix,iy,1)
-            div_fhj(ix,iy)=0
-     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0)-fhj(ix,iy,0)
-     2       +fhj(topix(ix,iy),topiy(ix,iy),1)-fhj(ix,iy,1)
-          else
-            div_fhet(ix,iy)=0.0_R8
-            div_fhit(ix,iy)=0.0_R8
-            div_fch(ix,iy)=0.0_R8
-            div_fhj(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c calculate the energy balance
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            energy_balance(ix,iy)=-div_fhet(ix,iy)-div_fhit(ix,iy)-
-     1       div_fhj(ix,iy)
-            do is=0,ns-1
-              energy_balance(ix,iy)=energy_balance(ix,iy)-
-     1         div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-div_fhp(ix,iy,is)
-            enddo
-c the viscous piece is still missing!
-          else
-            energy_balance(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c additional sources
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            energy_balance2(ix,iy)=
-c boundary conditions (species independent)
-     1         +b2stbc_she(ix,iy)+b2stbc_shi(ix,iy)
-     2         +b2stbc_sch(ix,iy)*po(ix,iy)
-c recycling (species independent)
-     1         +b2stbr_she(ix,iy)+b2stbr_shi(ix,iy)
-     2         +b2stbr_sch(ix,iy)*po(ix,iy)
-c other sources (species independent)
-     1         +b2stbm_she(ix,iy)+b2stbm_shi(ix,iy)
-     2         +b2stbm_sch(ix,iy)*po(ix,iy)
-c external sources (species independent)
-     1         +ext_she(ix,iy)+ext_shi(ix,iy)
-     2         +ext_sch(ix,iy)*po(ix,iy)
-            do is=0,ns-1
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c radiation (electron cooling rate)
-     1         -rqahe(ix,iy,is)
-c boundary conditions (species dependent)
-     3         +b2stbc_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbc_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c recycling (species dependent)
-     3         +b2stbr_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbr_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c other sources (species dependent)
-     3         +b2stbm_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbm_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c external sources (species dependent)
-     3         +ext_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -ext_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              if(is_neutral(is)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange (neutral H/D/T)
-     1           +rcxmo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     2           -rcxna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              else
-c charge exchange from is --> is-1
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-     1           -rcxmo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     2           +rcxna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-            do is=0,ns-2
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c ionisation from is --> is+1
-     1         +rsana(ix,iy,is)*rpi(ix,iy,is+1)*ev
-     2         +rsana(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     3         -rsamo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-c recombination from is+1 --> is
-     4         -rrana(ix,iy,is+1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     5         +rramo(ix,iy,is+1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              if(.not.is_neutral(is+1)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange from is+1 --> is (receiving)
-     1           -rcxna(ix,iy,is+1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     2           +rcxmo(ix,iy,is+1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-            do is=1,ns-1
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c recombination is --> is-1
-     1         -rrana(ix,iy,is)*rpi(ix,iy,is)*ev
-     2         +rrana(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     3         -rramo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-c ionisation from is-1 --> is
-     4         -rsana(ix,iy,is-1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     5         +rsamo(ix,iy,is-1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              if(is_neutral(is-1)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange for H+/D+/T+
-     1           +rcxna(ix,iy,is-1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     2           -rcxmo(ix,iy,is-1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-          else
-            energy_balance2(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c alternative (failed) calculation of energy balance (elegant, but flawed)
-      do iy=-1,ny
-        do ix=-1,nx
-          energy_balance_old(ix,iy)=div_fhet(ix,iy)+div_fhit(ix,iy)-
-     1     po(ix,iy)*div_fch(ix,iy)
-          do is=0,ns-1
-            energy_balance_old(ix,iy)=energy_balance_old(ix,iy)-
-     1       ua(ix,iy,is)*div_fmo(ix,iy,is)-
-     2       rpt(ix,iy,is)*ev*div_fna(ix,iy,is)+
-     3       div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-
-     4       rqahe(ix,iy,is)
           enddo
         enddo
       enddo
@@ -790,8 +615,9 @@ c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
+c 29: Same indexing error was also present in emolrad and eionrad
 
-      dbversion=28
+      dbversion=29
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1410,7 +1236,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
@@ -1426,7 +1252,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
-     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif

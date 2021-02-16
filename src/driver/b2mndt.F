@@ -123,8 +123,8 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
-       call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
-       call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style)                              !srv 18.06.08
+       call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
          call ipgeti ('b2mndt_nstg1', nstg(1))
@@ -163,11 +163,11 @@
      &      'faulty internal parameter nstg_aresco')
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
-       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 06.02.14
-       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
+       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
-     &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
-       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
+     &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }
+       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -340,6 +340,7 @@ ctmp.dpc
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
+          wrong_flow = .false.
           main_call = ntim.ne.0
           call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,

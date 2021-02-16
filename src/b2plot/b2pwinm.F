@@ -81,6 +81,7 @@ c*** Shadowing structure
       case (4)
        ll=1
        nwldprt=max(nwldprt,ll)
+       pltzlbl(ll)='Sh. str.'
        call scipit
 c----------------------------------------------------------------------
 c*** Starting points of the segments
@@ -233,7 +234,7 @@ c*** Plot zone label
        else !}{
         i=lena
         lena=mlblprtx
-        lblwldpt(ll)=' '
+        lblwldpt(ll)=repeat(' ',8)
         call resima(lblwldpt(ll))
         lena=i
        end if !}

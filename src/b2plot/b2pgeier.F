@@ -56,12 +56,12 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
         if(j.eq.ntrgts) jj=ntrgsx
         if(.not.LSN) jj=ntrgsx+1-j
         open(lun,file=ftrg(jj))
-        write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a,i2.2,9x))'
+        write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a2,i2.2,8x))'
 c        print *,trim(fmt_peak)  !###
         write(lun,740) 'Ion fluxes on the target - ',
      ,      trim(trg_label(jj)),trim(label)
         write(lun,fmt_peak) '# cell',
-     ,    ((trim(adjustl(species_list(is))),i,i=0,nfluids(is)),
+     ,    ((trim(species_list(is)),i,i=0,nfluids(is)),
      ,                                               is=1,nspecies)
         write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',ns,'(e12.4))'
 c        print *,trim(fmt_peak)  !###

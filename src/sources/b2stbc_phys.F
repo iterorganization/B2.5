@@ -3351,7 +3351,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           write(*,*) BCCON(IS,IB)
           call xerrab ('BCCON out of bounds')
         end select
-          
+
 * -- BOUNDARY CONDITIONS FOR PARALLEL MOMENTUM EQUATIONS --
 
         select case (BCMOM(IS,IB))
@@ -4314,7 +4314,7 @@ cxpb  and max(,,) statement for stability
           write(*,*) BCMOM(IS,IB)
           call xerrab ('BCMOM out of bounds')
         end select
-          
+
 * -- END LOOP OVER SPECIES
       enddo
 
@@ -4330,7 +4330,7 @@ cxpb  and max(,,) statement for stability
       select case (BCENE(IB))
       case (0)
         continue
-  
+
 * -- BCENE=1 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE
 
       case (1)

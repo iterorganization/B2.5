@@ -87,7 +87,7 @@
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
-*    
+*
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
@@ -477,10 +477,10 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,0)=fna(:,:,:,0)
-        fna_32(:,:,:,1)=0.0_R8
-        fna_52(:,:,:,0)=0.0_R8
-        fna_52(:,:,:,1)=fna(:,:,:,1)
+        fna_32(:,:,0,:)=fna(:,:,0,:)
+        fna_32(:,:,1,:)=0.0_R8
+        fna_52(:,:,0,:)=0.0_R8
+        fna_52(:,:,1,:)=fna(:,:,1,:)
         call b2xpfi (nx, ny, ns, fna_32, fni_32)
         call b2xpfi (nx, ny, ns, fna_52, fni_52)
         call b2xpfe (nx, ny, ns, 0, qe,

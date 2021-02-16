@@ -38,6 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: diff, dist, disx, disy, distc, match
+      public :: divide_by_areas
       public :: cr, cz, hy1, pit, sy
 
       contains
@@ -131,7 +132,7 @@
       call cfrure (nread, size(hx), hx, 'hx')
       call cfrure (nread, size(hy), hy, 'hy')
       call cfrure (nread, size(qz), qz, 'qz')
-      if (b2fplasma_version.gt.'01.001.021') then
+      if (b2fgmtry_version.gt.'01.001.021') then
        call cfrure (nread, size(qc), qc, 'qc')
       else
        do iy = -1, ny
@@ -150,7 +151,7 @@
        enddo
       endif
       qcb = 1.0_R8
-      if (b2fplasma_version.gt.'01.001.030') then
+      if (b2fgmtry_version.gt.'01.001.030') then
        call cfrure_opt (nread, size(qcb), qcb, 'qcb')
       end if
       if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
@@ -2516,6 +2517,29 @@ c conn
      & leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       end subroutine init_connectivity
+
+      subroutine divide_by_areas(nx,ny,field,result)
+      implicit none
+      integer, intent(in) :: nx, ny
+      real(kind=R8), intent(in) :: field(-1:nx,-1:ny,0:1)
+      real(kind=R8), intent(out) :: result(-1:nx,-1:ny,0:1)
+      integer ix, iy
+      do iy = -1, ny
+        do ix = -1, nx
+          if (gs(ix,iy,0).gt.0.0_R8) then
+            result(ix,iy,0) = field(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
+          else
+            result(ix,iy,0) = 0.0_R8
+          end if
+          if (gs(ix,iy,1).gt.0.0_R8) then
+            result(ix,iy,1) = field(ix,iy,1)/gs(ix,iy,1)
+          else
+            result(ix,iy,1) = 0.0_R8
+          end if
+        end do
+      end do
+      return
+      end subroutine divide_by_areas
 
       function cr(ix,iy)
       implicit none

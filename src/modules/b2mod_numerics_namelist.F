@@ -43,7 +43,7 @@
       logical, save :: last_solve_7(0:NNREGMAX)          !srv 02.04.18
       logical, save :: last_solve_9(0:NNREGMAX)
       logical, save :: last_solve_11(0:NNREGMAX)         !srv 02.04.18
-      logical, save :: add_te_corr_to_po(0:NNREGMAX)            ! IYS 21.09.2018
+      logical, save :: add_te_corr_to_po(0:NNREGMAX)     ! IYS 21.09.2018
 #endif
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
@@ -64,7 +64,7 @@
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,          !srv 22.05.18
      & write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch,
-     4 corr_core_dn,corr_core_dt,add_te_corr_to_po  ! IYS 19.12.2017
+     4 corr_core_dn,corr_core_dt,add_te_corr_to_po       ! IYS 19.12.2017
 
       contains
 

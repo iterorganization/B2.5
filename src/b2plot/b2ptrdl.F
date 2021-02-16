@@ -66,10 +66,10 @@ c
         print *,'%% b2ptrdl: nwldrad,nytg / lwldrad',nwldrad,nytg
         k=0
         do j=1,ntrgts !{
-          print '(30i4)',(lwldrad(k+i),i=1,nytg)
+          print '(20i4)',(lwldrad(k+i),i=1,nytg)
           k=k+nytg
         end do !}
-        print '(1x,a,i5/(30i4))','nwldlis / lwldlis',nwldlis(1),
+        print '(1x,a,i5/(20i4))','nwldlis / lwldlis',nwldlis(1),
      ,                             (lwldlis(i,1),i=1,nwldlis(1))
 #endif
 

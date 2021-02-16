@@ -53,7 +53,7 @@ C A PIECE OF CODE FROM B2PLOT
         ltrgpos(k)=nx-1
 C AREAS OF THE SURFACE ELEMENTS
         l=0
-        do j=1,nncut*2
+        do j=1,max(1,nncut)*2
           k=ltrgpos(j)
           wtarg_max(j)=0.0_R8
           do iy=0,ny-1

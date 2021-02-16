@@ -83,7 +83,7 @@ c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
 c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 cc%%%
@@ -94,18 +94,18 @@ c*** an arbitrary point.
       lwldstrt(1)=iabs(lwldlis(1,1))
       call b2pwsrt(iret)
       if (iret.eq.1) goto 999
-cc<<<
+c#ifdef DBG
 c      print *,'After b2pwsrt',nwldprt
 c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
 c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
-cc>>>
+c#endif
 c*** ... and produce the output file
       do i=1,natmi
         text_an(i)=textan(i-1)(2:8)
@@ -115,9 +115,9 @@ c*** ... and produce the output file
       end do
       open (lun,file='wlld.dat')
       write (hlp_frm,'(a,i2,a)')
-     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
-     .      '(3x,a4,a4,1x),4(5x,a4,3x))'
+     .      '(a4,a8),2(1x,a8,3x))'
       if (nmoli.gt.0) then
         write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
@@ -125,23 +125,22 @@ c*** ... and produce the output file
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
-     ,      'net_','ersn','grs_','ersn'
+     ,      'net_ersn','grs_ersn'
       else
         write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
-     ,      'net_','ersn','grs_','ersn'
+     ,      'net_ersn','grs_ersn'
       end if
-c<<<
-c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
-c      do il=1,nwldprt
-c        write (hlp_frm,'(a,i2,a)') '(1x,',nwldlis(il)+1,'i4)'
-c        print '(1x,2i4)',il,nwldlis(il)
-c        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+#ifdef DBG
+      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
+      do il=1,nwldprt
+        print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
+        write (6,'(1x,20i4)') (lwldlis(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c
 c*** Check whether carbon atoms are present in the calculation
 c
@@ -457,7 +456,7 @@ c                  print *,'do jj:',jj,is,goup,placed(jj)
                     js=lwldlis(jj,il)
 c                    print *,'js:',js,is,goup
                     if(goup) then
-                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
@@ -467,7 +466,7 @@ c                    print *,'js:',js,is,goup
 c                        print *,'2->1:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -478,7 +477,7 @@ c                        print *,'2->2:',is,nwsrtwrk
                         go to 100
                       end if
                     else
-                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -488,7 +487,7 @@ c                        print *,'2->2:',is,nwsrtwrk
 c                        print *,'1->2:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js

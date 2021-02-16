@@ -20,8 +20,16 @@ c----------------------------------------------------------------------
 c*** Set up the input routine
 c
       iret=0
+      lena=8
+      jmess=2
+      lfin=72
+      keylen=8
       immed=.false.
       mimp=lun
+      fixkey=.false.
+      finish = repeat(' ',8)
+      promp(1) = repeat(' ',8)
+      promp(2) = repeat(' ',8)
       ufile='param.dg'
       call find_file(ufile,file_ok)
 c      open(lun,file=ufile,status='old',err=998)
@@ -178,6 +186,7 @@ c*** Elements not for Eirene
 c*** Shadowing structure
         ll=1
         nwldprt=max(nwldprt,ll)
+        pltzlbl(ll)='Sh. Str.'
         call scipit
       case default
         call scipit

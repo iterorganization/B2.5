@@ -296,7 +296,7 @@
 *     the nuclear species inuc.
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *
-*     rtyr - (0:ntns-1) integer array.
+*     rtyr - (0:rtns-1) integer array.
 *     Specifies the ADAS year of the atomic species.
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *

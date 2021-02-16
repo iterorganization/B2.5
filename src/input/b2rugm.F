@@ -26,7 +26,7 @@
      &  hz(-1:nx,-1:ny), hyl(-1:nx,-1:ny), hxb(-1:nx,-1:ny),
      &  hzl(-1:nx,-1:ny), hzb(-1:nx,-1:ny),
      &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
+     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       type(B2GridMap) :: gmap

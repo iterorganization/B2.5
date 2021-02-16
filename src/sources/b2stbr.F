@@ -766,9 +766,13 @@ c   --> better solution wanted here..
           endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
@@ -914,6 +918,16 @@ cwdk these are now put back into the constant part of the sources (0-component)
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
         call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
+
+*   ..zero out contributions in dead cells
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
 
 * ..sources
       b2stbr_sna(-1:nx,-1:ny,0:ns-1)=

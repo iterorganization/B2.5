@@ -499,16 +499,16 @@ c carlis If starting @midplane in SOL then remove half of starting cell
         u=-u
       end do !}
       if (ntrgts.ge.2) then
-       do iy=lytg,jsep !{
+        do iy=lytg,jsep !{
 c carlis  If in PFR region then connection length from midplane to target will
 c         be equal to connection length from target to target
-        lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
-        lcnnt(iy,ntrgts)=lcnnx(iy,ntrgts)+lcnnx(iy,ntrgts-1)
-        if (ntrgts.gt.2) then
-          lcnnt(iy,2)=lcnnt(iy,1)
-          lcnnt(iy,3)=lcnnt(iy,ntrgts)
-        end if
-       end do
+          lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
+          lcnnt(iy,ntrgts)=lcnnx(iy,ntrgts)+lcnnx(iy,ntrgts-1)
+          if (ntrgts.gt.2) then
+            lcnnt(iy,2)=lcnnt(iy,1)
+            lcnnt(iy,3)=lcnnt(iy,ntrgts)
+          end if
+        end do
       end if
 
 c
@@ -562,7 +562,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         end do !}
       end do !}
       write(*,'(1x,a,1p,16e12.3)')
-     -                   'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
+     -           'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
 
       nclm_ld=21
 #ifdef B25_EIRENE
@@ -938,20 +938,21 @@ c!###}
           end if !}
         end do !}
 !###{
-        if(fwht_tt(j).lt.0.0_R8 .or. hwht_tt(j).lt.0.0_R8 .or.
-     .                               hwhm_tt(j).lt.0.0_R8) then !{
+        if(fwht_tt(j).lt.0.0_R8 .or.
+     .     hwht_tt(j).lt.0.0_R8 .or.
+     .     hwhm_tt(j).lt.0.0_R8) then !{
           print *,'!!!! NEGATIVE POWER WIDTH - target ',j,' time ',tim
           print '(1x,a,3(f10.5,4x))','fwht,hwht,hwhm = ',
      ,                                fwht_tt(j),hwht_tt(j),hwhm_tt(j)
           print *,'xtrg:'
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
-     ,                                            (xtrg(i,j),i=0,ny-1)
+     ,                                        (xtrg(i,j),i=0,ny-1)
           print *,'xtg_hlp:',xtg_hlp(-1,j)
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
-     ,                                          (xtg_hlp(i,j),i=0,ny-1)
+     ,                                        (xtg_hlp(i,j),i=0,ny-1)
           print *,'xmc_hlp:'
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
-     ,                                          (xmc_hlp(i,j),i=0,ny-1)
+     ,                                        (xmc_hlp(i,j),i=0,ny-1)
           print *,'m_hlp,wtttrg:',m_hlp(j)
           print '(1x,i3,1p,10e10.2/(4x,10e10.2))',lseppos(j)+1,
      ,                                          (wtttrg(i,j),i=0,ny-1)
@@ -1248,7 +1249,7 @@ c*** Calculate sputtering
           do j=1,ntrgts
 c           Check if sputtering is happening and which material is being sputtered
 c           and its atomic mass and density
-c carlis It is needed a variable that tells for each target or surface which is the sputtered atom.
+c carlis A variable is needed that tells for each target or surface which is the sputtered atom.
 c        Temporary solution for this routine is to use the bulk track_species
             do ia=1,n_srfs_m
              if (streql(mtrtrgsg(j),srfs_m(ia))) then
@@ -1486,7 +1487,7 @@ c
         if(ntrgts.eq.1) k=ntrgsx
         if(ntrgts.eq.2) k=ntrgsx-1
         open(lun,file=fsumm(2))
-        write(lun,*) 'Target erosion summary: ',trim(label)
+        write(lun,'(2a)') 'Target erosion summary: ',trim(label)
         write(lun,*)
         if (LSN) then
           write(lun,'(12x,3(a1,a12))')

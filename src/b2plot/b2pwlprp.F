@@ -158,7 +158,7 @@ c      print *,'nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 c
@@ -282,18 +282,18 @@ c*** segment input from DG does not coincide with the corresponding
 c*** segment saved by Eirene, its number becomes negative, and no
 c*** neutral-related data will be plotted for it.
 
-c<<<
+c#ifdef DBG
 c      print *,'After sorting. nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
-c>>>
+c#endif
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
@@ -586,7 +586,7 @@ c*** Target still open...
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                write(*,*) 'lwldlis :'
+                write(*,*) 'lwldlis : ',pltzlbl(il)
                 write(*,*) (lwldlis(i1,il),i1=1,n)
                 call xerrab ('Missing CCW edge in b2pwlprp')
               end if !}
@@ -747,7 +747,7 @@ c*** Limiter configuration. Add the CCW target face
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
                     end if !}
-                 else !}{
+                  else !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
                         write(*,*) 'b2pwlprp: unexpected error. ',
@@ -800,7 +800,7 @@ c!###{
 c      print *,'After correction. nwldprt =',nwldprt
 c      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt !{
-c       print '(a,i4/(20i4))','lwldlis :',il,
+c       print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
 c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
@@ -978,20 +978,20 @@ c*** use the zone index to label the plot zone
         write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
       end do !}
       close(lun_w)
-c<<<
-c      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
-c      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
-c      print '(16i5)',(nwldlis(i),i=1,nwldprt)
-c      print '(16l5)',(lwlddir(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(1x,8i11))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
-c     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
-c     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+#ifdef DBG
+      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
+      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
+      print '(16i5)',(nwldlis(i),i=1,nwldprt)
+      print '(16l5)',(lwlddir(i),i=1,nwldprt)
+      do il=1,nwldprt
+        print '(a,i5,1x,a/(1x,8i11))','lwldlis :',il,pltzlbl(il),
+     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
+     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
+     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c======================================================================
       call subend ()
       return
