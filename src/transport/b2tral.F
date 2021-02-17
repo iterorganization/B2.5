@@ -90,7 +90,7 @@
 *   ..local variables
       integer ix, iy, is, is0, n2
       integer ncall, pot_eq, no_current, no_solve, style, elm_count
-      integer :: nnucl, zmaxmax                                         !som 09.02.21
+      integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
       integer, save :: Zhdanov_closure = 0                              !som 25.01.21
       integer, save :: iout = 0,
@@ -216,14 +216,14 @@
      5  csig_cl, calf_cl)
 *   ..compute Zhdanov closure coefficients
       if(Zhdanov_closure.eq.1) then                                !som 09.02.21
-      print *, 'checkpoint_1'
-!       if (ncall.eq.0) then
+!     print *, 'checkpoint_1'
+        if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
-          print *, 'checkpoint_2'
-!       endif
-        print *, 'checkpoint_3'
+!         print *, 'checkpoint_2'
+        endif
+!       print *, 'checkpoint_3'
         call b2trzh (nx, ny, ns, nnucl, zmaxmax, na, ti)
-        print *, 'checkpoint_4'
+!       print *, 'checkpoint_4'
       endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17

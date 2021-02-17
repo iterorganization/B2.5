@@ -55,7 +55,7 @@
 *   ..set internal parameters on first call
 !     if (ncall.eq.0) then
 
-        print *, 'checkpoint_31'
+!       print *, 'checkpoint_31'
 !       print *, znmax  
 *   ..calculate the atom number and the atomic mass of each type of ions
         inucl=1
@@ -75,13 +75,13 @@
           nucl2s(inucl-1,nint(zamax(is)))=is 
           znnucl_int(inucl-1)=nint(znnucl(inucl-1))
         enddo        
-        print *, 'checkpoint_32'
+!       print *, 'checkpoint_32'
 *   ..calculate the N-coefficients and all mass related variables 
         call b2trcn (nnucl, amnucl, N2, N5, N6, N8, N9, N10, 
      & N11, N12, mu, rmu, mum, mdm)
 !     endif
        
-        print *, 'checkpoint_33'
+!       print *, 'checkpoint_33'
 *   ..main part  
       do iy = -1, ny
         do ix = -1, nx
@@ -103,11 +103,11 @@
 *    ..normalized average Z**2*n
           nz2n=z2n/zeffne
 *    ..calculate the inversed matrix for heat flux/r-moment
-        print *, 'checkpoint_34'
+!       print *, 'checkpoint_34'
           call b2trca(nnucl, amti, N5, N6, N9,  
      & N10, N11, N12, nz2n, Ainv)
 
-        print *, 'checkpoint_35'
+!       print *, 'checkpoint_35'
 *    ..re-normalize part of the inversed matrix  
           do j = 0, 2*nnucl-1
             Ainv_mdf(0:nnucl-1,j)=
@@ -119,18 +119,18 @@
             G8(:,j)=nz2n(:)*nz2n(j)*N8(:,j)
           enddo
 
-        print *, 'checkpoint_36'
+!       print *, 'checkpoint_36'
 *    ..calculate the thermal force transport coefficient 
           call b2trtf(nx, ny, nnucl, G2, G8, mum, mdm,
      & Ainv, Ainv_mdf, ix, iy)
-        print *, 'checkpoint_37'
+!       print *, 'checkpoint_37'
 *    ..calculate the friction force transport coefficient 
           call b2trfr(nx, ny, nnucl, G2, G8, mum, rmu,
      & z2n, Ainv, Ainv_mdf, ix, iy)
         enddo
       enddo
 
-      print *, 'checkpoint_38'
+!     print *, 'checkpoint_38'
       ncall = ncall+1
       call subend ()
       return
