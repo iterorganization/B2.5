@@ -1286,7 +1286,7 @@ c       Interpolate
 
 
 c     Calculate fast and thermal reflected parts
-      pf = min(nnf*rc1i/fnni,recyc0)+1.0E-30_R8
+      pf = min(nnf*rc1i*cs/fnni,recyc0)+1.0E-30_R8
       pcorf = min(pf,recyc0)/pf 
 
 
