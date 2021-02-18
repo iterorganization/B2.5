@@ -6121,9 +6121,6 @@ contains
           edge_transport%code%library( nlibs )%repository = repository
           radiation%code%library( nlibs )%repository = repository
           summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = repository
-#endif
         end if
 #endif
 
