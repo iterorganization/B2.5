@@ -1,4 +1,4 @@
-      subroutine b2tepsch(nx, ny, ns, facdrift, cddi, te, ne,
+      subroutine b2tepsch(nx, ny, ns, ismain, facdrift, cddi, te, ne,    !srv 19.02.21
      & cone, fhePSch)
       use b2mod_types
       use b2mod_indirect
@@ -12,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                         !srv 19.02.21
       real (kind=R8) ::
      &  facdrift(-1:nx,-1:ny), cddi(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
@@ -67,7 +67,8 @@
       if(facdriftm.ne.0.0e0_R8) then
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
         do is = 0,ns-1                                                   !srv 12.05.11
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
+        if(is.eq.ismain) then                                            !srv 19.02.21
 !        print *, 'style=0'
         if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
          do iy = 0, ny-1

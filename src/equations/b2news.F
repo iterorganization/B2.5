@@ -379,9 +379,9 @@
         call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol,                          !srv 10.10.17
+        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &                po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,         !srv 10.10.17
+        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -524,9 +524,9 @@ cxpb
         call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol,                          !srv 10.10.17
+        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &                po, ti, na, avisper, bvisper, cvisper, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
+        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
@@ -658,7 +658,8 @@ cxpb
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             new_matrix = .false.
             if(mdf_fnb.eq.0) then                                        !srv 13.10.06
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                      !srv 19.02.21
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &            solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -689,7 +690,8 @@ cxpb
               endif                                                      !srv 02.04.18
             else                                                         !srv 13.10.06 {
               if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then         !srv 06.11.08
-                if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then      !srv 02.04.18
+!                if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then      !srv 02.04.18
+                if(is.eq.ismain) then                                    !srv 19.02.21
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
      &               solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -826,7 +828,7 @@ cxpb
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
      &         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,     !srv 25.11.08
      1         csig_cl, calf_cl)
-              call b2tfhe (nx, ny, ns, guard_flows, facdrift,
+              call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
      1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
      &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
@@ -1064,7 +1066,7 @@ c     with diamagnetic drift part                                        !xpb
      &   calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,             !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
-        call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
+        call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21
      1   vol, hx, te, po, ne, na, vedia, veecrb,                         !srv 13.01.17
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06

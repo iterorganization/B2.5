@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian (nx, ny, isb, facdrift, fac_ExB, fchanml, smban)
+      subroutine b2sian (nx, ny, isb, ismain, facdrift, fac_ExB,         !srv 19.02.21
+     &  fchanml, smban)
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
@@ -13,7 +14,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb
+      integer nx, ny, isb, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                    !srv 15.04.19
      &   fchanml(-1:nx,-1:ny,0:1)
@@ -67,7 +68,8 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8
-      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+      if (isb.eq.ismain) then                                            !srv 19.02.21
 *   ..  compute smban
         do iy = -1, ny
           do ix = -1, nx
