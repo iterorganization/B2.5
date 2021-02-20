@@ -159,7 +159,7 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(nx,ny,ns)
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
-        call ipgeti ('b2tqna_Zhdanov_closure', Zhdanov_closure)   !som 25.01.20
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)   !som 25.01.20
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
@@ -220,9 +220,12 @@
         if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
 !         print *, 'checkpoint_2'
+          if (nnucl /= nspecies) then
+            stop 'Error during making isonuclear sequence!'
+          end if
         endif
 !       print *, 'checkpoint_3'
-        call b2trzh (nx, ny, ns, nnucl, zmaxmax, na, ti)
+        call b2trzh (nx, ny, ns, zmaxmax, na, ti)
 !       print *, 'checkpoint_4'
       endif     
 *   ..add to previous contributions

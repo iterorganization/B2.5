@@ -1,21 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trfr(nx, ny, nnucl, G2, G8, mum, rmu,
+      subroutine b2trfr(nnucl, G2, G8, mum, rmu,
      & z2n, Ainv, Ainv_mdf, ix, iy)
       use b2mod_types
       use b2mod_subsys
+*   ..output arguments 
+      use b2mod_b2zhco, only: c_R_wA
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nnucl, nx, ny, ix, iy
+      integer nnucl, ix, iy
       real (kind=R8) :: amti(0:nnucl-1),
      & z2n(0:nnucl-1),
      & G2(0:nnucl-1,0:nnucl-1), G8(0:nnucl-1,0:nnucl-1),
      & mum(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1)
       real (kind=R8) :: Ainv(0:2*nnucl-1,0:2*nnucl-1),
      & Ainv_mdf(0:nnucl-1,0:2*nnucl-1) 
-*   ..output arguments 
-      real (kind=R8) :: c_R_wA(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
