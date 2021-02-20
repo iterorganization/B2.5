@@ -366,9 +366,9 @@ csw 01oct2012 initialize potential if necessary
       call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &              facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol,                            !srv 10.10.17
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
@@ -552,9 +552,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
       call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &              facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol,                            !srv 10.10.17
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
@@ -638,7 +638,8 @@ csw 16oct2012 init ier0
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if(is.eq.ismain) then                                        !srv 19.02.21
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -669,7 +670,8 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                     !srv 19.02.21
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &            solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -935,7 +937,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx,              !srv 09.01.20
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol, hx,      !srv 09.01.20 19.02.21
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99 11.07.99
      & chvemx, cddi, fch_p, fchstoch,
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
@@ -1078,7 +1080,8 @@ c   recompute particle fluxes
 !         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if(is.eq.ismain) then                                        !srv 19.02.21
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -1112,7 +1115,8 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                     !srv 19.02.21
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)

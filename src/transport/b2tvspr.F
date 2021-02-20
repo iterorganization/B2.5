@@ -1,4 +1,4 @@
-      subroutine b2tvspr(nx, ny, ns, fac_vis, vol,                      !srv 10.10.17
+      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
      &   po, ti, na, avisper, bvisper, cvisper, fchvisper)
       use b2mod_types
       use b2mod_indirect
@@ -10,7 +10,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      1   po(-1:nx,-1:ny), ti(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1)
@@ -44,7 +44,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
-      call b2txvspr(nx, ny, ns, fac_vis, vol,                           !srv 10.10.17
+      call b2txvspr(nx, ny, ns, ismain, fac_vis, vol,                   !srv 10.10.17 19.02.21
      &              avisper, bvisper, cvisper)
 * ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
       va=0.0e0_R8
@@ -55,7 +55,8 @@
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
 
       do is = 0,ns-1                                                    !srv 16.10.17
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+        if(is.eq.ismain) then                                           !srv 19.02.21
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2)then

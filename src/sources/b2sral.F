@@ -274,9 +274,9 @@
        call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &               facdrift, fchinert)
-       call b2tvspr (nx, ny, ns, fac_vis, vol,                          !srv 10.10.17
+       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &               po, ti, na, avisper, bvisper, cvisper, fchvisper)
-       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
+       call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,

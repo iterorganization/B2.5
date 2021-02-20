@@ -839,7 +839,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
 
-         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+         if(isb.eq.ismain) then                                         !srv 19.02.21
            scur =
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
      &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
@@ -1329,7 +1330,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fna_pschused(ix,iy,1,isb) = 0.0_R8
          endif
         else
-         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
+!         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
+         if(isb.eq.ismain) then                                         !srv 19.02.21
            scur =
      &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
      &       fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/             !srv 17.07.08 {  02.10.17
@@ -1499,7 +1501,8 @@ cdjm Jan2017 store components of fnb for balance
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               endif
             endif
-            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+            if(isb.eq.ismain) then                                      !srv 19.02.21
               fna_ch(ix,iy,1,isb) = scur*
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
             else
