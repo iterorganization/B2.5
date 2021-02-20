@@ -1234,9 +1234,9 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-       call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
-     .  'Currents assignment to ions only supported for single '//
-     .  'hydrogenic species!')
+!      call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
+!    .  'Currents assignment to ions only supported for single '//
+!    .  'hydrogenic species!')
        call ipgeti ('b2sigp_style', b2sigp_style)
        if (.not.(k.eq.1.or.b2sigp_style.ne.2)) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
