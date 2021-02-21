@@ -349,13 +349,13 @@
 			<switchgroup>
 				<name>b2stbc_coreregn*</name>
 				<description>
-					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno needs to be set to 0, depending on the actual geometry details.
+					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For standard single-null and double-null cases, the default value of coreregno is 1. For a straight geometry or limiter case, the default value of coreregno is 0.
 					coreregn2 is the boundary index of the second core boundary in case of a double-null geometry, and is not used otherwise.
 				</description>
 				<switch>
 					<name>b2stbc_coreregno</name>
 					<type>integer</type>
-					<default>1</default>
+					<default>See description</default>
 				</switch>
 				<switch>
 					<name>b2stbc_coreregn2</name>

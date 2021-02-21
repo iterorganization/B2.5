@@ -1116,6 +1116,9 @@ c
               read(lun,*,err=10,iostat=iostat) ixd,iyd,
      1         (crxs(ix,iy,i),crys(ix,iy,i),i=0,4),
      2         bp(ix,iy),bt(ix,iy)
+              if (isymm.eq.2.or.isymm.eq.4) then
+                if (abs(bt(ix,iy)).lt.1.0e-5_R8) bt(ix,iy)=0.0_R8
+              end if
             enddo
           enddo
           fpsi=0.0_R8
@@ -1132,8 +1135,10 @@ c
           close(lun)
 ! If the toroidal flux function is not provided, compute it
           if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
-            write(*,*) 'Toroidal flux function missing!'
-            write(*,*) 'Trying to fix this automatically'
+            if (isymm.eq.1 .or. isymm.eq.3) then
+              write(*,*) 'Toroidal flux function missing!'
+              write(*,*) 'Trying to fix this automatically'
+            end if
             t0 = 0.0_R8
             do iy=0,ny+1
               do ix=0,nx+1
@@ -1144,7 +1149,7 @@ c
                 end if
               end do
             end do
-            ffbz =2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
+            ffbz = 2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
           endif
         else
           call xerrab('Error in reading geometry file')
@@ -1167,11 +1172,8 @@ c
      >     then
             go to 20
           end if
-
-
-
 c----------------------------------------------------------------------
-          if(ubr.eq.0.0_R8) then
+          if(ubr.eq.0.0_R8.and.(isymm.eq.1.or.isymm.eq.3)) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
             write(*,*)
      1       'It must be defined in the header of the grid file '
@@ -1295,20 +1297,22 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           fpsi=0.0_R8
           ffbz=0.0_R8
 
-          write(*,*) "Somebody has filled ffbz with zeroes"
-          write(*,*) " ... and is going to read it from some file again"
+!          write(*,*) "Somebody has filled ffbz with zeroes"
+!          write(*,*) " ... and is going to read it from some file again"
 
 ! IYS 21.02.2020
-! I slept little last night, so I could not find a solution without 'GOTO' here
+! I could not find a solution without 'GOTO' here
 ! Sorry for that ...
           read(lun,'(a)',end=210) uline
           no_flux_data = .FALSE.
           GOTO 211    ! Wenn es meine Wille gaebe...
   210     no_flux_data = .TRUE.
   211     if (no_flux_data) then
-            ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
-            write(*,*) "No flux data is found the 'old' format file"
-            write(*,*) "Trying to recover ffbz using RTOR*BTOR"
+            if (isymm.eq.1.or.isymm.eq.3) then
+              ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+              write(*,*) "No flux data is found the 'old' format file"
+              write(*,*) "Trying to recover ffbz using Rtor*Btor"
+            endif
           else
             backspace (lun)
             do iy=0,ny+1
@@ -1319,10 +1323,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             end do
           endif
           close(lun)
-! IYS 21.02.2020 ... being wanted to sleep
-
-
-
+! IYS 21.02.2020
         else
           call xerrab('Error in reading geometry file')
         endif
