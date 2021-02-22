@@ -728,6 +728,12 @@ c     Calculate fast and thermal recycled parts
       pf = min(rc1i*cs/(-i1l),recyc0)+1.0E-30_R8
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
+
+c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
+c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
+      pcorf = pcorf*fluid_frac_hyb
+      pt = pt*fluid_frac_hyb
+
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -765,11 +771,6 @@ c     Calculate recycled poloidal momentum flux of neutrals
 c     Convert energy flux densities in energy fluxes
       fenerec = fenec*area
 
-c finally: fluid fraction multiplier for generalized spatially hybrid models:
-      fenerec = fenerec*fluid_frac_hyb
-      fmomrec = fmomrec*fluid_frac_hyb
-      nnrec = nnrec*fluid_frac_hyb
-      nnwwnrec = nnwwnrec*fluid_frac_hyb
       call subend ()
       return
       end subroutine CalcRecycledFluxes
@@ -943,9 +944,14 @@ c     Calculate incident particle flux density
 c     Calculate fast and thermal reflected parts
       pf = min(vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)
      &   /fnni_nodrifts,recyc0)+1.0E-30_R8
-      pcorf = min(pf,recyc0)/pf 
-      
+      pcorf = min(pf,recyc0)/pf
       pt = recyc0-pf+1.0E-30_R8
+
+c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be reflected as fluid.
+c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
+      pcorf = pcorf*fluid_frac_hyb
+      pt = pt*fluid_frac_hyb
+
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -989,21 +995,15 @@ c     Convert energy flux densities in energy fluxes
       fene_el =  fene_el*area
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-c (here we have to pass fluid_frac_hyb as 1.0_R8 to avoid double counting its effect)
       if (fnni.lt.0) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,1.0_R8,                        
+     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,                        
      &            pl,tnf, geo, mpg,cosa, sina,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
 
-c finally, fluid multiplier for generalized spatially hybrid approach.
-      fmomrefl = fmomrefl*fluid_frac_hyb
-      fenerefl = fenerefl*fluid_frac_hyb
-      nnrefl = nnrefl*fluid_frac_hyb
-      nnwwnrefl = nnwwnrefl*fluid_frac_hyb
-      
 
+     
       call subend ()
       return
       end subroutine CalcReflectedFluxesDiffusion
@@ -1288,9 +1288,13 @@ c       Interpolate
 c     Calculate fast and thermal reflected parts
       pf = min(nnf*rc1i*cs/fnni,recyc0)+1.0E-30_R8
       pcorf = min(pf,recyc0)/pf 
-
-
       pt = recyc0-pf+1.0E-30_R8
+
+c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
+c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
+      pcorf = pcorf*fluid_frac_hyb
+      pt = pt*fluid_frac_hyb
+
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -1326,11 +1330,6 @@ c     Convert energy flux densities in energy fluxes
       fene_el = fene_el*area
 
 
-c finally, fluid multiplier for generalized spatially hybrid approach.
-      fmomrefl = fmomrefl*fluid_frac_hyb
-      fenerefl = fenerefl*fluid_frac_hyb
-      nnrefl = nnrefl*fluid_frac_hyb
-      nnwwnrefl = nnwwnrefl*fluid_frac_hyb
       call subend ()
       return
       end subroutine CalcReflectedFluxesMaxwellian
