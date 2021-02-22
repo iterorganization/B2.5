@@ -20,7 +20,7 @@
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi, strat_type
+     & , only: crcstra, rcfe, rcfi
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -28,7 +28,7 @@
 #else
       use b2mod_braeir
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi, strat_type
+     & , only: crcstra, rcfe, rcfi
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -433,14 +433,7 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%flength(i) = sqrt((gm%vxX(iv1)-gm%vxX(iv2))**2 +
      >                            (gm%vxY(iv1)-gm%vxY(iv2))**2)*100._R8
           trgt(istra)%tet(i) = teb(ic)
-
-          if (strat_type(istra).eq.'P') then
-            trgt(istra)%tit(i) = tib(ic)
-          elseif (strat_type(istra).eq.'N') then
-            trgt(istra)%tit(i) = tnb(ic)
-          else
-            call xerrab('strat_type should be P(plasma) or N(neutral)')
-          endif
+          trgt(istra)%tit(i) = tib(ic)
           trgt(istra)%tnt(i) = tnb(ic)
           trgt(istra)%fe(i) = rcfe(istra)
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
