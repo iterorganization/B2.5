@@ -560,7 +560,6 @@ c carlis calculation of total pumped fluxes
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
 
-
 c*** Check whether a target segment is requested
 
       if(ils.le.lppp) then !{

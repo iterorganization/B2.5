@@ -936,12 +936,12 @@
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
-       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
+       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1700,17 +1700,18 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
            na(:,:,is) = na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+
      .             na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0_R8)
-           fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
-           fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
-           fna_fcor(:,:,0:1,is) =
-     .      fna_fcor(:,:,0:1,is)*(-density_rescale)
-           fna_nodrift(:,:,0:1,is) =
-     .      fna_nodrift(:,:,0:1,is)*(-density_rescale)
-           fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*(-density_rescale)
-           fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*(-density_rescale)
-           fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
-           fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
-           fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
+           fna(:,:,:,is) = fna(:,:,:,is)*(-density_rescale)
+           fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*(-density_rescale)
+           fna_fcor(:,:,:,is) =
+     .      fna_fcor(:,:,:,is)*(-density_rescale)
+           fna_nodrift(:,:,:,is) =
+     .      fna_nodrift(:,:,:,is)*(-density_rescale)
+           fna_he(:,:,:,is) = fna_he(:,:,:,is)*(-density_rescale)
+           fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*(-density_rescale)
+           fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*(-density_rescale)
+           fna_32(:,:,:,is) = fna_32(:,:,:,is)*(-density_rescale)
+           fna_52(:,:,:,is) = fna_52(:,:,:,is)*(-density_rescale)
+           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1760,16 +1761,16 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
         do is=0,ns-1
           if(is_neutral(is)) then
             na(:,:,is) = na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
-            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
-            fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
-            fna_nodrift(:,:,0:1,is) =
-     .       fna_nodrift(:,:,0:1,is)*neutral_rescale
-            fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*neutral_rescale
-            fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*neutral_rescale
-            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
-            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
-            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
+            fna(:,:,:,is) = fna(:,:,:,is)*neutral_rescale
+            fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*neutral_rescale
+            fna_fcor(:,:,:,is) = fna_fcor(:,:,:,is)*neutral_rescale
+            fna_nodrift(:,:,:,is) =
+     .       fna_nodrift(:,:,:,is)*neutral_rescale
+            fna_he(:,:,:,is) = fna_he(:,:,:,is)*neutral_rescale
+            fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*neutral_rescale
+            fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*neutral_rescale
+            fna_32(:,:,:,is) = fna_32(:,:,:,is)*neutral_rescale
+            fna_52(:,:,:,is) = fna_52(:,:,:,is)*neutral_rescale
             kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
@@ -2659,8 +2660,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 * ..display and save the result of the calculation
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns)
-      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

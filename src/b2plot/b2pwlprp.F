@@ -846,7 +846,7 @@ c*** Limiter configuration. Add the CCW target face
                       luwrk(kn)=lwldlis(j,il)
                       lewrk(kn)=leirlis(j,il)
                     end if !}
-                 else !}{
+                  else !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
                         write(*,*) 'b2pwlprp: unexpected error. ',

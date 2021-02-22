@@ -132,7 +132,7 @@
       call cfrure (nread, size(hx), hx, 'hx')
       call cfrure (nread, size(hy), hy, 'hy')
       call cfrure (nread, size(qz), qz, 'qz')
-      if (b2fplasma_version.gt.'01.001.021') then
+      if (b2fgmtry_version.gt.'01.001.021') then
        call cfrure (nread, size(qc), qc, 'qc')
       else
        do iy = -1, ny
@@ -151,7 +151,7 @@
        enddo
       endif
       qcb = 1.0_R8
-      if (b2fplasma_version.gt.'01.001.030') then
+      if (b2fgmtry_version.gt.'01.001.030') then
        call cfrure_opt (nread, size(qcb), qcb, 'qcb')
       end if
       if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then

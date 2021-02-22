@@ -635,7 +635,7 @@
          fna_mdf(:,:,:,is)     = fna_mdf1(:,:,:,is)
          fna_fcor(:,:,:,is)    = fna_fcor1(:,:,:,is)
          fna_nodrift(:,:,:,is) = fna_nodrift1(:,:,:,is)
-         fna_he(:,:,:,is)      = fna_he(:,:,:,is)
+         fna_he(:,:,:,is)      = fna_he1(:,:,:,is)
          fnaPSch(:,:,:,is)     = fnaPSch1(:,:,:,is)
          fna_eir(:,:,:,is)     = fna_eir1(:,:,:,is)
          fna_32(:,:,:,is)      = fna_321(:,:,:,is)
@@ -652,6 +652,8 @@
          call sfill (n2*2, 0.0_R8, fna_32(-1,-1,0,is), 1)
          call sfill (n2*2, 0.0_R8, fna_52(-1,-1,0,is), 1)
        enddo
+       vedia     = vedia1
+       veecrb    = veecrb1
        fne_eir   = fne_eir1
        fne_32    = fne_321
        fne_52    = fne_521

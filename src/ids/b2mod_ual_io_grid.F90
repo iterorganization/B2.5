@@ -527,7 +527,7 @@ contains
             &   objects_per_dimension( NDIM + 1 ) )
 
         !! Allocate the number of objects of each type:
-        !! OD vertices/nodes
+        !! 0D vertices/nodes
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(1)%object( gmap%nVx ) )
@@ -2778,7 +2778,7 @@ contains
       call createSubGrid( itmgrid % subgrids( B2_SUBGRID_EDGES_Y ), &
           &   1, 'y-aligned edges' )
       call createImplicitObjectList( itmgrid,                    &
-          &   tmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1), &
+          &   itmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1), &
           &   CLASS_POLOIDALRADIAL_EDGE(1:SPACE_COUNT) )
       itmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1) % indset(1) &
           & = createIndexListForRange( gmap%nFcx + 1, gmap%nFcx + gmap%nFcy )

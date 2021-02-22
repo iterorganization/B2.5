@@ -197,8 +197,14 @@ cank
       allocate(texttrack(0:ntrack))
       allocate(texttargsp(ntrack))
 #else
+      call xertst(natmd .le.DEF_NATM,
+     . 'increase size of DEF_NATM in DIMENSIONS.F')
+      call xertst(nmold .le.DEF_NMOL,
+     . 'increase size of DEF_NMOL in DIMENSIONS.F')
+      call xertst(niond .le.DEF_NION,
+     . 'increase size of DEF_NION in DIMENSIONS.F')
       call xertst(nsd   .le.DEF_NPLS,
-     . 'increase size of textpl array')
+     . 'increase size of DEF_NPLS in DIMENSIONS.F')
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif

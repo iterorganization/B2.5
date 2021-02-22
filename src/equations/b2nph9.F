@@ -36,7 +36,8 @@
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)   !srv 07.07.09
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)                                  !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvtreg(0:nregionv),                                           !srv 22.05.18
@@ -48,7 +49,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *   reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
+     *  reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
      &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                    !srv 10.11.02
 *   ..common blocks

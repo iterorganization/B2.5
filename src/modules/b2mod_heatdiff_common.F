@@ -19,4 +19,4 @@
       integer :: iwall, ns
       !$OMP THREADPRIVATE(iwall, ns)
 
-      end module
+      end module b2mod_heatdiff_common

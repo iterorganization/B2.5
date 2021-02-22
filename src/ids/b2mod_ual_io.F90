@@ -348,13 +348,15 @@ contains
         character*5 zone
         integer tvalues(8)
         character*16 usrnam
-        character*8 imas_version, ual_version, ggd_version, adas_version
+        character*8 imas_version, ual_version, ggd_version, adas_version, &
+            &       mscl_version
         character*32 B25_git_version
         character*32 ADAS_git_version
         character*32 SOLPS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
         character*32 get_SOLPS_hash
+        character*132 repository
         character*256 filename
         logical match_found, streql, exists, wrong_flow
         logical at_top, at_bot, at_mid, target_east, target_west
@@ -434,6 +436,7 @@ contains
         end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call date_and_time (date, ctime, zone, tvalues)
+        mscl_version='0.0.0'
 #ifdef NAGFOR
         call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
@@ -441,15 +444,19 @@ contains
         if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
         call get_environment_variable('GGD_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('GGD_VERSION',value=ggd_version)
+        call get_environment_variable('EBVERSIONMSCL',status=ierror,length=lenval)
+        if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL',value=mscl_version)
 #else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
         CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
         CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
+        CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
 #else
         call getenv ('IMAS_VERSION', imas_version)
         call getenv ('UAL_VERSION', ual_version)
         call getenv ('GGD_VERSION', ggd_version)
+        call getenv ('EBVERSIONMSCL', mscl_version)
 #endif
 #endif
 
@@ -7077,6 +7084,8 @@ contains
         SOLPS_git_version = get_SOLPS_hash()
         if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) &
           & nlibs = nlibs + 1
+        if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
+
         allocate( edge_profiles%code%library( nlibs ) )
         allocate( edge_sources%code%library( nlibs ) )
         allocate( edge_transport%code%library( nlibs ) )
@@ -7126,13 +7135,14 @@ contains
 #if IMAS_MINOR_VERSION > 30
         allocate( divertors%code%library( nlibs )%repository(1) )
 #endif
-        edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
-        edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
-        edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
-        radiation%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
-        summary%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        repository = "ssh://git.iter.org/imex/ggd.git"
+        edge_profiles%code%library( nlibs )%repository = repository
+        edge_sources%code%library( nlibs )%repository = repository
+        edge_transport%code%library( nlibs )%repository = repository
+        radiation%code%library( nlibs )%repository = repository
+        summary%code%library( nlibs )%repository = repository
 #if IMAS_MINOR_VERSION > 30
-        divertors%code%library( nlibs )%repository = "ssh://git.iter.org/imex/ggd.git"
+        divertors%code%library( nlibs )%repository = repository
 #endif
         if (streql(b2frates_flag,'adas')) then
           nlibs = nlibs + 1
@@ -7192,13 +7202,14 @@ contains
 #if IMAS_MINOR_VERSION > 30
           allocate( divertors%code%library( nlibs )%repository(1) )
 #endif
-          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
-          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
-          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
-          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
-          summary%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          repository = "ssh://git.iter.org/imex/amns-adas.git"
+          edge_profiles%code%library( nlibs )%repository = repository
+          edge_sources%code%library( nlibs )%repository = repository
+          edge_transport%code%library( nlibs )%repository = repository
+          radiation%code%library( nlibs )%repository = repository
+          summary%code%library( nlibs )%repository = repository
 #if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = "ssh://git.iter.org/imex/amns-adas.git"
+          divertors%code%library( nlibs )%repository = repository
 #endif
         end if
 #ifdef AMNS
@@ -7343,11 +7354,12 @@ contains
 #if IMAS_MINOR_VERSION > 30
           allocate( divertors%code%library( nlibs )%repository(1) )
 #endif
-          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
-          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
-          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
-          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
-          summary%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
+          repository = "ssh://git.iter.org/bnd/eirene.git"
+          edge_profiles%code%library( nlibs )%repository = repository
+          edge_sources%code%library( nlibs )%repository = repository
+          edge_transport%code%library( nlibs )%repository = repository
+          radiation%code%library( nlibs )%repository = repository
+          summary%code%library( nlibs )%repository = repository
 #if IMAS_MINOR_VERSION > 30
           divertors%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
 #endif
@@ -7411,13 +7423,67 @@ contains
 #if IMAS_MINOR_VERSION > 30
           allocate( divertors%code%library( nlibs )%repository(1) )
 #endif
-          edge_profiles%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
-          edge_sources%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
-          edge_transport%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
-          radiation%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
-          summary%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          edge_profiles%code%library( nlibs )%repository = repository
+          edge_sources%code%library( nlibs )%repository = repository
+          edge_transport%code%library( nlibs )%repository = repository
+          radiation%code%library( nlibs )%repository = repository
+          summary%code%library( nlibs )%repository = repository
 #if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/solps-iter.git"
+          divertors%code%library( nlibs )%repository = repository
+#endif
+        end if
+
+        if (.not.streql(mscl_version,'0.0.0')) then
+          nlibs = nlibs + 1
+          allocate( edge_profiles%code%library( nlibs )%name(1) )
+          allocate( edge_sources%code%library( nlibs )%name(1) )
+          allocate( edge_transport%code%library( nlibs )%name(1) )
+          allocate( radiation%code%library( nlibs )%name(1) )
+          allocate( summary%code%library( nlibs )%name(1) )
+#if IMAS_MINOR_VERSION > 30
+          allocate( divertors%code%library( nlibs )%name(1) )
+#endif
+          edge_profiles%code%library( nlibs )%name = 'MSCL'
+          edge_sources%code%library( nlibs )%name = 'MSCL'
+          edge_transport%code%library( nlibs )%name = 'MSCL'
+          radiation%code%library( nlibs )%name = 'MSCL'
+          summary%code%library( nlibs )%name = 'MSCL'
+#if IMAS_MINOR_VERSION > 30
+          divertors%code%library( nlibs )%name = 'MSCL'
+#endif
+          allocate( edge_profiles%code%library( nlibs )%version(1) )
+          allocate( edge_sources%code%library( nlibs )%version(1) )
+          allocate( edge_transport%code%library( nlibs )%version(1) )
+          allocate( radiation%code%library( nlibs )%version(1) )
+          allocate( summary%code%library( nlibs )%version(1) )
+#if IMAS_MINOR_VERSION > 30
+          allocate( divertors%code%library( nlibs )%version(1) )
+#endif
+          edge_profiles%code%library( nlibs )%version = mscl_version
+          edge_sources%code%library( nlibs )%version = mscl_version
+          edge_transport%code%library( nlibs )%version = mscl_version
+          radiation%code%library( nlibs )%version = mscl_version
+          summary%code%library( nlibs )%version = mscl_version
+#if IMAS_MINOR_VERSION > 30
+          divertors%code%library( nlibs )%commit = mscl_version
+#endif
+          allocate( edge_profiles%code%library( nlibs )%repository(1) )
+          allocate( edge_sources%code%library( nlibs )%repository(1) )
+          allocate( edge_transport%code%library( nlibs )%repository(1) )
+          allocate( radiation%code%library( nlibs )%repository(1) )
+          allocate( summary%code%library( nlibs )%repository(1) )
+#if IMAS_MINOR_VERSION > 30
+          allocate( divertors%code%library( nlibs )%repository(1) )
+#endif
+          repository = "ssh://git@git.iter.org/lib/mscl.git"
+          edge_profiles%code%library( nlibs )%repository = repository
+          edge_sources%code%library( nlibs )%repository = repository
+          edge_transport%code%library( nlibs )%repository = repository
+          radiation%code%library( nlibs )%repository = repository
+          summary%code%library( nlibs )%repository = repository
+#if IMAS_MINOR_VERSION > 30
+          divertors%code%library( nlibs )%repository = repository
 #endif
         end if
 #endif
@@ -8404,7 +8470,7 @@ contains
 
     !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
-    edgecpo%datainfo%dataprovider="IPP"
+    edgecpo%datainfo%dataprovider="ITER"
     allocate(edgecpo%codeparam%codename(1))
     edgecpo%codeparam%codename(1)="B2.5"
     edgecpo%time= 0.0D0
@@ -8469,13 +8535,16 @@ contains
                 &                sna(:,:,1,is-1)*na(:,:,is-1) )
         end do
 
-!!$    ! ue TODO: must be computed, refactor code from b2news into function
-!!$    allocate(edgecpo%fluid%ve%comps(1))
-!!$    allocate(edgecpo%fluid%ve%align(1))
-!!$    allocate(edgecpo%fluid%ve%alignid(1))
-!!$    edgecpo%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
-!!$    edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
-!!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, b2CellData = ue(:,:) )
+        !! ue
+        allocate(edgecpo%fluid%ve)
+        allocate(edgecpo%fluid%ve%comps(1))
+        allocate(edgecpo%fluid%ve%align(1))
+        allocate(edgecpo%fluid%ve%alignid(1))
+        edgecpo%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
+        edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
+
+        call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, &
+            &   b2CellData = ue(:,:) )
 
         !! ua
         allocate(edgecpo%fluid%vi(ns))
