@@ -108,7 +108,7 @@ cank }
      *   ARCSTRA(:),
      *   RC_LIST_CHAR(:,:)
       character*2, allocatable, save ::
-     *   SURF_MAT(:), STRAT_TYPE(:), HYB_TYPE(:)
+     *   SURF_MAT(:), HYB_TYPE(:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
@@ -158,7 +158,6 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
       character*2, save :: SURF_MAT(NSTRAID)
-      character*1, save :: STRAT_TYPE(NSTRAID)
       character*1, save :: HYB_TYPE(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
@@ -201,7 +200,7 @@ cank }
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
      4  recyc, b2recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, 
      .  crcstra,
-     .  rf_neut, phys_sput, chem_sput, surf_mat, strat_type, hyb_type,
+     .  rf_neut, phys_sput, chem_sput, surf_mat, hyb_type,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
      .  itsput_chemical, issput_chemical,
@@ -289,7 +288,6 @@ csw 21feb2012
       allocate(CRCSTRA(NSTRAID))
       allocate(ARCSTRA(NSTRAID))
       allocate(SURF_MAT(NSTRAID))
-      allocate(STRAT_TYPE(NSTRAID))
       allocate(HYB_TYPE(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
@@ -333,7 +331,6 @@ csw 21feb2012
       CRCSTRA=' '
       ARCSTRA=' '
       SURF_MAT='C' !! default material Carbon
-      STRAT_TYPE='P' !! default stratum type plasma 
       HYB_TYPE='M' !! default hybrid stratum type manual (M)
       SPS_ID=' '
       SPS_MTRL=' '
@@ -528,7 +525,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(CRCSTRA)
       deallocate(ARCSTRA)
       deallocate(SURF_MAT)
-      deallocate(STRAT_TYPE)
       deallocate(HYB_TYPE)
       deallocate(species_start)
       deallocate(species_end)
