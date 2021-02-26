@@ -62,8 +62,7 @@
       real (kind=R8) ::
      *   trimg
       external subini, subend, xertst
-      external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
+      external b2xvsg, trimg
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
 *   ..initialisation

@@ -70,7 +70,7 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
-     *   zeros(nFc,0:1), dumm1(nFc,0:1)
+     *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1), 
      *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
@@ -137,6 +137,7 @@ c        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
 
 *   ..set dummy array
       zeros = 0.0_R8
+      zeros1 = 0.0_R8
 
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
@@ -556,7 +557,7 @@ c csc To be added contribution of ubdia
 *   ..compute ExB fluxes for k-model
       if (isb .eq. ismain) then
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),zeros,
-     &    co%cdna_ExB,dv%fna_ExB,zeros,dumm1)
+     &    co%cdna_ExB,dv%fna_ExB,zeros1,dumm1)
       endif
 
 *   ..compute flob, conb
