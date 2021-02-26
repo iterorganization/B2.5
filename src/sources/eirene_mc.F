@@ -42,6 +42,8 @@ c  version : 26.07.2002 23:39
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+      use eirmod_comsou
+     &    , only : NPTS
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -132,13 +134,13 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
      1 hlp_scl(:),hlp_scp(:,:),
-     2 hlp_stra(:), core_flux(:)
+     2 hlp_stra(:), core_flux(:), tflux0(:)
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
       logical, allocatable, save ::  hlp_pff(:,:)
       integer i,j,k,l,js,ls,kks,n,itmp,icount,ind
       integer, save :: l_ddt
-      integer, save, allocatable :: ispc_ref(:), ishigh(:)
+      integer, save, allocatable::ispc_ref(:), ishigh(:), NPTS_input(:)
       character*13, save, allocatable :: ion_name(:)
       character*3 :: chistrai
       character*3 :: chncall
@@ -268,6 +270,8 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(2,2+NATM))
+        allocate(NPTS_input(NSTRAI))
+        allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
           call alloc_b2mod_eirene_sources(nCv,nFc,ns,nstrat)
         endif
@@ -548,8 +552,17 @@ c*** recyc     : fudge factors for the sources in B2
         end if
       end do
 
+c for generalized spatially hybrid
+c adapt NPTS (number of MC histories) if a stratum is treated partially fluid and partially kinetic
+c first save the original NPTS provided by the Eirene input files.
+      if (ncall.eq.1) then!! npts not allocated yet on ncall = 0...
+        NPTS_input(:) = NPTS(:)
+      endif
+
       tfl=0.0_R8
-      tflux=0.0_R8
+      tflux=0.0_R8            !! the actual flux passed to EIRENE
+      tflux0 = 0.0_R8         !! a local variable which is only relevant in case kin_frac_hyb < 1 (generalized spatially hybrid model). 
+                              !! tflux0 is the flux we would have had if kin_frac_hyb = 1 for every face of that stratum (standard Eirene approach)
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
         flux_scale(istrai)=1.0_R8
@@ -565,6 +578,9 @@ c*** recyc     : fudge factors for the sources in B2
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
      &              kin_frac_hyb(ifc)
+                tflux0(istrai)=tflux0(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
@@ -572,6 +588,12 @@ c*** recyc     : fudge factors for the sources in B2
               end do !}
             end if !}
           end do   
+
+          if (istrai.le.nstrai.and.ncall.gt.0.and.
+     &     switch%use_auto_spatial_hyb.and.HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
+            NPTS(istrai) = 
+     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai))
+          endif
 
         else if(crcstra(istrai).eq.'C') then !}{
           if (ncall.ge.ncallfeedback.and.istrai.eq.nesepm_istra.and.
