@@ -239,7 +239,7 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
        call b2scopy (nCv, pl%na(1,is), 1, rob, 1)
        call b2sscal (nCv, am(is)*mp, rob, 1)
        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, pl%ti, 
-     &               pl%ti, is, pb)
+     &               pl%tn, is, pb)
 *    ..compute extended friction term
 !WG_TODO : friction not yet implemented
        smbch = 0.0e0_R8
