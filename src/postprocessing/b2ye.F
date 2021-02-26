@@ -68,8 +68,10 @@
         call cfruch (iun, 120, lbli, 'label')
         call b2ruzd (iun, b2faveri_version, ns,
      &    zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-        call cfruin (iun, 1, naver, 'naver')
-        call cfruin (iun, 1, ntotdt, 'ntotdt')
+        call cfruin (iun, 1, idum, 'naver')
+        naver = idum(1)
+        call cfruin (iun, 1, idum, 'ntotdt')
+        ntotdt = idum(1)
       else
         write (*,*) ' file b2favere not found '
         write (*,*) ' results are questionable! '
