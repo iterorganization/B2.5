@@ -362,7 +362,7 @@ contains
           iret = nf_close(ncid)
           call check_cdf_status(iret)
           call b2crtimecdf(filename, &
-           nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, &
+           nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
            write_2d, ncid, .true., iret)
         endif
         write(6,'(a)') trim(filename)//' will be appended'
@@ -379,7 +379,7 @@ contains
         nastep = 0
         write(6,'(a)') trim(filename)//' will be replaced'
         call b2crtimecdf(filename, &
-          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, &
+          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
           write_2d, ncid, .false., iret)
         call check_cdf_status(iret)
         iret = nf_open(trim(filename),NCWRITE,ncid)
