@@ -61,7 +61,7 @@
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
          do ix = -1, nx
           do iy = -1, ny
-*   ..compute parallel neutral difusion flux limit
+*   ..compute parallel neutral diffusion flux limit
            if (leftix(ix,iy).ne.-2) then
             t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
@@ -79,7 +79,7 @@
            endif
           enddo
          enddo
-*   ..compute perpendicular neutral difusion flux limit
+*   ..compute perpendicular neutral diffusion flux limit
          do ix = -1, nx
           do iy = -1, ny
            if (bottomiy(ix,iy).ne.-2) then

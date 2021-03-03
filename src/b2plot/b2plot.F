@@ -4456,7 +4456,7 @@ c     assumes that bb is OK for 1d cases
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
           call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,
-     1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
+     1     safetyfactor,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part

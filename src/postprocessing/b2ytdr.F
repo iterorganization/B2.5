@@ -10984,7 +10984,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     >     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -10998,7 +10999,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -11012,7 +11014,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -11026,7 +11029,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) =
      .       sputter_tmp(ib,0:ns1-1)
