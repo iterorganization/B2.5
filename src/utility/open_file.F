@@ -109,7 +109,7 @@ c
       open_file=.false.
       return
 c
-      end function open_file
+      end
 
       logical function silent_open(lu,filename,area,filenamecat)
       use b2mod_types
@@ -137,8 +137,7 @@ c
 c
       character*256 solpstop,filenamecat,localarea,copyarea
       integer lnblnk, iend
-      logical first, streql
-      external streql
+      logical first
 c
       save first, solpstop
       data first /.true./
@@ -218,12 +217,11 @@ c
       silent_open=.false.
       write(*,'(a,a)') 'Failed opening ', filename(1:lnblnk(filename))
       write(*,'(a,a)') 'SOLPSTOP = ', solpstop(1:lnblnk(solpstop))
-      if(.not.streql(area,''))
-     > write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
+      write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
       filenamecat=''
       return
 c
-      end function silent_open
+      end
 
       subroutine find_file(filename,exist)
       implicit none
@@ -260,5 +258,5 @@ c
       endif
 
       return
-      end subroutine find_file
+      end
 

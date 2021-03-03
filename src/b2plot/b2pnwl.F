@@ -34,7 +34,7 @@ c*** and for the power flux.
       integer il,is,i,ii,ia,ib,k,ic
       character*74 hlp_frm
       real (kind=R8) ::
-     *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
+     *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
       real (kind=R8) :: width
       data width /1.0_R8/
@@ -158,31 +158,33 @@ c*** calculate the length of the target segment
             ia=lwldlis(i,il)
             is=leirlis(i,il)
             if (is.gt.0) then
-              dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
-              hlpx=hlpx+dist
+              distance=sqrt((p1(1,is)-p2(1,is))**2+
+     .                      (p1(2,is)-p2(2,is))**2)
+              hlpx=hlpx+distance
             end if
           end do
 c
           x=0.e0_R8
-          dist=0.e0_R8
+          distance=0.e0_R8
           hlpw=0.e0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             ib=iabs(ia)
             is=leirlis(i,il)
-            h=dist
-            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+(pp1(2,ib)-pp2(2,ib))**2)
+            h=distance
+            distance=sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                    (pp1(2,ib)-pp2(2,ib))**2)
             if (isymm.eq.0) then
-              a=width*dist
+              a=width*distance
             else if (isymm.eq.1 .or. isymm.eq.2) then
-              a=pi*(pp1(1,ib)+pp2(1,ib))*dist
+              a=pi*(pp1(1,ib)+pp2(1,ib))*distance
             else if (isymm.eq.3 .or. isymm.eq.4) then
-              a=pi*(pp1(2,ib)+pp2(2,ib))*dist
+              a=pi*(pp1(2,ib)+pp2(2,ib))*distance
             end if
-            dist=0.5e0_R8*dist
-            x=x+h+dist
-            if(is .gt. 0) then
-              aa=1.e-6_R8/a
+            aa=1.e-6_R8/a
+            distance=0.5e0_R8*distance
+            x=x+h+distance
+            if(is.gt.0) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa

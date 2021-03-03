@@ -165,14 +165,10 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            flcb(ix,iy,0)=0.0_R8
-            cvcb(ix,iy,0)=0.0_R8
-            flcb(ix,iy,1)=0.0_R8
-            cvcb(ix,iy,1)=0.0_R8
-            flub(ix,iy,0)=0.0_R8
-            cvsb(ix,iy,0)=0.0_R8
-            flub(ix,iy,1)=0.0_R8
-            cvsb(ix,iy,1)=0.0_R8
+            flcb(ix,iy,:)=0.0_R8
+            cvcb(ix,iy,:)=0.0_R8
+            flub(ix,iy,:)=0.0_R8
+            cvsb(ix,iy,:)=0.0_R8
           end do
         end do
       end do

@@ -538,7 +538,7 @@
      &   expu2(-qe*po(ix,ny)/te(ix,ny))
 !        fchy_dia = 0.0e0_R8                                           !sv 01.07.99
 !        if(facdriftm.ne.0.0e0_R8) then                                !sv 09.07.99
-         if(fchy_dia_at_north .ne. 0.0e0_R8) then                      !sv 09.07.99
+        if(fchy_dia_at_north .ne. 0.0e0_R8) then                       !sv 09.07.99
 !         iy=ny                                                        !sv 01.07.99 { 18.05.02
 !         fchy_dia =-signmf*pz(ix,iy)*bb(ix,iy,2)                      !sv 31.03.00 18.01.02
 !     &      *vol(ix,iy)/gs(ix,iy,2)                                   !sv 01.07.99
@@ -941,7 +941,7 @@ crfs  (b_phi/b^2 dpi/dr)
 !         enddo                                                          !sv 20.02.03 }
 c         fchi=0.0e0_R8                      !sv was commented
 !       endif
-          if(ix.ne.nx) then                                              !sv 16.11.04 {
+         if(ix.ne.nx) then                                              !sv 16.11.04 {
 *  .. set the potential at inner upper plate for DND case with respect to outer plate
            fche = sqrt(1/(2*pi))*qe*ne(ix,iy)*vte*s1*
      &       expu2(-qe*(po(ix,iy)-po_in_upper)/te(ix,iy))

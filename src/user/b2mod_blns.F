@@ -428,7 +428,7 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
 c<<<
                   if(debug_flags(90).gt.0) then
                     hlp_pls(ic,ls)=hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,1,is)
+     .               bsign*fna(ixf,iyf,idir,is)
                   endif
                 endif
 

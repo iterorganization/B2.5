@@ -157,9 +157,9 @@
 
       call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne, cone, fhePSch)
 
-      fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
+      fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
@@ -169,7 +169,7 @@
         enddo
       else
         c071 = 0.71e0_R8
-      endif                                                             !srv 13.01.17
+      endif                                                              !srv 13.01.17
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFCH !!!!!!!!!!!!!!!!!!!!!
@@ -178,13 +178,13 @@
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
             floe(ix,iy,0) = 0.0_R8
-            cone(ix,iy,0,0) = 0.0_R8                                 !srv 02.01.07
-            fhe_mdf(ix,iy,0) = 0.0e0_R8                              !srv 13.10.06
+            cone(ix,iy,0,0) = 0.0_R8                                     !srv 02.01.07
+            fhe_mdf(ix,iy,0) = 0.0e0_R8                                  !srv 13.10.06
             fhe(ix,iy,0) = 0.0_R8
             fhet(ix,iy,0) = 0.0_R8
             fllime(ix,iy) = 1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
-              fhe_32(ix,iy,0) = 0.0_R8                               !djm Jan2017
+              fhe_32(ix,iy,0) = 0.0_R8                                   !djm Jan2017
               fhe_52(ix,iy,0) = 0.0_R8
               fhe_thermj(ix,iy,0) = 0.0_R8
               fhe_cond(ix,iy,0) = 0.0_R8
@@ -202,7 +202,7 @@
             if (no_current.eq.1) then
               ehx = 0.0_R8
             else
-              ehx = ehx_(ix,iy)                                         !srv 13.01.17
+              ehx = ehx_(ix,iy)                                          !srv 13.01.17
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
@@ -257,14 +257,14 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               t0 = cone0*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_mdf = cone0_mdf*abs(tex)/(flomx*max(
-     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))          !srv 18.08.08
+     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))               !srv 18.08.08
             else
               t0 = 0.0_R8
-              t0_mdf = 0.0_R8                                       !srv 18.08.08
+              t0_mdf = 0.0_R8                                            !srv 18.08.08
             endif
 
             tex0 = tex/(1.0_R8+t0)
-            tex0_mdf = tex/(1.0_R8+t0_mdf)                           !srv 18.08.08
+            tex0_mdf = tex/(1.0_R8+t0_mdf)                               !srv 18.08.08
             if(mdf_fhe.eq.0) then
               fllime(ix,iy) = 1.0_R8 + t0
             else
@@ -276,12 +276,12 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         -abs(floe0/2.0_R8)*tex-
      &          cone0*tex0 + alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              fhe_mdf(ix,iy,0) =floe0_mdf*                              !srv 18.08.08
+              fhe_mdf(ix,iy,0) =floe0_mdf*                               !srv 18.08.08
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
      &         abs(floe0_mdf/2.0_R8)*tex-cone0_mdf*tex0_mdf+
      &         alfTeEh*alfe0_mdf*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-     &         -fhePSch(ix,iy,0)                                       !srv 13.06.06 }
+     &         -fhePSch(ix,iy,0)                                         !srv 13.06.06 }
               if (balance.and.
      &            (balance_netcdf.ne.0).and.
      &            (mdf_fhe.eq.0)) then !djm Jan2017
@@ -304,9 +304,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
      &            2.0_R8*tex
                 fhe_thermj(ix,iy,0) =
-     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*                !srv 13.01.17
      &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*  !srv 13.01.17
+     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*   !srv 13.01.17
      &            tex+
      &            alfTeEh*alfe0*
      &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
@@ -340,9 +340,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
      &            2.0_R8*tex
                 fhe_thermj(ix,iy,0) =
-     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*                !srv 13.01.17
      &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*  !srv 13.01.17
+     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*   !srv 13.01.17
      &            tex+
      &            alfTeEh*alfe0_mdf*
      &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
@@ -383,7 +383,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &             (1.0_R8-upfac)*te(ix,iy))
                 fhe_thermj(ix,iy,0) =
-     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*                !srv 13.01.17
      &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &             (1.0_R8-upfac)*te(ix,iy))+
      &            alfTeEh*alfe0*
@@ -404,32 +404,32 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &       (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
 ! modify fhet for mdf case
             if (no_hybr.eq.0) then
-              if(mdf_fhe.eq.0) then                                  !srv 13.10.06 {
+              if(mdf_fhe.eq.0) then                                      !srv 13.10.06 {
                 floe(ix,iy,0) = floe0
-                cone(ix,iy,0,0) = abs(floe0/2)+cone0/(1.0_R8+t0)     !srv 02.01.07
+                cone(ix,iy,0,0) = abs(floe0/2)+cone0/(1.0_R8+t0)         !srv 02.01.07
               else
                 floe(ix,iy,0) = floe0_mdf
                 cone(ix,iy,0,0)=abs(floe0_mdf/2)+
-     .           cone0_mdf/(1.0_R8+t0_mdf)                           !srv 02.01.07
+     .           cone0_mdf/(1.0_R8+t0_mdf)                               !srv 02.01.07
               endif
             else
-              cone(ix,iy,0,0) = t1                                   !srv 02.01.07
+              cone(ix,iy,0,0) = t1                                       !srv 02.01.07
             endif
           endif
         enddo
       enddo
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, te, po, ne, ehy_)                         !srv 13.01.17
+      call b2xehy (nx, ny, te, po, ne, ehy_)                             !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
             floe(ix,iy,1) = 0.0_R8
-            cone(ix,iy,1,0) = 0.0_R8                                 !srv 02.01.07
-            fhe_mdf(ix,iy,1) = 0.0e0_R8                              !srv 13.10.06
+            cone(ix,iy,1,0) = 0.0_R8                                     !srv 02.01.07
+            fhe_mdf(ix,iy,1) = 0.0e0_R8                                  !srv 13.10.06
             fhe(ix,iy,1) = 0.0_R8
             fhet(ix,iy,1) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
-              fhe_32(ix,iy,1) = 0.0_R8                               !djm Jan2017
+              fhe_32(ix,iy,1) = 0.0_R8                                   !djm Jan2017
               fhe_52(ix,iy,1) = 0.0_R8
               fhe_thermj(ix,iy,1) = 0.0_R8
               fhe_cond(ix,iy,1) = 0.0_R8
@@ -442,7 +442,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             if (no_current.eq.1) then
               ehy = 0.0_R8
             else
-              ehy = ehy_(ix,iy)                                      !srv 13.01.17
+              ehy = ehy_(ix,iy)                                          !srv 13.01.17
             endif
             if (conduction_only.eq.1) then
               floe0 = 0.0_R8
@@ -451,7 +451,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+
      1         2.5_R8*fne_52(ix,iy,1)-
-     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                 !lk 21.02.08 !srv 17.12.13
+     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                     !lk 21.02.08 !srv 17.12.13
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
@@ -486,8 +486,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-     &            -fhePSch(ix,iy,1)                                  !srv 13.10.06
-              if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+     &            -fhePSch(ix,iy,1)                                      !srv 13.10.06
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
                 fhe_32(ix,iy,1) = (1.5_R8+BoRiS)*fne_32(ix,iy,1)*
      &           (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
                 fhe_52(ix,iy,1) = 2.5_R8*fne_52(ix,iy,1)*
@@ -556,14 +556,14 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fhet(ix,iy,1) = fhe(ix,iy,1)+
      1    ((1.0_R8-BoRiS)*fne_32(ix,iy,1)+flo_veecrb)*
      &    (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-            cone(ix,iy,1,0) = cone0                                  !xpb !srv 02.01.07
+            cone(ix,iy,1,0) = cone0                                      !xpb !srv 02.01.07
 !xpb     &         2.5_R8*((te(bottomix(ix,iy),bottomiy(ix,iy))+
 !xpb     &     te(ix,iy))/(2*qe))*csig(ix,iy,1)/qe
-          endif                                                      !xpb
+          endif                                                          !xpb
         enddo
       enddo
 
-      if(guard_flows.eq.0) then                                      !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -594,7 +594,7 @@ cxpb turn off poloidal flows in core boundary
               do ix = 1, bc_list_size(ib)
                 fhe(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
                 fhe_mdf(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
-                if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+                if (balance.and.(balance_netcdf.ne.0)) then              !djm Jan2017
                   fhe_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
                   fhe_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
                   fhe_thermj(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
@@ -619,7 +619,7 @@ cxpb turn off poloidal flows in core boundary
             if (on_closed_surface(ix,-1)) then
               fhe(ix,-1,0) = 0.0_R8
               fhe_mdf(ix,-1,0) = 0.0_R8
-              if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
                 fhe_32(ix,-1,0) = 0.0_R8
                 fhe_52(ix,-1,0) = 0.0_R8
                 fhe_thermj(ix,-1,0) = 0.0_R8
@@ -636,7 +636,7 @@ cxpb turn off poloidal flows in core boundary
             endif
           enddo
         endif
-      endif                                                          !xpb
+      endif                                                              !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
@@ -644,7 +644,7 @@ cxpb turn off poloidal flows in core boundary
           DO IY=NYISO1(IB), NYISO2(IB)
             fhe(ix,iy,0)=0.0_R8
             fhe_mdf(ix,iy,0)=0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then                  !djm Jan2017
               fhe_32(ix,iy,0) = 0.0_R8
               fhe_52(ix,iy,0) = 0.0_R8
               fhe_thermj(ix,iy,0) = 0.0_R8
@@ -675,7 +675,7 @@ cxpb turn off poloidal flows in core boundary
         end do
       end do
 
-      if(iout.ne.0) then                                             !srv 18.06.08 {
+      if(iout.ne.0) then                                                 !srv 18.06.08 {
         call my_out(70,nx,ny,fhe(-1,-1,0),'b2tfhe_fhex')
         call my_out(70,nx,ny,fhe(-1,-1,1),'b2tfhe_fhey')
         call my_out(70,nx,ny,fhePSch(-1,-1,0),'b2tfhe_fhePSchx')
@@ -693,7 +693,7 @@ cxpb turn off poloidal flows in core boundary
         call my_out(70,nx,ny,floe(-1,-1,0),'b2tfhe_floex')
         call my_out(70,nx,ny,floe(-1,-1,1),'b2tfhe_floey')
         call my_out(70,nx,ny,fllime,'b2tfhe_fllime')
-      endif                                                          !srv 18.06.08 }
+      endif                                                              !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

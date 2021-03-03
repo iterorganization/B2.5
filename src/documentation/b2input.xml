@@ -4693,7 +4693,7 @@
 				<default>0</default>
 				<type>real*8 array of size (NSTRAT,2)</type>
 				<description>
-					The element (istra,1) contains the strength of constant gas puff strata (type 'C') for Eirene in particles/second.
+					The element (istra,1) contains the strength of constant gas puff strata (type 'C') for Eirene in particles/second. Its values overwrite the values provided by the FLUX variables from the strata description in block 7 of the Eirene input file.
 				</description>
 			</switch>
 			<switch>

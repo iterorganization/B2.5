@@ -237,13 +237,28 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .eq. 1) then
             imi=nint(am(is))
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(nint(am(is)).ne.nuclear_mass(il)) then
+              if(nint(am(is)).lt.10) then
+                write(textsp(iss),'(a1,i1,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else if (nint(am(is)).lt.100) then
+                write(textsp(iss),'(a1,i2,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else
+                write(textsp(iss),'(a1,i3,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -764,7 +779,12 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
+      do iy=-1,ny
+       do ix=-1,nx
+        temp(ix,iy)=hy1(ix,iy)
+       end do
+      end do
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',

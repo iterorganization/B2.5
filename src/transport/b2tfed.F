@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfed (nx, ny, facdrift, fac_ExB, 
+      subroutine b2tfed (nx, ny, facdrift, fac_ExB,
      & te, po, vedia, veecrb)
       use b2mod_types
       use b2mod_indirect
@@ -14,8 +14,6 @@
       integer nx, ny
       real (kind=R8) ::
      * facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-!     * vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-!     * qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -83,8 +81,8 @@ c Drift terms
       vedia=0.0_R8                                                       !xpb
       veecrb=0.0_R8                                                      !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
- 
-       if(drift_style.eq.0) then ! 5.0 treatment
+
+        if(drift_style.eq.0) then ! 5.0 treatment
 
           call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
           do iy = -1, ny
@@ -245,7 +243,7 @@ cxpb  Standard case
 
          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
-         CALL XERRAB (
+         call xerrab (
      &   'faulty definition of drift_style and redef_gmtry, ' // 
      &   'or logical mistake occurred')
 

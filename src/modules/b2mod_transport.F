@@ -6,9 +6,9 @@
      *  calf(:,:,:),
      *  cdna(:,:,:,:),
      *  cdpa(:,:,:,:),
-     *  cddi(:,:,:,:),                                                !srv 13.10.06
-     *  cdnahz(:,:,:,:),                                              !srv 09.01.01
-     *  cdpahz(:,:,:,:),                                              !srv 09.01.01
+     *  cddi(:,:,:,:),                                                  !srv 13.10.06
+     *  cdnahz(:,:,:,:),                                                !srv 09.01.01
+     *  cdpahz(:,:,:,:),                                                !srv 09.01.01
      *  ceqp(:,:),
      *  chce(:,:,:),
      *  chci(:,:,:),
@@ -21,12 +21,12 @@
      *  cvsa(:,:,:,:),
      *  cthe(:,:,:),
      *  cthi(:,:,:),
-     *  csigin(:,:,:,:,:),                                            !xpb
-     *  cvlahz(:,:,:,:),                                              !srv 09.01.01
-     *  cvmahz(:,:,:,:),                                              !srv 15.12.05
-     *  cvsahz(:,:,:,:),                                              !srv 09.01.01
-     *  cvsa_cl(:,:,:,:),                                             !srv 04.10.99
-     *  cvsahz_cl(:,:,:,:),                                           !srv 09.01.01
+     *  csigin(:,:,:,:,:),                                              !xpb
+     *  cvlahz(:,:,:,:),                                                !srv 09.01.01
+     *  cvmahz(:,:,:,:),                                                !srv 15.12.05
+     *  cvsahz(:,:,:,:),                                                !srv 09.01.01
+     *  cvsa_cl(:,:,:,:),                                               !srv 04.10.99
+     *  cvsahz_cl(:,:,:,:),                                             !srv 09.01.01
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
      *  fllime(:,:),
@@ -34,7 +34,7 @@
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
      *  fllimvisc(:,:,:),
-     *  fllim_ki(:,:),                                                !srv 13.01.17 {
+     *  fllim_ki(:,:),                                                  !srv 13.01.17 {
      *  fllim_ke(:,:),
      *  fllim_al(:,:),
      *  fllim_al_c(:,:),
@@ -44,8 +44,8 @@
      *  f_luc_sg(:,:),
      *  f_luc_al(:,:),
      *  alfx_c(:,:),
-     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17 }
-     *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
+     *  sigx_c(:,:),                                                    !iyv 19.11.13 08.10.14 !srv 13.01.17 }
+     *  kt_neo(:,:)                                                     !iys 02.12.13 08.10.14
 
       contains
 
@@ -56,9 +56,9 @@
       allocate(calf(-1:nxd,-1:nyd,0:1))
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cdpa(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 13.10.06
-      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
+      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 13.10.06
+      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(ceqp(-1:nxd,-1:nyd))
       allocate(chce(-1:nxd,-1:nyd,0:1))
       allocate(chci(-1:nxd,-1:nyd,0:1))
@@ -71,12 +71,12 @@
       allocate(cvsa(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cthe(-1:nxd,-1:nyd,0:nsd-1))
       allocate(cthi(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))             !xpb
-      allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 15.12.05
-      allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 04.10.99
-      allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 09.01.01
+      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))               !xpb
+      allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 15.12.05
+      allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                      !srv 04.10.99
+      allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 09.01.01
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(fllime(-1:nxd,-1:nyd))
@@ -89,7 +89,7 @@
       fllim0fhi=1.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=1.0_R8
-      allocate(fllim_ki(-1:nxd,-1:nyd))                               !srv 13.01.17 {
+      allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
       allocate(fllim_al_c(-1:nxd,-1:nyd))
@@ -98,9 +98,9 @@
       allocate(f_luc_et(-1:nxd,-1:nyd))
       allocate(f_luc_sg(-1:nxd,-1:nyd))
       allocate(f_luc_al(-1:nxd,-1:nyd))
-      allocate(sigx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13
-      allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17 }
-      allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
+      allocate(sigx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13
+      allocate(alfx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13 08.10.14 ! srv 13.01.17 }
+      allocate(kt_neo(-1:nxd,-1:nyd))                                   !iys 02.12.13 08.10.14
       kt_neo = 0.0_R8
 
       return

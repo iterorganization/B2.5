@@ -224,7 +224,7 @@ csw 11dec2012, check for solv flags
        endif                                                            !srv 06.07.08 }
       endif
 
-      if (iout.ne.0) then                                            !srv 12.07.02 {
+      if (iout.ne.0) then                                               !srv 12.07.02 {
        if (in_parallel()) then
          !$OMP MASTER
          write(*,*) 'B2NPCO will not write to file in parallel mode'

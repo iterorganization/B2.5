@@ -416,7 +416,7 @@
      & hxx, hyy, qz1, qc1, qcb1, gs1,
      & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
 *   ..improved computation of qc based on interpolation of qz values
-cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
+cwdk  avoids artificial reduction of poloidal contact area between faces for
 cwdk  curvilinear grids; angle between left face and average direction of top/bottom
 cwdk  faces is not representative for orthogonality of left face to field!
       if (redef_qc.eq.1.and.qc_style.eq.0) then

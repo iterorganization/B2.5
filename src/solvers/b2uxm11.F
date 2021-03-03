@@ -101,7 +101,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of conb
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                    !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
       endif
 

@@ -265,9 +265,9 @@ c*** Prepare the list of grid indices for the target flux faces
 #ifdef DBG
       print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
       print '(a,8i6)','mtrgedge: ',((mtrgedge(i,j),i=1,2),j=1,ntrgts) !###
-      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
-      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,k)              !###
-      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
+      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,ntrgts)         !###
 #endif
 
 c*** Sort the segments in the lists of the "wall zones"

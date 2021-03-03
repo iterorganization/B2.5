@@ -37,11 +37,11 @@
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
      &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1),
-     &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),      !srv 22.11.99 30.09.02
-     &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),         !srv 11.07.99
-     2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),      !srv 07.07.99
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)       !srv 24.03.07
+     &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),             !srv 22.11.99 30.09.02
+     &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),                !srv 11.07.99
+     2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
+     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)              !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -204,7 +204,7 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        conc(ix,iy,1) = csig(ix,iy,1)                                    !srv
+         conc(ix,iy,1) = csig(ix,iy,1)                                   !srv
          if(fch_ion_neutral.ne.0.0e0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
@@ -229,14 +229,14 @@
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,0)    =0.0e0_R8
-            conc(ix,iy,0)   =0.0e0_R8
+            fch(ix,iy,0)  = 0.0e0_R8
+            conc(ix,iy,0) = 0.0e0_R8
           enddo
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,1)   =0.0e0_R8
-            conc(ix,iy,1)  =0.0e0_R8
+            fch(ix,iy,1)  = 0.0e0_R8
+            conc(ix,iy,1) = 0.0e0_R8
           end do
         enddo
       enddo
@@ -268,7 +268,7 @@
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch__cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch__cvispery')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__fch_px')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_fch_py')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__csig_any')
        call my_out(70,nx,ny,csig(-1,-1,0),'b2tfch__csigx')
@@ -300,17 +300,17 @@
        call my_out(70,nx,ny,fchvispar(-1,-1,0),
      &   'b2tfch__for_po_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &  'b2tfch__for_po_fchvispary')
+     &   'b2tfch__for_po_fchvispary')
 !       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__for_po_fchvisqx')
        call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch__for_po_fchvisqy')
 !       call my_out(70,nx,ny,fchvisper(-1,-1,0),
 !     &    'b2tfch__for_po_fchvisperx')
        call my_out(70,nx,ny,fchvisper(-1,-1,1),
-     &     'b2tfch__for_po_fchvispery')
+     &    'b2tfch__for_po_fchvispery')
        call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &      'b2tfch__for_po_fchinertx')
+     &    'b2tfch__for_po_fchinertx')
        call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &      'b2tfch__for_po_fchinerty')
+     &    'b2tfch__for_po_fchinerty')
        call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch__for_po_fchdiax')
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch__for_po_fchdiay')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch__for_po_fchanmlx')

@@ -141,8 +141,8 @@
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))        !srv
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
             endif                                                        !srv 26.11.02
-           enddo                                                          !srv
-         enddo                                                            !srv
+           enddo                                                         !srv
+         enddo                                                           !srv
 
         else  ! drift_style                                              !IYS 11.02.2020
 
@@ -163,17 +163,15 @@
          do iy=0,ny
            do ix=0,nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
-            fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
+             fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
      &   0.5e0_R8 * (pz(ix,iy) + pz(bottomix(ix,iy),bottomiy(ix,iy))) *  ! IYS 04.03.2019
      &         gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
      &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))   !srv
             endif                                                        !srv 26.11.02
-           enddo                                                          !srv
-         enddo                                                            !srv
+           enddo                                                         !srv
+         enddo                                                           !srv
 
-        endif  ! drift_style                                              !IYS 11.02.2020
-
-  
+        endif  ! drift_style                                             !IYS 11.02.2020
 
 #ifdef CLASSICAL_CURRENT
 crfs inertia terms

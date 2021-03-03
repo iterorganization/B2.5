@@ -103,7 +103,7 @@ c*** l2rdldw  : radiation load was calculated for the walls
 c*** l2rdldt  : radiation load was calculated for the targets
 c*** lrdlsp   : radiation load split was calculated
 c*** lrdlcr   : radiation load from core sources was calculated
-c*** luwrk    : working array
+c*** luwrk    : working array for wall elements (DG numbering)
 c*** co_data  : working array (originally, for average energy)
 c======================================================================
 
@@ -113,7 +113,8 @@ c======================================================================
       implicit none
       integer nlim, nsgmx
 
-      allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
+      allocate(indwll(nsgmx), lwldrad(nsgmx))
+      allocate(luwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(leirlis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2txnpsch (nx, ny, isb, guard_flows, facdrift, !xpb !iyv 06.02.14 02.04.18 {
-     &        kmprti, cddb, conb)                               !srv 09.01.01 13.10.06
+      subroutine b2txnpsch (nx, ny, isb, guard_flows, facdrift,    !xpb !iyv 06.02.14 02.04.18 {
+     &        kmprti, cddb, conb)                                       !srv 09.01.01 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect

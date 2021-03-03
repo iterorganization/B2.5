@@ -26,6 +26,7 @@
 *   ..test mode
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcy--faulty argument mode')
+
 *   ..compute cony
       if (mode.eq.-1) then
 *    ..use harmonic averaging

@@ -76,4 +76,4 @@
       usrnam = usrnm
       return
 *     ------------------------------------------------------------------
-      end
+      end function usrnam

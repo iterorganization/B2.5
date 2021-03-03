@@ -24,9 +24,9 @@
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                       !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
+     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1), 
+     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -41,7 +41,7 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-     
+
 *   ..local variables
       integer, save :: pot_eq = 1                                         !srv 26.07.06
       integer, save :: mode = 1
@@ -114,7 +114,7 @@
           call xertst(is_neutral(ismain0),
      .   'ismain0 not a neutral species!')
           call xertst(nint(zn(ismain)).eq.1.and.nint(zn(ismain0)).eq.1,
-     .   'ion-neutral current computation only supported for H/D/T !') 
+     .   'ion-neutral current computation only supported for H/D/T !')
           iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
 !*   ..get density in the guard cells (boundaries)
 !      do ix = -1, nx
@@ -199,7 +199,7 @@
 
 *      ..interpolate fluxes in the cell face
           call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,ismain0),
-     &                                        fnan(-1,-1,0,ismain0))
+     &                                          fnan(-1,-1,0,ismain0))
           if(style.eq.0) then
             do iy=0,ny-1
               do ix=-1,nx
@@ -491,4 +491,4 @@
 *-----------------------------------------------------------------------
 *.end b2tinnt
 
-      end
+      end subroutine b2tinnt

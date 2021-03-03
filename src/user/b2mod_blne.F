@@ -616,7 +616,7 @@ c*** Assign the identification suffices
 
 c<<<
 c      print *,'b2blne: targets ',(indt_hlp(1,i),':',hlp_trg(i),':',
-c     ,                                             ltgs(1,i),' ',i=1,k)
+c     ,                                 ltgs(1,i),' ',i=1,k)
 c>>>
 
 c*** Walls in B2

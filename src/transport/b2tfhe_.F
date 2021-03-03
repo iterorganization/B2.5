@@ -101,7 +101,6 @@ csw 10oct2012
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                  !srv 17.05.99 22.03.02
-
 *-----------------------------------------------------------------------
 *.computation
 
@@ -210,7 +209,7 @@ csw 10oct2012
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
 * ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
@@ -219,20 +218,20 @@ csw 10oct2012
           end do
         end do
       else
-        c071 = 0.71e0_R8                                               !srv 13.01.17
+        c071 = 0.71e0_R8                                                 !srv 13.01.17
       endif
 
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex
       do iy = -1, ny
-       do ix = -1, nx                                                  !srv 26.11.02 {
-        if(leftix(ix,iy).eq.-2) then                                   !srv 26.11.02
+       do ix = -1, nx                                                    !srv 26.11.02 {
+        if(leftix(ix,iy).eq.-2) then                                     !srv 26.11.02
          floe(ix,iy,0)    = 0.0e0_R8
-         cone(ix,iy,0,0)  = 0.0e0_R8                                   !srv 02.01.07
+         cone(ix,iy,0,0)  = 0.0e0_R8                                     !srv 02.01.07
          fhe(ix,iy,0)     = 0.0e0_R8
-         fhe_mdf(ix,iy,0) = 0.0e0_R8                                   !srv 13.10.06
+         fhe_mdf(ix,iy,0) = 0.0e0_R8                                     !srv 13.10.06
          if (balance.and.(balance_netcdf.ne.0)) then
-           fhe_32(ix,iy,0) = 0.0_R8                                    !djm Jan2017
+           fhe_32(ix,iy,0) = 0.0_R8                                      !djm Jan2017
            fhe_52(ix,iy,0) = 0.0_R8
            fhe_thermj(ix,iy,0) = 0.0_R8
            fhe_cond(ix,iy,0) = 0.0_R8
@@ -241,23 +240,22 @@ csw 10oct2012
            fhe_strange(ix,iy,0) = 0.0_R8
            fhe_pschused(ix,iy,0) = 0.0_R8
          endif
-        else                                                           !srv 26.11.02 }
-         ehx = ehx_(ix,iy)                                             !srv 13.01.17
+        else                                                             !srv 26.11.02 }
+         ehx = ehx_(ix,iy)                                               !srv 13.01.17
          tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-         if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
-          ehx = 0.0_R8                                                 !srv 27.02.13
-         endif                                                         !srv 30.12.09 }
+         if(pot_eq.ne.1 .and. no_current.ne.0) then                      !srv 27.02.13
+          ehx = 0.0_R8                                                   !srv 27.02.13
+         endif                                                           !srv 30.12.09 }
          floe0 = 1.5e0_R8*fne(ix,iy,0)+
-     &    (chve(ix,iy,0)+2.5e0_R8*fledia(ix,iy,0))*                    !srv 13.09.02 18.01.07 11.01.13  *signmf
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
-     &    -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                       !srv 30.12.09 13.01.17
-         floe0_mdf = 1.5e0_R8*fne(ix,iy,0)+                            !srv 13.06.06 {
+     &    (chve(ix,iy,0)+2.5e0_R8*fledia(ix,iy,0))*                      !srv 13.09.02 18.01.07 11.01.13  *signmf
+     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8           !srv 13.09.02
+     &    -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                         !srv 30.12.09 13.01.17
+         floe0_mdf = 1.5e0_R8*fne(ix,iy,0)+                              !srv 13.06.06 {
      &    chve(ix,iy,0)*
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.06.06 }
-     &    -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                       !srv 30.12.09 13.01.17
+     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8           !srv 13.06.06 }
+     &    -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                         !srv 30.12.09 13.01.17
 
-
-        if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 04.02.03 17.01.12
+        if(lim_flux.eq.1 .and. conductive_limit.eq.0) then               !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
            cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
@@ -718,9 +716,8 @@ csw 13mar2013 added check upwind (SOLPS4 style)
         if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 27.02.13
          ehy = ehy_(ix,iy)                                               !srv 13.01.17
         else
-         ehy=0.0_R8
+         ehy = 0.0_R8
         endif                                                            !srv 27.02.13
-
         floe0 = 1.5e0_R8*(fne(ix,iy,1)-                                  !srv 11.05.99
      &     5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                        !lk 21.02.08 17.12.13
 !* in the next line there is the coeffisient +4 because                  !srv 13.08.02
@@ -938,7 +935,7 @@ csw 18feb2014 remove fluxes between guard cells
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')          !srv 16.09.02 {
+       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                    !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
@@ -946,12 +943,12 @@ csw 18feb2014 remove fluxes between guard cells
 !       call my_out(70,nx,ny,w5,'b2tfhe__qey5')
        call my_out(70,nx,ny,w5,'b2tfhe__qediay')
        call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
-      endif                                               !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
        deallocate( w1, w2, w3, w4, w5, w6 )
-      endif                                               !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
@@ -960,9 +957,9 @@ csw 18feb2014 remove fluxes between guard cells
           DO IY=NYISO1(IB), NYISO2(IB)
             fhe(ix,iy,0)    = 0.0e0_R8
             floe(ix,iy,0)   = 0.0e0_R8
-            cone(ix,iy,0,:) = 0.0e0_R8                    !srv 02.01.07
+            cone(ix,iy,0,:) = 0.0e0_R8                              !srv 02.01.07
             if (balance.and.(balance_netcdf.ne.0)) then
-              fhe_32(ix,iy,0) = 0.0_R8                    !djm Jan2017
+              fhe_32(ix,iy,0) = 0.0_R8                              !djm Jan2017
               fhe_52(ix,iy,0) = 0.0_R8
               fhe_thermj(ix,iy,0) = 0.0_R8
               fhe_cond(ix,iy,0) = 0.0_R8
@@ -977,9 +974,9 @@ csw 18feb2014 remove fluxes between guard cells
           DO IY=NYISO1(IB), NYISO2(IB)
             fhe(ix,iy,1)   =0.0e0_R8
             floe(ix,iy,1)  =0.0e0_R8
-            cone(ix,iy,1,:)=0.0e0_R8                      !srv 02.01.07
+            cone(ix,iy,1,:)=0.0e0_R8                                !srv 02.01.07
             if (balance.and.(balance_netcdf.ne.0)) then
-              fhe_32(ix,iy,1) = 0.0_R8                    !djm Jan2017
+              fhe_32(ix,iy,1) = 0.0_R8                              !djm Jan2017
               fhe_52(ix,iy,1) = 0.0_R8
               fhe_thermj(ix,iy,1) = 0.0_R8
               fhe_cond(ix,iy,1) = 0.0_R8
@@ -992,8 +989,8 @@ csw 18feb2014 remove fluxes between guard cells
         enddo
       enddo
 
-      if(iout.ne.0) then                                         !srv 18.06.08 {
-       call my_out(70,nx,ny,fchstoch,'b2tfhe__fchstochy')        !lk 31.01.08
+      if(iout.ne.0) then                                            !srv 18.06.08 {
+       call my_out(70,nx,ny,fchstoch,'b2tfhe__fchstochy')           !lk 31.01.08
        call my_out(70,nx,ny,fne(-1,-1,0),'b2tfhe__fnex')
        call my_out(70,nx,ny,fne(-1,-1,1),'b2tfhe__fney')
        call my_out(70,nx,ny,floe(-1,-1,0),'b2tfhe__floex')

@@ -1264,7 +1264,7 @@ contains
         call createGridSubsetForClass( grid_ggd,                &
             &   grid_ggd%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
-            &   "All edges (1D objects) in the domain." )
+            &   "All cells (2D objects) in the domain." )
 
         !! Grid subset of all x-points
         !! (in one poloidal plane at toroidal index 1)
@@ -1904,7 +1904,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             nInd = 0
             do ix = 0, gmap%b2nx-1

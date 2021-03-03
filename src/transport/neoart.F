@@ -279,7 +279,7 @@ c       coeff and clear coeffc
       enddo
 
       return
-      end
+      end subroutine neoart
 
 
 
