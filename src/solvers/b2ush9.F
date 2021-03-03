@@ -64,7 +64,8 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iadd_9)
+      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9)
+      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
       integer ireg, ileft, ibot
       save ncall
       !$OMP THREADPRIVATE(ncall)
