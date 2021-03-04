@@ -109,6 +109,7 @@
         fch_p(:,:,1) = 0.0e0_R8
       else                                                               !srv 26.07.06 {
         fch_p = 0.0e0_R8
+        ehx   = 0.0e0_R8
       endif                                                              !srv 26.07.06 }
 
 * ..return

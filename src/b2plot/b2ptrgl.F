@@ -1092,7 +1092,7 @@ c!###}
       close (lun)
 c----------------------------------------------------------------------
 c*** Calculate the particle fluxes and erosion - if present
-c     carlis eb2atm contains the indexes of the B2 atoms mapped to Eirene
+c     carlis eb2atm contains the indices of the B2 atoms mapped to Eirene
 c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
 c            eb2atm will be [1 4 2 3]
 #ifndef B25_EIRENE

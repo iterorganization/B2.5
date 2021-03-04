@@ -403,7 +403,7 @@ c              print *,'Added :',sfpr_m(l),':',k,l                   !###
             else !}{
             end if !}
           end if !}
-c carlis list of indexes of wall materials referred to list of ACTIVE materials
+c carlis list of indices of wall materials referred to list of ACTIVE materials
           i_ersmtr(k)=l
         end do !}
 c        print *,'Input materials: ',sfpr_m                        !###
@@ -427,7 +427,7 @@ c        the list is not erdered as the list of possible materials
             sfpr_m(m)=srfs_x(l)
 c carlis     [s/y*m2*mm]   =[s/y]*[m2/cm2*mm/cm*]*[g/mol]/[1/mol]/[g/cm3]
             wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
-c carlis list of indexes that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
+c carlis list of indices that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
             l_ersmtr(k)=m
           end if !}
         end do !}
@@ -435,7 +435,7 @@ c carlis list of indexes that tells the new ordering of wall materials in active
         erntrg(:,:)=0.0_R8
         n_sfpr_er=m
         do i=1,lppp+ny*ntrgts !{
-c carlis substitute indexes of wall materials with the new ordering of ACTIVE list
+c carlis substitute indices of wall materials with the new ordering of ACTIVE list
           i_ersmtr(i)=l_ersmtr(i_ersmtr(i))
         end do !}
         write(*,*) 'Number of wall materials: ',n_sfpr_er

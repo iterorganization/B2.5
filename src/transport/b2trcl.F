@@ -87,37 +87,37 @@
 
 *   ..local variables
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
-      integer, save :: conductive_limit = 1                              !srv 16.06.08
-      integer, save :: style = 2                                         !srv 13.01.17
-      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
+      integer, save :: conductive_limit = 1                            !srv 16.06.08
+      integer, save :: style = 2                                       !srv 13.01.17
+      integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
      &                 integral_modeling = 1
-      character(3) chns, chns0                                           !srv 17.06.08
-      integer mintopcut                                                  !lk 19.09.07
+      character(3) chns, chns0                                         !srv 17.06.08
+      integer mintopcut                                                !lk 19.09.07
       integer mode
       real (kind=R8) ::
-     *  cthiv, cthev, vis_par, jemax                                     !srv 13.01.17
-      real (kind=R8) ::                                                  !srv 03.06.03
+     *  cthiv, cthev, vis_par, jemax                                   !srv 13.01.17
+      real (kind=R8) ::                                                !srv 03.06.03
      *   t0, dte, dti, flomx
-      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
-     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)           !lk 19.09.07
-      real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
-     &    k1(-1:nx,-1:ny), t1, t2                                        !lk 12.05.11
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
+      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),   !lk 19.09.07
+     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)         !lk 19.09.07
+      real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),            !lk 12.05.11
+     &    k1(-1:nx,-1:ny), t1, t2                                      !lk 12.05.11
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8   !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                               !srv 01.07.99 09.01.01
+     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                             !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax                                                       !srv 22.04.16
+     *  smin, smax                                                     !srv 22.04.16
       external xertst, xerrab, sfill, smin, smax
-      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,           !xpb
-     &  ipgeti, ipgetr, b2ttia                                           !lk 19.09.07
+      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,         !xpb
+     &  ipgeti, ipgetr, b2ttia                                         !lk 19.09.07
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
@@ -202,7 +202,7 @@ csw 13mar2012
       call sfill (n2, 1.0_R8, fllim_al, 1)
       call sfill (n2, 1.0_R8, fllim_al_c, 1)
       alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))             !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
-      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))             !             }               !srv 13.01.17
+      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))         ! } !srv 13.01.17
 *   ..incorporate geometry with hz                                       !srv 09.01.01
       wrk = hz*vol
       do is = 0, ns-1
@@ -259,7 +259,7 @@ csw 13mar2012
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_calfy')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                     !srv 05.07.17
+        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_chciy')
       endif
@@ -267,22 +267,22 @@ csw 13mar2012
      &                   .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_csigy')
-        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                     !srv 05.07.17
+        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
 #ifndef NO_21
-      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,      !srv 01.07.09
+      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,     !srv 01.07.09
      1 pbs, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
-      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                   !srv 01.07.09
+      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                  !srv 01.07.09
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
 *   ..luciani
-      f_luc_ke = 1.0_R8                                                  !srv 13.01.17 {
+      f_luc_ke = 1.0_R8                                                 !srv 13.01.17 {
       f_luc_ki = 1.0_R8
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
-      f_luc_al = 1.0_R8                                                  !srv 13.01.17 }
+      f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -303,7 +303,7 @@ csw 13mar2012
                   if(.not.is_neutral(is)) then
                     cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
                     cvsahz(ix,iy,0,is)=
-     .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                  !srv 02.07.08
+     .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
                   endif
                 enddo
                 chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)

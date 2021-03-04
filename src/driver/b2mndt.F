@@ -578,4 +578,3 @@ ctmp.dpc
 *.end b2mndt
 
       end subroutine b2mndt
-

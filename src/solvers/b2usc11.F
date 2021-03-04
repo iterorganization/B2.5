@@ -3,7 +3,7 @@
 
       subroutine b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvereg,  !srv 13.10.06 26.09.12 02.04.18
      &   itcnt, rxg, pcm1, pbs, po, ti, nb, pb, snbv, flob, conb, pccb1,
-     &    rescb, corpb, aa11, name)                                      !srv 18.05.02
+     &   rescb, corpb, aa11, name)                                       !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
@@ -130,8 +130,8 @@
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')               !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')               !srv 13.10.06 }
 !*    ..test edge values of pccb1                                   !srv 15.04.05
 !       call b2xvfx (nx, ny, pccb1, 'pccb1')                        !srv 15.04.05
       endif
@@ -190,7 +190,7 @@
      >     aa11(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif                                                        !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa11(ix,iy,1) = 0.0e0_R8                                       !srv 26.11.02
+     >   aa11(ix,iy,1) = 0.0e0_R8                                      !srv 26.11.02
        enddo
       enddo
 
@@ -222,7 +222,7 @@
 *   ..add matrix from contribution nine- and eleven-point stencils
       if(iadd_11 .eq. 1) then
         call b2uxm11 (nx, ny, isb, zb, fac_vis, nnreg(0), itcnt,
-     &       solvereg, po, ti, nb, pb, conb(-1,-1,0,3), aa11, name)      !srv 02.04.18
+     &       solvereg, po, ti, nb, pb, conb(-1,-1,0,3), aa11, name)    !srv 02.04.18
        endif
 
       do iy=-1,ny
@@ -244,7 +244,7 @@
       enddo
 
 *   ..solve the correction equation
-      call b2ux11p (nx, ny, aa11, itcnt, rescb, corpb, name)             !srv 02.04.18
+      call b2ux11p (nx, ny, aa11, itcnt, rescb, corpb, name)           !srv 02.04.18
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx

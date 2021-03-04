@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, vol, gs, bb, na, ua,            !srv 20.09.06 {
-     &                    facdrift, fchinert)                         !srv 22.06.08
+      subroutine b2tiner (nx, ny, ns, vol, gs, bb, na, ua,               !srv 20.09.06 {
+     &                    facdrift, fchinert)                            !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -11,7 +11,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_geo
-     &   , only : hyl, hxb                 ! IYS 04.03.2019
+     &   , only : hyl, hxb                                               ! IYS 04.03.2019
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -19,7 +19,7 @@
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      & na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                     !srv 22.06.08
+     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &     fchinert(-1:nx,-1:ny,0:1)
@@ -41,10 +41,9 @@
 
 *   ..local variables
       integer ncall, ix, iy, ib, is
-      integer, save :: fch_inert_style                                    !srv 19.04.13
+      integer, save :: fch_inert_style                                   !srv 19.04.13
       integer, save :: no_current = 0
       integer, save :: guard_flows
-!      integer, save :: drift_style                                       !IYS 11.02.2020
       real (kind=R8) ::
      &  fch_inert
       save ncall, fch_inert
@@ -61,7 +60,7 @@
       call subini ('b2tiner')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2tiner_inert', fch_inert)                         !srv 07.07.99
+       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_guard_flows', guard_flows)
        if (redef_gmtry.eq.0) then
@@ -69,7 +68,7 @@
        else
           fch_inert_style = 2
        end if
-       call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)         !srv 07.07.99
+       call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)          !srv 07.07.99
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -79,136 +78,136 @@
 c Drift terms
       fchinert =0.0e0_R8
       if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
-     .   no_current.eq.0)then                                           !srv 07.07.99
+     .   no_current.eq.0)then                                            !srv 07.07.99
 
         if(fch_inert_style.eq.0) then
 
-         do is = 0, ns-1                                                !srv 07.07.99
-          if (.not.is_neutral(is)) then                                 !srv 07.07.99
-*         X-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny-1                                                 !srv 07.07.99
-             do ix=0,nx                                                 !srv 07.07.99
-               if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*    !srv 23.07.05 11.01.13
-     &          facdrift(ix,iy)*                                        !srv 22.06.08
-     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2) !srv 07.07.99 05.02.05 23.07.05
+         do is = 0, ns-1                                                 !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
+*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+               if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02
+                fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*      ! signmf*    !srv 23.07.05 11.01.13
+     &          facdrift(ix,iy)*                                         !srv 22.06.08
+     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)  !srv 07.07.99 05.02.05 23.07.05
      &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 !srv 07.07.99
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8  !srv 07.07.99
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))           !srv 07.07.99
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))         !srv 07.07.99
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-*         Y-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny                                                   !srv 07.07.99
-             do ix=0,nx-1                                               !srv 07.07.99
+     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
+     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
+     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
+     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-               fchinert(ix,iy,1)=fchinert(ix,iy,1)                      !srv 07.07.99
-     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *(                                                      !srv 07.07.99
-     &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)    !srv 07.07.99
-     &           )/2.0e0_R8                                             !srv 07.07.99
-     &          *0.5e0_R8*(ua(ix,iy,is)**2 +                            !srv 07.07.99 18.02.00 23.07.05
-     &                     ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)   !srv 07.07.99 23.07.05
-     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
-     &          /2.0e0_R8                                               !srv 07.07.99
-     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 07.07.99
-     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
+               fchinert(ix,iy,1)=fchinert(ix,iy,1)                       !srv 07.07.99
+     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy)  ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
+     &          *(                                                       !srv 07.07.99
+     &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)     !srv 07.07.99
+     &           )/2.0e0_R8                                              !srv 07.07.99
+     &          *0.5e0_R8*(ua(ix,iy,is)**2 +                             !srv 07.07.99 18.02.00 23.07.05
+     &                     ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)    !srv 07.07.99 23.07.05
+     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
+     &          /2.0e0_R8                                                !srv 07.07.99
+     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
+     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                      !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-          endif                                                         !srv 07.07.99
-         enddo                                                          !srv 07.07.99
+     &            OnedBsqc(ix,iy))                                       !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+          endif                                                          !srv 07.07.99
+         enddo                                                           !srv 07.07.99
 
 
         elseif(fch_inert_style.eq.1) then
 
-         do is = 0, ns-1                                                !srv 07.07.99
-          if (.not.is_neutral(is)) then                                 !srv 07.07.99
-*         X-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny-1                                                 !srv 07.07.99
-             do ix=0,nx                                                 !srv 07.07.99
-               if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*    !srv 23.07.05 11.01.13
-     &          facdrift(ix,iy)*                                        !srv 22.06.08
-     &          (ua(ix,iy,is)**2*na(ix,iy,is)+                          !IYS 01.02.2013
-     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*                 !IYS 01.02.2013
+         do is = 0, ns-1                                                 !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
+*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+               if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02
+                fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*      ! signmf*    !srv 23.07.05 11.01.13
+     &          facdrift(ix,iy)*                                         !srv 22.06.08
+     &          (ua(ix,iy,is)**2*na(ix,iy,is)+                           !IYS 01.02.2013
+     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*                  !IYS 01.02.2013
      &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8  !srv 07.07.99
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))           !srv 07.07.99
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))         !srv 07.07.99
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-*         Y-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny                                                   !srv 07.07.99
-             do ix=0,nx-1                                               !srv 07.07.99
+     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
+     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
+     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
+     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-                fchinert(ix,iy,1)=fchinert(ix,iy,1)                     !srv 07.07.99
-     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *0.5e0_R8*(na(ix,iy,is)*ua(ix,iy,is)**2 +               !IYS 01.02.2013
-     &          na(bottomix(ix,iy),bottomiy(ix,iy),is)*                 !IYS 01.02.2013
-     &          ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)              !IYS 01.02.2013 !sv 07.07.99
-     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
-     &          /2.0e0_R8                                               !srv 07.07.99
-     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 07.07.99
-     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
+                fchinert(ix,iy,1)=fchinert(ix,iy,1)                      !srv 07.07.99
+     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
+     &          *0.5e0_R8*(na(ix,iy,is)*ua(ix,iy,is)**2 +                !IYS 01.02.2013
+     &          na(bottomix(ix,iy),bottomiy(ix,iy),is)*                  !IYS 01.02.2013
+     &          ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)               !IYS 01.02.2013 !sv 07.07.99
+     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
+     &          /2.0e0_R8                                                !srv 07.07.99
+     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
+     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                      !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-          endif                                                         !srv 07.07.99
-         enddo                                                          !srv 07.07.99
+     &            OnedBsqc(ix,iy))                                       !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+          endif                                                          !srv 07.07.99
+         enddo                                                           !srv 07.07.99
 
         elseif(fch_inert_style.eq.2) then
 
-         do is = 0, ns-1                                                !srv 07.07.99
-          if (.not.is_neutral(is)) then                                 !srv 07.07.99
-*         X-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny-1                                                 !srv 07.07.99
-             do ix=0,nx                                                 !srv 07.07.99
-               if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*    !srv 23.07.05 11.01.13
-     &          facdrift(ix,iy)*                                        !srv 22.06.08
-     &         (ua(ix,iy,is)**2 * na(ix,iy,is) +                        ! IYS 04.03.2019
+         do is = 0, ns-1                                                 !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
+*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+               if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02
+                fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*      ! signmf*    !srv 23.07.05 11.01.13
+     &          facdrift(ix,iy)*                                         !srv 22.06.08
+     &         (ua(ix,iy,is)**2 * na(ix,iy,is) +                         ! IYS 04.03.2019
      &          ua(leftix(ix,iy),leftiy(ix,iy),is)**2 *
      &          na(leftix(ix,iy),leftiy(ix,iy),is)) *
      &          gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-*         Y-COMPONENT OF INERTIA CURRENT                                !srv 07.07.99
-           do iy=0,ny                                                   !srv 07.07.99
-             do ix=0,nx-1                                               !srv 07.07.99
+     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-               fchinert(ix,iy,1)=fchinert(ix,iy,1)                      !srv 07.07.99
-     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *0.5e0_R8*( na(ix,iy,is) * ua(ix,iy,is)**2 +            ! IYS 04.03.2019
+                fchinert(ix,iy,1)=fchinert(ix,iy,1)                      !srv 07.07.99
+     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy)  ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
+     &          *0.5e0_R8*( na(ix,iy,is) * ua(ix,iy,is)**2 +             ! IYS 04.03.2019
      &           na(bottomix(ix,iy),bottomiy(ix,iy),is) *
      &           ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2) *
      &           gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                      !srv 07.07.99
-               endif                                                    !srv 26.11.02
-             enddo                                                      !srv 07.07.99
-           enddo                                                        !srv 07.07.99
-          endif                                                         !srv 07.07.99
-         enddo                                                          !srv 07.07.99
+     &            OnedBsqc(ix,iy))                                       !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+          endif                                                          !srv 07.07.99
+         enddo                                                           !srv 07.07.99
         else
           CALL XERRAB ('B2TINER -- INCORRECT VALUE OF fch_inert_style')
         endif
-      endif                                                             !srv 07.07.99
+      endif                                                              !srv 07.07.99
 
-      if(guard_flows.eq.0) then                                         !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -234,7 +233,6 @@ cxpb turn off poloidal flows in core boundary
             endif
           enddo
         endif
-
       endif
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS

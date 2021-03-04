@@ -208,11 +208,10 @@ c Drift terms
      & facdrift, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)
-
+      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
+*   ..compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
-     &  ehx_, zeff, fch_p)
-
+     & ehx_, zeff, fch_p)
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!
 *   ..compute fchx, concx
@@ -264,10 +263,10 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               t0_nd = cone0_nd*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
             else
-              t0    = 0.0_R8                                             !srv 15.10.18
+              t0    = 0.0_R8
               t0_nd = 0.0_R8
             endif
-            tex0 = tex/(1.0_R8+t0)                                       !srv 15.10.18
+            tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
             if (style.eq.0) then                                         !srv 15.10.18 {
               fch_p(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
@@ -295,7 +294,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &                         -calf(ix,iy,0)*tex0_nd
             end if
             conc(ix,iy,0) = csig(ix,iy,0)
-            if(fch_ion_neutral.ne.0.0e0_R8 .and.                         !xpb
+            if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
      &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is) .and. nint(zn(is)).eq.1) then
@@ -336,10 +335,10 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
-            fch_52(ix,iy,1)= csig_an(ix,iy,1)*ehy_po-calf(ix,iy,1)*
+            fch_52(ix,iy,1)=csig_an(ix,iy,1)*ehy_po-calf(ix,iy,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
             conc(ix,iy,1) = csig(ix,iy,1)
-            if(fch_ion_neutral.ne.0.0e0_R8 .and.                         !xpb
+            if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
      &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then

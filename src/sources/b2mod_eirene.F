@@ -380,7 +380,7 @@ c not sure this is the right place
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
         if (lfeedback) then
-           if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+          if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
      1       .or.nesepm_pfr.gt.0.0_R8) then !{
             call xertst (cbirso.le.pfrregno1.and.
      1       pfrregno1.le.cbirso+cbnrso-1,
@@ -569,7 +569,8 @@ c*** tflux(i)  : source strength for stratum i as given to Eirene
 c*** tfl(i,j)  : the same for species j only
 c*** flux_scale: conversion factor Eirene-B2
 c*** recyc     : fudge factors for the sources in B2
-
+cwdk only take outgoing fluxes into account in tflux and tfl, since
+cwdk ingoing fluxes will be cut off on the EIRENE side
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
@@ -600,12 +601,13 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)-
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+                tflux(istrai)=tflux(istrai)-min(0.0_R8,
+     1     fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     2         rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .      min(0.0_R8,
+     1     fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     2         rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is))
               end do !}
             end if !}
           end do !}
@@ -613,10 +615,11 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+                tflux(istrai)=tflux(istrai)+max(0.0_R8,
+     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+     .           max(0.0_R8,
+     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is))
               end do !}
             end if !}
           end do !}
@@ -624,12 +627,13 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)-
+                tflux(istrai)=tflux(istrai)-min(0.0_R8,
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
+     .      min(0.0_R8,
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is))
               end do !}
             end if !}
           end do !}
@@ -637,10 +641,11 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+                tflux(istrai)=tflux(istrai)+max(0.0_R8,
+     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+     .           max(0.0_R8,
+     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is))
               end do !}
             end if !}
           end do !}
@@ -3857,8 +3862,15 @@ cxpb  core recycling into ions of the highest ionisation stage
      .             rf0*abs(t0)
                   if (balance_netcdf.ne.0) then
                     eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
-     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))
-     .               -rf0*abs(t0)
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+
+     .               rf0*abs(t0)
+                  endif
+                  sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))-
+     1             rf0*abs(t0)/na(ix,-1,ishigh(j))
+                  if (balance_netcdf.ne.0) then
+                    eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))-
+     .               rf0*abs(t0)/na(ix,-1,ishigh(j))
                   endif
                 elseif(linearisation.eq.0) then !}{
                   sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0

@@ -11,7 +11,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       real (kind=R8) ::
      *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
      &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
@@ -33,7 +33,7 @@
 *     B2USC9 computes a correction towards the solution of the
 *     continuity equation for one atomic species using a
 *     nine-point stencil.
-*     
+*
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
@@ -113,8 +113,8 @@
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                   !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')                   !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                   !srv 13.10.06 }
 !*    ..test edge values of pccb1                                       !srv 15.04.05
 !       call b2xvfx (nx, ny, pccb1, 'pccb1')                            !srv 15.04.05
       endif
@@ -142,8 +142,8 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
-     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+             !srv 13.10.06 {
+     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))          !srv 13.10.06 }
         else
           aa9(ix,iy,0) = rscal(pb(ix,iy))
         endif
@@ -226,7 +226,7 @@
       enddo
 
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)             !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)              !srv 18.05.02
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx

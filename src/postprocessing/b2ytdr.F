@@ -510,7 +510,7 @@ c 2002-09-11: logic revised
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
-      character*10, allocatable :: species_name(:)
+      character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical time_dep_puff1(nstraid)
@@ -10985,7 +10985,7 @@ cxpb as they no longer necessarily point to the same species
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
      .     iatm1,imol1,iion1,
-     >     nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) =
      .       sputter_tmp(ib,0:ns1-1)

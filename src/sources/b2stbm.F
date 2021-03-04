@@ -304,7 +304,7 @@ cxpb And then derive: ua_ext
          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
      .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
 cxpb Computing ua from fa is what we really want to do
-         if (.false.) then
+         if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then

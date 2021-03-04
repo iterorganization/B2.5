@@ -17,14 +17,13 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
-*   ..common blocks
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2UX11P solves a nine-point system of equations. This routine is
+*     B2UX11P solves an eleven-point system of equations. This routine is
 *     an interface to an iterative or a direct solver; the choice
 *     depends upon an internal parameter.
 *
@@ -32,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine solves a system of equations of the form associated
-*     with the five-point discretization of a single scalar partial
+*     with the five-point discretisation of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
 *     parameter "style" has the value 0 then a solver based on Stone
@@ -70,19 +69,17 @@
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
-
 !      real (kind=R8), allocatable :: a(:)
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
-
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
-*   ..initialization
+*   ..initialisation
       save ncall, style, acpar, cpu
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
       !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
       !$OMP THREADPRIVATE (indexes, iasave, jasave)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
@@ -112,8 +109,8 @@
          n_nonzeros=mult_nonzero*nnd
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_11diag                               !srv 02.04.18
-!         call iniilu_9(nx+2,ny+2)                                      !srv 13.10.06
+         call alloc_b2mod_ma28_for_11diag                              !srv 02.04.18
+!         call iniilu_9(nx+2,ny+2)                                     !srv 13.10.06
          irnh = 0                                                      !srv 15.05.07
          icnh = 0                                                      !srv 15.05.07
          nltrsol=2
@@ -127,28 +124,30 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-       write(*,*) 'Allocating space for solver b2ux11p'
-       if (style.eq.0) then
-        call xerrab ('b2ux11p: Style 0 is not implemented')
+        write(*,*)
+     .   'Allocating space for solver for 11-point-stencil matrix'  !sv 11.01.00
+        if (style.eq.0) then
+          call xerrab ('Style not applicable to 11-point-stencil!')
 *    ..obtain workspace for iluter
-        allocate(aaf(1:n2*5))
-        allocate(wrk0(1:n2))
-        allocate(wrk1(1:n2))
-        allocate(wrk2(1:n2))
-        allocate(iwrk(1:1))
-       else if (style.eq.1) then
-        call xerrab ('b2ux11p: Style 1 is not implemented')
+          allocate(aaf(1:n2*5))
+          allocate(wrk0(1:n2))
+          allocate(wrk1(1:n2))
+          allocate(wrk2(1:n2))
+          allocate(iwrk(1:1))
+        else if (style.eq.1) then
+          call xerrab ('Style not applicable to 11-point-stencil!')
 *    ..obtain workspace for slv5pt
-        allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
-        allocate(wrk0(1:n2))
-        allocate(wrk1(1:1))
-        allocate(wrk2(1:1))
-        allocate(iwrk(1:n2))
-       else if (style.eq.2) then
-        allocate(indexes(1:3,1:solvdim))
-        allocate(iasave(1:solvdim),jasave(1:solvdim))
-       endif
-       write(*,*) 'Allocated space for solver b2ux11p'
+          allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
+          allocate(wrk0(1:n2))
+          allocate(wrk1(1:1))
+          allocate(wrk2(1:1))
+          allocate(iwrk(1:n2))
+        else if (style.eq.2) then
+          allocate(indexes(1:3,1:solvdim))
+          allocate(iasave(1:solvdim),jasave(1:solvdim))
+        endif
+        write(*,*)
+     .   'Allocated space for solver for 11-point-stencil matrix'   !sv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -205,7 +204,7 @@
 
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
-      subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,            !srv 02.04.18 {
+      subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,          !srv 02.04.18 {
      *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_openmp
@@ -266,7 +265,7 @@
       if(ncall.eq.0) then
         call ipgeti ('storage_11_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_11_kwrite_bnr', kwrite_bnr)
-        if (in_parallel() .and. 
+        if (in_parallel() .and.
      &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
          !$OMP MASTER
          write(*,*) 'storage_11 OpenMP warning: no file IO ' ,
@@ -314,7 +313,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-          if( aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,1)
               indexes(1,k)=ix
@@ -406,7 +405,7 @@
               a(k) = aa11(ix,iy,-2)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= -2
+              indexes(3,k)=-2
               ia(k) = i
               ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
@@ -416,7 +415,7 @@
               a(k) = aa11(ix,iy,-5)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= -5
+              indexes(3,k)=-5
               ia(k) = i
               ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1

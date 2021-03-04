@@ -42,7 +42,7 @@
      3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  wedia(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1, 0:ns-1),
+     &  wedia(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1),
      &  fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
 *   ..common blocks
@@ -85,16 +85,15 @@
      &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny),
      &   vsprcur                                                         !srv 02.04.18
       real (kind=R8) ::
-     &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
+     &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny),     !srv 14.07.10 }
+     &   nete(-1:nx,-1:ny), netec(-1:nx,-1:ny), nec(-1:nx,-1:ny),
+     &   weight(-1:nx,-1:ny)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                            !srv 13.01.17
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures
-      real (kind=R8) :: nete(-1:nx,-1:ny),
-     *    netec(-1:nx,-1:ny), nec(-1:nx,-1:ny), weight(-1:nx,-1:ny)
-
       external xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
 *   ..initialisation
@@ -315,8 +314,8 @@ csw 30sep2013, added check for no_hybr
            elseif (drift_style.eq.2) then
             flo_eir = flo_eir +
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
-     $       gs(ix,iy,1)
-            end if
+     &       gs(ix,iy,1)
+           end if
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
             scur =
      &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
@@ -327,7 +326,7 @@ csw 30sep2013, added check for no_hybr
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
-          endif
+           endif
            flo_eir = flo_eir + scur
            t0 = (na(ix,iy,is) +na(bottomix(ix,iy),bottomiy(ix,iy),is))/
      1      2.0_R8
@@ -364,29 +363,29 @@ csw 30sep2013, added check for no_hybr
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
      &       gs(ix,iy,1)
            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then     !srv 20.09.06
              scur =
      &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
-     &          fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/          !srv 02.10.17
+     &         fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/             !srv 02.10.17
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &             na(ix,iy,is))/2.0_R8)
-             vsprcur = vis_per*fchvisper(ix,iy,1)/qe                    !srv 02.04.18
+             vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
            else
              scur = 0.0_R8
-             vsprcur = 0.0_R8                                            !srv 02.04.18
-          endif
+             vsprcur = 0.0_R8                                             !srv 02.04.18
+           endif
            flo_eir = flo_eir + scur
-           if(no_Ptncr_y_co.eq.0) then                                   !srv 06.07.06 {
+           if(no_Ptncr_y_co.eq.0) then                                    !srv 06.07.06 {
              con_eir = hybr(flo_eir,cdna(ix,iy,1,is))
            else
              con_eir = cdna(ix,iy,1,is)
            endif
-           fna_eir(ix,iy,1,is) = flo_eir*                                !srv 14.07.10
+           fna_eir(ix,iy,1,is) = flo_eir*                                 !srv 14.07.10
      &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))
      &      /2.0_R8-con_eir*
      &      (na(ix,iy,is)-na(bottomix(ix,iy),bottomiy(ix,iy),is))
-     &      + vsprcur                                                    !srv 02.04.18
-         endif !no_hybr =0
+     &      + vsprcur                                                     !srv 02.04.18
+          endif !no_hybr =0
          endif
         enddo
        enddo
@@ -400,7 +399,7 @@ c Drift terms
         if (drift_style.eq.0) then
 
           wedia_=0.0_R8
-          wrk0=0.0_R8  ! compute .... on the cell faces                    !srv 14.07.10 {
+          wrk0=0.0_R8  ! compute ... on the cell faces
           do iy=0,ny
             do ix=-1,nx
               wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
@@ -719,7 +718,7 @@ cxpb turn off poloidal flows in core boundary
           enddo
         else
           do ix = -1, nx
-            if (on_closed_surface(ix,-1)) then
+            if(on_closed_surface(ix,-1)) then
               fna_eir(ix,-1,0,:) = 0.0_R8
               fne_eir(ix,-1,0) = 0.0_R8
               fhe_eir(ix,-1,0) = 0.0_R8

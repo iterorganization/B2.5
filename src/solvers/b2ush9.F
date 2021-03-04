@@ -64,8 +64,11 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
+      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9)
+      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
       integer ireg, ileft, ibot
       save ncall
+      !$OMP THREADPRIVATE(ncall)
       real (kind=R8) ::
      *   t0, t1
       logical new_matrix
@@ -370,7 +373,7 @@
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solveee(ireg))
      >    aa9(ix,iy,-1) = t1
-        endif                                                         !srv 26.11.02 {
+        endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
        enddo
       enddo
@@ -486,7 +489,7 @@
      &     -t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
          if (solveei(ireg))
      >    aa9(ix,iy,-1) = t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
-        endif                                                         !srv 26.11.02 {
+        endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
        enddo
       enddo

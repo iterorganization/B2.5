@@ -108,66 +108,66 @@
      1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_ixx,
      1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k                                  !srv 26.11.02
-      integer, save :: istyle_average_pr = 0, istyle_fchi = 0        !srv 08.08.02 14.02.05
-      integer, save :: iform_corr_dia = 0                            !srv 25.07.05
+      integer       :: num_inner, k                                     !srv 26.11.02
+      integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
+      integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0,
-     &                 iout = 0,                                     !srv 13.10.06
+     &                 iout = 0,                                        !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
-      integer, save :: istyle_cur_contr_on_S_and_N = 2               !srv 01.02.09 03.03.15
-      integer, save :: bcene_16_style = 0, bceni_16_style = 0        !srv 16.02.12
-      integer, save :: bcene_15_style = 0                            !srv 19.04.13
-      integer, save :: pot_eq = 1                                    !srv 27.02.13
+      integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
+      integer, save :: bcene_16_style = 0, bceni_16_style = 0           !srv 16.02.12
+      integer, save :: bcene_15_style = 0                               !srv 19.04.13
+      integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
-      logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot !srv 16.02.12 12.02.15 29.09.15
-      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01         !srv 14.10.99
-      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01      !IYS 07.03.2013 11.04.13
-      real (kind=R8) , save :: senepar, senipar,                     !srv 16.02.12 29.09.15
+      logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
+      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
+      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
+      real (kind=R8) , save :: senepar, senipar,                        !srv 16.02.12 29.09.15
      &                         sconpar(0:DEF_NSD-1), scurpar
-      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,    !Solovyev 01.05.14
-     * po_prev, po_curr, coeff_16                                    !Solovyev 01.05.14, 24.05.14
-      integer, save :: bcpot_16_step = 50                            !Solovyev 23.05.14 !srv 29.09.15 }
+      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
+     * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
+      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
       integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
-     *  vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,             !srv 15.11.07
+     *  vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,                !srv 15.11.07
      1  t3, totflux, weight,
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, totfluxn, totfluxi
-     &  ,pzaverage, pzsum, volsum                                    !srv 24.03.99 18.01.02
-     &  ,ua2sum, ua2average(0:ns-1)                                  !srv 07.04.00 15.02.02
-     &  ,uasum, uaaverage(0:ns-1)                                    !srv 15.02.02
-     &  ,nesum, tisum, tiaverage, tesum                              !srv 15.12.00 25.01.02
-     &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                  !srv 22.01.02 18.10.04
-      real (kind=R8) :: bzhzsum, bzhzaverage                         !lk 20.11.07
+     &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
+     &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
+     &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
+     &  ,nesum, tisum, tiaverage, tesum                                 !srv 15.12.00 25.01.02
+     &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
+      real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
      *  pr(-1:nx,-1:ny), wdia(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
      *  uu(-1:nx,-1:ny,0:ns+ns_ext-1),
      *  sx(-1:nx,-1:ny), ud(-1:nx,-1:ny,0:ns-1),
-     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),         !srv 24.08.08
-     &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                          !srv 23.09.08
-      real (kind=R8), save ::                                        !srv 16.02.12
+     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),            !srv 24.08.08
+     &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                             !srv 23.09.08
+      real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                          !srv 29.09.15
+     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8       !srv 02.10.17
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                        phm2 = 1.0e0_R8,
-     &                        corr_flux   = 0.0e0_R8                 !srv 25.07.05
+     &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
-      character chns*3, chk*1                                        !srv 11.07.05
+      character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species, ishigh
-      logical, save :: BCCON14(NBCD)                                 !srv 20.09.17
+      logical, save :: BCCON14(NBCD)                                    !srv 20.09.17
       logical, save :: consistent
       real (kind=R8) ::
-     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,  !srv 01.02.09
-     *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
+     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
+     *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
-      integer, save :: fix_sx_in_fhe_sheath = 1                      !srv 08.05.09
+      integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
       integer, save :: use_eirene, no_current, ionising_core
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
@@ -1264,7 +1264,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &              vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
-                else
+                else if (drift_style.gt.0) then
                   t0 =
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*0.5_R8*
@@ -1308,7 +1308,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &             vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-                else
+                else if (drift_style.gt.0) then
                   t0 =
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*0.5_R8*
@@ -1503,8 +1503,8 @@ cwdk  now need to recompute full diamagnetic component for ud
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      *           max(0.0e0_R8,
-     .               s0*(vadia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
-     *                  vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)))
+     .             s0*(vadia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
+     *                vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)))
               else
                 t0 = fnaPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
                 if (t0.ge.0.0_R8) then
@@ -1518,7 +1518,7 @@ cwdk  now need to recompute full diamagnetic component for ud
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      &           max(0.0e0_R8,
-     .               s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)) !lk 12.12.07 }
+     .             s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is))   !lk 12.12.07 }
               endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
@@ -1559,8 +1559,8 @@ cwdk  now need to recompute full diamagnetic component for ud
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,s0*vaecrb(
-     .               rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)) !lk 12.12.07 }
+     .             rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is))   !lk 12.12.07 }
               endif                                                    !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
@@ -1582,8 +1582,8 @@ cwdk  now need to recompute full diamagnetic component for ud
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      *           max(0.0e0_R8,
-     .               s0*(vadia(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
-     *                  vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+     .             s0*(vadia(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
+     *                vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
               else
                 t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
                 if (t0.ge.0.0_R8) then
@@ -1597,7 +1597,7 @@ cwdk  now need to recompute full diamagnetic component for ud
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,
-     .               s0*vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)) !lk 12.12.07 }
+     .             s0*vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is))   !lk 12.12.07 }
               endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSE
@@ -4569,7 +4569,7 @@ cxpb  and max(,,) statement for stability
      .               fix_sx_in_fhe_sheath.eq.0) then
                 NUEOUT=MIN(0.0_R8, NUEOUT -
      &           fch(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/QE )
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/QE)
               elseif(fix_fch_in_fhe_sheath.eq.2 .or.
      .               fix_sx_in_fhe_sheath.eq.1) then
                 NUEOUT=MIN(0.0_R8, NUEOUT -
@@ -4672,11 +4672,11 @@ cxpb  and max(,,) statement for stability
               if(fix_fch_in_fhe_sheath.eq.0) then
                 NUEOUT=MAX(0.0_R8, NUEOUT -
      .           fch(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/QE )
+     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/QE)
               elseif(fix_fch_in_fhe_sheath.eq.1 .and.
      .               fix_sx_in_fhe_sheath.eq.0) then
                 NUEOUT=MAX(0.0_R8,
-     .           NUEOUT - fch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/QE )
+     .           NUEOUT - fch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/QE)
               elseif(fix_fch_in_fhe_sheath.eq.2 .or.
      .               fix_sx_in_fhe_sheath.eq.1) then
                 NUEOUT=MAX(0.0_R8,
@@ -7558,7 +7558,7 @@ cxpb          endif
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      .         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
      &         fhiPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
-            endif                                                        !srv 13.10.06 }
+            endif                                                       !srv 13.10.06 }
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=15, NOT AVAILABLE FOR S,N')
@@ -8808,6 +8808,15 @@ cxpb Careful here because of BC number clash
      .          TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      .      -PBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)+1) =
+     &          qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
+     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -8823,6 +8832,15 @@ cxpb Careful here because of BC number clash
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-PBIG*
      .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)) =
+     &          qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
+     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)

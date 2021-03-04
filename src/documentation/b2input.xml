@@ -349,13 +349,13 @@
 			<switchgroup>
 				<name>b2stbc_coreregn*</name>
 				<description>
-					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno needs to be set to 0, depending on the actual geometry details.
+					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For standard single-null and double-null cases, the default value of coreregno is 1. For a straight geometry or limiter case, the default value of coreregno is 0.
 					coreregn2 is the boundary index of the second core boundary in case of a double-null geometry, and is not used otherwise.
 				</description>
 				<switch>
 					<name>b2stbc_coreregno</name>
 					<type>integer</type>
-					<default>1</default>
+					<default>See description</default>
 				</switch>
 				<switch>
 					<name>b2stbc_coreregn2</name>
@@ -4693,7 +4693,7 @@
 				<default>0</default>
 				<type>real*8 array of size (NSTRAT,2)</type>
 				<description>
-					The element (istra,1) contains the strength of constant gas puff strata (type 'C') for Eirene in particles/second.
+					The element (istra,1) contains the strength of constant gas puff strata (type 'C') for Eirene in particles/second. Its values overwrite the values provided by the FLUX variables from the strata description in block 7 of the Eirene input file.
 				</description>
 			</switch>
 			<switch>

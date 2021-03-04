@@ -54,6 +54,9 @@
       if (ncall.lt.3) then
       endif
 
+* ..initialize flubv to zero
+      flubv = 0.0_R8
+
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
@@ -63,15 +66,9 @@
          if(leftix(ix,iy).ne.-2) then
           flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*                     !srv 16.10.17
      &      (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
-         else
-          flubv(ix,iy,0) = 0.0e0_R8
          endif
         enddo
        enddo
-
-       flubv(:,:,1) = 0.0_R8
-      else
-       flubv = 0.0_R8
       endif
 
 * ..return

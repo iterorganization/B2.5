@@ -68,10 +68,8 @@
       if (alpha.eq.0.0_R8) then
         hcimx(:,:,0,:) = hcib(:,:,:)
         hcimx(:,:,1,:) = hcib(:,:,:)
-        goto 100
-      endif
 
-      if(flux_limit_style.eq.0) then                              !srv 13.06.08
+      elseif(flux_limit_style.eq.0) then                          !srv 13.06.08
 
        do ix = -1, nx
          do iy = -1, ny
@@ -197,6 +195,7 @@
      .            **(1.0_R8/gamma)
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+                 fllim0fhi(ix,iy,0,is) = t2
                else
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)
                endif
@@ -222,6 +221,7 @@
      .            **(1.0_R8/gamma)
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+                 fllim0fhi(ix,iy,1,is) = t2
                 else
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)
                 endif
@@ -276,12 +276,10 @@
        end do
       endif                                                       !srv 13.06.08 }
 
-  100 continue
-
-       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+      if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+      if (iout.ne.0) then
         allocate(w1(-1:nx,-1:ny))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -306,7 +304,7 @@
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
-       endif
+      endif
 
 *   ..return
       ncall = ncall + 1

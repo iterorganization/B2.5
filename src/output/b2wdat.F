@@ -1496,7 +1496,7 @@
      &   'of the dead region NYISO1', (NYISO1(IS),IS=1,NNISO)
        write (70,*) ' Row number of top right corner ',
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
-       close (70)                                                  !srv
+       close (70)                                                   !srv
 
        open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 

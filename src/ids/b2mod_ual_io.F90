@@ -214,6 +214,7 @@ contains
         !! Internal variables
         character(len=120) :: AM_label  !< Description of A&M data source
         character(len=24) :: source     !< Code source
+        character(len=13) :: spclabel   !< Species label
         character(len=2)  :: plate_name(4) !< Divertor plate name
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ns    !< Total number of B2.5 species
@@ -2550,19 +2551,19 @@ contains
           ! Put label to ion(js).state(is).label
           do is = 1, istion(js)
             ks = ispion(js,is)
-            call species( ks, edge_profiles%ggd( time_sind )%ion( js )% &
-              &   state( is )%label, .false.)
+            call species( ks, spclabel, .false.)
+            edge_profiles%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             do i = 1, nsources
-              call species( ks, edge_sources%source(i)%ggd( time_sind )%ion( js )% &
-                    &   state( is )%label, .false.)
+              call species( ks, spclabel, .false.)
+              edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             end do
-            call species( ks, edge_transport%model(1)%ggd( time_sind )%ion( js )% &
-                &   state( is )%label, .false.)
+            call species( ks, spclabel, .false.)
+            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #if IMAS_MINOR_VERSION > 21
-            call species( ks, radiation%process(1)%ggd( time_sind )%ion( js )% &
-                &   state( is )%label, .false.)
-            call species( ks, radiation%process(2)%ggd( time_sind )%ion( js )% &
-                &   state( is )%label, .false.)
+            call species( ks, spclabel, .false.)
+            radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
+            call species( ks, spclabel, .false.)
+            radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #endif
           end do
 
@@ -3157,8 +3158,8 @@ contains
                edge_profiles%ggd( time_sind )%neutral( j )%label = species_list( js )
                edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
                edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label, &
-                   &         .false. )
+               call species( is, spclabel, .false. )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3184,8 +3185,8 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%label = species_list( js )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-                  call species( is, edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label, &
-                     &   .false. )
+                  call species( is, spclabel, .false. )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
                      &      neutral_type%name(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3210,8 +3211,8 @@ contains
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%ion_index = js
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label, &
-                   &         .false. )
+               call species( is, spclabel, .false. )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3239,8 +3240,8 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list(js)
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               call species( is, radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label, &
-                   &        .false. )
+               call species( is, spclabel, .false. )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3874,7 +3875,7 @@ contains
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
                 !! fmo: Ion momentum flux
-                totFace(:,:,0:1) = 0.0_IDS_real
+                totFace(:,:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
                   call divide_by_areas(nx,ny,fmo(-1,-1,0,ispion(is,js)),tmpFace)
                   call write_face_vector_component(                           &
@@ -3892,10 +3893,10 @@ contains
                     &                     momentum%flux,                      &
                     &   b2FaceData = totFace,                                 &
                     &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                do js = 1, istion(is)
                 !! fllimvisc: Ion parallel momentum transport flux limit
+                do js = 1, istion(is)
                   tmpFace(:,:,0) = fllimvisc(:,:,ispion(is,js))
-                  tmpFace(:,:,1) = IDS_REAL_INVALID
+                  tmpFace(:,:,1) = 1.0_IDS_real
                   call write_face_vector_component(                           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
@@ -5275,7 +5276,7 @@ contains
                         &   time_sind = time_sind )
                 !! fllimvisc: Fluid neutral momentum transport flux limit
                     tmpFace(:,:,0) = fllimvisc(:,:,js)
-                    tmpFace(:,:,1) = IDS_REAL_INVALID
+                    tmpFace(:,:,1) = 1.0_IDS_real
                     call write_face_vector_component(                         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
@@ -6148,6 +6149,11 @@ contains
               & 0.5_R8 * (zeff(ixpos(itrg(i)),iypos(itrg(i))) + &
               &           zeff(topix(ixpos(itrg(i)),iypos(itrg(i))), &
               &                topiy(ixpos(itrg(i)),iypos(itrg(i)))))
+=======
+              & 0.5_R8 * (zeff(ixpos(i),iypos(i)) + &
+              &           zeff(topix(ixpos(i),iypos(i)), &
+              &                topiy(ixpos(i),iypos(i))))
+>>>>>>> develop
             allocate ( summary%local%divertor_plate(i)%zeff%source(1) )
             summary%local%divertor_plate(i)%zeff%source = source
           end do
@@ -8466,7 +8472,7 @@ contains
 
     real(ITM_R8) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
-
+    character(len=13) :: spclabel
 
     !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
@@ -8479,18 +8485,17 @@ contains
     nx = ubound(na, 1)
     ny = ubound(na, 2)
 
-
 !! species block
     allocate(edgecpo%species(ns))
     do is = 0, ns-1
        allocate(edgecpo%species(is+1)%label(1))
-       call species(is, edgecpo%species(is+1)%label, .false.)
+       call species(is, spclabel, .false.)
+       edgecpo%species(is+1)%label = spclabel
        edgecpo%species(is+1)%amn = am(is)
        edgecpo%species(is+1)%zn = zn(is)
        edgecpo%species(is+1)%zmin = zamin(is)
        edgecpo%species(is+1)%zmax = zamax(is)
     enddo
-
 
     !! set up the B2<->CPO mappings
     call b2ITMCreateMap( nx,ny,crx(-1:nx,-1:ny,: ),cry(-1:nx,-1:ny,:),&

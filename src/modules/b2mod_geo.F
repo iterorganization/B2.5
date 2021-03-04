@@ -37,7 +37,7 @@
       data geom_match_dist/1.0e-6_R8/
       logical, save :: b2mod_geo_allocated = .false.
 
-      public :: diff, dist, disx, disy, distc, match
+      public :: abs_diff, dist, disx, disy, distc, match
       public :: divide_by_areas
       public :: cr, cz, hy1, pit, sy
 
@@ -2541,6 +2541,13 @@ c conn
       return
       end subroutine divide_by_areas
 
+      function abs_diff(p1,p2)
+      implicit none
+      real(kind=R8) :: abs_diff, p1, p2
+      abs_diff = abs(p1-p2)
+      return
+      end function abs_diff
+
       function cr(ix,iy)
       implicit none
       integer, intent(in) :: ix, iy
@@ -2556,13 +2563,6 @@ c conn
       cz = 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
       return
       end function cz
-
-      function diff(p1,p2)
-      implicit none
-      real(kind=R8) :: diff, p1, p2
-      diff = abs(p1-p2)
-      return
-      end function diff
 
       function dist(ix,iy,i,j)
       implicit none

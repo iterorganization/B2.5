@@ -1006,9 +1006,9 @@ c
         call my_out(70,nx,ny,vma0(-1,-1,0,is),
      &                              'set_transport_srv_vma0x'//chns)
         call my_out(70,nx,ny,vma0(-1,-1,1,is),
-     &                             'set_transport_srv_vma0y'//chns)
+     &                              'set_transport_srv_vma0y'//chns)
         call my_out(70,nx,ny,hcib(-1,-1,is),
-     &                             'set_transport_srv_hcib'//chns)
+     &                              'set_transport_srv_hcib'//chns)
        enddo
        call my_out(70,nx,ny,hci0,'set_transport_srv_hci0')
        call my_out(70,nx,ny,hce0,'set_transport_srv_hce0')

@@ -2593,7 +2593,7 @@ cxpb Do the recreate to a temporary location and then bring it back
      &      fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &      na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor,
      &      uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi,
-     &      float(rightix), float(topiy))
+     &      rightix, topiy)
         endif
 #endif
         goto 1

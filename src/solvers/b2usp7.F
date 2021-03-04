@@ -78,6 +78,7 @@
       endif
 
 * ..compute the correction
+      aa7 = 0.0_R8
 *   ..compute the five-point matrix
       do iy = -1, ny
        do ix = -1, nx
@@ -132,9 +133,6 @@
         endif
        enddo
       enddo
-*   ..compute the seven-point matrix                               !srv 26.01.00
-      aa7(:,:,-3) = 0.0e0_R8
-      aa7(:,:, 3) = 0.0e0_R8
 
       do iy = -1, ny
        do ix = -1, nx                                              !srv 26.11.02
