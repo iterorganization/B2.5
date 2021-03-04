@@ -143,7 +143,7 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
-      deallocate(ffdata)
+      if (allocated(ffdata)) deallocate(ffdata)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -260,9 +260,11 @@ c***  Standard setup:
       call cf_to_struct(m)
 
 ! now allocate vectors that will be used to interpolate data
-      ndata = maxval(m%cfCvP(1:ncf,2),1)
-      allocate(ffdata(ncf,ndata))
-      ffdata = 0.0_R8
+      if (any(cfread)) then
+        ndata = maxval(m%cfCvP(1:ncf,2),1)
+        allocate(ffdata(ncf,ndata))
+        ffdata = 0.0_R8
+      endif
 
 #ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes

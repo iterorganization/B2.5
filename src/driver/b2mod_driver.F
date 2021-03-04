@@ -1816,6 +1816,11 @@ c new CDF movie option (1st frame at t=0)
      & , only: ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+      use b2mod_batch_average
+     & , only : e_she, e_shi, e_ua, ua_mean, e_kt, po_mean, te_mean,
+     &          na_mean, ti_mean, sna_mean, kt_mean, she_mean, e_po,
+     &          e_smo, shi_mean, naver, e_te, smo_mean, e_ti, e_sna,
+     &          e_na
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l

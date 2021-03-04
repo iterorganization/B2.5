@@ -135,10 +135,6 @@ c        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
       alpha = switch%b2tfnb_alpha
       gamma = switch%b2tfnb_gamma
 
-*   ..set dummy array
-      zeros = 0.0_R8
-      zeros1 = 0.0_R8
-
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
@@ -227,6 +223,7 @@ cwdk                   (original code: simple averaging)
 *     ..linearization coefficients for P.Sch flows
         cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk1 
         cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk1
+        zeros = 0.0_R8
         call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
           dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
@@ -477,9 +474,10 @@ c csc To be added contribution of ubdia
      &   (dpbc(mpg%fcCv(iFc,1)) + dpbc(mpg%fcCv(iFc,2)))*
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
       enddo
+!$AD DEBUG-HERE b2tfnb_user10 true true
       cdpb(:,1) = 0.0_R8
       term   = -cdpb(:,0)*(dpb(:,0) - dpbm)
-
+!$AD DEBUG-HERE b2tfnb_user11 true true
       fna_mdf0(:,0)      = fna_mdf0(:,0) + term
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
 
@@ -555,7 +553,10 @@ c csc To be added contribution of ubdia
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..compute ExB fluxes for k-model
-      if (isb .eq. ismain) then
+      dv%fna_ExB = 0.0_R8
+      if (isb .eq. ismain .and. switch%solve_keps.gt.0) then
+        zeros = 0.0_R8
+        zeros1 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),zeros,
      &    co%cdna_ExB,dv%fna_ExB,zeros1,dumm1)
       endif
@@ -588,16 +589,17 @@ c csc To be added contribution of ubdia
      &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 0.25_R8*
      &     flob0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
       enddo
-
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
+      zeros = 0.0_R8
       call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cdpb,flob0,conb0)
       dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
       dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
+!$AD DEBUG-HERE b2tfnb_user42 true true
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
+!$AD DEBUG-HERE b2tfnb_user43 true true
       dv%conb(:,1,1) = conb0(:,1)*kmprtif                           !wdk is this needed? correct? probably always zero?
       dv%conb(:,:,2) = dv%conb(:,:,1)
-
 *   ..flux limit
       if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.          !srv 20.11.08
      *     switch%b2tlc0_alpha.eq.0.0_R8 ) then                                   ! neutral flux limit
