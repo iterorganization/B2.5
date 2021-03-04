@@ -8248,7 +8248,11 @@ cxpb  Start rewrite of block 7
         do ISTRA=1,NSTRAI
           if (savestratum(istra)) then
             is = is + 1
-            indsrc(is) = indsrc(istra)
+            if (indsrc(istra).eq.-1.and..not.nlvol(istra)) then
+              indsrc(is) = 1
+            else
+              indsrc(is) = indsrc(istra)
+            endif
           endif
         enddo
         NSTRA1 = is
