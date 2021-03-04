@@ -23,7 +23,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2sihs_
+     & , only : ncall_b2sihs_, ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17

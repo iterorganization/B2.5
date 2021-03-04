@@ -104,13 +104,12 @@
 *.declarations
 
 *   ..local variables
-      integer moitlv,                                                    !xpb
-     *  ramp_slow, ier0, iCv
+      integer :: ramp_slow, ier0, iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0, tn_style = 0                             !iyv 06.02.14
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-      save moitlv, ramp_slow                                             !xpb 
+      save ramp_slow                                                     !xpb 
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical quit_residual, main_call
       logical solving(4)
@@ -142,7 +141,6 @@
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
-      data moitlv/-1/
       data ramp_slow/0/
 
 *
@@ -159,9 +157,6 @@
          switch%nstg(1) = 1
          switch%nstg(2) = 0
        end if
-       call ipgeti ('b2mndt_moitlv', moitlv)
-       call xertst (-1.le.moitlv.and.moitlv.le.3,
-     &   'faulty internal parameter moitlv')
        call ipgeti ('b2news_ramp_slow', ramp_slow)
        if (switch%no_solve.eq.1) switch%nstg(0:2)=1
        test_residual=switch%nstg_areshe.gt.0.0_R8.or.
@@ -441,10 +436,10 @@ ctmp.dpc
      &      (1.le.switch%b2mndt_moqtlv.or.istg(0).eq.0).and.
      &      (2.le.switch%b2mndt_moqtlv.or.istg(1).eq.0).and.
      &      (3.le.switch%b2mndt_moqtlv.or.istg(2).eq.0)
-           domoit = 0.le.moitlv.and.
-     &      (1.le.moitlv.or.istg(0).eq.0).and.
-     &      (2.le.moitlv.or.istg(1).eq.0).and.
-     &      (3.le.moitlv.or.istg(2).eq.0)
+           domoit = 0.le.switch%b2mndt_moitlv.and.
+     &      (1.le.switch%b2mndt_moitlv.or.istg(0).eq.0).and.
+     &      (2.le.switch%b2mndt_moitlv.or.istg(1).eq.0).and.
+     &      (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
            if (domoqt) then
             if (mod(ncall_b2mndt,ntim_step_out) .eq. 0) then             !srv 31.01.07

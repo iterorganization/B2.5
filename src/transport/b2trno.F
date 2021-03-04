@@ -23,7 +23,7 @@
      &          nkind_coeff
       use b2mod_ad
      & , only : my_out_folder, my_out_sf, ncall_b2trno, ncall_b2tqna,
-     &          ncall_transp_keps, nsdmax, cvregmax
+     &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),

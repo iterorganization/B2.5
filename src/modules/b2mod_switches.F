@@ -406,6 +406,7 @@ c b2mndt
       integer :: density_control
       integer :: nstg(0:2)
       integer :: b2mndt_moqtlv
+      integer :: b2mndt_moitlv
       real (kind=R8) :: nstg_aresco
       real (kind=R8) :: nstg_areshe
       real (kind=R8) :: nstg_areshi
@@ -809,6 +810,7 @@ c b2mndt
       s % nstg(1) = 1
       s % nstg(2) = 1
       s % b2mndt_moqtlv = 3
+      s % b2mndt_moitlv = -1
       s % nstg_aresco = 0.0_R8
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
@@ -1253,6 +1255,7 @@ c b2mndt
       call ipgeti ('b2mndt_nstg1', s%nstg(1))
       call ipgeti ('b2mndt_nstg2', s%nstg(2))
       call ipgeti ('b2mndt_moqtlv', s%b2mndt_moqtlv)
+      call ipgeti ('b2mndt_moitlv', s%b2mndt_moitlv)
       call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
       call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
@@ -1592,6 +1595,8 @@ c b2mndt
      &  'faulty internal parameter nstg(0:2)')
       call xertst (-1.le.s%b2mndt_moqtlv.and.s%b2mndt_moqtlv.le.3,
      &  'faulty internal parameter moqtlv')
+      call xertst (-1.le.s%b2mndt_moitlv.and.s%b2mndt_moitlv.le.3,
+     &   'faulty internal parameter moitlv')
       call xertst (s%nstg_areshe.ge.0.0_R8,
      &  'faulty internal parameter nstg_areshe')
       call xertst (s%nstg_areshi.ge.0.0_R8,
