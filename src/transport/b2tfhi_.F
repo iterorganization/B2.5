@@ -327,37 +327,35 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
       endif
 
-*   ..compute ExB heat fluxes (ion and electron (!))
-      flo0_ExB = 1.5_R8*dv%fna_ExB
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,flo0_ExB,
-     &  co%chci_ExB,dv%fhi_ExB,dumm0,dumm1)
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,flo0_ExB,
-     &  co%chce_ExB,dv%fhe_ExB,dumm0,dumm1)
-
-*   ..fluxes for k-equation
-cwdk  fflokt and fconkt: fudge factors to approximate enhanced parallel
-cwdk  transport of k due to term
-cwdk  related to (fluctuations in parallel current) * (fluctuations in potential)
-cwdk  in principle: models same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0)
-      flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
-      flokt0(:,1) = dv%fna(:,1,ismain) 
-      cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
-      cdkt0(:,1) = co%cdkt(:,1)
-
-*   ..apply discretization scheme
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
-     &  cdkt0,dv%fkt,dumm0,dumm1)
-
-*   ..contribution from ExB heat fluxes
-cwdk  at the moment: experimental; it is expected that this contriution
-cwdk  is at least partially compensated by the (divergence of the) term
-cwdk  related to (fluctuations in diamagnetic current) * (fluctuations in potential)
-      dv%fkt = dv%fkt + fkt_hie*2.0_R8/3.0_R8*(dv%fhi_ExB + dv%fhe_ExB)
-
-*   ..compute flokt, conkt
-      call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
-     &  dv%flokt,dv%conkt)
-
+      if (switch%solve_keps.gt.0) then
+*     ..compute ExB heat fluxes (ion and electron (!))
+        flo0_ExB = 1.5_R8*dv%fna_ExB
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,flo0_ExB,
+     &    co%chci_ExB,dv%fhi_ExB,dumm0,dumm1)
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,flo0_ExB,
+     &    co%chce_ExB,dv%fhe_ExB,dumm0,dumm1)
+*     ..fluxes for k-equation
+cwdk    fflokt and fconkt: fudge factors to approximate enhanced parallel
+cwdk    transport of k due to term
+cwdk    related to (fluctuations in parallel current) * (fluctuations in potential)
+cwdk    in principle: models same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0)
+        flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
+        flokt0(:,1) = dv%fna(:,1,ismain) 
+        cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
+        cdkt0(:,1) = co%cdkt(:,1)
+*     ..apply discretization scheme
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
+     &    cdkt0,dv%fkt,dumm0,dumm1)
+*     ..contribution from ExB heat fluxes
+cwdk    at the moment: experimental; it is expected that this contriution
+cwdk    is at least partially compensated by the (divergence of the) term
+cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in potential)
+        dv%fkt = dv%fkt + 
+     &           fkt_hie*2.0_R8/3.0_R8*(dv%fhi_ExB + dv%fhe_ExB)
+*     ..compute flokt, conkt
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
+     &    dv%flokt,dv%conkt)
+      endif
 
 #ifdef WG_TODO
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12

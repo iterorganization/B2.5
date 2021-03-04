@@ -32,10 +32,14 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar, nbcd
+      use b2mod_eirdiag
+     & , only : dab2, lkindi, lkindm, lkindp
       use b2mod_ad
      & , only : b2sral_elm_count, my_out_folder, my_out_sf,
      &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
-     &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax
+     &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
+     &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
+     &          ncall_b2tfrn, ncall_b2tiner
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr,

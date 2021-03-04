@@ -20,7 +20,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, ncall_b2trcl, ncall_b2tlnl
+     & , only : my_out_folder, my_out_sf, ncall_b2trcl, ncall_b2tlnl,
+     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
