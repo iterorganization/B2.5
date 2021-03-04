@@ -256,7 +256,7 @@ c*** Calculate the radiation load split by impurity species from B2
       end if !}
 
 #ifdef DBG
-        print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+      print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
 #endif
       if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
 
