@@ -234,8 +234,8 @@ c*** Plot zone label
        else !}{
         i=lena
         lena=mlblprtx
-        lblwldpt(ll)=repeat(' ',8)
-        call resima(lblwldpt(ll))
+        pltzlbl(ll)=repeat(' ',8)
+        call resima(pltzlbl(ll))
         lena=i
        end if !}
 c-----------------------------------------------------------------------

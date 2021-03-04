@@ -6,7 +6,7 @@ endif
 LD_NAG    ?= -L${NAGDIR}/lib -lnag_nag
 LD_NETCDF ?=
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
 ifndef SOLPS_CPP
 DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
 endif

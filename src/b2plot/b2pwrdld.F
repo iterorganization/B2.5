@@ -64,6 +64,8 @@ c
       print '(20i4)',(lbnd(i),i=1,nplgs)
       print *,'luwrk:'
       print '(20i4)',luwrk
+      print *,'lewrk:'
+      print '(20i4)',lewrk
 #endif
 
       k=0

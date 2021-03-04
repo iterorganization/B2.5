@@ -968,13 +968,6 @@ c*** Calculate the peak powers to the targets
 
       if(l_neutflux.lt.0 .or. use_eirene.eq.0) then !{ VK
 c West target
-#ifdef B25_EIRENE
-        js=ltns(1)
-        if (js.gt.0) then
-          ind=eirdiag_nds_ind(js)
-          ias=ind+1
-        end if
-#endif
         hlp_ppwi=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
@@ -993,19 +986,22 @@ c West target
           end do !}
           hlp=hlp/s
 #ifdef B25_EIRENE
-          if (use_eirene.ne.0.and.js.gt.0) hlp=hlp+ewldt_res(iy+ias)
+          if (use_eirene.ne.0) then !{
+            do js=1,nsts !{
+              if (eirdiag_nds_typ(js).ne.2) cycle
+              if (eirdiag_nds_srf(js).ne.0) cycle
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind=eirdiag_nds_ind(js)
+              ias=ind+1-(eirdiag_nds_start(js)-1)
+              hlp=hlp+ewldt_res(iy+ias)
+            end do !}
+          end if !}
 #endif
           hlp_ppwi=max(hlp_ppwi,hlp)
           hlp_s=hlp_s+s
         end do !}
 c East target
-#ifdef B25_EIRENE
-        js=ltns(nncut*2)
-        if (js.gt.0) then
-          ind=eirdiag_nds_ind(js)
-          ias=ind+1
-        end if
-#endif
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
@@ -1023,20 +1019,23 @@ c East target
           end do !}
           hlp=hlp/s
 #ifdef B25_EIRENE
-          if (use_eirene.ne.0.and.js.gt.0) hlp=hlp+ewldt_res(iy+ias)
+          if (use_eirene.ne.0) then !{
+            do js=1,nsts !{
+              if (eirdiag_nds_typ(js).ne.2) cycle
+              if (eirdiag_nds_srf(js).ne.nx) cycle
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind=eirdiag_nds_ind(js)
+              ias=ind+1-(eirdiag_nds_start(js)-1)
+              hlp=hlp+ewldt_res(iy+ias)
+            end do !}
+          end if !}
 #endif
           hlp_ppwo=max(hlp_ppwo,hlp)
           hlp_s=hlp_s+s
         end do !}
 
         if(double_null) then !{
-#ifdef B25_EIRENE
-          js=ltns(3)
-          if (js.gt.0) then
-            ind=eirdiag_nds_ind(js)
-            ias=ind+1
-          end if
-#endif
           hlp_pwou=0.0_R8
           ix=nxtr+1
           hlp_s=0.0_R8
@@ -1055,19 +1054,22 @@ c East target
             end do !}
             hlp=hlp/s
 #ifdef B25_EIRENE
-            if (use_eirene.ne.0.and.js.gt.0) hlp=hlp+ewldt_res(iy+ias)
+            if (use_eirene.ne.0) then !{
+              do js=1,nsts !{
+                if (eirdiag_nds_typ(js).ne.2) cycle
+                if (eirdiag_nds_srf(js).ne.ix) cycle
+                if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+                if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+                ind=eirdiag_nds_ind(js)
+                ias=ind+1-(eirdiag_nds_start(js)-1)
+                hlp=hlp+ewldt_res(iy+ias)
+              end do !}
+            end if !}
 #endif
             hlp_pwou=max(hlp_pwou,hlp)
             hlp_s=hlp_s+s
           end do !}
 
-#ifdef B25_EIRENE
-          js=ltns(2)
-          if (js.gt.0) then
-            ind=eirdiag_nds_ind(js)
-            ias=ind+1
-          end if
-#endif
           hlp_pwiu=0.0_R8
           ix=nxtl
           hlp_s=0.0_R8
@@ -1086,7 +1088,17 @@ c East target
             end do !}
             hlp=hlp/s
 #ifdef B25_EIRENE
-            if (use_eirene.ne.0.and.js.gt.0) hlp=hlp+ewldt_res(iy+ias)
+            if (use_eirene.ne.0) then !{
+              do js=1,nsts !{
+                if (eirdiag_nds_typ(js).ne.2) cycle
+                if (eirdiag_nds_srf(js).ne.ix) cycle
+                if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+                if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+                ind=eirdiag_nds_ind(js)
+                ias=ind+1-(eirdiag_nds_start(js)-1)
+                hlp=hlp+ewldt_res(iy+ias)
+              end do !}
+            end if !}
 #endif
             hlp_pwiu=max(hlp_pwiu,hlp)
             hlp_s=hlp_s+s

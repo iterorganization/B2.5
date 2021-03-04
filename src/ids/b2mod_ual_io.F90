@@ -57,7 +57,8 @@ module b2mod_ual_io
      &          b2stel_shi_ion_bal, b2stel_shi_rec_bal, &
      &          read_balance
     use b2mod_b2plot &
-     & , only : nxtl, nxtr, jxa, jsep
+     & , only : nxtl, nxtr, jxi, jxa, jsep
+    use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
     use eirmod_wneutrals
     use eirmod_comusr &
@@ -153,6 +154,7 @@ contains
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
 #endif
+#include <DIMENSIONS.F>
         type (ids_edge_profiles) :: edge_profiles !< IDS designed to
             !< store data on edge plasma profiles (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -228,6 +230,7 @@ contains
         integer :: ntrgts !< Number of divertor targets
         integer :: p      !< Dummy integer
         integer :: isep(2) !< Array of separatrix regions
+        integer :: itrg(4) !< Array of target indices
         integer, allocatable :: ionstt(:) !< Mapping array
                                           !< from B2-Eirene charged fluids to IDS ion states
         integer, allocatable :: istion(:) !< Number of IDS states for each ion
@@ -236,8 +239,11 @@ contains
            !< ispion(i,j) contains the B2.5 species index for (ion i,state j) or
            !<                      the Eirene molecular ion index
 #ifdef B25_EIRENE
+        integer :: ind    !< Non-standard surface index in resolved list
+        integer :: ias    !< Starting index for non-standard surface in resolved list
         integer :: iss    !< State index
         integer :: iatm   !< Atom iterator
+        integer :: imol   !< Molecule iterator
         integer :: iatm1  !< Hydrogenic atom index in molecule composition
         integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
         integer :: nelems !< Number of elements present in a molecule or molecular ion
@@ -249,7 +255,8 @@ contains
                                           !< from Eirene molecular ions to IDS ion sequences
 #endif
         integer :: nscx, iscx(0:nscxmax-1)
-        integer :: ixpos(4), iypos(4) !< Target positions
+        integer :: ixpos(4), ifpos(4), iypos(4) !< Target positions
+        integer :: idir(4), iysep(4), ixmid(4), ixmax(4)
         integer :: GeometryType !< Geometry identifier number
         integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
@@ -287,9 +294,16 @@ contains
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
-            &             u, qetot, qitot, qemax, qimax, lambda, &
+            &             u, qtot, qetot, qitot, qmax, qemax, qimax, lambda, &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
+        real(IDS_real) :: r_min, r_max, z_min, z_max
+        real(IDS_real) :: flux_expansion(4), extension_r(4), extension_z(4), &
+            &             wetted_area(4), power_convected(4),                &
+            &             power_conducted(4), power_neutrals(4),             &
+            &             power_incident(4), power_flux_peak(4),             &
+            &             power_recomb_neutrals(4),                          &
+            &             recycled_flux(4)
 
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
@@ -315,6 +329,7 @@ contains
         real(IDS_real), save :: nepedm_sol = 0.0_IDS_real
         real(IDS_real), save :: volrec_sol = 0.0_IDS_real
         real(IDS_real), save :: private_flux_puff = 0.0_IDS_real
+        real(IDS_real), save :: neutral_sources_rescale = 1.0_IDS_real
         real(IDS_real), save :: BoRiS = 0.0_IDS_real
         character*8 date
         character*10 ctime
@@ -332,7 +347,7 @@ contains
         character*132 repository
         character*256 filename
         logical match_found, streql, exists, wrong_flow
-        logical at_top, at_bot, at_mid
+        logical at_top, at_bot, at_mid, target_east, target_west
 #ifdef B25_EIRENE
         character*8 eirene_version
         character*31 Eirene_git_version
@@ -369,6 +384,7 @@ contains
         call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
         call ipgetr ('b2stbc_volrec_sol', volrec_sol)
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
+        call ipgetr ('b2mndr_rescale_neutrals_sources', neutral_sources_rescale)
         call ipgeti ('balance_netcdf', balance_netcdf)
         if (balance_netcdf.ne.0) then
           filename='balance.nc'
@@ -1134,6 +1150,387 @@ contains
           summary%global_quantities%power_loss%source = source
 #endif
         end if
+
+        select case (GeometryType)
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          u = 0.0_IDS_real
+          frac = 0.0_IDS_real
+          do ix = 0, nx-1
+            do iy = 0, ny-1
+              match_found = jsep.gt.-1 .and. jsep.le.ny
+              match_found = match_found .and. iy.le.jsep
+              do is = 0, ns-1
+                u = u + rqrad(ix,iy,is) + rqbrm(ix,iy,is)
+                if (match_found) frac = frac + rqrad(ix,iy,is) + rqbrm(ix,iy,is)
+              end do
+#ifdef B25_EIRENE
+              do is = 1, natmi
+                u = u - eneutrad(ix+1,iy+1,is,0)
+                if (match_found) frac = frac - eneutrad(ix+1,iy+1,is,0)
+              end do
+              do is = 1, nmoli
+                u = u - emolrad(ix+1,iy+1,is,0)
+                if (match_found) frac = frac - emolrad(ix+1,iy+1,is,0)
+              end do
+              do is = 1, nioni
+                u = u - eionrad(ix+1,iy+1,is,0)
+                if (match_found) frac = frac - eionrad(ix+1,iy+1,is,0)
+              end do
+#endif
+            end do
+          end do
+          if (u.ne.0.0_IDS_real) then
+            allocate( summary%global_quantities%power_radiated%value( time_sind ) )
+            summary%global_quantities%power_radiated%value( time_sind ) = u
+            allocate( summary%global_quantities%power_radiated%source(1) )
+            summary%global_quantities%power_radiated%source = source
+          end if
+        case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
+            &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
+            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          u = 0.0_IDS_real
+          do ix = 0, nx-1
+            do iy = 0, ny-1
+              if (on_closed_surface(ix,iy) .and. iy.le.jsep) cycle
+              do is = 0, ns-1
+                u = u + rqrad(ix,iy,is) + rqbrm(ix,iy,is)
+              end do
+#ifdef B25_EIRENE
+              do is = 1, natmi
+                u = u - eneutrad(ix+1,iy+1,is,0)
+              end do
+              do is = 1, nmoli
+                u = u - emolrad(ix+1,iy+1,is,0)
+              end do
+              do is = 1, nioni
+                u = u - eionrad(ix+1,iy+1,is,0)
+              end do
+#endif
+            end do
+          end do
+        end select
+
+! Determine divertor plate generic information
+        if (nncut.eq.0) then
+          if (geometryType.eq.GEOMETRY_LINEAR .or. &
+            & geometryType.eq.GEOMETRY_CYLINDER) then
+            ntrgts=0
+            if (boundary_namelist.ne.0) then
+              target_east = .false.
+              target_west = .false.
+              do i=1,nbc
+                if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+                  target_east = bcene(i).eq. 3.or. &
+                        &       bcene(i).eq.12.or.bcene(i).eq.15
+                end if
+                if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+                  target_west = bcene(i).eq. 3.or. &
+                        &       bcene(i).eq.12.or.bcene(i).eq.15
+                end if
+              end do
+              if(target_west) then
+                ntrgts=1
+                plate_name(ntrgts) = bcchar(i)
+                ixpos(ntrgts) = bcpos(i)
+                itrg(ntrgts) = 1
+                ixpos(ntrgts) = ixpos(ntrgts)+target_offset
+                ifpos(ntrgts) = ixpos(ntrgts)+1
+                iypos(ntrgts) = jsep
+                idir(ntrgts) = -1
+                ixmid(ntrgts) = jxa
+                iysep(ntrgts) = jsep
+                flux_expansion(ntrgts) =                                         &
+                 & ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/                    &
+                 &   wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/                  &
+                 & ( wbbc(rightix(topix(bcpos(i),jsep),topiy(bcpos(i),jsep)),    &
+                 &        rightiy(topix(bcpos(i),jsep),topiy(bcpos(i),jsep)),0)/ &
+                 &   wbbc(rightix(topix(bcpos(i),jsep),topiy(bcpos(i),jsep)),    &
+                 &        rightiy(topix(bcpos(i),jsep),topiy(bcpos(i),jsep)),3) )
+                r_max = max(maxval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),1)),       &
+                 &          maxval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),3)))
+                r_min = min(minval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),1)),       &
+                 &          minval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),3)))
+                z_max = max(maxval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),1)),       &
+                 &          maxval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),3)))
+                z_min = min(minval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),1)),       &
+                 &          minval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),3)))
+                extension_r(ntrgts) = r_max - r_min
+                extension_z(ntrgts) = z_max - z_min
+              end if
+              if (target_east) then
+                ntrgts = ntrgts+1
+                itrg(ntrgts) = 2
+                ixpos(ntrgts) = ixpos(ntrgts)-target_offset
+                ifpos(ntrgts) = ixpos(ntrgts)
+                iypos(ntrgts) = jsep
+                idir(ntrgts) = 1
+                ixmid(ntrgts) = jxa
+                iysep(ntrgts) = jsep
+                flux_expansion(ntrgts) =                                         &
+                 & ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/                    &
+                 &   wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/                  &
+                 & ( wbbc(topix(bcpos(i),jsep),topiy(bcpos(i),jsep),0)/          &
+                 &   wbbc(topix(bcpos(i),jsep),topiy(bcpos(i),jsep),3) )
+                r_max = max(maxval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),0)),       &
+                 &          maxval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),2)))
+                r_min = min(minval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),0)),       &
+                 &          minval(crx(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),2)))
+                z_max = max(maxval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),0)),       &
+                 &          maxval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),2)))
+                z_min = min(minval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),0)),       &
+                 &          minval(cry(bc_list_x(1:bc_list_size(i),i),           &
+                 &                     bc_list_y(1:bc_list_size(i),i),2)))
+                extension_r(ntrgts) = r_max - r_min
+                extension_z(ntrgts) = z_max - z_min
+              end if
+            end if
+          else
+            ntrgts = 0
+          end if
+        else
+          ntrgts = 2*nncut
+          plate_name(1) = 'LI'
+          itrg(1) = 1
+          ixpos(1) = -1+target_offset
+          ifpos(1) = 0
+          iypos(1) = topcut(1)
+          idir(1) = -1
+          iysep(1) = topcut(1)
+          r_max = max(maxval(crx(0,0:ny-1,0)),maxval(crx(0,0:ny-1,2)))
+          r_min = min(minval(crx(0,0:ny-1,0)),minval(crx(0,0:ny-1,2)))
+          z_max = max(maxval(cry(0,0:ny-1,0)),maxval(cry(0,0:ny-1,2)))
+          z_min = min(minval(cry(0,0:ny-1,0)),minval(cry(0,0:ny-1,2)))
+          extension_r(1) = r_max - r_min
+          extension_z(1) = z_max - z_min
+          if (nncut.eq.2) then
+            itrg(2) = 2
+            plate_name(2) = 'UI'
+            ixpos(2) = nxtl-target_offset
+            ifpos(2) = nxtl
+            iypos(2) = topcut(2)
+            idir(2) = 1
+            iysep(2) = topcut(2)
+            r_max = max(maxval(crx(nxtl,0:ny-1,0)),maxval(crx(nxtl,0:ny-1,2)))
+            r_min = min(minval(crx(nxtl,0:ny-1,0)),minval(crx(nxtl,0:ny-1,2)))
+            z_max = max(maxval(cry(nxtl,0:ny-1,0)),maxval(cry(nxtl,0:ny-1,2)))
+            z_min = min(minval(cry(nxtl,0:ny-1,0)),minval(cry(nxtl,0:ny-1,2)))
+            extension_r(2) = r_max - r_min
+            extension_z(2) = z_max - z_min
+            itrg(3) = 3
+            plate_name(3) = 'UO'
+            ixpos(3) = nxtr+target_offset
+            ifpos(3) = nxtr+1
+            iypos(3) = topcut(2)
+            idir(3) = -1
+            iysep(3) = topcut(2)
+            r_max = max(maxval(crx(nxtr,0:ny-1,1)),maxval(crx(nxtr,0:ny-1,3)))
+            r_min = min(minval(crx(nxtr,0:ny-1,1)),minval(crx(nxtr,0:ny-1,3)))
+            z_max = max(maxval(cry(nxtr,0:ny-1,1)),maxval(cry(nxtr,0:ny-1,3)))
+            z_min = min(minval(cry(nxtr,0:ny-1,1)),minval(cry(nxtr,0:ny-1,3)))
+            extension_r(3) = r_max - r_min
+            extension_z(3) = z_max - z_min
+          end if
+          itrg(ntrgts) = ntrgts
+          plate_name(ntrgts) = 'LO'
+          ixpos(ntrgts) = nx-target_offset
+          ifpos(ntrgts) = nx
+          iypos(ntrgts) = topcut(1)
+          idir(ntrgts) = 1
+          iysep(ntrgts) = topcut(1)
+          r_max = max(maxval(crx(nx,0:ny-1,0)),maxval(crx(nx,0:ny-1,2)))
+          r_min = min(minval(crx(nx,0:ny-1,0)),minval(crx(nx,0:ny-1,2)))
+          z_max = max(maxval(cry(nx,0:ny-1,0)),maxval(cry(nx,0:ny-1,2)))
+          z_min = min(minval(cry(nx,0:ny-1,0)),minval(cry(nx,0:ny-1,2)))
+          extension_r(ntrgts) = r_max - r_min
+          extension_z(ntrgts) = z_max - z_min
+          if (nncut.eq.1) then
+            ixmid(1) = jxa
+            flux_expansion(1) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+                &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+                &               ( wbbc(topix(0,jsep),topiy(0,jsep),0)/       &
+                &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
+            ixmid(2) = jxa
+            flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+              &                   wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+              &                 ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
+              &                   wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
+          else
+            if (topcut(1).lt.topcut(2)) then
+              ixmid(1) = jxa
+              flux_expansion(1) = &
+                &  ( wbbv(topix(jxa,topcut(1)),topiy(jxa,topcut(1)),0)/    &
+                &    wbbv(topix(jxa,topcut(1)),topiy(jxa,topcut(1)),3) )/  &
+                &  ( wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),0)/        &
+                &    wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),3) )
+            else
+              ixmid(1) = jxi
+              flux_expansion(1) = &
+                & ( wbbv(topix(jxi,topcut(1)),topiy(jxi,topcut(1)),0)/    &
+                &   wbbv(topix(jxi,topcut(1)),topiy(jxi,topcut(1)),3) )/  &
+                & ( wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),0)/        &
+                &   wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),3) )
+            end if
+            if (topcut(2).lt.topcut(1)) then
+              ixmid(2) = jxa
+              flux_expansion(2) = &
+                & ( wbbv(topix(jxa,topcut(2)),topiy(jxa,topcut(2)),0)/    &
+                &   wbbv(topix(jxa,topcut(2)),topiy(jxa,topcut(2)),3) )/  &
+                & ( wbbc(topix(nxtl,topcut(2)),topiy(nxtl,topcut(2)),0)/  &
+                &   wbbc(topix(nxtl,topcut(2)),topiy(nxtl,topcut(2)),3) )
+            else
+              ixmid(2) = jxi
+              flux_expansion(2) = &
+                & ( wbbv(topix(jxi,topcut(2)),topiy(jxi,topcut(2)),0)/    &
+                &   wbbv(topix(jxi,topcut(2)),topiy(jxi,topcut(2)),3) )/  &
+                & ( wbbc(topix(nxtl,topcut(2)),topiy(nxtl,topcut(2)),0)/  &
+                &   wbbc(topix(nxtl,topcut(2)),topiy(nxtl,topcut(2)),3) )
+            end if
+            ixmid(3) = jxa
+            flux_expansion(3) = &
+                & ( wbbv(topix(jxa,topcut(2)),topiy(jxa,topcut(2)),0)/    &
+                &   wbbv(topix(jxa,topcut(2)),topiy(jxa,topcut(2)),3) )/  &
+                & ( wbbc(rightix(topix(nxtr,topcut(2)),                   &
+                &                topiy(nxtr,topcut(2))),                  &
+                &        rightiy(topix(nxtr,topcut(2)),                   &
+                &                topiy(nxtr,topcut(2))),0)/               &
+                &   wbbc(rightix(topix(nxtr,topcut(2)),                   &
+                &                topiy(nxtr,topcut(2))),                  &
+                &        rightiy(topix(nxtr,topcut(2)),                   &
+                &                topiy(nxtr,topcut(2))),3) )
+            ixmid(4) = jxa
+            flux_expansion(4) = &
+                & ( wbbv(topix(jxa,topcut(1)),topiy(jxa,topcut(1)),0)/    &
+                &   wbbv(topix(jxa,topcut(1)),topiy(jxa,topcut(1)),3) )/  &
+                & ( wbbc(topix(nx,topcut(1)),topiy(nx,topcut(1)),0)/      &
+                &   wbbc(topix(nx,topcut(1)),topiy(nx,topcut(1)),3) )
+          endif
+        end if
+        call divide_by_areas(nx,ny,abs(fht),tmpFace)
+        call alloc_b2plot_wall_loading(nlim,nsgmx)
+        do i = 1, 2*max(1,nncut)
+          if (itrg(i).eq.0) cycle
+          qmax = 1.0_IDS_real
+          ixmax(itrg(i)) = ixmid(itrg(i))
+          do ix = ixmid(itrg(i)), ixpos(itrg(i)), idir(itrg(i))
+            qtot = 0.0_IDS_real
+            do iy = iysep(itrg(i))+1, ny
+              qtot = qtot + idir(itrg(i))*fht(ix,iy,0)
+            end do
+            if (abs(qtot).gt.abs(qmax).and.qtot*qmax.gt.0.0_IDS_real) then
+              qmax = qtot
+              ixmax(itrg(i)) = ix
+            end if
+          end do
+          wetted_area(itrg(i)) = 0.0_IDS_real
+          u = maxval(tmpFace(ixmax(itrg(i)),iysep(itrg(i))+1:ny,0)) &
+            &  *exp(-1.0_IDS_real)
+          j = maxloc(tmpFace(ixmax(itrg(i)),iysep(itrg(i))+1:ny,0),dim=1)
+          k = iysep(itrg(i))+j
+          do iy = iysep(itrg(i))+1, ny
+            if (k.gt.iysep(itrg(i))+j) cycle
+            if (tmpFace(ixmax(itrg(i)),iy,0).lt.u) then
+              k = max(k,iy)
+              frac = (tmpFace(ixmax(itrg(i)),iy-1,0)-u)/ &
+                   & (tmpFace(ixmax(itrg(i)),iy-1,0)-    &
+                   &  tmpFace(ixmax(itrg(i)),iy,0))
+              wetted_area(itrg(i)) = wetted_area(itrg(i)) + &
+                   &  frac*gs(ifpos(itrg(i)),iy,0)
+            else
+              wetted_area(itrg(i)) = wetted_area(itrg(i)) + &
+                   &  gs(ifpos(itrg(i)),iy,0)
+            end if
+          end do
+          recycled_flux(itrg(i)) = 0.0_IDS_real
+          power_neutrals(itrg(i)) = 0.0_IDS_real
+          power_incident(itrg(i)) = 0.0_IDS_real
+          power_conducted(itrg(i)) = 0.0_IDS_real
+          power_convected(itrg(i)) = 0.0_IDS_real
+          power_recomb_neutrals(itrg(i)) = 0.0_IDS_real
+          do iy = 0, ny-1
+            u = 0.0_R8
+            do is = 0, ns-1
+              u = u + idir(itrg(i))* &
+                 & (ti(ixpos(itrg(i)),iy) + &
+                 &  te(ixpos(itrg(i)),iy)*rza(ixpos(itrg(i)),iy,is))* &
+                 & (1.5_R8*fna_32(ifpos(itrg(i)),iy,0,is) + &
+                 &  2.5_R8*fna_52(ifpos(itrg(i)),iy,0,is))
+              if (is_neutral(is)) &
+                &  power_neutrals(itrg(i)) = power_neutrals(itrg(i)) + &
+                &    idir(itrg(i))*(ti(ixpos(itrg(i)),iy)* &
+                &   (1.5_R8*fna_32(ifpos(itrg(i)),iy,0,is) +  &
+                &    2.5_R8*fna_52(ifpos(itrg(i)),iy,0,is)) + &
+                &              fhm(ifpos(itrg(i)),iy,0,is))
+              match_found = .true.
+              do j = 1, nstrai
+                if (streql(crcstra(j),'E').or.streql(crcstra(j),'W')) then
+                  if (rcpos(j).eq. &
+                     &  (ixpos(itrg(i))+target_offset*idir(itrg(i))).and. &
+                     &  (rcstart(j).le.iy .and. rcend(j).ge.iy)) then
+                    recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                      &  neutral_sources_rescale*recyc(is,j)* &
+                      &  max(0.0_R8,idir(itrg(i))* &
+                      &  fna(ifpos(itrg(i)),iy,0,is))*zn(is)
+                  end if
+                end if
+              end do
+            end do
+            power_convected(itrg(i)) = power_convected(itrg(i)) + u
+            power_conducted(itrg(i)) = power_conducted(itrg(i))   &
+                 & - u + idir(itrg(i))* &
+                 & (fht(ifpos(itrg(i)),iy,0)-fhj(ifpos(itrg(i)),iy,0))
+            power_incident(itrg(i)) = power_incident(itrg(i)) + &
+                 &  idir(itrg(i))*fht(ifpos(itrg(i)),iy,0)
+          end do
+#ifdef B25_EIRENE
+          do js = 1, nsts
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ifpos(itrg(i))) cycle
+            do iy = 0, ny-1
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind = eirdiag_nds_ind(js)
+              ias = ind+1-(eirdiag_nds_start(js)-1)
+              power_neutrals(itrg(i)) = power_neutrals(itrg(i)) + &
+                   &  ewldt_res(iy+ias)
+              power_incident(itrg(i)) = power_incident(itrg(i)) + &
+                   &  ewldt_res(iy+ias)
+              do imol = 1, nmoli
+                power_recomb_neutrals(itrg(i)) = &
+                   &  power_recomb_neutrals(itrg(i)) + ewldmr_res(imol,iy+ias)
+              end do
+              tmpFace(ifpos(itrg(i)),iy,0) = tmpFace(ifpos(itrg(i)),iy,0) + &
+                &  ewldt_res(iy+ias)/gs(ifpos(itrg(i)),iy,0)
+            end do
+            do iatm = 1, natmi
+              recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                &  wldpa(nlim+js,iatm,0)*zn(eb2atcr(iatm))
+            end do
+            do imol = 1, nmoli
+              do iatm = 1, natmi
+                recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                  &  wldpm(nlim+js,imol,0)*mlcmp(iatm,imol)*zn(eb2atcr(iatm))
+              end do
+            end do
+          end do
+#endif
+          power_flux_peak(itrg(i)) = maxval(tmpFace(ifpos(itrg(i)),0:ny-1,0))
+        end do
+        call dealloc_b2plot_wall_loading
 #endif
 
         !! Write grid & grid subsets/subgrids
@@ -4760,50 +5157,6 @@ contains
         end if
 
 ! Summary divertor plate data
-        if (nncut.eq.0) then
-          if (geometryType.eq.GEOMETRY_LINEAR) then
-            ntrgts=0
-            if (use_eirene.ne.0) then
-              do while (ltns(ntrgts+1).gt.0)
-                ntrgts=ntrgts+1
-              end do
-            else if (boundary_namelist.ne.0) then
-              do i=1,nbc
-                if(bcchar(i).eq.'E'.or.bcchar(i).eq.'W') then
-                  if(bcene(i).eq. 3.or.bcene(i).eq.12.or.bcene(i).eq.15) then
-                    ntrgts=ntrgts+1
-                    plate_name(ntrgts) = bcchar(i)
-                    ixpos(ntrgts) = bcpos(i)
-                    if(bcchar(i).eq.'W') then
-                      ixpos(ntrgts) = ixpos(ntrgts)+target_offset
-                    else if (bcchar(i).eq.'E') then
-                      ixpos(ntrgts) = ixpos(ntrgts)-target_offset
-                    end if
-                    iypos(ntrgts) = jsep
-                  end if
-                end if
-              end do
-            end if
-          else
-            ntrgts = 0
-          end if
-        else
-          ntrgts = 2*nncut
-          plate_name(1) = 'LI'
-          ixpos(1) = -1+target_offset
-          iypos(1) = topcut(1)
-          if (nncut.eq.2) then
-            plate_name(2) = 'UI'
-            ixpos(2) = nxtl-target_offset
-            iypos(2) = topcut(2)
-            plate_name(3) = 'UO'
-            ixpos(3) = nxtr+target_offset
-            iypos(3) = topcut(2)
-          end if
-          plate_name(ntrgts) = 'LO'
-          ixpos(ntrgts) = nx-target_offset
-          iypos(ntrgts) = topcut(1)
-        end if
         if (ntrgts.gt.0) then
           allocate ( summary%local%divertor_plate( ntrgts ) )
           do i = 1, ntrgts
@@ -4813,23 +5166,23 @@ contains
             summary%local%divertor_plate(i)%name%source(1) = source
             allocate( summary%local%divertor_plate(i)%t_e%value( num_time_slices ) )
             summary%local%divertor_plate(i)%t_e%value( time_sind ) = &
-              &  0.5_R8 * (te(ixpos(i),iypos(i))+  &
-              &            te(topix(ixpos(i),iypos(i)), &
-              &               topiy(ixpos(i),iypos(i))))/ev
+              &  0.5_R8 * (te(ixpos(itrg(i)),iypos(itrg(i)))+  &
+              &            te(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev
             allocate( summary%local%divertor_plate(i)%t_e%source(1) )
             summary%local%divertor_plate(i)%t_e%source(1) = source
             allocate( summary%local%divertor_plate(i)%t_i_average%value( num_time_slices ) )
             summary%local%divertor_plate(i)%t_i_average%value( time_sind ) = &
-              &  0.5_R8 * (te(ixpos(i),iypos(i))+  &
-              &            te(topix(ixpos(i),iypos(i)), &
-              &               topiy(ixpos(i),iypos(i))))/ev
+              &  0.5_R8 * (te(ixpos(itrg(i)),iypos(itrg(i)))+  &
+              &            te(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev
             allocate( summary%local%divertor_plate(i)%t_i_average%source(1) )
             summary%local%divertor_plate(i)%t_i_average%source(1) = source
             allocate( summary%local%divertor_plate(i)%n_e%value( num_time_slices ) )
             summary%local%divertor_plate(i)%n_e%value( time_sind ) = &
-              &  0.5_R8 * (ne(ixpos(i),iypos(i))+  &
-              &            ne(topix(ixpos(i),iypos(i)), &
-              &               topiy(ixpos(i),iypos(i))))
+              &  0.5_R8 * (ne(ixpos(itrg(i)),iypos(itrg(i)))+  &
+              &            ne(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))
             allocate( summary%local%divertor_plate(i)%n_e%source(1) )
             summary%local%divertor_plate(i)%n_e%source(1) = source
             do is = 1, nspecies
@@ -4839,9 +5192,9 @@ contains
               nisep = 0.0_R8
               do j = is1, is2
                 nisep = nisep + &
-                  &  0.5_R8 * (na(ixpos(i),iypos(i),j) + &
-                  &            na(topix(ixpos(i),iypos(i)), &
-                  &               topiy(ixpos(i),iypos(i)),j))
+                  &  0.5_R8 * (na(ixpos(itrg(i)),iypos(itrg(i)),j) + &
+                  &            na(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+                  &               topiy(ixpos(itrg(i)),iypos(itrg(i))),j))
               end do
               select case (is_codes(eb2spcr(is)))
               case ('H')
@@ -4920,16 +5273,16 @@ contains
             end do
             allocate( summary%local%divertor_plate(i)%n_i_total%value( num_time_slices ))
             summary%local%divertor_plate(i)%n_i_total%value( time_sind ) = &
-              & 0.5_R8 * (ni(ixpos(i),iypos(i),1) + &
-              &           ni(topix(ixpos(i),iypos(i)), &
-              &              topiy(ixpos(i),iypos(i)),1))
+              & 0.5_R8 * (ni(ixpos(itrg(i)),iypos(itrg(i)),1) + &
+              &           ni(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+              &              topiy(ixpos(itrg(i)),iypos(itrg(i))),1))
             allocate ( summary%local%divertor_plate(i)%n_i_total%source(1) )
             summary%local%divertor_plate(i)%n_i_total%source = source
             allocate( summary%local%divertor_plate(i)%zeff%value( num_time_slices ))
             summary%local%divertor_plate(i)%zeff%value( time_sind ) = &
-              & 0.5_R8 * (zeff(ixpos(i),iypos(i)) + &
-              &           zeff(topix(ixpos(i),iypos(i)), &
-              &                topiy(ixpos(i),iypos(i))))
+              & 0.5_R8 * (zeff(ixpos(itrg(i)),iypos(itrg(i))) + &
+              &           zeff(topix(ixpos(itrg(i)),iypos(itrg(i))), &
+              &                topiy(ixpos(itrg(i)),iypos(itrg(i)))))
             allocate ( summary%local%divertor_plate(i)%zeff%source(1) )
             summary%local%divertor_plate(i)%zeff%source = source
           end do

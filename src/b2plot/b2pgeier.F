@@ -12,20 +12,22 @@ c=======================================================================
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_b2plot_wall_loading
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
 
       integer i,j,k,l,is,iy,jj
+      integer iatm,ind,ias,iss
       real (kind=R8) :: u
       real (kind=R8), allocatable :: hlp_flx(:,:,:)
-      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80,tab
+      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80
       data ftrg /
      ,       'fi_tg_i.dat','fi_tg_iu.dat','fi_tg_ou.dat','fi_tg_o.dat'/
       data trg_label /'inner','inner_top','outer_top','outer'/
 c=======================================================================
 c      print *,'Starting b2pgeier...'      !###
-
-      tab=char(9)
 
 c*** Determine topology and calculate some indices
 
@@ -36,24 +38,36 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
 
       l=1
       u=-1
-      do j=1,ntrgts !{
-        if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
-          l=0
-          u=1
-        end if
-        k=ltrgpos(j)
-        do iy=lytg,ny-1 !{
-          do is=0,ns-1 !{
-            hlp_flx(iy,is,j)=fna(k+1-l,iy,0,is)*u
+      do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
+        if(itrg(j).gt.0) then !{
+          k=ltrgpos(itrg(j))
+          do iy=lytg,ny-1 !{
+            do is=0,ns-1 !{
+              hlp_flx(iy,is,itrg(j))=fna(k+1-l,iy,0,is)*u
+              if (is_neutral(is)) then !{
+                iatm=b2eatcr(is)
+                do iss=1,nsts !{
+                  if (eirdiag_nds_typ(iss).ne.2) cycle
+                  if (eirdiag_nds_srf(iss).ne.ltrgpos(itrg(j))+1) cycle
+                  if (eirdiag_nds_start(iss).gt.iy+1) cycle
+                  if (eirdiag_nds_end(iss).lt.iy+1) cycle
+                  ind=eirdiag_nds_ind(iss)
+                  ias=ind+1-(eirdiag_nds_start(iss)-1)
+                  hlp_flx(iy,is,itrg(j))=hlp_flx(iy,is,itrg(j))+
+     .             wldna_res(iatm,iy+ias)
+                end do !}
+              end if !}
+            end do !}
           end do !}
-        end do !}
+        end if !}
         l=1-l
         u=-u
       end do !}
 
       do j=1,ntrgts !{
-        jj=j
-        if(j.eq.ntrgts) jj=ntrgsx
+        jj=itrg(j)
+        if(j.eq.ntrgts.and..not.(ntrgts.eq.1.and.itrg(1).eq.1))
+     >   jj=ntrgsx
         if(.not.LSN) jj=ntrgsx+1-j
         open(lun,file=ftrg(jj))
         write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a2,i2.2,8x))'
@@ -65,13 +79,8 @@ c        print *,trim(fmt_peak)  !###
      ,                                               is=1,nspecies)
         write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',ns,'(e12.4))'
 c        print *,trim(fmt_peak)  !###
-        if(ntrgts.eq.4) then !{
-          k=j
-        else !}{
-          k=ntrgts
-        end if !}
         do iy=lytg,ny-1 !{
-          write(lun,fmt_peak) iy,(hlp_flx(iy,is,j),is=0,ns-1)
+          write(lun,fmt_peak) iy,(hlp_flx(iy,is,itrg(j)),is=0,ns-1)
         end do !}
         close (lun)
       end do !}
