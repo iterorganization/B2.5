@@ -48,6 +48,8 @@ c*** and for the power flux.
       external streql, ipgetr
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
+c*** Input the DG data and prepare the geometry
+c
       call ipgetr ('b2agmt_1d_width', width)
 c*** Set the default values
       npumplis=0
@@ -56,61 +58,7 @@ c*** Read the data from dg files
       iret=0
       call b2pinp(iret)
       if (iret.eq.1) goto 999
-c*** Re-order jedge data if less than ntrgsx targets
-      if (ntrgsa.lt.ntrgsx) then
-        do i=1,ntrgsa
-          jedge(ntrgsa+i)=jedge(ntrgsx+i)
-          jedge(ntrgsx+i)=0
-        end do
-      end if
-c
-c*** Convert the input wall coordinates into double precision
-c*** and scale them to metres.
-c*** We have now two sets of the wall segments, one saved by Eirene
-c*** and (another) one read from dg file. Only the segments which are
-c*** identical in both sets are to be used for plotting, the rest
-c*** will be filled with the value representing zero in the list-
-c*** sorting routine b2pwsrt. The reference distance along the wall
-c*** will however be calculated from the geometry read from dg file.
-c*** This should allow one to have the same reference frame for the
-c*** radiation and neutral wall load.
-c
-      do i=1,lppp
-        pp1(1,i)=0.001e0_R8*ppp1(1,i)
-        pp1(2,i)=0.001e0_R8*ppp1(2,i)
-        pp2(1,i)=0.001e0_R8*ppp2(1,i)
-        pp2(2,i)=0.001e0_R8*ppp2(2,i)
-      end do
-cc%%%
-c      print *,'After b2pinp',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-cc%%%
-c*** Then sort the target lists
-c*** The shadowing structure must be closed, therefore it starts from
-c*** an arbitrary point.
-
-      lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(iret)
-      if (iret.eq.1) goto 999
-c#ifdef DBG
-c      print *,'After b2pwsrt',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(5x,15i5))','leirlis :',il,
-c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
-c      end do
-c#endif
-      call b2pwltrg
+      call b2pwlprp
 c*** ... and produce the output file
       do i=1,natmi
         text_an(i)=textan(i-1)(2:8)
@@ -398,6 +346,11 @@ c      end if
         write(*,700) 'Gross C erosion',(hlp_s(itrg(i)),i=1,ntrgts)
       end if
       deallocate(hlp_a,hlp_e,hlp_m,hlp_f)
+c
+c*** Calculate the load
+c
+      call b2pwrdld
+
   700 format(1x,a22,':',1p,4e14.3)
   710 format(1x,a2,a20,':',1p,4e14.3)
       return

@@ -60,6 +60,7 @@ c<<<
       print '(a/(1p,5e17.4))','Eastern target: load',
      ,                                      (wldrdld(lppp+ny+i),i=1,ny)
 #endif
+      return
 c>>>
 c======================================================================
-      end
+      end subroutine b2pwrldt
