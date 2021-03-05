@@ -62,7 +62,7 @@
       real (kind=R8) ::
      *   rcx, expu, t0, tav
 *   ..procedures
-      intrinsic sqrt, log, exp, max, dim
+      intrinsic sqrt, log, exp, max
       external subini, subend, xertst, sfill, expu
       external b2xvsg
 *   ..initialisation
