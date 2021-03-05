@@ -3,8 +3,8 @@
 
       subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain,
      &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
-     1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
-     2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
+     1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2,         !srv 09.01.01 01.07.09
+     2  lnlam, chvemx, chvimx, cvsahz,                                   !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
@@ -43,7 +43,7 @@
      &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)     !srv 03.06.03 01.07.09
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),
@@ -51,7 +51,8 @@
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 09.01.01
-     &  fllimvisc(-1:nx,-1:ny,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1),   !srv 09.01.01
+     &  fllimvisc(-1:nx,-1:ny,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),   !srv 09.01.01
      &  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -206,18 +207,18 @@ csw 13mar2012
 *   ..incorporate geometry with hz                                       !srv 09.01.01
       wrk = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, wrk, gs, hx, qz, vsa(-1,-1,0,is),      !srv 01.07.05 {
-     &   cvsahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, wrk, gs, hy, qz, vsa(-1,-1,1,is),
-     &   cvsahz(-1,-1,1,is))                                             !srv 01.07.05 }
+       call b2txcx (nx, ny, mode, wrk, gs, hx, qz,                       !srv 01.07.05 {
+     &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,is))
+       call b2txcy (nx, ny, mode, wrk, gs, hy, qz,
+     &   vsa(-1,-1,1,is), cvsahz(-1,-1,1,is))                            !srv 01.07.05 }
       enddo                                                              !srv 09.01.01
 *   ..incorporate geometry
       call sfill (n2*2*ns*ns, 0.0_R8, csigin(-1,-1,0,0,0), 1)
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa(-1,-1,0,is),
-     &   cvsa(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa(-1,-1,1,is),
-     &   cvsa(-1,-1,1,is))
+       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &   vsa(-1,-1,0,is), cvsa(-1,-1,0,is))
+       call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &   vsa(-1,-1,1,is), cvsa(-1,-1,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
@@ -229,28 +230,30 @@ csw 13mar2012
        enddo
       enddo
 
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce(-1,-1,0),
-     & chce(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce(-1,-1,1),
-     & chce(-1,-1,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci(-1,-1,0),
-     & chci(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci(-1,-1,1),
-     & chci(-1,-1,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig(-1,-1,0),
-     & csig(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig(-1,-1,1),
-     & csig(-1,-1,1))
-      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf(-1,-1,0),
-     & calf(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf(-1,-1,1),
-     & calf(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     & hce(-1,-1,0), chce(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     & hce(-1,-1,1), chce(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     & hci(-1,-1,0), chci(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     & hci(-1,-1,1), chci(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     & sig(-1,-1,0), csig(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     & sig(-1,-1,1), csig(-1,-1,1))
+      call b2txcx (nx, ny, -1, vol, gs, hx, qz,
+     & alf(-1,-1,0), calf(-1,-1,0))
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz,
+     & alf(-1,-1,1), calf(-1,-1,1))
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        if (.not. is_neutral(is))
-     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_cvsahzx'//chns)
+        if (.not. is_neutral(is)) then
+          call my_out(70,nx,ny,cvsahz(-1,-1,0,is),
+     &               'b2trcl_cvsahzx'//chns)
+        endif
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -301,7 +304,8 @@ csw 13mar2012
                 f_luc_et(ix,iy)=f_luc_ki(ix,iy)
                 do is=0,ns-1
                   if(.not.is_neutral(is)) then
-                    cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
+                    cvsa(ix,iy,0,is)=
+     .               cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
                     cvsahz(ix,iy,0,is)=
      .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
                   endif
@@ -334,7 +338,8 @@ csw 13mar2012
               do is=0,ns-1
                 if(.not.is_neutral(is)) then
                   cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
-                  cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
+                  cvsahz(ix,iy,0,is)=
+     .             cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
                 endif
               enddo
               chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
@@ -492,10 +497,10 @@ csw 13mar2012
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if(.not. is_neutral(is))
-     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_luciani_cvsahzx'
-     &              //chns)
-!        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trcl_luciani_cvsahzy'
-!     &              //chns)
+     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),
+     &              'b2trcl_luciani_cvsahzx'//chns)
+!        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),
+!     &              'b2trcl_luciani_cvsahzy'//chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -656,12 +661,15 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &       .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_luciani_fllim_chcex')
+        call my_out(70,nx,ny,chce(-1,-1,0),
+     &             'b2trcl_luciani_fllim_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_fllim_chcey')
-        call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_fllim_calfx')
+        call my_out(70,nx,ny,calf(-1,-1,0),
+     &             'b2trcl_luciani_fllim_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_luciani_fllim_calfy')
         call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_fllim_alfx_c')       !srv 05.07.17
-        call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_fllim_chcix')
+        call my_out(70,nx,ny,chci(-1,-1,0),
+     &             'b2trcl_luciani_fllim_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_fllim_chciy')
       endif
 

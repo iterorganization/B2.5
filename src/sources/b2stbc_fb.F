@@ -228,15 +228,18 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhm(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1), fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     &  fhe(-1:nx,-1:ny,0:1),
+     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

@@ -1,5 +1,5 @@
-      subroutine b2tlc0 (nx, ny, ns, hx, vol, na, te, ti, cdpa,  !srv 30.11.15 {
-     &                   flc)
+      subroutine b2tlc0 (nx, ny, ns, hx, vol,
+     &  na, te, ti, cdpa, flc)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants

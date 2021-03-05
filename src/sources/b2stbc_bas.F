@@ -27,7 +27,8 @@
      *  facdrift(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::

@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx,        !srv 23.11.10
-     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99
-     & chvemx, cddi, fch_p, fchstoch, floe, cone,                        !srv 07.07.99 24.03.07
-     & fhe, fhe_mdf, fhePSch, balance)                                   !djm Jan2017
+      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB,                 !srv 23.11.10
+     1 vol, hx, te, po, ne, na, vedia, fne,                              !srv 11.07.99
+     2 chce, chve, calf, chvemx, cddi, fch_p, fchstoch,                  !srv 17.05.99 11.07.99
+     & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
       use b2mod_types
       use b2mod_math
       use b2mod_boundary_namelist
@@ -27,10 +27,11 @@
       integer nx, ny, ns
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &   ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
-     &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
+     &   vol(-1:nx,-1:ny),
+     1   hx(-1:nx,-1:ny),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
+     &   na(-1:nx,-1:ny,0:ns-1),
+     &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      &   cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
@@ -38,9 +39,9 @@
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     1   floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),               !srv 02.01.07
-     *   fhe(-1:nx,-1:ny,0:1),
-     &   fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1)              !srv 13.10.06
+     &   floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),
+     *   fhe(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
+     &   fhePSch(-1:nx,-1:ny,0:1)                                        !srv 13.10.06
 *   ..local variables
       real (kind=R8) :: upfac, hybfac !djm Jan2017
 *   ..common blocks
@@ -89,8 +90,8 @@ csw 10oct2012
      &  tex, tex0, floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf     !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fledia(-1:nx,-1:ny,0:1), vdia_par,                             !srv 22.11.99 25.01.02
-     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny),       !srv 13.01.17
-     &    c071(-1:nx,-1:ny)                                              !srv 13.01.17
+     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),                          !srv 13.01.17
+     &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                           !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -204,7 +205,8 @@ csw 10oct2012
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 
-      call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne, cone, fhePSch)   !srv 16.10.17
+      call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne,
+     .  cone, fhePSch)                                                   !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
@@ -532,25 +534,25 @@ csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
 csw 13mar2013 added check upwind (SOLPS4 style)
           if(b2_upwind .eq. 0) then
             fhe(ix,iy,0) =
-     &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -cone0*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-            fhe_mdf(ix,iy,0) =                                           !srv 13.06.06 {
-     &         floe0_mdf*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+            fhe_mdf(ix,iy,0) = floe0_mdf*                                !srv 13.06.06 {
+     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -cone0_mdf*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0)                                          !srv 13.06.06 }
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
               fhe_32(ix,iy,0) = 1.5e0_R8*fne(ix,iy,0)*
-     &                  (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
               fhe_52(ix,iy,0) = 0.0_R8
               fhe_strange(ix,iy,0) = chve(ix,iy,0)*
      &         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
               if (mdf_fhe.eq.0) then
                 fhe_dia(ix,iy,0) = 2.5e0_R8*fledia(ix,iy,0)*
      &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
                 fhe_cond(ix,iy,0) = -cone0*tex0
                 fhe_pschused(ix,iy,0) = 0.0_R8
               else
@@ -559,8 +561,8 @@ csw 13mar2013 added check upwind (SOLPS4 style)
                 fhe_pschused(ix,iy,0) = -fhePSch(ix,iy,0)
               endif
               fhe_thermj(ix,iy,0) = -c071(ix,iy)*fch_p(ix,iy,0)/qe*
-     &          fch_pTe*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2+
-     &          alfTeEh*alfe0*
+     &          fch_pTe*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
+     &          /2.0_R8 + alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_ecrb(ix,iy,0) = 0.0_R8
             endif
@@ -696,10 +698,10 @@ csw 13mar2013 added check upwind (SOLPS4 style)
 *   ..compute fhey, floey, coney
       call b2xehy (nx, ny, te, po, ne, ehy_)                             !srv 13.01.17
       do ix = -1, nx
-       floe(ix,-1,1)    = 0
-       cone(ix,-1,1,0)  = 0                                              !srv 02.01.07
-       fhe(ix,-1,1)     = 0
-       fhe_mdf(ix,-1,1) = 0.0e0_R8                                       !srv 13.10.06
+       floe(ix,-1,1)    = 0.0_R8
+       cone(ix,-1,1,0)  = 0.0_R8                                         !srv 02.01.07
+       fhe(ix,-1,1)     = 0.0_R8
+       fhe_mdf(ix,-1,1) = 0.0_R8                                         !srv 13.10.06
        if (balance.and.(balance_netcdf.ne.0)) then
          fhe_32(ix,-1,1) = 0.0_R8                                        !djm Jan2017
          fhe_52(ix,-1,1) = 0.0_R8
@@ -883,10 +885,10 @@ csw 13mar2013 added check upwind (SOLPS4 style)
         endif
 
         if(mdf_fhe.eq.0) then                                            !srv 13.10.06 {
-         floe(ix,iy,1) = floe0
+         floe(ix,iy,1)   = floe0
          cone(ix,iy,1,0) = cone0                           !srv 02.01.07 !srv 23.06.99
         else
-         floe(ix,iy,1) = floe0_mdf
+         floe(ix,iy,1)   = floe0_mdf
          cone(ix,iy,1,0) = cone0_mdf                       !srv 02.01.07 !srv 23.06.99
         endif                                                            !srv 13.10.06 }
 
@@ -972,9 +974,9 @@ csw 18feb2014 remove fluxes between guard cells
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fhe(ix,iy,1)   =0.0e0_R8
-            floe(ix,iy,1)  =0.0e0_R8
-            cone(ix,iy,1,:)=0.0e0_R8                                !srv 02.01.07
+            fhe(ix,iy,1)   = 0.0e0_R8
+            floe(ix,iy,1)  = 0.0e0_R8
+            cone(ix,iy,1,:)= 0.0e0_R8                               !srv 02.01.07
             if (balance.and.(balance_netcdf.ne.0)) then
               fhe_32(ix,iy,1) = 0.0_R8                              !djm Jan2017
               fhe_52(ix,iy,1) = 0.0_R8

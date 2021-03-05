@@ -3,7 +3,8 @@
 
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
-     &  rxf, BoRiS, fac_ExB, hx, hy, vol, bb, pbs, lnlam,
+     &  rxf, BoRiS, fac_ExB,
+     &  hx, hy, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
@@ -151,7 +152,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                     !srv 02.01.07

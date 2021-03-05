@@ -141,10 +141,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
           aa5(ix,iy,-1) = 0.0_R8
         else
-          t0 =  flob(ix,iy,0)/2.0_R8-(conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) !srv 13.10.06
-     &                               - conb(ix,iy,0,1)
-          t1 = -flob(ix,iy,0)/2.0_R8-(conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) !srv 13.10.06
-     &                               - conb(ix,iy,0,2)
+          t0 =  flob(ix,iy,0)/2.0_R8 -
+     &         (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,1)     !srv 13.10.06
+          t1 = -flob(ix,iy,0)/2.0_R8 -
+     &         (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,2)     !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft))
      >     aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
@@ -174,8 +174,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
           aa5(ix,iy,-2) = 0.0_R8
         else
-          t0 =  flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0) - conb(ix,iy,1,1) !srv 13.10.06
-          t1 = -flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0) - conb(ix,iy,1,2) !srv 13.10.06
+          t0 =  flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0)
+     &                               - conb(ix,iy,1,1)                !srv 13.10.06
+          t1 = -flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0)
+     &                               - conb(ix,iy,1,2)                !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
      >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*rscal(pb(ix,iy))

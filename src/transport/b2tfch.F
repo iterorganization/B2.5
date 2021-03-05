@@ -26,11 +26,13 @@
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
-     & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
+     & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     & fna(-1:nx,-1:ny,0:1,0:ns-1),
      & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),        !xpb
      & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),    !xpb
+     & wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     & vaecrb(-1:nx,-1:ny,0:1,0:ns-1),                                   !xpb
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      1 csig(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                             !xpb
@@ -82,8 +84,8 @@
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flomx,
-     &   tex, ehx_po, ehy_po, floe0, cone0,
-     1   floe0_nd, cone0_nd, t0, t0_nd, tex0, tex0_nd                   !srv 15.10.18
+     &   tex, ehx_po, ehy_po,
+     1   floe0, floe0_nd, cone0, cone0_nd, t0, t0_nd, tex0, tex0_nd     !srv 15.10.18
       real (kind=R8) :: facdriftm, fac_ExBm                             !srv 23.12.19
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
@@ -196,7 +198,8 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, bb,
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)      !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, bb, ua,
+     & cvsa_cl, fac_vis, fchvispar)                                      !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol,                             !srv 10.10.17
      & po, ti, na, avisper, bvisper, cvisper, fchvisper)
@@ -218,8 +221,8 @@ c Drift terms
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-            conc(ix,iy,0) = 0.0_R8
-            fch(ix,iy,0) = 0.0_R8
+            conc(ix,iy,0)   = 0.0_R8
+            fch(ix,iy,0)    = 0.0_R8
             fch_32(ix,iy,0) = 0.0_R8
             fch_52(ix,iy,0) = 0.0_R8
           else
@@ -247,7 +250,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             endif
             floe0 = floe0_nd
             if (no_hybr.eq.0) then
-              cone0    = hybr(floe0   ,chce(ix,iy,0))-abs(floe0/2.0_R8)
+              cone0    = hybr(floe0   ,chce(ix,iy,0))-abs(floe0/2)
               cone0_nd = hybr(floe0_nd,chce(ix,iy,0))-abs(floe0_nd/2)
             else
               cone0    = chce(ix,iy,0)
@@ -258,7 +261,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &        ne(ix,iy))/2.0_R8
             if (flomx.gt.0.0_R8 .and. 
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
-              t0    = cone0*abs(tex)/(flomx*max(
+              t0    = cone0   *abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_nd = cone0_nd*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
@@ -266,10 +269,11 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               t0    = 0.0_R8
               t0_nd = 0.0_R8
             endif
-            tex0 = tex/(1.0_R8+t0)
+            tex0    = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
             if (style.eq.0) then                                         !srv 15.10.18 {
-              fch_p(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
+              fch_p(ix,iy,0) =
+     &         ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
      &         phm2*calf(ix,iy,0)*tex0)*prl_cur
               fch(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
      &         phm2*calf(ix,iy,0)*tex0)*prl_cur
@@ -286,8 +290,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
             if (style.eq.0) then
-              fch_52(ix,iy,0) =(csig_an(ix,iy,0)*ehx_po
-     &                         -calf_an(ix,iy,0)*tex0_nd)*fch_anomalous
+              fch_52(ix,iy,0) =
+     &           fch_anomalous*(csig_an(ix,iy,0)*ehx_po
+     &                         -calf_an(ix,iy,0)*tex0_nd)
      &                         -calf(ix,iy,0)*tex0_nd
             else
               fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
@@ -314,8 +319,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
-            conc(ix,iy,1) = 0.0_R8
-            fch(ix,iy,1) = 0.0_R8
+            conc(ix,iy,1)   = 0.0_R8
+            fch(ix,iy,1)    = 0.0_R8
             fch_32(ix,iy,1) = 0.0_R8
             fch_52(ix,iy,1) = 0.0_R8
           else
@@ -326,7 +331,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = ehy_(ix,iy)                                          !srv 13.01.17
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
-            fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po
+            fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy
+     .       +csig_an(ix,iy,1)*ehy_po
      .       -calf(ix,iy,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
@@ -343,8 +349,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
-                    if (is_neutral(is0)) conc(ix,iy,1) = conc(ix,iy,1) 
-     .               + csigin(ix,iy,1,is,is0)                            !xpb
+                    if (is_neutral(is0)) conc(ix,iy,1) =
+     .               conc(ix,iy,1) + csigin(ix,iy,1,is,is0)              !xpb
                   enddo
                 endif
               enddo

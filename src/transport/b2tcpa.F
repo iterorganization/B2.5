@@ -22,7 +22,8 @@
      &   csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   ehx(-1:nx,-1:ny), zeff(-1:nx,-1:ny), fch_p(-1:nx,-1:ny,0:1)
+     &   ehx(-1:nx,-1:ny), zeff(-1:nx,-1:ny),
+     &   fch_p(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

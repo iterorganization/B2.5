@@ -28,10 +28,14 @@
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvla(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1), cdpahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
+     *  cdna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cdpahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 09.01.01
+     &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 09.01.01
      &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 15.12.05
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
@@ -151,7 +155,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -186,14 +191,14 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       csig   = 0.0_R8
 
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nx, ny, ns, nscx, iscx, bb, na,
-     & te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,             !srv 15.12.05
+      call b2tqna (nx, ny, ns, nscx, iscx, bb,
+     & na, te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,             !srv 15.12.05
      & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      & hvi0, hve0, wrk)
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
 *   ..apply flux limit to neutrals contribution to hci
-        call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti, hcib, chcb,
-     &   hcimx, fllim0fhi)
+        call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti,
+     &    hcib, chcb, hcimx, fllim0fhi)
         if(hcimx_flag.eq.1) then
           hcib(:,:,:)=hcimx(:,:,1,:)
           do ix=-1,nx
@@ -208,41 +213,41 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       endif
 *   ..incorporate geometry
       do is = 0, ns-1
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dna0(-1,-1,is),
-     &   cdna(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dna0(-1,-1,is),
-     &   cdna(-1,-1,1,is))
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
-     &   cdpa(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
-     &   cdpa(-1,-1,1,is))
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &   dna0(-1,-1,is), cdna(-1,-1,0,is))
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &   dna0(-1,-1,is), cdna(-1,-1,1,is))
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &   dpa0(-1,-1,is), cdpa(-1,-1,0,is))
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &   dpa0(-1,-1,is), cdpa(-1,-1,1,is))
         call b2txsx (nx, ny, vol, hx, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,is))
         call b2txsy (nx, ny, vol, hy, vla0(-1,-1,1,is),
      &   cvla(-1,-1,1,is))
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa0(-1,-1,is),
-     &   cvsa(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa0(-1,-1,is),
-     &   cvsa(-1,-1,1,is))
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &   vsa0(-1,-1,is), cvsa(-1,-1,0,is))
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &   vsa0(-1,-1,is), cvsa(-1,-1,1,is))
         if(flux_limit_style.eq.2) then                                !srv 07.12.15 {
-          call b2txcx (nx, ny, mode, vol, gs, hx, qz, hcib(-1,-1,is),
-     &     chcb(-1,-1,0,is))
-          call b2txcy (nx, ny, mode, vol, gs, hy, qz, hcib(-1,-1,is),
-     &     chcb(-1,-1,1,is))
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     hcib(-1,-1,is), chcb(-1,-1,0,is))
+          call b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &     hcib(-1,-1,is), chcb(-1,-1,1,is))
         endif                                                         !srv 07.12.15 }
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
       hzvol = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dna0(-1,-1,is),
-     &   cdnahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dna0(-1,-1,is),
-     &   cdnahz(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dpa0(-1,-1,is),
-     &   cdpahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dpa0(-1,-1,is),
-     &   cdpahz(-1,-1,1,is))
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,
+     &   dna0(-1,-1,is), cdnahz(-1,-1,0,is))
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+     &   dna0(-1,-1,is), cdnahz(-1,-1,1,is))
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,
+     &   dpa0(-1,-1,is), cdpahz(-1,-1,0,is))
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+     &   dpa0(-1,-1,is), cdpahz(-1,-1,1,is))
        call b2txsx (nx, ny, hzvol, hx, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,is))
        call b2txsy (nx, ny, hzvol, hy, vla0(-1,-1,1,is),
@@ -251,10 +256,10 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      &   cvmahz(-1,-1,0,is))
        call b2txsy (nx, ny, hzvol, hy, vma0(-1,-1,1,is),              !srv 15.12.05
      &   cvmahz(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, vsa0(-1,-1,is),  !srv 01.07.05 {
-     &   cvsahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, vsa0(-1,-1,is),
-     &   cvsahz(-1,-1,1,is))                                          !srv 01.07.05 }
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,                  !srv 01.07.05 {
+     &   vsa0(-1,-1,is), cvsahz(-1,-1,0,is))
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+     &   vsa0(-1,-1,is), cvsahz(-1,-1,1,is))                          !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       cvsa_an = cvsa                                                  !srv 04.10.99
@@ -263,12 +268,18 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       call b2txsx (nx, ny, vol, hx, hve0(-1,-1,0), chve(-1,-1,0))
       call b2txsy (nx, ny, vol, hy, hve0(-1,-1,1), chve(-1,-1,1))
 
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, csig(-1,-1,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, csig(-1,-1,1))
-      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0,
+     &  chce(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0,
+     &  chce(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0,
+     &  csig(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0,
+     &  csig(-1,-1,1))
+      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0,
+     &  calf(-1,-1,0))
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0,
+     &  calf(-1,-1,1))
 
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then       !srv 07.12.15
 csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
@@ -296,7 +307,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
       if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
-        call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)
+        call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)      !srv 07.07.14
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
@@ -337,15 +348,16 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        call b2tlc0 (nx, ny, ns, hx, vol, na, te, ti, cdpa, flc)          !srv 09.07.03 30.11.15
-        call b2tlc0 (nx, ny, ns, hx, hzvol, na, te, ti, cdpahz,           !srv 30.11.15
-     &               flchz)
+        call b2tlc0 (nx, ny, ns, hx, vol, na, te, ti,
+     &    cdpa, flc)                                                      !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hzvol, na, te, ti,                   !srv 30.11.15
+     &    cdpahz, flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-       call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti, hcib, chcb,          !srv 07.12.15 {
-     &              hcimx, fllim0fhi)
+        call b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti,                     !srv 07.12.15 {
+     &              hcib, chcb, hcimx, fllim0fhi)
         chci = 0.0_R8
         do is = 0, ns-1
           chci(:,:,0) = chci(:,:,0) + chcb(:,:,0,is)
@@ -378,8 +390,10 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2trno_cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'b2trno_cvsay'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//
+     &              chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//
+     &              chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0

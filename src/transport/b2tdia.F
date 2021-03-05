@@ -19,7 +19,8 @@
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1)
+     &  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  uadia(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchdia(-1:nx,-1:ny,0:1)

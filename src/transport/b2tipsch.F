@@ -125,7 +125,8 @@
               if(.not.is_neutral(is)) then
                ixl = leftix(ix,iy)
                iyl = leftiy(ix,iy)
-               fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.25e0_R8*PSch*(
+               fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) +
+     &      0.25e0_R8*PSch*(
      &      cddi(topix(ix,iy),topiy(ix,iy),1,is)*
      &      (na(topix(ix,iy),topiy(ix,iy),is)*
      &      ti(topix(ix,iy),topiy(ix,iy))**2-na(ix,iy,is)*ti(ix,iy)**2)+
@@ -147,47 +148,48 @@
             coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-              endif
-             enddo
             endif
            enddo
-          enddo
-        else
+          endif
+         enddo
+        enddo
+       else
 !        print *,'b2tipsch style=2'
-         weight = 1.0e0_R8
-         nati2 = 0.0
-         do is = 0, ns-1
+        weight = 1.0e0_R8
+        nati2 = 0.0
+        do is = 0, ns-1
           if(.not.is_neutral(is)) then
 !            print *, is
             nati2(:,:,is)=na(:,:,is)*ti(:,:)*ti(:,:)
           endif
-         enddo
-         call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
+        enddo
+        call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
 !        print *, 'intcore done'
-         do iy = -1, ny
-          do ix = -1, nx
-           if(topiy(ix,iy).eq.ny+1 .or. bottomiy(ix,iy).eq.-2
+        do iy = -1, ny
+         do ix = -1, nx
+          if(topiy(ix,iy).eq.ny+1 .or. bottomiy(ix,iy).eq.-2
      &       .or. leftix(ix,iy).eq.-2) then
             fhiPSch(ix,iy,0) = 0.0e0_R8
             coni(ix,iy,0,:) = 0.0e0_R8
-           else
+          else
             do is = 0, ns-1
               if(.not.is_neutral(is)) then
-                fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) +
-     &           PSch*(nati2c(topix(ix,iy),topiy(ix,iy),is)-
+               fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) +
+     &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy),is)-
      &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
-                coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+               coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-                coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+               coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &          cddi(ix,iy,1,is)*
+     &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
               endif
             enddo
-           endif
-          enddo
+          endif
          enddo
+        enddo
 !        print *, 'psch x done'
-        endif
+       endif
 
 !      iy = ny
 !       do ix = -1, nx

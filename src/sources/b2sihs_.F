@@ -29,7 +29,8 @@
       integer nx, ny, ns, ismain                                      !srv 05.07.17
       real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
-     *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
+     *  vol(-1:nx,-1:ny),
+     &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -218,8 +219,7 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,           !srv 07.07.14
-     &      fchstoch)
+       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch) !srv 07.07.14
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -247,7 +247,7 @@
           else
             wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
-     2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
           endif
         enddo
       enddo                                                           !srv 05.03.11 }
@@ -282,8 +282,8 @@
             wrk0(ix,iy) = 0.0e0_R8
           else
             wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1                 hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
-     2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+     1                hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
           endif                                                       !srv 21.07.05 }
 !         if(leftix(ix,iy).eq.-2) then
 !           wrk0(ix,iy) = 0.0e0_R8
@@ -370,7 +370,8 @@
 !     &                                                )*0.25e0_R8*signmf !srv 21.04.00
          wrk0(ix,iy) = bb(ix,iy,2)*vol(ix,iy)*                        !srv 11.01.13
      &   ((dpo(ix,iy,1)+dpo(topix(ix,iy),topiy(ix,iy),1))*
-     &   (dOnedBsq(ix,iy,0)+dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
+     &   (dOnedBsq(ix,iy,0)+
+     &    dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
      &    (dpo(ix,iy,0)+dpo(rightix(ix,iy),rightiy(ix,iy),0))*
      &   (dOnedBsq(ix,iy,1)+dOnedBsq(topix(ix,iy),topiy(ix,iy),1)))
      &    *0.25e0_R8 ! *signmf                                        !srv 11.01.13 03.04.07 }
@@ -575,7 +576,7 @@
 *     (a.k.a. Joule heating) in case of small impurity amount;
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)                      !srv 13.01.17
+       call b2xehx (nx, ny, hx, te, po, ne, ehx)
        if (istyle_Joule_heating.eq.0)
      &   call b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
        b2joule=0.0_R8
@@ -586,16 +587,16 @@
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
            t0 = fch(ix,iy,0)*ehx(ix,iy)/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
-     &      ehx(rightix(ix,iy),rightiy(ix,iy))/
-     &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+     &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+     &        fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &        ehx(rightix(ix,iy),rightiy(ix,iy))/
+     &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
           if (istyle_Joule_heating.eq.0) t0 = t0 +
      &      fch(ix,iy,1)*ehy(ix,iy)/
-     &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-     &      fch(topix(ix,iy),topiy(ix,iy),1)*
-     &      ehy(topix(ix,iy),topiy(ix,iy))/
-     &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
+     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
+     &       fch(topix(ix,iy),topiy(ix,iy),1)*
+     &       ehy(topix(ix,iy),topiy(ix,iy))/
+     &      (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
           t0 = phm3*vol(ix,iy)*t0
           shefr(ix,iy,0) = shefr(ix,iy,0)+max(0.0e0_R8,t0)+rf3*abs(t0)
           shefr(ix,iy,3) = shefr(ix,iy,3)+

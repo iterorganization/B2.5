@@ -26,7 +26,8 @@
      *  facdrift(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),  !sv 14.10.99
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),                                 !sv 14.10.99
      1  vadia(-1:nx,-1:ny,0:1,0:ns-1),                                  !sv 12.05.00
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
@@ -383,10 +384,10 @@
      &        cbsna(2,is,ireg).ne.0.0e0_R8) then
              if(mdf_fnb.eq.0) then
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *          min(0.0e0_R8,s0*(vadia(ix,0,1,is)+vaecrb(ix,0,1,is)))
+     *         min(0.0e0_R8,s0*(vadia(ix,0,1,is)+vaecrb(ix,0,1,is)))
              else
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *          min(0.0e0_R8,s0*vaecrb(ix,0,1,is))
+     *         min(0.0e0_R8,s0*vaecrb(ix,0,1,is))
              endif
            endif
          endif                                                    !sv 02.03.05 }
@@ -479,19 +480,19 @@
         if (.not.on_closed_surface(ix,-1)) then                   !sv 26.11.02
           ! for PR
           if(fchy_in_at_PR .ne. 0.0e0_R8) then                    !sv 21.10.02
-            sch0(ix,-1,0) = sch0(ix,-1,0) +fchin(ix,0,1)
+           sch0(ix,-1,0) = sch0(ix,-1,0) +fchin(ix,0,1)
           endif                                                   !sv 21.10.02
           if(fchy_vispar_at_PR .ne. 0.0e0_R8) then                !sv 21.10.02
-            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvispar(ix,0,1)
+           sch0(ix,-1,0) = sch0(ix,-1,0) +fchvispar(ix,0,1)
           endif                                                   !sv 21.10.02
           if(fchy_visq_at_PR .ne. 0.0e0_R8) then                  !sv 21.10.02
-            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisq(ix,0,1)
+           sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisq(ix,0,1)
           endif                                                   !sv 21.10.02
           if(fchy_visper_at_PR .ne. 0.0e0_R8) then                !sv 21.10.02
-            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisper(ix,0,1)
+           sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisper(ix,0,1)
           endif                                                   !sv 21.10.02
           if(fchy_inert_at_PR .ne. 0.0e0_R8) then                 !sv 21.10.02
-            sch0(ix,-1,0) = sch0(ix,-1,0) +fchinert(ix,0,1)
+           sch0(ix,-1,0) = sch0(ix,-1,0) +fchinert(ix,0,1)
           endif                                                   !sv 21.10.02
         endif
         sch0(ix,-1,0) = sch0(ix,-1,0)+
@@ -771,7 +772,7 @@ c         fchi=0.0e0_R8                            ! was commented
      &          *pbs(rightix(ix,iy),rightiy(ix,iy),0))                   !sv 26.11.02
           if(mdf_fnb .ne. 0) then                                        !sv 13.10.06 {
               sna0(ix,iy,0,is) = sna0(ix,iy,0,is)-
-     &                      fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,is)
+     &                     fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,is)
           endif                                                          !sv 13.10.06 }
           if(ubig0 .gt. 0.0e0_R8)                                        !iyv 22.04.08 {
      &       sna0(ix,iy,0,is) = sna0(ix,iy,0,is) - cbsna(7,is,ireg)*
@@ -818,12 +819,13 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &      (-csbm)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+              !sv 09.01.01 26.11.02
      &      cbsmo(2,is,ireg)*vminus+                                     !sv 02.11.99 28.01.05
      &      cbsmo(5,is,ireg)* max(0.0e0_R8,
-     &       fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,is))/na(ix,iy,is)  !sv 25.02.00 26.11.02 01.07.05
+     &       fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,is))/
+     &       na(ix,iy,is)                                                !sv 25.02.00 26.11.02 01.07.05
            smo0(ix,iy,3,is) = smo0(ix,iy,3,is)+                          !sv 26.11.02
      &      cbsmo(3,is,ireg)*s0hz+                                       !sv 09.01.01
      &      cbsmo(4,is,ireg)*s1hz+                                       !sv 09.01.01
      &      cbsmo(6,is,ireg)*max(0.0e0_R8,
-     &      -fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,is))/na(ix,iy,is)  !sv 25.02.00 26.11.02 01.07.05
+     &     -fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,is))/na(ix,iy,is)   !sv 25.02.00 26.11.02 01.07.05
 *     ..compute atom heat source
            t0 = na(ix,iy,is)/ni(ix,iy,0)                                 !sv 26.11.02
            shi0(ix,iy,0) = shi0(ix,iy,0)+
@@ -932,10 +934,10 @@ crfs eventually include here diamagnetic drifts
 crfs  (b_phi/b^2 dpi/dr)
           fchi = qe*t0
 !       if(t0.lt.0) then
-!        wrong_flow=.true.
-!        write(*,'(a,i3,a,i3,a,es9.2)')
+!         wrong_flow=.true.
+!         write(*,'(a,i3,a,i3,a,es9.2)')
 !     &    ' East. Wrong flow at ix=',ix,' iy=',iy,' fchi=',fchi
-!        do is = 0, ns-1
+!         do is = 0, ns-1
 !           write(*,"(4x,' is=',i2,' fnax(ix,iy,is)=',es9.2)")
 !     &           is, fna(ix,iy,0,is)                                    !sv 26.11.02
 !         enddo                                                          !sv 20.02.03 }
@@ -1066,7 +1068,8 @@ c         sna0(nx,iy,1,1) = -1.0d160
 !     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
      &     cbshe(7,ireg)*((2.0e0_R8-1.0e0_R8)/1.0e0_R8+3.0e0_R8)         !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
 !     &                *max(0.0e0_R8,fne(ix,iy,0))/ne(ix,iy)             !sv 11.02.00 26.11.02 25.12.06
-     &    *max(0.0e0_R8, (pbs(ix,iy,0)*cst-fch_p(ix,iy,0)/qe/ne(ix,iy))) !sv 25.12.06
+     &    *max(0.0e0_R8,
+     &                (pbs(ix,iy,0)*cst-fch_p(ix,iy,0)/qe/ne(ix,iy)))    !sv 25.12.06
           if(mdf_fhe.ne.0) then                                          !sv 13.10.06 {
             she0(ix,iy,0) = she0(ix,iy,0)+fhePSch(ix,iy,0)               !sv 09.11.08
           endif                                                          !sv 13.10.06 }

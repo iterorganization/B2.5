@@ -99,7 +99,8 @@
      &  acorte, acorti, acorpo, nasum, na0sum,
      &  lnlam(-1:nx,-1:ny),                                             !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
-     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fne_53(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -316,8 +317,8 @@ ctmp.dpc
           newneo=.true.
 !          if(style.ne.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl,                   !srv 20.09.06 {
-     &                    fac_vis, fchvispar)
+            call b2tvspa (nx, ny, ns, bb, ua,                            !srv 20.09.06 {
+     &                    cvsa_cl, fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                    facdrift, fchinert)
             call b2tvspr (nx, ny, ns, fac_vis, vol,                      !srv 10.10.17
@@ -326,7 +327,7 @@ ctmp.dpc
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) ! vol, hx, hy, qz, bb,   !srv 05.06.18
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -487,13 +488,14 @@ ctmp.dpc
              call b2tfnb (nx, ny, is, ismain,
      &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is),
+     &          vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
+     &          wadia(-1,-1,0,is), ne, te, ti, bb,
      &          hx, hy, hz, gs, qc, po,                                  !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
+     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is),
+     &          cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
-     &          cdnahz(-1,-1,0,is),                                      !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is),
+     &          cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
      &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
@@ -505,7 +507,8 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB,te,po,vedia,veecrb)
+           call b2tfed (nx, ny, facdrift, fac_ExB,
+     &      te, po, vedia, veecrb)
 *      ..compute other fluxes
            call b2xpfe (nx, ny, ns, ns_ext, qe,
      &      rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                  !ajs 06.04.20

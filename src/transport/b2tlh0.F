@@ -14,7 +14,7 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  vol(-1:nx,-1:ny),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
+     *  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),

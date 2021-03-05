@@ -44,8 +44,10 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  fhe(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
@@ -60,7 +62,8 @@
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1),       !srv 13.10.06
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06
+     &  fchanml(-1:nx,-1:ny,0:1),
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)             !srv 28.10.02
       real (kind=R8) ::

@@ -887,7 +887,8 @@ cxpb  Western boundary
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
-     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
+     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/
+     &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
      &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo

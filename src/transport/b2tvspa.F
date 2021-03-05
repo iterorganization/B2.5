@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, bb, ua, cvsa_cl,                 !srv 20.09.06 { 16.10.17
-     &                    fac_vis, fchvispar)                          !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, bb, ua,                          !srv 20.09.06 { 16.10.17
+     &           cvsa_cl, fac_vis, fchvispar)                          !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect

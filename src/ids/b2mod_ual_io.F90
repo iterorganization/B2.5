@@ -2655,11 +2655,11 @@ contains
                 &   value = ne,                                             &
                 &   time_sind = time_sind )
             !! fne: Electron particle flux
-            call divide_by_areas(nx,ny,fne,tmpFace)
+            call divide_by_areas(nx,ny,fne,totFace)
             call write_face_scalar(                                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
-                &   value = tmpFace,                                        &
+                &   value = totFace,                                        &
                 &   time_sind = time_sind )
             !! sne: Electron particle sources
             tmpCv(:,:) = ( sne(:,:,0) + sne(:,:,1) * ne(:,:) ) / vol(:,:)
@@ -3278,11 +3278,11 @@ contains
                 &         electrons%energy%v,                           &
                 &   value = chve,                                       &
                 &   time_sind = time_sind )
-            call divide_by_areas(nx,ny,fhe,tmpFace)
+            call divide_by_areas(nx,ny,fhe,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
-                &   value = tmpFace,                                    &
+                &   value = totFace,                                    &
                 &   time_sind = time_sind )
             call write_cell_scalar(                                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
@@ -3407,11 +3407,11 @@ contains
                  &   value = chvi,                                    &
                  &   time_sind = time_sind )
             !! fhi : Ion heat flux
-            call divide_by_areas(nx,ny,fhi,tmpFace)
+            call divide_by_areas(nx,ny,fhi,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
-                &   value = tmpFace,                                    &
+                &   value = totFace,                                    &
                 &   time_sind = time_sind )
             call write_cell_scalar(                                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
@@ -4366,16 +4366,16 @@ contains
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                     end if
                 !! fna: Fluid neutral particle flux
-                    call divide_by_areas(nx,ny,fna(-1,-1,0,js),tmpFace)
+                    call divide_by_areas(nx,ny,fna(-1,-1,0,js),totFace)
                     call write_face_scalar(                                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux,                &
-                        &   value = tmpFace,                                  &
+                        &   value = totFace,                                  &
                         &   time_sind = time_sind )
                     call write_face_scalar(                                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux,       &
-                        &   value = tmpFace,                                  &
+                        &   value = totFace,                                  &
                         &   time_sind = time_sind )
                 !! pb : Fluid neutral pressure
                     call b2xppb( nx, ny, rza(:,:,js), na(:,:,js), te, ti, pb)
@@ -5154,6 +5154,10 @@ contains
            &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) )
           allocate( summary%local%limiter%zeff%source(1) )
           summary%local%limiter%zeff%source(1) = source
+          allocate( summary%local%limiter%flux_expansion%value ( num_time_slices ) )
+          summary%local%limiter%flux_expansion%value( time_sind ) = flux_expansion(itrg(1))
+          allocate( summary%local%limiter%flux_expansion%source(1) )
+          summary%local%limiter%flux_expansion%source = source
         end if
 
 ! Summary divertor plate data
@@ -5285,6 +5289,11 @@ contains
               &                topiy(ixpos(itrg(i)),iypos(itrg(i)))))
             allocate ( summary%local%divertor_plate(i)%zeff%source(1) )
             summary%local%divertor_plate(i)%zeff%source = source
+            allocate( summary%local%divertor_plate(i)%flux_expansion%value( num_time_slices ))
+            summary%local%divertor_plate(i)%flux_expansion%value( time_sind ) = &
+              & flux_expansion(itrg(i))
+            allocate ( summary%local%divertor_plate(i)%flux_expansion%source(1) )
+            summary%local%divertor_plate(i)%flux_expansion%source = source
           end do
         end if
 
