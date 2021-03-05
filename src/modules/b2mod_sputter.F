@@ -1415,17 +1415,15 @@ c   K(T) = 1/(KA * T + KB)
       implicit none
       integer ibnd
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      real (kind=R8), save :: cutll, cutlo
-      logical, save  :: lfirst, coating
+      logical, save  :: coating
       real (kind=R8) :: t0
-      real (kind=R8) :: machsfr, expu2, layer_Kappa
-      external machsfr, layer_Kappa
-      intrinsic dim, exp, min, max
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
+      real (kind=R8) :: machsfr, layer_Kappa, expu2
+      external machsfr, layer_Kappa, expu2
+      intrinsic exp, min, max
+
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
 *   ..initialisation
-      data lfirst /.true./
 
 c  Inputs:
 c  qin -> incident ion heat flux (Joules/m^2/sec)
@@ -1450,12 +1448,6 @@ c  Td -> Temperature at interface between mixing layer and original wall materia
 c  Remarks:
 c  Consider adding the option of layer_thermal_contact
 
-*   ..set cutll, cutlo
-      if (lfirst) then
-        cutll = log(machsfr())
-        cutlo = max(machsfr(),exp(cutll))
-        lfirst = .false.
-      end if
 
       TL = backplate_temp(ibnd)
       L = plate_thickness(ibnd)

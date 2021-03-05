@@ -53,7 +53,7 @@
       real (kind=R8) ::
      *   wrk0(nCv), expu
 *   ..procedures
-      intrinsic log, exp, max, dim
+      intrinsic log, exp, max
       external subini, subend, xertst, expu
       external b2xvsg
 *   ..initialisation

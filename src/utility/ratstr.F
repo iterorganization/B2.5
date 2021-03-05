@@ -191,7 +191,7 @@
      &  x1(0:nzm-1), x2(0:nzm-1), z1(0:nzm-1), z2(0:nzm-1),
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
-      intrinsic real, sqrt, log, exp, min, dim, max
+      intrinsic real, sqrt, log, exp, min, max
       external subini, subend, xertst, xerrab, expu
       real (kind=R8) ::
      *  sei1, hydfud, expu

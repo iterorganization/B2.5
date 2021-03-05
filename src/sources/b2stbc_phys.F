@@ -145,7 +145,7 @@
      *  machsfr, expu2, sy, bcint, syhz, sheath_g                        !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
-      external ipgetr, b2xvsg, b2xvff, b2xvps
+      external ipgetr, b2xvsg, b2xvff, b2xvps, expu2
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
 !      sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
@@ -171,7 +171,6 @@
 !      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
       pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
 !      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
       sheath_g(t0) = 1.0_R8 + sqrt(pi)*t0*(1+erf(t0))*exp(t0**2)

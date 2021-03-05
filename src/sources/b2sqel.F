@@ -53,7 +53,7 @@
       real (kind=R8) :: tnorm, art_rad
       real (kind=R8) :: wrk0(1:nCv), expu
 *   ..procedures
-      intrinsic log, exp, min, max, dim
+      intrinsic log, exp, min, max
       external subini, subend, xertst, expu
 *   ..initialisation
 
