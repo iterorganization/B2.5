@@ -120,7 +120,7 @@
       save jxi, jxa, jsep
       logical catch_up
 *   ..procedures
-      intrinsic sqrt, dim, max, exp
+      intrinsic sqrt, max, exp
       external subini, subend, xertst, sfill, ipgeti, ipgetr, expu
 *   ..initialisation
 *   ..statement functions
@@ -3556,7 +3556,7 @@ c*******************************************************************************
       real (kind=R8) ::
      *  wrk0(nCv), dcx, vcx, dion
       integer is, k, ic, iCv, tn_style
-      intrinsic dim, max, exp
+      intrinsic max, exp
       external expu
 *   ..statement functions
       real (kind=R8) :: expu

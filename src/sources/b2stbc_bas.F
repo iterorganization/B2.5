@@ -69,19 +69,18 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ireg
       real (kind=R8) ::
-     *  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     *  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
      2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log, dim
+      intrinsic min, max, abs, sqrt, log
       real (kind=R8) ::
-     *  machsfr, expu2, hy1
+     *  machsfr, hy1, expu2
       external subini, subend, xertst, machsfr, eseec0
-      external b2xvsg, b2xvff, b2xvps
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
+      external b2xvsg, b2xvff, b2xvps, expu2
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
@@ -131,9 +130,6 @@
        call b2xvsg (n2, chci(-1,-1,0,0), 1, 'chci00', '.ge.')
        call b2xvsg (n2, chci(-1,-1,1,1), 1, 'chci11', '.ge.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialise resignore array
       if (ncall.eq.0) then
         resignore(-1,-1:ny,1:2)=0
