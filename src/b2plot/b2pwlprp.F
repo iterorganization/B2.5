@@ -353,6 +353,11 @@ c
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
+      if (n.eq.0) then
+        write(*,*) 'The shadowing structure was not defined!'
+        call subend ()
+        return
+      end if
       l=iabs(lwldlis(1,1))
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then

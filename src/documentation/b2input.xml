@@ -6572,7 +6572,7 @@
 				<namelist>NUMERICS</namelist>
 				<description>
 					Used to specifiy time multipliers per equation and per region for the B2 solver.
-					Active is 'b2srdt_numerics_namelist' is set to 1 or greater.
+					Active if 'b2srdt_numerics_namelist' is set to 1 or greater.
 					It is recommended to use the same multiplier for all equations within one region.
 				</description>
 			</introduction>

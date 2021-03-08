@@ -353,12 +353,14 @@ c*** Power loading:
 
       ixstart(1,1)=jxi
       ixend(1,1)=0
-      ixstart(ntrgts,1)=jxa
-      ixend(ntrgts,1)=nx-1
       ixstart(1,2)=leftcut(1)-1
       ixend(1,2)=0
-      ixstart(ntrgts,2)=rightcut(1)
-      ixend(ntrgts,2)=nx-1
+      if (ntrgts.gt.0) then
+        ixstart(ntrgts,1)=jxa
+        ixend(ntrgts,1)=nx-1
+        ixstart(ntrgts,2)=rightcut(1)
+        ixend(ntrgts,2)=nx-1
+      end if
       if (ntrgts.gt.2) then
         ixstart(2,1)=jxi
         ixend(2,1)=nxtl-1
@@ -755,7 +757,7 @@ c
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-        if(j.eq.1 .or. ntrgts.eq.4) then !{
+        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           if(.not.LSN) then
@@ -1004,10 +1006,10 @@ c!###}
         end if !}
 !###}
       end do !}
-      hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(ntrgsx)
       if(.not.LSN) then
         hlp_trg(1)=trg_short(ntrgsx)
-        hlp_trg(ntrgts)=trg_short(1)
+        if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(1)
       end if
       fn_hlp=fsumm(4)
       tl=' '

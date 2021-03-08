@@ -1212,7 +1212,6 @@ contains
 #endif
         end if
 
-#if IMAS_MINOR_VERSION > 30
         select case (GeometryType)
         case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
           u = 0.0_IDS_real
@@ -1247,6 +1246,7 @@ contains
             allocate( summary%global_quantities%power_radiated%source(1) )
             summary%global_quantities%power_radiated%source = source
           end if
+#if IMAS_MINOR_VERSION > 30
           if (frac.ne.0.0_IDS_real) then
             allocate( summary%global_quantities%power_radiated_inside_lcfs%value( time_sind ) )
             summary%global_quantities%power_radiated_inside_lcfs%value( time_sind ) = frac
@@ -1257,6 +1257,7 @@ contains
             allocate( summary%global_quantities%power_radiated_outside_lcfs%source(1) )
             summary%global_quantities%power_radiated_outside_lcfs%source = source
           end if
+#endif
         case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
             &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
             &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
@@ -1280,14 +1281,15 @@ contains
 #endif
             end do
           end do
+#if IMAS_MINOR_VERSION > 30
           if (u.ne.0.0_IDS_real) then
             allocate( summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) )
             summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) = u
             allocate( summary%global_quantities%power_radiated_outside_lcfs%source(1) )
             summary%global_quantities%power_radiated_outside_lcfs%source = source
           end if
-        end select
 #endif
+        end select
 
 ! Determine divertor plate generic information
         if (nncut.eq.0) then
@@ -6149,11 +6151,6 @@ contains
               & 0.5_R8 * (zeff(ixpos(itrg(i)),iypos(itrg(i))) + &
               &           zeff(topix(ixpos(itrg(i)),iypos(itrg(i))), &
               &                topiy(ixpos(itrg(i)),iypos(itrg(i)))))
-=======
-              & 0.5_R8 * (zeff(ixpos(i),iypos(i)) + &
-              &           zeff(topix(ixpos(i),iypos(i)), &
-              &                topiy(ixpos(i),iypos(i))))
->>>>>>> develop
             allocate ( summary%local%divertor_plate(i)%zeff%source(1) )
             summary%local%divertor_plate(i)%zeff%source = source
           end do

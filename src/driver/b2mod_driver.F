@@ -1066,6 +1066,10 @@
        call ipgetr ('b2mndr_density_rescale', density_rescale)
        call ipgeti ('b2mndr_zn_rescale', zn_rescale)
 csw dec2013 allow for negative values; this is tweak to scale a specific species density
+       call xertst (zn_rescale.ge.0,
+     &   'faulty internal parameter zn_rescale')
+       call xertst (zn_rescale.gt.0.or.density_rescale.gt.0.0_R8,
+     &   'faulty internal parameter zn_rescale')
        call xertst (0.0_R8.lt.density_rescale.or.
      &             (0.0_R8.gt.density_rescale.and.zn_rescale.gt.0),
      &   'faulty internal parameter density_rescale')
