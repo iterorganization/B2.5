@@ -208,9 +208,12 @@ c 2002-09-11: logic revised
      2 fni_321(-1:nx1,-1:ny1,0:1), fni_521(-1:nx1,-1:ny1,0:1),
      3 fne_321(-1:nx1,-1:ny1,0:1), fne_521(-1:nx1,-1:ny1,0:1),
      4 fchdia1(-1:nx1,-1:ny1,0:1), fchin1(-1:nx1,-1:ny1,0:1),
-     5 fchvispar1(-1:nx1,-1:ny1,0:1), fchvisper1(-1:nx1,-1:ny1,0:1),
-     6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
-     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1),
+     5 fchvispar1(-1:nx1,-1:ny1,0:1),
+     5 fchvisper1(-1:nx1,-1:ny1,0:1),
+     6 fchvisq1(-1:nx1,-1:ny1,0:1),
+     6 fchinert1(-1:nx1,-1:ny1,0:1),
+     7 floe_noc1(-1:nx1,-1:ny1,0:1),
+     7 floi_noc1(-1:nx1,-1:ny1,0:1),
      8 veecrb1(-1:nx1,-1:ny1,0:1), vedia1(-1:nx1,-1:ny1,0:1)
       real (kind=R8), allocatable ::
      . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
@@ -236,7 +239,8 @@ c 2002-09-11: logic revised
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
      3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:),
-     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
+     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:),
+     4 fna_he1(:,:,:,:),
      5 fnaPSch1(:,:,:,:), fna_eir1(:,:,:,:),
      6 fna_321(:,:,:,:), fna_521(:,:,:,:),
      7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
@@ -8248,7 +8252,11 @@ cxpb  Start rewrite of block 7
         do ISTRA=1,NSTRAI
           if (savestratum(istra)) then
             is = is + 1
-            indsrc(is) = indsrc(istra)
+            if (indsrc(istra).eq.-1.and..not.nlvol(istra)) then
+              indsrc(is) = 1
+            else
+              indsrc(is) = indsrc(istra)
+            endif
           endif
         enddo
         NSTRA1 = is

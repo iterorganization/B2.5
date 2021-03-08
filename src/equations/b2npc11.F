@@ -178,8 +178,10 @@ cdjm Jan2017 update particle source components for balance
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:nnreg(0)))) then                  !srv 22.05.18
         call b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,   !srv 13.10.06 26.09.12
-     &    itcnt, rxg, pcm1, pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
-     &    conb, pccb(-1,-1,1), rescb, corpb, aa11, '_b2usc11_'//chns) !srv 18.05.02 02.04.18
+     &    itcnt, rxg, pcm1,
+     &    pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
+     &    conb, pccb(-1,-1,1), rescb, corpb, aa11,
+     &    '_b2usc11_'//chns)                                          !srv 18.05.02 02.04.18
 *   ..apply correction
         call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &   vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                  !IYS 19.12.2017

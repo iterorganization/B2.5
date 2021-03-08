@@ -8,7 +8,7 @@
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  vsb(-1:nx,-1:ny,0:1),
      &  cvsb(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------

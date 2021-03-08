@@ -62,7 +62,8 @@
      *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
+     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny),
+     &   csigia(-1:nx,-1:ny,0:1),                                         !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
 *   ..procedures
       external ipgeti, xertst
@@ -212,9 +213,9 @@
      &                    log(na(leftix(ix,iy),leftiy(ix,iy),ismain))))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -232,9 +233,9 @@
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -258,10 +259,10 @@
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &            -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &              tib(ix,iy)*(log(na(ix,iy,ismain))-
-     &                  log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain)))
-     &              )/(qe*rza(ix,iy,ismain))
+     &                log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain))))/
+     &              (qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -280,7 +281,7 @@
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -302,12 +303,15 @@
         else
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
-*    ..test sign of ne, te, csigin, chce
+*    ..test sign of ne, te, chce
             call b2xvsg (n2, te, 1, 'te', '.gt.')
-            call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
-*    ..test edge values of csigin
+*    ..test edge values and sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
+                call b2xvsg (n2, csigin(-1,-1,0,is,is0), 1, 'csigin',
+     .            '.ge.')
+                call b2xvsg (n2, csigin(-1,-1,1,is,is0), 1, 'csigin',
+     .            '.ge.')
                 call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
               enddo
             enddo

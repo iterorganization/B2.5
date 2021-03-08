@@ -10,8 +10,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     &   hx(-1:nx,-1:ny), te(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &   ne(-1:nx,-1:ny)
+     &   hx(-1:nx,-1:ny),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   ehx(-1:nx,-1:ny)

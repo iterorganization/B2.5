@@ -25,7 +25,8 @@
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
      &   uadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),          !srv 17.05.99 25.01.02
-     &   csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
+     &   csig(-1:nx,-1:ny,0:1),
+     &   csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
      &   chci(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
      &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
@@ -147,7 +148,8 @@
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)      !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, bb, ua,
+     &             cvsa_cl, fac_vis, fchvispar)                          !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol,                             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
@@ -184,7 +186,8 @@
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
              do is0 = 0, ns-1
               if (is_neutral(is0).and.nint(zn(is0)).eq.1) then           !srv 20.10.17
-               conc(ix,iy,0) = conc(ix,iy,0) + csigin(ix,iy,0,is,is0) !*facdrift    !srv 07.02.03
+               conc(ix,iy,0) = conc(ix,iy,0) +
+     &            csigin(ix,iy,0,is,is0) !*facdrift                      !srv 07.02.03
      &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
 !     1        *((bb(ix,iy,2)/bb(ix,iy,3))**2+                           !srv 25.02.03 {
 !     2        (bb(leftix(ix,iy),leftiy(ix,iy),2)/
@@ -212,7 +215,7 @@
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
-             conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+            conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
             endif                                                        !srv 20.10.17
            enddo
           endif
@@ -302,7 +305,8 @@
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
      &   'b2tfch__for_po_fchvispary')
 !       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__for_po_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch__for_po_fchvisqy')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),
+     &   'b2tfch__for_po_fchvisqy')
 !       call my_out(70,nx,ny,fchvisper(-1,-1,0),
 !     &    'b2tfch__for_po_fchvisperx')
        call my_out(70,nx,ny,fchvisper(-1,-1,1),
@@ -313,12 +317,16 @@
      &    'b2tfch__for_po_fchinerty')
        call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch__for_po_fchdiax')
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch__for_po_fchdiay')
-       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch__for_po_fchanmlx')
-       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch__for_po_fchanmly')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),
+     &    'b2tfch__for_po_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),
+     &    'b2tfch__for_po_fchanmly')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__for_po_fch_px')
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
-       call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__for_po_csig_anx')
-       call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__for_po_csig_any')
+       call my_out(70,nx,ny,csig_an(-1,-1,0),
+     &    'b2tfch__for_po_csig_anx')
+       call my_out(70,nx,ny,csig_an(-1,-1,1),
+     &    'b2tfch__for_po_csig_any')
        call my_out(70,nx,ny,fchstoch,'b2tfch__for_po_fchstochy')         !lk 31.01.08
       endif                                                              !srv 11.09.09 }
 

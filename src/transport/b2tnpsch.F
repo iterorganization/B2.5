@@ -98,7 +98,7 @@
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
-           fnbPSch(ix,iy,0)=0.0e0_R8
+           fnbPSch(ix,iy,0)= 0.0e0_R8
           else
            ixl = leftix(ix,iy)
            iyl = leftiy(ix,iy)
@@ -112,11 +112,11 @@
      &        nb(ixl,iyl)*ti(ixl,iyl))+
      &      cddb(ixl,iyl,1)*
      &       (nb(ixl,iyl)*ti(ixl,iyl)
-     &                   -nb(bottomix(ixl,iyl),bottomiy(ixl,iyl))*
-     &                    ti(bottomix(ixl,iyl),bottomiy(ixl,iyl)))+
+     &       -nb(bottomix(ixl,iyl),bottomiy(ixl,iyl))*
+     &        ti(bottomix(ixl,iyl),bottomiy(ixl,iyl)))+
      &      cddb(ix,iy,1)*
      &       (nb(ix,iy)*ti(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                         ti(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                            ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &                                       )
           endif
          enddo
@@ -130,7 +130,7 @@
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then       !srv 26.05.08
-           fnbPSch(ix,iy,0)=0.0e0_R8
+           fnbPSch(ix,iy,0)= 0.0e0_R8
           else
            ixl = leftix(ix,iy)
            iyl = leftiy(ix,iy)
@@ -239,7 +239,8 @@
 
       do iy = -1, ny                                                    !srv 02.01.07 {
         do ix = -1, nx
-          fnbPSch(ix,iy,0:1) = fnbPSch(ix,iy,0:1)*facdrift(ix,iy)
+          fnbPSch(ix,iy,0:1) =
+     .      fnbPSch(ix,iy,0:1)*facdrift(ix,iy)
         enddo
       enddo                                                             !srv 02.01.07 }
 
@@ -258,7 +259,8 @@ cxpb turn off poloidal flows in core boundary
           do ib = 1, nbc
             if(core_boundary(ib)) then
               do ix = 1, bc_list_size(ib)
-                fnbPSch(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fnbPSch(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
               enddo
             endif
           enddo
@@ -291,10 +293,10 @@ csw 18feb2014 remove fluxes between guard cells
       do ix=-1,nx
         do iy=-1,ny
           if(iffboundx(ix,iy).ne.0) then
-            fnbPSch(ix,iy,0)=0.0_R8
+            fnbPSch(ix,iy,0) = 0.0_R8
           endif
           if(iffboundy(ix,iy).ne.0) then
-            fnbPSch(ix,iy,1)=0.0_R8
+            fnbPSch(ix,iy,1) = 0.0_R8
           endif
         enddo
       enddo
@@ -303,15 +305,17 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fnbPSch(ix,iy,0)=0.0_R8
+            fnbPSch(ix,iy,0) = 0.0_R8
           end do
         end do
       end do
 
       if(iout.ne.0) then                                                 !srv 18.06.08 {
        write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tnpsch_fnbPSchx'//chns)
-       call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tnpsch_fnbPSchy'//chns)
+       call my_out(70,nx,ny,fnbPSch(-1,-1,0),
+     .             'b2tnpsch_fnbPSchx'//chns)
+       call my_out(70,nx,ny,fnbPSch(-1,-1,1),
+     .             'b2tnpsch_fnbPSchy'//chns)
       endif                                                              !srv 18.06.08 }
 
 * ..return

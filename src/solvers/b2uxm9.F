@@ -137,8 +137,8 @@
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
-          aaf(ix,iy,-2) = - conb(ixb,iyb,1,0) +
-     &                      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
+          aaf(ix,iy,-2) = -conb(ixb,iyb,1,0) +
+     &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
          endif
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
@@ -226,14 +226,14 @@
             if(bottomix(ixr,iyr) .eq. rightix(ixb,iyb) .and.
      &       bottomiy(ixr,iyr) .eq. rightiy(ixb,iyb)) then
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
-     &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
-     &                   - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
+     &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
+     &                 - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
               aa9(ix,iy,-5) = 0.0e0_R8
             else
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
-     &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
+     &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
               aa9(ix,iy,-5) = aa9(ix,iy,-5) -                         !sv 28.05.08
-     &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
+     &                   conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
             endif
          endif
 *       Case (ix+1,iy+1)
@@ -249,14 +249,14 @@
             if(topix(ixr,iyr) .eq. rightix(ixt,iyt) .and.
      &       topiy(ixr,iyr) .eq. rightiy(ixt,iyt)) then
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
-     &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)+
-     &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
+     &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)+
+     &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
               aa9(ix,iy,6) = 0.0e0_R8
             else
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
-     &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
+     &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
               aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08
-     &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
+     &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
             endif
          endif
 

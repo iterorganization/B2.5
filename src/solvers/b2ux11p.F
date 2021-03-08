@@ -63,15 +63,13 @@
 
 *   ..local variables
       integer ncall, style, n2, itmax, iters, itpar, cpu
+      integer, save :: nz
       parameter (itmax=100)
       real (kind=R8) ::
      *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
-!      real (kind=R8), allocatable :: a(:)
-      integer, save :: nz
-!      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
@@ -380,7 +378,7 @@
               a(k) = aa11(ix,iy,2)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= 2
+              indexes(3,k)=2
               ia(k) = i
               ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
@@ -390,7 +388,7 @@
               a(k) = aa11(ix,iy,5)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= 5
+              indexes(3,k)=5
               ia(k) = i
               ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
@@ -430,7 +428,7 @@
               a(k) = aa11(ix,iy,4)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= 4
+              indexes(3,k)=4
               ia(k) = i
               ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
               ner = ner+1
@@ -440,7 +438,7 @@
               a(k) = aa11(ix,iy,6)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)= 6
+              indexes(3,k)=6
               ia(k) = i
               ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
               ner = ner+1

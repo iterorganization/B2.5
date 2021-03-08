@@ -3,8 +3,8 @@
 
       subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
-     &  te, ti, po, ne, ni,
+     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
@@ -65,7 +65,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
      &  fht(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
@@ -394,7 +395,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -1251,8 +1253,10 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (.not. is_neutral(is)) then
-        call my_out(70,nx,ny,fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
-        call my_out(70,nx,ny,fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
         endif
        enddo 
       endif                                                           

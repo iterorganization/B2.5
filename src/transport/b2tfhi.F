@@ -26,16 +26,19 @@
       integer nx, ny, ns, guard_flows
       real (kind=R8) ::
      *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), cddi(-1:nx,-1:ny,0:1,0:ns-1),       !srv 13.10.06
+     &  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                    !srv 13.10.06
      1  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),          !lk 30.05.11
      &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !lk 30.05.11
      &  fchvisq(-1:nx,-1:ny,0:1),
-     &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
+     &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
+     &  chvi(-1:nx,-1:ny,0:1),
      &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:nx-1),
      &  hx(-1:nx,-1:ny),
      .  na(-1:nx,-1:ny,0:ns-1), 
-     2  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     2  vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     2  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      3  facdrift(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1), BoRiS
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
@@ -296,14 +299,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         hybfac*2.5_R8*cum_flo_vadia/2.0_R8*dti
              fhi_cond(ix,iy,0) = -coni0*dti0
              fhi_pschused(ix,iy,0) = 0.0_R8
-             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchinert(ix,iy,0)*xcur/2.0_R8*dti
-             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur/2.0_R8*dti
-             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur/2.0_R8*dti
              fhi_visq(ix,iy,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
@@ -338,14 +341,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              fhi_dia(ix,iy,0) = 0.0_R8
              fhi_cond(ix,iy,0) = -coni0_mdf*dti0_mdf
              fhi_pschused(ix,iy,0) = -fhiPSch(ix,iy,0)
-             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchinert(ix,iy,0)*xcur/2.0_R8*dti
-             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur/2.0_R8*dti
-             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur*
-     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*
+     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur/2.0_R8*dti
              fhi_visq(ix,iy,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
@@ -393,14 +396,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                           (1.0_R8-upfac)*ti(ix,iy))
              fhi_cond(ix,iy,0) = -coni0*dti0
              fhi_pschused(ix,iy,0) = 0.0_R8
-             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_visq(ix,iy,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
@@ -433,14 +436,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              fhi_dia(ix,iy,0) = 0.0_R8
              fhi_cond(ix,iy,0) = -coni0_mdf*dti0_mdf
              fhi_pschused(ix,iy,0) = -fhiPSch(ix,iy,0)
-             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_inert(ix,iy,0) = 1.5e0_R8/qe*fchinert(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_vispar(ix,iy,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*xcur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+             fhi_visper(ix,iy,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0)*
+     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_visq(ix,iy,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
@@ -606,9 +609,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_cond(ix,iy,1) = -coni(ix,iy,1,0)*
      &        (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-             fhi_inert(ix,iy,1) = 1.5e0_R8/qe*fchinert(ix,iy,1)*ycur*
+             fhi_inert(ix,iy,1) = 1.5e0_R8/qe*fchinert(ix,iy,1)*
+     &        ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
+             fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*
+     &        ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visper(ix,iy,1) =
      &         1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur*              !srv 02.10.17

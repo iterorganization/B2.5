@@ -401,10 +401,12 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
               if (core_boundary(ic)) then
 ! Count fluid neutrals if not coupled to Eirene
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnc(ls) = flxnc(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnc(ls) = flxnc(ls) +
+     .             bsign*fna(ixf,iyf,idir,is)
                 else if (.not.is_neutral(is)) then ! not neutral
                   if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
-                    flxic(ls) = flxic(ls) + bsign*fna(ixf,iyf,idir,is)
+                    flxic(ls) = flxic(ls) +
+     .               bsign*fna(ixf,iyf,idir,is)
                   else
                     flxic(ls) = flxic(ls) +
      .               bsign*fna_mdf(ixf,iyf,idir,is)
@@ -417,14 +419,16 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
               else if (idir.eq.1) then      ! radial wall boundary
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnw(ls) = flxnw(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnw(ls) = flxnw(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
                   if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
      &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
 
                 else if (.not.is_neutral(is)) then
 
-                  flxiw(ls) = flxiw(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxiw(ls) = flxiw(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 c<<<
                   if(debug_flags(90).gt.0) then
                     hlp_pls(ic,ls)=hlp_pls(ic,ls) +
@@ -435,13 +439,15 @@ c<<<
               else if (idir.eq.0) then      ! target boundaries
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnt(ls) = flxnt(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnt(ls) = flxnt(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
                   if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
      &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
 
                 else if (.not.is_neutral(is)) then
-                  flxit(ls) = flxit(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxit(ls) = flxit(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
                   if(debug_flags(90).gt.0) then
 

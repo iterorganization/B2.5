@@ -81,10 +81,11 @@
      &  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                              !srv 09.01.01
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  pbshz(-1:nx,-1:ny,0:1),
-     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
-     2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
+     &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
       logical solving
@@ -251,10 +252,10 @@
        do is = 0, ns-1
         call b2xvff (nx, ny, fna_fcor(-1,-1,0,is), 'fna_fcor')
        enddo
-*    ..test sign of cvsa
-       call b2xvsg (n2*2*ns, cvsa, 1, 'cvsa', '.ge.')
-*    ..test edge values of cvsa
+*    ..test sign and edge values of cvsa
        do is = 0, ns-1
+        call b2xvsg (n2, cvsa(-1,-1,0,is), 1, 'cvsa0', '.ge.')
+        call b2xvsg (n2, cvsa(-1,-1,1,is), 1, 'cvsa1', '.ge.')
         call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')
        enddo
 *    ..test sign of smo, smq
@@ -483,7 +484,8 @@
        call b2siav (nx, ny, ns, is, am(is)*mp,
      &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
-     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
+     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is),
+     &   cvsahz(-1,-1,0,is),
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo,
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
 *    ..compute centrifugal force term                                  !srv 09.07.01
@@ -518,7 +520,8 @@ cdjm Jan2017 update momentum source components for balance
 *    ..compute residual
        if((solving.and.any(solvemo(is,0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
-        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
+        call b2urmo (nx, ny, is,
+     &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
         fmo(:,:,:,is)=wrkf
 

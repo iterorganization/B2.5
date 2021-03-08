@@ -1,4 +1,4 @@
-      subroutine b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,
+      subroutine b2tvsq (nx, ny, ns, fac_vis,
      &           ne2, lnlam, te, ti, ni, chci, fchvisq)
       use b2mod_types
       use b2mod_indirect
@@ -12,8 +12,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     &   fac_vis(-1:nx,-1:ny), !vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-!     &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     &   fac_vis(-1:nx,-1:ny),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)

@@ -709,9 +709,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      2            fchdia(ix,iy,1))*uadia(ix,iy,0,is))
 *   ..case where the mesh is discontinuous
               else
-                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0)*uadia(ix,iy,1,is)-
-     1           0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1)+
-     2                   fchdia(ix,iy,1))*uadia(ix,iy,0,is))
+                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0)*
+     1            uadia(ix,iy,1,is)
+     1           -0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1)+
+     2                    fchdia(ix,iy,1))*uadia(ix,iy,0,is))
               endif
               she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)
               she0(ix,iy,3) = she0(ix,iy,3)+

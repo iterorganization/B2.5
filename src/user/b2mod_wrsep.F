@@ -223,7 +223,8 @@ c          v=vol(ix,iy)
                 gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
                 gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
               else
-                gisi_tmp(is)=gisi_tmp(is)+fna_mdf(ix,iy,1,ions_list(is))
+                gisi_tmp(is)=gisi_tmp(is)+
+     .                                  fna_mdf(ix,iy,1,ions_list(is))
                 gisp_tmp(j)=gisp_tmp(j)+fna_mdf(ix,iy,1,ions_list(is))
               endif
               do i=0,jsep !{

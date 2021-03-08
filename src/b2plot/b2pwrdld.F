@@ -256,13 +256,14 @@ c*** Calculate the radiation load split by impurity species from B2
       end if !}
 
 #ifdef DBG
-        print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+      print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
 #endif
       if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
 
 c*** Calculate the radiation load from the core sources
 
-        write(*,*) '  Extra radiation from the core: ',1.0e6_R8*add_rad
+        write(*,*) '  Extra radiation from the core       : ',
+     .   1.0e6_R8*add_rad
         do i=1,nplgs !{
           radld(i)=0.0_R8
         end do !}
@@ -276,8 +277,10 @@ c*** Calculate the radiation load from the core sources
         end do !}
         nsrc=k
         call rlcomp
-        write(*,*) '  Total radiation      : ',ttsrc
-        write(*,*) '  Reaching the targets : ',tttrg
+#ifdef DBG
+        write(*,*) '  Total additional core radiation     : ',ttsrc
+#endif
+        write(*,*) '  Core radiation reaching the targets : ',tttrg
         k=0
         is=1
         do i=1,nwldrad !{

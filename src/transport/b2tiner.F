@@ -222,7 +222,8 @@ cxpb turn off poloidal flows in core boundary
           do ib = 1, nbc
             if(core_boundary(ib)) then
               do ix = 1, bc_list_size(ib)
-                fchinert(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchinert(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                    0.0_R8
               enddo
             endif
           enddo

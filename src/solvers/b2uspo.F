@@ -100,7 +100,7 @@
      &       aa5(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
          if (solvereg(ireg))
      >    aa5(ix,iy,-1) = -conc(ix,iy,0)
-        endif
+        endif                                                        !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo

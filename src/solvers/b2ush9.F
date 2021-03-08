@@ -104,7 +104,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
@@ -115,8 +116,8 @@
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                   !srv 02.01.07
        endif                                                          !srv 06.07.06 }
        if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                   !srv 02.01.07
-       endif                                                          !srv 06.07.06 }
+        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')
+       endif
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
@@ -152,7 +153,7 @@
        do ix = -1, nx                                                 !srv 26.11.02 {
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
-         flo0(ix,iy,0) = 0.0e0_R8
+         flo0(ix,iy,0)   = 0.0e0_R8
          con0(ix,iy,0,:) = 0.0e0_R8                                   !srv 02.01.07
         else
          if (solveee(ireg) .and. solveei(ireg)) then
@@ -205,13 +206,13 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solveee(ireg) .and. solveei(ireg)) then
-          flo0(ix,iy,1) = floe(ix,iy,1)+floi(ix,iy,1)
+          flo0(ix,iy,1)   = floe(ix,iy,1)+floi(ix,iy,1)
           con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)           !srv 02.01.07
         else if (.not.solveee(ireg) .and. solveei(ireg)) then
-          flo0(ix,iy,1) = floi(ix,iy,1)
+          flo0(ix,iy,1)   = floi(ix,iy,1)
           con0(ix,iy,1,0) = coni(ix,iy,1,0)                           !srv 02.01.07
         else if (solveee(ireg) .and. .not.solveei(ireg)) then
-          flo0(ix,iy,1) = floe(ix,iy,1)
+          flo0(ix,iy,1)   = floe(ix,iy,1)
           con0(ix,iy,1,0) = cone(ix,iy,1,0)                           !srv 02.01.07
         endif
        enddo
@@ -242,19 +243,22 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
+         aa9(ix,iy,-4) = 0.0e0_R8
+         aa9(ix,iy, 2) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
+         t0 =  0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solveee(ileft) .or. solveei(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solveee(ireg) .or. solveei(ireg))
-     >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-         if (solveee(ileft) .or. solveei(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
-     &      aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solveee(ireg) .or. solveei(ireg))
-     >    aa9(ix,iy,-1) = t1
+         if (solveee(ireg) .or. solveei(ireg)) then
+          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
+          aa9(ix,iy,-1) = aa9(ix,iy,-1) + t1
+         endif
+         if (solveee(ileft) .or. solveei(ileft)) then
+          aa9(leftix(ix,iy),leftiy(ix,iy),1) =
+     &      aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0
+          aa9(leftix(ix,iy),leftiy(ix,iy),0) =
+     &      aa9(leftix(ix,iy),leftiy(ix,iy),0) - t1
+         endif
         endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
        enddo
@@ -263,18 +267,19 @@
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
+        t0 =  0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
+        t1 = -0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveee(ibot) .or. solveei(ibot))
-     >   aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
-        if (solveee(ireg) .or. solveei(ireg))
-     >   aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-        if (solveee(ibot) .or. solveei(ibot))
-     >   aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-        if (solveee(ireg) .or. solveei(ireg))
-     >   aa9(ix,iy,-3) = t1
+        if (solveee(ireg) .or. solveei(ireg)) then
+         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
+        endif
+        if (solveee(ibot) .or. solveei(ibot)) then
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
+        endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
@@ -339,7 +344,7 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        flo0(ix,iy,1) = floe(ix,iy,1)
+        flo0(ix,iy,1)   = floe(ix,iy,1)
         con0(ix,iy,1,0) = cone(ix,iy,1,0)                             !srv 02.01.07
        enddo
       enddo
@@ -360,10 +365,12 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
+         aa9(ix,iy,-4) = 0.0e0_R8
+         aa9(ix,iy, 2) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
-         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)                !srv 25.02.19
+         t0 =  0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
+         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveee(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
          if (solveee(ireg))
@@ -381,18 +388,19 @@
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
+        t0 =  0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
+        t1 = -0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveee(ibot))
-     >   aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
-        if (solveee(ireg))
-     >   aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-        if (solveee(ibot))
-     >   aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
-     &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-        if (solveee(ireg))
-     >    aa9(ix,iy,-3) = t1
+        if (solveee(ireg)) then
+         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
+        endif
+        if (solveee(ibot)) then
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
+        endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
@@ -454,7 +462,7 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        flo0(ix,iy,1) = floi(ix,iy,1)
+        flo0(ix,iy,1)   = floi(ix,iy,1)
         con0(ix,iy,1,0) = coni(ix,iy,1,0)                             !srv 02.01.07
        enddo
       enddo
@@ -475,9 +483,11 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
+         aa9(ix,iy,-4) = 0.0e0_R8
+         aa9(ix,iy, 2) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
+         t0 =  0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveei(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*scalr(ti(ix,iy))
@@ -497,19 +507,21 @@
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                    !srv 02.01.07
+        t0 =  0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
+        t1 = -0.5_R8*flo0(ix,iy,1)-con0(ix,iy,1,0)                    !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveei(ibot))
-     >    aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*scalr(ti(ix,iy))
-        if (solveei(ireg))
-     >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0*scalr(ti(ix,iy))
-        if (solveei(ibot))
-     >    aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &    aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &    -t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
-        if (solveei(ireg))
-     >    aa9(ix,iy,-3) = t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
+        if (solveei(ireg)) then
+         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0*scalr(ti(ix,iy))
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1*
+     &     scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
+        endif
+        if (solveei(ibot)) then
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*scalr(ti(ix,iy))
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1*
+     &      scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
+        endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
@@ -536,9 +548,9 @@
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
       last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
-        do ix = -1, nx
-          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-        enddo
+       do ix = -1, nx
+        corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
+       enddo
       enddo
       endif                                                           !srv 22.05.18
 

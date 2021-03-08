@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, isb, ub, rob, smb, flub, cvsb,
-     .  resmb, fmb)                                                     !srv 02.06.11
+      subroutine b2urmo (nx, ny, isb, ub, rob,
+     .  smb, flub, cvsb, resmb, fmb)                                    !srv 02.06.11
       use b2mod_types
       use b2mod_math
       use b2mod_indirect

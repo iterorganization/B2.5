@@ -1,5 +1,5 @@
-      subroutine b2tepsch(nx, ny, ns, facdrift, cddi, te, ne,
-     & cone, fhePSch)
+      subroutine b2tepsch(nx, ny, ns, facdrift,
+     &                    cddi, te, ne, cone, fhePSch)
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
@@ -197,7 +197,8 @@
 
          do iy = -1, ny
           do ix = -1, nx                                                 !srv 26.11.02 {
-           fhePSch(ix,iy,:)=2.5e0_R8*fhePSch(ix,iy,:)*facdrift(ix,iy)
+           fhePSch(ix,iy,:) =
+     &       2.5e0_R8*fhePSch(ix,iy,:)*facdrift(ix,iy)
            cone(ix,iy,:,1:2) = cone(ix,iy,:,1:2)*facdrift(ix,iy)         !srv 02.01.07
 !           cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)            !srv 02.01.07
           enddo

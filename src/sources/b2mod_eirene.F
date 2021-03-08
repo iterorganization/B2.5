@@ -4104,8 +4104,8 @@ c*** recombination is already evaluated above.
               if(crcstra(istrai).eq.'W') then !{
                 do iy=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st-
-     .    fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     .       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
                 end do !}
               else if(crcstra(istrai).eq.'E') then !}{
                 do iy=1,rc_list_size(istrai) !{

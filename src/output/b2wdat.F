@@ -333,8 +333,10 @@
       call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')           !srv
       call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')           !srv
       if (ismain0.ne.ismain) then
-        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),'csig_inx') !srv
-        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),'csig_iny') !srv
+        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),
+     &                      'csig_inx')                           !srv
+        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),
+     &                      'csig_iny')                           !srv
       endif
       call my_out(70,nx,ny,cvsa(-1,-1,0,ismain),'cvsa')           !srv
       call my_out(70,nx,ny,cvsa_cl(-1,-1,0,ismain),'cvsa_cl')     !srv

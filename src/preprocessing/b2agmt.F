@@ -18,8 +18,8 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  gs(-1:nx,-1:ny,0:2), qcb(-1:nx,-1:ny),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------

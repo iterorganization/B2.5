@@ -131,16 +131,16 @@ c
       vaecrbc = vaecrb
       wadiac  = wadia
       vadiac  = vadia
-      if (drift_style.gt.0) then
-        do is=0,ns-1
+      do is=0,ns-1
+        if (drift_style.gt.0) then
           call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
           call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)
           call mapx(nx,ny,1,wadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,wadiac(:,:,1,is),wrk)
           call mapx(nx,ny,1,vadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,vadiac(:,:,1,is),wrk)
-        enddo
-      endif
+        endif
+      enddo
 
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1

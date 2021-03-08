@@ -155,12 +155,12 @@ c*** Check the topology of the grid and the list of target edges
       if(ntrgsa.gt.0) then !{
         ntrgs=ntrgsa
         if (ntrgs.eq.1) then
-          ltrgedge(1,1)=mtrgedge(2,1)
-          ltrgedge(2,1)=mtrgedge(1,1)
+          if (mtrgedge(2,1).gt.0) ltrgedge(1,1)=mtrgedge(2,1)
+          if (mtrgedge(1,1).gt.0) ltrgedge(2,1)=mtrgedge(1,1)
         else
           do i=1,ntrgs !{
-            ltrgedge(1,i)=mtrgedge(1,i)
-            ltrgedge(2,i)=mtrgedge(2,i)
+            if (mtrgedge(1,i).gt.0) ltrgedge(1,i)=mtrgedge(1,i)
+            if (mtrgedge(2,i).gt.0) ltrgedge(2,i)=mtrgedge(2,i)
           end do !}
         end if
       end if !}
@@ -220,16 +220,19 @@ c*** Check the topology of the grid and the list of target edges
       end if !}
       if(ntrgs.eq.0) then !{
 c*** use the obsolete jedg[io][12] parameters
-        ltrgedge(1,1)=jedge(3) ! jedgo1
-        ltrgedge(2,1)=jedge(1) ! jedgi1
-        ltrgedge(1,ntrgts)=jedge(2) ! jedgi2
-        ltrgedge(2,ntrgts)=jedge(4) ! jedgo2
-        ntrgts=2
+        k=0
+        do i=1,2*max(1,nncut) !{
+          if (itrg(i).gt.0) then !{
+            ltrgedge(2-k,itrg(i))=jedge(i+(1-k)*ntrgsx) ! jedgo
+            ltrgedge(1+k,itrg(i))=jedge(i+k*ntrgsx)     ! jedgi
+          end if !}
+          k=1-k
+        end do !}
       end if !}
 c*** Check the target edge specifications and make them clear
       do i=1,ntrgts !{
-        if(ltrgedge(1,i).le.0) ltrgedge(2,i)=0
-        if(ltrgedge(2,i).le.0) ltrgedge(1,i)=0
+        if(ltrgedge(1,i).lt.0) ltrgedge(1,i)=0
+        if(ltrgedge(2,i).lt.0) ltrgedge(2,i)=0
       end do !}
 c*** No PFR for limiter configuration
       if(lim_cnf) then !{
@@ -363,7 +366,7 @@ c
       if(lwlddir(1)) then
         if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
      .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
-          write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
+          write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp1(1,l),pp1(2,l)
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
@@ -375,7 +378,7 @@ c
       else
         if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
      .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
-          write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
+          write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp2(1,l),pp2(2,l)
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
@@ -643,13 +646,13 @@ c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
 c*** Target still open...
-                write(*,'(2a,3i4)') 'b2pwlprp: unexpected error. ',
+                write(*,'(2a,3i4)') 'b2pwltrg: unexpected error. ',
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
                 write(*,*) 'lwldlis : ',pltzlbl(il)
                 write(*,*) (lwldlis(i1,il),i1=1,n)
-                call xerrab ('Missing CCW edge in b2pwlprp')
+                call xerrab ('Missing CCW edge in b2pwltrg')
               end if !}
               i1=2
               do i2=1,ntrgts !{
@@ -670,11 +673,11 @@ c*** CCW edge. Check to which target this edge belongs
               end do !}
               if(kb.eq.0) kb=kkb
               if (kb.ne.kkb .and. .not. lim_cnf) then !{
-                write(*,*) 'b2pwlprp: unexpected error. ',
+                write(*,*) 'b2pwltrg: unexpected error. ',
      ,                                  'Inner edge not found ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                call xerrab ('Inner edge not found in b2pwlprp')
+                call xerrab ('Inner edge not found in b2pwltrg')
               end if !}
               ie(kkb)=is
               it(kkb)=kkb
@@ -751,7 +754,7 @@ c*** CCW target
                   end do !}
 c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
                   if(kb.gt.0 .and. ke.gt.0) then !{
-                    write (*,*) 'b2pwlprp: a segment can appear in ',
+                    write (*,*) 'b2pwltrg: a segment can appear in ',
      ,                   'the grid edge lists no more than once.'
                     write (*,*) 'Segment ',lwldlis(j,il),',  list ',
      ,                                 il,',  targets ',it(kb),it(ke)
@@ -854,7 +857,7 @@ c*** Limiter configuration. Add the CCW target face
                   else !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
-                        write(*,*) 'b2pwlprp: unexpected error. ',
+                        write(*,*) 'b2pwltrg: unexpected error. ',
      ,                        'Trying to close a target different ',
      ,                        'from the opened one.'
                         write(*,*) 'Segment ',lwldlis(j,il),
@@ -871,7 +874,7 @@ c*** Limiter configuration. Add the CCW target face
                       lewrk(kn)=leirlis(j,il)
                       k=0
                    else if(kb.ne.0) then !}{
-                      write(*,*) 'b2pwlprp: unexpected error. ',
+                      write(*,*) 'b2pwltrg: unexpected error. ',
      ,                         'Trying to open a target having one ',
      ,                         'already opened.'
                       write(*,*) 'Segment ',lwldlis(j,il),
@@ -892,7 +895,7 @@ c*** Limiter configuration. Add the CCW target face
                 nwldlis(il)=kn
 c                print *,'il,kn = ',il,kn                  !###
               else !}{
-                print *,'b2pwlprp: not yet provided for the CW target ',
+                print *,'b2pwltrg: not yet provided for the CW target ',
      ,                                                   'orientation.'
                 print *,'==> Check specification of the "Plot zones"',
      ,                            ' in the DG model.'
