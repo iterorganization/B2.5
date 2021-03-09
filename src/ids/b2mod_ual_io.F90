@@ -1501,7 +1501,8 @@ contains
                 &   wbbc(topix(nx,topcut(1)),topiy(nx,topcut(1)),3) )
           endif
         end if
-        call divide_by_areas(nx,ny,abs(fht),tmpFace)
+        totFace=abs(fht)
+        call divide_by_areas(nx,ny,totFace,tmpFace)
         call alloc_b2plot_wall_loading(nlim,nsgmx)
         allocate(wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM))
         wrdtrg = 0.0_IDS_real
@@ -7023,7 +7024,8 @@ contains
             end if
           end do
           lambda = 0.0_IDS_real
-          call divide_by_areas(nx,ny,abs(fhe),tmpFace)
+          totFace=abs(fhe)
+          call divide_by_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(ii,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(ii,jsep+1:ny,0),dim=1)
           i = jsep+j
@@ -7040,7 +7042,8 @@ contains
           lambda = lambda/log(2.0_IDS_real)
           summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) = lambda
           lambda = 0.0_IDS_real
-          call divide_by_areas(nx,ny,abs(fhi),tmpFace)
+          totFace=abs(fhi)
+          call divide_by_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(jj,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(jj,jsep+1:ny,0),dim=1)
           i = jsep+j
@@ -7204,7 +7207,7 @@ contains
           radiation%code%library( nlibs )%commit = ADAS_git_version
           summary%code%library( nlibs )%commit = ADAS_git_version
 #if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%version = ADAS_git_version
+          divertors%code%library( nlibs )%commit = ADAS_git_version
 #endif
           allocate( edge_profiles%code%library( nlibs )%repository(1) )
           allocate( edge_sources%code%library( nlibs )%repository(1) )
@@ -7478,7 +7481,7 @@ contains
           radiation%code%library( nlibs )%version = mscl_version
           summary%code%library( nlibs )%version = mscl_version
 #if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%commit = mscl_version
+          divertors%code%library( nlibs )%version = mscl_version
 #endif
           allocate( edge_profiles%code%library( nlibs )%repository(1) )
           allocate( edge_sources%code%library( nlibs )%repository(1) )

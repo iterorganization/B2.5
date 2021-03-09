@@ -99,9 +99,11 @@ program b2_ual_rewrite
     !! Local variables
     character(len=24) :: shot_string
     character(len=24) :: run_string
+    character(len=24) :: new_run_string
     character(len=24) :: argName
-    integer narg, cptArg
+    integer narg, cptArg, new_run, tmp_run
     character*16 usrnam
+    data new_run / 0 /
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
@@ -126,6 +128,8 @@ program b2_ual_rewrite
 
     call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )
+    if (run.gt.0) new_run = run
+    write(new_run_string,'(i5)') new_run
     username = usrnam()
     call ipgetc('b2mndr_user', username )
     database = 'solps-iter'
@@ -163,6 +167,14 @@ program b2_ual_rewrite
           call get_command_argument( cptArg + 1, run_string )
           !! Transform dummy string variable to integer
           read( run_string, *) run
+          if (new_run.eq.0) then
+            new_run_string = run_string
+            new_run = run
+          end if
+        case("--newrun","-n")
+          call get_command_argument( cptArg + 1, new_run_string )
+          !! Transform dummy string variable to integer
+          read( new_run_string, *) new_run
         case("--username","-u")
           call get_command_argument( cptArg + 1, username )
         case("--database","--device","-d")
@@ -174,11 +186,15 @@ program b2_ual_rewrite
 
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( 0.le.new_run.and.new_run.le.99999, 'Invalid new run number')
+    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
+    write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
+    if (new_run.ne.run) write(*,'(a,i5)') &
+        & ' will be rewritten with run number ',new_run
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
@@ -203,30 +219,53 @@ program b2_ual_rewrite
           &  trim(imas_version)//'.'
         call close_ual(idx)
 !xpb Do the recreate to a temporary location and then bring it back
+        if (new_run.eq.run) then
+          tmp_run = run+1000
+        else
+          tmp_run = new_run
+        end if
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
           & 'recreate -si ',shot,' -ri ',run,      &
-          &         ' -so ',shot,' -ro ',run+1000, &
+          &         ' -so ',shot,' -ro ',tmp_run,  &
           &         ' -d ',database,' -u ',username
 #ifdef NAGFOR
         call system(systemarg, status, ierror)
 #else
         call system(systemarg)
 #endif
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-          & 'recreate -si ',shot,' -ri ',run+1000, &
-          &         ' -so ',shot,' -ro ',run,      &
-          &         ' -d ',database,' -u ',username
+        if (new_run.eq.run) then
+          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+            & 'recreate -si ',shot,' -ri ',tmp_run,  &
+            &         ' -so ',shot,' -ro ',run,      &
+            &         ' -d ',database,' -u ',username
 #ifdef NAGFOR
-        call system(systemarg, status, ierror)
+          call system(systemarg, status, ierror)
 #else
-        call system(systemarg)
+          call system(systemarg)
 #endif
-        call imas_open_env(treename, shot, run, idx, &
+        end if
+        call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
       end if
     else
       write (0,*) "No previous IDS found, new one will be created"
       idx = 0
+    end if
+    !! Create/Write the set data to IDSs
+    if (new_run.eq.run.and.idx.ne.0) then
+      write(*,*) "START delete_ids_edge"
+      call delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
+        &   idx )
     end if
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, &
@@ -239,22 +278,8 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
       &  divertors, &
 #endif
-      &  tim, dtim, shot, run, database, version )
+      &  tim, dtim, shot, new_run, database, version )
 
-    !! Create/Write the set data to IDSs
-    write(*,*) "START delete_ids_edge"
-    call delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-#if IMAS_MINOR_VERSION > 25
-        &   numerics, &
-#endif
-#if IMAS_MINOR_VERSION > 30
-        &   divertors, &
-#endif
-        &   idx )
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &
@@ -268,6 +293,23 @@ program b2_ual_rewrite
         &   divertors, &
 #endif
         &   idx )
+    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+#ifdef NAGFOR
+    call system(systemarg, status, ierror)
+#else
+    call system(systemarg)
+#endif
+    if (new_run.ne.run) then
+! Add superceding information to .yaml file
+      systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
+        &  trim(run_string)//' '//trim(new_run_string)
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
+      call system(systemarg)
+#endif
+    end if
     call close_ual(idx)
 
 end program b2_ual_rewrite
