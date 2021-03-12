@@ -1,18 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trzh (nx, ny, ns, znmax, na, ti)          !som 05.02.2021  
+      subroutine b2trzh (nx, ny, ns, znmax, na, ua, ti, lnlam, hx, bb)  !som 05.02.2021  
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_constants     
       use b2mod_subsys
       use b2mod_b2mrel
       use b2mod_b2zhco
+      use b2mod_zhfrtf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax
       real (kind=R8) ::
-     &  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny)
+     &  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny), ua(-1:nx,-1:ny,0:ns-1),
+     &  lnlam(-1:nx,-1:ny), hx(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
+
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -29,13 +32,14 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-*   ..local variables
       integer ncall
       integer ix, iy, is, inucl, iz,i, j 
 !    & nucl2s(0:nspecies-1,0:znmax), znnucl_int(0:nspecies-1) 
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
+     & gtal(-1:nx,-1:ny,0:nspecies-1),
 !    & amnucl(0:nspecies-1), znnucl(0:nspecies-1), 
-     & zeffne, nz2n(0:nspecies-1),z2n(0:nspecies-1),
+     & zeffne, nz2n(0:nspecies-1),
+!    & z2n(-1:nx,-1:ny,0:nspecies-1),nal(-1:nx,-1:ny,0:nspecies-1),
 !    & N2(0:nspecies-1,0:nspecies-1), N5(0:nspecies-1,0:nspecies-1), 
 !    & N6(0:nspecies-1,0:nspecies-1), N8(0:nspecies-1,0:nspecies-1),
 !    & N9(0:nspecies-1,0:nspecies-1),
@@ -46,7 +50,11 @@
 !    & rmu(0:nspecies-1,0:nspecies-1),
 !    & mdm(0:nspecies-1,0:nspecies-1),
      & Ainv(0:2*nspecies-1,0:2*nspecies-1),
-     & Ainv_mdf(0:nspecies-1,0:2*nspecies-1)
+     & Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
+     & Ainv_fl(0:2*nspecies-1,0:2*nspecies-1),
+     & Ainv_mdf_fl(0:nspecies-1,0:2*nspecies-1),
+     & t0, t1, czetap,zetap(-1:nx,-1:ny),
+     & cF_lim(0:nspecies-1,0:nspecies-1)
 
       save ncall
       data ncall/0/
@@ -60,8 +68,11 @@
 
 !       print *, 'checkpoint_31'
 !       print *, znmax  
-        call init_mrel(nspecies,znmax)
+*   ..allocate
+        call init_mrel(nspecies,znmax,ns)
         call init_zhco(nspecies, nx, ny)
+        call b2mod_zhfrtf_init(nx, ny, ns)
+
 *   ..calculate the atom number and the atomic mass of each type of ions
         inucl=1
         znnucl(0)=zn(0)
@@ -79,9 +90,10 @@
           endif 
 *   ..correspondence matrix
           nucl2s(inucl-1,nint(zamax(is)))=is 
+          s2nucl(is)=inucl
           znnucl_int(inucl-1)=nint(znnucl(inucl-1))
         enddo        
-!       print *, 'checkpoint_32'
+!       print *, s2nucl
 *   ..calculate the N-coefficients and all mass related variables 
         call b2trcn (nspecies, amnucl, N2, N5, N6, N8, N9, N10, 
      & N11, N12, mu, rmu, mum, mdm)
@@ -89,25 +101,25 @@
        
 !       print *, 'checkpoint_33'
 *   ..main part  
+*   ..calculate the average Z**2*n and density of each type
+      call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
+
+*   ..calculate temperature gradients  
+      call b2mod_zhfrtf_tgta(nx, ny, ns, na, ua, ti, hx, bb)
+
+*   ..compute zetap 
+      t1 = (4.0_R8*pi*eps0/qe)/qe
+      t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
+      czetap = t0*sqrt(mp)
+      zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
+
+*   ..calculate transport coefficietns  
       do iy = -1, ny
         do ix = -1, nx
-*   ..calculate the average Z**2*n
-          do inucl = 0, nspecies-1
-            z2n(inucl) = 0
-            do iz= 1, znnucl_int(inucl)
-!             print * 
-!       print *,'inucl', inucl
-!       print *,'znnucl_int(inucl)', znnucl_int(inucl)  
-!       print *,'iz', iz
-!       print *,'nucl2s(inucl,iz)', nucl2s(inucl,iz)
-              z2n(inucl)=z2n(inucl)+iz**2*na(ix, iy, nucl2s(inucl,iz))
-            enddo
-          enddo
-
-          amti=amnucl*mp/ti(nx,ny)
-          zeffne=sum(z2n) 
+          amti=amnucl*mp/ti(ix,iy)
+          zeffne=sum(z2n_xy(ix,iy,0:nspecies-1)) 
 *    ..normalized average Z**2*n
-          nz2n=z2n/zeffne
+          nz2n=z2n_xy(ix,iy,0:nspecies-1)/zeffne
 *    ..calculate the inversed matrix for heat flux/r-moment
 !       print *, 'checkpoint_34'
           call b2trca(nspecies, amti, N5, N6, N9,  
@@ -133,6 +145,13 @@
             Ainv_mdf(0:nspecies-1,j)=
      & amti(0:nspecies-1)*Ainv(nspecies:2*nspecies-1,j)
           enddo
+*    ..Flux limiting coefficient	
+          call b2trfl(ix,iy,Ainv,zeffne,amti,zetap(ix,iy),cF_lim) 
+          Ainv_fl(0:nspecies-1,0:nspecies-1)=
+     & cF_lim(0:nspecies-1,0:nspecies-1)*Ainv(0:nspecies-1,0:nspecies-1)
+          Ainv_mdf_fl(0:nspecies-1,0:nspecies-1)=
+     & cF_lim(0:nspecies-1,0:nspecies-1)*
+     & Ainv_mdf(0:nspecies-1,0:nspecies-1)
 *    ..G-objects for the thermal and friction forces	 
           do j = 0, nspecies-1
             G2(:,j)=nz2n(:)*nz2n(j)*N2(:,j)
@@ -140,13 +159,17 @@
           enddo
 
 !       print *, 'checkpoint_36'
-*    ..calculate the thermal force transport coefficient 
+*    ..calculate the thermal force transport coefficient without flux limiting 
           call b2trtf(nspecies, G2, G8, mum, mdm,
-     & Ainv, Ainv_mdf, ix, iy)
+     & Ainv, Ainv_mdf, c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1))
+*    ..calculate the thermal force transport coefficient with flux limiting 
+          call b2trtf(nspecies, G2, G8, mum, mdm,
+     & Ainv_fl, Ainv_mdf_fl, c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
 !       print *, 'checkpoint_37'
 *    ..calculate the friction force transport coefficient 
           call b2trfr(nspecies, G2, G8, mum, rmu,
-     & z2n, Ainv, Ainv_mdf, ix, iy)
+     & z2n_xy(ix,iy,0:nspecies-1), Ainv, Ainv_mdf, 
+     & c_R_w(ix,iy,0:nspecies-1,0:nspecies-1))
         enddo
       enddo
       if (ncall.eq.10) then
@@ -156,14 +179,19 @@
         print *, 'ix,iy:',ix,iy
         print *, 'na:'
         print *,  (na(ix, iy,j),j=0,ns-1)
+        print *, 'c_R_TA_nofl:'
+        do, i=0,nspecies-1
+          print *, (c_R_TA_nofl(ix,iy,i,j), j=0,nspecies-1 )
+        enddo
+        print *
         print *, 'c_R_TA:'
         do, i=0,nspecies-1
           print *, (c_R_TA(ix,iy,i,j), j=0,nspecies-1 )
         enddo
         print *
-        print *, 'c_R_wA:'
+        print *, 'c_R_w:'
         do, i=0,nspecies-1
-          print *, (c_R_wA(ix,iy,i,j), j=0,nspecies-1 )
+          print *, (c_R_w(ix,iy,i,j), j=0,nspecies-1 )
         enddo
         print *
       endif    

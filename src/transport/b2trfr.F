@@ -2,20 +2,21 @@
 *.specification
 
       subroutine b2trfr(nnucl, G2, G8, mum, rmu,
-     & z2n, Ainv, Ainv_mdf, ix, iy)
+     & z2n, Ainv, Ainv_mdf, c_R_w)
       use b2mod_types
       use b2mod_subsys
-*   ..output arguments 
-      use b2mod_b2zhco, only: c_R_wA
+!     use b2mod_b2zhco, only: c_R_wA
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nnucl, ix, iy
+      integer nnucl
       real (kind=R8) :: amti(0:nnucl-1),
      & z2n(0:nnucl-1),
      & G2(0:nnucl-1,0:nnucl-1), G8(0:nnucl-1,0:nnucl-1),
      & mum(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1)
       real (kind=R8) :: Ainv(0:2*nnucl-1,0:2*nnucl-1),
      & Ainv_mdf(0:nnucl-1,0:2*nnucl-1) 
+*   ..output arguments 
+      real (kind=R8) :: c_R_w(0:nnucl-1,0:nnucl-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -37,7 +38,8 @@
       real (kind=R8) :: c_hwAm(0:nnucl-1,0:nnucl-1,0:nnucl-1),
      & c_rwAm(0:nnucl-1,0:nnucl-1,0:nnucl-1),
      & c_hwA(0:nnucl-1,0:nnucl-1), c_rwA(0:nnucl-1,0:nnucl-1),
-     & c_R_wA1, c_R_wA2, c_R_wA3
+     & c_R_wA1, c_R_wA2, c_R_wA3,
+     & c_R_wA(0:nnucl-1,0:nnucl-1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -117,15 +119,29 @@
      & (0.6_R8*c_hwA(k,j)-rel*mum(j,i)*c_rwA(k,j))
           enddo
 *   ..finally
-          c_R_wA(ix,iy,j,i)=1+c_R_wA1+c_R_wA2+c_R_wA3
+          c_R_wA(j,i)=1+c_R_wA1+c_R_wA2+c_R_wA3
         enddo
       enddo
 
+!     print *
 !     do, i=0,nnucl-1
 !     print *, (c_R_wA(ix,iy,i,j), j=0,nnucl-1 )
 !     enddo
 !     print *
         
+      c_R_w=c_R_wA
+!     do i = 0, nnucl-1
+!       temp=0
+!       do k = 0, nnucl-1
+!         temp=temp+(rmu(i,k)/rmu(i,i))*(z2n(k)/z2n(i))*
+!    & (1-c_R_wA(k,i))
+!       enddo
+!       c_R_w(i,i)=c_R_w(i,i)+temp
+!     enddo
+
+      do i = 0, nnucl-1
+        c_R_w(i,i)=1
+      enddo
       call subend ()
       return
 

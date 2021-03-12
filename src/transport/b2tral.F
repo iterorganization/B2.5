@@ -18,6 +18,8 @@
       use b2mod_rates
      , , only : rza
       use b2mod_b2cmpa
+      use b2mod_b2zhco ,
+     & only: zhflcorr                                !som 05.03.21
       use b2mod_neoclassical
       use b2mod_subsys
       implicit none
@@ -93,6 +95,7 @@
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
       integer, save :: Zhdanov_closure = 0                              !som 25.01.21
+      integer, save :: icase = 0                                        !som 05.03.20
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -160,6 +163,10 @@
         call alloc_input_profile(nx,ny,ns)
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)   !som 25.01.20
+        call ipgetr ('b2tral_zhflcorr', zhflcorr)
+        call ipgeti ('b2tlnl_ii', icase)                                !som 05.03.20
+        call xertst (0.eq.icase .or. 1.eq.icase, 
+     &               'faulty input b2tlnl_ii')
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
@@ -216,17 +223,18 @@
      5  csig_cl, calf_cl)
 *   ..compute Zhdanov closure coefficients
       if(Zhdanov_closure.eq.1) then                                !som 09.02.21
-!     print *, 'checkpoint_1'
+      print *, 'checkpoint_1'
         if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
-!         print *, 'checkpoint_2'
+          print *, 'checkpoint_2'
           if (nnucl /= nspecies) then
             stop 'Error during making isonuclear sequence!'
           end if
         endif
-!       print *, 'checkpoint_3'
-        call b2trzh (nx, ny, ns, zmaxmax, na, ti)
-!       print *, 'checkpoint_4'
+        print *, 'checkpoint_3'
+        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam) 
+        call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb)
+        print *, 'checkpoint_4'
       endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17

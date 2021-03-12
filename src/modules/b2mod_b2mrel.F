@@ -1,7 +1,7 @@
       module b2mod_b2mrel
       use b2mod_types
       integer, allocatable :: 
-     & nucl2s(:,:), znnucl_int(:) 
+     & nucl2s(:,:), znnucl_int(:), s2nucl(:) 
       real (kind=R8), allocatable ::
      & amnucl(:), znnucl(:), 
      & N2(:,:), N5(:,:), 
@@ -14,7 +14,7 @@
      & mdm(:,:)
       contains
 
-      subroutine init_mrel(nnucl,znmax)
+      subroutine init_mrel(nnucl,znmax,ns)
       integer :: nnucl, znmax
       
       allocate(amnucl(0:nnucl-1))
@@ -33,6 +33,7 @@
       allocate(mdm(0:nnucl-1,0:nnucl-1))
       allocate(nucl2s(0:nnucl-1,0:znmax))
       allocate(znnucl_int(0:nnucl-1))
+      allocate(s2nucl(0:ns-1))
       end subroutine init_mrel
 
       end module b2mod_b2mrel
