@@ -13,7 +13,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb)
+     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb, fnn_inc)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -51,7 +51,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
       real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc), 
-     &                                  kin_frac_hyb(nFc)
+     &            kin_frac_hyb(nFc), fnn_inc(nFc,0:ns-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -975,7 +975,8 @@ c          while B2.5 uses internal energy equations.
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1,
+     &              switch%diffusion_bc_safeguard, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
@@ -1004,6 +1005,9 @@ c          while B2.5 uses internal energy equations.
      &             (b2recyc(is,istra)*fluid_frac_hyb(iFc)-1)*
      &             fnni*neutral_sources_rescale
 
+!! save the incident fluid neutral flux
+             fnn_inc(iFc,is0) = fnni*isign
+
 
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
@@ -1015,6 +1019,7 @@ cmb   net momentum sources from neutral particle reflection
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
+     &              switch%diffusion_bc_safeguard,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,

@@ -57,6 +57,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: spatial_hybrid
       integer :: ineustra
       integer :: use_auto_spatial_hyb
+      integer :: diffusion_bc_safeguard
 
 
   
@@ -478,6 +479,7 @@ c b2mndt
       s % spatial_hybrid = 0
       s % ineustra = 0
       s % use_auto_spatial_hyb = 0
+      s % diffusion_bc_safeguard = 1
 
 
       s % fhe_vis_per = 0.0e0_R8
@@ -886,6 +888,9 @@ c b2mndt
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
       call ipgeti ('eirene_neutr_strata', s % ineustra)  
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
+      call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard) 
+
+
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)    
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
@@ -1662,6 +1667,10 @@ c spatially hybrid neutrals
 
       if(s%use_auto_spatial_hyb.ne.0.and.s%spatial_hybrid.eq.0) then
         call xerrab('automatic spatial hybrid needs spatial hybrid')
+      endif
+
+      if(s%use_auto_spatial_hyb.ne.0.and.s%kul_recycle.eq.0) then
+        call xerrab('automatic spatial hybrid needs KUL neutral BCs')
       endif
 
 c k-enstrophy model

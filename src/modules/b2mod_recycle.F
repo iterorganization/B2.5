@@ -219,7 +219,7 @@ c     Other initializations
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,safeguard,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
@@ -236,7 +236,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
+     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1, safeguard
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy,dnndz, cosa, sina
 c     Output variables: 
@@ -363,7 +363,7 @@ c     Convert energy flux densities in net energy flux contributions
 
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni.lt.0) then
+      if (fnni.lt.0.and.safeguard.eq.1) then
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
      &            fnni,fmomni,
@@ -434,7 +434,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnni,fmomni,nni,nnwwni,feneni)
 
       elseif (mfp.gt.mfp_b2) then
@@ -453,7 +453,7 @@ c     if the mfp is in between, we use a linear interpolation
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnniD,fmomniD,nniD,nnwwniD,feneniD)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fnniD,  fnniM,   fnni)
         call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomniD,fmomniM, fmomni)
@@ -505,7 +505,7 @@ c     Output variables
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1, !! <- '1': = safeguard for diffusion BCs
      &            fnni,fmomni,nni,nnwwni,feneni)
       else
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
@@ -780,7 +780,7 @@ c     Convert energy flux densities in energy fluxes
      &            Phi_app,area,recyc0,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0,safeguard,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
@@ -796,7 +796,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, safeguard
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz,
@@ -995,7 +995,7 @@ c     Convert energy flux densities in energy fluxes
       fene_el =  fene_el*area
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni.lt.0) then
+      if (fnni.lt.0.and.safeguard.eq.1) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,                        
      &            pl,tnf, geo, mpg,cosa, sina,
@@ -1069,7 +1069,7 @@ c     Calculate rate coefficients at boundary
      &            Phi_app,area,recyc0,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       elseif (mfp.gt.mfp_b2) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
@@ -1086,7 +1086,7 @@ c     Calculate rate coefficients at boundary
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,fluid_frac_hyb,pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
      &            fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD)
 
           call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomreflD,fmomreflM,
@@ -1146,7 +1146,7 @@ c     Output variables:
      &            Phi_app,area,recyc0,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
