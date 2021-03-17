@@ -230,6 +230,7 @@ program b2_ual_write
              & 'Recreating using IMAS version '// &
              &  trim(imas_version)//'.'
             call close_ual(idx)
+            idx = 0
 !xpb Do the recreate to a temporary location and then bring it back
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
              & 'recreate -si ',shot,' -ri ',run,      &
@@ -307,6 +308,7 @@ program b2_ual_write
 #endif
         &   treename, shot, run, idx, username, database, version )
     call close_ual(idx)
+    idx = 0
 
 end program b2_ual_write
 

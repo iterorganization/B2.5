@@ -195,11 +195,19 @@ program b2_ual_rewrite
         & ' User: ', trim(username), ' Database: ', trim(database)
     if (new_run.ne.run) write(*,'(a,i5)') &
         & ' will be rewritten with run number ',new_run
+    systemarg = 'imasdb '//trim(database)
+    write(*,*) trim(systemarg)
+#ifdef NAGFOR
+    call system(systemarg, status, ierror)
+#else
+    call system(systemarg)
+#endif
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-    call imas_open_env(treename, shot, run, idx, username, database, version, status)
+    call imas_open_env(treename, shot, run, idx, &
+      &                username, database, version, status)
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
       call ids_get( idx, "dataset_description", old_description, status)
@@ -218,6 +226,7 @@ program b2_ual_rewrite
           & 'Recreating using IMAS version '// &
           &  trim(imas_version)//'.'
         call close_ual(idx)
+        idx = 0
 !xpb Do the recreate to a temporary location and then bring it back
         if (new_run.eq.run) then
           tmp_run = run+1000
@@ -246,6 +255,16 @@ program b2_ual_rewrite
         end if
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
+      else if (new_run.ne.run) then
+        call close_ual(idx)
+        idx = 0
+        call imas_open_env(treename, shot, new_run, idx, &
+          &                username, database, version, status)
+        if ( status.ne.0 .or. idx.eq.0 ) then ! New run IDS must be created
+          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
+            &                  username, database, version, status )
+          call xertst( status.eq.0, 'Error creating IDS with new run number !')
+        end if
       end if
     else
       write (0,*) "No previous IDS found, new one will be created"
@@ -295,6 +314,7 @@ program b2_ual_rewrite
         &   idx )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+    write(*,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
 #else
@@ -304,6 +324,7 @@ program b2_ual_rewrite
 ! Add superceding information to .yaml file
       systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
         &  trim(run_string)//' '//trim(new_run_string)
+      write(*,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
@@ -311,6 +332,7 @@ program b2_ual_rewrite
 #endif
     end if
     call close_ual(idx)
+    idx = 0
 
 end program b2_ual_rewrite
 

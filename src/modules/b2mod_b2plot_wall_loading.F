@@ -123,6 +123,7 @@ c======================================================================
       allocate(segm_area(nsgmx), segm_len(nsgmx),
      ,  wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
       allocate(mtrwldsg(nsgmx))
+      lewrk = 0
       lskip = .false.
 
       return

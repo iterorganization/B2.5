@@ -20,6 +20,7 @@ module b2mod_ual_io
 
     use b2mod_types
     use b2mod_b2cmpa
+    use b2mod_b2cmrc
     use b2mod_geo
     use b2mod_work
     use b2mod_diag
@@ -191,15 +192,6 @@ contains
         type (ids_divertors) :: divertors !< IDS designed to store
             !< data related to the divertor plates
 #endif
-#if IMAS_MINOR_VERSION > 29
-        integer :: nlibs !< Number of declared libraries in IDS description
-#ifdef AMNS
-        type (amns_handle_type) :: amns
-        type (amns_query_type) :: query
-        type (amns_answer_type) :: answer
-        type (amns_error_type) :: amns_status
-#endif
-#endif
         integer, intent(in) :: shot, run
         character(len=24), intent(in) :: database, version
         real(IDS_real), intent(in), optional :: time_IN !< Time
@@ -212,8 +204,8 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
-        character(len=120) :: AM_label  !< Description of A&M data source
-        character(len=24) :: source     !< Code source
+        character(len=132) :: comment   !< IDS properties label
+        character(len=132) :: source    !< Code source
         character(len=13) :: spclabel   !< Species label
         character(len=2)  :: plate_name(4) !< Divertor plate name
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
@@ -305,8 +297,8 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, &
-            &             u, qtot, qetot, qitot, qmax, qemax, qimax, lambda, &
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u, v,         &
+            &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
         real(IDS_real) :: r_min, r_max, z_min, z_max
@@ -347,24 +339,19 @@ contains
         character*8 date
         character*10 ctime
         character*5 zone
+        character*132 create_date
         integer tvalues(8)
         character*16 usrnam
-        character*8 imas_version, ual_version, ggd_version, adas_version, &
-            &       mscl_version
+        character*8 imas_version, ual_version, adas_version
         character*32 B25_git_version
         character*32 ADAS_git_version
-        character*32 SOLPS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
-        character*32 get_SOLPS_hash
-        character*132 repository
+        character*132 code_commit, radiation_commit
         character*256 filename
         logical match_found, streql, exists, wrong_flow
         logical at_top, at_bot, at_mid, target_east, target_west
 #ifdef B25_EIRENE
-        character*8 eirene_version
-        character*31 Eirene_git_version
-        character*31 get_Eir_hash
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         logical, allocatable :: in_species(:)
@@ -437,27 +424,18 @@ contains
         end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call date_and_time (date, ctime, zone, tvalues)
-        mscl_version='0.0.0'
 #ifdef NAGFOR
         call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
         call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
-        call get_environment_variable('GGD_VERSION',status=ierror,length=lenval)
-        if (ierror.eq.0) call get_environment_variable('GGD_VERSION',value=ggd_version)
-        call get_environment_variable('EBVERSIONMSCL',status=ierror,length=lenval)
-        if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL',value=mscl_version)
 #else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
         CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
-        CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
-        CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
 #else
         call getenv ('IMAS_VERSION', imas_version)
         call getenv ('UAL_VERSION', ual_version)
-        call getenv ('GGD_VERSION', ggd_version)
-        call getenv ('EBVERSIONMSCL', mscl_version)
 #endif
 #endif
 
@@ -564,78 +542,109 @@ contains
             & call xertst( num_time_slices_IN .ge. 1, &
             & "faulty argument num_time_slices_IN" )
 
-        !! Preparing edge_profiles IDS for writing
+        !! Preparing IDSs for writing
         !! In order to write to IDS database there are next steps that are
         !! mandatory to do, otherwise there is high change that writing to IDS
         !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        edge_profiles%ids_properties%homogeneous_time = homogeneous_time
-        allocate( edge_profiles%ids_properties%comment(1) )
-        edge_profiles%ids_properties%comment(1) = label
-        !! 2. Allocate edge_profiles.time and set it to desired values
+        comment = label
+        create_date = date//' '//ctime//' '//' '//zone
+        !! 1. Set homogeneous_time to 0 or 1 and other properties
+        call write_ids_properties( edge_profiles%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+        call write_ids_properties( edge_transport%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+        call write_ids_properties( edge_sources%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+        call write_ids_properties( radiation%ids_properties, &
+          &  homogeneous_time, comment, AM_label, create_date )
+        call write_ids_properties( description%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+#if IMAS_MINOR_VERSION > 21
+        call write_ids_properties( summary%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call write_ids_properties( numerics%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+#endif
+#if IMAS_MINOR_VERSION > 30
+        call write_ids_properties( divertors%ids_properties, &
+          &  homogeneous_time, comment, source, create_date )
+#endif
+
+        !! 2. Set code and library data
+        B25_git_version = get_B25_hash()
+        code_commit = B25_git_version
+        if (streql(b2frates_flag,'adas')) then
+          ADAS_git_version = get_ADAS_hash()
+          radiation_commit = 'B25 : '//trim(B25_git_version)// &
+                      &  ' + ADAS : '//trim(ADAS_git_version)
+          p = index(ADAS_git_version,'-')
+          if (p.eq.0) then
+            adas_version = trim(ADAS_git_version)
+          else if (p.gt.1) then
+            adas_version = ADAS_git_version(1:p-1)
+          else
+            adas_version = ''
+          end if
+        else
+          radiation_commit = B25_git_version
+        endif
+        call write_ids_code( edge_profiles%code, code_commit )
+        call write_ids_code( edge_transport%code, code_commit )
+        call write_ids_code( edge_sources%code, code_commit )
+        call write_ids_code( radiation%code, radiation_commit )
+#if IMAS_MINOR_VERSION > 21
+        call write_ids_code( summary%code, code_commit )
+#endif
+#if IMAS_MINOR_VERSION > 30
+        call write_ids_code( divertors%code, code_commit )
+#endif
+        allocate( edge_transport%model(1) )
+        edge_transport%model(1)%identifier%index = 1
+        allocate( edge_transport%model(1)%identifier%name(1) )
+        allocate( edge_transport%model(1)%identifier%description(1) )
+        if (ids_from_43.eq.0) then
+          if (style.eq.0) then
+            edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
+            edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
+          else if (style.eq.1) then
+            edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
+            edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
+          end if
+          edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
+        else
+          edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
+          edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
+          edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
+        end if
+#if IMAS_MINOR_VERSION > 29
+        allocate( edge_transport%model(1)%code%name(1) )
+        edge_transport%model(1)%code%name = source
+        allocate( edge_transport%model(1)%code%version(1) )
+        edge_transport%model(1)%code%version = newversion
+        allocate( edge_transport%model(1)%code%commit(1) )
+        edge_transport%model(1)%code%commit = B25_git_version
+        allocate( edge_transport%model(1)%code%repository(1) )
+        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
+        call write_timed_integer( edge_transport%model(1)%code%output_flag, 0 )
+#endif
+
+        !! 3. Allocate IDS.time and set it to desired values
         allocate( edge_profiles%time(num_time_slices) )
         edge_profiles%time(time_sind) = time
-
-        !! Preparing edge_transport IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        edge_transport%ids_properties%homogeneous_time = homogeneous_time
-        allocate( edge_transport%ids_properties%comment(1) )
-        edge_transport%ids_properties%comment(1) = label
-        !! 2. Allocate edge_transport.time and set it to desired values
         allocate( edge_transport%time(num_time_slices) )
         edge_transport%time(time_sind) = time
-
-        !! Preparing edge_sources IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        edge_sources%ids_properties%homogeneous_time = homogeneous_time
-        allocate( edge_sources%ids_properties%comment(1) )
-        edge_sources%ids_properties%comment(1) = label
-        !! 2. Allocate edge_sources.time and set it to desired values
         allocate( edge_sources%time(num_time_slices) )
         edge_sources%time(time_sind) = time
-
-        !! Preparing dataset_description IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        description%ids_properties%homogeneous_time = homogeneous_time
-        allocate( description%ids_properties%comment(1) )
-        description%ids_properties%comment(1) = label
-        !! 2. Allocate description.time and set it to desired values
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
-
 #if IMAS_MINOR_VERSION > 21
-        !! Preparing summary IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        summary%ids_properties%homogeneous_time = homogeneous_time
-        allocate( summary%ids_properties%comment(1) )
-        summary%ids_properties%comment(1) = label
-        !! 2. Allocate summary.time and set it to desired values
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
 #endif
-
 #if IMAS_MINOR_VERSION > 25
-        !! Preparing numerics IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        numerics%ids_properties%homogeneous_time = homogeneous_time
-        allocate( numerics%ids_properties%comment(1) )
-        numerics%ids_properties%comment(1) = label
-        !! 2. Allocate numerics.time and set it to desired values
+        !! Allocate numerics.time and set it to desired values
         allocate( numerics%time(num_time_slices) )
         numerics%time(time_sind) = time
         allocate( numerics%time_start(num_time_slices) )
@@ -645,33 +654,14 @@ contains
         allocate( numerics%time_end(num_time_slices) )
         numerics%time_end(time_sind) = run_end_time_IN
 #endif
-
 #if IMAS_MINOR_VERSION > 30
-        !! Preparing divertors IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        divertors%ids_properties%homogeneous_time = homogeneous_time
-        allocate( divertors%ids_properties%comment(1) )
-        divertors%ids_properties%comment(1) = label
-        !! 2. Allocate divertors.time and set it to desired values
         allocate( divertors%time(num_time_slices) )
         divertors%time(time_sind) = time
 #endif
-
-        !! Preparing radiation IDS for writing
-        !! In order to write to IDS database there are next steps that are
-        !! mandatory to do, otherwise there is high change that writing to IDS
-        !! database will fail
-        !! 1. Set homogeneous_time to 0 or 1
-        radiation%ids_properties%homogeneous_time = homogeneous_time
-        allocate( radiation%ids_properties%comment(1) )
-        radiation%ids_properties%comment(1) = label
-        !! 2. Allocate radiation.time and set it to desired values
         allocate( radiation%time(num_time_slices) )
         radiation%time(time_sind) = time
-        !! 3. Allocate radiation.process
+
+        !! Allocate radiation.process
         !! Process 1: line and recombination radiation due to B2.5 species
         !! Process 2: bremsstrahlung recombination due to B2.5 species
         !! Process 3: line radiation due to Eirene neutrals (atoms and molecules)
@@ -731,24 +721,6 @@ contains
             allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
 #endif
-            allocate( edge_transport%model(1) )
-            edge_transport%model(1)%identifier%index = 1
-            allocate( edge_transport%model(1)%identifier%name(1) )
-            allocate( edge_transport%model(1)%identifier%description(1) )
-            if (ids_from_43.eq.0) then
-              if (style.eq.0) then
-                edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
-                edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-              else if (style.eq.1) then
-                edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
-                edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
-              end if
-              edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
-            else
-              edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-              edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-              edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
-            end if
             allocate( edge_transport%model(1)%ggd( num_time_slices ) )
             allocate( edge_sources%source(nsources) )
             do is = 1, nsources
@@ -828,238 +800,7 @@ contains
             edge_sources%source(12)%identifier%description = "Radiation sources from "//trim(source)
         end if
 
-        !! Allocate and init the IDS
-        allocate( edge_profiles%code%name(1) )
-        allocate( edge_transport%code%name(1) )
-        allocate( edge_sources%code%name(1) )
-        allocate( radiation%code%name(1) )
-        edge_profiles%code%name = source
-        edge_transport%code%name = source
-        edge_sources%code%name = source
-        radiation%code%name = source
-#if IMAS_MINOR_VERSION > 29
-        allocate( edge_transport%model(1)%code%name(1) )
-        edge_transport%model(1)%code%name = source
-#endif
-
-        allocate( edge_profiles%code%version(1) )
-        edge_profiles%code%version = newversion
-        allocate( edge_transport%code%version(1) )
-        edge_transport%code%version = newversion
-        allocate( edge_sources%code%version(1) )
-        edge_sources%code%version = newversion
-        allocate( radiation%code%version(1) )
-        radiation%code%version = newversion
-#if IMAS_MINOR_VERSION > 29
-        allocate( edge_transport%model(1)%code%version(1) )
-        edge_transport%model(1)%code%version = newversion
-#endif
-
-        B25_git_version = get_B25_hash()
-        allocate( edge_profiles%code%commit(1) )
-        edge_profiles%code%commit = B25_git_version
-        allocate( edge_transport%code%commit(1) )
-        edge_transport%code%commit = B25_git_version
-        allocate( edge_sources%code%commit(1) )
-        edge_sources%code%commit = B25_git_version
-        allocate( radiation%code%commit(1) )
-        if (streql(b2frates_flag,'adas')) then
-          ADAS_git_version = get_ADAS_hash()
-          radiation%code%commit = 'B25 : '//trim(B25_git_version)// &
-                           &  ' + ADAS : '//trim(ADAS_git_version)
-          p = index(ADAS_git_version,'-')
-          if (p.eq.0) then
-            adas_version = trim(ADAS_git_version)
-          else if (p.gt.1) then
-            adas_version = ADAS_git_version(1:p-1)
-          else
-            adas_version = ''
-          end if
-        else
-          radiation%code%commit = B25_git_version
-        endif
-#if IMAS_MINOR_VERSION > 29
-        allocate( edge_transport%model(1)%code%commit(1) )
-        edge_transport%model(1)%code%commit = B25_git_version
-#endif
-#ifdef B25_EIRENE
-        if (use_eirene.ne.0) then
-          Eirene_git_version = get_Eir_hash()
-          p = index(Eirene_git_version,'-')
-          if (p.eq.0) then
-            eirene_version = trim(Eirene_git_version)
-          else if (p.gt.1) then
-            eirene_version = Eirene_git_version(1:p-1)
-          else
-            eirene_version = ''
-          end if
-        end if
-#endif
-
-        allocate( edge_profiles%code%repository(1) )
-        edge_profiles%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        allocate( edge_transport%code%repository(1) )
-        edge_transport%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        allocate( edge_sources%code%repository(1) )
-        edge_sources%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        allocate( radiation%code%repository(1) )
-        radiation%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-#if IMAS_MINOR_VERSION > 29
-        allocate( edge_transport%model(1)%code%repository(1) )
-        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-#endif
-
-        allocate( radiation%ids_properties%source(1) )
-        radiation%ids_properties%source = AM_label
-        allocate( description%ids_properties%source(1) )
-        description%ids_properties%source = source
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%source(1) )
-        numerics%ids_properties%source = source
-#endif
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%ids_properties%source(1) )
-        divertors%ids_properties%source = source
-#endif
-#if IMAS_MINOR_VERSION > 14
-        allocate( edge_profiles%ids_properties%provider(1) )
-        edge_profiles%ids_properties%provider = usrnam()
-        allocate( edge_transport%ids_properties%provider(1) )
-        edge_transport%ids_properties%provider = usrnam()
-        allocate( edge_sources%ids_properties%provider(1) )
-        edge_sources%ids_properties%provider = usrnam()
-        allocate( radiation%ids_properties%provider(1) )
-        radiation%ids_properties%provider = usrnam()
-        allocate( description%ids_properties%provider(1) )
-        description%ids_properties%provider = usrnam()
-
 #if IMAS_MINOR_VERSION > 21
-        allocate( summary%code%name(1) )
-        summary%code%name = source
-        allocate( summary%code%version(1) )
-        summary%code%version = newversion
-        allocate( summary%code%commit(1) )
-        summary%code%commit = get_B25_hash()
-        allocate( summary%code%repository(1) )
-        summary%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        allocate( summary%ids_properties%provider(1) )
-        summary%ids_properties%provider = usrnam()
-#endif
-
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%provider(1) )
-        numerics%ids_properties%provider = usrnam()
-#endif
-
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%name(1) )
-        divertors%code%name = source
-        allocate( divertors%code%version(1) )
-        divertors%code%version = newversion
-        allocate( divertors%code%commit(1) )
-        divertors%code%commit = get_B25_hash()
-        allocate( divertors%code%repository(1) )
-        divertors%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        allocate( divertors%ids_properties%provider(1) )
-        divertors%ids_properties%provider = usrnam()
-#endif
-
-        allocate( edge_profiles%ids_properties%creation_date(1) )
-        edge_profiles%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-        allocate( edge_transport%ids_properties%creation_date(1) )
-        edge_transport%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-        allocate( edge_sources%ids_properties%creation_date(1) )
-        edge_sources%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-        allocate( radiation%ids_properties%creation_date(1) )
-        radiation%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-        allocate( description%ids_properties%creation_date(1) )
-        description%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-#if IMAS_MINOR_VERSION > 21
-        allocate( summary%ids_properties%creation_date(1) )
-        summary%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-#endif
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%creation_date(1) )
-        numerics%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-#endif
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%ids_properties%creation_date(1) )
-        divertors%ids_properties%creation_date = &
-                &   date//' '//ctime//' '//' '//zone
-#endif
-
-#if IMAS_MINOR_VERSION > 21
-        allocate( edge_profiles%ids_properties%version_put%data_dictionary(1) )
-        edge_profiles%ids_properties%version_put%data_dictionary = imas_version
-        allocate( edge_transport%ids_properties%version_put%data_dictionary(1) )
-        edge_transport%ids_properties%version_put%data_dictionary = imas_version
-        allocate( edge_sources%ids_properties%version_put%data_dictionary(1) )
-        edge_sources%ids_properties%version_put%data_dictionary = imas_version
-        allocate( radiation%ids_properties%version_put%data_dictionary(1) )
-        radiation%ids_properties%version_put%data_dictionary = imas_version
-        allocate( summary%ids_properties%version_put%data_dictionary(1) )
-        summary%ids_properties%version_put%data_dictionary = imas_version
-        allocate( description%ids_properties%version_put%data_dictionary(1) )
-        description%ids_properties%version_put%data_dictionary = imas_version
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%version_put%data_dictionary(1) )
-        numerics%ids_properties%version_put%data_dictionary = imas_version
-#endif
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%ids_properties%version_put%data_dictionary(1) )
-        divertors%ids_properties%version_put%data_dictionary = imas_version
-#endif
-
-        allocate( edge_profiles%ids_properties%version_put%access_layer(1) )
-        edge_profiles%ids_properties%version_put%access_layer = ual_version
-        allocate( edge_transport%ids_properties%version_put%access_layer(1) )
-        edge_transport%ids_properties%version_put%access_layer = ual_version
-        allocate( edge_sources%ids_properties%version_put%access_layer(1) )
-        edge_sources%ids_properties%version_put%access_layer = ual_version
-        allocate( radiation%ids_properties%version_put%access_layer(1) )
-        radiation%ids_properties%version_put%access_layer = ual_version
-        allocate( summary%ids_properties%version_put%access_layer(1) )
-        summary%ids_properties%version_put%access_layer = ual_version
-        allocate( description%ids_properties%version_put%access_layer(1) )
-        description%ids_properties%version_put%access_layer = ual_version
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%version_put%access_layer(1) )
-        numerics%ids_properties%version_put%access_layer = ual_version
-#endif
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%ids_properties%version_put%access_layer(1) )
-        divertors%ids_properties%version_put%access_layer = ual_version
-#endif
-
-        allocate( edge_profiles%ids_properties%version_put%access_layer_language(1) )
-        edge_profiles%ids_properties%version_put%access_layer_language = 'FORTRAN'
-        allocate( edge_transport%ids_properties%version_put%access_layer_language(1) )
-        edge_transport%ids_properties%version_put%access_layer_language = 'FORTRAN'
-        allocate( edge_sources%ids_properties%version_put%access_layer_language(1) )
-        edge_sources%ids_properties%version_put%access_layer_language = 'FORTRAN'
-        allocate( radiation%ids_properties%version_put%access_layer_language(1) )
-        radiation%ids_properties%version_put%access_layer_language = 'FORTRAN'
-        allocate( summary%ids_properties%version_put%access_layer_language(1) )
-        summary%ids_properties%version_put%access_layer_language = 'FORTRAN'
-        allocate( description%ids_properties%version_put%access_layer_language(1) )
-        description%ids_properties%version_put%access_layer_language = 'FORTRAN'
-#if IMAS_MINOR_VERSION > 25
-        allocate( numerics%ids_properties%version_put%access_layer_language(1) )
-        numerics%ids_properties%version_put%access_layer_language = 'FORTRAN'
-#endif
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%ids_properties%version_put%access_layer_language(1) )
-        divertors%ids_properties%version_put%access_layer_language = 'FORTRAN'
-#endif
-#endif
-
         allocate( description%data_entry%user(1) )
         description%data_entry%user = usrnam()
         allocate( description%data_entry%machine(1) )
@@ -1646,197 +1387,135 @@ contains
               divertors%divertor(i)%target(1)%extension_r = extension_r(i)
               divertors%divertor(i)%target(1)%extension_z = extension_z(i)
             end do
-            allocate( divertors%divertor(1)%target(1)%power_flux_peak%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_flux_peak%data( time_sind ) = power_flux_peak(1)
-            allocate( divertors%divertor(1)%target(1)%power_flux_peak%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_flux_peak%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%flux_expansion%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%flux_expansion%data( time_sind ) = flux_expansion(1)
-            allocate( divertors%divertor(1)%target(1)%flux_expansion%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%flux_expansion%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%wetted_area%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%wetted_area%data( time_sind ) = wetted_area(1)
-            allocate( divertors%divertor(1)%target(1)%wetted_area%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_incident_fraction%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_incident_fraction%data( time_sind ) = 1.0_IDS_real
-            allocate( divertors%divertor(1)%target(1)%power_incident_fraction%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_incident_fraction%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_incident%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_incident%data( time_sind ) = power_incident(1)
-            allocate( divertors%divertor(1)%target(1)%power_incident%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_incident%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_conducted%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_conducted%data( time_sind ) = power_conducted(1)
-            allocate( divertors%divertor(1)%target(1)%power_conducted%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_conducted%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_convected%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_convected%data( time_sind ) = power_convected(1)
-            allocate( divertors%divertor(1)%target(1)%power_convected%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_convected%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_radiated%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_radiated%data( time_sind ) = power_radiated(1)
-            allocate( divertors%divertor(1)%target(1)%power_radiated%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_radiated%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_neutrals%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_neutrals%data( time_sind ) = power_neutrals(1)
-            allocate( divertors%divertor(1)%target(1)%power_neutrals%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_neutrals%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_recombination_plasma%data( time_sind ) = &
-               &  idir(1)*sum(fhp(ifpos(1),:,0,:))
-            allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_recombination_neutrals%data( time_sind ) = &
-               &  power_recomb_neutrals(1)
-            allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%target(1)%power_currents%data( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_currents%data( time_sind ) = &
-               &  idir(1)*sum(fhj(ifpos(1),:,0))
-            allocate( divertors%divertor(1)%target(1)%power_currents%time( num_time_slices ) )
-            divertors%divertor(1)%target(1)%power_currents%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%wetted_area%data( num_time_slices ) )
-            divertors%divertor(1)%wetted_area%data( time_sind ) = wetted_area(1)
-            allocate( divertors%divertor(1)%wetted_area%time( num_time_slices ) )
-            divertors%divertor(1)%wetted_area%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_incident%data( num_time_slices ) )
-            divertors%divertor(1)%power_incident%data( time_sind ) = power_incident(1)
-            allocate( divertors%divertor(1)%power_incident%time( num_time_slices ) )
-            divertors%divertor(1)%power_incident%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_conducted%data( num_time_slices ) )
-            divertors%divertor(1)%power_conducted%data( time_sind ) = power_conducted(1)
-            allocate( divertors%divertor(1)%power_conducted%time( num_time_slices ) )
-            divertors%divertor(1)%power_conducted%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_convected%data( num_time_slices ) )
-            divertors%divertor(1)%power_convected%data( time_sind ) = power_convected(1)
-            allocate( divertors%divertor(1)%power_convected%time( num_time_slices ) )
-            divertors%divertor(1)%power_convected%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_radiated%data( num_time_slices ) )
-            divertors%divertor(1)%power_radiated%data( time_sind ) = power_radiated(1)
-            allocate( divertors%divertor(1)%power_radiated%time( num_time_slices ) )
-            divertors%divertor(1)%power_radiated%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_neutrals%data( num_time_slices ) )
-            divertors%divertor(1)%power_neutrals%data( time_sind ) = power_neutrals(1)
-            allocate( divertors%divertor(1)%power_neutrals%time( num_time_slices ) )
-            divertors%divertor(1)%power_neutrals%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_recombination_plasma%data( num_time_slices ) )
-            divertors%divertor(1)%power_recombination_plasma%data( time_sind ) = &
-               &  idir(1)*sum(fhp(ifpos(1),:,0,:))
-            allocate( divertors%divertor(1)%power_recombination_plasma%time( num_time_slices ) )
-            divertors%divertor(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_recombination_neutrals%data( num_time_slices ) )
-            divertors%divertor(1)%power_recombination_plasma%data( time_sind ) = &
-               &  power_recomb_neutrals(1)
-            allocate( divertors%divertor(1)%power_recombination_neutrals%time( num_time_slices ) )
-            divertors%divertor(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%power_currents%data( num_time_slices ) )
-            divertors%divertor(1)%power_currents%data( time_sind ) = &
-               &  idir(1)*sum(fhj(ifpos(1),:,0))
-            allocate( divertors%divertor(1)%power_currents%time( num_time_slices ) )
-            divertors%divertor(1)%power_currents%time( time_sind ) = time_slice_value
-            allocate( divertors%divertor(1)%particle_flux_recycled_total%data( num_time_slices ) )
-            divertors%divertor(1)%particle_flux_recycled_total%data( time_sind ) = &
-               &  recycled_flux(1)
-            allocate( divertors%divertor(1)%particle_flux_recycled_total%time( num_time_slices ) )
-            divertors%divertor(1)%particle_flux_recycled_total%time( time_sind ) = time_slice_value
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_flux_peak, &
+              &  power_flux_peak(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%flux_expansion, &
+              &  flux_expansion(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%wetted_area, &
+              &  wetted_area(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%wetted_area, &
+              &  wetted_area(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_incident_fraction, &
+              &  1.0_IDS_real )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_incident, &
+              &  power_incident(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_incident, &
+              &  power_incident(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_conducted, &
+              &  power_conducted(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_conducted, &
+              &  power_conducted(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_convected, &
+              &  power_convected(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_convected, &
+              &  power_convected(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_radiated, &
+              &  power_radiated(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_radiated, &
+              &  power_radiated(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_neutrals, &
+              &  power_neutrals(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_neutrals, &
+              &  power_neutrals(1) )
+            u = idir(1)*sum(fhp(ifpos(1),:,0,:))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_recombination_plasma, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+              &  power_recomb_neutrals(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_recombination_neutrals, &
+              &  power_recomb_neutrals(1) )
+            u = idir(1)*sum(fhj(ifpos(1),:,0))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_currents, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_currents, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%particle_flux_recycled_total, &
+              &  recycled_flux(1) )
             if (ntrgts.eq.2) then
-              allocate( divertors%divertor(2)%target(1)%power_flux_peak%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_flux_peak%data( time_sind ) = power_flux_peak(2)
-              allocate( divertors%divertor(2)%target(1)%power_flux_peak%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_flux_peak%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%flux_expansion%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%flux_expansion%data( time_sind ) = flux_expansion(2)
-              allocate( divertors%divertor(2)%target(1)%flux_expansion%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%flux_expansion%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%wetted_area%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%wetted_area%data( time_sind ) = wetted_area(2)
-              allocate( divertors%divertor(2)%target(1)%wetted_area%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_incident_fraction%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_incident_fraction%data( time_sind ) = 1.0_IDS_real
-              allocate( divertors%divertor(2)%target(1)%power_incident_fraction%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_incident_fraction%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_incident%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_incident%data( time_sind ) = power_incident(2)
-              allocate( divertors%divertor(2)%target(1)%power_incident%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_incident%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_conducted%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_conducted%data( time_sind ) = power_conducted(2)
-              allocate( divertors%divertor(2)%target(1)%power_conducted%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_conducted%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_convected%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_convected%data( time_sind ) = power_convected(2)
-              allocate( divertors%divertor(2)%target(1)%power_convected%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_convected%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_radiated%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_radiated%data( time_sind ) = power_radiated(2)
-              allocate( divertors%divertor(2)%target(1)%power_radiated%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_radiated%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_neutrals%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_neutrals%data( time_sind ) = power_neutrals(2)
-              allocate( divertors%divertor(2)%target(1)%power_neutrals%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_neutrals%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_recombination_plasma%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_recombination_plasma%data( time_sind ) = &
-                 &  idir(2)*sum(fhp(ifpos(2),:,0,:))
-              allocate( divertors%divertor(2)%target(1)%power_recombination_plasma%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_recombination_neutrals%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_recombination_neutrals%data( time_sind ) = &
-                 &  power_recomb_neutrals(2)
-              allocate( divertors%divertor(2)%target(1)%power_recombination_neutrals%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%target(1)%power_currents%data( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_currents%data( time_sind ) = &
-                 &  idir(2)*sum(fhj(ifpos(2),:,0))
-              allocate( divertors%divertor(2)%target(1)%power_currents%time( num_time_slices ) )
-              divertors%divertor(2)%target(1)%power_currents%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%wetted_area%data( num_time_slices ) )
-              divertors%divertor(2)%wetted_area%data( time_sind ) = wetted_area(2)
-              allocate( divertors%divertor(2)%wetted_area%time( num_time_slices ) )
-              divertors%divertor(2)%wetted_area%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_incident%data( num_time_slices ) )
-              divertors%divertor(2)%power_incident%data( time_sind ) = power_incident(2)
-              allocate( divertors%divertor(2)%power_incident%time( num_time_slices ) )
-              divertors%divertor(2)%power_incident%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_conducted%data( num_time_slices ) )
-              divertors%divertor(2)%power_conducted%data( time_sind ) = power_conducted(2)
-              allocate( divertors%divertor(2)%power_conducted%time( num_time_slices ) )
-              divertors%divertor(2)%power_conducted%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_convected%data( num_time_slices ) )
-              divertors%divertor(2)%power_convected%data( time_sind ) = power_convected(2)
-              allocate( divertors%divertor(2)%power_convected%time( num_time_slices ) )
-              divertors%divertor(2)%power_convected%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_radiated%data( num_time_slices ) )
-              divertors%divertor(2)%power_radiated%data( time_sind ) = power_radiated(2)
-              allocate( divertors%divertor(2)%power_radiated%time( num_time_slices ) )
-              divertors%divertor(2)%power_radiated%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_neutrals%data( num_time_slices ) )
-              divertors%divertor(2)%power_neutrals%data( time_sind ) = power_neutrals(2)
-              allocate( divertors%divertor(2)%power_neutrals%time( num_time_slices ) )
-              divertors%divertor(2)%power_neutrals%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_recombination_plasma%data( num_time_slices ) )
-              divertors%divertor(2)%power_recombination_plasma%data( time_sind ) = &
-                 &  idir(2)*sum(fhp(ifpos(2),:,0,:))
-              allocate( divertors%divertor(2)%power_recombination_plasma%time( num_time_slices ) )
-              divertors%divertor(2)%power_recombination_plasma%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_recombination_neutrals%data( num_time_slices ) )
-              divertors%divertor(2)%power_recombination_neutrals%data( time_sind ) = &
-                 &  power_recomb_neutrals(2)
-              allocate( divertors%divertor(2)%power_recombination_neutrals%time( num_time_slices ) )
-              divertors%divertor(2)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%power_currents%data( num_time_slices ) )
-              divertors%divertor(2)%power_currents%data( time_sind ) = &
-                 &  idir(2)*sum(fhj(ifpos(2),:,0))
-              allocate( divertors%divertor(2)%power_currents%time( num_time_slices ) )
-              divertors%divertor(2)%power_currents%time( time_sind ) = time_slice_value
-              allocate( divertors%divertor(2)%particle_flux_recycled_total%data( num_time_slices ) )
-              divertors%divertor(2)%particle_flux_recycled_total%data( time_sind ) = &
-                 &  recycled_flux(2)
-              allocate( divertors%divertor(2)%particle_flux_recycled_total%time( num_time_slices ) )
-              divertors%divertor(2)%particle_flux_recycled_total%time( time_sind ) = time_slice_value
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_flux_peak, &
+                & power_flux_peak(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%flux_expansion, &
+                & flux_expansion(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%wetted_area, &
+                & wetted_area(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%wetted_area, &
+                & wetted_area(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_incident_fraction, &
+                & 1.0_IDS_real )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_incident, &
+                & power_incident(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_incident, &
+                & power_incident(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_conducted, &
+                & power_conducted(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_conducted, &
+                & power_conducted(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_convected, &
+                & power_convected(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_convected, &
+                & power_convected(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_radiated, &
+                & power_radiated(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_radiated, &
+                & power_radiated(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_neutrals, &
+                & power_neutrals(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_neutrals, &
+                & power_neutrals(2) )
+              u = idir(2)*sum(fhp(ifpos(2),:,0,:))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_recombination_plasma, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+                & power_recomb_neutrals(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_recombination_neutrals, &
+                & power_recomb_neutrals(2) )
+              u = idir(2)*sum(fhj(ifpos(2),:,0))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_currents, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_currents, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%particle_flux_recycled_total, &
+                & recycled_flux(2) )
             end if
           end if
         case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
@@ -1871,154 +1550,106 @@ contains
             divertors%divertor(1)%target(2)%name = "Inner target"
             divertors%divertor(1)%target(2)%identifier = "ID"
           end if
-          allocate( divertors%divertor(1)%target(1)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_flux_peak%data( time_sind ) = power_flux_peak(1)
-          allocate( divertors%divertor(1)%target(1)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_flux_peak%data( time_sind ) = power_flux_peak(2)
-          allocate( divertors%divertor(1)%target(2)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%flux_expansion%data( time_sind ) = flux_expansion(1)
-          allocate( divertors%divertor(1)%target(1)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%flux_expansion%data( time_sind ) = flux_expansion(2)
-          allocate( divertors%divertor(1)%target(2)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%wetted_area%data( time_sind ) = wetted_area(1)
-          allocate( divertors%divertor(1)%target(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%wetted_area%data( time_sind ) = wetted_area(2)
-          allocate( divertors%divertor(1)%target(2)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(1) / (power_incident(1) + power_incident(2))
-          allocate( divertors%divertor(1)%target(1)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(2) / (power_incident(1) + power_incident(2))
-          allocate( divertors%divertor(1)%target(2)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident%data( time_sind ) = power_incident(1)
-          allocate( divertors%divertor(1)%target(1)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident%data( time_sind ) = power_incident(2)
-          allocate( divertors%divertor(1)%target(2)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_conducted%data( time_sind ) = power_conducted(1)
-          allocate( divertors%divertor(1)%target(1)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_conducted%data( time_sind ) = power_conducted(2)
-          allocate( divertors%divertor(1)%target(2)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_convected%data( time_sind ) = power_convected(1)
-          allocate( divertors%divertor(1)%target(1)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_convected%data( time_sind ) = power_convected(2)
-          allocate( divertors%divertor(1)%target(2)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_radiated%data( time_sind ) = power_radiated(1)
-          allocate( divertors%divertor(1)%target(1)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_radiated%data( time_sind ) = power_radiated(2)
-          allocate( divertors%divertor(1)%target(2)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_neutrals%data( time_sind ) = power_neutrals(1)
-          allocate( divertors%divertor(1)%target(1)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_neutrals%data( time_sind ) = power_neutrals(2)
-          allocate( divertors%divertor(1)%target(2)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(1)*sum(fhp(ifpos(1),:,0,:))
-          allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(2)*sum(fhp(ifpos(2),:,0,:))
-          allocate( divertors%divertor(1)%target(2)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(1)
-          allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(2)
-          allocate( divertors%divertor(1)%target(2)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_currents%data( time_sind ) = &
-             &  idir(1)*sum(fhj(ifpos(1),:,0))
-          allocate( divertors%divertor(1)%target(1)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_currents%data( time_sind ) = &
-             &  idir(2)*sum(fhj(ifpos(2),:,0))
-          allocate( divertors%divertor(1)%target(2)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%wetted_area%data( time_sind ) = wetted_area(1)+wetted_area(2)
-          allocate( divertors%divertor(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%power_incident%data( time_sind ) = power_incident(1)+power_incident(2)
-          allocate( divertors%divertor(1)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%power_conducted%data( time_sind ) = power_conducted(1)+power_conducted(2)
-          allocate( divertors%divertor(1)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%power_convected%data( time_sind ) = power_convected(1)+power_convected(2)
-          allocate( divertors%divertor(1)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%power_radiated%data( time_sind ) = power_radiated(1)+power_radiated(2)
-          allocate( divertors%divertor(1)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%power_neutrals%data( time_sind ) = power_neutrals(1)+power_neutrals(2)
-          allocate( divertors%divertor(1)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(1)*sum(fhp(ifpos(1),:,0,:))+idir(2)*sum(fhp(ifpos(2),:,0,:))
-          allocate( divertors%divertor(1)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(1) + power_recomb_neutrals(2)
-          allocate( divertors%divertor(1)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%power_currents%data( time_sind ) = &
-             &  idir(1)*sum(fhj(ifpos(1),:,0))+idir(2)*sum(fhj(ifpos(2),:,0))
-          allocate( divertors%divertor(1)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%particle_flux_recycled_total%data( num_time_slices ) )
-          divertors%divertor(1)%particle_flux_recycled_total%data( time_sind ) = &
-             &  recycled_flux(1)
-          allocate( divertors%divertor(1)%particle_flux_recycled_total%time( num_time_slices ) )
-          divertors%divertor(1)%particle_flux_recycled_total%time( time_sind ) = time_slice_value
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_flux_peak, &
+            &  power_flux_peak(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_flux_peak, &
+            &  power_flux_peak(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%flux_expansion, &
+            &  flux_expansion(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%flux_expansion, &
+            &  flux_expansion(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%wetted_area, &
+            &  wetted_area(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%wetted_area, &
+            &  wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(2) )
+          u = power_incident(1) / (power_incident(1) + power_incident(2))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident_fraction, u )
+          u = power_incident(2) / (power_incident(1) + power_incident(2))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident, &
+            &  power_incident(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident, &
+            &  power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_conducted, &
+            &  power_conducted(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_conducted, &
+            &  power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_convected, &
+            &  power_convected(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_convected, &
+            &  power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_radiated, &
+            &  power_radiated(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_radiated, &
+            &  power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_neutrals, &
+            &  power_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_neutrals, &
+            &  power_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(2) )
+          u = idir(1)*sum(fhp(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+          v = idir(2)*sum(fhp(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1)+power_recomb_neutrals(2) )
+          u = idir(1)*sum(fhj(ifpos(1),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_currents, u )
+          v = idir(2)*sum(fhj(ifpos(2),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, &
+            &  recycled_flux(1) )
         case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
           allocate( divertors%divertor(2) )
           allocate( divertors%divertor(1)%name(1) )
@@ -2050,308 +1681,212 @@ contains
           divertors%divertor(2)%target(2)%extension_z = extension_z(3)
           divertors%divertor(1)%target(1)%name = "Lower inner target"
           divertors%divertor(1)%target(1)%identifier = "LID"
-          allocate( divertors%divertor(1)%target(1)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_flux_peak%data( time_sind ) = power_flux_peak(1)
-          allocate( divertors%divertor(1)%target(1)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%flux_expansion%data( time_sind ) = flux_expansion(1)
-          allocate( divertors%divertor(1)%target(1)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%wetted_area%data( time_sind ) = wetted_area(1)
-          allocate( divertors%divertor(1)%target(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(1) / (power_incident(1) + power_incident(4))
-          allocate( divertors%divertor(1)%target(1)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident%data( time_sind ) = power_incident(1)
-          allocate( divertors%divertor(1)%target(1)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_conducted%data( time_sind ) = power_conducted(1)
-          allocate( divertors%divertor(1)%target(1)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_convected%data( time_sind ) = power_convected(1)
-          allocate( divertors%divertor(1)%target(1)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_radiated%data( time_sind ) = power_radiated(1)
-          allocate( divertors%divertor(1)%target(1)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_neutrals%data( time_sind ) = power_neutrals(1)
-          allocate( divertors%divertor(1)%target(1)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(1)*sum(fhp(ifpos(1),:,0,:))
-          allocate( divertors%divertor(1)%target(1)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(1)
-          allocate( divertors%divertor(1)%target(1)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(1)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_currents%data( time_sind ) = &
-             &  idir(1)*sum(fhj(ifpos(1),:,0))
-          allocate( divertors%divertor(1)%target(1)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_currents%time( time_sind ) = time_slice_value
           divertors%divertor(1)%target(2)%name = "Lower outer target"
           divertors%divertor(1)%target(2)%identifier = "LOD"
-          allocate( divertors%divertor(1)%target(2)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_flux_peak%data( time_sind ) = power_flux_peak(4)
-          allocate( divertors%divertor(1)%target(2)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%flux_expansion%data( time_sind ) = flux_expansion(4)
-          allocate( divertors%divertor(1)%target(2)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%wetted_area%data( time_sind ) = wetted_area(4)
-          allocate( divertors%divertor(1)%target(2)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(4) / (power_incident(1) + power_incident(4))
-          allocate( divertors%divertor(1)%target(2)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident%data( time_sind ) = power_incident(4)
-          allocate( divertors%divertor(1)%target(2)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_conducted%data( time_sind ) = power_conducted(4)
-          allocate( divertors%divertor(1)%target(2)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_convected%data( time_sind ) = power_convected(4)
-          allocate( divertors%divertor(1)%target(2)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_radiated%data( time_sind ) = power_radiated(4)
-          allocate( divertors%divertor(1)%target(2)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_neutrals%data( time_sind ) = power_neutrals(4)
-          allocate( divertors%divertor(1)%target(2)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(4)*sum(fhp(ifpos(4),:,0,:))
-          allocate( divertors%divertor(1)%target(2)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(4)
-          allocate( divertors%divertor(1)%target(2)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%target(2)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%target(2)%power_currents%data( time_sind ) = &
-             &  idir(4)*sum(fhj(ifpos(4),:,0))
-          allocate( divertors%divertor(1)%target(2)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%target(1)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(1)%wetted_area%data( time_sind ) = wetted_area(1)+wetted_area(4)
-          allocate( divertors%divertor(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_incident%data( num_time_slices ) )
-          divertors%divertor(1)%power_incident%data( time_sind ) = power_incident(1)+power_incident(4)
-          allocate( divertors%divertor(1)%power_incident%time( num_time_slices ) )
-          divertors%divertor(1)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(1)%power_conducted%data( time_sind ) = power_conducted(1)+power_conducted(4)
-          allocate( divertors%divertor(1)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(1)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_convected%data( num_time_slices ) )
-          divertors%divertor(1)%power_convected%data( time_sind ) = power_convected(1)+power_convected(4)
-          allocate( divertors%divertor(1)%power_convected%time( num_time_slices ) )
-          divertors%divertor(1)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(1)%power_radiated%data( time_sind ) = power_radiated(1)+power_radiated(4)
-          allocate( divertors%divertor(1)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(1)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%power_neutrals%data( time_sind ) = power_neutrals(1)+power_neutrals(4)
-          allocate( divertors%divertor(1)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(1)*sum(fhp(ifpos(1),:,0,:))+idir(4)*sum(fhp(ifpos(4),:,0,:))
-          allocate( divertors%divertor(1)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(1) + power_recomb_neutrals(4)
-          allocate( divertors%divertor(1)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%power_currents%data( num_time_slices ) )
-          divertors%divertor(1)%power_currents%data( time_sind ) = &
-             &  idir(1)*sum(fhj(ifpos(1),:,0))+idir(4)*sum(fhj(ifpos(4),:,0))
-          allocate( divertors%divertor(1)%power_currents%time( num_time_slices ) )
-          divertors%divertor(1)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(1)%particle_flux_recycled_total%data( num_time_slices ) )
-          divertors%divertor(1)%particle_flux_recycled_total%data( time_sind ) = &
-             &  recycled_flux(1) + recycled_flux(4)
-          allocate( divertors%divertor(1)%particle_flux_recycled_total%time( num_time_slices ) )
-          divertors%divertor(1)%particle_flux_recycled_total%time( time_sind ) = time_slice_value
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_flux_peak, &
+            &  power_flux_peak(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_flux_peak, &
+            &  power_flux_peak(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%flux_expansion, &
+            &  flux_expansion(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%flux_expansion, &
+            &  flux_expansion(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%wetted_area, &
+            &  wetted_area(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%wetted_area, &
+            &  wetted_area(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(4) )
+          u = power_incident(1) / (power_incident(1) + power_incident(4))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident_fraction, u )
+          u = power_incident(4) / (power_incident(1) + power_incident(4))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident, &
+            &  power_incident(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident, &
+            &  power_incident(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_conducted, &
+            &  power_conducted(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_conducted, &
+            &  power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_convected, &
+            &  power_convected(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_convected, &
+            &  power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_radiated, &
+            &  power_radiated(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_radiated, &
+            &  power_radiated(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_neutrals, &
+            &  power_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_neutrals, &
+            &  power_neutrals(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(4) )
+          u = idir(1)*sum(fhp(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+          v = idir(4)*sum(fhp(ifpos(4),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1)+power_recomb_neutrals(4) )
+          u = idir(1)*sum(fhj(ifpos(1),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_currents, u )
+          v = idir(4)*sum(fhj(ifpos(4),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, &
+            &  recycled_flux(1)+recycled_flux(4) )
           divertors%divertor(2)%target(1)%name = "Upper inner target"
           divertors%divertor(2)%target(1)%identifier = "UID"
-          allocate( divertors%divertor(2)%target(1)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_flux_peak%data( time_sind ) = power_flux_peak(2)
-          allocate( divertors%divertor(2)%target(1)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%flux_expansion%data( time_sind ) = flux_expansion(2)
-          allocate( divertors%divertor(2)%target(1)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%wetted_area%data( time_sind ) = wetted_area(2)
-          allocate( divertors%divertor(2)%target(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(2) / (power_incident(2) + power_incident(3))
-          allocate( divertors%divertor(2)%target(1)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_incident%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_incident%data( time_sind ) = power_incident(2)
-          allocate( divertors%divertor(2)%target(1)%power_incident%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_conducted%data( time_sind ) = power_conducted(2)
-          allocate( divertors%divertor(2)%target(1)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_convected%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_convected%data( time_sind ) = power_convected(2)
-          allocate( divertors%divertor(2)%target(1)%power_convected%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_radiated%data( time_sind ) = power_radiated(2)
-          allocate( divertors%divertor(2)%target(1)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_neutrals%data( time_sind ) = power_neutrals(2)
-          allocate( divertors%divertor(2)%target(1)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(2)*sum(fhp(ifpos(2),:,0,:))
-          allocate( divertors%divertor(2)%target(1)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(2)
-          allocate( divertors%divertor(2)%target(1)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%power_currents%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_currents%data( time_sind ) = &
-             &  idir(2)*sum(fhj(ifpos(2),:,0))
-          allocate( divertors%divertor(2)%target(1)%power_currents%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%power_currents%time( time_sind ) = time_slice_value
           divertors%divertor(2)%target(2)%name = "Upper outer target"
           divertors%divertor(2)%target(2)%identifier = "UOD"
-          allocate( divertors%divertor(2)%target(2)%power_flux_peak%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_flux_peak%data( time_sind ) = power_flux_peak(3)
-          allocate( divertors%divertor(2)%target(2)%power_flux_peak%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_flux_peak%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%flux_expansion%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%flux_expansion%data( time_sind ) = flux_expansion(3)
-          allocate( divertors%divertor(2)%target(2)%flux_expansion%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%flux_expansion%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(1)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(2)%target(1)%wetted_area%data( time_sind ) = wetted_area(3)
-          allocate( divertors%divertor(2)%target(1)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(2)%target(1)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_incident_fraction%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_incident_fraction%data( time_sind ) = &
-            &  power_incident(3) / (power_incident(2) +  power_incident(3))
-          allocate( divertors%divertor(2)%target(2)%power_incident_fraction%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_incident_fraction%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_incident%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_incident%data( time_sind ) = power_incident(3)
-          allocate( divertors%divertor(2)%target(2)%power_incident%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_conducted%data( time_sind ) = power_conducted(3)
-          allocate( divertors%divertor(2)%target(2)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_convected%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_convected%data( time_sind ) = power_convected(3)
-          allocate( divertors%divertor(2)%target(2)%power_convected%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_radiated%data( time_sind ) = power_radiated(3)
-          allocate( divertors%divertor(2)%target(2)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_neutrals%data( time_sind ) = power_neutrals(3)
-          allocate( divertors%divertor(2)%target(2)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(3)*sum(fhp(ifpos(3),:,0,:))
-          allocate( divertors%divertor(2)%target(2)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(3)
-          allocate( divertors%divertor(2)%target(2)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%target(2)%power_currents%data( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_currents%data( time_sind ) = &
-             &  idir(3)*sum(fhj(ifpos(3),:,0))
-          allocate( divertors%divertor(2)%target(2)%power_currents%time( num_time_slices ) )
-          divertors%divertor(2)%target(2)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%wetted_area%data( num_time_slices ) )
-          divertors%divertor(2)%wetted_area%data( time_sind ) = wetted_area(2)+wetted_area(3)
-          allocate( divertors%divertor(2)%wetted_area%time( num_time_slices ) )
-          divertors%divertor(2)%wetted_area%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_incident%data( num_time_slices ) )
-          divertors%divertor(2)%power_incident%data( time_sind ) = power_incident(2)+power_incident(3)
-          allocate( divertors%divertor(2)%power_incident%time( num_time_slices ) )
-          divertors%divertor(2)%power_incident%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_conducted%data( num_time_slices ) )
-          divertors%divertor(2)%power_conducted%data( time_sind ) = power_conducted(2)+power_conducted(3)
-          allocate( divertors%divertor(2)%power_conducted%time( num_time_slices ) )
-          divertors%divertor(2)%power_conducted%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_convected%data( num_time_slices ) )
-          divertors%divertor(2)%power_convected%data( time_sind ) = power_convected(2)+power_convected(3)
-          allocate( divertors%divertor(2)%power_convected%time( num_time_slices ) )
-          divertors%divertor(2)%power_convected%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_radiated%data( num_time_slices ) )
-          divertors%divertor(2)%power_radiated%data( time_sind ) = power_radiated(2)+power_radiated(3)
-          allocate( divertors%divertor(2)%power_radiated%time( num_time_slices ) )
-          divertors%divertor(2)%power_radiated%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%power_neutrals%data( time_sind ) = power_neutrals(2)+power_neutrals(3)
-          allocate( divertors%divertor(2)%power_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%power_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_recombination_plasma%data( num_time_slices ) )
-          divertors%divertor(2)%power_recombination_plasma%data( time_sind ) = &
-             &  idir(2)*sum(fhp(ifpos(2),:,0,:))+idir(3)*sum(fhp(ifpos(3),:,0,:))
-          allocate( divertors%divertor(2)%power_recombination_plasma%time( num_time_slices ) )
-          divertors%divertor(2)%power_recombination_plasma%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_recombination_neutrals%data( num_time_slices ) )
-          divertors%divertor(2)%power_recombination_neutrals%data( time_sind ) = &
-             &  power_recomb_neutrals(2) + power_recomb_neutrals(3)
-          allocate( divertors%divertor(2)%power_recombination_neutrals%time( num_time_slices ) )
-          divertors%divertor(2)%power_recombination_neutrals%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%power_currents%data( num_time_slices ) )
-          divertors%divertor(2)%power_currents%data( time_sind ) = &
-             &  idir(2)*sum(fhj(ifpos(2),:,0))+idir(3)*sum(fhj(ifpos(3),:,0))
-          allocate( divertors%divertor(2)%power_currents%time( num_time_slices ) )
-          divertors%divertor(2)%power_currents%time( time_sind ) = time_slice_value
-          allocate( divertors%divertor(2)%particle_flux_recycled_total%data( num_time_slices ) )
-          divertors%divertor(2)%particle_flux_recycled_total%data( time_sind ) = &
-             &  recycled_flux(2) + recycled_flux(3)
-          allocate( divertors%divertor(2)%particle_flux_recycled_total%time( num_time_slices ) )
-          divertors%divertor(2)%particle_flux_recycled_total%time( time_sind ) = time_slice_value
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_flux_peak, &
+            &  power_flux_peak(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_flux_peak, &
+            &  power_flux_peak(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%flux_expansion, &
+            &  flux_expansion(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%flux_expansion, &
+            &  flux_expansion(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%wetted_area, &
+            &  wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%wetted_area, &
+            &  wetted_area(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%wetted_area, &
+            &  wetted_area(2)+wetted_area(3) )
+          u = power_incident(2) / (power_incident(2) + power_incident(3))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_incident_fraction, u )
+          u = power_incident(3) / (power_incident(2) + power_incident(3))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_incident, &
+            &  power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_incident, &
+            &  power_incident(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_incident, &
+            &  power_incident(2)+power_incident(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_conducted, &
+            &  power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_conducted, &
+            &  power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_conducted, &
+            &  power_conducted(2)+power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_convected, &
+            &  power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_convected, &
+            &  power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_convected, &
+            &  power_convected(2)+power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_radiated, &
+            &  power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_radiated, &
+            &  power_radiated(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_radiated, &
+            &  power_radiated(2)+power_radiated(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_neutrals, &
+            &  power_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_neutrals, &
+            &  power_neutrals(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_neutrals, &
+            &  power_neutrals(2)+power_neutrals(3) )
+          u = idir(2)*sum(fhp(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+          v = idir(3)*sum(fhp(ifpos(3),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2)+power_recomb_neutrals(3) )
+          u = idir(2)*sum(fhj(ifpos(2),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_currents, u )
+          v = idir(3)*sum(fhj(ifpos(3),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_currents, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%particle_flux_recycled_total, &
+            &  recycled_flux(2)+recycled_flux(3) )
         end select
 #endif
         deallocate(wrdtrg)
@@ -7066,443 +6601,6 @@ contains
         end if
 #endif
 
-        allocate( edge_profiles%code%output_flag( num_time_slices ) )
-        edge_profiles%code%output_flag( time_sind ) = 0
-        allocate( edge_transport%code%output_flag( num_time_slices ) )
-        edge_transport%code%output_flag( time_sind ) = 0
-        allocate( edge_sources%code%output_flag( num_time_slices ) )
-        edge_sources%code%output_flag( time_sind ) = 0
-        allocate( radiation%code%output_flag( num_time_slices ) )
-        radiation%code%output_flag( time_sind ) = 0
-#if IMAS_MINOR_VERSION > 21
-        allocate( summary%code%output_flag( num_time_slices ) )
-        summary%code%output_flag( time_sind ) = 0
-#endif
-#if IMAS_MINOR_VERSION > 29
-        allocate( edge_transport%model(1)%code%output_flag%data( num_time_slices ) )
-        edge_transport%model(1)%code%output_flag%data( time_sind ) = 0
-        allocate( edge_transport%model(1)%code%output_flag%time( num_time_slices ) )
-        edge_transport%model(1)%code%output_flag%time( time_sind ) = time_slice_value
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%output_flag( num_time_slices ) )
-        divertors%code%output_flag( time_sind ) = 0
-#endif
-
-        nlibs = 1
-        if (streql(b2frates_flag,'adas')) nlibs = nlibs + 1
-#ifdef AMNS
-        if (streql(b2frates_flag,'amns')) nlibs = nlibs + 1
-#endif
-#ifdef B25_EIRENE
-        if (use_eirene.ne.0) nlibs = nlibs + 1
-#endif
-        SOLPS_git_version = get_SOLPS_hash()
-        if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) &
-          & nlibs = nlibs + 1
-        if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
-
-        allocate( edge_profiles%code%library( nlibs ) )
-        allocate( edge_sources%code%library( nlibs ) )
-        allocate( edge_transport%code%library( nlibs ) )
-        allocate( radiation%code%library( nlibs ) )
-        allocate( summary%code%library( nlibs ) )
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%library( nlibs ) )
-#endif
-        nlibs = 1
-        allocate( edge_profiles%code%library( nlibs )%name(1) )
-        allocate( edge_sources%code%library( nlibs )%name(1) )
-        allocate( edge_transport%code%library( nlibs )%name(1) )
-        allocate( radiation%code%library( nlibs )%name(1) )
-        allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-        edge_profiles%code%library( nlibs )%name = 'GGD'
-        edge_sources%code%library( nlibs )%name = 'GGD'
-        edge_transport%code%library( nlibs )%name = 'GGD'
-        radiation%code%library( nlibs )%name = 'GGD'
-        summary%code%library( nlibs )%name = 'GGD'
-#if IMAS_MINOR_VERSION > 30
-        divertors%code%library( nlibs )%name = 'GGD'
-#endif
-        allocate( edge_profiles%code%library( nlibs )%version(1) )
-        allocate( edge_sources%code%library( nlibs )%version(1) )
-        allocate( edge_transport%code%library( nlibs )%version(1) )
-        allocate( radiation%code%library( nlibs )%version(1) )
-        allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-        edge_profiles%code%library( nlibs )%version = ggd_version
-        edge_sources%code%library( nlibs )%version = ggd_version
-        edge_transport%code%library( nlibs )%version = ggd_version
-        radiation%code%library( nlibs )%version = ggd_version
-        summary%code%library( nlibs )%version = ggd_version
-#if IMAS_MINOR_VERSION > 30
-        divertors%code%library( nlibs )%version = ggd_version
-#endif
-        allocate( edge_profiles%code%library( nlibs )%repository(1) )
-        allocate( edge_sources%code%library( nlibs )%repository(1) )
-        allocate( edge_transport%code%library( nlibs )%repository(1) )
-        allocate( radiation%code%library( nlibs )%repository(1) )
-        allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-        allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-        repository = "ssh://git.iter.org/imex/ggd.git"
-        edge_profiles%code%library( nlibs )%repository = repository
-        edge_sources%code%library( nlibs )%repository = repository
-        edge_transport%code%library( nlibs )%repository = repository
-        radiation%code%library( nlibs )%repository = repository
-        summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-        divertors%code%library( nlibs )%repository = repository
-#endif
-        if (streql(b2frates_flag,'adas')) then
-          nlibs = nlibs + 1
-          allocate( edge_profiles%code%library( nlibs )%name(1) )
-          allocate( edge_sources%code%library( nlibs )%name(1) )
-          allocate( edge_transport%code%library( nlibs )%name(1) )
-          allocate( radiation%code%library( nlibs )%name(1) )
-          allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-          edge_profiles%code%library( nlibs )%name = 'ADAS'
-          edge_sources%code%library( nlibs )%name = 'ADAS'
-          edge_transport%code%library( nlibs )%name = 'ADAS'
-          radiation%code%library( nlibs )%name = 'ADAS'
-          summary%code%library( nlibs )%name = 'ADAS'
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%name = 'ADAS'
-#endif
-          allocate( edge_profiles%code%library( nlibs )%version(1) )
-          allocate( edge_sources%code%library( nlibs )%version(1) )
-          allocate( edge_transport%code%library( nlibs )%version(1) )
-          allocate( radiation%code%library( nlibs )%version(1) )
-          allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-          edge_profiles%code%library( nlibs )%version = adas_version
-          edge_sources%code%library( nlibs )%version = adas_version
-          edge_transport%code%library( nlibs )%version = adas_version
-          radiation%code%library( nlibs )%version = adas_version
-          summary%code%library( nlibs )%version = adas_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%version = adas_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%commit(1) )
-          allocate( edge_sources%code%library( nlibs )%commit(1) )
-          allocate( edge_transport%code%library( nlibs )%commit(1) )
-          allocate( radiation%code%library( nlibs )%commit(1) )
-          allocate( summary%code%library( nlibs )%commit(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%commit(1) )
-#endif
-          edge_profiles%code%library( nlibs )%commit = ADAS_git_version
-          edge_sources%code%library( nlibs )%commit = ADAS_git_version
-          edge_transport%code%library( nlibs )%commit = ADAS_git_version
-          radiation%code%library( nlibs )%commit = ADAS_git_version
-          summary%code%library( nlibs )%commit = ADAS_git_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%commit = ADAS_git_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%repository(1) )
-          allocate( edge_sources%code%library( nlibs )%repository(1) )
-          allocate( edge_transport%code%library( nlibs )%repository(1) )
-          allocate( radiation%code%library( nlibs )%repository(1) )
-          allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-          repository = "ssh://git.iter.org/imex/amns-adas.git"
-          edge_profiles%code%library( nlibs )%repository = repository
-          edge_sources%code%library( nlibs )%repository = repository
-          edge_transport%code%library( nlibs )%repository = repository
-          radiation%code%library( nlibs )%repository = repository
-          summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = repository
-#endif
-        end if
-#ifdef AMNS
-        if (streql(b2frates_flag,'amns')) then
-          nlibs = nlibs + 1
-          call IMAS_AMNS_SETUP(amns)
-          allocate( edge_profiles%code%library( nlibs )%name(1) )
-          allocate( edge_sources%code%library( nlibs )%name(1) )
-          allocate( edge_transport%code%library( nlibs )%name(1) )
-          allocate( radiation%code%library( nlibs )%name(1) )
-          allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-          edge_profiles%code%library( nlibs )%name = 'AMNS'
-          edge_sources%code%library( nlibs )%name = 'AMNS'
-          edge_transport%code%library( nlibs )%name = 'AMNS'
-          radiation%code%library( nlibs )%name = 'AMNS'
-          summary%code%library( nlibs )%name = 'AMNS'
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%name = 'AMNS'
-#endif
-          query%string = 'code_version'
-          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
-          if (.not.amns_status%flag) then
-            allocate( edge_profiles%code%library( nlibs )%version(1) )
-            allocate( edge_sources%code%library( nlibs )%version(1) )
-            allocate( edge_transport%code%library( nlibs )%version(1) )
-            allocate( radiation%code%library( nlibs )%version(1) )
-            allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-            allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-            edge_profiles%code%library( nlibs )%version = answer%string
-            edge_sources%code%library( nlibs )%version = answer%string
-            edge_transport%code%library( nlibs )%version = answer%string
-            radiation%code%library( nlibs )%version = answer%string
-            summary%code%library( nlibs )%version = answer%string
-#if IMAS_MINOR_VERSION > 30
-            divertors%code%library( nlibs )%version = answer%string
-#endif
-          end if
-          query%string = 'code_commit'
-          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
-          if (.not.amns_status%flag) then
-            allocate( edge_profiles%code%library( nlibs )%commit(1) )
-            allocate( edge_sources%code%library( nlibs )%commit(1) )
-            allocate( edge_transport%code%library( nlibs )%commit(1) )
-            allocate( radiation%code%library( nlibs )%commit(1) )
-            allocate( summary%code%library( nlibs )%commit(1) )
-#if IMAS_MINOR_VERSION > 30
-            allocate( divertors%code%library( nlibs )%commit(1) )
-#endif
-            edge_profiles%code%library( nlibs )%commit = answer%string
-            edge_sources%code%library( nlibs )%commit = answer%string
-            edge_transport%code%library( nlibs )%commit = answer%string
-            radiation%code%library( nlibs )%commit = answer%string
-            summary%code%library( nlibs )%commit = answer%string
-#if IMAS_MINOR_VERSION > 30
-            divertors%code%library( nlibs )%commit = answer%string
-#endif
-          end if
-          query%string = 'code_repository'
-          call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
-          if (.not.amns_status%flag) then
-            allocate( edge_profiles%code%library( nlibs )%repository(1) )
-            allocate( edge_sources%code%library( nlibs )%repository(1) )
-            allocate( edge_transport%code%library( nlibs )%repository(1) )
-            allocate( radiation%code%library( nlibs )%repository(1) )
-            allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-            allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-            edge_profiles%code%library( nlibs )%repository = answer%string
-            edge_sources%code%library( nlibs )%repository = answer%string
-            edge_transport%code%library( nlibs )%repository = answer%string
-            radiation%code%library( nlibs )%repository = answer%string
-            summary%code%library( nlibs )%repository = answer%string
-#if IMAS_MINOR_VERSION > 30
-            divertors%code%library( nlibs )%repository = answer%string
-#endif
-          end if
-          call IMAS_AMNS_FINISH(amns)
-        end if
-#endif
-#ifdef B25_EIRENE
-        if (use_eirene.ne.0) then
-          nlibs = nlibs + 1
-          allocate( edge_profiles%code%library( nlibs )%name(1) )
-          allocate( edge_sources%code%library( nlibs )%name(1) )
-          allocate( edge_transport%code%library( nlibs )%name(1) )
-          allocate( radiation%code%library( nlibs )%name(1) )
-          allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-          edge_profiles%code%library( nlibs )%name = 'EIRENE'
-          edge_sources%code%library( nlibs )%name = 'EIRENE'
-          edge_transport%code%library( nlibs )%name = 'EIRENE'
-          radiation%code%library( nlibs )%name = 'EIRENE'
-          summary%code%library( nlibs )%name = 'EIRENE'
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%name = 'EIRENE'
-#endif
-          allocate( edge_profiles%code%library( nlibs )%version(1) )
-          allocate( edge_sources%code%library( nlibs )%version(1) )
-          allocate( edge_transport%code%library( nlibs )%version(1) )
-          allocate( radiation%code%library( nlibs )%version(1) )
-          allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-          edge_profiles%code%library( nlibs )%version = eirene_version
-          edge_sources%code%library( nlibs )%version = eirene_version
-          edge_transport%code%library( nlibs )%version = eirene_version
-          radiation%code%library( nlibs )%version = eirene_version
-          summary%code%library( nlibs )%version = eirene_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%version = eirene_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%commit(1) )
-          allocate( edge_sources%code%library( nlibs )%commit(1) )
-          allocate( edge_transport%code%library( nlibs )%commit(1) )
-          allocate( radiation%code%library( nlibs )%commit(1) )
-          allocate( summary%code%library( nlibs )%commit(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%commit(1) )
-#endif
-          edge_profiles%code%library( nlibs )%commit = Eirene_git_version
-          edge_sources%code%library( nlibs )%commit = Eirene_git_version
-          edge_transport%code%library( nlibs )%commit = Eirene_git_version
-          radiation%code%library( nlibs )%commit = Eirene_git_version
-          summary%code%library( nlibs )%commit = Eirene_git_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%commit = Eirene_git_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%repository(1) )
-          allocate( edge_sources%code%library( nlibs )%repository(1) )
-          allocate( edge_transport%code%library( nlibs )%repository(1) )
-          allocate( radiation%code%library( nlibs )%repository(1) )
-          allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-          repository = "ssh://git.iter.org/bnd/eirene.git"
-          edge_profiles%code%library( nlibs )%repository = repository
-          edge_sources%code%library( nlibs )%repository = repository
-          edge_transport%code%library( nlibs )%repository = repository
-          radiation%code%library( nlibs )%repository = repository
-          summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = "ssh://git.iter.org/bnd/eirene.git"
-#endif
-        end if
-#endif
-        if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) then
-          nlibs = nlibs + 1
-          allocate( edge_profiles%code%library( nlibs )%name(1) )
-          allocate( edge_sources%code%library( nlibs )%name(1) )
-          allocate( edge_transport%code%library( nlibs )%name(1) )
-          allocate( radiation%code%library( nlibs )%name(1) )
-          allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-          edge_profiles%code%library( nlibs )%name = 'SOLPS-ITER'
-          edge_sources%code%library( nlibs )%name = 'SOLPS-ITER'
-          edge_transport%code%library( nlibs )%name = 'SOLPS-ITER'
-          radiation%code%library( nlibs )%name = 'SOLPS-ITER'
-          summary%code%library( nlibs )%name = 'SOLPS-ITER'
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%name = 'SOLPS-ITER'
-#endif
-          allocate( edge_profiles%code%library( nlibs )%version(1) )
-          allocate( edge_sources%code%library( nlibs )%version(1) )
-          allocate( edge_transport%code%library( nlibs )%version(1) )
-          allocate( radiation%code%library( nlibs )%version(1) )
-          allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-          edge_profiles%code%library( nlibs )%version = newversion
-          edge_sources%code%library( nlibs )%version = newversion
-          edge_transport%code%library( nlibs )%version = newversion
-          radiation%code%library( nlibs )%version = newversion
-          summary%code%library( nlibs )%version = newversion
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%version = newversion
-#endif
-          allocate( edge_profiles%code%library( nlibs )%commit(1) )
-          allocate( edge_sources%code%library( nlibs )%commit(1) )
-          allocate( edge_transport%code%library( nlibs )%commit(1) )
-          allocate( radiation%code%library( nlibs )%commit(1) )
-          allocate( summary%code%library( nlibs )%commit(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%commit(1) )
-#endif
-          edge_profiles%code%library( nlibs )%commit = SOLPS_git_version
-          edge_sources%code%library( nlibs )%commit = SOLPS_git_version
-          edge_transport%code%library( nlibs )%commit = SOLPS_git_version
-          radiation%code%library( nlibs )%commit = SOLPS_git_version
-          summary%code%library( nlibs )%commit = SOLPS_git_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%commit = SOLPS_git_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%repository(1) )
-          allocate( edge_sources%code%library( nlibs )%repository(1) )
-          allocate( edge_transport%code%library( nlibs )%repository(1) )
-          allocate( radiation%code%library( nlibs )%repository(1) )
-          allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-          repository = "ssh://git.iter.org/bnd/solps-iter.git"
-          edge_profiles%code%library( nlibs )%repository = repository
-          edge_sources%code%library( nlibs )%repository = repository
-          edge_transport%code%library( nlibs )%repository = repository
-          radiation%code%library( nlibs )%repository = repository
-          summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = repository
-#endif
-        end if
-
-        if (.not.streql(mscl_version,'0.0.0')) then
-          nlibs = nlibs + 1
-          allocate( edge_profiles%code%library( nlibs )%name(1) )
-          allocate( edge_sources%code%library( nlibs )%name(1) )
-          allocate( edge_transport%code%library( nlibs )%name(1) )
-          allocate( radiation%code%library( nlibs )%name(1) )
-          allocate( summary%code%library( nlibs )%name(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%name(1) )
-#endif
-          edge_profiles%code%library( nlibs )%name = 'MSCL'
-          edge_sources%code%library( nlibs )%name = 'MSCL'
-          edge_transport%code%library( nlibs )%name = 'MSCL'
-          radiation%code%library( nlibs )%name = 'MSCL'
-          summary%code%library( nlibs )%name = 'MSCL'
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%name = 'MSCL'
-#endif
-          allocate( edge_profiles%code%library( nlibs )%version(1) )
-          allocate( edge_sources%code%library( nlibs )%version(1) )
-          allocate( edge_transport%code%library( nlibs )%version(1) )
-          allocate( radiation%code%library( nlibs )%version(1) )
-          allocate( summary%code%library( nlibs )%version(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%version(1) )
-#endif
-          edge_profiles%code%library( nlibs )%version = mscl_version
-          edge_sources%code%library( nlibs )%version = mscl_version
-          edge_transport%code%library( nlibs )%version = mscl_version
-          radiation%code%library( nlibs )%version = mscl_version
-          summary%code%library( nlibs )%version = mscl_version
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%version = mscl_version
-#endif
-          allocate( edge_profiles%code%library( nlibs )%repository(1) )
-          allocate( edge_sources%code%library( nlibs )%repository(1) )
-          allocate( edge_transport%code%library( nlibs )%repository(1) )
-          allocate( radiation%code%library( nlibs )%repository(1) )
-          allocate( summary%code%library( nlibs )%repository(1) )
-#if IMAS_MINOR_VERSION > 30
-          allocate( divertors%code%library( nlibs )%repository(1) )
-#endif
-          repository = "ssh://git@git.iter.org/lib/mscl.git"
-          edge_profiles%code%library( nlibs )%repository = repository
-          edge_sources%code%library( nlibs )%repository = repository
-          edge_transport%code%library( nlibs )%repository = repository
-          radiation%code%library( nlibs )%repository = repository
-          summary%code%library( nlibs )%repository = repository
-#if IMAS_MINOR_VERSION > 30
-          divertors%code%library( nlibs )%repository = repository
-#endif
-        end if
-#endif
-
         deallocate(ionstt,istion,ispion)
 #ifdef B25_EIRENE
         deallocate(isstat,imneut,imiion)
@@ -7528,6 +6626,237 @@ contains
             return
 
         end function get_atom_number
+
+        subroutine write_ids_properties( properties, homo, &
+          & comment, source, create_date)
+            type(ids_ids_properties), intent(inout) :: properties
+                !< Type of IDS data structure, designed for IDS properties
+            integer, intent(in) :: homo
+            character(len=ids_string_length), intent(in) :: comment
+            character(len=ids_string_length), intent(in) :: source
+            character(len=ids_string_length), intent(in) :: create_date
+
+            properties%homogeneous_time = homo
+            allocate( properties%comment(1) )
+            properties%comment = comment
+            allocate( properties%source(1) )
+            properties%source = source
+            allocate( properties%creation_date(1) )
+            properties%creation_date = create_date
+#if IMAS_MINOR_VERSION > 14
+            allocate( properties%provider(1) )
+            properties%provider = usrnam()
+#endif
+#if IMAS_MINOR_VERSION > 21
+            allocate( properties%version_put%data_dictionary(1) )
+            properties%version_put%data_dictionary = imas_version
+            allocate( properties%version_put%access_layer(1) )
+            properties%version_put%access_layer = ual_version
+            allocate( properties%version_put%access_layer_language(1) )
+            properties%version_put%access_layer_language = 'FORTRAN'
+#endif
+            return
+
+        end subroutine write_ids_properties
+
+        subroutine write_ids_code( code, commit )
+            type(ids_code), intent(inout) :: code
+                !< Type of IDS data structure, designed for code data handling
+            character(len=ids_string_length), intent(in) :: commit
+#if IMAS_MINOR_VERSION > 29
+            integer :: nlibs !< Number of declared libraries in IDS description
+            character*8 ggd_version, mscl_version
+            character*32 SOLPS_git_version
+            character*32 get_SOLPS_hash
+#ifdef B25_EIRENE
+            character*8 eirene_version
+            character*31 Eirene_git_version
+            character*31 get_Eir_hash
+#endif
+#ifdef AMNS
+            type (amns_handle_type) :: amns
+            type (amns_query_type) :: query
+            type (amns_answer_type) :: answer
+            type (amns_error_type) :: amns_status
+#endif
+#endif
+            character(len=ids_string_length) :: repository
+
+            allocate( code%name(1) )
+            code%name = source
+            allocate( code%version(1) )
+            code%version = newversion
+            allocate( code%commit(1) )
+            code%commit = commit
+            allocate( code%repository(1) )
+            code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
+            allocate( code%output_flag( num_time_slices ) )
+            code%output_flag( time_sind ) = 0
+
+#if IMAS_MINOR_VERSION > 29
+            nlibs = 1
+            if (streql(b2frates_flag,'adas')) nlibs = nlibs + 1
+#ifdef AMNS
+            if (streql(b2frates_flag,'amns')) nlibs = nlibs + 1
+#endif
+#ifdef B25_EIRENE
+            if (use_eirene.ne.0) then
+              nlibs = nlibs + 1
+              Eirene_git_version = get_Eir_hash()
+              p = index(Eirene_git_version,'-')
+              if (p.eq.0) then
+                eirene_version = trim(Eirene_git_version)
+              else if (p.gt.1) then
+                eirene_version = Eirene_git_version(1:p-1)
+              else
+                eirene_version = ''
+              end if
+            end if
+#endif
+            SOLPS_git_version = get_SOLPS_hash()
+            if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) &
+              & nlibs = nlibs + 1
+
+            mscl_version='0.0.0'
+#ifdef NAGFOR
+            call get_environment_variable('GGD_VERSION', &
+              &  status=ierror,length=lenval)
+            if (ierror.eq.0) call get_environment_variable('GGD_VERSION', &
+              &  value=ggd_version)
+            call get_environment_variable('EBVERSIONMSCL', &
+              &  status=ierror,length=lenval)
+            if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL', &
+              &  value=mscl_version)
+#else
+#ifdef USE_PXFGETENV
+            CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
+            CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
+#else
+            call getenv ('GGD_VERSION', ggd_version)
+            call getenv ('EBVERSIONMSCL', mscl_version)
+#endif
+#endif
+            if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
+
+            allocate( code%library( nlibs ) )
+
+            nlibs = 1
+            allocate( code%library( nlibs )%name(1) )
+            code%library( nlibs )%name = 'GGD'
+            allocate( code%library( nlibs )%version(1) )
+            code%library( nlibs )%version = ggd_version
+            allocate( code%library( nlibs )%repository(1) )
+            repository = "ssh://git.iter.org/imex/ggd.git"
+            code%library( nlibs )%repository = repository
+            if (streql(b2frates_flag,'adas')) then
+              nlibs = nlibs + 1
+              allocate( code%library( nlibs )%name(1) )
+              code%library( nlibs )%name = 'ADAS'
+              allocate( code%library( nlibs )%version(1) )
+              code%library( nlibs )%version = adas_version
+              allocate( code%library( nlibs )%commit(1) )
+              code%library( nlibs )%commit = ADAS_git_version
+              allocate( code%library( nlibs )%repository(1) )
+              repository = "ssh://git.iter.org/imex/amns-adas.git"
+              code%library( nlibs )%repository = repository
+            end if
+#ifdef AMNS
+            if (streql(b2frates_flag,'amns')) then
+              nlibs = nlibs + 1
+              call IMAS_AMNS_SETUP(amns)
+              allocate( code%library( nlibs )%name(1) )
+              code%library( nlibs )%name = 'AMNS'
+              query%string = 'code_version'
+              call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+              if (.not.amns_status%flag) then
+                allocate( code%library( nlibs )%version(1) )
+                code%library( nlibs )%version = answer%string
+              end if
+              query%string = 'code_commit'
+              call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+              if (.not.amns_status%flag) then
+                allocate( code%library( nlibs )%commit(1) )
+                code%library( nlibs )%commit = answer%string
+              end if
+              query%string = 'code_repository'
+              call IMAS_AMNS_QUERY(amns,query,answer,amns_status)
+              if (.not.amns_status%flag) then
+                allocate( code%library( nlibs )%repository(1) )
+                code%library( nlibs )%repository = answer%string
+              end if
+              call IMAS_AMNS_FINISH(amns)
+            end if
+#endif
+#ifdef B25_EIRENE
+            if (use_eirene.ne.0) then
+              nlibs = nlibs + 1
+              allocate( code%library( nlibs )%name(1) )
+              code%library( nlibs )%name = 'EIRENE'
+              allocate( code%library( nlibs )%version(1) )
+              code%library( nlibs )%version = eirene_version
+              allocate( code%library( nlibs )%commit(1) )
+              code%library( nlibs )%commit = Eirene_git_version
+              allocate( code%library( nlibs )%repository(1) )
+              repository = "ssh://git.iter.org/bnd/eirene.git"
+              code%library( nlibs )%repository = repository
+            end if
+#endif
+            if (.not.streql(SOLPS_git_version,'0.0.0-0-g0000000')) then
+              nlibs = nlibs + 1
+              allocate( code%library( nlibs )%name(1) )
+              code%library( nlibs )%name = 'SOLPS-ITER'
+              allocate( code%library( nlibs )%version(1) )
+              code%library( nlibs )%version = newversion
+              allocate( code%library( nlibs )%commit(1) )
+              code%library( nlibs )%commit = SOLPS_git_version
+              allocate( code%library( nlibs )%repository(1) )
+              repository = "ssh://git.iter.org/bnd/solps-iter.git"
+              code%library( nlibs )%repository = repository
+            end if
+            if (.not.streql(mscl_version,'0.0.0')) then
+              nlibs = nlibs + 1
+              allocate( code%library( nlibs )%name(1) )
+              code%library( nlibs )%name = 'MSCL'
+              allocate( code%library( nlibs )%version(1) )
+              code%library( nlibs )%version = mscl_version
+              allocate( code%library( nlibs )%commit(1) )
+              code%library( nlibs )%commit = SOLPS_git_version
+              allocate( code%library( nlibs )%repository(1) )
+              repository = "ssh://git.iter.org/lib/mscl.git"
+              code%library( nlibs )%repository = repository
+            end if
+#endif
+            return
+
+        end subroutine write_ids_code
+
+        subroutine write_timed_integer( ival, ivalue )
+            type(ids_signal_int_1d), intent(inout) :: ival
+                !< Type of IDS data structure, designed for integer data handling
+            integer, intent(in) :: ivalue
+
+            allocate( ival%data( num_time_slices ) )
+            ival%data( time_sind ) = ivalue
+            allocate( ival%time( num_time_slices ) )
+            ival%time( time_sind ) = time_slice_value
+
+            return
+
+        end subroutine write_timed_integer
+
+        subroutine write_timed_value( val, value )
+            type(ids_signal_flt_1d), intent(inout) :: val
+                !< Type of IDS data structure, designed for scalar data handling
+            real(IDS_real), intent(in) :: value
+
+            allocate( val%data( num_time_slices ) )
+            val%data( time_sind ) = value
+            allocate( val%time( num_time_slices ) )
+            val%time( time_sind ) = time_slice_value
+
+            return
+
+        end subroutine write_timed_value
 
 #if IMAS_MINOR_VERSION > 11
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'

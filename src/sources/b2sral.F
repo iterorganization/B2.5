@@ -428,7 +428,7 @@ csw 30sep2013, added cdpa in call, uadia
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
-          write(*,*) 'Allocating arrays for cx'
+          write(*,*) 'Allocating arrays for CX'
           allocate (shi0_cx(-1:nx,-1:ny,0:3))
           allocate (sna0_cx(-1:nx,-1:ny,0:1,0:ns-1))
           allocate (smo0_cx(-1:nx,-1:ny,0:3,0:ns-1))
@@ -452,7 +452,7 @@ csw 30sep2013, added cdpa in call, uadia
         call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
 *      (no contribution to she, sne or sch)
         if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-          write(*,*) 'Summing cx sources over hydrogenic neutrals'
+          write(*,*) 'Summing CX sources over hydrogenic neutrals'
           call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna0_cx, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smo0_cx, 1)
           call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi0_cx, 1)
@@ -460,7 +460,7 @@ csw 30sep2013, added cdpa in call, uadia
       enddo
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-        write(*,*) 'Writing cx sources'
+        write(*,*) 'Writing CX sources'
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           wrk(:,:) = sna0_cx(:,:,0,is)+sna0_cx(:,:,1,is)*na(:,:,is)

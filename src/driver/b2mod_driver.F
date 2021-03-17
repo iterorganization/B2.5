@@ -127,7 +127,8 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
+      integer n2, itim, ierr, edition, b2time, coronal,
+     *  use_eirene, neutrals_namelist,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -204,7 +205,7 @@
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
-     4  use_astra, BoRiS, density_rescale,
+     4  use_astra, BoRiS, density_rescale, neutrals_namelist,
      .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
@@ -228,7 +229,7 @@
      2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
-     *     no_solve/0/, no_current/0/,
+     *     no_solve/0/, no_current/0/, neutrals_namelist/0/,
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
@@ -1184,6 +1185,7 @@ csw dec2013 allow for negative values; this is tweak to scale a specific species
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
+       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
        call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
@@ -1929,6 +1931,8 @@ cxpb initialize the data necessary for boundary conditions
       else
         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       endif
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
+     > call read_neutrals_namelist(nx, ny, ns, .true.)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
@@ -2482,6 +2486,7 @@ c new CDF movie option
      &               'Recreating using IMAS version '//
      &                trim(imas_version)//'.'
                     call close_ual(idx)
+                    idx = 0
 cxpb Do the recreate to a temporary location and then bring it back
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &               'recreate -si ',shot,' -ri ',run,
@@ -2833,6 +2838,7 @@ cxpb Do the recreate to a temporary location and then bring it back
      &             'Recreating using IMAS version '//
      &              trim(imas_version)//'.'
                   call close_ual(idx)
+                  idx = 0
 cxpb Do the recreate to a temporary location and then bring it back
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &             'recreate -si ',shot,' -ri ',run,
@@ -2912,6 +2918,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 #endif
      &    treename, shot, run, idx, username, database, version )
         call close_ual(idx)
+        idx = 0
 #endif
       end if
 

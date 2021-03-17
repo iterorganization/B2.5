@@ -73,4 +73,4 @@ c       calculate xab = vthb / vtha
      +      m(is))
 
       return
-      end
+      end subroutine viscol

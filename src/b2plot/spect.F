@@ -2705,23 +2705,23 @@ C
       ILENC  = LEN(CSTRNG)
       CALL XXSLEN(SSTRNG,I,ILENS)
 C
-         IF ( (ILENC .GE. ILENS)  .AND.  (ILENS .GT. 0) ) THEN
+      IF ( (ILENC .GE. ILENS)  .AND.  (ILENS .GT. 0) ) THEN
 C
-           DO 1 I=1,1+ILENC-ILENS
+        DO 1 I=1,1+ILENC-ILENS
 C
-              IF (CSTRNG(I:I-1+ILENS) .EQ. SSTRNG(1:ILENS)) THEN
-                 IF (IFIRST .EQ. 0) IFIRST = I
-                 ILAST = I
-              ENDIF
+          IF (CSTRNG(I:I-1+ILENS) .EQ. SSTRNG(1:ILENS)) THEN
+            IF (IFIRST .EQ. 0) IFIRST = I
+            ILAST = I
+          ENDIF
 C
-    1      CONTINUE
+    1   CONTINUE
 C
-         ENDIF
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C
-       RETURN
-       END SUBROUTINE XXFCHR
+      RETURN
+      END SUBROUTINE XXFCHR
 CX UNIX PORT - SCCS info: Module @(#)xfesym.for 1.1 Date 5/25/95
 CX
       FUNCTION XFESYM ( IZ0 )
@@ -2763,12 +2763,12 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       CHARACTER*2  XFESYM
 C-----------------------------------------------------------------------
-         IF ( (IZ0 .GT. size(elements)) .OR. (IZ0 .LT. 0) ) THEN
-            XFESYM = ' '
-         ELSE
-            XFESYM = elements(IZ0)
-         ENDIF
-         call lower_case(XFESYM)                  !srv 14.10.13
+      IF ( (IZ0 .GT. size(elements)) .OR. (IZ0 .LT. 0) ) THEN
+        XFESYM = ' '
+      ELSE
+        XFESYM = elements(IZ0)
+      ENDIF
+      call lower_case(XFESYM)                          !srv 14.10.13
 C-----------------------------------------------------------------------
       RETURN
       END FUNCTION XFESYM
@@ -2901,9 +2901,9 @@ C-----------------------------------------------------------------------
 C
       IKEY   = 0
 C
-         DO 1 I = 1,LENKEY
-            IF (CKEY(I:I) .NE. ' ') IKEY = I
-    1    CONTINUE
+      DO 1 I = 1,LENKEY
+        IF (CKEY(I:I) .NE. ' ') IKEY = I
+    1 CONTINUE
 C
       IF (IKEY .EQ. 0) GOTO 999
 C
@@ -2915,22 +2915,22 @@ C
   100 IPOS1 = INDEX( CTEXT(IPOS1:LENTXT) , CKEY(1:IKEY) ) + IPOS1 - 1
       IPOS2 = IPOS1 + IKEY
 C
-         IF (IPOS2 .GT. LENTXT) THEN
-            GOTO 999
-         ELSEIF (IPOS1 .EQ. 1) THEN
-            IPOS1 = IPOS2
-         ELSEIF (IPOS1 .NE. 0) THEN
-            IPOS1 = IPOS1 - 1
-               IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
+      IF (IPOS2 .GT. LENTXT) THEN
+        GOTO 999
+      ELSEIF (IPOS1 .EQ. 1) THEN
+        IPOS1 = IPOS2
+      ELSEIF (IPOS1 .NE. 0) THEN
+        IPOS1 = IPOS1 - 1
+        IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
      &                        .OR.
-     &              (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
-                  IPOS1 = IPOS2
-               ELSE
-                  GOTO 999
-               ENDIF
-         ELSE
-            GOTO 999
-         ENDIF
+     &       (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
+          IPOS1 = IPOS2
+        ELSE
+          GOTO 999
+        ENDIF
+      ELSE
+        GOTO 999
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C ESTABLISH IF EQUAL SIGN EXISTS AFTER THE KEY (SEPERATED BY BLANKS).
@@ -2939,25 +2939,25 @@ C
       IPOS2 = INDEX( CTEXT(IPOS1:LENTXT) , '=' )
       IPOS3 = IPOS2 + IPOS1
 C
-         IF (IPOS3 .GT. LENTXT) THEN
-            GOTO 999
-         ELSEIF (IPOS2 .EQ. 1) THEN
-            IPOS2 = IPOS3
-         ELSEIF (IPOS2 .NE. 0) THEN
-            IPOS2 = IPOS3 - 2
-               IF (CTEXT(IPOS1:IPOS2) .EQ. ' ') THEN
-                  IPOS2 = IPOS3
-               ELSE
+      IF (IPOS3 .GT. LENTXT) THEN
+        GOTO 999
+      ELSEIF (IPOS2 .EQ. 1) THEN
+        IPOS2 = IPOS3
+      ELSEIF (IPOS2 .NE. 0) THEN
+        IPOS2 = IPOS3 - 2
+        IF (CTEXT(IPOS1:IPOS2) .EQ. ' ') THEN
+          IPOS2 = IPOS3
+        ELSE
 C
 C- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C SEE IF VALID KEY EXISTS FURTHER DOWN THE 'CTEXT' STRING.
 C- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C
-                  GOTO 100
-               ENDIF
-         ELSE
-            GOTO 999
-         ENDIF
+          GOTO 100
+        ENDIF
+      ELSE
+        GOTO 999
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C FIND SEPERATOR CHARACTER AND IDENTIFY RESPONSE (IF PRESENT).
@@ -3057,7 +3057,7 @@ C-----------------------------------------------------------------------
       END DO
 C-----------------------------------------------------------------------
       RETURN
-      END  FUNCTION I4EIZ0
+      END FUNCTION I4EIZ0
 
       subroutine CalculateEmissivity(is,iwl,idwl)
       use b2mod_types
