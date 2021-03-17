@@ -983,16 +983,17 @@ c          while B2.5 uses internal energy equations.
      &              istra,farea,pl,tnf,geo,cosa,sina,
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.2) then
-               call CalcIncidentFluxesMfp(switch%mfp_b1,
-     &              switch%mfp_b2,
+               call CalcIncidentFluxesKn(switch%Kn_b1,
+     &              switch%Kn_b2,
      &              iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1,
+     &              switch%L_macro_AFN,
      &              fnni,fmomni,nni,nnwwni,feneni)
              else
-               call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
+               call CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
@@ -1029,18 +1030,18 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,cosa, sina,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                elseif (maxw(istra).eq.2) then
-                 call CalcReflectedFluxesMfp(switch%mfp_b1,
-     &              switch%mfp_b2,
+                 call CalcReflectedFluxesKn(switch%Kn_b1,
+     &              switch%Kn_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                else
-                 call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
+                 call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
