@@ -205,29 +205,26 @@
 #endif
 !$OMP& REDUCTION(+: smbfrial)
 #endif
-      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then
 *     ..contribution from friction between ions
-        smbfrial_test=0
+      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then
+*     ..actual use of the Zhdanov closure
         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then 
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)  
-
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &  smbfrial_test(ix,iy,0),
-     &  smbfrial_test(ix,iy,1))
+     &  smbfrial(ix,iy,0),
+     &  smbfrial(ix,iy,1))
            endif
           enddo
         enddo
-        smbfrial=smbfrial_test
       elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1) then
-*     ..contribution from friction between ions
+*     ..test run of the Zhdanov closure
         smbfrial_test=0
         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then 
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)  
-
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
      &  smbfrial_test(ix,iy,0),
      &  smbfrial_test(ix,iy,1))
@@ -270,6 +267,7 @@
          endif
         enddo
       else
+*     ..standard friction force calculation
         do is = 0, ns-1
          if(isb.ne.is .and.
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
@@ -369,26 +367,24 @@
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then
-        smbtfial_test=0
-        smbtfial_test_nofl=0
+*     ..actual use of the Zhdanov closure
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             call b2mod_zhfrtf_tf(ix,iy,isb,smbtfial_test(ix,iy,0),
-     & smbtfial_test_nofl(ix,iy,0))
+             call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
+     & smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0))
             endif
            enddo
           enddo
-        smbtfial=smbtfial_test
-        smbtfial_nofl=smbtfial_test_nofl
       elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1) then
+*     ..test run of the Zhdanov closure
         smbtfial_test=0
         smbtfial_test_nofl=0
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             call b2mod_zhfrtf_tf(ix,iy,isb,smbtfial_test(ix,iy,0),
-     & smbtfial_test_nofl(ix,iy,0))
+             call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
+     & smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0))
             endif
            enddo
           enddo
@@ -436,6 +432,7 @@ c   .... apply flux limit
          endif
         enddo
       else
+*     ..standard thermal force calculation 
         do is = 0, ns-1
          if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then

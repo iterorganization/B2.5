@@ -5,7 +5,6 @@
      & Ainv, Ainv_mdf, c_R_TA)                                   !som 05.02.2021
       use b2mod_types
       use b2mod_subsys
-!     use b2mod_b2zhco, only: c_R_TA
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nnucl
@@ -53,10 +52,6 @@
         enddo
       enddo
  
-!     do, i=0,nnucl-1
-!     print *, (c_RTA(ix,iy,i,j), j=0,nnucl-1 )
-!     enddo
-!     print *        
       call subend ()
       return
 

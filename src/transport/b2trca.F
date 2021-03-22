@@ -17,7 +17,6 @@
      & N9(0:nnucl-1,0:nnucl-1),
      & N10(0:nnucl-1,0:nnucl-1), N11(0:nnucl-1,0:nnucl-1),
      & N12(0:nnucl-1,0:nnucl-1)
-!    & mu(0:nnucl-1,0:nnucl-1), mum(0:nnucl-1,0:nnucl-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) :: Ainv(0:2*nnucl-1,0:2*nnucl-1)
 *   ..common blocks
@@ -86,6 +85,13 @@
       call DGETRF(dnnucl, dnnucl, Ainv, dnnucl, ipiv, info)
     
       if (info /= 0) then
+         print *, nz2n
+         print *
+         do, i=0,dnnucl-1
+           print *, (A(i,j), j=0,dnnucl-1 )
+         enddo
+         print *
+         call sleep(3)
          stop 'Matrix is numerically singular!'
       end if
     

@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trzh (nx, ny, ns, znmax, na, ua, ti, lnlam, hx, bb)  !som 05.02.2021  
+      subroutine b2trzh (nx, ny, ns, znmax, na, ua, ti, lnlam, hx, bb,
+     & gamma)  !som 05.02.2021  
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_constants     
@@ -12,6 +13,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax
+      real (kind=R8) :: gamma                             !som 20.03.21
       real (kind=R8) ::
      &  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny), ua(-1:nx,-1:ny,0:ns-1),
      &  lnlam(-1:nx,-1:ny), hx(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
@@ -29,32 +31,35 @@
 *  3. description 
 *
 *     This routine computes:
+*     - c_R_TA: the thermal force transport coefficient for isonuclear ions
+*     - c_R_TA_nofl: the thermal force transport coefficient for isonuclear ions without flux limiting
+*     - c_R_TB: the thermal force transport coefficient correction for each charge state
+*     - c_R_TB_nofl: the thermal force transport coefficient correction for each charge state without flux limiting
+*     - c_R_wA: the friction force transport coefficient for isonuclear ions
+*     - c_R_wB: the friction force transport coefficient correction for each charge state
+*     - c_R_w: the total friction force transport coefficient 
+*     - c_hwA: the ion heat conductivity transport coefficientfor isonuclear ions
+*     - temperature gradients  
+*     - mass-related variables  
 *
 *-----------------------------------------------------------------------
 *.declarations
       integer ncall
       integer ix, iy, is, inucl, iz,i, j 
-!    & nucl2s(0:nspecies-1,0:znmax), znnucl_int(0:nspecies-1) 
+      real (kind=R8) :: temp
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
-     & gtal(-1:nx,-1:ny,0:nspecies-1),
-!    & amnucl(0:nspecies-1), znnucl(0:nspecies-1), 
      & zeffne, nz2n(0:nspecies-1),
-!    & z2n(-1:nx,-1:ny,0:nspecies-1),nal(-1:nx,-1:ny,0:nspecies-1),
-!    & N2(0:nspecies-1,0:nspecies-1), N5(0:nspecies-1,0:nspecies-1), 
-!    & N6(0:nspecies-1,0:nspecies-1), N8(0:nspecies-1,0:nspecies-1),
-!    & N9(0:nspecies-1,0:nspecies-1),
-!    & N10(0:nspecies-1,0:nspecies-1), N11(0:nspecies-1,0:nspecies-1),
-!    & N12(0:nspecies-1,0:nspecies-1),
      & G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
-!    & mu(0:nspecies-1,0:nspecies-1), mum(0:nspecies-1,0:nspecies-1),
-!    & rmu(0:nspecies-1,0:nspecies-1),
-!    & mdm(0:nspecies-1,0:nspecies-1),
      & Ainv(0:2*nspecies-1,0:2*nspecies-1),
      & Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
      & Ainv_fl(0:2*nspecies-1,0:2*nspecies-1),
      & Ainv_mdf_fl(0:nspecies-1,0:2*nspecies-1),
+     & c_rwA(0:nspecies-1,0:nspecies-1),
+     & c_R_TA_an_nofl(0:nspecies-1,0:nspecies-1),
+     & c_R_TA_an(0:nspecies-1,0:nspecies-1),
+     & c_hTA_an(0:nspecies-1),
      & t0, t1, czetap,zetap(-1:nx,-1:ny),
-     & cF_lim(0:nspecies-1,0:nspecies-1)
+     & cF_lim(0:nspecies-1),cF_limB(0:nspecies-1)
 
       save ncall
       data ncall/0/
@@ -65,9 +70,6 @@
       call subini ('b2trzh')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-
-!       print *, 'checkpoint_31'
-!       print *, znmax  
 *   ..allocate
         call init_mrel(nspecies,znmax,ns)
         call init_zhco(nspecies, nx, ny)
@@ -84,7 +86,6 @@
            inucl=inucl+1 
            znnucl(inucl-1)=zn(is)
            amnucl(inucl-1)=am(is)  
-!      print *, znnucl
            zn_temp=zn(is)
            am_temp=am(is)
           endif 
@@ -93,13 +94,11 @@
           s2nucl(is)=inucl
           znnucl_int(inucl-1)=nint(znnucl(inucl-1))
         enddo        
-!       print *, s2nucl
 *   ..calculate the N-coefficients and all mass related variables 
         call b2trcn (nspecies, amnucl, N2, N5, N6, N8, N9, N10, 
      & N11, N12, mu, rmu, mum, mdm)
       endif
        
-!       print *, 'checkpoint_33'
 *   ..main part  
 *   ..calculate the average Z**2*n and density of each type
       call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
@@ -120,83 +119,97 @@
           zeffne=sum(z2n_xy(ix,iy,0:nspecies-1)) 
 *    ..normalized average Z**2*n
           nz2n=z2n_xy(ix,iy,0:nspecies-1)/zeffne
+*    ..calculate the correction for each charge state
+          call b2trcc(nspecies,mum,mdm,nz2n,
+     & c_R_TB_nofl(ix,iy,0:nspecies-1),
+     & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1)) 
+
+          if (zh_imp_analyt.eq.0) then
 *    ..calculate the inversed matrix for heat flux/r-moment
-!       print *, 'checkpoint_34'
-          call b2trca(nspecies, amti, N5, N6, N9,  
+            call b2trca(nspecies, amti, N5, N6, N9,  
      & N10, N11, N12, nz2n, Ainv)
 
-!         if (ncall.eq.10) then
-!         if (ix.eq.-1) then
-!         if (iy.eq.-1) then
-!           print *, 'checkpoint_Ainv'
-!           print *, 'na:'
-!           print *,  (na(ix, iy,j),j=0,ns-1)
-!           print *, 'Ainv:'
-!           do, i=0,nspecies-1
-!             print *, (Ainv(i,j), j=0,nspecies-1 )
-!           enddo
-!             print *
-!         endif
-!         endif
-!         endif
-!       print *, 'checkpoint_35'
 *    ..re-normalize part of the inversed matrix  
-          do j = 0, 2*nspecies-1
-            Ainv_mdf(0:nspecies-1,j)=
+            do j = 0, 2*nspecies-1
+              Ainv_mdf(0:nspecies-1,j)=
      & amti(0:nspecies-1)*Ainv(nspecies:2*nspecies-1,j)
-          enddo
-*    ..Flux limiting coefficient	
-          call b2trfl(ix,iy,Ainv,zeffne,amti,zetap(ix,iy),cF_lim) 
-          Ainv_fl(0:nspecies-1,0:nspecies-1)=
-     & cF_lim(0:nspecies-1,0:nspecies-1)*Ainv(0:nspecies-1,0:nspecies-1)
-          Ainv_mdf_fl(0:nspecies-1,0:nspecies-1)=
-     & cF_lim(0:nspecies-1,0:nspecies-1)*
-     & Ainv_mdf(0:nspecies-1,0:nspecies-1)
-*    ..G-objects for the thermal and friction forces	 
-          do j = 0, nspecies-1
-            G2(:,j)=nz2n(:)*nz2n(j)*N2(:,j)
-            G8(:,j)=nz2n(:)*nz2n(j)*N8(:,j)
-          enddo
+            enddo
 
-!       print *, 'checkpoint_36'
+*    ..Flux limiting coefficient	
+            call b2trfl(ix,iy,Ainv,zeffne,amti,zetap(ix,iy),gamma,
+     & cF_lim,cF_limB)
+            do i = 0, nspecies-1
+              Ainv_fl(i,0:nspecies-1)=
+     & cF_lim(i)*Ainv(i,0:nspecies-1)
+              Ainv_mdf_fl(i,0:nspecies-1)=
+     & cF_lim(i)*Ainv_mdf(i,0:nspecies-1)
+            enddo
+*    ..G-objects for the thermal and friction forces	 
+            do j = 0, nspecies-1
+              G2(:,j)=nz2n(:)*nz2n(j)*N2(:,j)
+              G8(:,j)=nz2n(:)*nz2n(j)*N8(:,j)
+            enddo
+
+*    ..calculate the velocity parts heat flux and r transport coefficient 
+            call b2trhw(nspecies, G2, G8, mum, rmu,
+     & z2n_xy(ix,iy,0:nspecies-1), Ainv, Ainv_mdf, 
+     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting 
-          call b2trtf(nspecies, G2, G8, mum, mdm,
+            call b2trtf(nspecies, G2, G8, mum, mdm,
      & Ainv, Ainv_mdf, c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient with flux limiting 
-          call b2trtf(nspecies, G2, G8, mum, mdm,
+            call b2trtf(nspecies, G2, G8, mum, mdm,
      & Ainv_fl, Ainv_mdf_fl, c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
-!       print *, 'checkpoint_37'
+
+          else
+*    ..the analytical thermal force transport coefficient  
+            call b2trhrtf_an(nspecies, mum, mdm,nz2n,
+     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_rwA(0:nspecies-1,0:nspecies-1),  
+     & c_hTA_an,c_R_TA_an_nofl)
+*    ..the thermal force transport coefficient without flux limiting
+            do i = 0, nspecies-1
+              temp=sum(c_R_TA_an_nofl(i,0:nspecies-1)*
+     & (nz2n(0:nspecies-1)/nz2n(i)))
+              c_R_TA_nofl(ix,iy,i,0:nspecies-1)=
+     & -c_R_TA_an_nofl(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
+              c_R_TA_nofl(ix,iy,i,i)=c_R_TA_nofl(ix,iy,i,i)+temp
+            enddo
+
+*    ..Flux limiting coefficient (analytical)	
+            call b2trfl_an(ix,iy,c_hTA_an,
+     & amnucl,amti,zetap(ix,iy),gamma,
+     & cF_lim,cF_limB)
+            do i = 0, nspecies-1
+              c_R_TA_an(i,0:nspecies-1)=
+     & cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
+            enddo
+*    ..the thermal force transport coefficient with flux limiting
+            do i = 0, nspecies-1
+              temp=sum(c_R_TA_an(i,0:nspecies-1)*
+     & (nz2n(0:nspecies-1)/nz2n(i)))
+              c_R_TA(ix,iy,i,0:nspecies-1)=
+     & -c_R_TA_an(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
+              c_R_TA(ix,iy,i,i)=c_R_TA(ix,iy,i,i)+temp
+            enddo
+          endif
+
+*    ..calculate the thermal force correction for each charge state
+          c_R_TB(ix,iy,0:nspecies-1)=cF_limB(0:nspecies-1)*
+     & c_R_TB_nofl(ix,iy,0:nspecies-1)
+
 *    ..calculate the friction force transport coefficient 
-          call b2trfr(nspecies, G2, G8, mum, rmu,
-     & z2n_xy(ix,iy,0:nspecies-1), Ainv, Ainv_mdf, 
+          call b2trfr(nspecies, mum, rmu,
+     & z2n_xy(ix,iy,0:nspecies-1), 
+     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_rwA(0:nspecies-1,0:nspecies-1),
+     & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1),
      & c_R_w(ix,iy,0:nspecies-1,0:nspecies-1))
         enddo
       enddo
-      if (ncall.eq.10) then
-        ix=(nx-1)/2
-        iy=(ny-1)/2
-        print *, 'checkpoint_c_R'
-        print *, 'ix,iy:',ix,iy
-        print *, 'na:'
-        print *,  (na(ix, iy,j),j=0,ns-1)
-        print *, 'c_R_TA_nofl:'
-        do, i=0,nspecies-1
-          print *, (c_R_TA_nofl(ix,iy,i,j), j=0,nspecies-1 )
-        enddo
-        print *
-        print *, 'c_R_TA:'
-        do, i=0,nspecies-1
-          print *, (c_R_TA(ix,iy,i,j), j=0,nspecies-1 )
-        enddo
-        print *
-        print *, 'c_R_w:'
-        do, i=0,nspecies-1
-          print *, (c_R_w(ix,iy,i,j), j=0,nspecies-1 )
-        enddo
-        print *
-      endif    
 
-!     print *, 'checkpoint_38'
       ncall = ncall+1
       call subend ()
       return

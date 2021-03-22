@@ -1,21 +1,21 @@
 *.specification
 
-      subroutine b2trfl (ix,iy,Ainv,zeffne,amti,zetap,gamma,
-     & cF_lim,cF_limB) 
+      subroutine b2trfl_an (ix,iy,c_hTA_an,amnucl,amti,zetap,
+     & gamma,cF_lim,cF_limB) 
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_indirect
       use b2mod_constants     
-      use b2mod_zhfrtf , only: gtalc, nal
+      use b2mod_zhfrtf, only: gtalc, nal,z2n_xy
       use b2mod_b2zhco , only: zhflcorr
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ix,iy
       real (kind=R8) :: gamma                             !som 20.03.21
-      real (kind=R8) :: zeffne,zetap,amti(0:nspecies-1),
-     & Ainv(0:2*nspecies-1,0:2*nspecies-1)
+      real (kind=R8) :: amnucl(0:nspecies-1),zetap,
+     & amti(0:nspecies-1),c_hTA_an(0:nspecies-1),z2n(0:nspecies-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) :: 
      & cF_lim(0:nspecies-1),
@@ -26,13 +26,14 @@
 *
 *  1. purpose
 *
-*     b2trfl computes the flux limiting coefficients   
+*     b2trfl computes the flux limiting coefficients using analitycaly calculated ion heat conductivity  
 *
 *  3. description 
 *
 *     This routine computes:
 *     - cF_lim: the flux limiting coefficient for the thermal force coefficient
 *     - cF_limB: the flux limiting coefficient for the charge state correction 
+*
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
@@ -42,13 +43,13 @@
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2trfl')
+      call subini ('b2trfl_an')
 *   ..main
       if (cflim(4).ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
-        coef=2.5_R8*zetap/mp/(zeffne**2)
+        coef=zetap/mp
         do i=0, nspecies-1
-          t0=abs(sum(Ainv(i,0:nspecies-1)*nal(ix,iy,0:nspecies-1)*
-     & gtalc(ix,iy,0:nspecies-1)))
+          t0=nal(ix,iy,i)/z2n_xy(ix,iy,i)**2*sqrt(2.0_R8/amnucl(i))*
+     & abs(c_hTA_an(i)*gtalc(ix,iy,i))
           t1=zhflcorr*cflim(4)/sqrt(amti(i))
         
           cF_lim(i)=
@@ -64,4 +65,4 @@
       call subend ()
       return
 
-      end subroutine b2trfl
+      end subroutine b2trfl_an
