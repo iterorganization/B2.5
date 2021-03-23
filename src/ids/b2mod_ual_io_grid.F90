@@ -22,6 +22,10 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
+#if IMAS_MINOR_VERSION > 8
+    use ids_schemas  & ! IGNORE
+     & , only : IDS_real
+#endif
 #if IMAS_MINOR_VERSION > 11
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
@@ -35,7 +39,7 @@ module b2mod_ual_io_grid
      & , only : ids_generic_grid_aos3_root
 #endif
     use ids_grid_object   & ! IGNORE
-     & , only : ids_generic_grid_dynamic_grid_subset, IDS_real, &
+     & , only : ids_generic_grid_dynamic_grid_subset, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
 #if GGD_MINOR_VERSION > 9
@@ -50,7 +54,39 @@ module b2mod_ual_io_grid
     use ids_grid_structured & ! IGNORE
      & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
-     & , IDS_GRID_UNDEFINED => GRID_UNDEFINED
+     & , only : COORDTYPE_R, COORDTYPE_Y, COORDTYPE_Z, COORDTYPE_PHI,         &
+     &          gridSubsetName, gridSubsetDescription,                        &
+     &          GRID_SUBSET_CORE, GRID_SUBSET_SOL,                            &
+     &          GRID_SUBSET_CORE_BOUNDARY,                                    &
+     &          GRID_SUBSET_INNER_DIVERTOR, GRID_SUBSET_OUTER_DIVERTOR,       &
+     &          GRID_SUBSET_INNER_DIVERTOR_INACTIVE,                          &
+     &          GRID_SUBSET_OUTER_DIVERTOR_INACTIVE,                          &
+     &          GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT,                    &
+     &          GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE,  &
+     &          GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT,           &
+     &          GRID_SUBSET_OUTER_THROAT_INACTIVE,                            &
+     &          GRID_SUBSET_INNER_THROAT_INACTIVE,                            &
+     &          GRID_SUBSET_INNER_TARGET, GRID_SUBSET_OUTER_TARGET,           &
+     &          GRID_SUBSET_INNER_TARGET_INACTIVE,                            &
+     &          GRID_SUBSET_OUTER_TARGET_INACTIVE,                            &
+     &          GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL,         &
+     &          GRID_SUBSET_PFR_WALL,                                         &
+     &          GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL,       &
+     &          GRID_SUBSET_OUTER_PFR_WALL_INACTIVE,                          &
+     &          GRID_SUBSET_INNER_PFR_WALL_INACTIVE,                          &
+     &          GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE,           &
+     &          GRID_SUBSET_OUTER_BAFFLE_INACTIVE,                            &
+     &          GRID_SUBSET_INNER_BAFFLE_INACTIVE,                            &
+     &          GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_SEPARATRIX,        &
+     &          GRID_SUBSET_SECOND_SEPARATRIX,                                &
+     &          GRID_SUBSET_BETWEEN_SEPARATRICES,                             &
+     &          GRID_SUBSET_OUTER_MIDPLANE, GRID_SUBSET_INNER_MIDPLANE,       &
+     &          GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,                        &
+     &          GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,                        &
+     &          GRID_SUBSET_INNER_STRIKEPOINT, GRID_SUBSET_OUTER_STRIKEPOINT, &
+     &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
+     &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
+     &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED

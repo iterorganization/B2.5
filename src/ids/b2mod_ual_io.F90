@@ -82,8 +82,15 @@ module b2mod_ual_io
      & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
-     & , only : findGridSubsetByName, GridWriteData, &
-     &          b2_IMAS_Fill_Grid_Desc
+     & , only : b2_IMAS_Fill_Grid_Desc
+    use ids_grid_subgrid  &     ! IGNORE
+     & , only : findGridSubsetByName
+    use ids_grid_structured &   ! IGNORE
+     & , only : GridWriteData
+    use ids_grid_common , &     ! IGNORE
+        &   IDS_COORDTYPE_R => COORDTYPE_R,       &
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
+        &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #endif
 #if GGD_MINOR_VERSION < 9
     use b2mod_ual_io_grid &
@@ -102,16 +109,29 @@ module b2mod_ual_io
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
 #endif
-    use ids_routines       ! IGNORE
-    use ids_schemas        ! IGNORE
-#if IMAS_MINOR_VERSION > 14
-    use ids_utility        ! IGNORE
+#if IMAS_MINOR_VERSION > 8
+    use ids_schemas &     ! IGNORE
+     & , only : ids_real, ids_real_invalid
 #endif
-#if IMAS_MINOR_VERSION > 11
-    use ids_grid_common , &     ! IGNORE
-        &   IDS_COORDTYPE_R => COORDTYPE_R,       &
-        &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
-        &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
+    use ids_schemas &     ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,    &
+     &          ids_radiation, ids_dataset_description, ids_ids_properties, &
+     &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,             &
+     &          ids_generic_grid_scalar, ids_generic_grid_vector_components
+#if IMAS_MINOR_VERSION > 21
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary,                                                        &
+     &          ids_summary_constant_flt_0d, ids_summary_constant_int_0d,           &
+     &          ids_summary_dynamic_int_1d_root, ids_summary_dynamic_flt_1d_root,   &
+     &          ids_summary_dynamic_flt_1d_root_parent_2, ids_summary_static_str_0d
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &     ! IGNORE
+     & , only : ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &     ! IGNORE
+     & , only : ids_divertors
 #endif
 #if IMAS_MINOR_VERSION > 29
 #ifdef AMNS
@@ -135,6 +155,16 @@ module b2mod_ual_io
   integer, parameter :: IDS_REAL = R8
   real(kind=R8), parameter :: IDS_REAL_INVALID = -9.0E40_R8
 #endif
+
+  interface write_sourced_value
+     module procedure write_sourced_value_root
+     module procedure write_sourced_value_root_parent_2
+  end interface write_sourced_value
+
+  integer :: num_time_slices  !< Total number of time slices.
+  integer :: time_sind   !< Time slice index. Also General grid
+            !< description slice identifier
+  character(len=132) :: source    !< Code source
 
 contains
 
@@ -205,9 +235,9 @@ contains
 
         !! Internal variables
         character(len=132) :: comment   !< IDS properties label
-        character(len=132) :: source    !< Code source
-        character(len=13) :: spclabel   !< Species label
-        character(len=2)  :: plate_name(4) !< Divertor plate name
+        character(len=132) :: username  !< IDS user name
+        character(len=132) :: plate_name(4) !< Divertor plate name
+        character(len=13)  :: spclabel   !< Species label
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ns    !< Total number of B2.5 species
         integer :: nsion !< Total number of IDS ion species
@@ -277,9 +307,6 @@ contains
         integer :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
         integer :: homogeneous_time !< Homogeneous time (0 or 1)
-        integer :: num_time_slices  !< Total number of time slices.
-        integer :: time_sind   !< Time slice index. Also General grid
-            !< description slice identifier
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
@@ -424,6 +451,7 @@ contains
         end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call date_and_time (date, ctime, zone, tvalues)
+        username = usrnam()
 #ifdef NAGFOR
         call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
@@ -802,7 +830,7 @@ contains
 
 #if IMAS_MINOR_VERSION > 21
         allocate( description%data_entry%user(1) )
-        description%data_entry%user = usrnam()
+        description%data_entry%user = username
         allocate( description%data_entry%machine(1) )
         description%data_entry%machine = database
         allocate( description%data_entry%pulse_type(1) )
@@ -873,53 +901,45 @@ contains
         if ( b0.ne.0.0_IDS_real ) then
           if (streql(database,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
-            allocate( summary%global_quantities%ip%value( num_time_slices ) )
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
-            allocate( summary%global_quantities%b0%value( num_time_slices ) )
-            allocate( summary%global_quantities%q_95%value( num_time_slices ) )
             i = nint(b0r0_ref/b0r0)
             select case (i)
             case (1)
-              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real
+              call write_sourced_value( summary%global_quantities%ip, -15.0e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, -5.3_IDS_real )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -5.3_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = -5.3_IDS_real
             case (2)
-              summary%global_quantities%ip%value( time_sind ) =  -7.5e6_IDS_real
+              call write_sourced_value( summary%global_quantities%ip, -7.5e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, -2.65_IDS_real )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -2.65_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = -2.65_IDS_real
             case (3)
-              summary%global_quantities%ip%value( time_sind ) =  -5.0e6_IDS_real
+              call write_sourced_value( summary%global_quantities%ip, -5.0e6_IDS_real )
+              call write_sourced_value( summary%global_quantities%b0, -1.8_IDS_real )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -1.8_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = -1.8_IDS_real
             case default
-              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real/nint(b0r0_ref/b0r0)
+              call write_sourced_value( summary%global_quantities%ip, &
+                &  -15.0e6_IDS_real/nint(b0r0_ref/b0r0) )
+              call write_sourced_value( summary%global_quantities%b0, &
+                &  -b0r0 / 6.2e6_IDS_real )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0r0 / 6.2_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = -b0r0 / 6.2_IDS_real
             end select
-            allocate( summary%global_quantities%ip%source(1) )
             summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
-            summary%global_quantities%q_95%value( time_sind ) = 3.0_IDS_real
-            allocate( summary%global_quantities%q_95%source(1) )
+            call write_sourced_value( summary%global_quantities%q_95, 3.0_IDS_real )
             summary%global_quantities%q_95%source = "ITER Baseline q95=3 equilibrium"
+            call write_sourced_constant( summary%global_quantities%r0, 6.2_IDS_real )
             edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
-            summary%global_quantities%r0%value = 6.2_IDS_real
           else
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
             edge_profiles%vacuum_toroidal_field%r0 = r0
-            summary%global_quantities%r0%value = r0
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
-            allocate( summary%global_quantities%b0%value( num_time_slices ) )
             if (isymm.ne.0) then
+              call write_sourced_value( summary%global_quantities%b0, -b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
-              summary%global_quantities%b0%value( time_sind ) = -b0
             else
+              call write_sourced_value( summary%global_quantities%b0, -b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
-              summary%global_quantities%b0%value( time_sind ) = b0
             end if
           end if
-          allocate( summary%global_quantities%r0%source(1) )
-          summary%global_quantities%r0%source = source
-          allocate( summary%global_quantities%b0%source(1) )
-          summary%global_quantities%b0%source = source
         end if
 
         select case (GeometryType)
@@ -946,10 +966,7 @@ contains
         end do
         if (u.ne.0.0_IDS_real) then
 #if IMAS_MINOR_VERSION > 28
-          allocate( summary%global_quantities%power_loss%value( num_time_slices ) )
-          summary%global_quantities%power_loss%value( time_sind ) = u
-          allocate( summary%global_quantities%power_loss%source(1) )
-          summary%global_quantities%power_loss%source = source
+          call write_sourced_value( summary%global_quantities%power_loss, u )
 #endif
         end if
 
@@ -982,21 +999,13 @@ contains
             end do
           end do
           if (u.ne.0.0_IDS_real) then
-            allocate( summary%global_quantities%power_radiated%value( time_sind ) )
-            summary%global_quantities%power_radiated%value( time_sind ) = u
-            allocate( summary%global_quantities%power_radiated%source(1) )
-            summary%global_quantities%power_radiated%source = source
+            call write_sourced_value( summary%global_quantities%power_radiated, u )
           end if
 #if IMAS_MINOR_VERSION > 30
           if (frac.ne.0.0_IDS_real) then
-            allocate( summary%global_quantities%power_radiated_inside_lcfs%value( time_sind ) )
-            summary%global_quantities%power_radiated_inside_lcfs%value( time_sind ) = frac
-            allocate( summary%global_quantities%power_radiated_inside_lcfs%source(1) )
-            summary%global_quantities%power_radiated_inside_lcfs%source = source
-            allocate( summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) )
-            summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) = u - frac
-            allocate( summary%global_quantities%power_radiated_outside_lcfs%source(1) )
-            summary%global_quantities%power_radiated_outside_lcfs%source = source
+            call write_sourced_value( summary%global_quantities%power_radiated_inside_lcfs, frac )
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, &
+              &  u - frac )
           end if
 #endif
         case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
@@ -1024,10 +1033,7 @@ contains
           end do
 #if IMAS_MINOR_VERSION > 30
           if (u.ne.0.0_IDS_real) then
-            allocate( summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) )
-            summary%global_quantities%power_radiated_outside_lcfs%value( time_sind ) = u
-            allocate( summary%global_quantities%power_radiated_outside_lcfs%source(1) )
-            summary%global_quantities%power_radiated_outside_lcfs%source = source
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, u )
           end if
 #endif
         end select
@@ -5225,21 +5231,12 @@ contains
            allocate( summary%local%separatrix%position%psi( num_time_slices ) )
            summary%local%separatrix%position%psi( time_sind ) = fpsi(jxa,jsep,2)
         end if
-        allocate( summary%local%separatrix%t_e%value( num_time_slices ) )
-        summary%local%separatrix%t_e%value( time_sind ) = &
-           &  0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-        allocate ( summary%local%separatrix%t_e%source(1) )
-        summary%local%separatrix%t_e%source = source
-        allocate( summary%local%separatrix%t_i_average%value( num_time_slices ) )
-        summary%local%separatrix%t_i_average%value( time_sind ) = &
-           &  0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-        allocate ( summary%local%separatrix%t_i_average%source(1) )
-        summary%local%separatrix%t_i_average%source = source
-        allocate( summary%local%separatrix%n_e%value( num_time_slices ) )
-        summary%local%separatrix%n_e%value( time_sind ) = &
-           &  0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep)))
-        allocate ( summary%local%separatrix%n_e%source(1) )
-        summary%local%separatrix%n_e%source = source
+        call write_sourced_value( summary%local%separatrix%t_e, &
+           &  0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev )
+        call write_sourced_value( summary%local%separatrix%t_i_average, &
+           &  0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev )
+        call write_sourced_value( summary%local%separatrix%n_e, &
+           &  0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep))) )
         do is = 1, nspecies
           is1 = eb2spcr(is)
           if (nint(zamax(is1)).eq.0) is1 = is1 + 1
@@ -5257,186 +5254,75 @@ contains
           if (nasum.gt.0.0_R8) vtor = vtor / nasum
           select case (is_codes(eb2spcr(is)))
           case ('H')
-            allocate( summary%local%separatrix%n_i%hydrogen%value( num_time_slices ))
-            summary%local%separatrix%n_i%hydrogen%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%hydrogen%source(1) )
-            summary%local%separatrix%n_i%hydrogen%source = source
-            allocate( summary%local%separatrix%velocity_tor%hydrogen%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%hydrogen%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%hydrogen%source(1) )
-            summary%local%separatrix%velocity_tor%hydrogen%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, vtor )
           case ('D')
-            allocate( summary%local%separatrix%n_i%deuterium%value( num_time_slices ))
-            summary%local%separatrix%n_i%deuterium%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%deuterium%source(1) )
-            summary%local%separatrix%n_i%deuterium%source = source
-            allocate( summary%local%separatrix%velocity_tor%deuterium%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%deuterium%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%deuterium%source(1) )
-            summary%local%separatrix%velocity_tor%deuterium%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, vtor )
           case ('T')
-            allocate( summary%local%separatrix%n_i%tritium%value( num_time_slices ))
-            summary%local%separatrix%n_i%tritium%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%tritium%source(1) )
-            summary%local%separatrix%n_i%tritium%source = source
-            allocate( summary%local%separatrix%velocity_tor%tritium%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%tritium%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%tritium%source(1) )
-            summary%local%separatrix%velocity_tor%tritium%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, vtor )
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
-              allocate( summary%local%separatrix%n_i%helium_3%value( num_time_slices ))
-              summary%local%separatrix%n_i%helium_3%value( time_sind ) = nisep
-              allocate ( summary%local%separatrix%n_i%helium_3%source(1) )
-              summary%local%separatrix%n_i%helium_3%source = source
-              allocate( summary%local%separatrix%velocity_tor%helium_3%value( num_time_slices ))
-              summary%local%separatrix%velocity_tor%helium_3%value( time_sind ) = vtor
-              allocate ( summary%local%separatrix%velocity_tor%helium_3%source(1) )
-              summary%local%separatrix%velocity_tor%helium_3%source = source
+              call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, vtor )
             else if (nint(am(eb2spcr(is))).eq.4) then
-              allocate( summary%local%separatrix%n_i%helium_4%value( num_time_slices ))
-              summary%local%separatrix%n_i%helium_4%value( time_sind ) = nisep
-              allocate ( summary%local%separatrix%n_i%helium_4%source(1) )
-              summary%local%separatrix%n_i%helium_4%source = source
-              allocate( summary%local%separatrix%velocity_tor%helium_4%value( num_time_slices ))
-              summary%local%separatrix%velocity_tor%helium_4%value( time_sind ) = vtor
-              allocate ( summary%local%separatrix%velocity_tor%helium_4%source(1) )
-              summary%local%separatrix%velocity_tor%helium_4%source = source
+              call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, vtor )
             end if
           case ('Li')
-            allocate( summary%local%separatrix%n_i%lithium%value( num_time_slices ))
-            summary%local%separatrix%n_i%lithium%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%lithium%source(1) )
-            summary%local%separatrix%n_i%lithium%source = source
-            allocate( summary%local%separatrix%velocity_tor%lithium%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%lithium%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%lithium%source(1) )
-            summary%local%separatrix%velocity_tor%lithium%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, vtor )
           case ('Be')
-            allocate( summary%local%separatrix%n_i%beryllium%value( num_time_slices ))
-            summary%local%separatrix%n_i%beryllium%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%beryllium%source(1) )
-            summary%local%separatrix%n_i%beryllium%source = source
-            allocate( summary%local%separatrix%velocity_tor%beryllium%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%beryllium%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%beryllium%source(1) )
-            summary%local%separatrix%velocity_tor%beryllium%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
           case ('C')
-            allocate( summary%local%separatrix%n_i%carbon%value( num_time_slices ))
-            summary%local%separatrix%n_i%carbon%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%carbon%source(1) )
-            summary%local%separatrix%n_i%carbon%source = source
-            allocate( summary%local%separatrix%velocity_tor%carbon%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%carbon%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%carbon%source(1) )
-            summary%local%separatrix%velocity_tor%carbon%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, vtor )
           case ('N')
-            allocate( summary%local%separatrix%n_i%nitrogen%value( num_time_slices ))
-            summary%local%separatrix%n_i%nitrogen%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%nitrogen%source(1) )
-            summary%local%separatrix%n_i%nitrogen%source = source
-            allocate( summary%local%separatrix%velocity_tor%nitrogen%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%nitrogen%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%nitrogen%source(1) )
-            summary%local%separatrix%velocity_tor%nitrogen%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, vtor )
           case ('O')
-            allocate( summary%local%separatrix%n_i%oxygen%value( num_time_slices ))
-            summary%local%separatrix%n_i%oxygen%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%oxygen%source(1) )
-            summary%local%separatrix%n_i%oxygen%source = source
-            allocate( summary%local%separatrix%velocity_tor%oxygen%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%oxygen%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%oxygen%source(1) )
-            summary%local%separatrix%velocity_tor%oxygen%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, vtor )
           case ('Ne')
-            allocate( summary%local%separatrix%n_i%neon%value( num_time_slices ))
-            summary%local%separatrix%n_i%neon%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%neon%source(1) )
-            summary%local%separatrix%n_i%neon%source = source
-            allocate( summary%local%separatrix%velocity_tor%neon%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%neon%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%neon%source(1) )
-            summary%local%separatrix%velocity_tor%neon%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%neon, vtor )
           case ('Ar')
-            allocate( summary%local%separatrix%n_i%argon%value( num_time_slices ))
-            summary%local%separatrix%n_i%argon%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%argon%source(1) )
-            summary%local%separatrix%n_i%argon%source = source
-            allocate( summary%local%separatrix%velocity_tor%argon%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%argon%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%argon%source(1) )
-            summary%local%separatrix%velocity_tor%argon%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%argon, vtor )
 #if IMAS_MINOR_VERSION > 30
           case ('Fe')
-            allocate( summary%local%separatrix%n_i%iron%value( num_time_slices ))
-            summary%local%separatrix%n_i%iron%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%iron%source(1) )
-            summary%local%separatrix%n_i%iron%source = source
-            allocate( summary%local%separatrix%velocity_tor%iron%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%iron%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%iron%source(1) )
-            summary%local%separatrix%velocity_tor%iron%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%iron, vtor )
           case ('Kr')
-            allocate( summary%local%separatrix%n_i%krypton%value( num_time_slices ))
-            summary%local%separatrix%n_i%krypton%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%krypton%source(1) )
-            summary%local%separatrix%n_i%krypton%source = source
-            allocate( summary%local%separatrix%velocity_tor%krypton%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%krypton%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%krypton%source(1) )
-            summary%local%separatrix%velocity_tor%krypton%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, vtor )
 #endif
           case ('Xe')
-            allocate( summary%local%separatrix%n_i%xenon%value( num_time_slices ))
-            summary%local%separatrix%n_i%xenon%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%xenon%source(1) )
-            summary%local%separatrix%n_i%xenon%source = source
-            allocate( summary%local%separatrix%velocity_tor%xenon%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%xenon%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%xenon%source(1) )
-            summary%local%separatrix%velocity_tor%xenon%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, vtor )
           case ('W')
-            allocate( summary%local%separatrix%n_i%tungsten%value( num_time_slices ))
-            summary%local%separatrix%n_i%tungsten%value( time_sind ) = nisep
-            allocate ( summary%local%separatrix%n_i%tungsten%source(1) )
-            summary%local%separatrix%n_i%tungsten%source = source
-            allocate( summary%local%separatrix%velocity_tor%tungsten%value( num_time_slices ))
-            summary%local%separatrix%velocity_tor%tungsten%value( time_sind ) = vtor
-            allocate ( summary%local%separatrix%velocity_tor%tungsten%source(1) )
-            summary%local%separatrix%velocity_tor%tungsten%source = source
+            call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, vtor )
           end select
         end do
-        allocate( summary%local%separatrix%n_i_total%value( num_time_slices ))
-        summary%local%separatrix%n_i_total%value( time_sind ) = &
-          & 0.5_R8 * (ni(jxa,jsep,1) + ni(topix(jxa,jsep),topiy(jxa,jsep),1))
-        allocate ( summary%local%separatrix%n_i_total%source(1) )
-        summary%local%separatrix%n_i_total%source = source
-        allocate( summary%local%separatrix%zeff%value( num_time_slices ))
-        summary%local%separatrix%zeff%value( time_sind ) = &
-          & 0.5_R8 * (zeff(jxa,jsep) + zeff(topix(jxa,jsep),topiy(jxa,jsep)))
-        allocate ( summary%local%separatrix%zeff%source(1) )
-        summary%local%separatrix%zeff%source = source
+        call write_sourced_value( summary%local%separatrix%n_i_total, &
+          & 0.5_R8 * (ni(jxa,jsep,1) + ni(topix(jxa,jsep),topiy(jxa,jsep),1)) )
+        call write_sourced_value( summary%local%separatrix%zeff, &
+          & 0.5_R8 * (zeff(jxa,jsep) + zeff(topix(jxa,jsep),topiy(jxa,jsep))) )
 
 ! Data at limiter tangency point
         if (geometryType.eq.GEOMETRY_LIMITER) then
-          allocate( summary%local%limiter%t_e%value( num_time_slices ))
-          summary%local%limiter%t_e%value( time_sind ) = &
+          call write_sourced_value( summary%local%limiter%t_e, &
            & 0.25_R8 * ( te(0,jsep) + te(0,jsep+1) + &
-           &             te(nx-1,jsep) + te(nx-1,jsep+1) )/ev
-          allocate( summary%local%limiter%t_e%source(1) )
-          summary%local%limiter%t_e%source(1) = source
-          allocate( summary%local%limiter%t_i_average%value( num_time_slices ))
-          summary%local%limiter%t_i_average%value( time_sind ) = &
+           &             te(nx-1,jsep) + te(nx-1,jsep+1) )/ev )
+          call write_sourced_value( summary%local%limiter%t_i_average, &
            & 0.25_R8 * ( ti(0,jsep) + ti(0,jsep+1) + &
-           &             ti(nx-1,jsep) + ti(nx-1,jsep+1) )/ev
-          allocate( summary%local%limiter%t_i_average%source(1) )
-          summary%local%limiter%t_i_average%source(1) = source
-          allocate( summary%local%limiter%n_e%value( num_time_slices ))
-          summary%local%limiter%n_e%value( time_sind ) = &
+           &             ti(nx-1,jsep) + ti(nx-1,jsep+1) )/ev )
+          call write_sourced_value( summary%local%limiter%n_e, &
            & 0.25_R8 * ( ne(0,jsep) + ne(0,jsep+1) + &
-           &             ne(nx-1,jsep) + ne(nx-1,jsep+1) )
-          allocate( summary%local%limiter%n_e%source(1) )
-          summary%local%limiter%n_e%source(1) = source
+           &             ne(nx-1,jsep) + ne(nx-1,jsep+1) ) )
           do is = 1, nspecies
             is1 = eb2spcr(is)
             if (nint(zamax(is1)).eq.0) is1 = is1 + 1
@@ -5449,138 +5335,72 @@ contains
             end do
             select case (is_codes(eb2spcr(is)))
             case ('H')
-              allocate( summary%local%limiter%n_i%hydrogen%value( num_time_slices ))
-              summary%local%limiter%n_i%hydrogen%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%hydrogen%source(1) )
-              summary%local%limiter%n_i%hydrogen%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%hydrogen, nisep )
             case ('D')
-              allocate( summary%local%limiter%n_i%deuterium%value( num_time_slices ))
-              summary%local%limiter%n_i%deuterium%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%deuterium%source(1) )
-              summary%local%limiter%n_i%deuterium%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%deuterium, nisep )
             case ('T')
-              allocate( summary%local%limiter%n_i%tritium%value( num_time_slices ))
-              summary%local%limiter%n_i%tritium%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%tritium%source(1) )
-              summary%local%limiter%n_i%tritium%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%tritium, nisep )
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
-                allocate( summary%local%limiter%n_i%helium_3%value( num_time_slices ))
-                summary%local%limiter%n_i%helium_3%value( time_sind ) = nisep
-                allocate( summary%local%limiter%n_i%helium_3%source(1) )
-                summary%local%limiter%n_i%helium_3%source(1) = source
+                call write_sourced_value( summary%local%limiter%n_i%helium_3, nisep )
               else if (nint(am(eb2spcr(is))).eq.4) then
-                allocate( summary%local%limiter%n_i%helium_4%value( num_time_slices ))
-                summary%local%limiter%n_i%helium_4%value( time_sind ) = nisep
-                allocate( summary%local%limiter%n_i%helium_4%source(1) )
-                summary%local%limiter%n_i%helium_4%source(1) = source
+                call write_sourced_value( summary%local%limiter%n_i%helium_4, nisep )
               end if
             case ('Li')
-              allocate( summary%local%limiter%n_i%lithium%value( num_time_slices ))
-              summary%local%limiter%n_i%lithium%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%lithium%source(1) )
-              summary%local%limiter%n_i%lithium%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%lithium, nisep )
             case ('Be')
-              allocate( summary%local%limiter%n_i%beryllium%value( num_time_slices ))
-              summary%local%limiter%n_i%beryllium%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%beryllium%source(1) )
-              summary%local%limiter%n_i%beryllium%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%beryllium, nisep )
             case ('C')
-              allocate( summary%local%limiter%n_i%carbon%value( num_time_slices ))
-              summary%local%limiter%n_i%carbon%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%carbon%source(1) )
-              summary%local%limiter%n_i%carbon%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%carbon, nisep )
             case ('N')
-              allocate( summary%local%limiter%n_i%nitrogen%value( num_time_slices ))
-              summary%local%limiter%n_i%nitrogen%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%nitrogen%source(1) )
-              summary%local%limiter%n_i%nitrogen%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%nitrogen, nisep )
             case ('O')
-              allocate( summary%local%limiter%n_i%oxygen%value( num_time_slices ))
-              summary%local%limiter%n_i%oxygen%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%oxygen%source(1) )
-              summary%local%limiter%n_i%oxygen%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%oxygen, nisep )
             case ('Ne')
-              allocate( summary%local%limiter%n_i%neon%value( num_time_slices ))
-              summary%local%limiter%n_i%neon%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%neon%source(1) )
-              summary%local%limiter%n_i%neon%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%neon, nisep )
             case ('Ar')
-              allocate( summary%local%limiter%n_i%argon%value( num_time_slices ))
-              summary%local%limiter%n_i%argon%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%argon%source(1) )
-              summary%local%limiter%n_i%argon%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%argon, nisep )
 #if IMAS_MINOR_VERSION > 30
             case ('Fe')
-              allocate( summary%local%limiter%n_i%iron%value( num_time_slices ))
-              summary%local%limiter%n_i%iron%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%iron%source(1) )
-              summary%local%limiter%n_i%iron%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%iron, nisep )
             case ('Kr')
-              allocate( summary%local%limiter%n_i%krypton%value( num_time_slices ))
-              summary%local%limiter%n_i%krypton%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%krypton%source(1) )
-              summary%local%limiter%n_i%krypton%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%krypton, nisep )
 #endif
             case ('Xe')
-              allocate( summary%local%limiter%n_i%xenon%value( num_time_slices ))
-              summary%local%limiter%n_i%xenon%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%xenon%source(1) )
-              summary%local%limiter%n_i%xenon%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%xenon, nisep )
             case ('W')
-              allocate( summary%local%limiter%n_i%tungsten%value( num_time_slices ))
-              summary%local%limiter%n_i%tungsten%value( time_sind ) = nisep
-              allocate( summary%local%limiter%n_i%tungsten%source(1) )
-              summary%local%limiter%n_i%tungsten%source(1) = source
+              call write_sourced_value( summary%local%limiter%n_i%tungsten, nisep )
             end select
           end do
-          allocate( summary%local%limiter%n_i_total%value( num_time_slices ))
-          summary%local%limiter%n_i_total%value( time_sind ) = &
+          call write_sourced_value( summary%local%limiter%n_i_total, &
            & 0.25_R8 * ( ni(0,jsep,1) + ni(0,jsep+1,1) + &
-           &             ni(nx-1,jsep,1) + ni(nx-1,jsep+1,1) )
-          allocate( summary%local%limiter%n_i_total%source(1) )
-          summary%local%limiter%n_i_total%source(1) = source
-          allocate( summary%local%limiter%zeff%value( num_time_slices ))
-          summary%local%limiter%zeff%value( time_sind ) = &
+           &             ni(nx-1,jsep,1) + ni(nx-1,jsep+1,1) ) )
+          call write_sourced_value( summary%local%limiter%zeff, &
            & 0.25_R8 * ( zeff(0,jsep) + zeff(0,jsep+1) + &
-           &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) )
-          allocate( summary%local%limiter%zeff%source(1) )
-          summary%local%limiter%zeff%source(1) = source
-          allocate( summary%local%limiter%flux_expansion%value ( num_time_slices ) )
-          summary%local%limiter%flux_expansion%value( time_sind ) = flux_expansion(itrg(1))
-          allocate( summary%local%limiter%flux_expansion%source(1) )
-          summary%local%limiter%flux_expansion%source = source
+           &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) ) )
+          call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(itrg(1)) )
+#if IMAS_MINOR_VERSION > 31
+          call write_sourced_value( summary%local%limiter%power_flux_peak, power_flux_peak(itrg(i)) )
+#endif
         end if
 
 ! Summary divertor plate data
         if (ntrgts.gt.0) then
           allocate ( summary%local%divertor_plate( ntrgts ) )
           do i = 1, ntrgts
-            allocate( summary%local%divertor_plate(i)%name%value( num_time_slices ) )
-            summary%local%divertor_plate(i)%name%value( time_sind ) = plate_name(i)
-            allocate( summary%local%divertor_plate(i)%name%source(1) )
-            summary%local%divertor_plate(i)%name%source(1) = source
-            allocate( summary%local%divertor_plate(i)%t_e%value( num_time_slices ) )
-            summary%local%divertor_plate(i)%t_e%value( time_sind ) = &
+            call write_sourced_string( summary%local%divertor_plate(i)%name, plate_name(i) )
+            call write_sourced_value( summary%local%divertor_plate(i)%t_e, &
               &  0.5_R8 * (te(ixpos(itrg(i)),iypos(itrg(i)))+  &
               &            te(topix(ixpos(itrg(i)),iypos(itrg(i))), &
-              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev
-            allocate( summary%local%divertor_plate(i)%t_e%source(1) )
-            summary%local%divertor_plate(i)%t_e%source(1) = source
-            allocate( summary%local%divertor_plate(i)%t_i_average%value( num_time_slices ) )
-            summary%local%divertor_plate(i)%t_i_average%value( time_sind ) = &
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev )
+            call write_sourced_value( summary%local%divertor_plate(i)%t_i_average, &
               &  0.5_R8 * (te(ixpos(itrg(i)),iypos(itrg(i)))+  &
               &            te(topix(ixpos(itrg(i)),iypos(itrg(i))), &
-              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev
-            allocate( summary%local%divertor_plate(i)%t_i_average%source(1) )
-            summary%local%divertor_plate(i)%t_i_average%source(1) = source
-            allocate( summary%local%divertor_plate(i)%n_e%value( num_time_slices ) )
-            summary%local%divertor_plate(i)%n_e%value( time_sind ) = &
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev )
+            call write_sourced_value( summary%local%divertor_plate(i)%n_e, &
               &  0.5_R8 * (ne(ixpos(itrg(i)),iypos(itrg(i)))+  &
               &            ne(topix(ixpos(itrg(i)),iypos(itrg(i))), &
-              &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))
-            allocate( summary%local%divertor_plate(i)%n_e%source(1) )
-            summary%local%divertor_plate(i)%n_e%source(1) = source
+              &               topiy(ixpos(itrg(i)),iypos(itrg(i))))) )
             do is = 1, nspecies
               is1 = eb2spcr(is)
               if (nint(zamax(is1)).eq.0) is1 = is1+1
@@ -5594,169 +5414,97 @@ contains
               end do
               select case (is_codes(eb2spcr(is)))
               case ('H')
-                allocate( summary%local%divertor_plate(i)%n_i%hydrogen%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%hydrogen%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%hydrogen%source(1) )
-                summary%local%divertor_plate(i)%n_i%hydrogen%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%hydrogen, nisep )
               case ('D')
-                allocate( summary%local%divertor_plate(i)%n_i%deuterium%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%deuterium%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%deuterium%source(1) )
-                summary%local%divertor_plate(i)%n_i%deuterium%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium, nisep )
               case ('T')
-                allocate( summary%local%divertor_plate(i)%n_i%tritium%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%tritium%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%tritium%source(1) )
-                summary%local%divertor_plate(i)%n_i%tritium%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tritium, nisep )
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
-                  allocate( summary%local%divertor_plate(i)%n_i%helium_3%value( num_time_slices ))
-                  summary%local%divertor_plate(i)%n_i%helium_3%value( time_sind ) = nisep
-                  allocate ( summary%local%divertor_plate(i)%n_i%helium_3%source(1) )
-                  summary%local%divertor_plate(i)%n_i%helium_3%source = source
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_3, nisep )
                 else if (nint(am(eb2spcr(is))).eq.4) then
-                  allocate( summary%local%divertor_plate(i)%n_i%helium_4%value( num_time_slices ))
-                  summary%local%divertor_plate(i)%n_i%helium_4%value( time_sind ) = nisep
-                  allocate ( summary%local%divertor_plate(i)%n_i%helium_4%source(1) )
-                  summary%local%divertor_plate(i)%n_i%helium_4%source = source
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_4, nisep )
                 end if
               case ('Li')
-                allocate( summary%local%divertor_plate(i)%n_i%lithium%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%lithium%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%lithium%source(1) )
-                summary%local%divertor_plate(i)%n_i%lithium%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%lithium, nisep )
               case ('Be')
-                allocate( summary%local%divertor_plate(i)%n_i%beryllium%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%beryllium%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%beryllium%source(1) )
-                summary%local%divertor_plate(i)%n_i%beryllium%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%beryllium, nisep )
               case ('C')
-                allocate( summary%local%divertor_plate(i)%n_i%carbon%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%carbon%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%carbon%source(1) )
-                summary%local%divertor_plate(i)%n_i%carbon%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%carbon, nisep )
               case ('N')
-                allocate( summary%local%divertor_plate(i)%n_i%nitrogen%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%nitrogen%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%nitrogen%source(1) )
-                summary%local%divertor_plate(i)%n_i%nitrogen%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%nitrogen, nisep )
               case ('O')
-                allocate( summary%local%divertor_plate(i)%n_i%oxygen%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%oxygen%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%oxygen%source(1) )
-                summary%local%divertor_plate(i)%n_i%oxygen%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%oxygen, nisep )
               case ('Ne')
-                allocate( summary%local%divertor_plate(i)%n_i%neon%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%neon%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%neon%source(1) )
-                summary%local%divertor_plate(i)%n_i%neon%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%neon, nisep )
               case ('Ar')
-                allocate( summary%local%divertor_plate(i)%n_i%argon%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%argon%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%argon%source(1) )
-                summary%local%divertor_plate(i)%n_i%argon%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%argon, nisep )
 #if IMAS_MINOR_VERSION > 30
               case ('Fe')
-                allocate( summary%local%divertor_plate(i)%n_i%iron%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%iron%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%iron%source(1) )
-                summary%local%divertor_plate(i)%n_i%iron%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%iron, nisep )
               case ('Kr')
-                allocate( summary%local%divertor_plate(i)%n_i%krypton%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%krypton%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%krypton%source(1) )
-                summary%local%divertor_plate(i)%n_i%krypton%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%krypton, nisep )
 #endif
               case ('Xe')
-                allocate( summary%local%divertor_plate(i)%n_i%xenon%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%xenon%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%xenon%source(1) )
-                summary%local%divertor_plate(i)%n_i%xenon%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%xenon, nisep )
               case ('W')
-                allocate( summary%local%divertor_plate(i)%n_i%tungsten%value( num_time_slices ))
-                summary%local%divertor_plate(i)%n_i%tungsten%value( time_sind ) = nisep
-                allocate ( summary%local%divertor_plate(i)%n_i%tungsten%source(1) )
-                summary%local%divertor_plate(i)%n_i%tungsten%source = source
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tungsten, nisep )
               end select
             end do
-            allocate( summary%local%divertor_plate(i)%n_i_total%value( num_time_slices ))
-            summary%local%divertor_plate(i)%n_i_total%value( time_sind ) = &
+            call write_sourced_value( summary%local%divertor_plate(i)%n_i_total, &
               & 0.5_R8 * (ni(ixpos(itrg(i)),iypos(itrg(i)),1) + &
               &           ni(topix(ixpos(itrg(i)),iypos(itrg(i))), &
-              &              topiy(ixpos(itrg(i)),iypos(itrg(i))),1))
-            allocate ( summary%local%divertor_plate(i)%n_i_total%source(1) )
-            summary%local%divertor_plate(i)%n_i_total%source = source
-            allocate( summary%local%divertor_plate(i)%zeff%value( num_time_slices ))
-            summary%local%divertor_plate(i)%zeff%value( time_sind ) = &
+              &              topiy(ixpos(itrg(i)),iypos(itrg(i))),1)) )
+            call write_sourced_value( summary%local%divertor_plate(i)%zeff, &
               & 0.5_R8 * (zeff(ixpos(itrg(i)),iypos(itrg(i))) + &
               &           zeff(topix(ixpos(itrg(i)),iypos(itrg(i))), &
-              &                topiy(ixpos(itrg(i)),iypos(itrg(i)))))
-            allocate ( summary%local%divertor_plate(i)%zeff%source(1) )
-            summary%local%divertor_plate(i)%zeff%source = source
-            allocate( summary%local%divertor_plate(i)%flux_expansion%value( num_time_slices ))
-            summary%local%divertor_plate(i)%flux_expansion%value( time_sind ) = &
-              & flux_expansion(itrg(i))
-            allocate ( summary%local%divertor_plate(i)%flux_expansion%source(1) )
-            summary%local%divertor_plate(i)%flux_expansion%source = source
+              &                topiy(ixpos(itrg(i)),iypos(itrg(i))))) )
+            call write_sourced_value( summary%local%divertor_plate(i)%flux_expansion, &
+              & flux_expansion(itrg(i)) )
+#if IMAS_MINOR_VERSION > 31
+            call write_sourced_value( summary%local%divertor_plate(i)%power_flux_peak, &
+              & power_flux_peak(itrg(i)) )
+#endif
           end do
         end if
 
-        allocate( summary%boundary%type%value( num_time_slices ) )
         select case (GeometryType)
           case( GEOMETRY_LIMITER )
-            summary%boundary%type%value( time_sind ) = 0
+            call write_sourced_integer( summary%boundary%type, 0 )
           case( GEOMETRY_SN )
-            summary%boundary%type%value( time_sind ) = 1
             if ( isymm.eq.1 .or. isymm.eq.2 ) then
               if ( cry(leftcut(1),jsep,3).lt.0.0_R8) then
-                summary%boundary%type%value( time_sind ) = 11
+                call write_sourced_integer( summary%boundary%type, 11 )
               else if ( cry(leftcut(1),jsep,3).gt.0.0_R8) then
-                summary%boundary%type%value( time_sind ) = 12
+                call write_sourced_integer( summary%boundary%type, 12 )
               end if
             else if ( isymm.eq.3 .or. isymm.eq.4 ) then
               if ( crx(leftcut(1),jsep,3).lt.0.0_R8) then
-                summary%boundary%type%value( time_sind ) = 11
+                call write_sourced_integer( summary%boundary%type, 11 )
               else if ( crx(leftcut(1),jsep,3).gt.0.0_R8) then
-                summary%boundary%type%value( time_sind ) = 12
+                call write_sourced_integer( summary%boundary%type, 12 )
               end if
+            else
+              call write_sourced_integer( summary%boundary%type, 1 )
             end if
           case( GEOMETRY_CDN , GEOMETRY_DDN_BOTTOM , GEOMETRY_DDN_TOP )
-            summary%boundary%type%value( time_sind ) = 13
+            call write_sourced_integer( summary%boundary%type, 13 )
         end select
-        allocate( summary%boundary%type%source(1) )
-        summary%boundary%type%source = source
-        allocate( summary%boundary%strike_point_inner_r%value( num_time_slices ) )
-        allocate( summary%boundary%strike_point_inner_z%value( num_time_slices ) )
-        allocate( summary%boundary%strike_point_outer_r%value( num_time_slices ) )
-        allocate( summary%boundary%strike_point_outer_z%value( num_time_slices ) )
         if (LSN) then
-          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),1)
-          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),1)
-          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(nx,topcut(1),0)
-          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(nx,topcut(1),0)
+          call write_sourced_value( summary%boundary%strike_point_inner_r, crx(-1,topcut(1),1) )
+          call write_sourced_value( summary%boundary%strike_point_inner_z, cry(-1,topcut(1),1) )
+          call write_sourced_value( summary%boundary%strike_point_outer_r, crx(nx,topcut(1),0) )
+          call write_sourced_value( summary%boundary%strike_point_outer_z, cry(nx,topcut(1),0) )
         else
-          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(nx,topcut(1),0)
-          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(nx,topcut(1),0)
-          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(-1,topcut(1),1)
-          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(-1,topcut(1),1)
+          call write_sourced_value( summary%boundary%strike_point_inner_r, crx(nx,topcut(1),0) )
+          call write_sourced_value( summary%boundary%strike_point_inner_z, cry(nx,topcut(1),0) )
+          call write_sourced_value( summary%boundary%strike_point_outer_r, crx(-1,topcut(1),1) )
+          call write_sourced_value( summary%boundary%strike_point_outer_z, cry(-1,topcut(1),1) )
         endif
-        allocate( summary%boundary%strike_point_outer_z%source(1) )
-        summary%boundary%strike_point_outer_z%source = source
-        allocate( summary%boundary%strike_point_inner_r%source(1) )
-        summary%boundary%strike_point_inner_r%source = source
-        allocate( summary%boundary%strike_point_inner_z%source(1) )
-        summary%boundary%strike_point_inner_z%source = source
-        allocate( summary%boundary%strike_point_outer_r%source(1) )
-        summary%boundary%strike_point_outer_r%source = source
 
-        allocate( summary%fusion%power%value( num_time_slices ) )
-        summary%fusion%power%value( time_sind ) = fusion_power
-        allocate( summary%fusion%power%source(1) )
-        summary%fusion%power%source = source
+        call write_sourced_value( summary%fusion%power, fusion_power )
 
-        summary%gas_injection_rates%impurity_seeding%value = 0
-        allocate( summary%gas_injection_rates%impurity_seeding%source(1) )
-        summary%gas_injection_rates%impurity_seeding%source = source
+        call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
         gsum = 0.0_R8
         gtop = 0.0_R8
         gmid = 0.0_R8
@@ -5839,155 +5587,43 @@ contains
             end if
             select case (is_codes(is))
             case ('H')
-             if ( associated( summary%gas_injection_rates%hydrogen%value ) ) then
-               summary%gas_injection_rates%hydrogen%value( time_sind ) = &
-                & summary%gas_injection_rates%hydrogen%value( time_sind ) + gpff
-             else
-               allocate( summary%gas_injection_rates%hydrogen%value( num_time_slices ))
-               summary%gas_injection_rates%hydrogen%value( time_sind ) = gpff
-               allocate ( summary%gas_injection_rates%hydrogen%source(1) )
-               summary%gas_injection_rates%hydrogen%source = source
-             end if
+              call add_sourced_value( summary%gas_injection_rates%hydrogen, gpff )
             case ('D')
-             if ( associated( summary%gas_injection_rates%deuterium%value ) ) then
-               summary%gas_injection_rates%deuterium%value( time_sind ) = &
-                & summary%gas_injection_rates%deuterium%value( time_sind ) + gpff
-             else
-               allocate( summary%gas_injection_rates%deuterium%value( num_time_slices ))
-               summary%gas_injection_rates%deuterium%value( time_sind ) = gpff
-               allocate ( summary%gas_injection_rates%deuterium%source(1) )
-               summary%gas_injection_rates%deuterium%source = source
-             end if
+              call add_sourced_value( summary%gas_injection_rates%deuterium, gpff )
             case ('T')
-             if ( associated( summary%gas_injection_rates%tritium%value ) ) then
-               summary%gas_injection_rates%tritium%value( time_sind ) = &
-                & summary%gas_injection_rates%tritium%value( time_sind ) + gpff
-             else
-               allocate( summary%gas_injection_rates%tritium%value( num_time_slices ))
-               summary%gas_injection_rates%tritium%value( time_sind ) = gpff
-               allocate ( summary%gas_injection_rates%tritium%source(1) )
-               summary%gas_injection_rates%tritium%source = source
-             end if
+              call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
             case ('He')
              if (nint(am(is)).eq.3) then
-              if ( associated( summary%gas_injection_rates%helium_3%value ) ) then
-               summary%gas_injection_rates%helium_3%value( time_sind ) = &
-                & summary%gas_injection_rates%helium_3%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%helium_3%value( num_time_slices ))
-               summary%gas_injection_rates%helium_3%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%helium_3%source(1) )
-               summary%gas_injection_rates%helium_3%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
              else if (nint(am(is)).eq.4) then
-              if ( associated( summary%gas_injection_rates%helium_4%value ) ) then
-               summary%gas_injection_rates%helium_4%value( time_sind ) = &
-                & summary%gas_injection_rates%helium_4%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%helium_4%value( num_time_slices ))
-               summary%gas_injection_rates%helium_4%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%helium_4%source(1) )
-               summary%gas_injection_rates%helium_4%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%helium_4, gpff*zn(is) )
              end if
             case ('Li')
-              if ( associated( summary%gas_injection_rates%lithium%value ) ) then
-               summary%gas_injection_rates%lithium%value( time_sind ) = &
-                & summary%gas_injection_rates%lithium%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%lithium%value( num_time_slices ))
-               summary%gas_injection_rates%lithium%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%lithium%source(1) )
-               summary%gas_injection_rates%lithium%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%lithium, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('Be')
-              if ( associated( summary%gas_injection_rates%beryllium%value ) ) then
-               summary%gas_injection_rates%beryllium%value( time_sind ) = &
-                & summary%gas_injection_rates%beryllium%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%beryllium%value( num_time_slices ))
-               summary%gas_injection_rates%beryllium%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%beryllium%source(1) )
-               summary%gas_injection_rates%beryllium%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%beryllium, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('C')
-              if ( associated( summary%gas_injection_rates%carbon%value ) ) then
-               summary%gas_injection_rates%carbon%value( time_sind ) = &
-                & summary%gas_injection_rates%carbon%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%carbon%value( num_time_slices ))
-               summary%gas_injection_rates%carbon%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%carbon%source(1) )
-               summary%gas_injection_rates%carbon%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%carbon, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('N')
-              if ( associated( summary%gas_injection_rates%nitrogen%value ) ) then
-               summary%gas_injection_rates%nitrogen%value( time_sind ) = &
-                & summary%gas_injection_rates%nitrogen%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%nitrogen%value( num_time_slices ))
-               summary%gas_injection_rates%nitrogen%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%nitrogen%source(1) )
-               summary%gas_injection_rates%nitrogen%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%nitrogen, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('O')
-              if ( associated( summary%gas_injection_rates%oxygen%value ) ) then
-               summary%gas_injection_rates%oxygen%value( time_sind ) = &
-                & summary%gas_injection_rates%oxygen%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%oxygen%value( num_time_slices ))
-               summary%gas_injection_rates%oxygen%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%oxygen%source(1) )
-               summary%gas_injection_rates%oxygen%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%oxygen, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('Ne')
-              if ( associated( summary%gas_injection_rates%neon%value ) ) then
-               summary%gas_injection_rates%neon%value( time_sind ) = &
-                & summary%gas_injection_rates%neon%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%neon%value( num_time_slices ))
-               summary%gas_injection_rates%neon%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%neon%source(1) )
-               summary%gas_injection_rates%neon%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%neon, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('Ar')
-              if ( associated( summary%gas_injection_rates%argon%value ) ) then
-               summary%gas_injection_rates%argon%value( time_sind ) = &
-                & summary%gas_injection_rates%argon%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%argon%value( num_time_slices ))
-               summary%gas_injection_rates%argon%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%argon%source(1) )
-               summary%gas_injection_rates%argon%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%argon, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('Xe')
-              if ( associated( summary%gas_injection_rates%xenon%value ) ) then
-               summary%gas_injection_rates%xenon%value( time_sind ) = &
-                & summary%gas_injection_rates%xenon%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%xenon%value( num_time_slices ))
-               summary%gas_injection_rates%xenon%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%xenon%source(1) )
-               summary%gas_injection_rates%xenon%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%xenon, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             case ('Kr')
-              if ( associated( summary%gas_injection_rates%krypton%value ) ) then
-               summary%gas_injection_rates%krypton%value( time_sind ) = &
-                & summary%gas_injection_rates%krypton%value( time_sind ) + gpff*zn(is)
-              else
-               allocate( summary%gas_injection_rates%krypton%value( num_time_slices ))
-               summary%gas_injection_rates%krypton%value( time_sind ) = gpff*zn(is)
-               allocate ( summary%gas_injection_rates%krypton%source(1) )
-               summary%gas_injection_rates%krypton%source = source
-              end if
+              call add_sourced_value( summary%gas_injection_rates%krypton, gpff*zn(is) )
               summary%gas_injection_rates%impurity_seeding%value = 1
             end select
           end do
@@ -6065,183 +5701,57 @@ contains
               if (gpfc(iatm,istrai).eq.1.0_R8) then
                select case (is_codes(eb2atcr(iatm)))
                case ('H')
-                if ( associated( summary%gas_injection_rates%hydrogen%value ) ) then
-                  summary%gas_injection_rates%hydrogen%value( time_sind ) = &
-                    & summary%gas_injection_rates%hydrogen%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%hydrogen%value( num_time_slices ))
-                  summary%gas_injection_rates%hydrogen%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%hydrogen%source(1) )
-                  summary%gas_injection_rates%hydrogen%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%hydrogen, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
                case ('D')
-                if ( associated( summary%gas_injection_rates%deuterium%value ) ) then
-                  summary%gas_injection_rates%deuterium%value( time_sind ) = &
-                    & summary%gas_injection_rates%deuterium%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%deuterium%value( num_time_slices ))
-                  summary%gas_injection_rates%deuterium%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%deuterium%source(1) )
-                  summary%gas_injection_rates%deuterium%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%deuterium, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
                case ('T')
-                if ( associated( summary%gas_injection_rates%tritium%value ) ) then
-                  summary%gas_injection_rates%tritium%value( time_sind ) = &
-                    & summary%gas_injection_rates%tritium%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%tritium%value( num_time_slices ))
-                  summary%gas_injection_rates%tritium%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%tritium%source(1) )
-                  summary%gas_injection_rates%tritium%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%tritium, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
                case ('He')
                 if (nint(am(is)).eq.3) then
-                  if ( associated( summary%gas_injection_rates%helium_3%value ) ) then
-                    summary%gas_injection_rates%helium_3%value( time_sind ) = &
-                      & summary%gas_injection_rates%helium_3%value( time_sind ) + &
-                      & tflux(istrai)*zn(eb2atcr(iatm))
-                  else
-                    allocate( summary%gas_injection_rates%helium_3%value( num_time_slices ))
-                    summary%gas_injection_rates%helium_3%value( time_sind ) = &
-                      & tflux(istrai)*zn(eb2atcr(iatm))
-                    allocate ( summary%gas_injection_rates%helium_3%source(1) )
-                    summary%gas_injection_rates%helium_3%source = source
-                  end if
+                 call add_sourced_value( summary%gas_injection_rates%helium_3, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
                 else if (nint(am(is)).eq.4) then
-                  if ( associated( summary%gas_injection_rates%helium_4%value ) ) then
-                    summary%gas_injection_rates%helium_4%value( time_sind ) = &
-                      & summary%gas_injection_rates%helium_4%value( time_sind ) + &
-                      & tflux(istrai)*zn(eb2atcr(iatm))
-                  else
-                    allocate( summary%gas_injection_rates%helium_4%value( num_time_slices ))
-                    summary%gas_injection_rates%helium_4%value( time_sind ) = &
-                      & tflux(istrai)*zn(eb2atcr(iatm))
-                    allocate ( summary%gas_injection_rates%helium_4%source(1) )
-                    summary%gas_injection_rates%helium_4%source = source
-                  end if
+                 call add_sourced_value( summary%gas_injection_rates%helium_4, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
                 end if
                case ('Li')
-                if ( associated( summary%gas_injection_rates%lithium%value ) ) then
-                  summary%gas_injection_rates%lithium%value( time_sind ) = &
-                    & summary%gas_injection_rates%lithium%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%lithium%value( num_time_slices ))
-                  summary%gas_injection_rates%lithium%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%lithium%source(1) )
-                  summary%gas_injection_rates%lithium%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%lithium, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('Be')
-                if ( associated( summary%gas_injection_rates%beryllium%value ) ) then
-                  summary%gas_injection_rates%beryllium%value( time_sind ) = &
-                    & summary%gas_injection_rates%beryllium%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%beryllium%value( num_time_slices ))
-                  summary%gas_injection_rates%beryllium%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%beryllium%source(1) )
-                  summary%gas_injection_rates%beryllium%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%beryllium, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('C')
-                if ( associated( summary%gas_injection_rates%carbon%value ) ) then
-                  summary%gas_injection_rates%carbon%value( time_sind ) = &
-                    & summary%gas_injection_rates%carbon%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%carbon%value( num_time_slices ))
-                  summary%gas_injection_rates%carbon%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%carbon%source(1) )
-                  summary%gas_injection_rates%carbon%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%carbon, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('N')
-                if ( associated( summary%gas_injection_rates%nitrogen%value ) ) then
-                  summary%gas_injection_rates%nitrogen%value( time_sind ) = &
-                    & summary%gas_injection_rates%nitrogen%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%nitrogen%value( num_time_slices ))
-                  summary%gas_injection_rates%nitrogen%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%nitrogen%source(1) )
-                  summary%gas_injection_rates%nitrogen%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%nitrogen, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('O')
-                if ( associated( summary%gas_injection_rates%oxygen%value ) ) then
-                  summary%gas_injection_rates%oxygen%value( time_sind ) = &
-                    & summary%gas_injection_rates%oxygen%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%oxygen%value( num_time_slices ))
-                  summary%gas_injection_rates%oxygen%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%oxygen%source(1) )
-                  summary%gas_injection_rates%oxygen%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%oxygen, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('Ne')
-                if ( associated( summary%gas_injection_rates%neon%value ) ) then
-                  summary%gas_injection_rates%neon%value( time_sind ) = &
-                    & summary%gas_injection_rates%neon%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%neon%value( num_time_slices ))
-                  summary%gas_injection_rates%neon%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%neon%source(1) )
-                  summary%gas_injection_rates%neon%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%neon, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('Ar')
-                if ( associated( summary%gas_injection_rates%argon%value ) ) then
-                  summary%gas_injection_rates%argon%value( time_sind ) = &
-                    & summary%gas_injection_rates%argon%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%argon%value( num_time_slices ))
-                  summary%gas_injection_rates%argon%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%argon%source(1) )
-                  summary%gas_injection_rates%argon%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%argon, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('Xe')
-                if ( associated( summary%gas_injection_rates%xenon%value ) ) then
-                  summary%gas_injection_rates%xenon%value( time_sind ) = &
-                    & summary%gas_injection_rates%xenon%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%xenon%value( num_time_slices ))
-                  summary%gas_injection_rates%xenon%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%xenon%source(1) )
-                  summary%gas_injection_rates%xenon%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%xenon, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                case ('Kr')
-                if ( associated( summary%gas_injection_rates%krypton%value ) ) then
-                  summary%gas_injection_rates%krypton%value( time_sind ) = &
-                    & summary%gas_injection_rates%krypton%value( time_sind ) + &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                else
-                  allocate( summary%gas_injection_rates%krypton%value( num_time_slices ))
-                  summary%gas_injection_rates%krypton%value( time_sind ) = &
-                    & tflux(istrai)*zn(eb2atcr(iatm))
-                  allocate ( summary%gas_injection_rates%krypton%source(1) )
-                  summary%gas_injection_rates%krypton%source = source
-                end if
+                call add_sourced_value( summary%gas_injection_rates%krypton, &
+                   & tflux(istrai)*zn(eb2atcr(iatm)) )
                 summary%gas_injection_rates%impurity_seeding%value = 1
                end select
               end if
@@ -6259,134 +5769,53 @@ contains
                 if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.4) then
                   if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     & nint(am(eb2atcr(iatm2))).eq.12) then ! CH4
-                     if ( associated( summary%gas_injection_rates%methane%value ) ) then
-                       summary%gas_injection_rates%methane%value( time_sind ) = &
-                        & summary%gas_injection_rates%methane%value( time_sind ) + &
-                        & tflux(istrai)*10
-                     else
-                       allocate( summary%gas_injection_rates%methane%value( num_time_slices ))
-                       summary%gas_injection_rates%methane%value( time_sind ) = &
-                        & tflux(istrai)*10
-                       allocate ( summary%gas_injection_rates%methane%source(1) )
-                       summary%gas_injection_rates%methane%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%methane, &
+                        & tflux(istrai)*10 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.13) then ! 13CH4
-                     if ( associated( summary%gas_injection_rates%methane_carbon_13%value ) ) then
-                       summary%gas_injection_rates%methane_carbon_13%value( time_sind ) = &
-                        & summary%gas_injection_rates%methane_carbon_13%value( time_sind ) + &
-                        & tflux(istrai)*10
-                     else
-                       allocate( summary%gas_injection_rates%methane_carbon_13%value( num_time_slices ))
-                       summary%gas_injection_rates%methane_carbon_13%value( time_sind ) = &
-                        & tflux(istrai)*10
-                       allocate ( summary%gas_injection_rates%methane_carbon_13%source(1) )
-                       summary%gas_injection_rates%methane_carbon_13%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%methane_carbon_13, &
+                        & tflux(istrai)*10 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.12) then ! CD4
-                     if ( associated( summary%gas_injection_rates%methane_deuterated%value ) ) then
-                       summary%gas_injection_rates%methane_deuterated%value( time_sind ) = &
-                        & summary%gas_injection_rates%methane_deuterated%value( time_sind ) + &
-                        & tflux(istrai)*10
-                     else
-                       allocate( summary%gas_injection_rates%methane_deuterated%value( num_time_slices ))
-                       summary%gas_injection_rates%methane_deuterated%value( time_sind ) = &
-                        & tflux(istrai)*10
-                       allocate ( summary%gas_injection_rates%methane_deuterated%source(1) )
-                       summary%gas_injection_rates%methane_deuterated%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%methane_deuterated, &
+                        & tflux(istrai)*10 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.28) then ! SiH4
-                     if ( associated( summary%gas_injection_rates%silane%value ) ) then
-                       summary%gas_injection_rates%silane%value( time_sind ) = &
-                        & summary%gas_injection_rates%silane%value( time_sind ) + &
-                        & tflux(istrai)*18
-                     else
-                       allocate( summary%gas_injection_rates%silane%value( num_time_slices ))
-                       summary%gas_injection_rates%silane%value( time_sind ) = &
-                        & tflux(istrai)*18
-                       allocate ( summary%gas_injection_rates%silane%source(1) )
-                       summary%gas_injection_rates%silane%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%silane, &
+                        & tflux(istrai)*18 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   end if
                 else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.2) then
                   if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     & nint(am(eb2atcr(iatm2))).eq.12) then ! C2H4
-                     if ( associated( summary%gas_injection_rates%ethylene%value ) ) then
-                       summary%gas_injection_rates%ethylene%value( time_sind ) = &
-                        & summary%gas_injection_rates%ethylene%value( time_sind ) + &
-                        & tflux(istrai)*16
-                     else
-                       allocate( summary%gas_injection_rates%ethylene%value( num_time_slices ))
-                       summary%gas_injection_rates%ethylene%value( time_sind ) = &
-                        & tflux(istrai)*16
-                       allocate ( summary%gas_injection_rates%ethylene%source(1) )
-                       summary%gas_injection_rates%ethylene%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%ethylene, &
+                        & tflux(istrai)*16 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   endif
                 else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.3) then ! C2H6, C3H8, NH3, ND3
                   if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     & nint(am(eb2atcr(iatm2))).eq.12) then
                     if (nint(gpfc(iatm2,istrai)*6).eq.2) then ! C2H6
-                     if ( associated( summary%gas_injection_rates%ethane%value ) ) then
-                       summary%gas_injection_rates%ethane%value( time_sind ) = &
-                        & summary%gas_injection_rates%ethane%value( time_sind ) + &
-                        & tflux(istrai)*18
-                     else
-                       allocate( summary%gas_injection_rates%ethane%value( num_time_slices ))
-                       summary%gas_injection_rates%ethane%value( time_sind ) = &
-                        & tflux(istrai)*18
-                       allocate ( summary%gas_injection_rates%ethane%source(1) )
-                       summary%gas_injection_rates%ethane%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%ethane, &
+                        & tflux(istrai)*18 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                     else if (nint(gpfc(iatm2,istrai)*8).eq.3) then ! C3H8
-                     if ( associated( summary%gas_injection_rates%propane%value ) ) then
-                       summary%gas_injection_rates%propane%value( time_sind ) = &
-                        & summary%gas_injection_rates%propane%value( time_sind ) + &
-                        & tflux(istrai)*26
-                     else
-                       allocate( summary%gas_injection_rates%propane%value( num_time_slices ))
-                       summary%gas_injection_rates%propane%value( time_sind ) = &
-                        & tflux(istrai)*26
-                       allocate ( summary%gas_injection_rates%propane%source(1) )
-                       summary%gas_injection_rates%propane%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%propane, &
+                        & tflux(istrai)*26 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                     end if
                   else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.14) then ! NH3
-                     if ( associated( summary%gas_injection_rates%ammonia%value ) ) then
-                       summary%gas_injection_rates%ammonia%value( time_sind ) = &
-                        & summary%gas_injection_rates%ammonia%value( time_sind ) + &
-                        & tflux(istrai)*10
-                     else
-                       allocate( summary%gas_injection_rates%ammonia%value( num_time_slices ))
-                       summary%gas_injection_rates%ammonia%value( time_sind ) = &
-                        & tflux(istrai)*10
-                       allocate ( summary%gas_injection_rates%ammonia%source(1) )
-                       summary%gas_injection_rates%ammonia%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%ammonia, &
+                        & tflux(istrai)*10 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
                     &      nint(am(eb2atcr(iatm2))).eq.14) then ! ND3
-                     if ( associated( summary%gas_injection_rates%ammonia_deuterated%value) ) then
-                       summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) = &
-                        & summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) + &
-                        & tflux(istrai)*10
-                     else
-                       allocate( summary%gas_injection_rates%ammonia_deuterated%value( num_time_slices ))
-                       summary%gas_injection_rates%ammonia_deuterated%value( time_sind ) = &
-                        & tflux(istrai)*10
-                       allocate ( summary%gas_injection_rates%ammonia_deuterated%source(1) )
-                       summary%gas_injection_rates%ammonia_deuterated%source = source
-                     end if
+                     call add_sourced_value( summary%gas_injection_rates%ammonia_deuterated, &
+                        & tflux(istrai)*10 )
                      summary%gas_injection_rates%impurity_seeding%value = 1
                   end if
                 end if
@@ -6395,22 +5824,10 @@ contains
           end if
         end do
 #endif
-        allocate( summary%gas_injection_rates%total%value( num_time_slices ) )
-        summary%gas_injection_rates%total%value( time_sind ) = gsum
-        allocate( summary%gas_injection_rates%total%source(1) )
-        summary%gas_injection_rates%total%source = source
-        allocate( summary%gas_injection_rates%midplane%value( num_time_slices ) )
-        summary%gas_injection_rates%midplane%value( time_sind ) = gmid
-        allocate( summary%gas_injection_rates%midplane%source(1) )
-        summary%gas_injection_rates%midplane%source = source
-        allocate( summary%gas_injection_rates%top%value( num_time_slices ) )
-        summary%gas_injection_rates%top%value( time_sind ) = gtop
-        allocate( summary%gas_injection_rates%top%source(1) )
-        summary%gas_injection_rates%top%source = source
-        allocate( summary%gas_injection_rates%bottom%value( num_time_slices ) )
-        summary%gas_injection_rates%bottom%value( time_sind ) = gbot
-        allocate( summary%gas_injection_rates%bottom%source(1) )
-        summary%gas_injection_rates%bottom%source = source
+        call write_sourced_value( summary%gas_injection_rates%total, gsum )
+        call write_sourced_value( summary%gas_injection_rates%midplane, gmid )
+        call write_sourced_value( summary%gas_injection_rates%top, gtop )
+        call write_sourced_value( summary%gas_injection_rates%bottom, gbot )
 
         ib = 0
         do icnt = 1, nbc
@@ -6428,16 +5845,11 @@ contains
         end do
         if (ib.ne.0) then
           if (bcene(ib).eq.9.or.bcene(ib).eq.19) then
-            allocate( summary%scrape_off_layer%t_e_decay_length%value( num_time_slices ) )
-            summary%scrape_off_layer%t_e_decay_length%value( time_sind ) = enepar(ib,1)
-            allocate( summary%scrape_off_layer%t_e_decay_length%source(1) )
-            summary%scrape_off_layer%t_e_decay_length%source = source
+            call write_sourced_value( summary%scrape_off_layer%t_e_decay_length, enepar(ib,1) )
           end if
           if (bceni(ib).eq.9.or.bceni(ib).eq.19) then
-            allocate( summary%scrape_off_layer%t_i_average_decay_length%value( num_time_slices ) )
-            summary%scrape_off_layer%t_i_average_decay_length%value( time_sind ) = enipar(ib,1)
-            allocate( summary%scrape_off_layer%t_i_average_decay_length%source(1) )
-            summary%scrape_off_layer%t_i_average_decay_length%source = source
+            call write_sourced_value( summary%scrape_off_layer%t_i_average_decay_length, &
+               & enipar(ib,1) )
           end if
           nibnd = IDS_REAL_INVALID
           match_found = .true.
@@ -6452,14 +5864,8 @@ contains
             end if
           end do
           if (match_found.and.nibnd.ne.IDS_REAL_INVALID) then
-            allocate( summary%scrape_off_layer%n_e_decay_length%value( num_time_slices ) )
-            summary%scrape_off_layer%n_e_decay_length%value( time_sind ) = nibnd
-            allocate( summary%scrape_off_layer%n_e_decay_length%source(1) )
-            summary%scrape_off_layer%n_e_decay_length%source = source
-            allocate( summary%scrape_off_layer%n_i_total_decay_length%value( num_time_slices ) )
-            summary%scrape_off_layer%n_i_total_decay_length%value( time_sind ) = nibnd
-            allocate( summary%scrape_off_layer%n_i_total_decay_length%source(1) )
-            summary%scrape_off_layer%n_i_total_decay_length%source = source
+            call write_sourced_value( summary%scrape_off_layer%n_e_decay_length, nibnd )
+            call write_sourced_value( summary%scrape_off_layer%n_i_total_decay_length, nibnd )
           end if
         end if
         u = 0.0_IDS_real
@@ -6494,10 +5900,7 @@ contains
           end do
         end do
         if (u.ne.0.0_IDS_real) then
-          allocate( summary%scrape_off_layer%power_radiated%value( num_time_slices ) )
-          summary%scrape_off_layer%power_radiated%value( time_sind ) = u
-          allocate( summary%scrape_off_layer%power_radiated%source(1) )
-          summary%scrape_off_layer%power_radiated%source(1) = source
+          call write_sourced_value( summary%scrape_off_layer%power_radiated, u )
         end if
         select case (geometryType)
         case (GEOMETRY_LINEAR, GEOMETRY_CYLINDER)
@@ -6530,8 +5933,6 @@ contains
           jj = ix
           icnt = -1
           if (.not.LSN) icnt = 1
-          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%value( num_time_slices ) )
-          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%value( num_time_slices ) )
           qemax = 0.0_IDS_real
           qimax = 0.0_IDS_real
           do iy = jsep+1, ny-1
@@ -6575,7 +5976,7 @@ contains
             end if
           end do
           lambda = lambda/log(2.0_IDS_real)
-          summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) = lambda
+          call write_sourced_value( summary%scrape_off_layer%heat_flux_e_decay_length, lambda )
           lambda = 0.0_IDS_real
           totFace=abs(fhi)
           call divide_by_areas(nx,ny,totFace,tmpFace)
@@ -6593,11 +5994,7 @@ contains
             end if
           end do
           lambda = lambda/log(2.0_IDS_real)
-          summary%scrape_off_layer%heat_flux_i_decay_length%value( time_sind ) = lambda
-          allocate ( summary%scrape_off_layer%heat_flux_e_decay_length%source(1) )
-          allocate ( summary%scrape_off_layer%heat_flux_i_decay_length%source(1) )
-          summary%scrape_off_layer%heat_flux_e_decay_length%source = source
-          summary%scrape_off_layer%heat_flux_i_decay_length%source = source
+          call write_sourced_value( summary%scrape_off_layer%heat_flux_i_decay_length, lambda )
         end if
 #endif
 
@@ -6645,7 +6042,7 @@ contains
             properties%creation_date = create_date
 #if IMAS_MINOR_VERSION > 14
             allocate( properties%provider(1) )
-            properties%provider = usrnam()
+            properties%provider = username
 #endif
 #if IMAS_MINOR_VERSION > 21
             allocate( properties%version_put%data_dictionary(1) )
@@ -6681,6 +6078,8 @@ contains
 #endif
 #endif
             character(len=ids_string_length) :: repository
+            logical streql
+            external streql
 
             allocate( code%name(1) )
             code%name = source
@@ -6830,6 +6229,59 @@ contains
 
         end subroutine write_ids_code
 
+        subroutine write_sourced_constant( val, value )
+            type(ids_summary_constant_flt_0d) :: val
+                !< Type of IDS data structure, designed for sourced real constant data handling
+            real(ids_real), intent(in) :: value
+
+            val%value = value
+            allocate( val%source(1) )
+            val%source = source
+
+            return
+
+        end subroutine write_sourced_constant
+
+        subroutine write_sourced_int_constant( ival, ivalue )
+            type(ids_summary_constant_int_0d) :: ival
+                !< Type of IDS data structure, designed for sourced integer constant data handling
+            integer, intent(in) :: ivalue
+
+            ival%value = ivalue
+            allocate( ival%source(1) )
+            ival%source = source
+
+            return
+
+        end subroutine write_sourced_int_constant
+
+        subroutine write_sourced_integer( ival, ivalue )
+            type(ids_summary_dynamic_int_1d_root) :: ival
+                !< Type of IDS data structure, designed for sourced integer data handling
+            integer, intent(in) :: ivalue
+
+            allocate( ival%value( num_time_slices ) )
+            ival%value( time_sind ) = ivalue
+            allocate( ival%source(1) )
+            ival%source = source
+
+            return
+
+        end subroutine write_sourced_integer
+
+        subroutine write_sourced_string( val, string )
+            type(ids_summary_static_str_0d) :: val
+                !< Type of IDS data structure, designed for sourced string data handling
+            character(len=ids_string_length), intent(in) :: string
+
+            val%value = string
+            allocate( val%source(1) )
+            val%source = source
+
+            return
+
+        end subroutine write_sourced_string
+
         subroutine write_timed_integer( ival, ivalue )
             type(ids_signal_int_1d), intent(inout) :: ival
                 !< Type of IDS data structure, designed for integer data handling
@@ -6857,6 +6309,21 @@ contains
             return
 
         end subroutine write_timed_value
+
+        subroutine add_sourced_value( val, value )
+            type(ids_summary_dynamic_flt_1d_root_parent_2) :: val
+                !< Type of IDS data structure, designed for sourced float data handling
+            real(ids_real), intent(in) :: value
+
+            if ( associated( val%value ) ) then
+              val%value( time_sind ) = val%value( time_sind ) + value
+            else
+              call write_sourced_value( val, value )
+            end if
+
+            return
+
+        end subroutine add_sourced_value
 
 #if IMAS_MINOR_VERSION > 11
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
@@ -7596,7 +7063,6 @@ contains
         !!               the data relates to.
         subroutine write_face_vector( vector, b2FaceData, time_sind,    &
                 &   gridID, gridSubsetID, gridSubsetInd )
-            use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
                 !< Type of IDS data structure, designed for scalar data handling
                 !< (in this case 1D vector)
@@ -7789,6 +7255,34 @@ contains
 
         unitV = v / sqrt( sum( v**2 ) )
     end function unitVector
+
+    subroutine write_sourced_value_root( val, value )
+        type(ids_summary_dynamic_flt_1d_root) :: val
+            !< Type of IDS data structure, designed for sourced float data handling
+        real(ids_real), intent(in) :: value
+
+        allocate( val%value( num_time_slices ) )
+        val%value( time_sind ) = value
+        allocate( val%source(1) )
+        val%source = source
+
+        return
+
+    end subroutine write_sourced_value_root
+
+    subroutine write_sourced_value_root_parent_2( val, value )
+        type(ids_summary_dynamic_flt_1d_root_parent_2) :: val
+            !< Type of IDS data structure, designed for sourced float data handling
+        real(ids_real), intent(in) :: value
+
+        allocate( val%value( num_time_slices ) )
+        val%value( time_sind ) = value
+        allocate( val%source(1) )
+        val%source = source
+
+        return
+
+    end subroutine write_sourced_value_root_parent_2
 
 #else
 # ifdef ITM_ENVIRONMENT_LOADED

@@ -64,17 +64,25 @@ program b2_ual_rewrite
     use b2mod_main
     use b2mod_driver
     use b2mod_grid_mapping
-    use b2mod_ual    &
-     & , only : new_ids_edge, delete_ids_edge, b25_process_ids, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+    use ids_routines &  ! IGNORE
+     & , only : imas_create_env
+    use ids_schemas &   ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description
-    use b2mod_ual_io
+    use b2mod_ual &
+     & , only : new_ids_edge, delete_ids_edge
+    use b2mod_ual_io &
+     & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & , only : ids_numerics
+#endif
 #if IMAS_MINOR_VERSION > 30
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
 #ifdef B25_EIRENE
@@ -103,6 +111,7 @@ program b2_ual_rewrite
     character(len=24) :: argName
     integer narg, cptArg, new_run, tmp_run
     character*16 usrnam
+    logical same_run_number
     data new_run / 0 /
     external usrnam
 
@@ -110,6 +119,7 @@ program b2_ual_rewrite
     status = 0
     version = '3'
     treename = 'ids'
+    same_run_number = .true.
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
@@ -167,7 +177,7 @@ program b2_ual_rewrite
           call get_command_argument( cptArg + 1, run_string )
           !! Transform dummy string variable to integer
           read( run_string, *) run
-          if (new_run.eq.0) then
+          if (same_run_number) then
             new_run_string = run_string
             new_run = run
           end if
@@ -175,6 +185,7 @@ program b2_ual_rewrite
           call get_command_argument( cptArg + 1, new_run_string )
           !! Transform dummy string variable to integer
           read( new_run_string, *) new_run
+          same_run_number = new_run.eq.run
         case("--username","-u")
           call get_command_argument( cptArg + 1, username )
         case("--database","--device","-d")
@@ -193,7 +204,7 @@ program b2_ual_rewrite
 
     write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
-    if (new_run.ne.run) write(*,'(a,i5)') &
+    if (.not.same_run_number) write(*,'(a,i5)') &
         & ' will be rewritten with run number ',new_run
     systemarg = 'imasdb '//trim(database)
     write(*,*) trim(systemarg)
@@ -228,7 +239,7 @@ program b2_ual_rewrite
         call close_ual(idx)
         idx = 0
 !xpb Do the recreate to a temporary location and then bring it back
-        if (new_run.eq.run) then
+        if (same_run_number) then
           tmp_run = run+1000
         else
           tmp_run = new_run
@@ -242,7 +253,7 @@ program b2_ual_rewrite
 #else
         call system(systemarg)
 #endif
-        if (new_run.eq.run) then
+        if (same_run_number) then
           write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
             & 'recreate -si ',shot,' -ri ',tmp_run,  &
             &         ' -so ',shot,' -ro ',run,      &
@@ -255,7 +266,7 @@ program b2_ual_rewrite
         end if
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
-      else if (new_run.ne.run) then
+      else if (.not.same_run_number) then
         call close_ual(idx)
         idx = 0
         call imas_open_env(treename, shot, new_run, idx, &
@@ -271,7 +282,7 @@ program b2_ual_rewrite
       idx = 0
     end if
     !! Create/Write the set data to IDSs
-    if (new_run.eq.run.and.idx.ne.0) then
+    if (same_run_number.and.idx.ne.0) then
       write(*,*) "START delete_ids_edge"
       call delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &
@@ -320,7 +331,7 @@ program b2_ual_rewrite
 #else
     call system(systemarg)
 #endif
-    if (new_run.ne.run) then
+    if (.not.same_run_number) then
 ! Add superceding information to .yaml file
       systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
         &  trim(run_string)//' '//trim(new_run_string)

@@ -87,11 +87,31 @@
       use b2mod_impgyro !yamoto
 #endif
 #ifdef IMAS
-      use ids_schemas   ! IGNORE
-      use b2mod_ual
-     , ,only: put_ids_edge, b25_process_ids, close_ual
-      use b2mod_ual_io
+      use ids_routines  ! IGNORE
      , ,only: imas_open_env, ids_deallocate, ids_get
+      use ids_schemas   ! IGNORE
+     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,        ids_radiation, ids_dataset_description
+#if IMAS_MINOR_VERSION > 8
+      use ids_schemas   ! IGNORE
+     , ,only: ids_real, ids_real_invalid
+#endif
+#if IMAS_MINOR_VERSION > 21
+      use ids_schemas   ! IGNORE
+     , ,only: ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+      use ids_schemas   ! IGNORE
+     , ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+      use ids_schemas   ! IGNORE
+     , ,only: ids_divertors
+#endif
+      use b2mod_ual
+     , ,only: put_ids_edge, close_ual
+      use b2mod_ual_io
+     , ,only: b25_process_ids, num_time_slices
 #endif
       use b2mod_subsys
       implicit none
@@ -178,7 +198,7 @@
 #if IMAS_MINOR_VERSION > 30
       type(ids_divertors) :: divertors
 #endif
-      integer :: num_time_slices, time_slice_index
+      integer :: time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
       character old_imas_version*132, imas_version*132, systemarg*256

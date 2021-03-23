@@ -12,11 +12,30 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use b2mod_ual_io
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open_env, imas_create_env, imas_close, &
+     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &        ids_radiation, ids_dataset_description
+    use b2mod_ual_io &
+     & ,only: b25_process_ids
+#if IMAS_MINOR_VERSION > 21
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_divertors
+#endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-    use euITM_schemas  ! IGNORE
-    use euITM_routines ! IGNORE
+    use euITM_schemas   ! IGNORE
+    use euITM_routines  ! IGNORE
 # endif
 #endif
 

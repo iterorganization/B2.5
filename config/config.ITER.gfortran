@@ -41,7 +41,7 @@ INCMOD = -B
 
 LDLIBES = -limf -lm # Intel Math must be before -lm
 
-GGD_VERSION ?= ${EBVERSIONGGD}
+GGD_VERSION ?= `pkg-config ggd --modversion`
 
 #!!!Local Variables:
 #!!! mode: Makefile

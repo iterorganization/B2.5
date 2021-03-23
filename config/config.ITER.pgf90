@@ -20,7 +20,7 @@ LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
-GGD_VERSION ?= ${EBVERSIONGGD}
+GGD_VERSION ?= `pkg-config ggd --modversion`
 
 #!!!Local Variables:
 #!!! mode: Makefile

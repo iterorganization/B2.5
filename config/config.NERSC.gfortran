@@ -30,7 +30,7 @@ else
 LDOPTS =
 endif
 
-GGD_VERSION ?= ${EBVERSIONGGD}
+GGD_VERSION ?= `pkg-config ggd --modversion`
 
 DBLOPTION =
 

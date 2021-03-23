@@ -253,17 +253,25 @@ program b2_ual_write_b2mod
 
     use b2mod_main
     use b2mod_driver
-    use b2mod_ual    &
-     & , only : put_ids_edge, b25_process_ids, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+    use ids_routines &  ! IGNORE
+     & , only : imas_create_env
+    use ids_schemas &   ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description
-    use b2mod_ual_io
+    use b2mod_ual &
+     & , only : new_ids_edge, delete_ids_edge
+    use b2mod_ual_io &
+     & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & , only : ids_numerics
+#endif
 #if IMAS_MINOR_VERSION > 30
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
     use b2mod_grid_mapping

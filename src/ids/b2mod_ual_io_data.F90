@@ -24,19 +24,24 @@ module b2mod_ual_io_data
 #ifdef IMAS
 #if IMAS_MINOR_VERSION > 11
 #if IMAS_MINOR_VERSION > 14
-    use b2mod_ual_io_grid &
+    use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #else
-    use b2mod_ual_io_grid &
+    use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_dynamic
 #endif
+    use ids_schemas &  ! IGNORE
+     & , only : IDS_real
+    use ids_grid_object &  ! IGNORE
+     & , only : GridObject
     use b2mod_ual_io_grid &
-     & , only : IDS_real, GridObject, &
-     &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
-     &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
+     & , only : SPACE_POLOIDALPLANE, &
+     &          IDS_CLASS_CELL, IDS_CLASS_NODE, &
      &          IDS_CLASS_POLOIDALRADIAL_EDGE
-    use ids_grid_subgrid  & ! IGNORE
-     & , only : getGridSubsetSize
+    use ids_grid_subgrid  &    ! IGNORE
+     & , only : getGridSubsetObject, getGridSubsetSize
+    use ids_grid_structured &  ! IGNORE
+     & , only : GridWriteData
 
     implicit none
 
