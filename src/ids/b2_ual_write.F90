@@ -231,20 +231,20 @@ program b2_ual_write
              &  trim(imas_version)//'.'
             call close_ual(idx)
             idx = 0
-!xpb Do the recreate to a temporary location and then bring it back
+!xpb Copy the IDS to a temporary location with the new DD and then bring it back
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run,      &
-             &         ' -so ',shot,' -ro ',run+1000, &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion -si ',shot,' -ri ',run,      &
+             &                          ' -so ',shot,' -ro ',run+1000, &
+             &                          ' -d ',database,' -u ',username
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
             call system(systemarg)
 #endif
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run+1000, &
-             &         ' -so ',shot,' -ro ',run,      &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion -si ',shot,' -ri ',run+1000, &
+             &                          ' -so ',shot,' -ro ',run,      &
+             &                          ' -d ',database,' -u ',username
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else

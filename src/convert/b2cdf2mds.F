@@ -139,7 +139,7 @@ c loop over all variables in the file
         write(*,*) '  scale = ',scale
 
         if(.not. found_time) then
-          write(*,*) 'This variable did not have a ', 
+          write(*,*) 'This variable did not have a ',
      &               'time dimension --- it has been skipped'
           cycle
         endif

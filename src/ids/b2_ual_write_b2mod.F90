@@ -457,20 +457,20 @@ program b2_ual_write_b2mod
              &  trim(imas_version)//'.'
             call close_ual(idx)
             idx = 0
-!xpb Do the recreate to a temporary location and then bring it back
+!xpb Copy the IDS to a temporary location with the new DD and then bring it back
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run,      &
-             &         ' -so ',shot,' -ro ',run+1000, &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion -si ',shot,' -ri ',run,      &
+             &                          ' -so ',shot,' -ro ',run+1000, &
+             &                          ' -d ',database,' -u ',username
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
             call system(systemarg)
 #endif
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run+1000, &
-             &         ' -so ',shot,' -ro ',run,      &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion -si ',shot,' -ri ',run+1000, &
+             &                          ' -so ',shot,' -ro ',run,      &
+             &                          ' -d ',database,' -u ',username
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
@@ -563,7 +563,8 @@ contains
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, database, version )
-        use b2mod_ual_io
+        use ids_routines &  ! IGNORE
+         & , only : imas_close
         implicit none
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
