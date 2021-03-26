@@ -174,8 +174,8 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       sr%skt_prod = 0.0_R8
       sr%skt_diss = 0.0_R8
       if (switch%solve_keps.gt.0) then
-        call b2sikt (nCv, nFc, nVx, ns, ismain, geo, mpg, pl, 
-     &    dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, 
+        call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg, 
+     &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, 
      &    skt_diss)
         call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
         call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
