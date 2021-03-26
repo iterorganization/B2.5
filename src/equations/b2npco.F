@@ -117,21 +117,21 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(1,isb), sr%sna(1,0,isb), 
-     &    dv%fna(1,0,isb), dv%resco(1,isb))
+        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb), 
+     &    dv%fna(:,:,isb), dv%resco(:,isb))
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
-     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(1,isb), dv%pa(1,isb), 
-     &   sr%sna(1,1,isb), dv%flob, dv%conb,
-     &   dv%resco(1,isb), dv%corpa(1,isb), aa, 'b2usco_'//chns)
+     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(:,isb), dv%pa(:,isb), 
+     &   sr%sna(:,1,isb), dv%flob, dv%conb,
+     &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
         call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
-     &   solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(1,isb),
-     &   dv%pcca(1,0,isb), 
-     &   dv%pa(1,isb), pl%na(1,isb), pl%ua(1,isb))
+     &   solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
+     &   dv%pcca(:,0,isb), 
+     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb))
       endif                                                             !srv 22.05.18
       if (switch%b2npco_iout.ne.0) then                                               !srv 12.07.02 {
         write (chns,'(i3.3)') isb

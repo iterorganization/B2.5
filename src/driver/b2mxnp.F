@@ -19,13 +19,12 @@
 *     ------------------------------------------------------------------
       integer i
       real (kind=R8) ::
-     *   eps, t0, t1, t2
+     *   eps, t0
       parameter (eps=0.0_R8)
       intrinsic min, max
       real (kind=R8) ::
      *   med
-      external subini, subend, b2scopy
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
+      external subini, subend, b2scopy, med
 *     ------------------------------------------------------------------
 *     Must set eps to a small non-negative value. eps.eq.0 is safest,
 *     positive values of eps are suitable only if the inner iterations

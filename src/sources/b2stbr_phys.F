@@ -874,7 +874,7 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
          ! xpb: recycled neutrals come back with at least thermal energy
 
 
-        else !! use advanded fluid neutral boundary conditions by N. Horsten et. al 
+        else !! use advanced fluid neutral boundary conditions by N. Horsten et. al 
 c lvn1
 c**************************************************************************************
 c*****************     New KU Leuven recycling model for neutrals *********************
@@ -914,10 +914,10 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              cosa, sina, switch%use_uy_uz_0,     
      &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
-                fmomrec = 0
-                nnrec = 0
-                nnwwnrec = 0
-                fenerec = 0
+                fmomrec = 0.0_R8
+                nnrec = 0.0_R8
+                nnwwnrec = 0.0_R8
+                fenerec = 0.0_R8
              endif
 
              smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale         
@@ -1045,11 +1045,11 @@ cmb   net momentum sources from neutral particle reflection
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
-             fmomrefl = 0
-             nnrefl = 0
-             nnwwnrefl = 0
-             fenerefl = 0
-             fene_el = 0
+             fmomrefl = 0.0_R8
+             nnrefl = 0.0_R8
+             nnwwnrefl = 0.0_R8
+             fenerefl = 0.0_R8
+             fene_el = 0.0_R8
              endif
 
              if (switch%AFN_out.ne.0) then

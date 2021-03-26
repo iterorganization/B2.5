@@ -363,7 +363,7 @@ c     Convert energy flux densities in net energy flux contributions
 
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni.lt.0) then
+      if (fnni .lt. 0.0_R8) then
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
      &            fnni,fmomni,
@@ -995,7 +995,7 @@ c     Convert energy flux densities in energy fluxes
       fene_el =  fene_el*area
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni.lt.0) then
+      if (fnni .lt. 0.0_R8) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,                        
      &            pl,tnf, geo, mpg,cosa, sina,
@@ -1577,18 +1577,14 @@ c     Calculate rate coefficients at boundary
 c     local variables
       integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
-      real(kind=R8) :: dumm0(nFc,0:1), dumm1(nFc,0:1), nnVx(nVx),
-     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv), 
-     &                 dumm2(nFc,0:1)
+      real(kind=R8) :: nnVx(nVx),
+     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv)
 
       if (ncall.eq.0) then
         call ipgeti ('b2sihs_style_visc', style_visc)
       endif
       isn = 0 !! AFN_TODO generalize species index for multi-speciescases? 
               !! For now KUL AFN models have only been developed for single species cases.
-      dumm0 = 0.0_R8
-      dumm1 = 0.0_R8
-      dumm2 = 0.0_R8
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
       call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
 
