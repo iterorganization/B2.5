@@ -236,7 +236,7 @@
       temp=0
       do inucl = 0, nspecies-1
         temp=temp+z2n_xy(ix,iy,inucl)*
-     & rmu(s2nucl(is)-1,inucl)*c_R_w(ix,iy,s2nucl(is)-1,inucl)
+     & rmu(inucl,s2nucl(is)-1)*c_R_w(ix,iy,inucl,s2nucl(is)-1)
       enddo
       smfr_p1=-coef*temp
 
@@ -244,7 +244,7 @@
       temp=0
       do inucl = 0, nspecies-1
         temp=temp+z2n_xy(ix,iy,inucl)*
-     & rmu(s2nucl(is)-1,inucl)*c_R_w(ix,iy,s2nucl(is)-1,inucl)*
+     & rmu(inucl,s2nucl(is)-1)*c_R_w(ix,iy,inucl,s2nucl(is)-1)*
      & av_ualpha(ix,iy,inucl)
       enddo
       smfr_p2=coef*temp
