@@ -7,6 +7,7 @@
      & c_hTA_an,c_R_TA_an)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_b2zhco , only: zh_analyt_mdf
       use b2mod_Zzh
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -104,6 +105,18 @@
      & (1.0_R8+13.0_R8*sqrt2/8.0_R8*Z5s(i)))/Delta_al(i)*
      & (nz2n(0:nspecies-1)/nz2n(i))
       enddo
+
+*    ..the mdf correction
+      if (zh_analyt_mdf.eq.1) then
+        do j=0, nspecies-1
+          do i=0, nspecies-1
+            if (mdm(i,j).gt.1.0_R8) then
+              c_hwA_an(j,i)=0.0_R8
+              c_rwA_an(j,i)=0.0_R8
+            endif
+          enddo
+        enddo
+      endif
 
       call subend ()
       return

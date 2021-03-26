@@ -19,7 +19,7 @@
      , , only : rza
       use b2mod_b2cmpa
       use b2mod_b2zhco ,
-     & only: zhflcorr,zhcscorr,zh_imp_analyt                            !som 21.03.21
+     & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf              !som 21.03.26
       use b2mod_neoclassical
       use b2mod_subsys
       implicit none
@@ -172,6 +172,7 @@
         call ipgetr ('b2tlc0_gamma', gamma)                       !som 20.03.21
         call xertst (0.lt.gamma, 'invalid input parameter gamma')      
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
+        call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.26
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
