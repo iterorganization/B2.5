@@ -334,6 +334,15 @@ c k-enstrophy model
       real(kind=R8) :: keps_inc
       real(kind=R8) :: keps_fac
       real(kind=R8) :: keps_shear
+      integer :: b2sikt_iout
+      integer :: b2sikt_style
+      integer :: b2sikt_model
+      integer :: b2sikt_local
+      integer :: b2sikt_sheath_local
+      real(kind=R8) :: b2sikt_fac_aniso
+      real(kind=R8) :: b2sikt_fac_sheath
+      real(kind=R8) :: b2sikt_fac_sheath_core
+
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -736,6 +745,14 @@ c k-enstrophy model
       s % keps_inc = 1.0_R8
       s % keps_fac = 1.0_R8
       s % keps_shear = 1.0e1_R8
+      s % b2sikt_iout = 0
+      s % b2sikt_style = 0
+      s % b2sikt_model = 1
+      s % b2sikt_local = 1
+      s % b2sikt_sheath_local = 1
+      s % b2sikt_fac_aniso = 1.0_R8
+      s % b2sikt_fac_sheath = 1.0_R8
+      s % b2sikt_fac_sheath_core = 0.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1161,6 +1178,14 @@ c k-enstrophy model
       call ipgetr ('b2tqna_keps_inc', s % keps_inc)
       call ipgetr ('b2tqna_keps_init', s % keps_fac)
       call ipgetr ('b2tqna_keps_shear', s % keps_shear)
+      call ipgeti ('b2sikt_iout', s % b2sikt_iout)
+      call ipgeti ('b2sikt_style', s % b2sikt_style)
+      call ipgeti ('b2sikt_model', s % b2sikt_model)
+      call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
+      call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
+      call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
+      call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
+      call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
