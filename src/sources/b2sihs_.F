@@ -57,7 +57,7 @@
       
 *   ..local variables
       integer iCv, iFc, is, isb, k
-      real (kind=R8), save :: eps = 1.0e-60_R8
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *  vti32(nCv),
      &  wrkc(nCv), wrkf(nFc,0:1),
@@ -74,7 +74,7 @@
      *  shedd(nCv,0:3), shefr(nCv,0:3),
      *  shest(nCv,0:3),                          !srv 17.12.13
      *  shidun(nCv,0:3),
-     *  wrks(nCv), ehx(nFc), ehy(nFc)   !srv 13.01.17
+     *  wrks(nCv), ehx(nFc), ehy(nFc)   !srv 13.01.17i
       real (kind=R8) ::
      3  zeff(nCv), zmff(nCv), ce1(nCv),                                 !srv 13.01.17 05.07.17 {
      4  ce2(nCv), cimp1(nCv), cimp2(nCv),
@@ -186,12 +186,12 @@
       call b2saxpy (nCv*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence ue
       if(switch%style_int_vel.eq.0) then
-        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ue,wrkf(1,0))
+        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ue,wrkf(:,0))
       else
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ue,wrkf(1,0))
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ue,wrkf(:,0))
       endif
       wrkf(:,0) = wrkf(:,0)*geo%fcPbs
-      call div0(nCv, nFc, mpg, wrkf(1,0), wrkc)
+      call div0(nCv, nFc, mpg, wrkf(:,0), wrkc)
 !WG_TODO      b2divue=0.0_R8
 !WG_TODO      b2sihs_divue=0.0_R8
       do iCv = 1, mpg%nCi
@@ -213,12 +213,12 @@
 !WG_TODO      b2sihs_divua=0.0_R8
       do is = 0, ns-1
         if(switch%style_int_vel.eq.0) then
-          call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ua(:,is),wrkf(1,0))
+          call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ua(:,is),wrkf(:,0))
         else
-          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ua(:,is),wrkf(1,0))
+          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ua(:,is),wrkf(:,0))
         endif
         wrkf(:,0) = wrkf(:,0)*geo%fcPbs
-        call div0(nCv, nFc, mpg, wrkf(1,0), wrkc)
+        call div0(nCv, nFc, mpg, wrkf(:,0), wrkc)
         do iCv = 1, mpg%nCi
           t0 = -switch%b2sihs_phm1*(na(iCv,is)/ni(iCv,0))
      &                                      *(1.0_R8-BoRiS)*wrkc(iCv)  !srv 21.07.05 {
@@ -322,20 +322,20 @@
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.            !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then               
         if (switch%style_visc.eq.0) then
-         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
+         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
          wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
         else
          !wdk use effective viscous momentum terms from the hybrid scheme
          !wdk avoids excessive heating in convection-dominated regions
          !wdk (improved total energy conservation at discretized level)
-         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
+         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
          wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
          wrkf(:,0) = wrkf(:,0)/geo%fcHz
          wrkf(:,1) = wrkf(:,1)/geo%fcHz
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
         endif
         do iCv = 1, mpg%nCi
            t0 = switch%b2sihs_phm2*(1.0_R8-BoRiS)*visc(iCv,0)
@@ -487,14 +487,14 @@
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
        enddo
-       call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(1,0),wrkc)
+       call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(:,0),wrkc)
        if (switch%istyle_Joule_heating.eq.0) then
         do iFc = 1, nFc
           wrkf(iFc,1) = fch(iFc,1)*ehy(iFc)/
      &     ((geo%fcS(iFc)*geo%fcQalf(iFc,1) + eps)*
      &      (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
         enddo
-        call intcell(nFc,nCv,mpg, mpg%intcellR, wrkf(1,1),wrkc1)
+        call intcell(nFc,nCv,mpg, mpg%intcellR, wrkf(:,1),wrkc1)
         wrkc = wrkc + wrkc1
        endif
        do iCv = 1, mpg%nCi

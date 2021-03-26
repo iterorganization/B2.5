@@ -43,7 +43,7 @@
       integer iFc
       real (kind=R8) ::
      *  dfun(nFc,0:1), funv(nVx), fl, df, t0, t1
-      real (kind=R8), save :: eps = 1.0e-60_R8
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
 
 *   ..procedures
       real (kind=R8) ::

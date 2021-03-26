@@ -199,44 +199,44 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
       enddo
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
-     &   vsa(1,0,is), cvsahz(1,0,is))
+     &   vsa(:,0,is), cvsahz(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   vsa(1,1,is), cvsahz(1,1,is))                                 !srv 01.07.05 }
+     &   vsa(:,1,is), cvsahz(:,1,is))                                 !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
-      call sfill (nFc*2*ns*ns, 0.0_R8, csigin(1,0,0,0), 1)
+      call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(1,0,is), cvsa(1,0,is))
+     &   vsa(:,0,is), cvsa(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(1,1,is), cvsa(1,1,is))
+     &   vsa(:,1,is), cvsa(:,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(1,0,is,k), csigin(1,0,is,is0))                       !sv 01.07.99
+     &       sigin(:,0,is,k), csigin(:,0,is,is0))                       !sv 01.07.99
            call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(1,1,is,k), csigin(1,1,is,is0))                       !sv
+     &       sigin(:,1,is,k), csigin(:,1,is,is0))                       !sv
         endif
        enddo
       enddo
 
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(1,0), chce(1,0))
+     &  hce(:,0), chce(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(1,1), chce(1,1))
+     &  hce(:,1), chce(:,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(1,0), chci(1,0))
+     &  hci(:,0), chci(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(1,1), chci(1,1))
+     &  hci(:,1), chci(:,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(1,0), csig(1,0))
+     &  sig(:,0), csig(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(1,1), csig(1,1))
+     &  sig(:,1), csig(:,1))
       call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(1,0), calf(1,0))
+     &  alf(:,0), calf(:,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(1,1), calf(1,1))
+     &  alf(:,1), calf(:,1))
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
@@ -622,9 +622,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       cflmv = cflim(2)
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg, 
-     &   pl%na(1,is),
-     &   pl%ti, pl%ua(1,is), co%vsaf_cl(1,0,is), cvsa(1,0,is),
-     &   cvsahz(1,0,is), fllimvisc(1,is))
+     &   pl%na(:,is),
+     &   pl%ti, pl%ua(:,is), co%vsaf_cl(:,0,is), cvsa(:,0,is),
+     &   cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   .. save the classical transport coefficients
       csig_cl = csig

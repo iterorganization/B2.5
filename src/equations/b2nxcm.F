@@ -25,14 +25,10 @@
 
 *   ..local variables
       integer iCv, is
-      real (kind=R8) ::
-     *   t0, t1
 *   ..procedures
-      intrinsic max, abs, sign
       real (kind=R8) ::
      *   uxcm
-      external subini, subend, xertst
-      uxcm(t0,t1) = sign(max(abs(t0),abs(t1)),t0+t1)
+      external subini, subend, xertst, uxcm
 *   ..initialisation
 
 *-----------------------------------------------------------------------

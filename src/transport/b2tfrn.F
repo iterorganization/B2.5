@@ -104,8 +104,8 @@ c        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 0
       do is = 0, ns-1
 
 *    ..compute partial pressure
-       call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, pl%ti, 
-     &   pl%tn, is, dv%pa(1,is))
+       call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, pl%ti, 
+     &   pl%tn, is, dv%pa(:,is))
 
 *   ..interpolate na and pa to cell faces
        weight = 1.0_R8

@@ -49,14 +49,13 @@
 *   ..local variables
       integer iCv, is, ireg
       real (kind=R8) ::
-     *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), t0, t1, t2,
+     *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
      *  med
-      external subini, subend, xertst, b2xvsg, xerrab
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
+      external subini, subend, xertst, b2xvsg, xerrab, med
 *   ..initialisation
 
 *-----------------------------------------------------------------------

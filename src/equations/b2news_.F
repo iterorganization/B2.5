@@ -332,8 +332,8 @@ csw 01oct2012 initialize potential if necessary
 !        do is=0,ns-1                                                    !srv 01.10.99
         do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
-          call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
-     &      pl%ti, pl%tn, is, dv%pa(1,is))                                   !srv 01.10.99
+          call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,
+     &      pl%ti, pl%tn, is, dv%pa(:,is))                                   !srv 01.10.99
 *    ..compute particle flux
           call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo, 
      &      mpg, pl, dv, co, rt, .true.)
@@ -438,8 +438,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &    sr, st_ext, ier0)
         do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
-          call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
-     &      pl%ti, pl%tn, is, dv%pa(1,is))                                  
+          call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,
+     &      pl%ti, pl%tn, is, dv%pa(:,is))                                  
 *    ..compute particle flux
           call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo, 
      &      mpg, pl, dv, co, rt, .true.)
@@ -477,8 +477,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
         endif
 
 *    ..compute partial pressure
-        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, 
-     &    pl%ti, pl%tn, is, dv%pa(1,is))
+        call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, 
+     &    pl%ti, pl%tn, is, dv%pa(:,is))
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo, 
      &    mpg, pl, dv, co, rt, .true.)
@@ -628,8 +628,8 @@ csw 16oct2012 init ier0
 #endif
       do is = 0, ns-1
 *   ..compute partial pressure
-        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
-     &      pl%ti, pl%tn, is, dv%pa(1,is))
+        call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,
+     &      pl%ti, pl%tn, is, dv%pa(:,is))
 *   ..re-compute particle flux
 #ifdef DBG
             write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
@@ -795,8 +795,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
         enddo
 *    ..compute partial pressure
 !pb        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)    !srv 01.10.99
-        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,              !srv 01.10.99
-     &    pl%ti, pl%tn, is, dv%pa(1,is))
+        call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,              !srv 01.10.99
+     &    pl%ti, pl%tn, is, dv%pa(:,is))
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo, 
      &  mpg, pl, dv, co, rt, .false.)

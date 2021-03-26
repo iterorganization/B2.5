@@ -39,7 +39,7 @@
       integer iFc
       real (kind=R8) ::
      *  fl, df, t0, t1, t00, t01, t10, t11
-      real (kind=R8), save :: eps = 1.0e-60_R8
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
 
 *   ..procedures
       real (kind=R8) ::
