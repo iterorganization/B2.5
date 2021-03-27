@@ -194,7 +194,7 @@
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
      3 ',\TOP.SNAPSHOT.GRID:CZ' // trim(dirsuffix) //
      4 ')'
-      
+
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx,ny,0),data,0)
@@ -228,7 +228,7 @@
      3 ',\TOP.SNAPSHOT.GRID:CZ' // trim(dirsuffix) //
      4 ',' //
      5 '\TOP.SNAPSHOT:' // trim(nsindex) // ')'
-      
+
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
@@ -264,7 +264,7 @@
      5 '\TOP.SNAPSHOT:' // trim(dirindex) //
      6 ',' //
      7 '\TOP.SNAPSHOT:' // trim(nsindex) // ')'
-      
+
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
@@ -297,5 +297,5 @@
       call xerrab('mds_err_msg: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
-      return 
+      return
       end subroutine mds_err_msg

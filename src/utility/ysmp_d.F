@@ -566,7 +566,7 @@ C----FOR EACH VERTEX VI IN EK
 C
 C------IF VI NEITHER PROTOTYPE NOR DUPLICATE VERTEX, THEN MERGE ELEMENTS
 C------TO COMPUTE DEGREE
-    1       TAG = TAG + 1
+            TAG = TAG + 1
             DVI = LAST(EK)
 C
 C--------FOR EACH VERTEX/ELEMENT VS/ES IN ELEMENT LIST OF VI
@@ -904,10 +904,10 @@ C
      *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
      *     UMAX, IL(N), JL(N), FLAG, VJ
         INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !srv 11.01.07
-C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
-         real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI              !srv 11.01.07
+C       REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
+        real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI               !srv 11.01.07
 #ifdef DBG
-         real (kind=R8) :: product
+        real (kind=R8) :: product
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
@@ -923,7 +923,7 @@ C----FOR EACH ROW K
         DO 11 K=1,N
 C
 C------INITIALIZE K-TH ROW WITH ELEMENTS NONZERO IN ROW P(K) OF M
-    3     JMIN = IA(P(K))
+          JMIN = IA(P(K))
           JMAX = IA(P(K)+1) - 1
           IF (JMIN.GT.JMAX) GO TO 5
           DO 4 J=JMIN,JMAX

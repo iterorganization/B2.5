@@ -120,7 +120,6 @@
 *   ..program start-up calls
       call prgini ('b2rd')
 *   ..open files
-      zero = 0.0_R8
       call cfopen (nout(0),'b2rd.prt','new','formatted')
       call cfopen (nout(1),'b2fstate','new','un*formatted')
       call cfopen (nout(2),'b2fgmtrt','new','un*formatted')
@@ -180,6 +179,7 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       allocate(idummy(-1:nx,-1:ny))
       allocate(zero(-1:nx,-1:ny))
+      zero = 0.0_R8
 
 *   ..read species data
       if (dbversion.ge.9) then

@@ -365,7 +365,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       lsns=0
       msns=0
       gpfc=0.0_R8
-      dbg_eir_mc=100                     !srv 08.06.13
+      dbg_eir_mc=0
       debug_flags=0
       debug_flags(90)=-1
       debug_flags(92:95)=-1
