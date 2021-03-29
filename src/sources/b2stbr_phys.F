@@ -568,7 +568,7 @@ c dnndz           the gradient of the main neutral species density across the bo
      &  abs(am(is)-am(js)).lt.amtol
 c new variables for advanced fluid neutral reflection/recycling model
       real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,
-     &     fmomrefl, 
+     &     fnnrefl_mol,fmomrefl,fnnrec_mol,
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
      &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa
@@ -908,12 +908,13 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
    
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
-     &              pl,tif,tef,pof,
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
+     &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
-     &              fmomrec,nnrec,nnwwnrec,fenerec)
+     &              fnnrec_mol,fmomrec,nnrec,nnwwnrec,fenerec)
              else
+                fnnrec_mol = 0
                 fmomrec = 0
                 nnrec = 0
                 nnwwnrec = 0
@@ -1015,42 +1016,47 @@ cmb   net momentum sources from neutral particle reflection
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
+     &              fluid_frac_hyb(iFc),
      &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
      &              switch%diffusion_bc_safeguard,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,b2recyc(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tnf,
+     &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                elseif (maxw(istra).eq.2) then
                  call CalcReflectedFluxesKn(switch%Kn_b1,
      &              switch%Kn_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                else
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,fnnrefl_mol,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
+             fnnrefl_mol=0
              fmomrefl = 0
              nnrefl = 0
              nnwwnrefl = 0
