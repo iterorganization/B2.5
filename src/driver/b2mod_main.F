@@ -18,6 +18,7 @@
       use b2us_plasma
       use b2us_prep
       use b2mod_switches
+      use b2mod_recycle
       implicit none
 #     include <git_version_B25.h>
 #ifdef USE_MPI
@@ -288,6 +289,7 @@ csw
       call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
 *   ..call principal driver routine
       call alloc_b2mod_ppout(1,1,ns)
+      call alloc_b2mod_recycle(nFc,ns)   !nh 30.03.21
 !WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
 !WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
 
@@ -343,6 +345,7 @@ csw
 !WG_TODO      call dealloc_b2mod_astra_to_b2
 !WG_TODO      call dealloc_b2mod_b2_to_astra
       call dealloc_b2mod_neutr_src_scaling
+      call dealloc_b2mod_recycle   !nh 30.03.21
       call prgend ()
 
 #ifdef USE_MPI

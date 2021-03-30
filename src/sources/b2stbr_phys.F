@@ -257,6 +257,7 @@ c     initialize debugging/analysis arrays
         fenerefl_out = 0.0_R8
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
+        fna_mol      = 0.0_R8  !nh 30.03.21
 
         if (ns.gt.2) then
           call xerrab('KUL recycling model not yet developed for'//
@@ -267,8 +268,7 @@ c     initialize debugging/analysis arrays
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals
 
-
-
+      
       do istra = 1, nstrat
 #ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
@@ -567,8 +567,7 @@ c dnndz           the gradient of the main neutral species density across the bo
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 c new variables for advanced fluid neutral reflection/recycling model
-      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,
-     &     fnnrefl_mol,fmomrefl,fnnrec_mol,
+      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,fmomrefl,
      &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
      &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa
@@ -912,9 +911,8 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
-     &              fnnrec_mol,fmomrec,nnrec,nnwwnrec,fenerec)
+     &              fmomrec,nnrec,nnwwnrec,fenerec)
              else
-                fnnrec_mol = 0
                 fmomrec = 0
                 nnrec = 0
                 nnwwnrec = 0
@@ -1023,7 +1021,7 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
      &              switch%diffusion_bc_safeguard,
-     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
@@ -1031,7 +1029,7 @@ cmb   net momentum sources from neutral particle reflection
      &              istra,iwall,farea,b2recyc(is,istra),
      &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
-     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                elseif (maxw(istra).eq.2) then
                  call CalcReflectedFluxesKn(switch%Kn_b1,
@@ -1043,7 +1041,7 @@ cmb   net momentum sources from neutral particle reflection
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
-     &              fnnrefl_mol,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                else
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
@@ -1052,11 +1050,10 @@ cmb   net momentum sources from neutral particle reflection
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,fnnrefl_mol,
+     &              cosa, sina, switch%use_uy_uz_0,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
-             fnnrefl_mol=0
              fmomrefl = 0
              nnrefl = 0
              nnwwnrefl = 0
