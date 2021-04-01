@@ -611,9 +611,10 @@ c first save the original NPTS provided by the Eirene input files.
      &              kin_frac_hyb(ifc)
               end do !}
             elseif (lneustra.and.(mol(istrai).eq.1)) then  !nh 31.03.21 stratum of molecules
-              tflux(istrai)=tflux(istrai) + fna_mol(ifc,is)
+              tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)
               tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) + 
-     &          fna_mol(ifc,is)
+     &          2.0_R8*fna_mol(ifc,is)
+              flux_scale = 0.5_R8 ! Molecules consist of two atoms 
             endif
           end do   
 
