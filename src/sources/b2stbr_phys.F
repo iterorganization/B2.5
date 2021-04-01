@@ -567,9 +567,9 @@ c dnndz           the gradient of the main neutral species density across the bo
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 c new variables for advanced fluid neutral reflection/recycling model
-      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,fmomrefl,
-     &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
-     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
+      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,fnnrefl,fnnrec,
+     &     fmomrefl,fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,
+     &     nnrec,nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa
 
 
@@ -897,9 +897,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
 
            if (is.ne.is0) then !! ion species, recycling
 
-cmb   particle recycling
-             snan = b2recyc(is,istra)*fluid_frac_hyb(iFc)*t0  !! conservation of particles: t0 = incident ion flux
-             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
 
 cmb   net momentum sources from neutral particle recombination
 c            Calculate recycled neutral particle flux (assuming thin boundary cells)
@@ -911,14 +908,17 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
-     &              fmomrec,nnrec,nnwwnrec,fenerec)
+     &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
              else
-                fmomrec = 0
-                nnrec = 0
-                nnwwnrec = 0
-                fenerec = 0
+                fnnrec = 0.0_R8
+                fmomrec = 0.0_R8
+                nnrec = 0.0_R8
+                nnwwnrec = 0.0_R8
+                fenerec = 0.0_R8
              endif
-
+             
+             snan = fnnrec*fluid_frac_hyb(iFc)
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
              smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale         
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
@@ -1000,10 +1000,10 @@ c          while B2.5 uses internal energy equations.
      &              fnni,fmomni,nni,nnwwni,feneni)
 
              endif
+             
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
+     &         fnni*neutral_sources_rescale
 
-             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
-     &             (b2recyc(is,istra)*fluid_frac_hyb(iFc)-1)*
-     &             fnni*neutral_sources_rescale
 
 !! save the incident fluid neutral flux
              fnn_inc(iFc,is0) = fnni*isign
@@ -1021,7 +1021,7 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
      &              switch%diffusion_bc_safeguard,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
@@ -1029,7 +1029,7 @@ cmb   net momentum sources from neutral particle reflection
      &              istra,iwall,farea,b2recyc(is,istra),
      &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                elseif (maxw(istra).eq.2) then
                  call CalcReflectedFluxesKn(switch%Kn_b1,
@@ -1041,7 +1041,7 @@ cmb   net momentum sources from neutral particle reflection
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
                else
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
@@ -1051,15 +1051,22 @@ cmb   net momentum sources from neutral particle reflection
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
-             fmomrefl = 0
-             nnrefl = 0
-             nnwwnrefl = 0
-             fenerefl = 0
-             fene_el = 0
+               fnnrefl = 0.0_R8
+               fmomrefl = 0.0_R8
+               nnrefl = 0.0_R8
+               nnwwnrefl = 0.0_R8
+               fenerefl = 0.0_R8
+               fene_el = 0.0_R8
              endif
+             
+cnh  adding the reflected particle source (with the molecular part subtracted)
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + 
+     1         fnnrefl*fluid_frac_hyb(iFc)*neutral_sources_rescale
+             snan = fnnrefl
+
 
              if (switch%AFN_out.ne.0) then
                fmomni_out(iCv)   = fmomni
