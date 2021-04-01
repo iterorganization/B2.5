@@ -756,10 +756,10 @@ c     once all thermal particles are pumped.
 cnh 22.02.2020
 c     Calculate the flux emitted as molecules. At the moment, molecules will be 
 c     treated kinetically.
-      fna_mol_rec = - isign*recycm*pt*fdni*area
+      fna_mol_rec = - isign*recycm*pt*fdni*area*0.5_R8
       fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_rec
       
-      fnnrec = max(0.0_R8,recyc0*t0 - fna_mol_rec)
+      fnnrec = max(0.0_R8,recyc0*t0 - 2.0_R8*fna_mol_rec)
 
 
 c     Recycled momentum flux densities
@@ -984,10 +984,10 @@ cnh 22.02.2020
 c     Calculate the part of the reflected flux emitted as molecules. At the moment,
 c     the molecules are treated kinetically.
       if (fnni<0.0_R8) then
-        fna_mol_refl = -isign*recycm*pt*fnni_nodrifts*area
+        fna_mol_refl = -isign*recycm*pt*fnni_nodrifts*area*0.5_R8
         fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
         
-        fnnrefl = max(0.0_R8,recyc0*fnni*area - fna_mol_refl)
+        fnnrefl = max(0.0_R8,recyc0*fnni*area - 2.0_R8*fna_mol_refl)
       else
         fnnrefl = 0.0_R8
       endif
@@ -1351,10 +1351,10 @@ c     once all thermal particles are pumped.
 cnh 22.02.2020
 c     Calculate the part of the reflected flux emitted as molecules. At the moment,
 c     the molecules are treated kinetically. 
-      fna_mol_refl = -isign*recycm*pt*fnni*area
+      fna_mol_refl = -isign*recycm*pt*fnni*area*0.5_R8
       fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
       
-      fnnrefl = max(0.0_R8,recyc0*fnni*area - fna_mol_refl)
+      fnnrefl = max(0.0_R8,recyc0*fnni*area - 2.0_R8*fna_mol_refl)
       
 
 c     reflected momentum flux densities
