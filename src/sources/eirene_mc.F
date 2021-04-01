@@ -35,6 +35,8 @@ c  version : 26.07.2002 23:39
      &         eirene_mc_eppl_shi0to3,
      &         alloc_b2mod_eirene_sources,
      &         balance_netcdf
+      use b2mod_recycle !nh Feb2020
+     & ,only : fna_mol 
 #ifdef B25_EIRENE
       use b2mod_work
       use eirmod_parmmod
@@ -574,7 +576,7 @@ c first save the original NPTS provided by the Eirene input files.
 
         if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
-            if(.not.is_neutral(is)) then !{    !! plasma species
+            if(.not.is_neutral(is).and.(mol(istrai).ne.1)) then !{    !! plasma species
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
@@ -591,8 +593,8 @@ c first save the original NPTS provided by the Eirene input files.
      &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
      &              kin_frac_hyb(ifc)
               end do !}
-            end if !}
-            if(is_neutral(is).and.lneustra) then !{   !! fluid neutral species only if they are needed for hybrid fluid/kinetic models. In a standard Eirene run they are not used.
+            elseif(is_neutral(is).and.lneustra.and.(mol(istrai).ne.1)) 
+     &        then !{   !! fluid neutral species only if they are needed for hybrid fluid/kinetic models. In a standard Eirene run they are not used.
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
@@ -608,7 +610,11 @@ c first save the original NPTS provided by the Eirene input files.
      &             fnn_inc(iFc,is))*
      &              kin_frac_hyb(ifc)
               end do !}
-            end if !}
+            elseif (lneustra.and.(mol(istrai).eq.1)) then  !nh 31.03.21 stratum of molecules
+              tflux(istrai)=tflux(istrai) + fna_mol(ifc,is)
+              tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) + 
+     &          fna_mol(ifc,is)
+            endif
           end do   
 
 #ifdef B25_EIRENE

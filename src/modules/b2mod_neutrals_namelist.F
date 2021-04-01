@@ -100,6 +100,7 @@ cank }
      *   accel_ion(:),
      *   maxw(:),                                 !nh 11.07.18
      *   maxw_eff(:),
+     *   mol(:)                                   !nh 31.03.21
       real (kind=R8), allocatable, save ::
      *   RCFE(:), RCFI(:), e_fc
       logical, allocatable, save ::
@@ -156,6 +157,7 @@ cank }
       integer, save :: accel_ion(NSTRAID)
       integer, save :: maxw(NSTRAID)
       integer, save :: maxw_eff(NSTRAID)
+      integer, save :: mol(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
@@ -210,7 +212,7 @@ cank }
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end, b2species_start, b2species_end,
-     .  maxw, maxw_eff,
+     .  maxw, maxw_eff, mol,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
      ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
@@ -298,6 +300,7 @@ csw 21feb2012
       allocate(b2species_end(NSTRAID))
       allocate(maxw(NSTRAID))
       allocate(maxw_eff(NSTRAID))
+      allocate(mol(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
       allocate(eb2atcr(natm_in))
@@ -412,6 +415,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       b2species_end(:)=-100
       maxw(:) = 1
       maxw_eff(:) = 1
+      mol(:) = 0
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -537,6 +541,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(b2species_end)
       deallocate(maxw)
       deallocate(maxw_eff)
+      deallocate(mol)
       deallocate(b2eatcr)
       deallocate(b2espcr)
       deallocate(eb2atcr)
@@ -825,6 +830,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
         call xertst (4.gt.maxw(istra), 'faulty input maxw')
+        call xertst (0.le.mol(istra).and.mol(istra).le.1, 
+     &   'faulty input mol')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
           call xertst(0.0_R8.le.mrecyc(is,istra), 'faulty input mrecyc')
@@ -2225,6 +2232,9 @@ cwdk also need to correct for degenerate faces?
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
      .   'maxw= ',(maxw(is),',',is =1,nstrai)
+     
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+     .   'mol= ',(mol(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,(1x,T12,10(i5,a1,1x)))') 
      .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)
