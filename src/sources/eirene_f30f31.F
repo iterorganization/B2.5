@@ -459,7 +459,7 @@ c we derive the guard cell value from its neighbouring interior cell
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
             else                          !! neutral molecule species
-              trgt(istra)%flux(i,ifl) = fnn_mol_b(iFc,ifl)
+              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
             endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !!'
