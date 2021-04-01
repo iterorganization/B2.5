@@ -987,7 +987,7 @@ c     the molecules are treated kinetically.
         fna_mol_refl = -isign*recycm*pt*fnni_nodrifts*area
         fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
         
-        fnnrefl = max(0.0_R8,recyc0*fnni - fna_mol_refl)
+        fnnrefl = max(0.0_R8,recyc0*fnni*area - fna_mol_refl)
       else
         fnnrefl = 0.0_R8
       endif
