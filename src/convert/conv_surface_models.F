@@ -131,7 +131,7 @@
                 end do
                 ntrg = ntrg + 1
                 idtrg(isf) = -ists
-                exit  ! surface marked
+!                exit  ! surface marked
               elseif ( isf <= mpg%nRc + mpg%nBc ) then
 !  boundary
                 found = .true.
@@ -143,7 +143,7 @@
                     bndmdl = -ists
                   end where
                 end do
-                exit            ! surface marked
+!                exit            ! surface marked
               else if (artificial_slab) then
                 found = .true.
                 ix = ipos_b2(isf)
