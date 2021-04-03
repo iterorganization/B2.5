@@ -36,6 +36,29 @@ c      use b2mod_types
       real(kind=R8), save :: tdata(3,nrr,nkind_coeff,0:nss)
       integer, save :: addspec(nss,nkind_coeff,0:nss)
 #endif
+      character*256, save :: transport_ip_filename
+      real (kind=R8), save :: transport_ip_time_mod
+      real (kind=R8), save :: transport_ip_time_switch
+      real (kind=R8), save :: elm_time_begin, elm_time_end
+      real (kind=R8), save :: elm_time_period
+      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
+      logical, save :: region_flags(CVREGMAX,nkind_coeff), no_pflux,
+     1 poloidal_scaling(nscale), no_div
+      integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
+      integer, save :: elm_ix_begin, elm_ix_end
+      integer, save :: tr_ip_elm_count
+      logical, save :: tr_ip_new_files
+      namelist /transport/ ndata, tdata, addspec,
+     1   transport_ip_filename, transport_ip_time_mod, 
+     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end, 
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling, 
+     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
+     5   elm_ix_begin, elm_ix_end, no_div
+
+      data transport_ip_filename/'b2.transport.inputfile'/,
+     1 transport_ip_time_mod/0.0_R8/,transport_ip_time_switch/0.0_R8/
+
+      private :: transport
 
       contains
 
@@ -451,58 +474,37 @@ cdjm Jan2017 Keep linearised sources for balance
      &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
      &      kind_coeff,kind_data,isc,ic,lbl
       integer :: ixwidth(nscale), ixmean(nscale)
-       
-      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
-      character*256, save :: transport_filename
-      real (kind=R8), save :: transport_time_mod
-      real (kind=R8), save :: transport_time_switch
-      real (kind=R8), save :: elm_time_begin, elm_time_end
-      real (kind=R8), save :: elm_time_period
       real (kind=R8) :: poloidal_scale_factor, rsep
-      integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer, save :: elm_ix_begin, elm_ix_end, nlbl
-      logical, save :: region_flags(CVREGMAX,nkind_coeff), no_pflux,
-     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data,
-     2 no_div, found
+      integer, save :: nlbl
+      logical, save :: elm_time, elm_region, elm_data, found
       character*260 filename
       character*26 hlp_frm
-      integer, save :: elm_count
       logical catch_up, lpflux, ldiv
-      logical, save :: new_files
       intrinsic sqrt
-      namelist /transport/ ndata, tdata, addspec,
-     1   transport_filename, transport_time_mod, transport_time_switch,
-     2   scaling_ix_begin, scaling_ix_end, scaling_strength,
-     3   region_flags, no_pflux, poloidal_scaling, scaling_width,
-     4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end, no_div
-
-      data transport_filename/'b2.transport.inputfile'/,
-     1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
 
       if(ncall.eq.0) then
         call xertst(CVREGMAX.ge.mpg%nnreg(0),
      1   'Increase CVREGMAX in b2mod_numerics_namelist')
-        filename=transport_filename
-        new_files = .true.
+        filename=transport_ip_filename
+        tr_ip_new_files = .true.
         call read_transport_input         
 !  read the profile data
-        if(transport_time_mod.gt.0.0_R8) then
+        if(transport_ip_time_mod.gt.0.0_R8) then
           call xerrab('ELM transport inputifile not coded yet for WG')
-          elm_count=tim/transport_time_mod
+          tr_ip_elm_count=tim/transport_ip_time_mod
         else
-          elm_count=0
+          tr_ip_elm_count=0
         endif
-        catch_up=transport_time_mod.gt.0.0_R8
+        catch_up=transport_ip_time_mod.gt.0.0_R8
         do while(catch_up) 
-          if(mod(tim,transport_time_mod).gt.transport_time_switch)
+          if(mod(tim,transport_ip_time_mod).gt.transport_ip_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filename=transport_filename
+            filename=transport_ip_filename
             call read_transport_input
-            catch_up=transport_time_mod.gt.0.0_R8
+            catch_up=transport_ip_time_mod.gt.0.0_R8
           else
             catch_up=.false.
           endif
@@ -515,21 +517,23 @@ cdjm Jan2017 Keep linearised sources for balance
         if (any(poloidal_scaling)) 
      .    call xerrab('Poloidal scaling not yet coded for WG')
       else
-        if(transport_time_mod.gt.0.0_R8) then
+        if(transport_ip_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3(1x,e14.7),2i4)')
-     .     'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
-            filename=transport_filename
-            new_files = .true.
+     .     'ELM: ',tim,mod(tim,transport_ip_time_mod),
+     1     transport_ip_time_switch,int(tim/transport_ip_time_mod),
+     2     tr_ip_elm_count
+          if(mod(tim,transport_ip_time_mod).gt.
+     1     transport_ip_time_switch.or.
+     2     int(tim/transport_ip_time_mod).gt.tr_ip_elm_count) then
+            tr_ip_elm_count=tim/transport_ip_time_mod
+            filename=transport_ip_filename
+            tr_ip_new_files = .true.
             call read_transport_input
           endif
         endif
       endif
 
-      if (new_files) then
+      if (tr_ip_new_files) then
         open (94,file='da1')
         open (93,file='da2')
       end if
@@ -572,7 +576,7 @@ cdjm Jan2017 Keep linearised sources for balance
               r(i)=tdata(1,i,kind_coeff,spec)
               f(i)=tdata(2,i,kind_coeff,spec)
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
-!             if (new_files) write(93,*) r(i),f(i),felm(i)
+!             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
@@ -598,7 +602,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             if (elm_data) 
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
-            if (new_files) then
+            if (tr_ip_new_files) then
 
               if (elm_data) then
                 do iy=1,ndat
@@ -800,10 +804,10 @@ cdjm Jan2017 Keep linearised sources for balance
  99   write (*,*) 'Error in reading the dsp file'
  100  continue
        
-      if (new_files) then
+      if (tr_ip_new_files) then
         close(93)
         close(94)
-        new_files = .false.
+        tr_ip_new_files = .false.
       end if
 
       return
@@ -836,13 +840,13 @@ c*** Clear data to forget previous profiles
       call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
-        write(*,*) 'Reading namelist transport from ',trim(filename)
+        write(*,*) 'Reading namelist transport_ip from ',trim(filename)
 #ifdef USE_MPI
         read(99,transport,err=999)
 #else
         read(99,transport)
 #endif
-        write(*,*) 'Read namelist transport from ',trim(filename)
+        write(*,*) 'Read namelist transport_ip from ',trim(filename)
         write(*,transport)
         close(99)
       else

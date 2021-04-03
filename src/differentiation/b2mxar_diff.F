@@ -1,18 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diff (nCv, ns, nregionv, BoRiS, geo, mpg, pl, 
-     &  dv, diag)
+      subroutine b2mxar_diff (nCv, ns, nregionv, BoRiS, switch, geo, 
+     &  mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
 !      use b2mod_rates
       use b2mod_b2cmpa_diff
+      use b2mod_switches_diff
       use b2us_geo_diff
       use b2us_map_diff
       use b2us_plasma_diff
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nregionv
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma_diff), intent (in) :: pl
@@ -35,7 +37,6 @@
 
 *   ..local variables
       integer ncall, iCv, is
-      integer, save :: tn_style = 0                               
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
       save ncall
@@ -54,9 +55,6 @@
 *   ..subprogram start-up calls
       call subini ('b2mxar')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2mn_tn_style', tn_style)                
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -101,7 +99,7 @@
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         nevi = nevi+abs(geo%cvVol(iCv)*dv%ne(iCv))
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv))
-        if (tn_style.eq.0) then
+        if (switch%tn_style.eq.0) then
          do is = 0, ns-1
           prvi = prvi+abs(geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv))
          enddo

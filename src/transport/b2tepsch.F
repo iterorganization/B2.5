@@ -1,12 +1,14 @@
-      subroutine b2tepsch(nCv, nFc, nVx, ns, geo, mpg, facdrift, cddi,
-     &    te, ne, floe, cone, fhePSch)
+      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, 
+     &    facdrift, cddi, te, ne, floe, cone, fhePSch)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -30,7 +32,6 @@
 *   ..local variables
       integer iFc, is
       integer, save :: ncall = 0
-      real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      &  facdriftm, nete(nCv), nete2(nCv), netev(nVx), nete2v(nVx),
      &  dnete2(nFc,0:1),
@@ -42,10 +43,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tepsch')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
-      end if
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
       
@@ -68,11 +65,13 @@
          call diff(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
 
 *   ..compute P.Sch heat flux
-         fhePSch(:,0) = -2.5_R8*PSch*facdrift*cddi(:,0,is)*dnete2(:,1)
-         fhePSch(:,1) =  2.5_R8*PSch*facdrift*cddi(:,1,is)*dnete2(:,0)
+         fhePSch(:,0) = -2.5_R8*switch%fhePSch*facdrift*cddi(:,0,is)
+     &                                                  *dnete2(:,1)
+         fhePSch(:,1) =  2.5_R8*switch%fhePSch*facdrift*cddi(:,1,is)
+     &                                                  *dnete2(:,0)
 *     ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) =  5.0_R8*PSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) = -5.0_R8*PSch*facdrift*cddi(:,0,is)
+         cddi_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cddi(:,1,is)
+         cddi_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cddi(:,0,is)
          call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi_eff,floe0,cone0)
          do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*

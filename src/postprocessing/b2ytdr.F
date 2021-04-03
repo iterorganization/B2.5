@@ -171,8 +171,6 @@ c 2002-09-11: logic revised
       integer indx, indy, indx1, indy1
       integer coriolis
       integer nncut1, nnreg1(0:2), periodic_bc1
-      integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
@@ -439,10 +437,8 @@ c 2002-09-11: logic revised
       integer :: nCv, nFc
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
-     .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
@@ -510,8 +506,7 @@ c 2002-09-11: logic revised
       logical averaging
       logical first_pass, do_scale
       logical wall_namelist_used
-      logical region_flags(NNREGMAX,nkind_coeff), no_pflux
-      logical poloidal_scaling(nscale), prdone, axdone, spdone
+      logical prdone, axdone, spdone
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
@@ -555,16 +550,15 @@ c 2002-09-11: logic revised
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
-      namelist /transport/ ndata, tdata, addspec,
-     1   transport_filename, transport_time_mod, transport_time_switch,
-     2   scaling_ix_begin, scaling_ix_end, scaling_strength,
-     3   region_flags, no_pflux, poloidal_scaling, scaling_width,
-     4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-
+      namelist /transport/ ndata, tdata, addspec,
+     1   transport_ip_filename, transport_ip_time_mod, 
+     2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end, 
+     3   scaling_strength, region_flags, no_pflux, poloidal_scaling, 
+     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
+     5   elm_ix_begin, elm_ix_end, no_div
       cr(ix,iy)=0.25_R8*
      1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
       cz(ix,iy)=0.25_R8*
@@ -1356,8 +1350,10 @@ c 2002-09-11: logic revised
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
+#ifdef WG_TODO
       if (numerics_namelist.ge.1) 
      >  call alloc_b2mod_numerics((nx+2)*(ny+2), ns, nnreg)
+#endif
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       filename='b2.feedback_save.parameters'
@@ -1372,7 +1368,9 @@ c 2002-09-11: logic revised
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in DIMENSIONS.F')
+#ifdef WG_TODO
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
+#endif
       endif
 *   ..modify b2mn.dat parameters
       ismain = is1(ismain)
@@ -3171,10 +3169,12 @@ cxpb This will need to be checked !!!
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
+#ifdef WG_TODO
         if (numerics_namelist.eq.0) 
      >   call alloc_b2mod_numerics((nx+2)*(ny+2),ns,nnreg)
         call read_b2mod_numerics_namelist((nx+2)*(ny+2),nsmin,nsmax,
      >    nnreg,on_closed_surface)
+#endif
         if (same_bundling) then
           if (first_pass)
      >     write(nout(5),'(a)') 'b2.numerics.parameters'

@@ -4,7 +4,7 @@
       program b2mn
       use b2mod_types
       use b2mod_main
-      use b2mod_user_namelist
+      use b2mod_ad
      , , only: nncf
       implicit none
       real(kind=R8) J(nncf)

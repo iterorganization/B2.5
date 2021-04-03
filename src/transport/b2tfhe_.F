@@ -1,13 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nCv, nFc, nVx, ns, geo, mpg, 
+      subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg, 
      &  pl, dv, co, balance)                                             !djm Jan2017 !srv 29.01.20
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -15,9 +16,14 @@
 !WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
 !WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
 !WG_TODO      use b2mod_transport_fun                                            !srv 13.01.17
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
@@ -53,29 +59,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is
-      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2nph9 = 0, iout_b2npht = 0
-      integer, save :: lim_flux = 0, mdf_fhe = 0                         !srv 04.02.03 13.10.06
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
-      integer, save :: pot_eq = 1                                        !srv 26.07.06
-      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
-      integer, save :: style = 2                                         !srv 13.01.17
-      integer, save :: no_current= 0                                     !srv 27.02.13
-      integer, save :: meth = 2
+      integer is
 csw 10oct2012
-      integer, save :: b2_upwind = 0
-      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
-
       character(3) :: charns, charns0
-      real (kind=R8), save :: drift_hyb = 1.0_R8
-      real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
-      real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
-      real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1), flomx,
-     &  alfe0(nFc), vdia_par, floe0_mdf(nFc,0:1)                         !srv 22.11.99 13.10.06 17.06.09
+     &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc)!,                                   !srv 22.11.99 25.01.02
 !WG_TODO    &    zeff(-1:nx,-1:ny)                                           !srv 13.01.17
@@ -86,14 +76,18 @@ csw 10oct2012
      *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
-
-      save ncall, vdia_par                                               !srv 17.05.99 11.07.99 22.11.99
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c      integer, save :: b2_upwind = 0
+c      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
+c      integer, save :: lim_flux = 0                                      !srv 04.02.03 
+c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
+c      real (kind=R8), save :: drift_hyb = 1.0_R8
+c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
-      data ncall/0/, vdia_par/1.0e0_R8/                                  !srv 17.05.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -102,38 +96,19 @@ csw 10oct2012
 *   ..subprogram start-up calls
       call subini ('b2tfhe_')
 *   ..set internal parameters on first call                              !srv
-      if (ncall.eq.0) then                                               !srv
-       call ipgetr ('b2tfhe_vdia_par', vdia_par)                         !srv 17.05.99
-       call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
-       call ipgeti ('b2tfhe_iout', iout)                                 !srv 16.09.02
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06
-       call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
-       call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
-       call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
-       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
-       call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
-       if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
-       call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
-     &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
-       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
-       call ipgeti ('b2tfhe_no_current',no_current)
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2tfhe_upwind', b2_upwind)
-       call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
-       call ipgeti ('b2tfhe_flo53', flo53)
-       call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
-       call ipgeti ('b2tfhe_discr_meth', meth)
-       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
-       endif                                                             !srv
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c       call ipgeti ('b2tfhe_upwind', b2_upwind)
+c       call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
+c       call ipgeti ('b2tfhe_flo53', flo53)
+c       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
+c       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06
+c       call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
+c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
+c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tfhe.lt.3) then
 *    ..test sign of ne, te, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
@@ -151,8 +126,10 @@ csw 10oct2012
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 *      ..compute fledia
-         fledia(:,0) = vdia_par*dv%vedia(:,0)*geo%fcS*geo%fcQalf(:,0)
-         fledia(:,1) = vdia_par*dv%vedia(:,1)*geo%fcS*geo%fcQalf(:,1)
+         fledia(:,0) = switch%fhe_vdia_par*dv%vedia(:,0)*
+     &                                     geo%fcS*geo%fcQalf(:,0)
+         fledia(:,1) = switch%fhe_vdia_par*dv%vedia(:,1)*
+     &                                     geo%fcS*geo%fcQalf(:,1)
         endif
        enddo
       endif                                                              !srv 18.01.07
@@ -167,13 +144,15 @@ csw 10oct2012
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 #endif
-      call b2tepsch(nCv, nFc, nVx, ns, geo, mpg, dv%facdrift, co%cddi, 
-     &   pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)                     !srv 16.10.17
+      call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
+     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)            !srv 16.10.17
 
 * ..compute parallel current
-      call b2xehx (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehx)    !srv 13.01.17 {
-      call b2xehy (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehy)    !srv 13.01.17
-      if(style.eq.2) then
+      call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
+     &                                         pl%po, dv%ne, ehx)    !srv 13.01.17 {
+      call b2xehy (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
+     &                                         pl%po, dv%ne, ehy)    !srv 13.01.17
+      if(switch%b2sigp_style.eq.2) then
         call xerrab ('b2sigp_style 2 not yet supported')
 #ifdef WG_TODO
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
@@ -200,18 +179,20 @@ csw 10oct2012
 * ..compute fluxes and linearization
        floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
      &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                    !srv 13.09.02 18.01.07 11.01.13  *signmf
-     &    -c071*dv%fch_p(:,0)/qe*fch_pTe                               !srv 30.12.09 13.01.17
+     &    -c071*dv%fch_p(:,0)/qe*switch%fch_pTe                        !srv 30.12.09 13.01.17
        floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +                           
      &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef -                  !srv 11.05.99
      &    5.0e0_R8/3.0e0_R8*fchstoch/qe
 
        floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                      !srv 13.06.06 {
-     &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*fch_pTe             !srv 30.12.09 13.01.17
+     &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*
+     &                                      switch%fch_pTe             !srv 30.12.09 13.01.17
        floe0_mdf(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
      &    co%chve(:,1)*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe             !srv 11.05.99
 
 *   ..apply discretization scheme
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,floe0_mdf,
+      call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
+     &  geo,mpg,pl%te,floe0_mdf,
      &  co%chce,fhe0_mdf,dumm0,dumm1)
 
 *   ..compute fluxes
@@ -219,19 +200,20 @@ csw 10oct2012
       tefh  = tef !WG_TODO: harmonic average to faces
 
       dv%fhe(:,0) = fhe0_mdf(:,0) +  (floe0(:,0) - floe0_mdf(:,0))*tef + 
-     &  alfTeEh*alfe0*tefh*ehx
+     &  switch%alfTeEh*alfe0*tefh*ehx
       dv%fhe(:,1) = fhe0_mdf(:,1) +  (floe0(:,1) - floe0_mdf(:,1))*tef + 
-     &  alfTeEh*co%calf(:,1)*tefh*ehy
+     &  switch%alfTeEh*co%calf(:,1)*tefh*ehy
 
       dv%fhe_mdf(:,0)  = fhe0_mdf(:,0) - dv%fhePSch(:,0)  + 
-     &  alfTeEh*alfe0*tefh*ehx
+     &  switch%alfTeEh*alfe0*tefh*ehx
       dv%fhe_mdf(:,1)  = fhe0_mdf(:,1) - dv%fhePSch(:,1)  + 
-     &  alfTeEh*co%calf(:,1)*tefh*ehy
+     &  switch%alfTeEh*co%calf(:,1)*tefh*ehy
 
 *   ..compute floe, cone
       floe0 = dv%floe
       cone0 = dv%cone(:,:,0)
-      call calccoef(nCv,nFc,nVx,meth,geo,mpg,floe0_mdf,co%chce,
+      call calccoef(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
+     &  geo,mpg,floe0_mdf,co%chce,
      &  dv%floe,dv%cone)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
@@ -247,7 +229,7 @@ csw 10oct2012
               fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
      &         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
      &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-              if (mdf_fhe.eq.0) then
+              if (switch%mdf_fhe.eq.0) then
                 fhe_dia(ix,iy,0,0) = 2.5e0_R8*fledia(ix,iy,0,0)*
      &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
@@ -277,7 +259,7 @@ csw 10oct2012
      &        -fhePSch(ix,iy,0,0)                                        !srv 13.06.06 }
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
-     &          (mdf_fhe.eq.0)) then !djm Jan2017
+     &          (switch%mdf_fhe.eq.0)) then !djm Jan2017
               if(floe0.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -307,7 +289,7 @@ csw 10oct2012
             endif
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
-     &          (mdf_fhe.ne.0)) then !djm Jan2017
+     &          (switch%mdf_fhe.ne.0)) then !djm Jan2017
               if(floe0_mdf.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -337,7 +319,7 @@ csw 10oct2012
 
           if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                             .or. iout_b2wdat.eq.4) then           !srv 16.09.02 {
-           if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
+           if(switch%mdf_fhe.eq.0) then                                         !srv 13.10.06 {
             w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,0,0)
      &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)=(chve(ix,iy,0,0)+2.5e0_R8*fledia(ix,iy,0,0))*      !srv 13.09.02 11.01.13 *signmf
@@ -420,7 +402,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
              if (balance.and.
      &           (balance_netcdf.ne.0).and.
-     &           (mdf_fhe.eq.0)) then !djm Jan2017
+     &           (switch%mdf_fhe.eq.0)) then !djm Jan2017
                if(floe0.ge.0.0_R8) then
                  upfac=1.0_R8
                else
@@ -456,7 +438,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
              if (balance.and.
      &           (balance_netcdf.ne.0).and.
-     &           (mdf_fhe.eq.0)) then !djm Jan2017
+     &           (switch%mdf_fhe.eq.0)) then !djm Jan2017
                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
                fhe_52(ix,iy,0,0) = 0.0_R8
@@ -477,7 +459,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
              endif
           endif
 
-          if(mdf_fhe.eq.0) then                                         !srv 17.06.09 {
+          if(switch%mdf_fhe.eq.0) then                                         !srv 17.06.09 {
 
 csw 30apr2014
             if(b2tfhe_hybr2 .ne.0) then
@@ -525,7 +507,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               if (balance.and.
      &           (balance_netcdf.ne.0).and.
-     &           (mdf_fhe.ne.0)) then !djm Jan2017
+     &           (switch%mdf_fhe.ne.0)) then !djm Jan2017
                 if(floe0_mdf.ge.0.0_R8) then
                   upfac=1.0_R8
                 else
@@ -558,7 +540,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               if (balance.and.
      &           (balance_netcdf.ne.0).and.
-     &           (mdf_fhe.ne.0)) then !djm Jan2017
+     &           (switch%mdf_fhe.ne.0)) then !djm Jan2017
                !djm Jan2017 share the hybrid part according to relative contributions
                 if (floe0_mdf.ge.0.0_R8) then
                   hybfac=1.0_R8
@@ -693,7 +675,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #endif
 
 
-      if(iout.ne.0) then                                                 !srv 18.06.08 {
+      if(switch%b2tfhe_iout.ne.0) then                                   !srv 18.06.08 {
        call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstochy')             !lk 31.01.08
        call my_out_us(70,nFc,1,dv%fne_he(1,0),'b2tfhe__fnex')
        call my_out_us(70,nFc,1,dv%fne_he(1,1),'b2tfhe__fney')
@@ -746,7 +728,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 
 #endif
 * ..return
-      ncall = ncall+1
+      ncall_b2tfhe = ncall_b2tfhe+1
       call subend ()
       return
 

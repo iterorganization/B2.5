@@ -1,10 +1,12 @@
-      subroutine b2tlhi (nCv, nFc, mp, cflmi, geo, mpg, ni, nirm,
-     &  ni_ext, ti, tn, chvimx)
+      subroutine b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, 
+     &  ni, nirm, ni_ext, ti, tn, chvimx)
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
       integer nCv, nFc
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -14,30 +16,24 @@
 *     B2TLHI computes the all atom heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ncall, iCv, iFc, model
+      integer iCv, iFc
       real (kind=R8) ::
      *   t0,t1
-      save ncall, model
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvfx, ipgeti
+      external subini, subend, xertst, b2xvfx
       pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/, model/1/
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlhi')
 *   ..test mp, cflmi
       call xertst (0.0_R8.lt.mp, 'faulty argument mp')
       call xertst (0.0_R8.le.cflmi, 'faulty argument cflmi')
-*   ..read switches
-      if (ncall.eq.0) then
-        call ipgeti ('b2tqca_model', model)
-      endif
 
 *   ..compute flux limit velocity
-      if (model.eq.1) then  ! SOLPS5.0 treatments
+      if (switch%b2tqca_model.eq.1) then  ! SOLPS5.0 treatments
         do iFc = 1, nFc
 cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model, 
 c    because now both options are interchangeable
@@ -47,7 +43,7 @@ c    because now both options are interchangeable
      &      (ni(mpg%fcCv(iFc,1),0)+ni_ext(mpg%fcCv(iFc,1),0)+
      &       ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))
         enddo
-      else if (model.eq.2) then  ! SOLPS4.0 treatment
+      else if (switch%b2tqca_model.eq.2) then  ! SOLPS4.0 treatment
        do iFc = 1, nFc
         t0 = ti(mpg%fcCv(iFc,2))
         t1 = ti(mpg%fcCv(iFc,1))
@@ -62,7 +58,6 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
      &     ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))*max(t0,t1))
        enddo
       endif
-      ncall = ncall+1
       call subend ()
       return
 *     ------------------------------------------------------------------

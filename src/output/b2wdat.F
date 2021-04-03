@@ -84,7 +84,7 @@
       real (kind=R8) ::                                            !srv
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  cutll, cutlo, t0, phi_app
+     &  t0, phi_app
 #ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
@@ -115,12 +115,11 @@
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
       real (kind=R8) ::                                            !srv
-     *   hy1, expu2, machsfr                                       !srv
+     *   hy1, machsfr                                       !srv
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -129,9 +128,6 @@
       call subini ('b2wdat')
 *   ..initialise files and common
 
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..set internal parameters on first (and only) call
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01

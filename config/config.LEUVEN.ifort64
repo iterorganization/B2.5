@@ -30,7 +30,7 @@ FC       = ifort
 endif
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all #-warn interfaces
+FCOPTS   = -g -C -debug all -traceback -check all -warn interfaces
 else
 FCOPTS   = -O2 -vec_report0 -fp-model precise #-warn interfaces
 endif
@@ -70,10 +70,13 @@ LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
+ifdef IPOPT
 LIBOPT = -L${IPOPTDIR}/lib/ -lipopt
-ADDINCFLAGS =
 MODINCLUDE += -I${IPOPTDIR}/include/coin-or
-
+endif
+ifdef TAO
+LIBOPT = ${PETSC_LIB}
+endif
 
 #!!!Local Variables:
 #!!! mode: Makefile
