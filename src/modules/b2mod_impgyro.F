@@ -73,13 +73,13 @@
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
      &  1, mpi_local, mpi_err)
-      call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
+      call mpi_bcast ([ismain], 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
 
       if(mpi_rank.eq.0) then
-      call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
+      call mpi_recv ([ikmn], 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
-      call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
+      call mpi_recv ([ikmx], 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       end if
 
@@ -92,13 +92,13 @@
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
      &  1, mpi_local, mpi_err)
-      call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
+      call mpi_bcast ([ismain], 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
 
       if(mpi_rank.eq.0) then
-      call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
+      call mpi_recv ([ikmn], 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
-      call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
+      call mpi_recv ([ikmx], 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       end if
 
@@ -338,7 +338,7 @@ cxpb
 
 #ifdef USE_MPI
       write (*,*) 'b2ig: impgyro_main...flag=MPI'
-      call mpi_bcast (last, 1, mpi_logical , 0,
+      call mpi_bcast ([last], 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
@@ -357,7 +357,7 @@ cxpb
 #else
 #ifdef USE_IMPGYRO
       write (*,*) 'b2ig: impgyro_main...flag=IG'
-      call mpi_bcast (last, 1, mpi_logical , 0,
+      call mpi_bcast ([last], 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)

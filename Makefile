@@ -965,7 +965,7 @@ ifneq (${MOD},o)
 endif
 ifdef SOLPSTOP
 ifdef LD_NETCDF
-	-rm ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
+	-rm -f ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
 endif
 endif
 	-rm -rf ${OBJDIR}/.delete &

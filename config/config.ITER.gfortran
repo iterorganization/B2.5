@@ -39,7 +39,11 @@ DDBLOPTION =
 
 INCMOD = -B
 
+ifeq (,$(findstring sdcc-login,${NODENAME}))
 LDLIBES = -limf -lm # Intel Math must be before -lm
+else
+LDIBES = -lm
+endif
 
 GGD_VERSION ?= `pkg-config ggd --modversion`
 
