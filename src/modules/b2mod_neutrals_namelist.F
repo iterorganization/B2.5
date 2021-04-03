@@ -1204,7 +1204,9 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         endif
 
         m%nRc = nstrat
-        m%mxnRc = count(m%fcLbl /= 0)
+cwdk    could have multiple recycling strata per boundary;
+cwdk    conservative estimate: assume that there might be one stratum per fluid
+        m%mxnRc = ns*count(m%fcLbl /= 0)
         call alloc_mapping_rc (m)
         m%rcFcP = 0
         
