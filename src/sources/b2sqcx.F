@@ -1,10 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqcx (nCv, ns, ev, amh0, th0, thn0, rlcx0, rcx)
+      subroutine b2sqcx (nCv, ns, ev, switch, amh0, th0, thn0, rlcx0, 
+     &                  rcx)
+      use b2mod_switches
       use b2mod_types
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sqcx
       implicit none
 *   ..input arguments (unchanged on exit)
+      type (switches), intent (in) :: switch
       integer nCv, ns
       real (kind=R8) ::
      *   ev, amh0, th0(nCv), thn0(nCv), rlcx0(nCv,0:1,0:ns-1)
@@ -41,18 +48,15 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, iCv, is
-      real (kind=R8) ::
-     *   phm0, t_av
+      integer n2, iCv, is
+      real (kind=R8) :: t_av
       real (kind=R8) ::
      *   wrk0(nCv), expu
-      save ncall, styl0, phm0
 *   ..procedures
-      intrinsic log, exp, max, dim
-      external subini, subend, xertst, ipgeti, ipgetr, expu
+      intrinsic log, exp, max
+      external subini, subend, xertst, expu
       external b2xvsg
 *   ..initialisation
-      data ncall/0/, styl0/0/, phm0/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -60,13 +64,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sqcx')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2sqcx_styl0', styl0)
-       call xertst (0.le.styl0, 'faulty internal parameter styl0')
-       call ipgetr ('b2sqcx_phm0', phm0)
-       call xertst (0.0_R8.le.phm0, 'faulty internal parameter phm0')
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -75,7 +72,7 @@
       call xertst (1.0_R8.le.amh0.and.amh0.le.3.0_R8,
      &  'faulty argument range amh0')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sqcx.lt.3) then
 *    ..test th0
        call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
       endif
@@ -88,10 +85,10 @@
 * ..main computation
 *   ..compute rate coefficients
       do is = 0, ns-1
-       if (styl0.eq.0.or.is.lt.2) then
+       if (switch%b2sqcx_styl0.eq.0.or.is.lt.2) then
         do iCv = 1, nCv
 *      ..compute charge exchange rate coefficient
-          rcx(iCv,is) = phm0*
+          rcx(iCv,is) = switch%b2sqcx_phm0*
      &     expu(rlcx0(iCv,0,is)+rlcx0(iCv,1,is)*wrk0(iCv))
         enddo
        else
@@ -101,7 +98,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sqcx = ncall_b2sqcx+1
       call subend ()
       return
 

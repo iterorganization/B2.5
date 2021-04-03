@@ -11,10 +11,9 @@
       real (kind=R8) ::
      *   t0, t1, t2
       intrinsic min, max, real
-      external b2xvfx, rratio
+      external b2xvfx, rratio, med
       real (kind=R8) ::
      *   med, rratio
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
 *   ..test edge values of fun
       call b2xvfx (nx, ny, fun, 'b2xtvx--fun')

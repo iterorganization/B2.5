@@ -1,17 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqce (nCv, geo, mpg, pl, dv, hce, sig, alf)   !srv 01.07.09
+      subroutine b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)   !srv 01.07.09
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tqce, ncall_b2tlnl
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -61,26 +67,18 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, model
-      integer, save :: icase = 0                                        !srv 20.09.11
-      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
-      integer, save :: style_guard_cells = 0                            !srv 19.04.13
-      integer, save :: style = 2                                        !srv 13.01.17
+      integer iCv
       character(23) hlp_frm                                             !srv 11.03.13
-      real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
-      real (kind=R8), save :: prl_cur = 1.0_R8                          !srv 15.06.18
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
       parameter (ce = 3.16e0_R8)
-      save ncall, model
 *   ..procedures
       intrinsic abs, sqrt, max, log
       real (kind=R8) ::
      *  pitx, fke, fse, fal, fke_Zh
       external subini, subend, xertst, sfill
-      external b2xvsg, ipgeti
+      external b2xvsg
 
       real (kind=R8) c11e, c13e, c15e
       parameter (c11e = 1.0000_R8, c13e = 0.9487_R8, c15e =-0.8964_R8)
@@ -92,7 +90,6 @@
       real (kind=R8) h135e, h153e, h315e
       real (kind=R8) f135e
 *   ..initialisation
-      data ncall/0/, model/1/
       pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
       fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
       fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
@@ -140,24 +137,8 @@
       call subini ('b2tqce')
 *   ..test nCv
       call xertst (0.le.nCv, 'faulty argument nCv')
-*   ..read input data
-      if (ncall.eq.0) then
-        call ipgeti ('b2tqce_model', model)
-        call ipgeti ('b2tqce_iout', iout)                                !srv 16.06.08                       
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                          !srv 30.12.09
-        call ipgeti ('b2tqce_fke_Zhdanov', fke_Zhdanov)                  !srv 02.12.10
-        call ipgeti ('b2tlnl_ee', icase)
-        call xertst (0.eq.icase .or. 2.eq.icase, 
-     &               'faulty input b2tlnl_ee')
-        call ipgeti ('b2tqce_style_guard_cells', style_guard_cells)      !srv 19.04.13
-        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
-        call ipgetr ('b2tfhe_prl_cur', prl_cur)                         !srv 15.06.18
-      endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tqce.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
@@ -176,46 +157,47 @@
 !xpb vary with space and species or be set by user.
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
-      if (model.eq.1.or.model.eq.3) then
+      if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then
         ctaue = t0*sqrt(me)						 !xpb
-      else if (model.eq.2) then
+      else if (switch%b2tqce_model.eq.2) then
         ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
       endif
 
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nCv, icase, pl%te, pl%ti, dv%ne, dv%lnlam)
+      call b2tlnl (nCv, switch, switch%icase_ee, pl%te,
+     &                                         pl%ti, dv%ne, dv%lnlam)
 * ..compute classical hce, sig, alf
 *   ..compute hcex, sigx, alfx.
-      if(style_guard_cells.eq.0) then
+      if(switch%b2tqce_style_guard_cells.eq.0) then
        do iCv = 1, nCv
          t0 = pl%te(iCv)/ev
          tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)	   !xpb !srv 01.07.09
          tnp = tau(iCv)*dv%ne(iCv)*pitx(iCv)**2
          z = dv%ne2(iCv)/dv%ne(iCv)
-         if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-          if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then                !srv 02.12.10
+         if (switch%b2tqce_model.eq.1) then  ! SOLPS5.0 model : Balescu fit
+          if(switch%fch_pTe.eq.1.0_R8.and.switch%fke_Zhdanov.eq.1) then          !srv 02.12.10
            hce(iCv,0) = (pl%te(iCv)/me)*fke_zh(z)*tnp
           else
            hce(iCv,0) = 2.5_R8*(pl%te(iCv)/me)*fke(z)*tnp
           endif
-          if(style.eq.2) then                                              !srv 13.01.17 {
+          if(switch%b2sigp_style.eq.2) then                                 !srv 13.01.17 {
            sig(iCv,0) = (qe**2/me)*tnp/fse_ce1(z)
            alf(iCv,0) = (qe/me)*z*fal_cen(z)*tnp
           else
            sig(iCv,0) = (qe**2/me)*fse(z)*tnp
            alf(iCv,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
           endif                                                            !srv 13.01.17 }
-         else if (model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
+         else if (switch%b2tqce_model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
           hce(iCv,0) = ce*(pl%te(iCv)/me)*tnp
           sig(iCv,0) = (qe**2/me)*fse(z)*tnp
           alf(iCv,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
-         else if (model.eq.3) then  ! Balescu exact 21-moment expressions
+         else if (switch%b2tqce_model.eq.3) then  ! Balescu exact 21-moment expressions
           hce(iCv,0) = 2.5_R8*(pl%te(iCv)/me)*(d15e(z)/f135e(z))*tnp
           sig(iCv,0) = (qe**2/me)*(d35e(z)/f135e(z))*tnp
           alf(iCv,0) = sqrt(2.5_R8)*(qe/me)*(-h153e(z)/f135e(z))*tnp
          endif
        enddo
-      elseif(style_guard_cells.eq.1) then
+      elseif(switch%b2tqce_style_guard_cells.eq.1) then
        call sfill (nCv, 0.0_R8, hce(1,0), 1)  ! IYS and lk 21.11.2012
        call sfill (nCv, 0.0_R8, sig(1,0), 1)  ! IYS and lk 21.11.2012
        call sfill (nCv, 0.0_R8, alf(1,0), 1)  ! IYS and lk 21.11.2012
@@ -225,14 +207,14 @@
          tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)        !xpb !srv 01.07.09
          tnp = tau(iCv)*dv%ne(iCv)*pitx(iCv)**2
          z = dv%ne2(iCv)/dv%ne(iCv)
-         if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-          if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then              !srv 02.12.10
+         if (switch%b2tqce_model.eq.1) then  ! SOLPS5.0 model : Balescu fit
+          if(switch%fch_pTe.eq.1.0_R8.and.switch%fke_Zhdanov.eq.1) then         !srv 02.12.10
            hce(iCv,0) = (pl%te(iCv)/me)*fke_zh(z)*tnp
           else
            hce(iCv,0) = 2.5_R8*(pl%te(iCv)/me)*fke(z)*tnp
           endif
           if ((iCv .le. mpg%nCi) .or. mpg%cvOnClosedSurface(iCv)) then   ! IYS and lk 21.11.2012
-           if(style.eq.2) then                                           !srv 13.01.17 {
+           if(switch%b2sigp_style.eq.2) then                                           !srv 13.01.17 {
             sig(iCv,0) = (qe**2/me)*tnp/fse_ce1(z)
             alf(iCv,0) = (qe/me)*z*fal_cen(z)*tnp
            else
@@ -240,13 +222,13 @@
             alf(iCv,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
            endif                                                         !srv 13.01.17 }
           endif
-         else if (model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
+         else if (switch%b2tqce_model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
           hce(iCv,0) = ce*(pl%te(iCv)/me)*tnp
           if ((iCv .le. mpg%nCi) .or. mpg%cvOnClosedSurface(iCv)) then   ! IYS and lk 21.11.2012
            sig(iCv,0) = (qe**2/me)*fse(z)*tnp
            alf(iCv,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
           endif
-         else if (model.eq.3) then  ! Balescu exact 21-moment expressions
+         else if (switch%b2tqce_model.eq.3) then  ! Balescu exact 21-moment expressions
           hce(iCv,0) = 2.5_R8*(pl%te(iCv)/me)*(d15e(z)/f135e(z))*tnp
           if ((iCv .le. mpg%nCi) .or. mpg%cvOnClosedSurface(iCv)) then   ! IYS and lk 21.11.2012
            sig(iCv,0) = (qe**2/me)*(d35e(z)/f135e(z))*tnp
@@ -257,15 +239,15 @@
       else
        call xerrab ('B2TQCE - incorrect value of style_guard_cells')
       endif
-      sig(:,:) = sig(:,:)*prl_cur                                    !srv 15.06.18
-      alf(:,:) = alf(:,:)*prl_cur                                    !srv 15.06.18
+      sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
+      alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
       call sfill (nCv, 0.0_R8, hce(1,1), 1)
       call sfill (nCv, 0.0_R8, sig(1,1), 1)
       call sfill (nCv, 0.0_R8, alf(1,1), 1)
 
-      if(iout.ne.0) then                                                 !srv 16.06.08 {
+      if(switch%b2tqce_iout.ne.0) then                                !srv 16.06.08 {
         call my_out_us(70,nCv,0,tau,'taue')
         call my_out_us(70,nCv,0,hce(1,0),'hcex')
         call my_out_us(70,nCv,0,hce(1,1),'hcey')
@@ -284,13 +266,13 @@
 !WG_TODO        close(71)
 !WG_TODO        close(70)
       endif                                                          !srv 16.06.08 }
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &                         .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,tau,'b2tqce_taue')
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tqce = ncall_b2tqce+1
       call subend ()
       return
 

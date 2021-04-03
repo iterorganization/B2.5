@@ -775,9 +775,9 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+#ifdef WG_TODO
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-#ifdef WG_TODO
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
 #endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
@@ -1020,7 +1020,9 @@ c
         textin(0)=' ZERO'
         nsw=ns
         call eirene_mc_init(nx,ny)
+#ifdef WG_TODO
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+#endif
         p1=0.0_R8
         p2=0.0_R8
       else

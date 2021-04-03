@@ -1,11 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tlnl (nCv, icase, te, ti, ne, lnlam)                 !srv 01.07.09 {
+      subroutine b2tlnl (nCv, switch, icase, te, ti, ne, lnlam)                 !srv 01.07.09 {
       use b2mod_types
       use b2mod_constants
+      use b2mod_switches
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlnl
       implicit none
 *   ..input arguments (unchanged on exit)
+      type (switches), intent (in) :: switch
       integer nCv, icase                                                !srv 20.09.11
       real (kind=R8) ::
      &   te(nCv), ti(nCv), ne(nCv)                                      !srv 20.09.11
@@ -31,15 +37,13 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, iCv
-      real (kind=R8), save :: lambda=-5.0e0_R8
-      save ncall
+      real (kind=R8) :: lambda
+      integer iCv
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, sfill
       external b2xvsg
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -56,19 +60,15 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tlnl')
-      if (ncall.eq.0) then
-       call ipgetr('b2trcl_lambda', lambda)
-       call xertst(0.0_R8.ne.lambda, 'faulty internal parameter lambda') !srv 02.07.13
-      endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tlnl.lt.3) then
 *    ..test state
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
-
+      lambda = switch%b2trcl_lambda
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
 	select case(icase)
@@ -124,7 +124,7 @@
         lnlam = lambda
       endif
 * ..return
-      ncall = ncall+1
+      ncall_b2tlnl = ncall_b2tlnl+1
       call subend ()
       return
 

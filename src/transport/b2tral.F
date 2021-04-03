@@ -2,19 +2,36 @@
 *.specification
 
       subroutine b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,!srv 23.11.10
-     1 geo, mpg, pl, dv, rt, st_ext, co)
+     1 switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
       use b2mod_constants
-      use b2mod_input_profile
       use b2mod_b2cmpa
 !WG_TBD      use b2mod_neoclassical
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_b2cmpt
+     &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
+     &           cfhce, cfhci
+      use b2mod_transport_namelist
+     & , only : parm_hce, parm_hci, parm_dna
+      use b2mod_input_profile
+     & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
+     &          tr_ip_elm_count, no_div, addspec, alloc_input_profile,
+     &          nss, nrr, nkind_coeff, nkind_data
+      use b2mod_ad
+     & , only : my_out_folder, my_out_sf, b2news_solving, ncall_b2tral,
+     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
+     &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
+     &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
      &  ismain
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -58,28 +75,19 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ncall, pot_eq, no_current, no_solve, is0
-      integer, save :: iout = 0,
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
+      integer iCv, iFc, is, is0
       character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
      4  chce0(nFc,0:1), chve0(nFc,0:1),
-     1	pol_anom_scale, ft,                                             !srv 16.10.17
-     *  wrk(nFc), wrkmin, fch_anomalous
+     1	ft,                                                             !srv 16.10.17
+     *  wrk(nFc), wrkmin
       character*72 message
-      logical solving(4)
-      save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
-     .  fch_anomalous, no_current
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
 *   ..initialisation
-      data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
-     1  fch_anomalous/1.0_R8/, no_current/0/
       intrinsic huge
 *-----------------------------------------------------------------------
 *.computation
@@ -91,41 +99,23 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall.eq.0) then
-        call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
-        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
-        if (fch_anomalous.eq.1.0_R8)
-     >   call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-        call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2news_poteq', pot_eq)
-        call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-        call ipgeti ('b2news_no_solve', no_solve)
-        call xertst (-15.le.no_solve.and.no_solve.le.1,
-     &   'faulty input no_solve')
-        solving(1:4)=no_solve.eq.0
+      if (ncall_b2tral.eq.0) then
+        b2news_solving(1:4)=switch%no_solve.eq.0
         do is=1,4
-          solving(is)=solving(is).or.
-     &    (no_solve.lt.0.and.mod(abs(no_solve),2**is).ge.2**(is-1))
+          b2news_solving(is)=b2news_solving(is).or.
+     &    (switch%no_solve.lt.0.and.
+     &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
-        call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(nCV,ns)
       end if
 
 * ..compute transport coefficients
 *   ..compute anomalous terms
       call b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     &  geo, mpg, pl, dv, rt, st_ext, co)
+     &  switch, geo, mpg, pl, dv, rt, st_ext, co)
 *   ..compute classical terms
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10
-     1  geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,                !srv 09.01.01 03.06.03
+     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,        !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0,          !xpb
      4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
@@ -142,11 +132,11 @@
         co%cvsahz(:,:,is) =  co%cvsahz_cl(:,:,is) + co%cvsahz(:,:,is)
        end if
       end do                                                      !srv 16.10.17 }
-      if (fch_anomalous.ne.1.0_R8) then
-        co%csig = co%csig * fch_anomalous
-        co%calf = co%calf * fch_anomalous
-        co%csig_an = co%csig_an * fch_anomalous
-        co%calf_an = co%calf_an * fch_anomalous
+      if (switch%fch_anomalous.ne.1.0_R8) then
+        co%csig = co%csig * switch%fch_anomalous
+        co%calf = co%calf * switch%fch_anomalous
+        co%csig_an = co%csig_an * switch%fch_anomalous
+        co%calf_an = co%calf_an * switch%fch_anomalous
       end if
       call b2saxpy (nFc*2, 1.0_R8, chce0, 1, co%chce, 1)
       call b2saxpy (nFc*2, 1.0_R8, chve0, 1, co%chve, 1)
@@ -171,7 +161,7 @@
        endif 
       enddo                                                           !srv 13.10.06 }
 *  ..check that we have some particle diffusion
-      if (ncall.le.3) then                                            !srv 12.03.12 {
+      if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
 cwdk combined check for poloidal or radial diffusion
           wrk(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
@@ -184,13 +174,15 @@ cwdk combined check for poloidal or radial diffusion
           enddo
           write(message,'(a, i3)') 
      .     'No particle diffusion for species ',is
-          call xertst (wrkmin.gt.0.0_R8 .or. pol_anom_scale.eq.0.0_R8
-     .     .or. .not.solving(2),message)
+          call xertst (wrkmin.gt.0.0_R8 .or. 
+     .     switch%pol_anom_scale.eq.0.0_R8 .or. .not.b2news_solving(2),
+     .     message)
 *  ..check that we have some anomalous ion heat transport
           wrkmin = minval(co%hcib(:,is))
           write(message,'(a, i3)')
      .     'No ion heat diffusivity for species ',is
-          call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(4), message)
+          call xertst (wrkmin.gt.0.0_R8 .or. .not.b2news_solving(4),
+     .      message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
 !WG_TODO
@@ -201,11 +193,11 @@ cwdk combined check for poloidal or radial diffusion
 !WG_TODO              wrkmin = min(wrkmin, wrk(iFc))
 !WG_TODO        enddo
 !WG_TODO        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
-!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.solving(3) .or. 
+!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or. 
 !WG_TODO     .   no_current.eq.1, 'No anomalous perpendicular currents')
       endif                                                           !srv 12.03.12 }
 
-      if(iout.ne.0) then                                              !srv 17.06.08 {
+      if(switch%b2tral_iout.ne.0) then                                              !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'cdnax'//chns)
@@ -260,7 +252,7 @@ cwdk combined check for poloidal or radial diffusion
        call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkty')
       endif                                                          !srv 17.06.08 }
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {
+      if(switch%b2npc9_iout.ne.0 .or. switch%b2npco_iout.ne.0) then                !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2tral_cdnax'//chns)
@@ -276,7 +268,7 @@ cwdk combined check for poloidal or radial diffusion
        enddo
       endif
         
-      if(iout_b2npmo.ne.0) then
+      if(switch%b2npmo_iout.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahzx'//
@@ -295,7 +287,7 @@ cwdk combined check for poloidal or radial diffusion
         call my_out_us(70,nFc,1,co%cthi(1,is),'b2tral_cthi'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0) then
        call my_out_us(70,nFc,1,co%chce(1,0),'b2tral_chcex')
        call my_out_us(70,nFc,1,co%chce(1,1),'b2tral_chcey')
        call my_out_us(70,nFc,1,co%chci(1,0),'b2tral_chcix')
@@ -305,7 +297,7 @@ cwdk combined check for poloidal or radial diffusion
 !       call my_out_us(70,nFc,1,co%chvi(1,0),'b2tral_chvix')
 !       call my_out_us(70,nFc,1,co%chvi(1,1),'b2tral_chviy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         do is0=0,ns-1
@@ -323,7 +315,7 @@ cwdk combined check for poloidal or radial diffusion
       endif                                                          !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tral = ncall_b2tral+1
       call subend ()
       return
 

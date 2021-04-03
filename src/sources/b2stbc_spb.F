@@ -67,7 +67,7 @@
       logical wrong_flow
       real (kind=R8) ::
      *   sna0ep, she0ep, shi0ep,
-     1  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     1  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      4  csbm, cstm,   ! cstm1                                       !sv 14.10.99
      6    s0hz, s1hz, vwest, veast, vminus, vplus  !, v0              !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
@@ -119,8 +119,7 @@
      *   machsfr, b2ssum, expu2, hy1, sdot
       external subini, subend, xertst, machsfr, sfill, b2ssum, b2saxpy,
      1 sdot
-      external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                  !sv 18.01.02
-      expu2(t0) = dim(exp(min(20.0e0_R8,max(t0,cutll))),cutlo)
+      external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz, expu2                 !sv 18.01.02
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somehwat arbitrary level.)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -201,9 +200,6 @@
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialize sources to 0
       call sfill (n2*2*ns, 0.0e0_R8, sna0, 1)
       call sfill (n2*4*ns, 0.0e0_R8, smo0, 1)

@@ -212,7 +212,7 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
-      if (version.ge.'03.000.007') then
+      if (version.ge.'03.001.000') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
       else
         rtlqa_ra = lnzero

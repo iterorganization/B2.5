@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxus_b(nCv, mpg, mpgb, aa, aab, itcnt,   
+      subroutine b2uxus_b(nCv, mpg, aa, aab, itcnt,   
      .  resfun, resfunb, corfun, corfunb, name)
       use b2mod_types
       use b2mod_ma28_for_us
@@ -10,7 +10,6 @@
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt
       type (mapping), intent (in) :: mpg
-      type (mapping_diff), intent (in) :: mpgb
       real (kind=R8) ::
      *   aa(13*nCv), resfun(nCv)
       real (kind=R8) ::

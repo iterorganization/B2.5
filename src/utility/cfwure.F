@@ -1,5 +1,9 @@
       subroutine cfwure (nput, n, refun, id)
       use b2mod_types
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : fmt
       implicit none
       integer nput, n
       real (kind=R8) ::
@@ -12,13 +16,9 @@
 *     ------------------------------------------------------------------
       integer ifmt, i
       parameter (ifmt=1)
-      character fmt(0:5)*32, chf*12, idcod*8, idtyp*8, id0*32
-      save fmt
+      character chf*12, idcod*8, idtyp*8, id0*32
       logical streql
       external xerrab, streql
-      data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
-     &  '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))',
-     &  '(1p,9(1x,e13.5e3))', '(1p,10(1x,e12.4e3))'/
 *     ------------------------------------------------------------------
 *!!   Note: set ifmt to select the desired format.
 *     ------------------------------------------------------------------

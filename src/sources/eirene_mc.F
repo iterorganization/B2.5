@@ -1,5 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
-     1 BoRiS, sna0, smo0, she0, shi0, main_call, geo, mpg, pl, dv, rt)
+     1 BoRiS, sna0, smo0, she0, shi0, main_call, switch, geo, mpg, 
+     & pl, dv, rt, kin_frac_hyb)
 
 c  version : 26.07.2002 23:39
 
@@ -45,6 +46,7 @@ c  version : 26.07.2002 23:39
       use b2mod_braeir
       use b2mod_eirbra
 #endif
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -55,6 +57,7 @@ c  version : 26.07.2002 23:39
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
      & she0(nCv,0:3), shi0(nCv,0:3)
       logical main_call                                           !dpc
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -66,11 +69,11 @@ csw 19oct2012, added save attribute!!!
       integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
-      integer, save :: iout = 0
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
-     * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
-     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
+     * ndes, private_flux_puff, nesepm_sol,
+     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
+     * kin_frac_hyb(nFc)
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
      1 SSEISTAB(:),
@@ -149,21 +152,22 @@ c      data lis_hlp / 110, 111, 112, 49 /
       logical last, saved_volrec_used, na_feedback_on
       integer :: igpuff(NSTRAT)
 
-      integer output_style, linearisation, ank_mods, save_f31,
+      integer output_style, linearisation, ank_mods,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30, stab_corr
+     2 no_sseicorr, stab_corr
       save ncall, output_style, saved_volrec_used,
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
+     * ncallfeedback, ank_mods,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
-     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
+     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol,
      3 stab_corr
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
       integer, save :: ihist=0, neutr_avg=0, nhist=1, nrelax = 0
       integer, save :: ih_end
+      logical, save :: lneustra
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
 
@@ -221,12 +225,12 @@ csw 26feb2014
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
      .  linearisation/1/, solregno/3/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
-     2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
+     2  rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
-     5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
+     5  ndes/0.0_R8/, ank_mods/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/, stab_corr/1/
+     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, stab_corr/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -347,10 +351,6 @@ c not sure this is the right place
      1     solregno.le.cbirno+cbnrno-1,
      2     'faulty internal parameter solregno')
         endif
-        call ipgetr ('b2mndr_rescale_neutrals_sources',
-     *       neutral_sources_rescale)
-        call xertst (0.0_R8.le.neutral_sources_rescale,
-     1   'faulty input neutral_sources_rescale')
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
         call ipgeti ('eirene_ionising_core', ionising_core)
         if (ionising_core.eq.0)     ! for backward compatibility
@@ -359,10 +359,8 @@ c not sure this is the right place
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
-        call ipgeti ('eirene_savef30', save_f30)
-        call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
-        call ipgeti ('eirene_mc_iout', iout)
+
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
@@ -415,9 +413,17 @@ csw 26feb2013
         call ipgeti ('eirene_stab_corr',stab_corr)
       end if !}
 
+!! set logical lneustra
+      lneustra = switch%ineustra > 0
+!! make sure to keep standard behaviour if generalized spatially hybrid is not used.
+      if (switch%use_auto_spatial_hyb.eq.0) then 
+          kin_frac_hyb = 1.0_R8
+      endif
+
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,mpg,geo,pl,dv,BoRiS)
-        if(ncall.eq.0.or.save_f31.ne.0) then
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS,
+     &                       kin_frac_hyb)
+        if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
       endif
@@ -550,15 +556,19 @@ c*** recyc     : fudge factors for the sources in B2
 
         if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{    
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
-                tflux(istrai)=tflux(istrai)+mpg%rcFcOr(ind)*
-     1             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
+!!                iCv = mpg%rcCv(mpg%rcCvP(
+                tflux(istrai)=tflux(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
+     &              kin_frac_hyb(ifc)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
-     1             mpg%rcFcOr(ind)*
-     2             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
+     &              kin_frac_hyb(ifc)
               end do !}
             end if !}
           end do   
@@ -569,10 +579,12 @@ c*** recyc     : fudge factors for the sources in B2
      &      private_flux_puff.gt.0.0_R8)) then !{
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
-     1         cbsna(0,isfeedback,pfrregno2))/neutral_sources_rescale
+     1         cbsna(0,isfeedback,pfrregno2))/
+     2         switch%neutral_sources_rescale
             else !}{
               tflux(istrai)=
-     1         cbsna(0,isfeedback,pfrregno1)/neutral_sources_rescale
+     1         cbsna(0,isfeedback,pfrregno1)/
+     2         switch%neutral_sources_rescale
             end if !}
             if(ncall.eq.0) then
               if(nesepm_pfr.gt.0.0_R8) then
@@ -587,25 +599,29 @@ c*** recyc     : fudge factors for the sources in B2
           else if (ncall.ge.ncallfeedback.and.nesepm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
      1     istrai.eq.nesepm_istra) then !}{
             TFLUX(istrai)=
-     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+     1       (cbsna(0,isfeedback,solregno))/
+     2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
           else if (time_dep_puff(istrai)) then !}{
@@ -709,7 +725,9 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         eircount=1
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
-           call copy_background(nCv, nFc, ns, mpg, geo, pl, dv, BoRiS)
+           call copy_background(nCv, nFc, ns, switch, mpg, 
+     &                          geo, pl, dv, BoRiS,
+     &                          kin_frac_hyb)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -935,7 +953,8 @@ c*** Print the particle fluxes for each stratum and species
             do j=1,nnlimi+nnstsi !{
               if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) hlp_pi(b2eatcr(is))=
+                  if(.not.is_neutral(is).or.lneustra) 
+     +             hlp_pi(b2eatcr(is))=
      +             hlp_pi(b2eatcr(is))+wldpp(j,fluids_list(is),istrai)
                 end do !}
                 do i=1,nnatmi !{
@@ -985,7 +1004,7 @@ c*** Print the particle fluxes for each stratum and species
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
                 do is=0,ns-1    !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     hlp_s(b2eatcr(is))=hlp_s(b2eatcr(is))+
      +                   sni(ic,fluids_list(is),istrai)
                   end if        !}
@@ -1084,7 +1103,7 @@ c*** species to be scaled with themselves (recycling species)
             do i=1,n !{
               j=nnlimi+i
               do is=0,ns-1 !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).eq.ls) then !{
                     hlp_pi(ls)=hlp_pi(ls)+
@@ -1113,7 +1132,7 @@ c!###}
 
             do ic=1,nCv !{
               do is=0,ns-1      !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
@@ -1290,7 +1309,7 @@ c>>>
 
             do ic=1,nCv !{
               do is=0,ns-1      !{
-                if(.not.is_neutral(is)) then !{
+                if(.not.is_neutral(is).or.lneustra) then !{
                   ls=b2eatcr(is)
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
@@ -1366,7 +1385,7 @@ c*** Here only the second pass of correction
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     ls=b2eatcr(is)
                     hlp_s(ls)=hlp_s(ls)+
      .                 sni(ic,fluids_list(is),istrai)
@@ -1512,7 +1531,7 @@ c*** Here only the second pass of correction
             end do !}
 
             do is=0,ns-1 !{
-              if(.not.is_neutral(is)) then !{
+              if(.not.is_neutral(is).or.lneustra) then !{
                 ls=b2eatcr(is)
                 if(lstrascl(istrai,ls).gt.0) then !{
                   do ic=1,nCv !{
@@ -1585,7 +1604,7 @@ c*** Print the particle fluxes for each stratum and species
             do j=1,nnlimi+nnstsi !{
               if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
                 do is=0,ns-1 !{
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     hlp_pi(b2eatcr(is))=hlp_pi(b2eatcr(is))+
      +               wldpp(j,fluids_list(is),istrai)
                   end if !}
@@ -2050,7 +2069,7 @@ c***  sclbase : the plasma sources
             sclbase(j,istrai)=0.0_R8
           end do !}
           do is=0,ns-1 !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{
               j=b2eatcr(is)
               if(use_recyceir.gt.0) then
                 recyctmp=recyceir(istrai)
@@ -2187,7 +2206,7 @@ c   and apply linearisation
       smo_tot=0.0_R8
       sni_tot=0.0_R8
       do is = 0, ns-1 !{
-        if(.not.is_neutral(is)) then !{
+        if(.not.is_neutral(is).or.lneustra) then !{
           j=b2eatcr(is)
           ifl=fluids_list(is)
           do istrai=1,nstrat !{
@@ -2238,7 +2257,7 @@ c   and apply linearisation
 * by ns
         recyc_hlp=0.0_R8
         do is=0,ns-1 !{
-          if(.not.is_neutral(is)) then !{
+          if(.not.is_neutral(is).or.lneustra) then !{
             ifl=fluids_list(is)
             j=b2eatcr(is)
             if(use_recyceir.gt.0) then
@@ -2610,7 +2629,7 @@ c*** before correction (r), after correction (c), after iteration (i)
           end if !}
         end do !}  ! is
 
-        if (iout.ne.0) then
+        if (switch%eirene_mc_iout.ne.0) then
           write (chistrai,'(i1)') istrai
           call my_out_us(70,nCv,0,sei_av(:,istrai),'sei'//chistrai)
           if (istrai.eq.1) then
@@ -2835,7 +2854,7 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                   else
                     recyctmp=recyc(is,istrai)
                   endif
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     ifl=fluids_list(is)
                     j=b2eatcr(is)
                     if (smo_tot(ic,ifl).ne.0.0_R8 .and.
@@ -3320,7 +3339,9 @@ C           call xerrab ('eirene_mc: bccon <> 13')
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
-      call copy_background(nCv, nFc, ns, mpg, geo, pl, dv, BoRiS)
+      call copy_background(nCv, nFc, ns, switch, 
+     &                     mpg, geo, pl, dv, BoRiS,
+     &                     kin_frac_hyb)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011
@@ -3396,7 +3417,7 @@ c*** SNIC and SNIV evaluation above
                   else
                     recyctmp=recyc(is,istrai)
                   endif
-                  if(.not.is_neutral(is)) then !{
+                  if(.not.is_neutral(is).or.lneustra) then !{
                     j=b2eatcr(is)
                     t0=sni(ic,fluids_list(is),istrai)*recyctmp*
      *               tflux(istrai)*flux_scale(istrai)
@@ -3429,7 +3450,7 @@ c*** recombination is already evaluated above.
         hlp_pff=.true.
         do istrai=1, nstrat !{
           do is=0,ns-1 !{
-            if(.not.is_neutral(is)) then !{
+            if(.not.is_neutral(is).or.lneustra) then !{
               j=b2eatcr(is)
               if(use_recyceir.gt.0) then
                 recyctmp=recyceir(istrai)

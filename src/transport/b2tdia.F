@@ -1,13 +1,15 @@
-      subroutine b2tdia(nCv, nFc, nVx, ns, geo, mpg,
+      subroutine b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg,
      &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_constants
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -34,7 +36,6 @@
       integer, save :: ncall = 0
       real (kind=R8) ::
      &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1), pzf(nFc)
-      real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -47,10 +48,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tdia')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then                                               !srv
-       call ipgetr ('b2tfhe_dia_cur', dia_cur)                           !srv
-      end if
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *   ..test nx, ny, ns
@@ -59,7 +56,7 @@
       endif
       
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+      if (facdriftm.ne.0.0_R8.and.switch%dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
 
 *     ..interpolate to faces
         wght = 1.0_R8
@@ -70,9 +67,9 @@
      &    geo%vxOnedBsq, gOnedBsq)
 
 *     ..DIVERGENT PART OF DIAMAGNETIC CURRENT
-        fchdia(:,0) =  dia_cur*facdrift*pzf*
+        fchdia(:,0) =  switch%dia_cur*facdrift*pzf*
      &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
-        fchdia(:,1) = -dia_cur*facdrift*pzf*
+        fchdia(:,1) = -switch%dia_cur*facdrift*pzf*
      &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
       else

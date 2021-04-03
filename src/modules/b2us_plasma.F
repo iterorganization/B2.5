@@ -1613,6 +1613,7 @@ cwdk move to dv
       call cfwure (nout, nCv*ns*4,   st % sr % smq, 'smq')
       call cfwure (nout, nCv*4,   st % sr % shi, 'shi')
       call cfwure (nout, nCv*4,   st % sr % she, 'she')
+      call cfwure (nout, nCv*4,   st % sr % shn, 'shn')
       call cfwure (nout, nCv*4,   st % sr % skt, 'skt')
       call cfwure (nout, nCv,   st % sr % skt_prod, 'skt_prod')
       call cfwure (nout, nCv,   st % sr % skt_diss, 'skt_diss')

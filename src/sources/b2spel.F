@@ -5,6 +5,10 @@
       use b2mod_types
       use b2mod_b2cmrc
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2spel
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -49,9 +53,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, ite, ine
+      integer iCv, is, ite, ine
       logical ltst0
-      save ncall
       real (kind=R8) ::
      *   rlte, rlne, fxte, fxne, t0, t1, tt
 *   ..procedures
@@ -59,12 +62,10 @@
       real (kind=R8) ::
      *   trimg
       external subini, subend, xertst
-      external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
+      external b2xvsg, trimg
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -78,7 +79,7 @@
 *   ..test ev
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2spel.lt.3) then
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
@@ -267,7 +268,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2spel = ncall_b2spel+1
       call subend ()
       return
 

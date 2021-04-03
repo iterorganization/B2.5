@@ -5,6 +5,10 @@
      *   rlcx0)
       use b2mod_types
       use b2mod_b2cmrc
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2spcx
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -50,8 +54,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, it0, in0
-      save ncall
+      integer iCv, is, it0, in0
       real (kind=R8) ::
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
 *   ..procedures
@@ -59,12 +62,10 @@
       real (kind=R8) ::
      *   trimg
       external subini, subend, xertst
-      external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
+      external b2xvsg, trimg
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -80,7 +81,7 @@
       call xertst (0.lt.amh0.and.amh0.le.3,
      &  'faulty argument range amh0')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2spcx.lt.3) then
        call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
@@ -144,7 +145,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2spcx = ncall_b2spcx+1
       call subend ()
       return
 

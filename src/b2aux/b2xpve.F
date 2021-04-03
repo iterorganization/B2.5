@@ -1,11 +1,14 @@
-      subroutine b2xpve (nCv, nFc, ns, geo, mpg, qe, rza, rz2, alfx_c,      !srv 17.11.16 {
+      subroutine b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza, 
+     &                rz2, alfx_c,                                     !srv 17.11.16 {
      &                sigx_c, fch_pi_c, po, ne, te, na, ua, st_ext, ve)
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
       implicit none
       integer nCv, nFc, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
@@ -20,20 +23,12 @@
 *     ------------------------------------------------------------------
       integer ic, iFc, is
       integer, save :: ncall = 0                                        !srv 03.04.15
-      real (kind=R8), save :: prl_cur = 1.0_R8, phm2 = 1.0_R8           !srv 03.04.15
-      integer, save :: style = 2                                        !srv 13.01.17
       real (kind=R8) ::
      &   wrksig(nFc), wrkalf(nFc), wrksig_c(nCv), wrkalf_c(nCv),
      &   gpop(nFc), gpep(nFc), gtep(nFc), dumm(mpg%nVx), nef(nFc),
      &   zeff(nCv), wght(nFc,2), pe(nCv)
 *     ------------------------------------------------------------------
-      if (ncall.eq.0) then
-       call ipgetr ('b2tfhe_prl_cur', prl_cur)
-       call ipgetr ('b2sifr_phm2', phm2)
-       call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
-      endif
-
-      if(style.eq.2) then                                               !srv 13.01.17 {
+      if(switch%b2sigp_style.eq.2) then                                 !srv 13.01.17 {
         call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
         call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
      &    st_ext, fch_pi_c)
@@ -52,9 +47,10 @@
 
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrksig,wrksig_c)
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkalf,wrkalf_c)
-      ve = -sigx_c*wrksig_c - phm2*alfx_c*wrkalf_c
+      ve = -sigx_c*wrksig_c - switch%b2sifr_phm2*alfx_c*wrkalf_c
 
-      ve = (ve+fch_pi_c(:,0))/(geo%cvBb(:,0)/geo%cvBb(:,3))/qe*prl_cur      !srv 21.12.15
+      ve = (ve+fch_pi_c(:,0))/(geo%cvBb(:,0)/geo%cvBb(:,3))/qe*
+     &                                               switch%prl_cur      !srv 21.12.15
       do is=0,ns-1
         ve = ve + rza(:,is)*ua(:,is)*na(:,is)
       enddo

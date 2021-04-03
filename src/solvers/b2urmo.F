@@ -1,16 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nCv, nFc, nVx, geo, mpg,  isb, ub, rob, 
+      subroutine b2urmo (nCv, nFc, nVx, switch, geo, mpg,  isb, ub, rob, 
      .  smb, flub, flubv, cvsb, resmb, fmb, fkb, cvsb_eff)                      !srv 02.06.11
       use b2mod_types
+      use b2mod_switches
       use b2us_geo
       use b2us_map
 !WG_TODO      use b2mod_balance                                                 !djm Jan2017
 !WG_TODO     & , only : fmo_flua, fmo_cvsa, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2urmo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -55,22 +61,18 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iFc
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
-      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
-      integer, save :: meth = 2
+      integer iFc
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       character chns*3                                                  !srv 02.06.11
-      save ncall
       real (kind=R8) ::
      *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
-      real (kind=R8), save :: eps = 1.0e-60_R8
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, calcflow, calccoef
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -80,16 +82,8 @@
       call subini ('b2urmo')
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                              !iys 17.04.17
-        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
-        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-        call ipgeti ('b2npmo_discr_meth', meth)
-      endif
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2urmo.lt.3) then
 *    ..test sign of rob, smb1, smb3
        call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
        call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
@@ -102,9 +96,11 @@
 * ..compute flux
 cwdk note: compared to original code, flv is now based on "effective" 
 cwdk       viscosity, and will be zero if cvsb is zero
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,ub,flub,cvsb,fmb,flf,flv)
+      call calcflow(nCv,nFc,nVx, switch%b2npmo_discr_meth,
+     &                       geo,mpg,ub,flub,cvsb,fmb,flf,flv)
 cwdk store effective viscosity, for use in viscous heating
       call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
+!$AD DEBUG-HERE b2urmo_user1 true true
       cvsb_eff  = -flv/(wrkf + eps)
 
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
@@ -112,7 +108,8 @@ cwdk store effective viscosity, for use in viscous heating
 !WG_TODO        fmo_flua(:,:,isb)=flf
 !WG_TODO      endif
 
-      if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
+!$AD DEBUG-HERE b2urmo_user2 true true
+      if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_graduax'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_graduay'//chns)
@@ -125,7 +122,8 @@ cwdk store effective viscosity, for use in viscous heating
       ! - should contribution from flubv be in here?
       wrk  = 0.5_R8*ub**2
       wrkf = flub + flubv
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
+      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_ meth,
+     &                     geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz
 
@@ -143,7 +141,7 @@ cwdk store effective viscosity, for use in viscous heating
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2urmo = ncall_b2urmo+1
       call subend ()
       return
 

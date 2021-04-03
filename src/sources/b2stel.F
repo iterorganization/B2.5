@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
-     &  geo, mpg, pl, dv, rt, rtw, srw)
+     &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
 !      use b2mod_diag
       use b2mod_tallies
@@ -21,14 +21,20 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
 #endif
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2stel
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
       real (kind=R8) ::
      *  BoRiS
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -53,19 +59,11 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, iCv, is, js, fix_recomb_energy, k
+      integer iCv, is, js, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
-      integer, save :: iout = 0, iout_b2wdat = 0,
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, tn_style = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
-     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     *  fix_recomb_energy
-      real (kind=R8) ::
-     *  rf0, t0, t1, t1n, t1i, tkin
+     *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
@@ -83,11 +81,6 @@
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
-      data ncall/0/, styl0/0/, rg0/1.0_R8/,
-     &  rg1/1.0_R8/, rxm0/0.0_R8/,
-     &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/,           !srv 05.06.18
-     &  fix_recomb_energy/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -96,32 +89,6 @@
 *   ..subprogram start-up calls
       call subini ('b2stel')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2stel_rg0', rg0)
-       call ipgetr ('b2stel_rg1', rg1)
-       call xertst (0.0_R8.le.rg0.and.0.0_R8.le.rg1,
-     &   'faulty internal parameter rg0/1')
-       call ipgetr ('b2stel_rxm0', rxm0)
-       call ipgetr ('b2stel_rxm1', rxm1)
-       call ipgetr ('b2stel_rxm2', rxm2)
-       call ipgetr ('b2stel_rxm3', rxm3)
-       call ipgetr ('b2stel_rxm4', rxm4)
-       call ipgetr ('b2stel_phm0', phm0)
-       call xertst (0.0_R8.le.rxm0.and.
-     &   0.0_R8.le.rxm1.and.0.0_R8.le.rxm2.and.
-     &   0.0_R8.le.rxm3.and.0.0_R8.le.rxm4,
-     &   'faulty internal parameter rxm0/1/2/3/4')
-       call xertst (0.0_R8.le.phm0, 'faulty parameter phm0')
-       call ipgeti ('b2stel_styl0', styl0)
-       call xertst (0.le.styl0.and.styl0.lt.4,
-     &   'faulty internal parameter styl0')
-       call ipgeti ('b2stel_fix_recomb_energy', fix_recomb_energy)
-       call xertst (.not.(adpak_used.and.fix_recomb_energy.ne.0),
-     &   'fix_recomb_energy should not be used with ADPAK rates!')
-       if(fix_recomb_energy.ne.0) then
-         write(*,*)
-     &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
-       endif
 *   ..identify impurity homonuclear sequences
 !WG_TODO       nimp_tmp=0
 !WG_TODO       jimp_tmp=0
@@ -131,20 +98,11 @@
 !WG_TODO           jimp_tmp(is)=nimp_tmp
 !WG_TODO         end if !}
 !WG_TODO       end do !}
-       call ipgeti ('b2stel_iout', iout)                         !srv 30.06.08
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
-       call ipgeti ('b2npco_iout', iout_b2npco)
-       call ipgeti ('b2npmo_iout', iout_b2npmo)
-       call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
-       call ipgeti ('b2mn_tn_style', tn_style)
-      endif
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nx, ny')
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stel.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'vol', '.gt.')
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
@@ -198,9 +156,10 @@
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rxm0*max(0.0_R8,rt%rlsa(iCv,1,is))
+           rf0 = switch%b2stel_rxm0*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-           t0 = phm0*rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)      !srv 05.06.18
+           t0 = switch%b2stel_phm0*
+     &                rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)      !srv 05.06.18
 *       ..compute particle source
            sna0_ion(iCv,0,is+1) = sna0_ion(iCv,0,is+1)+             !srv 11.09.09 {
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
@@ -217,12 +176,12 @@
             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
-           if (tn_style.eq.0) then
+           if (switch%tn_style.eq.0) then
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
-           elseif (tn_style.eq.1) then
+           elseif (switch%tn_style.eq.1) then
              t1i = t1 + t0*pl%na(iCv,is)*1.5_R8*pl%tn(iCv)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
@@ -236,7 +195,8 @@
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
              shn0_ion(iCv,0) = shn0_ion(iCv,0)+(1.0_R8+rf0)*t1n
              shn0_ion(iCv,3) = shn0_ion(iCv,3)-
-     &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
+     &                         rf0*t1n/((dv%ni(iCv,0)-dv%ni(iCv,1))*
+     &                         pl%tn(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
            !! neutrals that ionize have energy according to Tn, but source scaling is still based on ti and ni.
            endif
@@ -251,13 +211,15 @@
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-             rf0 = rg0+rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
+             rf0 = switch%b2stel_rg0 +
+     &             switch%b2stel_rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-             t0 = phm0*rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*   !srv 05.06.18
+             t0 = switch%b2stel_phm0*
+     &                 rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*   !srv 05.06.18
      &           pl%na(iCv,is)*geo%cvHz(iCv)                        !srv 09.01.01
 *       ..compute parallel momentum source
              t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
-             if (styl0.eq.0) then
+             if (switch%b2stel_styl0.eq.0) then
                 smq0_ion(iCv,0,is+1) = smq0_ion(iCv,0,is+1)+
      &           t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))
                 smq0_ion(iCv,1,is+1) = smq0_ion(iCv,1,is+1)-
@@ -266,7 +228,7 @@
      &           rf0*t1*pl%ua(iCv,is)
                 smq0_ion(iCv,1,is) = smq0_ion(iCv,1,is)-
      &           (1.0_R8+rf0)*t1
-             else if (styl0.eq.1) then
+             else if (switch%b2stel_styl0.eq.1) then
 *       ..compute parallel momentum source
                smq0_ion(iCv,2,is+1) = smq0_ion(iCv,2,is+1)+
      &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))/roxa(iCv,is+1)
@@ -276,7 +238,7 @@
      &          rf0*t1*pl%ua(iCv,is)/roxa(iCv,is)
                smq0_ion(iCv,3,is) = smq0_ion(iCv,3,is)-
      &          (1.0_R8+rf0)*t1/roxa(iCv,is)
-             else if (styl0.eq.2) then
+             else if (switch%b2stel_styl0.eq.2) then
                smq0_ion(iCv,0,is+1) = smq0_ion(iCv,0,is+1)+
      &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))
                smq0_ion(iCv,3,is+1) = smq0_ion(iCv,3,is+1)-
@@ -285,7 +247,7 @@
      &          rf0*t1*pl%ua(iCv,is)
                smq0_ion(iCv,3,is) = smq0_ion(iCv,3,is)-
      &          (1.0_R8+rf0)*t1/roxa(iCv,is)
-             else if (styl0.eq.3) then
+             else if (switch%b2stel_styl0.eq.3) then
                smq0_ion(iCv,2,is+1) = smq0_ion(iCv,2,is+1)+
      &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))/roxa(iCv,is+1)
                smq0_ion(iCv,1,is+1) = smq0_ion(iCv,1,is+1)-
@@ -320,9 +282,10 @@
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rxm2*max(0.0_R8,-rt%rlra(iCv,1,is))
+           rf0 = switch%b2stel_rxm2*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 = phm0*rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)    !srv 05.06.18
+           t0 = switch%b2stel_phm0*
+     &                    rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)    !srv 05.06.18
 *       ..compute particle source
            sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+               !srv 11.09.09 {
      &       rf0*t0*pl%na(iCv,is)
@@ -335,14 +298,14 @@
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           if (tn_style.eq.0) then !! combined ion-neutral (default)
+           if (switch%tn_style.eq.0) then !! combined ion-neutral (default)
              t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
      &         ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
-           elseif (tn_style.eq.1) then !! pure ion
+           elseif (switch%tn_style.eq.1) then !! pure ion
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))*
      *         (1.0_R8-BoRiS)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
@@ -358,14 +321,15 @@
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
              shn0_rec(iCv,0) = shn0_rec(iCv,0)+(1.0_R8+rf0)*t1n
              shn0_rec(icv,3) = shn0_rec(iCv,3)-
-     *                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
+     *                         rf0*t1n/((dv%ni(iCv,0)-dv%ni(iCv,1))*
+     *                         pl%tn(iCv))
            endif
 !WG_TODO           rrahi(iCv,is) = t1
 
 
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(fix_recomb_energy.ne.0) then
+           if(switch%fix_recomb_energy.ne.0) then
 c the default treatment is to have the entire ionization potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
@@ -391,9 +355,11 @@ c accounted for)
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rg1+rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
+           rf0 = switch%b2stel_rg1 +
+     &           switch%b2stel_rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 =phm0*rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*      !srv 05.06.18
+           t0 =switch%b2stel_phm0*
+     &              rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*      !srv 05.06.18
      &         pl%na(iCv,is)*geo%cvHz(iCv)                          !srv 09.01.01
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
@@ -426,11 +392,11 @@ c accounted for)
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
 *      ..compute damping coefficient
-          rf0 = rxm4*max(0.0_R8,rt%rlqa(iCv,1,is))
+          rf0 = switch%b2stel_rxm4*max(0.0_R8,rt%rlqa(iCv,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..if adpak_used, also contains recombination and CX terms
-          t0 = phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
+          t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
      &         *geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
@@ -439,7 +405,8 @@ c accounted for)
 !WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
-          t0 = phm0*rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+          t0 = switch%b2stel_phm0*
+     &         rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
      &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute line radiation
 !WG_TODO          rqrad(iCv,is) = t0
@@ -451,7 +418,8 @@ c accounted for)
 !WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
 !WG_TODO          endif
 *      ..compute bremsstrahlung radiation rate for is->any
-          t0 = phm0*rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+          t0 = switch%b2stel_phm0*
+     &         rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
      &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
 !WG_TODO          rqbrm(iCv,is) = t0
@@ -494,8 +462,8 @@ c accounted for)
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 #endif
 
-      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or.
-     &    iout_b2wdat .eq. 4) then                                    !srv 30.06.08 11.09.09 {
+      if (switch%b2stel_iout.eq.1 .or. switch%b2npmo_iout.eq.1 .or.
+     &    switch%iout_b2wdat .eq. 4) then                              !srv 30.06.08 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !         do k=0,3
@@ -517,8 +485,9 @@ c accounted for)
           call my_out_us(70,nCv,0,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-     &                 .or. iout_b2wdat .eq. 4) then
+      if (switch%b2stel_iout.eq.1 .or. 
+     &     (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1)
+     &                           .or. switch%iout_b2wdat .eq. 4) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !         do k=0,1
@@ -535,8 +504,9 @@ c accounted for)
 
         enddo
       endif
-      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
-     &                 .or. iout_b2wdat .eq. 4) then
+      if (switch%b2stel_iout.eq.1 .or. 
+     & (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1)
+     &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,shi0_ion(-1,-1,k),'b2stel_shi_ion'//chk)
@@ -576,7 +546,7 @@ cdjm Jan2017 Keep linearised sources for balance
 #endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2stel = ncall_b2stel+1
       call subend ()
       return
 

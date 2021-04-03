@@ -24,18 +24,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
-      save ncall
-      real (kind=R8) ::
-     *   t0, t1
+      integer iCv, is
 *   ..procedures
-      intrinsic max, abs, sign
       real (kind=R8) ::
      *   uxcm
-      external subini, subend, xertst
-      uxcm(t0,t1) = sign(max(abs(t0),abs(t1)),t0+t1)
+      external subini, subend, xertst, uxcm
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -54,7 +48,6 @@
       enddo
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

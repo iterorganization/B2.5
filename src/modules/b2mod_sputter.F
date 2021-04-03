@@ -3,7 +3,9 @@
       use b2mod_constants
       use b2mod_wall
       use b2mod_layer
-
+      use b2mod_ad
+     & , only : nsdmax
+      implicit none
       integer, save :: sput_dst, sput_dst2, sput_dst3
       integer, save :: target_intcode(3+6), target_index(92)
       integer, save :: zwall(6)
@@ -33,9 +35,8 @@
      *  sputter_yield(:,:,:,:), sputter_yield2(:,:,:,:)
 #else
 #     include "DIMENSIONS.F"
-      integer nxmax, nymax, nsdmax
-      parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD,NSDMAX=DEF_NSD)
-      private :: nsdmax
+      integer nxmax, nymax
+      parameter (NXMAX=DEF_NXD,NYMAX=DEF_NYD)
       real (kind=R8), save ::
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2), 
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)      
@@ -1414,17 +1415,15 @@ c   K(T) = 1/(KA * T + KB)
       implicit none
       integer ibnd
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      real (kind=R8), save :: cutll, cutlo
-      logical, save  :: lfirst, coating
+      logical, save  :: coating
       real (kind=R8) :: t0
-      real (kind=R8) :: machsfr, expu2, layer_Kappa
-      external machsfr, layer_Kappa
-      intrinsic dim, exp, min, max
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
+      real (kind=R8) :: machsfr, layer_Kappa, expu2
+      external machsfr, layer_Kappa, expu2
+      intrinsic exp, min, max
+
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
 *   ..initialisation
-      data lfirst /.true./
 
 c  Inputs:
 c  qin -> incident ion heat flux (Joules/m^2/sec)
@@ -1449,12 +1448,6 @@ c  Td -> Temperature at interface between mixing layer and original wall materia
 c  Remarks:
 c  Consider adding the option of layer_thermal_contact
 
-*   ..set cutll, cutlo
-      if (lfirst) then
-        cutll = log(machsfr())
-        cutlo = max(machsfr(),exp(cutll))
-        lfirst = .false.
-      end if
 
       TL = backplate_temp(ibnd)
       L = plate_thickness(ibnd)

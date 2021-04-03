@@ -27,11 +27,10 @@
       external E01BEF, E01BFF
       real (kind=R8) ::
      *   t0, t1, t2
-      external xerrab, subini, subend, interp2d
+      external xerrab, subini, subend, interp2d, med
       intrinsic min, max, real
       real (kind=R8) ::
      *   med
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
       call subini ('b2xtvc')
       if (non_commensurate.eq.0) then   ! commensurate mapping

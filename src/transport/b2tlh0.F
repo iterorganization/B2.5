@@ -1,13 +1,19 @@
-      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, ti,
+      subroutine b2tlh0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, ti,
      & tn, chcib, chcb, fllim0fhi)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tlh0
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -21,19 +27,15 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, ncall, c3
-      integer, save :: style = 0
-      integer, save :: iout = 0                                   !srv 13.01.04 {
-      real (kind=R8), allocatable :: w1(:)
+      integer iFc, is, c3                                 
+      real (kind=R8), allocatable :: w1(:)                        !srv 13.01.04 {
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dtn, vthi, maxfluxlimit(0:1),
-     *  flux_limit_min_tn, tnv(nVx), dtnf(nFc,0:1)
+     *  tnv(nVx), dtnf(nFc,0:1)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
-      save ncall, alpha, gamma, flux_limit_min_tn
+      save alpha, gamma
 *   ..initialisation
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
-     *     flux_limit_min_tn/0.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst, ipgetr, ipgeti
@@ -44,24 +46,19 @@
       call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read input on first call
-      if (ncall.eq.0) then
-        call ipgetr ('b2tlh0_alpha', alpha)
-        call xertst (0.0_R8.le.alpha, 'invalid input parameter alpha')
-        call ipgetr ('b2tlh0_gamma', gamma)
-        call xertst (0.0_R8.lt.gamma, 'invalid input parameter gamma')
-        call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_tn) !! do not change name of switch for compatibility with existing input files?
-        flux_limit_min_tn=flux_limit_min_tn*ev
-        call ipgeti ('b2tlh0_iout', iout)                         !srv 13.01.04
-        call ipgeti ('b2tlh0_style', style)
-      endif
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_tn) !! do not change name of switch for compatibility with existing input files?
+c        flux_limit_min_tn=flux_limit_min_tn*ev
 
+      alpha = switch%b2tlh0_alpha
+      gamma = switch%b2tlh0_gamma
       call sfill(nFc*2*ns, 1.0_R8, fllim0fhi, 1)
       maxfluxlimit=0.0_R8
 
       if (alpha.ne.0.0_R8) then
 *   .. compute differences of temperature
        call diff(nCv, nFc, nVx, 0, geo, mpg, tn, tnv, dtnf)
-       if (style.eq.0) then
+       if (switch%b2tlh0_style.eq.0) then
         do is = 0, ns-1
          if (is_neutral(is)) then
           do iFc = 1, nFc
@@ -117,10 +114,10 @@ cwdk    or radial contributions, since neutral transport is isotropic
 
  100  continue
 
-       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+       if (ncall_b2tlh0.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+       if (switch%b2tlh0_iout.ne.0) then
         allocate(w1(nCv))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -135,7 +132,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
        endif
 
 *   ..return
-      ncall = ncall + 1
+      ncall_b2tlh0 = ncall_b2tlh0 + 1
       call subend ()
       return
 *     ------------------------------------------------------------------

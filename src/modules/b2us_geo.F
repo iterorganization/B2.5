@@ -310,20 +310,17 @@
 
 ***********************************************************************
 
-      subroutine init_geometry (mpg, gm)
+      subroutine init_geometry (mpg, gm, switch)
       use b2mod_constants
       use b2mod_b2cmfs
      &  , only : isymm
+      use b2mod_switches
       use b2us_map
       implicit none
+      type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
-      integer :: use_9pt_stencil = 1
-      integer :: fcHz_style = 0
-      integer :: vxHz_style = 0
-      integer :: fcVol_style = 0
-      integer :: vxVol_style = 2
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width
       intrinsic maxval
       data width /1.0_R8/
@@ -332,11 +329,6 @@
       call ipgetr ('b2mndr_hz', fac_hz)
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')
-      call ipgeti ('b2mndr_fcHz_style',fcHz_style)
-      call ipgeti ('b2mndr_vxHz_style',vxHz_style)
-      call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
-      call ipgeti ('b2mndr_fcVol_style',fcVol_style)
-      call ipgeti ('b2mndr_vxVol_style',vxVol_style)
       call ipgetr ('b2agmt_1d_width', width)
 
       nCv = mpg%nCv
@@ -344,13 +336,13 @@
       nVx = mpg%nVx
 
 *   ..set weights for interpolation to faces
-      if (fcVol_style.eq.0) then
+      if (switch%fcVol_style.eq.0) then
        ! weights for inverse volume interpolation
        do iFc = 1, nFc
          gm%fcVol(iFc,1) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,1))
          gm%fcVol(iFc,2) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,2))
        enddo
-      elseif (fcVol_style.eq.1) then
+      elseif (switch%fcVol_style.eq.1) then
        ! weights for simple averaging
        do iFc = 1, nFc
          gm%fcVol(iFc,1) = 0.5_R8
@@ -361,7 +353,7 @@
       endif
 
 *   ..set weights for interpolation to vertices
-      if (vxVol_style.eq.0) then
+      if (switch%vxVol_style.eq.0) then
        ! weights for inverse volume interpolation
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
@@ -370,7 +362,7 @@
      &     (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
         enddo
        enddo
-      elseif (vxVol_style.eq.1) then
+      elseif (switch%vxVol_style.eq.1) then
        ! weights based on relative volume fraction
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
@@ -385,7 +377,7 @@
          endif
         enddo
        enddo
-      elseif (vxVol_style.eq.2) then
+      elseif (switch%vxVol_style.eq.2) then
        ! assign 1/4, except guard cells
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
@@ -442,7 +434,7 @@
       gm%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*gm%cvVol/gm%cvSz
 
 *   ..compute fcHz and fcPbshz
-      if (fcHz_style.eq.0) then
+      if (switch%fcHz_style.eq.0) then
         call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcHz)
       else
         if (isymm.eq.0) then
@@ -462,7 +454,7 @@
       gm%fcPbshz = gm%fcPbs * gm%fcHz
 
 *   ..compute vxHz
-      if (fcHz_style.eq.0) then
+      if (switch%fcHz_style.eq.0) then
         call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
       else
         if (isymm.eq.0) then
@@ -482,7 +474,7 @@
 
 *   ..modify geometry to recover 5-point stencil behavior
       ! only supported for cases derived from original, structured grid
-      if (use_9pt_stencil.eq.0) then
+      if (switch%use_9pt_stencil.eq.0) then
         if (mpg%isClassicalGrid.eq.1) then
           nfx = maxval(mpg%imapFcx)
           ! 'poloidal' faces

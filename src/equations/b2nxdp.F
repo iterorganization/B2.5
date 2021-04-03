@@ -2,6 +2,10 @@
      &  delpo)
       use b2mod_types
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2nxdp
       implicit none
       integer nCv, nregionv
       type (mapping), intent (in) :: mpg
@@ -12,18 +16,16 @@
 *     B2NXDP computes the correction to the electric potential following
 *     an update to the electron density.
 *     ------------------------------------------------------------------
-      integer ncall, iCv, ireg
-      save ncall
+      integer iCv, ireg
       external subini, subend, xertst
       external b2xvsg
 *   ..initialisation
-      data ncall/0/
 *     ------------------------------------------------------------------
       call subini ('b2nxdp')
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (0.0_R8.lt.qe, 'faulty argument qe')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2nxdp.lt.3) then
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, nep, 1, 'nep', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
@@ -38,7 +40,7 @@
          delpo(iCv) = 0.0_R8
         endif
       enddo
-      ncall = ncall+1
+      ncall_b2nxdp = ncall_b2nxdp+1
       call subend ()
       return
 *     ------------------------------------------------------------------

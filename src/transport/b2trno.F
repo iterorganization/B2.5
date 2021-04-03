@@ -2,20 +2,33 @@
 *.specification
 
       subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     &  geo, mpg, pl, dv, rt, st_ext, co)
+     &  switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
 !      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
 !      use b2mod_neoclassical
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_transport_namelist
+     & , only : parm_hce, parm_hci, parm_dna
+      use b2mod_input_profile
+     & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
+     &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
+     &          nkind_coeff
+      use b2mod_ad
+     & , only : my_out_folder, my_out_sf, ncall_b2trno, ncall_b2tqna,
+     &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
      *  ismain
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -63,20 +76,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, is
-      integer mode
-      integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
-     &                 tn_style = 0
+      integer iCv, iFc, is, mode
       character(3) chns                                               !srv 17.06.08
-      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
-      integer, save :: flux_limit_to_vsa = 1
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
-      integer, save :: user_transport = 0                             !mb  11.10.17  
-      real (kind=R8), save :: fch_stochastic = 0.0_R8,
-     &                        alpha_stoch = 1.0e0_R8                  !srv 17.12.13
+      real (kind=R8), save :: alpha_stoch = 1.0e0_R8                  !srv 17.12.13
       real (kind=R8) ::
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
@@ -85,9 +88,7 @@
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
-     4	pol_anom_scale,
-     5  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
-      save ncall, pol_anom_scale, mode
+     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -95,7 +96,6 @@
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
-      data ncall/0/, pol_anom_scale/1.0_R8/, mode/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -107,28 +107,11 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall.eq.0) then
-        call ipgeti ('b2tqna_user_transport', user_transport)        !mb  11.10.17
-        call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
-        call ipgeti ('b2tral_mode', mode)
-        call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
-        call ipgeti ('b2trno_flux_limit_to_vsa', flux_limit_to_vsa)
-        call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
-        call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
-        call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
+      if (ncall_b2trno.eq.0) then
         call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-        call ipgeti ('b2mn_tn_style', tn_style)                  
       end if
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2trno.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test sign of vol
@@ -154,12 +137,15 @@
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
       endif
 
+      mode = switch%b2tral_mode
+
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain, geo,
-     &  mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0,
-     &  co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0, co%alf0,
-     &  hvi0, hve0, co%dkt0, co%dna_ExB, co%hce_ExB, co%hci_ExB)
+      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain, 
+     &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
+     &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
+     &  co%alf0, hvi0, hve0, co%dkt0, co%dna_ExB, co%hce_ExB, 
+     &  co%hci_ExB)
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -226,7 +212,7 @@
 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (user_transport.eq.10) then 
+      if (switch%user_transport.eq.10) then 
        do is = 0, ns-1
          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
            wrk_afn =  co%dpa0(:,is)*abs(geo%cvbb(:,2)/geo%cvbb(:,3))
@@ -276,7 +262,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  co%hci_ExB, co%chci_ExB(1,1))
 
 *   ..set csigx = 0 and calfx = 0
-      if (csig_an_style.eq.1) then
+      if (switch%csig_an_style.eq.1) then
         call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
         call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
       end if
@@ -285,7 +271,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chve, 1)
 c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
-      if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
+      if(switch%fch_stochastic.ne.0.0e0_R8)then                            !lk 31.01.08 { !srv 17.12.13
       call xerrab('b2trno -- option to be adapted for WG')
 #ifdef WG_TODO
         call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
@@ -302,52 +288,52 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 #endif
       endif                                                               !lk 31.01.08 } !srv 17.12.13
 *   ..scale parallel coefficients if desired
-      if (pol_anom_scale.ne.1.0_R8) then
+      if (switch%pol_anom_scale.ne.1.0_R8) then
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
-            co%cdna(:,0,is) = co%cdna(:,0,is) * pol_anom_scale
-            co%cdpa(:,0,is) = co%cdpa(:,0,is) * pol_anom_scale
-            co%cvla(:,0,is) = co%cvla(:,0,is) * pol_anom_scale
-            co%cvsa(:,0,is) = co%cvsa(:,0,is) * pol_anom_scale
-            co%cdnahz(:,0,is) = co%cdnahz(:,0,is) * pol_anom_scale      !wdk 16.04.14
-            co%cdpahz(:,0,is) = co%cdpahz(:,0,is) * pol_anom_scale
-            co%cvlahz(:,0,is) = co%cvlahz(:,0,is) * pol_anom_scale
-            co%cvsahz(:,0,is) = co%cvsahz(:,0,is) * pol_anom_scale
-            co%chcb(:,0,is) = co%chcb(:,0,is) * pol_anom_scale
+            co%cdna(:,0,is) = co%cdna(:,0,is) * switch%pol_anom_scale
+            co%cdpa(:,0,is) = co%cdpa(:,0,is) * switch%pol_anom_scale
+            co%cvla(:,0,is) = co%cvla(:,0,is) * switch%pol_anom_scale
+            co%cvsa(:,0,is) = co%cvsa(:,0,is) * switch%pol_anom_scale
+            co%cdnahz(:,0,is) = co%cdnahz(:,0,is) *switch%pol_anom_scale      !wdk 16.04.14
+            co%cdpahz(:,0,is) = co%cdpahz(:,0,is) *switch%pol_anom_scale
+            co%cvlahz(:,0,is) = co%cvlahz(:,0,is) *switch%pol_anom_scale
+            co%cvsahz(:,0,is) = co%cvsahz(:,0,is) *switch%pol_anom_scale
+            co%chcb(:,0,is) = co%chcb(:,0,is) * switch%pol_anom_scale
           end if
         end do
-        co%chce(:,0) = co%chce(:,0) * pol_anom_scale
-        co%calf(:,0) = co%calf(:,0) * pol_anom_scale
-        co%csig(:,0) = co%csig(:,0) * pol_anom_scale
+        co%chce(:,0) = co%chce(:,0) * switch%pol_anom_scale
+        co%calf(:,0) = co%calf(:,0) * switch%pol_anom_scale
+        co%csig(:,0) = co%csig(:,0) * switch%pol_anom_scale
       end if
 *   ..save the anomalous transport coefficients
       co%csig_an = co%csig
       co%calf_an = co%calf
 
-      if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
+      if(switch%flux_limit_to_dpa .ne. 0) then                            !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa and cdpahz
-        call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%te, 
+        call b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%te, 
      &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
 
-      if(flux_limit_to_vsa .ne. 0) then                                   !srv 15.06.08 {
+      if(switch%flux_limit_to_vsa .ne. 0) then                            !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cvsa and cvsahz
-        call b2tlv0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+        call b2tlv0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
      &    pl%te, pl%tn, rt%rza, cvsa0, co%cvsa, co%cvsahz, flv)
       endif
 
 *   ..apply flux limit to neutrals contribution to chcb
-      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
+      call b2tlh0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ti,
      &  pl%tn, chcib, co%chcb, co%fllim0fhi)
        co%chci = 0.0_R8
        co%chcn = 0.0_R8
       do is = 0, ns-1
 c the logic statements below could be simplfied but for now we go for readability
-        if (tn_style.eq.0) then                             !! default combined ion-neutral energy equation
+        if (switch%tn_style.eq.0) then                             !! default combined ion-neutral energy equation
           co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
-        elseif (tn_style.eq.1.and..not.is_neutral(is)) then !! pure ion energy equation, only ion contributions
+        elseif (switch%tn_style.eq.1.and..not.is_neutral(is)) then !! pure ion energy equation, only ion contributions
           co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
-        else                                                !! separate ion-neutral energy equation
+        else                                                       !! separate ion-neutral energy equation
           if (.not.is_neutral(is)) then
             co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
           else
@@ -366,8 +352,8 @@ c the logic statements below could be simplfied but for now we go for readabilit
       call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0), 1, 'cdkt', '.ge.')
       call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1), 1, 'cdkt', '.ge.')
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
+      if(switch%b2npc9_iout.ne.0 .or. switch%b2npco_iout.ne.0
+     &                  .or. switch%iout_b2wdat.eq.4) then                  !srv 19.05.10 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
@@ -381,7 +367,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
 !        call my_out_us(70,nFc,1,co%cvla(1,1,is),'b2trno_cvlay'//chns)
        enddo
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
@@ -392,21 +378,21 @@ c the logic statements below could be simplfied but for now we go for readabilit
      &              chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
+      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+     &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,co%chce(1,0),'b2trno_chcex')
         call my_out_us(70,nFc,1,co%chce(1,1),'b2trno_chcey')
         call my_out_us(70,nFc,1,co%chci(1,0),'b2trno_chcix')
         call my_out_us(70,nFc,1,co%chci(1,1),'b2trno_chciy')
         call my_out_us(70,nFc,1,chce_stoch,'b2trno_chcey_stoch')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
+      if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
+     &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,co%csig(1,0),'b2trno_csigx')
         call my_out_us(70,nFc,1,co%csig(1,1),'b2trno_csigy')
         call my_out_us(70,nFc,1,csig_stoch,'b2trno_csigy_stoch')
       endif                                                          !srv 19.05.10 }
-      if(iout.ne.0) then                                             !srv 17.06.08 {
+      if(switch%b2trno_iout.ne.0) then                                             !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2trno_cdnax'//chns)
@@ -459,13 +445,15 @@ c the logic statements below could be simplfied but for now we go for readabilit
       endif                                                          !srv 17.06.08 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2trno = ncall_b2trno+1
       call subend ()
       return
 
 *-----------------------------------------------------------------------
 *.scribbles
 
+*!!   Consider to apply a flux limit to the anomalous particle transport.
+*!!   Still must consider how to deal with a non-orthogonal grid.
 
 *-----------------------------------------------------------------------
 *.end b2trno

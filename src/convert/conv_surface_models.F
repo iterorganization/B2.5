@@ -24,10 +24,11 @@
       integer, allocatable :: idim_eir(:), ipos_eir(:), 
      .                        istart_eir(:), iend_eir(:), idtrg(:)
       logical :: found,lhelp(60)
-      integer :: artificial_slab=0
+      integer :: artificial_slab=0, spatial_hybrid = 0
       intrinsic pack
 
       call ipgeti ('artificial_slab', artificial_slab)	
+      call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)	
 
       nd = mpg%nRc + mpg%nBc
       if (artificial_slab > 0) nd = nd + 4*nncut
@@ -217,8 +218,13 @@
       do i = 1, ntrg
         if (index('EWSN',crcstra(i)) > 0) itrg = itrg + 1
       end do
-      if (ihelp(1) /= itrg) 
-     .    call xerrab ('number of targets mismatch')
+      
+      if (spatial_hybrid.eq.0) then !! default, no spatially hybrid
+        if (ihelp(1) /= itrg) 
+     .      call xerrab ('number of targets mismatch')
+      else !! spatially hybrid neutrals are used
+        !! SH_TODO
+      endif
       write (iouteir,'(12i6)') itrg
 !  number of target parts  
       isum = 0
@@ -254,8 +260,12 @@
         write (iouteir,'(a)') trim(line)
       end do
 
-      if (count(mpg%icornVx > 0) /= nasmod)
-     .  call xerrab('conv_surface_models -- nasmod')
+      if (spatial_hybrid.eq.0) then !! default, no spatially hybrid neutrals
+        if (count(mpg%icornVx > 0) /= nasmod)
+     .    call xerrab('conv_surface_models -- nasmod')
+      else !! spatially hybrid neutrals
+        !! SH_TODO
+      endif
 
       do i = 1, nasmod
         read (ineir,'(2i6)') ihelp(1), ihelp(2)

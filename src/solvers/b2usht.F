@@ -1,21 +1,27 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, ne, ni, te, ti, tn, kt,
+      subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
+     &  itcnt, rxg, ne, ni, te, ti, tn, kt,
      &  floe, cone, floi, coni, flon, conn, flokt, conkt,
      &  she, shi, shn, skt, ceqp,
      &  resht, reshe, reshi, reshn, reskt,
      &  cortt, corte, corti, cortn, corkt, flo0, con0, aa)
       use b2mod_types
       use b2mod_numerics_namelist
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2usht
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -63,17 +69,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: iadd_9 = 1                                      !srv 02.01.07
+      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv
+c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
+c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
+c      integer, save :: iadd_9 = 1                                      !srv 02.01.07
       integer, save :: last_ion
-      integer, save :: iout = 0
-      integer, save :: tn_style = 0
-      integer, save :: solve_keps = 0
       integer ireg
       logical lnonzero
-      save ncall
       real (kind=R8) ::
      *   t0, t1, t2, t3, t11, t22
       logical new_matrix
@@ -82,24 +84,15 @@
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2uxus, b2uxm9                 !srv 02.01.07
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
+      icv1 = 1 !csc needed for correct initialization in adjoint AD
+      icv2 = 1
 *   ..subprogram start-up calls
       call subini ('b2usht')
-      if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
-       call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.01.07
-       call ipgeti ('b2usht_iout', iout)
-       call ipgeti ('b2mn_tn_style', tn_style)
-       call ipgeti ('b2mndr_solve_keps', solve_keps)
-      endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -107,7 +100,7 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2usht.lt.3) then
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, ni, 1, 'ni', '.gt.')
@@ -130,8 +123,8 @@
        call b2xvsg (nCv, ceqp, 1, 'ceqp', '.ge.')
       endif
 
-      if (tn_style.le.1) then !! in case we solve a combined ion-neutral energy equation (default) or pure ion energy equation we make sure
-         conn = 0.0_R8       !! the neutral fluxes and sources are zero.
+      if (switch%tn_style.le.1) then !! in case we solve a combined ion-neutral energy equation (default) or pure ion energy equation we make sure
+         conn = 0.0_R8               !! the neutral fluxes and sources are zero.
          flon = 0.0_R8
          shn = 0.0_R8
       endif
@@ -166,13 +159,13 @@
      &    -shi(iCv,1)-shi(iCv,3)*ni(iCv,0)
           t0 = min(t0,ti(iCv))
         endif
-        if (solveen(ireg).and.tn_style.eq.2) then
+        if (solveen(ireg).and.switch%tn_style.eq.2) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
-     &    -shn(iCv,1)-shn(iCv,3)*ni(iCv,0)
+     &    -shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))
           t0 = min(t0,tn(iCv))
         endif
         if (solveee(ireg).or.solveei(ireg).or.
-     &      (solveen(ireg).and.tn_style.eq.2)) then
+     &      (solveen(ireg).and.switch%tn_style.eq.2)) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &      +abs(resht(iCv))/(rxg*t0)
         endif
@@ -184,7 +177,7 @@
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
         if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
-     &      (solveen(ireg).and.tn_style.eq.2)) then
+     &      (solveen(ireg).and.switch%tn_style.eq.2)) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
@@ -194,7 +187,7 @@
          end where
         endif
         if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2)).or.
-     &      (solveen(ireg).and.tn_style.eq.2)) then
+     &      (solveen(ireg).and.switch%tn_style.eq.2)) then
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
@@ -218,7 +211,7 @@
         enddo
         ! contribution to equation of iCv1
         if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
-     &      (solveen(ireg).and.tn_style.eq.2)) then
+     &      (solveen(ireg).and.switch%tn_style.eq.2)) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
@@ -244,7 +237,7 @@
         endif
         ! contribution to equation of iCv2
         if (solveee(mpg%cvReg(iCv2)).or.solveei(mpg%cvReg(iCv2)).or.
-     &      (solveen(ireg).and.tn_style.eq.2)) then
+     &      (solveen(ireg).and.switch%tn_style.eq.2)) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
@@ -279,7 +272,7 @@
        call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
      &  aa, 'b2usht_totali')                                         !srv 02.01.07
       endif
-      if(iadd_9 .eq. 1 .and. tn_style.eq.2) then
+      if(iadd_9 .eq. 1 .and. switch%tn_style.eq.2) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveen, conn(-1,-1,0,0,1),
      &  aa, 'b2usht_totaln')
 !srv 02.01.07
@@ -300,7 +293,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
       endif                                                              !srv 22.05.18
       
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_total_aam5')
@@ -454,7 +447,7 @@
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
       endif                                                              !srv 22.05.18
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_he_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_he_aam5')
@@ -612,7 +605,7 @@
       endif                                                          !srv 22.05.18
 
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hi_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hi_aam5')
@@ -632,7 +625,7 @@
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
 
-      if (tn_style.eq.2) then
+      if (switch%tn_style.eq.2) then
 * ..neutral atom temperature correction equation
       if (any(solveen(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
@@ -651,7 +644,7 @@
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
-     &    (-shn(iCv,1)-shn(iCv,3)*ni(iCv,0)+
+     &    (-shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))+
      &    +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo
@@ -770,7 +763,8 @@
       endif                                                          !srv 22.05.18
       endif
 
-      if (iout.ne.0) then
+
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hn_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hn_aam5')
@@ -792,7 +786,7 @@
 
 * ..turbulent kinetic energy correction equation
       corkt = 0.0_R8
-      if (solve_keps.gt.0.and.any(solvekt(0:mpg%nnreg(0)))) then
+      if (switch%solve_keps.gt.0.and.any(solvekt(0:mpg%nnreg(0)))) then
        call restart_ma28_for_us
 *   ..compute flo0, con0
        flo0        = flokt
@@ -920,7 +914,7 @@
       endif !solve_keps
 
 
-      if (iout.ne.0) then
+      if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_kt_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_kt_aam5')
@@ -943,7 +937,7 @@
 
 
 *   ..return
-      ncall = ncall+1
+      ncall_b2usht = ncall_b2usht+1
       call subend ()
       return
 

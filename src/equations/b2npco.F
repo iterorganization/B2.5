@@ -2,17 +2,25 @@
 *.specification
 
       subroutine b2npco (nCv, nFc, nVx, nregionv, solving, solvcreg,         !srv 22.05.18
-     &  ua_solve, solvmreg, itcnt, isb, rxf, geo, mpg, pl, dv, sr, ierr)
+     &  ua_solve, solvmreg, itcnt, isb, rxf, switch, geo, mpg, pl, dv,
+     &  sr, ierr)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
 !WG_TODO      use b2mod_balance
 !WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2npco, ncall_b2upco, ncall_b2usco, my_out_folder,
+     &          my_out_sf, ncall_b2ursc
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Source), intent (in) :: sr
@@ -51,20 +59,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
-      integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
-      integer, save :: get_residuals = 0                             !srv 22.05.18
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
-     *   rxg, pcm0, pcm1
-      real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
-      save ncall, rxg, pcm0, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
-      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -89,24 +90,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npco')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2npco_rxg', rxg)
-       call ipgetr ('b2npco_pcm0', pcm0)
-       call ipgetr ('b2npco_pcm1', pcm1)
-       call xertst (0.lt.rxg, 'faulty internal parameter rxg')
-       call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
-       call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2npco_iout', iout)                              !srv 13.07.05
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
-       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
       call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
        call b2xvsg (nFc, dv%conb(1,0,0), 1, 'conb00', '.ge.')
        call b2xvsg (nFc, dv%conb(1,0,1), 1, 'conb01', '.ge.')
@@ -127,23 +116,24 @@ cdjm Jan2017 update particle source components for balance
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
-     &            .or.get_residuals.eq.1) then                          !srv 22.05.18
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(1,isb), sr%sna(1,0,isb), 
-     &    dv%fna(1,0,isb), dv%resco(1,isb))
+     &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
+        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb), 
+     &    dv%fna(:,:,isb), dv%resco(:,isb))
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
-        call b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
-     &   solvcreg, itcnt, rxg, pl%na(1,isb), dv%pa(1,isb), 
-     &   sr%sna(1,1,isb), dv%flob, dv%conb,
-     &   dv%resco(1,isb), dv%corpa(1,isb), aa, 'b2usco_'//chns)
+        call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
+     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(:,isb), dv%pa(:,isb), 
+     &   sr%sna(:,1,isb), dv%flob, dv%conb,
+     &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
         call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
-     &   solvmreg, rxf, pcm0, dv%corpa(1,isb), dv%pcca(1,0,isb), 
-     &   dv%pa(1,isb), pl%na(1,isb), pl%ua(1,isb))
+     &   solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
+     &   dv%pcca(:,0,isb), 
+     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb))
       endif                                                             !srv 22.05.18
-      if (iout.ne.0) then                                               !srv 12.07.02 {
+      if (switch%b2npco_iout.ne.0) then                                               !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
@@ -155,7 +145,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fnax'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fnay'//chns)
-      elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
+      elseif (switch%iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
         call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)
@@ -170,7 +160,7 @@ cdjm Jan2017 update particle source components for balance
       ierr = 0
 
 * ..return
-      ncall = ncall+1
+      ncall_b2npco = ncall_b2npco+1
       call subend ()
       return
 

@@ -2,10 +2,9 @@
 *.specification
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  wrong_flow, main_call)
       use b2mod_types
-!      use b2mod_boundary_namelist
 !      use b2mod_geo_corner
       use b2mod_constants
 !      use b2mod_sources
@@ -17,14 +16,23 @@
       use b2mod_feedback
       use b2mod_b2cmpa
       use b2mod_time
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_boundary_namelist
+     & , only : conpar, enepar, enipar, nbcd
+      use b2mod_ad
+     & , only : my_out_folder, my_out_sf, ncall_b2stbc,
+     &          ncall_b2stbc_phys, nsdmax
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) ::
      *  BoRiS
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -51,24 +59,18 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, regcnt, ixx
+      integer iCv, is, regcnt, ixx
       real (kind=R8) ::
-     *   sna0ep, she0ep, shi0ep, t0, testqe, testqi,
-     *   b2stbc_neoclassical, b2stbc_fchy_dia,
+     *   t0, testqe, testqi,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2), teave(2), tiave(2),
      1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
-     1   sum_sch0, sum_vol, integral_current
-      integer boundary_namelist, diagno, b2stbc_fchy_dia_coreonly,
-     *   sheath_drift_fix
+     1   sum_sch0, sum_vol
 !WG_TODO      integer element_done(-1:nx)
-      integer b2stbc_feedback, secmodel
-      save ncall, sna0ep, she0ep, shi0ep, boundary_namelist, diagno,
-     *   b2stbc_neoclassical, b2stbc_fchy_dia, integral_current,
-     1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
-     *   sheath_drift_fix
+      integer b2stbc_feedback
+      save b2stbc_feedback
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
@@ -78,12 +80,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation
-      data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
-     1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
-     2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
-     3   integral_current/0.0_R8/, b2stbc_feedback/0/,
-     4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
-     5   sheath_drift_fix/1/
+      data b2stbc_feedback/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -91,37 +88,17 @@
 *   ..subprogram start-up calls
       call subini ('b2stbc')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2stbc_sna0ep', sna0ep)
-       call xertst (0.0_R8.le.sna0ep, 
-     .  'faulty internal parameter sna0ep')
-       call ipgetr ('b2stbc_she0ep', she0ep)
-       call xertst (0.0_R8.le.she0ep, 
-     .  'faulty internal parameter she0ep')
-       call ipgetr ('b2stbc_shi0ep', shi0ep)
-       call xertst (0.0_R8.le.shi0ep, 
-     .  'faulty internal parameter shi0ep')
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
-       call ipgeti ('b2stbc_diagno',diagno)                              !xpb
-       call ipgetr ('b2stbc_neoclassical', b2stbc_neoclassical)          !xpb
-       call xertst (0.0_R8.le.b2stbc_neoclassical .and.                  !xpb
-     &              b2stbc_neoclassical.le.1.0_R8,                       !xpb
-     1              'faulty internal parameter b2stbc_neoclassical')     !xpb
-       call ipgetr ('b2stbc_fchy_dia', b2stbc_fchy_dia)                  !xpb
-       call xertst (0.0_R8.le.b2stbc_fchy_dia .and.                      !xpb
-     &              b2stbc_fchy_dia.le.1.0_R8,                           !xpb
-     1              'faulty internal parameter b2stbc_fchy_dia')         !xpb
-       call ipgetr ('b2stbc_integral_current', integral_current)         !dpc
-       call xertst (.not.(integral_current.ne.0.0_R8.and.
-     .  ((maxval(dv%facdrift).gt.0.0_R8.and.b2stbc_fchy_dia.gt.0.0_R8)
-     .   .or.b2stbc_neoclassical.gt.0.0_R8)),
+      if (ncall_b2stbc.eq.0) then
+       call xertst (.not.(switch%integral_current.ne.0.0_R8.and.
+     .  ((maxval(dv%facdrift).gt.0.0_R8.and.
+     .                         switch%b2stbc_fchy_dia.gt.0.0_R8)
+     .   .or.switch%b2stbc_neoclassical.gt.0.0_R8)),
      .  'inconsistent boundary settings for current equation')
-       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
 !WG_TODO       lfeedback=b2stbc_feedback.ne.0                          ! dpc-2003-10-23
-       call ipgeti ('b2stbc_fchy_dia_coreonly',
-     .               b2stbc_fchy_dia_coreonly)
-       call ipgeti ('b2stbc_secmodel', secmodel)
-       call ipgeti ('b2stbc_sheath_drift_fix', sheath_drift_fix)
+
+
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -135,7 +112,7 @@
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2stbc.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
@@ -150,7 +127,7 @@
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and. 
      & 1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
-!      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
+!      if (ncall_b2stbc.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
 !        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
 !          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
 !        else                                                             !xpb
@@ -158,7 +135,7 @@
 !        endif                                                            !xpb
 !      endif
 *   ..check kinetic secondary electron emission model
-      if (ncall.eq.0 .and. secmodel.eq.1) then
+      if (ncall_b2stbc.eq.0 .and. switch%secmodel.eq.1) then
         call xertst (nint(zn(ismain)).eq.1, 
      &   'Kinetic secondary emission model only for hydrogen plasmas!')
         write (*,*) 'Kinetic secondary emission model turned on'
@@ -180,10 +157,10 @@
 *   (This code placed here for want of a better location)
 *   ..low-level particle source
       do is = 0, ns-1
-       call b2saxpy (nCv, sna0ep, geo%cvVol, 1, srw%sna0(1,0,is), 1)
+        call b2saxpy (nCv,switch%sna0ep,geo%cvVol,1,srw%sna0(1,0,is),1)
       enddo
-      call b2saxpy (nCv, she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
-      call b2saxpy (nCv, shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
+      call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
+      call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
 #ifdef WG_TODO
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
@@ -347,9 +324,9 @@
         tiave(2)=tisum(2)/gssum(2)
         naave(:,2)=nasum(:,2)/gssum(2)
       endif
-      if (ncall.eq.0) lbndusr=.false.                                    !xpb
+      if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
-      if(boundary_namelist.ge.1) then
+      if(switch%b2stbc_boundary_namelist.ge.1) then
 
 #ifdef WG_TODO
          if(lfeedback.or.b2stbc_feedback.ne.0)
@@ -358,17 +335,18 @@
      &        sna0, smo0, she0, shi0, sch0, sne0, 
      &        main_call, diagno)
 #endif
-        if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
+        if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
-     &    geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &    wrong_flow, main_call, diagno,
-     &    b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &    b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix)
+     &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &    wrong_flow, main_call, switch%b2stbc_diagno,
+     &    switch%b2stbc_fchy_dia, switch%b2stbc_neoclassical, praverage,
+     &    switch%b2stbc_fchy_dia_coreonly,
+     &    switch%secmodel, switch%sheath_drift_fix)
         if(wrong_flow) write(*,*) 
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
 #ifdef WG_TODO
         if(lbndusr) then
-          if(ncall.eq.0) write(*,*) 'BNDUSR called'
+          if(ncall_b2stbc.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
      1     facdrift, vol, hx, hy, qz, qc, gs,
      1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
@@ -570,14 +548,14 @@ c if we want the integral current to be 0
             endif
             ix=ix+1
           enddo
-          if (ncall.eq.0 .or. diagno.ge.2)
+          if (ncall_b2stbc.eq.0 .or. diagno.ge.2)
      >     write(*,'(i5/(10(1x,10i1)))') iy,element_done
         enddo
       endif
 #endif
 * ..return
 #ifdef WG_TODO
-      if((ncall.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
+      if((ncall_b2stbc.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
         do ix=-1,nx
           write(*,'(a,i4,1p,6(1x,e14.7))') 'S:ix,ti,ni,shi0 ',
      1     ix,ti(ix,-1)/ev,ni(ix,-1,0),(shi0(ix,-1,is),is=0,3)
@@ -644,7 +622,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbc_shi0to3 = shi0
       endif
 #endif
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      if(ncall_b2stbc.eq.0 .or. main_call) ncall_b2stbc = ncall_b2stbc+1
       call subend ()
       return
 

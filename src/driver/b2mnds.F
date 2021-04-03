@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0)
+      subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
       use b2mod_types
       use b2mod_version
       use b2mod_constants
@@ -14,9 +14,11 @@
       use b2mod_ppout
       use b2mod_diag
      . , only : label
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0
+      type (switches), intent (inout) :: switch
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -287,6 +289,26 @@
       call cfwuin (nout(5), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+c The switches are now also loaded in a module b2mod_switches.
+c Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
+c The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+c and to centralize consistency checks on the switches.
+
+
+c load default values of switches
+      call set_defaults_switches(switch,ns)
+c overwrite with values provided in b2mn.dat
+      call read_switches(switch)
+c check the values of the switches
+      call check_switches(switch,ns)
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+
 ! csc UNCOMMENT WITH AD
 !  call cfverw (nout(9), newversion)
 !  call cfwuin (nout(9), 3, idum, 'nCv,nFc,ns')
@@ -296,13 +318,15 @@
       idum(0) = ns
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
-      call b2mwq0 (nout(4), ns)
+      call b2mwq0 (nout(4), ns, switch)
 ! csc UNCOMMENT WITH AD
 !!   ..write header to nout(10)
 !  idum(0) = ns
 !  call cfwuin(nout(10), 1, idum, 'ns')
 !  call cfwuch(nout(10), 120, lblmn, 'label')
-!  call b2mwq0(nout(10), ns)
+!  call b2mwq0_nodiff(nout(10), ns, switch)
+
+
 * ..return
       call subend ()
       return

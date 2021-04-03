@@ -1,17 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nCv, nFc, nVx, ns, geo, mpg, na, ua,
+      subroutine b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, na, ua,
      &  facdrift, fchinert)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2tiner
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -36,38 +42,29 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, is
-      integer, save :: no_current = 0
+      integer is
       integer, save :: guard_flows
-      real (kind=R8) ::
-     &  fch_inert, wght(nFc,2), gOnedBsq(nFc,0:1),
+      real (kind=R8) :: wght(nFc,2), gOnedBsq(nFc,0:1),
      &  wrk(nCv), wrk0(nFc), wrk1(nFc)
-      save ncall, fch_inert
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
-      data ncall/0/, fch_inert/1.0e0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tiner')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgetr ('b2tiner_inert', fch_inert)                           !srv 07.07.99
-       call ipgeti ('b2tfhe_no_current', no_current)
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2tiner.lt.3) then
       endif
 c Drift terms
-      if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
-     .   no_current.eq.0)then                                            !srv 07.07.99
+      if(switch%fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8
+     .   .and.switch%no_current.eq.0)then                                       !srv 07.07.99
 
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
@@ -86,9 +83,9 @@ c Drift terms
         wrk0 = 0.5_R8*mp*wrk0
 
 *     ..COMPONENTS OF INERTIA CURRENT
-        fchinert(:,0) =  fch_inert*facdrift*wrk0*
+        fchinert(:,0) =  switch%fch_inert*facdrift*wrk0*
      &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
-        fchinert(:,1) = -fch_inert*facdrift*wrk0*
+        fchinert(:,1) = -switch%fch_inert*facdrift*wrk0*
      &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
       else
@@ -96,7 +93,7 @@ c Drift terms
       endif
 
 * ..return
-      ncall = ncall+1
+      ncall_b2tiner = ncall_b2tiner+1
       call subend ()
       return
 

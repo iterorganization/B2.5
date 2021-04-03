@@ -1,18 +1,24 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trql (nCv, nFc, ns, geo, mpg, pl, dv, st_ext, 
+      subroutine b2trql (nCv, nFc, ns, switch, geo, mpg, pl, dv, st_ext, 
      .  chvemx, chvimx)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2trql, ncall_b2tlhe
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -40,8 +46,6 @@
 *.declarations
 
 *   ..local variables
-      integer ncall
-      save ncall
       real (kind=R8) ::
      *   cflme, cflmi
       real (kind=R8) ::
@@ -52,7 +56,6 @@
       external subini, subend, xertst, smin, smax
       external b2tlhe, b2tlhi, b2tlmv, b2xpnr, b2xvsg
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -80,7 +83,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2trql.lt.3) then
 *    ..test bb
        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test sign of cvVol
@@ -110,15 +113,15 @@
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
       cflme = cflim(0)
-      call b2tlhe (nCv, nFc, me, cflme, geo, mpg, dv%ne, pl%te, 
-     &  chvemx)
+      call b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, dv%ne, 
+     &  pl%te, chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
-      call b2tlhi (nCv, nFc, mp, cflmi, geo, mpg, dv%ni,
+      call b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, dv%ni,
      &  nirm, st_ext%ni, pl%ti, pl%tn, chvimx)
 
 * ..return
-      ncall = ncall+1
+      ncall_b2trql = ncall_b2trql+1
       call subend ()
       return
 

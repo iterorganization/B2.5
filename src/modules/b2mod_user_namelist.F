@@ -3,10 +3,12 @@
       use b2mod_diag
       use b2us_geo
       use b2us_map
+      use b2mod_ad
+     & , only : nncf, ffdata
       implicit none
 #     include "DIMENSIONS.F"
-      integer npfrgrpd, nntrgrpd, nncf
-      parameter (npfrgrpd=6, nntrgrpd=16, nncf=4)
+      integer npfrgrpd, nntrgrpd
+      parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -24,7 +26,7 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
-     ,  cfstart(nncf),cfend(nncf), cftype(nncf)
+     ,  cfstart(nncf),cfend(nncf),cftype(nncf)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -34,7 +36,7 @@
       logical, save :: user_initialised = .false.
       logical, save :: cfread(nncf), cfomp(nncf)
       integer, save :: ncfdata(nncf), ncf
-      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
 
       private :: user
       namelist /user/
@@ -45,7 +47,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp
+     ,  cfread, cftype, rzomp, cfomp, cfweight
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -128,6 +130,7 @@ c***  Standard setup:
       cfdata = 0.0_R8
       ncfdata = 0
       rzomp = 0.0_R8
+      cfweight = 1.0_R8
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -140,6 +143,7 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      if (allocated(ffdata)) deallocate(ffdata)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -194,7 +198,14 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.4) call xerrab ('cftype>4 not coded ')
+          if (cftype(icf).gt.5) call xerrab ('cftype>5 not coded ')
+          if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
+     &     'cftype(1)=0 but no other cost functions are defined')
+          if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
+     &     'only cftype(1) can be zero')
+          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
+     &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
+     &         ' read experimental profile')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -220,7 +231,8 @@ c***  Standard setup:
             enddo
             close(99)
           endif
-          if (cfstart(icf) /= 0 .and. cfend(icf) /= 0) then
+          if (cfstart(icf) /= 0 .and. cfend(icf) /= 0 .and.
+     &         cftype(icf).ne.0) then
             ncffc = 0
             m%cfFcP(icf,1) = incf +1 
             noss = cfend(icf) - cfstart(icf) + 1
@@ -234,7 +246,10 @@ c***  Standard setup:
             end do              ! iss	 
             m%cfFcP(icf,2) = ncffc
           else
-            if (.not.cfomp(icf)) call xerrab ('cfstart/cfend = 0 ')
+            if (cftype(icf).eq.0 .and. cfstart(icf).eq.0 .or.
+     &          cfend(icf).eq.0) call xerrab ('cfstart/cfend = 0 ')
+            if (cftype(icf).ne.0 .and. .not.cfomp(icf)) 
+     &        call xerrab ('cfstart/cfend = 0 ')
             m%cfFcP(icf,1) = 0
             m%cfFcP(icf,2) = 0
           endif
@@ -243,6 +258,13 @@ c***  Standard setup:
       end if
 
       call cf_to_struct(m)
+
+! now allocate vectors that will be used to interpolate data
+      if (any(cfread)) then
+        ndata = maxval(m%cfCvP(1:ncf,2),1)
+        allocate(ffdata(ncf,ndata))
+        ffdata = 0.0_R8
+      endif
 
 #ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
@@ -423,7 +445,7 @@ c*** Set default values according to current species list
 
       call subend ()
       return
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+ 999  call xerrab ('Error while reading USER namelist!')
       end subroutine read_b2mod_user_namelist
 
       subroutine write_b2mod_user_namelist(nx,ns)
