@@ -12,13 +12,13 @@
      *  fnn_32(:,:,:,:),    fnn_52(:,:,:,:),
      *  fhe(:,:,:,:),  fhe0(:,:,:,:),  fhep(:,:,:,:),  fhet(:,:,:,:),
      *  fhi(:,:,:,:),  fhi0(:,:,:,:),  fhip(:,:,:,:),  fhit(:,:,:,:),
-     *  fhn(:,:,:,:),  fkt(:,:,:,:),
+     *  fhn(:,:,:,:),  fkt(:,:,:,:),   fzt(:,:,:,:),
      *  fna(:,:,:,:,:),  fna0(:,:,:,:,:),  fnap(:,:,:,:,:),
      *  fne(:,:,:,:),    fni(:,:,:,:),  fnn(:,:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
      *  ni(:,:,:),  ni0(:,:,:),
-     *  pb(:,:), kt(:,:),
+     *  pb(:,:), kt(:,:), zt(:,:),
      *  po(:,:),  po0(:,:),  pop(:,:),
      *  te(:,:),  te0(:,:),  tep(:,:),
      *  ti(:,:),  ti0(:,:),  tip(:,:), tn(:,:), 
@@ -75,6 +75,7 @@
       allocate(fhePSch(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
       allocate(fhi(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fkt(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fzt(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhi0(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhip(-1:nxd,-1:nyd,0:1,0:1))
       allocate(fhit(-1:nxd,-1:nyd,0:1,0:1))
@@ -122,6 +123,7 @@
       allocate(ni0(-1:nxd,-1:nyd,0:1))
       allocate(pb(-1:nxd,-1:nyd))
       allocate(kt(-1:nxd,-1:nyd))
+      allocate(zt(-1:nxd,-1:nyd))
       allocate(po(-1:nxd,-1:nyd))
       allocate(po0(-1:nxd,-1:nyd))
       allocate(pop(-1:nxd,-1:nyd))
@@ -225,7 +227,9 @@
       deallocate(ni0)
       deallocate(pb)
       deallocate(kt)
+      deallocate(zt)
       deallocate(fkt)
+      deallocate(fzt)
       deallocate(po)
       deallocate(po0)
       deallocate(pop)
@@ -599,6 +603,7 @@
       call cfwure (nwrite, size(fne),  fne,  'fne')
       call cfwure (nwrite, size(fni),  fni,  'fni')
       call cfwure (nwrite, size(fkt),  fkt,  'fkt')
+      call cfwure (nwrite, size(fzt),  fzt,  'fzt')
       call cfwure (nwrite, size(na),   na,   'na')
       call cfwure (nwrite, size(na0),  na0,  'na0')
       call cfwure (nwrite, size(nap),  nap,  'nap')
@@ -620,6 +625,7 @@
       call cfwure (nwrite, size(tip),  tip,  'tip')
       call cfwure (nwrite, size(tn),   tn,   'tn')
       call cfwure (nwrite, size(kt),   kt,   'kt')
+      call cfwure (nwrite, size(zt),   zt,   'zt')
       call cfwure (nwrite, size(ua),   ua,   'ua')
       call cfwure (nwrite, size(ua0),  ua0,  'ua0')
       call cfwure (nwrite, size(uap),  uap,  'uap')

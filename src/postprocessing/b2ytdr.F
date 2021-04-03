@@ -20,6 +20,7 @@ c 2002-09-11: logic revised
       use b2mod_wall
       use b2mod_wall2
       use b2mod_plasma
+     , ,zt0 => zt
       use b2mod_sources
       use b2mod_version
       use b2mod_sputter
@@ -204,7 +205,7 @@ c 2002-09-11: logic revised
      7 floe_noc1(-1:nx1,-1:ny1,0:1,0:1), 
      7 floi_noc1(-1:nx1,-1:ny1,0:1,0:1),
      8 veecrb1(-1:nx1,-1:ny1,0:1,0:1), vedia1(-1:nx1,-1:ny1,0:1,0:1),
-     9 tn1(-1:nx1,-1:ny1), kt1(-1:nx1,-1:ny1), 
+     9 tn1(-1:nx1,-1:ny1), kt1(-1:nx1,-1:ny1), zt1(-1:nx1,-1:ny1),
      9 fhn1(-1:nx1,-1:ny1,0:1,0:1)
       real (kind=R8), allocatable ::
      . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
@@ -854,7 +855,7 @@ c 2002-09-11: logic revised
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,
-     &  po, kt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  po, kt, zt0, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -1231,7 +1232,7 @@ c 2002-09-11: logic revised
       call b2wuzd (nout(1), newversion, ns1, zamin1, zamax1, zn1, am1)
 *   ..save transformed state
       call b2wups (nout(1), nx1, ny1, ns1,
-     &  ne1, na1, ua1, uadia1, te1, ti1, tn1, po1, kt1,
+     &  ne1, na1, ua1, uadia1, te1, ti1, tn1, po1, kt1, zt1,
      &  fna1, fhe1, fhi1, fhn1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
      &  fnaPSch1, fhePSch1, fhiPSch1,

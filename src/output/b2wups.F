@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wups (nput, nx, ny, ns,
-     &  ne, na, ua, uadia, te, ti, tn, po, kt,
+     &  ne, na, ua, uadia, te, ti, tn, po, kt, zt,
      &  fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -19,7 +19,7 @@
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                  !xpb
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny)
+     &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny), zt(-1:nx,-1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1), 
@@ -120,6 +120,7 @@
       call cfwure (nput, n2, tn, 'tn')
       call cfwure (nput, n2, po, 'po')
       call cfwure (nput, n2, kt, 'kt')
+      call cfwure (nput, n2, zt, 'zt')
 *   ..save fluxes
       call cfwure (nput, n2*4*ns, fna, 'fna')
       call cfwure (nput, n2*4, fhe, 'fhe')

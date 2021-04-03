@@ -10,6 +10,7 @@
      *  skt(:,:,:),
      *  skt_prod(:,:),
      *  skt_diss(:,:),
+     *  szt(:,:,:),
      *  sne(:,:,:),
      *  smo(:,:,:,:),
      *  shef(:,:,:),                                           !srv 10.11.02                
@@ -90,6 +91,7 @@
       allocate(skt(-1:nxd,-1:nyd,0:3))
       allocate(skt_prod(-1:nxd,-1:nyd))
       allocate(skt_diss(-1:nxd,-1:nyd))
+      allocate(szt(-1:nxd,-1:nyd,0:3))
       allocate(smo(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(sna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(shef(-1:nxd,-1:nyd,0:3))                        !sv 10.11.02
@@ -212,6 +214,7 @@
       skt=0.0_R8
       skt_prod=0.0_R8
       skt_diss=0.0_R8
+      szt=0.0_R8
 
       return
       end subroutine alloc_b2mod_sources
@@ -227,6 +230,7 @@
       deallocate(skt)
       deallocate(skt_prod)
       deallocate(skt_diss)
+      deallocate(szt)
       deallocate(smo)
       deallocate(shef)                        !sv 10.11.02
       deallocate(shif)                        !sv 10.11.02
@@ -414,6 +418,9 @@
         call cfrure (nread, size(skt_prod), skt_prod, 'skt_prod')
         call cfrure (nread, size(skt_diss), skt_diss, 'skt_diss')
       endif
+      if(b2fplasma_version.ge.'03.002.000') then
+        call cfrure (nread, size(szt), szt, 'szt')
+      endif
 
       return
       end subroutine read_b2mod_sources
@@ -541,7 +548,7 @@
         call cfwure (nwrite, size(skt_prod), skt_prod, 'skt_prod')
         call cfwure (nwrite, size(skt_diss), skt_diss, 'skt_diss')
       endif
-
+      call cfwure (nwrite, size(szt), szt, 'szt')
 
       return
       end subroutine write_b2mod_sources

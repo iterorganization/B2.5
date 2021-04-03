@@ -10,6 +10,7 @@
      *  cdnahz(:,:,:,:,:),                                              !srv 09.01.01
      *  cdpahz(:,:,:,:,:),                                              !srv 09.01.01
      *  cdkt(:,:,:,:),
+     *  cdzt(:,:,:,:),
      *  ceqp(:,:),
      *  chce(:,:,:,:),
      *  chci(:,:,:,:),
@@ -62,6 +63,8 @@
       allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                   !srv 09.01.01
       allocate(cdkt(-1:nxd,-1:nyd,0:1,0:1))
       cdkt = 0.0_R8
+      allocate(cdzt(-1:nxd,-1:nyd,0:1,0:1))
+      cdzt = 0.0_R8
       allocate(ceqp(-1:nxd,-1:nyd))
       allocate(chce(-1:nxd,-1:nyd,0:1,0:1))
       allocate(chci(-1:nxd,-1:nyd,0:1,0:1))
@@ -157,6 +160,7 @@
       deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
       deallocate(cdkt)
+      deallocate(cdzt)
 
       return
       end subroutine dealloc_b2mod_transport
@@ -300,6 +304,11 @@
       else
         cdkt=0.0_R8
       endif
+      if(b2fplasma_version.ge.'03.002.000') then
+        call cfrure (nread, size(cdzt), cdzt, 'cdzt')
+      else
+        cdzt=0.0_R8
+      endif
 
       return
       end subroutine read_b2mod_transport
@@ -351,6 +360,9 @@
       endif
       if(newversion.ge.'03.000.009') then
         call cfwure (nwrite, size(cdkt), cdkt, 'cdkt')
+      endif
+      if(newversion.ge.'03.002.000') then
+        call cfwure (nwrite, size(cdzt), cdzt, 'cdzt')
       endif
 
       return
