@@ -55,6 +55,7 @@ c      use b2mod_keps
       integer, save :: model = 1, keps_local = 1, fac_sheath_local=1
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
      &  pz(nCv), cs(nCv), t0, t1, t2, wrk0(nCv), wrk1(nCv), wrk2(nCv),
+     &  wrkg0(nCv,0:1), wrkg1(nCv,0:1),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv)
       real (kind=R8), save ::
@@ -230,6 +231,26 @@ cwdk     parallel transport due to parallel current fluctuations
         call my_out_us(70,nCv,0,dtic(:,1),'b2sikt_dtic1')
         call my_out_us(70,nCv,0,dlbc(:,0),'b2sikt_dlbc0')
         call my_out_us(70,nCv,0,dlbc(:,1),'b2sikt_dlbc1')
+!!some temporary/experimental output computations for source due to Reynolds stress
+        call intcell(nFc,nCv,mpg,mpg%intcellP,dv%vaecrb(:,0,ismain),
+     &    wrk0)
+        call intcell(nFc,nCv,mpg,mpg%intcellR,dv%vaecrb(:,1,ismain),
+     &    wrk1)
+        wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
+        wrks = -geo%cvVol*pl%na(:,ismain)*pl%kt*wrk2
+        call my_out_us(70,nCv,0,wrks,'b2sikt_RS_symmetric')
+
+        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
+     &    dv%vaecrb(:,0,ismain), wrkg0)
+        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
+     &    dv%vaecrb(:,1,ismain), wrkg1)
+        wrkg0(:,0) = wrkg0(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
+        wrkg1(:,0) = wrkg1(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
+        wrks = geo%cvVol*co%dna_ExB*am(ismain)*mp*pl%na(:,ismain)*
+     &   (wrkg0(:,0)**2 + wrkg1(:,1)**2 +
+     &    0.5_R8*(wrkg1(:,0)**2 + wrkg0(:,1)**2) +
+     &    wrkg1(:,0)*wrkg0(:,1))
+        call my_out_us(70,nCv,0,wrks,'b2sikt_RS_deviatoric')
       endif
 
 * ..return
