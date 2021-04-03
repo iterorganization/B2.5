@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2srsm (nCv, ns, dtim, geo, mpg, na, ua, te, ti, ne,
-     &  ni, sr, main_call)
+      subroutine b2srsm (nCv, ns, dtim, switch, geo, mpg, na, ua,
+     &   te, ti, ne, ni, sr, main_call)
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
@@ -9,15 +9,21 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
 !WG_TODO     2          b2srsm_shi0to3, balance_netcdf
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2srsm
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -45,11 +51,8 @@
 *.declarations
 
 *   ..local variables
-      integer is, iCv, ncall, diagno, enable
-      integer k
-      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
-     &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, tn_style = 0                                
+      integer is, iCv, diagno
+      integer k                           
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
@@ -61,8 +64,8 @@
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
-      save ncall, diagno, enable
-      data ncall/0/, diagno/0/, enable/0/
+      save diagno
+      data diagno/0/
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *-----------------------------------------------------------------------
 *.computation
@@ -86,17 +89,10 @@
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
 *   ..obtain input
-      if (ncall.eq.0) then
-        call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
-        call ipgeti ('b2npc9_iout', iout_b2npc9) 
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
-        call ipgeti ('b2srsm_diagno', diagno)
-        call ipgeti ('b2srsm_enable', enable)
-        call ipgeti ('b2mn_tn_style', tn_style)
-        if(enable.eq.0) then
+      if (ncall_b2srsm.eq.0) then
+c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+c        call ipgeti ('b2srsm_diagno', diagno)
+        if(switch%b2srsm_enable.eq.0) then
           write(*,*) 'b2srsm disabled'
         endif
         if(eirene_mod.le.0) eirene_mod=1
@@ -108,7 +104,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       shetmp = sr%she
       shitmp = sr%shi
 
-      if(enable.ne.0) then
+      if(switch%b2srsm_enable.ne.0) then
         call xerrab ('b2srsm not adapted for WG')
 #ifdef WG_TODO
 c*** calculate the integral sources for all regions:
@@ -141,7 +137,8 @@ c check particles
                   endif
                   sr%sna(ix,iy,0,is) = sr%sna(ix,iy,0,is)/hlp
                   sr%sna(ix,iy,1,is) = sr%sna(ix,iy,1,is)/hlp
-                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                  if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                     src_ni(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_ni(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
@@ -182,7 +179,8 @@ c check parallel momentum
                   sr%smo(ix,iy,1,is) = sr%smo(ix,iy,1,is)/hlp
                   sr%smo(ix,iy,2,is) = sr%smo(ix,iy,2,is)/hlp
                   sr%smo(ix,iy,3,is) = sr%smo(ix,iy,3,is)/hlp
-                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                  if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                     src_mo(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_mo(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
@@ -228,7 +226,8 @@ c check ion energy
                 sr%shi(ix,iy,1) = sr%shi(ix,iy,1)/hlp
                 sr%shi(ix,iy,2) = sr%shi(ix,iy,2)/hlp
                 sr%shi(ix,iy,3) = sr%shi(ix,iy,3)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ei(region(ix,iy,0),2) = 
      &              src_ei(region(ix,iy,0),2) +
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -242,7 +241,7 @@ c check ion energy
                 endif
               endif
 c check neutral energy
-          if (tn_style.ne.0) then
+          if (switch%tn_style.ne.0) then
             call xerrab('b2srsm not developed for tn_style.ne.0')
           endif
 c check electron energy
@@ -270,7 +269,8 @@ c check electron energy
                 sr%she(ix,iy,1) = sr%she(ix,iy,1)/hlp
                 sr%she(ix,iy,2) = sr%she(ix,iy,2)/hlp
                 sr%she(ix,iy,3) = sr%she(ix,iy,3)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ee(region(ix,iy,0),2) = 
      &              src_ee(region(ix,iy,0),2) +
      &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -303,7 +303,8 @@ c check electron particle number
                 endif
                 sr%sne(ix,iy,0) = sr%sne(ix,iy,0)/hlp
                 sr%sne(ix,iy,1) = sr%sne(ix,iy,1)/hlp
-                if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                if (main_call.and.
+     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
                   src_ne(region(ix,iy,0),2) = 
      &              src_ne(region(ix,iy,0),2) +
      &              cor_ne(ix,iy)*(1.0_R8/hlp-1.0_R8)
@@ -325,7 +326,7 @@ cdjm Store the total change in linearised sources for balance
 !WG_TODO        b2srsm_shi0to3 = sr%shi-shitmp
 !WG_TODO      endif
 
-      if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
+      if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {
 	 do is = 0, ns-1          
 	  write (chns,'(i3.3)') is
 !	  call my_out(70,nCv,sr%smo(:,:,0,is)+                        !srv 07.10.09
@@ -335,14 +336,14 @@ cdjm Store the total change in linearised sources for balance
 !     &        'b2srsm_smosm'//chns)
 	 enddo
       endif
-      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+      if (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !        call my_out(70,nCv,sr%sna(:,:,0,is)+                       !srv 07.10.09
 !     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
-      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1) then
 !	 call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
 !     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
 !	 call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+
@@ -350,7 +351,7 @@ cdjm Store the total change in linearised sources for balance
 !     &   sr%shi(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
       endif            
 
-      if (iout.eq.1) then
+      if (switch%b2srsm_iout.eq.1) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 	  do k=0,3
@@ -374,7 +375,8 @@ cdjm Store the total change in linearised sources for balance
       endif                                                          !srv 11.09.09 }
 
 * ..return
-      if (ncall.eq.0 .or. main_call) ncall = ncall+1
+      if (ncall_b2srsm.eq.0 .or. main_call) 
+     &  ncall_b2srsm = ncall_b2srsm+1
       call subend ()
       return
 

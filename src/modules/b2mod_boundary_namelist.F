@@ -5,6 +5,8 @@
       use b2us_map
       use b2us_geo
       use carre_constants
+      use b2mod_ad
+     & , only : nsdmax
       implicit none
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
@@ -57,9 +59,6 @@ cank }
      *   ACCHAR(:)
      *   BC_LIST_CHAR(:,:)
 #else
-      integer NSDMAX
-      parameter (NSDMAX=DEF_NSD)
-      private :: nsdmax
       real (kind=R8), save :: CONPAR(0:nsdmax-1,NBCD,3)
       real (kind=R8), save :: MOMPAR(0:nsdmax-1,NBCD,2)
       real (kind=R8), save :: ENEPAR(NBCD,2)

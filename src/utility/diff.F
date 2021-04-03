@@ -45,8 +45,8 @@
       endif
 
 *   ..compute poloidal and radial differences
-      call diff_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, dfun(1,0))
-      call diff_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, dfun(1,1))
+      call diff_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, dfun(:,0))
+      call diff_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, dfun(:,1))
 
 *   ..return
       return

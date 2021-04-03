@@ -5,6 +5,7 @@ c     for "original" B2.5 grids.
 c     File names will be appended with "*_st.dat".
       
       use b2mod_types
+      use b2mod_ad
 #ifdef WG_DEBUG
       use b2us_debug
 #endif     
@@ -12,7 +13,6 @@ c     File names will be appended with "*_st.dat".
 #ifdef WG_DEBUG
       real (kind=R8) :: fun_st(-1:nx_st,-1:ny_st), 
      .  funf_st(-1:nx_st,-1:ny_st,0:1)
-      character(8), save :: sf(0:1)
 #endif     
       integer nwrite, nel, flag     ! flag = 0 for cell centers;
       real (kind=R8) :: fun_us(1:nel)
@@ -26,7 +26,6 @@ c     File names will be appended with "*_st.dat".
       integer, save :: iappend = 0, ndigits = 6
 
       logical ex
-      character(7), save :: folder
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
@@ -36,12 +35,12 @@ c     File names will be appended with "*_st.dat".
 *    ..try to create a file in optional output folder
         open(70,file='output/__1__st.dat',err=10)
 *    ..folder exists: future output will be done in folder
-        folder='output/'
+        my_out_folder='output/'
         write(70,*) 'Test file to check on output folder'
         close(70)
         go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10     folder=''
+ 10     my_out_folder=''
  20     continue
       end if
       
@@ -50,7 +49,7 @@ c     File names will be appended with "*_st.dat".
 #endif
 !        filename = trim(folder)//trim(first_name)//'_us.dat'
         finame=first_name
-        filename = trim(folder)//trim(finame)//'_us.dat'
+        filename = trim(my_out_folder)//trim(finame)//'_us.dat'
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
         else
@@ -69,7 +68,7 @@ c     File names will be appended with "*_st.dat".
         
         call to_struct_cell(nel,fun_us,fun_st)
 
-        filename = trim(folder)//trim(first_name)//'_st.dat'
+        filename = trim(my_out_folder)//trim(first_name)//'_st.dat'
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
         else
@@ -86,13 +85,13 @@ c     File names will be appended with "*_st.dat".
         close (nwrite)
         
       elseif(flag.eq.1) then
-        sf(0) ='x_st.dat'
-        sf(1) ='y_st.dat'
+        my_out_sf(0) ='x_st.dat'
+        my_out_sf(1) ='y_st.dat'
 
         call to_struct_face(nel,fun_us,funf_st)
         
         do ic = 0,1  
-          filename = trim(folder)//trim(first_name)//sf(ic)
+          filename=trim(my_out_folder)//trim(first_name)//my_out_sf(ic)
           if (iappend.eq.0) then
             open (nwrite,file=trim(filename))
           else
@@ -109,7 +108,7 @@ c     File names will be appended with "*_st.dat".
           close (nwrite)
         enddo
         
-        filename = trim(folder)//trim(first_name)//'_sum_st.dat'                !srv 13.12.18 {
+        filename = trim(my_out_folder)//trim(first_name)//'_sum_st.dat'                !srv 13.12.18 {
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
         else

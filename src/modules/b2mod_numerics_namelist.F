@@ -1,5 +1,7 @@
       module b2mod_numerics_namelist
       use b2mod_types
+      use b2mod_ad
+     & , only : nsdmax, cvregmax
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -23,9 +25,6 @@
      *   last_solve_9(:)
 #else
 #     include "DIMENSIONS.F"
-      integer NSDMAX, CVREGMAX
-      parameter (NSDMAX=DEF_NSD)
-      parameter (CVREGMAX=8)
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtee(0:CVREGMAX)
@@ -62,15 +61,15 @@
 
       contains
 
-      subroutine alloc_b2mod_numerics(nCv,nsd,nnreg)
+      subroutine alloc_b2mod_numerics(nCv,nsd,nnreg,switch)
+      use b2mod_switches
       implicit none
-      integer nCv,nsd,nnreg(0:1), kul_recycle
+      integer nCv,nsd,nnreg(0:1)
+      type (switches), intent (in) :: switch
 
       if (allocated(time_factor)) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
-      kul_recycle = 0    
-      call ipgeti ('b2stbr_kul_recycle', kul_recycle)
 
       allocate(time_factor(nCv))
 #ifdef ALLOCATE_AND_NAMELIST
@@ -105,10 +104,10 @@
       core_dt_factor=1.0_R8
       solveco=.true.
       solvemo=.true.
-      if (kul_recycle.ne.1) then !! default, use total momentum equation
+      if (switch%kul_recycle.ne.1) then !! default, use total momentum equation
         solvemt=.true.
       else
-        solvemt=.false.          !! in case of KUL fluid neutrals, don't use total momentum equation
+        solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
       endif
       solvepo=.true.
       solveee=.true.

@@ -1,14 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehy (nCv, nFc, nVx, geo, mpg, te, po, ne, ehy)       !srv 13.01.17
+      subroutine b2xehy (nCv, nFc, nVx, switch, geo, mpg, te, po,
+     &                   ne, ehy)       !srv 13.01.17
       use b2mod_types
       use b2mod_constants
+      use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2xehy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -33,47 +40,34 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall
-      integer, save :: pot_eq = 1, no_current= 0                        !srv 29.01.20
-      integer, save :: mode_ehy = 0                                     !srv 06.04.15
       real (kind=R8) ::
      *   dpor(nFc), wrk0(nFc), 
      *   wrk1(nFc), wrk2(nFc), wrk(nCv),
      *   wrkv(nVx), ones(nFc,2)
-      save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg
 *   ..initialization
-      data ncall/0/
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2xehy')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_mode_ehy',mode_ehy)                          !srv 06.04.15
-       call ipgeti ('b2news_poteq', pot_eq)                              !srv 29.01.20 {
-       call ipgeti ('b2tfhe_no_current',no_current)               
-       call xertst (pot_eq.eq.1.or.no_current.eq.1,
-     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')       !srv 29.01.20 }
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2xehy.lt.3) then
 *    ..test sign of ne, te, csig
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 
 *   ..compute ehy
-      if(pot_eq.ne.1 .and. no_current.ne.0) then                         !srv 29.01.20 {
+      if(switch%pot_eq.ne.1 .and. switch%no_current.ne.0) then           !srv 29.01.20 {
         ehy = 0.0_R8
       else
-        if(mode_ehy.eq.0) then
+        if(switch%mode_ehy.eq.0) then
           ones = 1.0_R8
 *       ..compute radial differences of po and pe
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpor)
@@ -82,7 +76,7 @@
           call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
 *       ..compute ehy      
           ehy = -dpor + wrk0/(qe*wrk1)
-        else if (mode_ehy.eq.1) then
+        else if (switch%mode_ehy.eq.1) then
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpor)
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
 *       ..interpolate ne to faces
@@ -106,7 +100,7 @@ cwdk instead of radial distance ("hy1_")
       endif                                                              !srv 29.01.20 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2xehy = ncall_b2xehy+1
       call subend ()
       return
 

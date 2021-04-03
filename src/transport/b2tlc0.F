@@ -1,13 +1,15 @@
-      subroutine b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, na, te, 
+      subroutine b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, te, 
      &  ti, tn, rza, cdpa0, cdpa, cdpahz, flc)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -24,41 +26,35 @@
 *     B2TLC0 computes the neutral diffusion flux limit.              !srv 09.07.03
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, ncall
-      integer, save :: style = 0, iout = 0
+      integer iFc, is
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
       character charns*3                                      
-      save ncall, alpha, gamma
+      save alpha, gamma
 *   ..initialization
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
+      data alpha/0.0_R8/, gamma/2.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr
+      external subini, subend, xertst
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-*   ..read input on first call
-      if (ncall.eq.0) then
-        call ipgetr ('b2tlc0_alpha', alpha)
-        call xertst (0.le.alpha, 'invalid input parameter alpha')
-        call ipgetr ('b2tlc0_gamma', gamma)
-        call xertst (0.lt.gamma, 'invalid input parameter gamma')
-        call ipgeti ('b2tlc0_style', style)
-        call ipgeti ('b2tlc0_iout', iout)                      
-      endif
+
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
       call sfill(2, 1.0_R8, maxfluxlimit, 1)
 
+      alpha = switch%b2tlc0_alpha
+      gamma = switch%b2tlc0_gamma
+
 *   ..nothing done if alpha.eq.0
       if (alpha.ne.0.0_R8) then
-       if (style.eq.0) then
+       if (switch%b2tlc0_style.eq.0) then
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute partial pressure
@@ -130,7 +126,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
 
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlc0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+       if (switch%b2tlc0_iout.ne.0) then
          do is=0,ns-1          
            if (is_neutral(is)) then                            
              write (charns,'(i3.3)') is
@@ -143,7 +139,6 @@ cwdk    or radial contributions, since neutral transport is isotropic
        endif
 
 *   ..return
-      ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------
