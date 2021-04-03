@@ -9,6 +9,7 @@
      *  resmt(:,:),
      *  respo(:,:),
      *  reskt(:,:),
+     *  reszt(:,:),
      *  aresco(:),
      *  aresmo(:)
        real (kind=R8), save ::
@@ -17,6 +18,7 @@
      *  areshi,
      *  arespo,
      *  areskt
+     *  areszt
 
       contains
 
@@ -32,6 +34,7 @@
       allocate(resmt(-1:nxd,-1:nyd))
       allocate(respo(-1:nxd,-1:nyd))
       allocate(reskt(-1:nxd,-1:nyd))
+      allocate(reszt(-1:nxd,-1:nyd))
       allocate(aresco(0:nsd-1))
       allocate(aresmo(0:nsd-1))
 
@@ -43,6 +46,7 @@
       resmt=0.0_R8
       respo=0.0_R8
       reskt=0.0_R8
+      reszt=0.0_R8
       aresco=0.0_R8
       aresmo=0.0_R8
 
@@ -60,6 +64,7 @@
       deallocate(resmt)
       deallocate(respo)
       deallocate(reskt)
+      deallocate(reszt)
       deallocate(aresco)
       deallocate(aresmo)
 
@@ -93,6 +98,7 @@
       call cfwure (nwrite, size(resmt), resmt, 'resmt')
       call cfwure (nwrite, size(respo), respo, 'respo')
       call cfwure (nwrite, size(reskt), reskt, 'reskt')
+      call cfwure (nwrite, size(reszt), reszt, 'reszt')
 
       return
       end subroutine write_b2mod_residuals
