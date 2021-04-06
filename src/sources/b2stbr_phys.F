@@ -917,7 +917,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                 fenerec = 0.0_R8
              endif
              
-             snan = fnnrec*fluid_frac_hyb(iFc)
+             snan = fnnrec
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
              smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale         
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
@@ -1064,7 +1064,7 @@ cmb   net momentum sources from neutral particle reflection
              
 cnh  adding the reflected particle source (with the molecular part subtracted)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + 
-     1         fnnrefl*fluid_frac_hyb(iFc)*neutral_sources_rescale
+     1         fnnrefl*neutral_sources_rescale
              snan = fnnrefl
 
 
