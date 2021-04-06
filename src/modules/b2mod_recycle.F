@@ -743,11 +743,6 @@ c     Calculate fast and thermal recycled parts
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
-
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -759,30 +754,34 @@ c     treated kinetically.
       fna_mol_rec = recycm*pt*fdni*area*0.5_R8
       fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_rec
       
-      fnnrec = max(0.0_R8,recyc0*t0 - 2.0_R8*fna_mol_rec)
+      fnnrec = max(0.0_R8,(recyc0*t0 - 2.0_R8*fna_mol_rec)*
+     1  fluid_frac_hyb)
 
 
 c     Recycled momentum flux densities
-      fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)
+      fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)*
+     1  fluid_frac_hyb
 
       fmoy = 0.0_R8
 
-      fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)
+      fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)*fluid_frac_hyb
     
-      fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt
+      fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*
+     1  fluid_frac_hyb
 c       Pressure of recycled neutrals 
-      pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)
+      pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)*fluid_frac_hyb
 
-      pnc = pnc + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt
+      pnc = pnc + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*fluid_frac_hyb
 c       Density of recycled neutrals
-      nnrec = pcorf*rp21i*fdni/(-i1l)
-      nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt
+      nnrec = pcorf*rp21i*fdni/(-i1l)*fluid_frac_hyb
+      nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt*fluid_frac_hyb
 c       product of density and toroidal velocity
-      nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)
+      nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)*
+     1  fluid_frac_hyb
 
 c     recycled total energy flux density of neutrals
-      fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)
-      fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2
+      fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
+      fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
 
 
 c     Calculate recycled poloidal momentum flux of neutrals
@@ -970,11 +969,6 @@ c     Calculate fast and thermal reflected parts
       pcorf = min(pf,recyc0)/pf
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be reflected as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
-
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -987,7 +981,8 @@ c     the molecules are treated kinetically.
         fna_mol_refl = recycm*pt*fnni_nodrifts*area*0.5_R8
         fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
         
-        fnnrefl = max(0.0_R8,recyc0*fnni*area - 2.0_R8*fna_mol_refl)
+        fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
+     1    fluid_frac_hyb)
       else
         fnnrefl = 0.0_R8
       endif
@@ -995,29 +990,33 @@ c     the molecules are treated kinetically.
 
 c     reflected momentum flux densities
       fmox = pcorf*mn*vcx/vtot*(nnf*rmx1i*cs**2 + 
-     2     1.0_R8/vtot*dnndz*rmx2i*cs**3)*sign(1.0_R8,ux)
-      fmoy = -pcorf*mn*vcx/vtot**2*dnndy*rmy2i*cs**3
+     2     1.0_R8/vtot*dnndz*rmx2i*cs**3)*sign(1.0_R8,ux)*fluid_frac_hyb
+      fmoy = -pcorf*mn*vcx/vtot**2*dnndy*rmy2i*cs**3*fluid_frac_hyb
 
       fmoz = pcorf*mn*vcx/vtot*(nnf*rmz1i*cs**2 + 
-     2     1.0_R8/vtot*dnndz*rmz2i*cs**3)
+     2     1.0_R8/vtot*dnndz*rmz2i*cs**3)*fluid_frac_hyb
     
-      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt
+      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+     1  fluid_frac_hyb
 c       Pressure of reflected neutrals 
       pn = pcorf*mn/3.0_R8*vcx/vtot*(nnf*rp11i*cs**2+
-     2     1.0_R8/vtot*dnndz*rp12i*cs**3)
+     2     1.0_R8/vtot*dnndz*rp12i*cs**3)*fluid_frac_hyb
 
-      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt
+      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+     1  fluid_frac_hyb
 c       Density of reflected neutrals
-      nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)
-      nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt
+      nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)*
+     1  fluid_frac_hyb
+      nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt*
+     1  fluid_frac_hyb
 c       product of density and toroidal velocity
       nnwwnrefl = pcorf*vcx/vtot*(nnf*rp31i*cs+
-     2     1.0_R8/vtot*dnndz*rp32i*cs**2)*sign(1.0_R8,ux)
+     2     1.0_R8/vtot*dnndz*rp32i*cs**2)*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
       fene = 0.5_R8*pcorf*mn*vcx/vtot*(nnf*re1i*cs**3+
-     2     1.0_R8/vtot*dnndz*re2i*cs**4)
-      fene = fene + (1-recycm)*pt*fnni_nodrifts*E_fc*ev
-      fene_el =   - (1-recycm)*pt*fnni_nodrifts*E_fc*ev    !! the Franck-Condon energy must at least be provided by the electrons.
+     2     1.0_R8/vtot*dnndz*re2i*cs**4)*fluid_frac_hyb
+      fene = fene + (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb
+      fene_el =   - (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb    !! the Franck-Condon energy must at least be provided by the electrons.
 
 
 
@@ -1338,10 +1337,6 @@ c     Calculate fast and thermal reflected parts
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
 
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
@@ -1354,26 +1349,28 @@ c     the molecules are treated kinetically.
       fna_mol_refl = recycm*pt*fnni*area*0.5_R8
       fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
       
-      fnnrefl = max(0.0_R8,recyc0*fnni*area - 2.0_R8*fna_mol_refl)
+      fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
+     1  fluid_frac_hyb)
       
 
 c     reflected momentum flux densities
-      fmox = pcorf*mn*nnf*rmx1i*cs**2*sign(1.0_R8,ux)
+      fmox = pcorf*mn*nnf*rmx1i*cs**2*sign(1.0_R8,ux)*fluid_frac_hyb
       fmoy = 0._R8
-      fmoz = pcorf*mn*nnf*rmz1i*cs**2
-      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt
+      fmoz = pcorf*mn*nnf*rmz1i*cs**2*fluid_frac_hyb
+      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*
+     1   fluid_frac_hyb
 c     Pressure of reflected neutrals 
-      pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2
-      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt
+      pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2*fluid_frac_hyb
+      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*fluid_frac_hyb
 c     Density of reflected neutrals
-      nnrefl = pcorf*nnf*rp21i
-      nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt
+      nnrefl = pcorf*nnf*rp21i*fluid_frac_hyb
+      nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt*fluid_frac_hyb
 c     Product of density and toroidal velocity
-      nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)
+      nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
-      fene = 0.5_R8*pcorf*mn*nnf*re1i*cs**3
-      fene = fene + (1-recycm)*pt*fnni*E_fc*ev
-      fene_el =   - (1-recycm)*pt*fnni*E_fc*ev  !! the Franck-Condon energy is provided by the electrons
+      fene = 0.5_R8*pcorf*mn*nnf*re1i*cs**3*fluid_frac_hyb
+      fene = fene + (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb
+      fene_el =   - (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb  !! the Franck-Condon energy is provided by the electrons
 
 
 
