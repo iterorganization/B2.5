@@ -72,11 +72,11 @@
 *   .. compute smbcf
         do iCv = 1, mpg%nCi
           smbcf(iCv,0) = switch%b2sicf_phm0*geo%cvVol(iCv)*              !srv factor hz/hz=1
-     &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*ub(iCv)**2          !srv 05.04.07
+     &     (geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*mb*ub(iCv)**2               !srv 05.04.07
      &      *nb(iCv)*wrk0(iCv)
           ctcf(iCv) = switch%b2sicf_phm0*switch%b2sicf_phm1*
      &                                        geo%cvVol(iCv)*            !srv 06.04.07 {
-     &     (abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
+     &     (geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
      &      *nb(iCv)*wrk0(iCv)                                           !srv 06.04.07 }
         enddo
 

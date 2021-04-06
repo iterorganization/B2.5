@@ -2049,7 +2049,8 @@
            if(mpg%imapCv(ix,iy)/=0) then           
             ic = mpg%imapCv(ix,iy)
 ! b field
-            gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
+            ! wdk sign/orientation of field now included in angles/unit vector cvEb
+            gm%cvBb(ic,0:3) = abs(bb(ix,iy,0:3))
             gm%cvEb(ic,0:2) = ebc(ix,iy,0:2)
 ! cell center
             gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
@@ -2061,7 +2062,7 @@
             gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
             gm%cvVol(ic) = vol(ix,iy)
             gm%cvOnedBsq(ic) = OnedBsq(ix,iy)
-            gm%cvBzb(ic) = bzb(ix,iy)
+            gm%cvBzb(ic) = bzb(ix,iy) !wdk to check: need abs here?
           end if 
         end do
       end do
@@ -2071,7 +2072,8 @@
         do ix = 0, nx
           if(mpg%imapFcx(ix,iy)/=0) then
             ifc = mpg%imapFcx(ix,iy)
-            gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
+            ! wdk sign of field now included in angles
+            gm%fcBb(ifc,0:3) = abs(wbbl(ix,iy,0:3))
             gm%fcS(ifc) = gs(ix,iy,0)
             gm%fcHc(ifc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
             gm%fcHc(ifc,2) = hc(ix,iy,0)
@@ -2086,6 +2088,11 @@
      .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
             gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) - 
      .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            ! wdk account for negative toroidal field through sign of angles
+            gm%fcQalf(ifc,1) = gm%fcQalf(ifc,1)*
+     .        sign(1.0_R8,wbbl(ix,iy,2))
+            gm%fcQbet(ifc,0) = gm%fcQbet(ifc,0)*
+     .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(ifc) = pbs(ix,iy,0)
             gm%fcPbshz(ifc) = pbshz(ix,iy,0)
           end if
@@ -2097,7 +2104,8 @@
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
             ifc = mpg%imapFcy(ix,iy)
-            gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
+            ! wdk sign of field now included in angles
+            gm%fcBb(ifc,0:3) = abs(wbbv(ix,iy,0:3))
             gm%fcS(ifc) = gs(ix,iy,1)
             gm%fcHc(ifc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
             gm%fcHc(ifc,2) = hc(ix,iy,1)
@@ -2113,6 +2121,11 @@
      .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
             gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) - 
      .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            ! wdk account for negative toroidal field through sign of angles
+            gm%fcQalf(ifc,1) = gm%fcQalf(ifc,1)*
+     .        sign(1.0_R8,wbbv(ix,iy,2))
+            gm%fcQbet(ifc,0) = gm%fcQbet(ifc,0)*
+     .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(ifc) = pbs(ix,iy,1)
             gm%fcPbshz(ifc) = pbshz(ix,iy,1)
           end if
@@ -2126,7 +2139,7 @@
         do ix = 0, nx
           if(mpg%imapVx(ix,iy)/=0) then
             ivx = mpg%imapVx(ix,iy)
-            gm%vxBb(ivx,0:3) = wbbc(ix,iy,0:3)
+            gm%vxBb(ivx,0:3) = abs(wbbc(ix,iy,0:3))
             gm%vxX(ivx) = crx(ix,iy,0)
             gm%vxY(ivx) = cry(ix,iy,0)
             gm%vxFfbz(ivx) = ffbz(ix,iy,0)
@@ -2205,22 +2218,6 @@
       end do
 ! calculate connection length
       call calc_conn(mpg, gm)
-#ifdef WG_TODO
-      do i = 1, nFs 
-       ic = mpg%fsCv(mpg%fsCvP(i,1))
-       if (mpg%cvOnClosedSurface(ic)) then        
-        do j=mpg%fsFcP(i,1), mpg%fsFcP(i,1)+mpg%fsFcP(i,2)-1
-          ifc = mpg%fsFc(j)
-cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
-          gm%fsconn(i) = gm%fsconn(i) + 
-     .                   gm%fcHc(ifc,1)*gm%cvBb(mpg%fcCv(ifc,1),3)/
-     .                              abs(gm%cvBb(mpg%fcCv(ifc,1),0)) + 
-     .                   gm%fcHc(ifc,2)*gm%cvBb(mpg%fcCv(ifc,2),3)/
-     .                              abs(gm%cvBb(mpg%fcCv(ifc,2),0))
-        end do
-       end if
-      end do      
-#endif
 
       end subroutine prep_geometry
 

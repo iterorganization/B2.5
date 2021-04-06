@@ -164,7 +164,7 @@
         pob(ic)=pl%po(ic)
         prb(ic)=teb(ic)*max(min(dv%ne(ic),switch%eir_na_max),
      &                                 switch%eir_na_min)
-        rrb(ic)=abs(gm%cvBb(ic,0)/gm%cvBb(ic,3))
+        rrb(ic)=gm%cvBb(ic,0)/gm%cvBb(ic,3)
         volb(ic)=gm%cvVol(ic)
         bbxb(ic)=gm%cvBb(ic,3) * gm%cvEb(ic,0)
         bbyb(ic)=gm%cvBb(ic,3) * gm%cvEb(ic,1)
@@ -280,17 +280,15 @@ c     * guard cell values used for source sampling in infcop
               if (switch%eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*abs(gm%cvBb(ic,0))/gm%cvBb(ic,3)+
-     2               (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3               sign(1.0_R8,gm%cvEb(ic,0)),switch%eir_ua_max),
-     4                                          switch%eir_ua_min)
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
+     3               switch%eir_ua_max),switch%eir_ua_min)
               else
 c     internal cell -> full diamagnetic drift
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*abs(gm%cvBb(ic,0))/gm%cvBb(ic,3)+
-     2               (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3               sign(1.0_R8,gm%cvEb(ic,0)),switch%eir_ua_max),
-     4                                          switch%eir_ua_min)
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
+     3               switch%eir_ua_max),switch%eir_ua_min)
                  endif
             elseif(switch%eirene_uub_style.eq.1) then
 cwdk  uub computed from face fluxes, and interpolated to cell centers
@@ -343,7 +341,7 @@ c     internal cell -> full diamagnetic drift
      1                        vvb(ic,nflai)*pvx(ic)
               vyb(ic,nflai) = uub(ic,nflai)*puy(ic) +
      1                        vvb(ic,nflai)*pvy(ic)
-              vzb(ic,nflai) = wwb(ic,nflai)
+              vzb(ic,nflai) = wwb(ic,nflai)*sign(1.0_R8,gm%cvEb(ic,2))
 
           enddo
 * cell faces
