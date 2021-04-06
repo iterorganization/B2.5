@@ -169,7 +169,7 @@
       save conduction_only, no_hybr_e, no_hybr_i
 !      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
 !      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
-      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+      pit(iCv)=geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
 !      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol

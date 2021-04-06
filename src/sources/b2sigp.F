@@ -226,8 +226,7 @@
         wrk6  = 0.0e0_R8
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi
-         t0=geo%cvHz(iCv)*geo%cvVol(iCv)*abs(geo%cvBb(iCv,0))/
-     &                                       geo%cvBb(iCv,3)          !srv 18.10.02 10.06.05
+         t0=geo%cvHz(iCv)*geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)!srv 18.10.02 10.06.05
          wrk5(iCv) = -t0*wrk0(iCv)
          wrk6(iCv) = -t0*rzb(iCv)*(nb(iCv)/ne(iCv))*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
@@ -275,8 +274,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi
-         t0=geo%cvHz(iCv)*geo%cvVol(iCv)*abs(geo%cvBb(iCv,0))/
-     &                                       geo%cvBb(iCv,3)
+         t0=geo%cvHz(iCv)*geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
          wrk5(iCv) = -t0*wrk0(iCv)
          wrk6(iCv) = -t0*qe*rzb(iCv)*nb(iCv)*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)

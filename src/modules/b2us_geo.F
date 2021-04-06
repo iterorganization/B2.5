@@ -6,7 +6,7 @@
       private
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
-     .          init_geometry, calc_conn
+     .          init_geometry, calc_conn, check_geometry
 
       type, public :: geometry
 
@@ -21,7 +21,7 @@
         real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
         real (kind=R8), allocatable  :: cvBzb(:)       ! Factor for P-S/mdf flows
-        real (kind=R8), allocatable  :: cvEb(:,:)      ! 
+        real (kind=R8), allocatable  :: cvEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
 
 !  face based quantities
         real (kind=R8), allocatable  :: fcBb(:,:)      ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
@@ -35,7 +35,7 @@
         real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
-        real (kind=R8), allocatable  :: fcEb(:,:)      !
+        real (kind=R8), allocatable  :: fcEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
 
 !  vertex quantities
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
@@ -258,7 +258,10 @@
 
 ! flux surface quantities
       call cfrure (iun, nCv,   gm%ftConn, 'ftConn')
-      call cfrure (iun, nFs,   gm%fsPsi, 'fsPsi')
+      call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
+
+! check consistency of input
+      call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
 
       return
       end subroutine read_geometry
@@ -303,10 +306,36 @@
 
 ! flux surface quantities
       call cfwure (nout, nCv,   gm%ftConn, 'ftConn')
-      call cfwure (nout, nFs,   gm%fsPsi, 'fsPsi')
+      call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
 
       return
       end subroutine write_geometry
+
+***********************************************************************
+
+      subroutine check_geometry (nCv, nFc, nVx, nFs, nFt, gm)
+      implicit none
+      integer, intent(in) :: nCv, nFc, nVx, nFs, nFt
+      type (geometry), intent (in) :: gm
+
+*   ..check sign of magnetic field components
+      call b2xvsg (nCv, gm % cvBb(:,0), 1, 'cvBb0', '.ge.')
+      call b2xvsg (nCv, gm % cvBb(:,1), 1, 'cvBb1', '.ge.')
+      call b2xvsg (nCv, gm % cvBb(:,2), 1, 'cvBb2', '.ge.')
+      call b2xvsg (nCv, gm % cvBb(:,3), 1, 'cvBb3', '.ge.')
+
+      call b2xvsg (nFc, gm % fcBb(:,0), 1, 'fcBb0', '.ge.')
+      call b2xvsg (nFc, gm % fcBb(:,1), 1, 'fcBb1', '.ge.')
+      call b2xvsg (nFc, gm % fcBb(:,2), 1, 'fcBb2', '.ge.')
+      call b2xvsg (nFc, gm % fcBb(:,3), 1, 'fcBb3', '.ge.')
+
+      call b2xvsg (nVx, gm % vxBb(:,0), 1, 'vxBb0', '.ge.')
+      call b2xvsg (nVx, gm % vxBb(:,1), 1, 'vxBb1', '.ge.')
+      call b2xvsg (nVx, gm % vxBb(:,2), 1, 'vxBb2', '.ge.')
+      call b2xvsg (nVx, gm % vxBb(:,3), 1, 'vxBb3', '.ge.')
+
+      return
+      end subroutine check_geometry
 
 ***********************************************************************
 
@@ -321,7 +350,8 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
-      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width
+      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width,
+     .  sbf
       intrinsic maxval
       data width /1.0_R8/
       save width
@@ -406,15 +436,21 @@
         dux =   gm%vxY(mpg%fcVx(iFc,2))-gm%vxY(mpg%fcVx(iFc,1))
         duy = -(gm%vxX(mpg%fcVx(iFc,2))-gm%vxX(mpg%fcVx(iFc,1)))
           
-        ! length
+        ! Normalize
         du  = sqrt(dux**2+duy**2)
+        dux = dux/du
+        duy = duy/du
 
-        ! rotate over angle -alpha; scale with poloidal pitch
-        gm%fcEb(iFc,0) = abs(gm%fcBb(iFc,0))/gm%fcBb(iFc,3)*
-     &    ( gm%fcQalf(iFc,0)*dux + gm%fcQalf(iFc,1)*duy)/du
-        gm%fcEb(iFc,1) = abs(gm%fcBb(iFc,0))/gm%fcBb(iFc,3)*
-     &    (-gm%fcQalf(iFc,1)*dux + gm%fcQalf(iFc,0)*duy)/du
-        gm%fcEb(iFc,2) = gm%fcBb(iFc,2)/gm%fcBb(iFc,3)
+        ! Sign of toroidal field (1: out of page; -1: into page)
+        sbf = sign(1.0_R8,gm%fcQalf(iFc,0)*gm%fcQbet(iFc,0) - 
+     &                    gm%fcQalf(iFc,1)*gm%fcQbet(iFc,1))
+
+        ! Rotate over angle -alpha; scale with poloidal pitch
+        gm%fcEb(iFc,0) = gm%fcBb(iFc,0)/gm%fcBb(iFc,3)*
+     &    (     gm%fcQalf(iFc,0)*dux + sbf*gm%fcQalf(iFc,1)*duy)
+        gm%fcEb(iFc,1) = gm%fcBb(iFc,0)/gm%fcBb(iFc,3)*
+     &    (-sbf*gm%fcQalf(iFc,1)*dux +     gm%fcQalf(iFc,0)*duy)
+        gm%fcEb(iFc,2) = sbf*gm%fcBb(iFc,2)/gm%fcBb(iFc,3)
 
       end do
 
@@ -502,7 +538,7 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, iCv, iFt, j, ic
+      integer :: nCv, iCv, iFt, i, j, ic, iFc
       integer, save :: conn_style = 0
       real (kind=r8) :: wrk(mpg%nCv), Lr, Ll
 
@@ -513,9 +549,17 @@
       if (mpg%isClassicalGrid.eq.1) then
        wrk = 0.0_R8
        gm%ftConn = 0.0_R8
-       do iCv = 1, mpg%nCv
-        wrk(iCv) = gm%cvHx(iCv)*gm%cvBb(iCv,3)/abs(gm%cvBb(iCv,0))
-       end do
+       do i = 1, mpg%nFt 
+         do j = mpg%ftFcP(i,1), mpg%ftFcP(i,1)+mpg%ftFcP(i,2)-1
+           ifc = mpg%ftFc(j)
+           wrk(mpg%fcCv(ifc,1)) = wrk(mpg%fcCv(ifc,1)) + 
+     .       gm%fcHc(ifc,1)*gm%cvBb(mpg%fcCv(ifc,1),3)/
+     .                      gm%cvBb(mpg%fcCv(ifc,1),0)
+           wrk(mpg%fcCv(ifc,2)) = wrk(mpg%fcCv(ifc,2)) + 
+     .       gm%fcHc(ifc,2)*gm%cvBb(mpg%fcCv(ifc,2),3)/
+     .                      gm%cvBb(mpg%fcCv(ifc,2),0)
+         end do
+       end do      
        do iFt = 1, mpg%nFt 
         ic = mpg%ftCv(mpg%ftCvP(iFt,1))
         if (mpg%cvOnClosedSurface(ic)) then !core  
