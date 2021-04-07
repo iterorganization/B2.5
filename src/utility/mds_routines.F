@@ -9,7 +9,8 @@
         write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
         status=mdsput2(trim(node_name)//char(0),'$'//char(0),
-     1   descr2(idtype_cstring,0,len_trim(string)),trim(string),0)
+     1   descr2(idtype_cstring,0,len_trim(string)),
+     1   trim(string),0)
         call mds_err_msg(status)
       else
         write(*,*) 'Skipped writing zero length string to ',
@@ -83,7 +84,7 @@
       character :: tdi*(172)
 
       tdi='$'
-      
+
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_long,nx,ny,0),data,0)
@@ -110,7 +111,7 @@
       character :: tdi*(172)
 
       tdi='$'
-      
+
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_long,ns,0),data,0)

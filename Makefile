@@ -927,7 +927,11 @@ endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
 endif
 
+ifdef USE_EIRENE
 ${OBJDIR}/libsolps4.a: ${SOLPS4OBJS} ${EIR4MODS}
+else
+${OBJDIR}/libsolps4.a: ${SOLPS4OBJS}
+endif
 	${BLD} $@ ${SOLPS4OBJS}
 
 ${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}
@@ -965,7 +969,7 @@ ifneq (${MOD},o)
 endif
 ifdef SOLPSTOP
 ifdef LD_NETCDF
-	-rm ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
+	-rm -f ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
 endif
 endif
 	-rm -rf ${OBJDIR}/.delete &

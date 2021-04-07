@@ -213,7 +213,8 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       '$'//char(0),
-     *       descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
+     *       descr2(idtype_cstring,dimsize(2),0,len(str1(1))),
+     *       str1,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data2c,str1)
@@ -232,7 +233,8 @@ c first deal with the time vector
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *         descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+     *         descr2(idtype_double,dimsize(1),dimsize(2),0),
+     *         data2,0)
               write(*,*) 'mdsput2'
               call mds_err_msg(status)
             else
@@ -247,7 +249,8 @@ c first deal with the time vector
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *         descr2(idtype_double,dimsize(2),dimsize(1),0),data2T,0)
+     *         descr2(idtype_double,dimsize(2),dimsize(1),0),
+     *         data2T,0)
               write(*,*) 'mdsput2'
               call mds_err_msg(status)
               deallocate(data2T)
