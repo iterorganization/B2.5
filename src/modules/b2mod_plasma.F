@@ -655,4 +655,51 @@
       return
       end subroutine write_b2mod_plasma
 
+      subroutine write_b2mod_plasma_short(nwrite)
+      implicit none
+      integer nwrite
+
+      call cfwure (nwrite, size(fch),  fch,  'fch')
+      call cfwure (nwrite, size(fhe),  fhe,  'fhe')
+      call cfwure (nwrite, size(fhi),  fhi,  'fhi')
+      call cfwure (nwrite, size(fna),  fna,  'fna')
+      call cfwure (nwrite, size(fne),  fne,  'fne')
+      call cfwure (nwrite, size(fni),  fni,  'fni')
+      call cfwure (nwrite, size(fkt),  fkt,  'fkt')
+      call cfwure (nwrite, size(na),   na,   'na')
+      call cfwure (nwrite, size(ne),   ne,   'ne')
+      call cfwure (nwrite, size(ni),   ni,   'ni')
+      call cfwure (nwrite, size(pb),   pb,   'pb')
+      call cfwure (nwrite, size(po),   po,   'po')
+      call cfwure (nwrite, size(te),   te,   'te')
+      call cfwure (nwrite, size(ti),   ti,   'ti')
+      call cfwure (nwrite, size(tn),   tn,   'tn')
+      call cfwure (nwrite, size(kt),   kt,   'kt')
+      call cfwure (nwrite, size(ua),   ua,   'ua')
+      call cfwure (nwrite, size(uadia), uadia, 'uadia')
+      call cfwure (nwrite, size(fchdia), fchdia, 'fchdia')
+      call cfwure (nwrite, size(fmo), fmo, 'fmo')
+      call cfwure (nwrite, size(wadia),  wadia,  'wadia')
+      call cfwure (nwrite, size(vaecrb), vaecrb, 'vaecrb')
+      call cfwure (nwrite, size(facdrift), facdrift, 'facdrift')
+      call cfwure (nwrite, size(fac_ExB), fac_ExB, 'fac_ExB')
+      call cfwure (nwrite, size(fchvispar), fchvispar, 'fchvispar')
+      call cfwure (nwrite, size(fchvisper), fchvisper, 'fchvisper')
+      call cfwure (nwrite, size(fchin), fchin, 'fchin')
+      call cfwure (nwrite, size(fna_nodrift), fna_nodrift,'fna_nodrift')
+      call cfwure (nwrite, size(fac_vis), fac_vis, 'fac_vis')
+      call cfwure (nwrite, size(fna_mdf), fna_mdf, 'fna_mdf')
+      call cfwure (nwrite, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
+      call cfwure (nwrite, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
+      call cfwure (nwrite, size(fnaPSch), fnaPSch, 'fnaPSch')
+      call cfwure (nwrite, size(fhePSch), fhePSch, 'fhePSch')
+      call cfwure (nwrite, size(fhiPSch), fhiPSch, 'fhiPSch')
+      call cfwure (nwrite, size(fna_fcor), fna_fcor, 'fna_fcor')
+      call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
+      call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
+      call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
+
+      return
+      end subroutine write_b2mod_plasma_short
+
       end module b2mod_plasma

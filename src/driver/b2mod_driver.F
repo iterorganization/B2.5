@@ -2452,7 +2452,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 !    call write_plasma_state_diff (nout(9), ns, nCv, nFc, stated)
 *   ..conversion to structured format and output
       if (mpg%isClassicalGrid.eq.1) then
-        call to_struct_plasma (ns,mpg,state)
+        call to_struct_plasma (ns,mpg,state,switch%write_pl_short)
       endif
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
