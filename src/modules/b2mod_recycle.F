@@ -1661,6 +1661,12 @@ c         do nothing to prevent oscillations if minimum Kn is just around Kn_b1
         endif
       enddo
       if (switch%AFN_out.ne.0) then
+c calculate mfp for all cells
+        do i=1,nCv
+          call CalcMinKn(i,isn,istra,
+     &        pl,dv,rt,switch%L_macro_AFN,min_Kn,Kn,mfp)
+          mfp_out(i) = mfp
+        enddo
         call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
         call my_out_us(70,nCv,0,Kn_out,'AFN_Kn')
         call my_out_us(70,nCv,0,Kn_ti_out,'AFN_Kn_ti')
