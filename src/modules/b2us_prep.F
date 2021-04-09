@@ -3009,10 +3009,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
 **********************************************************************
       
-      subroutine to_struct_plasma (ns, mpg, st)
+      subroutine to_struct_plasma (ns, mpg, st, write_pl_short)
       
       implicit none
-      integer, intent(in) :: ns
+      integer, intent(in) :: ns, write_pl_short
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
       integer :: nx, ny, nCi, nCv, nFc
@@ -3996,6 +3996,23 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
       call write_b2mod_neutr_src_scaling(nout_st,nstrat)
 
       close(nout_st)
+
+      if (write_pl_short.ne.0) then !! optional: write reduced version of b2fplasmf_st to minimize data tranfer times
+
+*   ..write b2fplasmf_st_short in structured format
+      open (newunit=nout_st,file='b2fplasmf_st_short',iostat=io)
+      if (io /= 0) then
+        write (*,*) ' File b2fplasmf_st_short not writable'
+        call xerrab ('to_struct_plasma_short -- no plasma file ')
+      end if
+      lblps = 'Plasma state in structured format'
+
+      call cfverw(nout_st, newversion)
+      call write_b2mod_plasma_short(nout_st)
+      call write_b2mod_sources_short(nout_st)
+      close(nout_st)
+      
+      endif
 
 
 *   ..deallocate modules for structured grid

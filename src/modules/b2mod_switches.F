@@ -169,7 +169,8 @@ c iout switches
       integer :: b2wdat_append      
       integer :: AFN_out       
       integer :: copy_background_iout      
-      integer :: eirene_mc_iout         
+      integer :: eirene_mc_iout   
+      integer :: write_pl_short      
                                                                                                            
 
 
@@ -591,6 +592,7 @@ c b2mndt
       s % AFN_out = 0
       s % copy_background_iout =  0 !srv 14.07.10
       s % eirene_mc_iout = 0
+      s % write_pl_short = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -1003,6 +1005,7 @@ c iout switches
       call ipgeti ('b2stbr_AFN_out',s % AFN_out)
       call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
+      call ipgeti ('write_pl_short', s % write_pl_short)
       
                                                                         
 

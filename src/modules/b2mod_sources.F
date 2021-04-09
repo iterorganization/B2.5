@@ -546,4 +546,27 @@
       return
       end subroutine write_b2mod_sources
 
+      subroutine write_b2mod_sources_short(nwrite)
+      implicit none
+      integer nwrite
+      character*3 source_name
+
+      if (newversion.ge.'01.001.026') then
+        source_name = 'sne'
+      else if (newversion.gt.'01.001.010') then
+        source_name = 'sch'
+      end if
+
+      call cfwure (nwrite, size(sch), sch, 'sch')
+      call cfwure (nwrite, size(she), she, 'she')
+      call cfwure (nwrite, size(shi), shi, 'shi')
+      call cfwure (nwrite, size(smo), smo, 'smo')
+      call cfwure (nwrite, size(smq), smq, 'smq')
+      call cfwure (nwrite, size(sna), sna, 'sna')
+      if(newversion.ge.'01.001.026')
+     >  call cfwure (nwrite, size(sne), sne, 'sne')
+
+      return
+      end subroutine write_b2mod_sources_short
+
       end module b2mod_sources
