@@ -177,6 +177,24 @@
           call xerrab
      &     ('Prohibited "b2news_guard_flows" switch usage!')
         endif
+        if (ipnam(ip).eq.'hybrid_neutrals') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete'
+          call xerrab
+     &     ('Use b2mn_spatial_hybrid instead')
+        endif
+        if (ipnam(ip).eq.'b2stbr_mfp_b1') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete'
+          call xerrab
+     &     ('Use b2stbr_Kn_b1 instead')
+        endif
+        if (ipnam(ip).eq.'b2stbr_mfp_b2') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete'
+          call xerrab
+     &     ('Use b2stbr_Kn_b2 instead')
+        endif
       enddo
       return
 !srv 15.09.15 }
