@@ -1,5 +1,5 @@
       program b2optim_ipopt
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       use b2mod_main_diff
      , , only : b2mn_init_d, b2mn_fin_d
       implicit none
@@ -8,7 +8,7 @@
       include 'IpReturnCodes.inc'
 
 !     Size of the problem (number of variables and equality constraints)
-      integer :: nvar, ncon, nele_jac, NELE_HESS, IDX_STY
+      integer :: ncon, nele_jac, NELE_HESS, IDX_STY
       parameter  (NELE_HESS = 0, IDX_STY = 1 )
 !sc N = number design variables
 !   M number of constraints (it's 2 because the third one is the variable bound!
@@ -42,7 +42,7 @@
       integer IPADDNUMOPTION, IPADDINTOPTION
       integer IPOPENOUTPUTFILE
       double precision F
-      integer ivar, icon
+      integer ipar, icon
 
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
@@ -53,23 +53,24 @@
 
 !     ..START OF COMPUTATION
 
-      call read_b2mod_par_opt(nvar, ncon, nele_jac)
+      call read_b2mod_par_opt(ncon, nele_jac)
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
       ncon = 1 ! FIXME to be updated whenever nonlinear constraints are needed
       nele_jac = 1
 
-      allocate(X(nvar),X_L(nvar),X_U(nvar),Z_L(nvar),Z_U(nvar))
+      allocate(X(npar_opt),X_L(npar_opt),X_U(npar_opt))
+      allocate(Z_L(npar_opt),Z_U(npar_opt))
       allocate(G(ncon),G_L(ncon),G_U(ncon),LAM(ncon))
 
-      do ivar = 1, nvar
-        X(ivar) = x0(ivar)
-        X_L(ivar) = xl(ivar)
-        X_U(ivar) = xu(ivar)
-        if (X_L(ivar).lt.-inf_opt)
-     &    write(*,*) 'IPOPT: warning, X_L(',ivar,') set to infty'
-        if (X_U(ivar).gt.inf_opt)
-     &    write(*,*) 'IPOPT: warning, X_U(',ivar,') set to infty'
+      do ipar = 1, npar_opt
+        X(ipar) = x0(ipar)
+        X_L(ipar) = xl(ipar)
+        X_U(ipar) = xu(ipar)
+        if (X_L(ipar).lt.-inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_L(',ipar,') set to infty'
+        if (X_U(ipar).gt.inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_U(',ipar,') set to infty'
       end do
       do icon = 1, ncon
         G_L(icon) = -inf_opt*10!gl(icon)
@@ -85,13 +86,17 @@
 !     Allocate and initialize par_opt variables to be used in B2.5
 
       call b2mn_init_d
-      npar_opt = nvar
-      allocate(par_opt_phys(1:npar_opt))
+      allocate(par_opt_phys(npar_opt)) 
+      if (nsigma.gt.0) then
+        allocate(par_opt_physd(nbdirsmax, npar_opt))
+        par_opt_physd =0.0_R8
+        par_opt_physd(2,2) = 1.0_R8
+      endif
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
 !     First create a handle for the Ipopt problem (and read the options file)
-      IPROBLEM = IPCREATE(nvar, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
+      IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
      &     NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F, EV_JAC_G)
       if (IPROBLEM.eq.0) then
          write(*,*) 'Error creating an Ipopt Problem handle.'
@@ -190,20 +195,20 @@
       write(*,*)
       write(*,*) 'The optimal values of X are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'X  (',ivar,') = ',X(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'X  (',ipar,') = ',X(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the lower bounds are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'Z_L(',ivar,') = ',Z_L(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'Z_L(',ipar,') = ',Z_L(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the upper bounds are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'Z_U(',ivar,') = ',Z_U(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'Z_U(',ipar,') = ',Z_U(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the equality constraints are:'
@@ -220,36 +225,37 @@
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
       deallocate(par_opt_phys)
+      if (nsigma.gt.0) deallocate(par_opt_physd)
       stop 'b2optim'
  9990 continue
       write(*,*) 'Error setting an option'
       goto 9000
       end program b2optim_ipopt
 
-      subroutine EV_F(nvar, XX, NEW_X, F, IDAT, DAT, IER)
+      subroutine EV_F(npar, XX, NEW_X, F, IDAT, DAT, IER)
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step
-      use b2mod_ad
+      use b2mod_ad_diff
      , , only : nncf
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       implicit none
-      integer nvar, NEW_X
-      double precision F, XX(nvar)
+      integer npar, NEW_X
+      double precision F, XX(npar)
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, iv
+      integer IER, ipar
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        do iv = 1, nvar
-          par_opt_phys(iv) = real(XX(iv),kind=r8)
-          write(str,"(I1)") iv
-          if (iv.ge.10) write(str,"(I2)") iv
+        do ipar = 1, npar
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)
+          write(str,"(I1)") ipar
+          if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
-     &     par_opt_phys(iv)
+     &     par_opt_phys(ipar)
         enddo
         call b2mn_step(j)
       endif
@@ -258,36 +264,36 @@
       return
       end subroutine EV_F
 
-      subroutine EV_GRAD_F(nvar, XX, NEW_X, GRAD, IDAT, DAT, IER)
+      subroutine EV_GRAD_F(npar, XX, NEW_X, GRAD, IDAT, DAT, IER)
       use b2mod_types
       use b2mod_main_diff
      , , only : b2mn_step_d
-      use b2mod_ad
+      use b2mod_ad_diff
      , , only : nncf
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       implicit none
-      integer nvar, NEW_X
-      double precision GRAD(nvar), XX(nvar)
+      integer npar, NEW_X
+      double precision GRAD(npar), XX(npar)
       real(kind=r8) j(nncf), jd(nncf), jb(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, iv
+      integer IER, ipar
       character*3 str
       save jd
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do iv = 1, nvar
-          par_opt_phys(iv) = real(XX(iv),kind=r8)
-          write(str,"(I1)") iv
-          if (iv.ge.10) write(str,"(I2)") iv
+        do ipar = 1, npar
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)
+          write(str,"(I1)") ipar
+          if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
-     &     par_opt_phys(iv)
+     &     par_opt_phys(ipar)
         enddo
         call b2mn_step_d(j,jd)
       endif
-      do iv = 1, nvar
-        grad(iv) = DBLE(jd(1))
+      do ipar = 1, npar
+        grad(ipar) = DBLE(jd(1))
       end do
 !      if (new_x.eq.0) then
 !        call b2mn_init_b
@@ -302,11 +308,11 @@
       return
       end subroutine EV_GRAD_F
 
-      subroutine EV_G(nvar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
+      subroutine EV_G(npar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
       use b2mod_types
       implicit none
-      integer nvar, NEW_X, ncon
-      double precision G(ncon), X(nvar)
+      integer npar, NEW_X, ncon
+      double precision G(ncon), X(npar)
       double precision DAT(*)
       integer IDAT(*)
       integer IERR, icon
@@ -319,12 +325,12 @@
       return
       end subroutine EV_G
 
-      subroutine EV_JAC_G(TASK, nvar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
+      subroutine EV_JAC_G(TASK, npar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
      &    IDAT, DAT, IERR)
       use b2mod_types
-      use b2mod_par_opt
-      integer TASK, nvar, NEW_X, ncon, NZ
-      double precision X(nvar), A(NZ)
+      use b2mod_par_opt_diff
+      integer TASK, npar, NEW_X, ncon, NZ
+      double precision X(npar), A(NZ)
       integer ACON(NZ), AVAR(NZ), I
       double precision DAT(*)
       integer IDAT(*)

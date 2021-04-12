@@ -301,6 +301,7 @@ csw
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_boundary_namelist
+      use b2mod_par_opt
       use b2mod_ad
      , , only: nncf
       implicit none

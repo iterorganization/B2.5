@@ -1876,7 +1876,7 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! $AD FP-LOOP "res_max"
+! $AD FP-LOOP "state%pl%na state%pl%ua state%pl%te state%pl%ti state%pl%tn state%pl%po state%pl%kt"
       do while (res_max.ge.res_quit)
 #else
     1 continue
@@ -2357,11 +2357,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         endif
 #endif
 #ifdef FIXED_POINT
-*   ..loop test
-      if (quit .or. itim.ge.ntim .or. ierr.ne.0 .or.
-     &     (etim.le.tim .and. etim.gt.0.0_R8) ) then
-        exit
-      endif
 *   ..end loop
       end do
 #else

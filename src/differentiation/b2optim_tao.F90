@@ -7,7 +7,7 @@
 
       program b2optim_petsc
       use taomodule ! IGNORE
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       use b2mod_main_diff &
       , only : b2mn_init_d, b2mn_fin_d
       implicit none
@@ -19,7 +19,7 @@
       PetscReal            tol
       PetscViewer viewer
 
-      integer :: nvar, ncon, nele_jac, ivar
+      integer :: ncon, nele_jac, ipar
 
       external FormFunctionGradient
 
@@ -29,16 +29,20 @@
          stop
       endif
 
-      call read_b2mod_par_opt(nvar, ncon, nele_jac)
+      call read_b2mod_par_opt(ncon, nele_jac)
 
 !      call PetscPrintf(PETSC_COMM_SELF,'Solution should be f(1,1)=-2\n',ierr);CHKERRA(ierr)
 
-      call InitializeProblem(nvar,ierr);CHKERRA(ierr)
+      call InitializeProblem(npar_opt,ierr);CHKERRA(ierr)
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       call b2mn_init_d
-      npar_opt = nvar
-      allocate(par_opt_phys(1:npar_opt))
+      allocate(par_opt_phys(npar_opt))
+      if (nsigma.gt.0) then
+        allocate(par_opt_physd(nbdirsmax, npar_opt))
+        par_opt_physd =0.0_R8
+        par_opt_physd(2,2) = 1.0_R8
+      endif
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
@@ -74,42 +78,43 @@
 
       call b2mn_fin_d
       deallocate(par_opt_phys)
+      if (nsigma.gt.0) deallocate(par_opt_physd)
       stop 'b2optim'
 
       stop
       end program b2optim_petsc
 
 
-      subroutine InitializeProblem(nvar,ierr)
+      subroutine InitializeProblem(npar,ierr)
       use taomodule ! IGNORE
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       implicit none
       PetscReal zero
       PetscErrorCode ierr
-      integer ivar, nvar
+      integer ipar, npar
 
       zero = 0.0
 
-      call VecCreateSeq(PETSC_COMM_SELF,nvar,X,ierr);CHKERRQ(ierr)
+      call VecCreateSeq(PETSC_COMM_SELF,npar,X,ierr);CHKERRQ(ierr)
       call VecDuplicate(X,X_L,ierr);CHKERRQ(ierr)
       call VecDuplicate(X,X_U,ierr);CHKERRQ(ierr)
       call VecSet(X,zero,ierr);CHKERRQ(ierr)
       call VecSet(X_L,zero,ierr);CHKERRQ(ierr)
       call VecSet(X_U,zero,ierr);CHKERRQ(ierr)
 
-      do ivar = 1, nvar
-        call VecSetValue(X,ivar-1,x0(ivar),INSERT_VALUES,ierr);CHKERRQ(ierr)
-        if (xl(ivar).lt.-inf_opt) then
-          write(*,*) 'TAO: warning, X_L(',ivar,') set to infty'
-          call VecSetValue(X_L,ivar-1,PETSC_NINFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
+      do ipar = 1, npar
+        call VecSetValue(X,ipar-1,x0(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+        if (xl(ipar).lt.-inf_opt) then
+          write(*,*) 'TAO: warning, X_L(',ipar,') set to infty'
+          call VecSetValue(X_L,ipar-1,PETSC_NINFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
         else
-          call VecSetValue(X_L,ivar-1,xl(ivar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+          call VecSetValue(X_L,ipar-1,xl(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
         endif
-        if (xu(ivar).gt.inf_opt) then
-          write(*,*) 'TAO: warning, X_U(',ivar,') set to infty'
-          call VecSetValue(X_U,ivar-1,PETSC_INFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
+        if (xu(ipar).gt.inf_opt) then
+          write(*,*) 'TAO: warning, X_U(',ipar,') set to infty'
+          call VecSetValue(X_U,ipar-1,PETSC_INFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
         else
-          call VecSetValue(X_U,ivar-1,xu(ivar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+          call VecSetValue(X_U,ipar-1,xu(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
         endif
       end do
       call VecAssemblyBegin(x,ierr);CHKERRQ(ierr)
@@ -143,17 +148,17 @@
       , only : b2mn_step_d
       use b2mod_ad_diff &
       , only : nncf
-      use b2mod_par_opt
+      use b2mod_par_opt_diff
       implicit none
       real(kind=r8) j(nncf), jd(nncf)
-      integer iv
+      integer ipar
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
       Tao tao
       PetscScalar F
-      PetscScalar x_v(0:nnvar-1),g_v(0:nnvar-1)
+      PetscScalar x_v(0:npar_opt-1),g_v(0:npar_opt-1)
       PetscOffset x_i,g_i
 
 
@@ -165,16 +170,16 @@
 !     g_v(g_i) = 2.0*(x_v(x_i)-2.0) - 2.0
 !     gx2=2*(x2-2) -2
 !     g_v(g_i+1) = 2.0*(x_v(x_i+1)-2.0) - 2.0
-      do iv = 1, nnvar
-        par_opt_phys(iv) = x_v(x_i+iv-1)
-        write(str,"(I1)") iv
-        if (iv.ge.10) write(str,"(I2)") iv
-        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(iv)
+      do ipar = 1, npar_opt
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
       call b2mn_step_d(j,jd)
       F = j(1)
-      do iv = 1, nnvar
-        g_v(g_i+iv-1) = jd(1)
+      do ipar = 1, npar_opt
+        g_v(g_i+ipar-1) = jd(1)
       end do
 
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
