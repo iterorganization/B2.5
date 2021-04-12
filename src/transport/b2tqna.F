@@ -116,7 +116,7 @@
       real (kind=R8) ::
      *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
-      integer elm_count, iv
+      integer elm_count, ipar
       save jxi, jxa, jsep
       logical catch_up
 *   ..procedures
@@ -196,17 +196,17 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if (flag_optim) then
-        do iv = 1, nnvar !loop over all design variables
-          select case (xtype(iv))
+        do ipar = 1, npar_opt - nsigma !loop over all design variables except sigmas
+          select case (partype(ipar))
           case (1) ! dna
-            parm_dna(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
+            parm_dna(1) = par_opt_phys(ipar) ! FIXME to improve for multispecies
           case (2) ! hce
-            parm_hce = par_opt_phys(iv)
+            parm_hce = par_opt_phys(ipar)
           case (3) ! hci
-            parm_hci(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
+            parm_hci(1) = par_opt_phys(ipar) ! FIXME to improve for multispecies
           case default
-            write(*,*) xtype(iv)
-            call xerrab ('xtype out of bounds')
+            write(*,*) partype(ipar)
+            call xerrab ('partype out of bounds')
           end select
         end do
       endif

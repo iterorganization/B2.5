@@ -35,7 +35,7 @@
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
       logical, save :: cfread(nncf), cfomp(nncf)
-      integer, save :: ncfdata(nncf), ncf
+      integer, save :: ncfdata(nncf), ncf, ntimescf(nncf)
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
 
       private :: user
@@ -198,11 +198,13 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.5) call xerrab ('cftype>5 not coded ')
+          if (cftype(icf).gt.6) call xerrab ('cftype>6 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
-     &     'only cftype(1) can be zero')
+     &     'only cftype(1) should be =0')
+          if (cftype(icf).eq.6.and. icf.ne.1) call xerrab (
+     &     'only cftype(1) should be =6')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
      &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
      &         ' read experimental profile')
@@ -259,10 +261,27 @@ c***  Standard setup:
 
       call cf_to_struct(m)
 
-! now allocate vectors that will be used to interpolate data
+! now allocate vector that will be used to interpolate data onto solps grid
       if (any(cfread)) then
-        ndata = maxval(m%cfCvP(1:ncf,2),1)
-        allocate(ffdata(ncf,ndata))
+        ntimescf = 0
+! check that for now we have data for a multiple of the number of CV in CF
+        do icf = 1, ncf
+          if (cfread(icf)) then
+           call xertst(mod(ncfdata(icf),m%cfCvP(icf,2)).eq.0,
+     &      'b2mod_par_opt: number of data read for CF should be'//
+     &      ' a multiple of the CVs in that CF (to be improved)')
+           ntimescf(icf) = ncfdata(icf)/m%cfCvP(icf,2)
+          endif
+        enddo
+      endif
+
+! now allocate vector that will be used to interpolate solps onto data grid in loglikelihood for Bayesian MAP
+      if (any(cftype.eq.6)) then
+        do icf  = 1, ncf
+          if (cftype(icf).eq.6) is = icf
+        enddo
+        ndata = maxval(ncfdata(1:ncf),1)
+        allocate(ffdata(cfend(is)-cfstart(is)+1,ndata))
         ffdata = 0.0_R8
       endif
 
