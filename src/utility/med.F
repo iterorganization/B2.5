@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       function med (t0, t1, t2)
       use b2mod_types
       implicit none

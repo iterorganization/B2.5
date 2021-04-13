@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       subroutine intvertex1(nCv,nVx,nz,mpg,vxvol,centre,vertex)
       use b2mod_types
       use b2us_map
@@ -13,6 +14,7 @@
       return
       end subroutine intvertex1
 c
+! $AD NOCHECKPOINT
       subroutine intvertex(nCv,nVx,mpg,vxvol,centre,vertex)
       use b2mod_types
       use b2us_map

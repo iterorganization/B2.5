@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine calccoef(nCv,nFc,nVx,meth,geo,mpg,flo,con,flo0,con0)
       use b2mod_types
       use b2us_geo
