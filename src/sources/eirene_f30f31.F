@@ -60,7 +60,7 @@
      &  vadiac(nCv,0:1,0:ns-1), wrk(nCv)
       real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:1,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
-      integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
+      integer :: ic, ifc, iRc1, ian, ien, ntrgdat, ifl, i, istra, ic2,
      &           iv1, iv2, icp
       integer, save :: check_target=1
       real (kind=R8) :: intface_s
@@ -68,7 +68,7 @@
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8), allocatable, save :: wght(:,:)
       real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
-      real (kind=R8) :: fnn_inc_b(nFc,1:ns)
+
 
       call subini ('copy_background')
       if(ncall.eq.0) then
@@ -350,11 +350,18 @@ c     internal cell -> full diamagnetic drift
           enddo
 * cell faces
           do ifc = 1, nFc
-            fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
-            if (is_neutral(is)) then
-              fnn_inc_b(ifc,nflai) = fnn_inc(ifc,is)
-            endif
+            fnib(ifc,nflai) = (dv%fna(ifc,0,is) + dv%fna(ifc,1,is))*
+     &                         kin_frac_hyb(iFc)
           end do
+          if (is_neutral(is).and.switch%use_auto_spatial_hyb.eq.1) then
+            do istra = 1, mpg%nRc
+              do i = 1, mpg%rcCvP(istra,2)
+                iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+                ifc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
+                fnib(ifc,nflai) = fnn_inc(ifc,is)*kin_frac_hyb(iFc)  ! neutral flux based on the incident flux, not the net flux
+              enddo
+            enddo
+          endif
           
 !!        endif
       enddo
@@ -445,13 +452,13 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            if (zab(ifl).ne.0) then !! ion species
+c            if (zab(ifl).ne.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            else                      !! neutral species
-              trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            endif
+     &                mpg%rcFcOr(ian+i-1)
+c            else                      !! neutral species
+c              trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
+c     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
+c            endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !!'
               trgt(istra)%flux(i,ifl) = 0.0_R8
