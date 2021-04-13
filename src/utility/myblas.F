@@ -160,6 +160,7 @@
       return
 *     ------------------------------------------------------------------
       end subroutine b2sscal 
+! $AD NOCHECKPOINT
       subroutine b2scopy (n, sx, incx, sy, incy)
       use b2mod_types
       implicit none
@@ -196,6 +197,7 @@
       return
 *     ------------------------------------------------------------------
       end subroutine b2scopy
+! $AD NOCHECKPOINT
       subroutine b2saxpy (n, sa, sx, incx, sy, incy)
       use b2mod_types
       implicit none

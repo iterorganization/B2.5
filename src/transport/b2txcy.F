@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       subroutine b2txcy (nCv, nFc, mode, geo, mpg, fcVol, fcS, kapy, 
      .  cony)
       use b2mod_types

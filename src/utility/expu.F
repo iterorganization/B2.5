@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       function expu (arg)
       use b2mod_types
       implicit none

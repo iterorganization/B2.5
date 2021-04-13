@@ -1,7 +1,7 @@
 
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine calcflow(nCv,nFc,nVx,meth,geo,mpg,fun,flo,con,
      *  flow,flowf,flowc)
       use b2mod_types

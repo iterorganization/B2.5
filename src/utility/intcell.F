@@ -13,6 +13,7 @@
       return
       end subroutine intcell1
 c
+! $AD NOCHECKPOINT
       subroutine intcell(nFc,nCv,mpg,wght,face,centre)
       use b2mod_types
       use b2us_map

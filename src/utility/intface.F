@@ -12,6 +12,7 @@
       return
       end subroutine intface1
 c
+! $AD NOCHECKPOINT
       subroutine intface(nCv,nFc,fcCv,fcVol,centre,face)
       use b2mod_types
       implicit none
