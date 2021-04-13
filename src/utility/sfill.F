@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       subroutine sfill (n, sa, sx, incx)
       use b2mod_types
       implicit none

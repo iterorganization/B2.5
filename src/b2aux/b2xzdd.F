@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       subroutine b2xzdd (nCv, nd, switch, mpg, src)
       use b2mod_switches
       use b2mod_types
