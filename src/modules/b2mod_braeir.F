@@ -20,6 +20,8 @@ c
       REAL(kind=R8), ALLOCATABLE, SAVE, PUBLIC :: 
      &  PUX(:),  PUY(:),  PVX(:),  PVY(:)
 
+      REAL(kind=R8), SAVE, PUBLIC ::  L_macro
+
       type :: targetdata
         integer :: ntrgdat
         integer, allocatable :: faces(:)
