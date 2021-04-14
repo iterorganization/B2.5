@@ -241,6 +241,7 @@
 *    ..test state
        call b2xvps (nx, ny, ns,
      &   ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
       endif
 *   ..compute fne, fni
       call b2xpfe (nx, ny, ns, ns_ext, qe,

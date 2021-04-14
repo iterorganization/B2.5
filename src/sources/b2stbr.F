@@ -38,7 +38,7 @@
      ,  , only : eirene_mc
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          ext_sna
+     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
       use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
@@ -873,6 +873,7 @@ cwdk i.e. fully replaced by the averaged values from b2faveri
 cwdk get the averaged sources
           call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
      &                            she0_eir_tot, shi0_eir_tot,
+     &                            sch0_eir_tot, sne0_eir_tot,
      &                            nx, ny, ns)
 
 cwdk note: only total Eirene source are averaged!

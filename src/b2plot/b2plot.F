@@ -2070,7 +2070,7 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          call b2xehx(nx, ny, hx, te, po, ne, mach(-1,-1,0))
+          call b2xehx(nx, ny, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'

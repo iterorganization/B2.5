@@ -2316,7 +2316,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,te,'b2tfnb_te')
        call my_out(70,nx,ny,ti,'b2tfnb_ti')
        call my_out(70,nx,ny,po,'b2tfnb_po')
-!      call my_out(70,nx,ny,zb,'b2tfnb_zb'//chns)
+       call my_out(70,nx,ny,zb,'b2tfnb_zb'//chns)
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
        call my_out(70,nx,ny,fchvispar_b(-1,-1,0),

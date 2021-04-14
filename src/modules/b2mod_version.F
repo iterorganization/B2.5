@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10, save :: newversion ='03.000.007'
+      character*10, save :: newversion ='03.000.008'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -296,7 +296,7 @@ c                                 inserted boundary conditions BCENI = 23 and 24
 c                                 changed subroutine intcor.F Complicated operator IF was splitted by two in order that debugger not complain about index
 c                        11.06.13 added calculation of integrated electron and ion heat sources due to atomic processes for B2-ASTRA coupling
 c
-c    Versions 02.00x.0xx  Reserved for SOLPS6.0
+c    Versions 02.00x.0xx          Reserved for SOLPS6.0
 c
 c    Version 03.000.000  09.02.15 Inaugural SOLPS-ITER version
 c                                 Added smcf centrifugal force array to b2fplasma
@@ -328,4 +328,5 @@ c    Version 03.000.007  01.07.19 Added fix_recomb and zmax_recomb to b2frates
 c                                 Replaced redef_pbs by redef_gmtry in b2fgmtry
 c                                 Added wbbl to b2fgmtry
 c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma
+c    Version 03.000.008  14.04.21 Reduced size of batch averaged sources to only include total values
 c

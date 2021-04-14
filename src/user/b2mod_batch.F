@@ -17,19 +17,19 @@
      .                             e_po(:,:)
 
       real (kind=R8), allocatable, save ::
-     .                             sna_mean(:,:,:,:),
-     .                             sne_mean(:,:,:),
-     .                             smo_mean(:,:,:,:),
-     .                             she_mean(:,:,:),
-     .                             shi_mean(:,:,:),
-     .                             sch_mean(:,:,:)
+     .                             sna_mean(:,:,:),
+     .                             sne_mean(:,:),
+     .                             smo_mean(:,:,:),
+     .                             she_mean(:,:),
+     .                             shi_mean(:,:),
+     .                             sch_mean(:,:)
       real (kind=R8), allocatable, save ::
-     .                             e_sna(:,:,:,:),
-     .                             e_sne(:,:,:),
-     .                             e_smo(:,:,:,:),
-     .                             e_she(:,:,:),
-     .                             e_shi(:,:,:),
-     .                             e_sch(:,:,:)
+     .                             e_sna(:,:,:),
+     .                             e_sne(:,:),
+     .                             e_smo(:,:,:),
+     .                             e_she(:,:),
+     .                             e_shi(:,:),
+     .                             e_sch(:,:)
 
       contains
 
@@ -54,12 +54,12 @@
       call batch_average (n2,    po, po_mean, itp, ntim_batch)
       call batch_average (n2*ns, ua, ua_mean, itp, ntim_batch)
 
-      call batch_average (n2*2*ns, sna, sna_mean, itp, ntim_batch)
-      call batch_average (n2*2,    sne, sne_mean, itp, ntim_batch)
-      call batch_average (n2*4,    she, she_mean, itp, ntim_batch)
-      call batch_average (n2*4,    shi, shi_mean, itp, ntim_batch)
-      call batch_average (n2*4,    sch, sch_mean, itp, ntim_batch)
-      call batch_average (n2*4*ns, smo, smo_mean, itp, ntim_batch)
+      call batch_average (n2*ns, sna, sna_mean, itp, ntim_batch)
+      call batch_average (n2,    sne, sne_mean, itp, ntim_batch)
+      call batch_average (n2,    she, she_mean, itp, ntim_batch)
+      call batch_average (n2,    shi, shi_mean, itp, ntim_batch)
+      call batch_average (n2,    sch, sch_mean, itp, ntim_batch)
+      call batch_average (n2*ns, smo, smo_mean, itp, ntim_batch)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (n2*ns, na, e_na, itp, ntim_batch)
@@ -68,12 +68,12 @@
       call batch_average_sq (n2,    po, e_po, itp, ntim_batch)
       call batch_average_sq (n2*ns, ua, e_ua, itp, ntim_batch)
 
-      call batch_average_sq (n2*2*ns, sna, e_sna, itp, ntim_batch)
-      call batch_average_sq (n2*2,    sne, e_sne, itp, ntim_batch)
-      call batch_average_sq (n2*4,    she, e_she, itp, ntim_batch)
-      call batch_average_sq (n2*4,    shi, e_shi, itp, ntim_batch)
-      call batch_average_sq (n2*4,    sch, e_sch, itp, ntim_batch)
-      call batch_average_sq (n2*4*ns, smo, e_smo, itp, ntim_batch)
+      call batch_average_sq (n2*ns, sna, e_sna, itp, ntim_batch)
+      call batch_average_sq (n2,    sne, e_sne, itp, ntim_batch)
+      call batch_average_sq (n2,    she, e_she, itp, ntim_batch)
+      call batch_average_sq (n2,    shi, e_shi, itp, ntim_batch)
+      call batch_average_sq (n2,    sch, e_sch, itp, ntim_batch)
+      call batch_average_sq (n2*ns, smo, e_smo, itp, ntim_batch)
 
       naver = naver + 1
 
@@ -97,20 +97,18 @@
          allocate (e_ti(-1:nx,-1:ny))
          allocate (e_po(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only
-ctb..as the mean of the product does not equal the product of the means etc.
-         allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (sne_mean(-1:nx,-1:ny,0:1))
-         allocate (smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (she_mean(-1:nx,-1:ny,0:3))
-         allocate (shi_mean(-1:nx,-1:ny,0:3))
-         allocate (sch_mean(-1:nx,-1:ny,0:3))
-         allocate (e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (e_sne(-1:nx,-1:ny,0:1))
-         allocate (e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (e_she(-1:nx,-1:ny,0:3))
-         allocate (e_shi(-1:nx,-1:ny,0:3))
-         allocate (e_sch(-1:nx,-1:ny,0:3))
+         allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (sne_mean(-1:nx,-1:ny))
+         allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (she_mean(-1:nx,-1:ny))
+         allocate (shi_mean(-1:nx,-1:ny))
+         allocate (sch_mean(-1:nx,-1:ny))
+         allocate (e_sna(-1:nx,-1:ny,0:ns-1))
+         allocate (e_sne(-1:nx,-1:ny))
+         allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_she(-1:nx,-1:ny))
+         allocate (e_shi(-1:nx,-1:ny))
+         allocate (e_sch(-1:nx,-1:ny))
 
       end if
 
@@ -218,12 +216,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, n2,    po_mean, 'po_mean')
       call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
 
-      call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
-      call cfwure (iun, n2*2, sne_mean, 'sne_mean')
-      call cfwure (iun, n2*4, she_mean, 'she_mean')
-      call cfwure (iun, n2*4, shi_mean, 'shi_mean')
-      call cfwure (iun, n2*4, sch_mean, 'sch_mean')
-      call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
+      call cfwure (iun, n2*ns, sna_mean, 'sna_mean')
+      call cfwure (iun, n2,    sne_mean, 'sne_mean')
+      call cfwure (iun, n2,    she_mean, 'she_mean')
+      call cfwure (iun, n2,    shi_mean, 'shi_mean')
+      call cfwure (iun, n2,    sch_mean, 'sch_mean')
+      call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
 
       call cfwure (iun, n2*ns, e_na, 'e_na')
       call cfwure (iun, n2,    e_te, 'e_te')
@@ -231,12 +229,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, n2,    e_po, 'e_po')
       call cfwure (iun, n2*ns, e_ua, 'e_ua')
 
-      call cfwure (iun, n2*2*ns, e_sna, 'e_sna')
-      call cfwure (iun, n2*2,    e_sne, 'e_sne')
-      call cfwure (iun, n2*4,    e_she, 'e_she')
-      call cfwure (iun, n2*4,    e_shi, 'e_shi')
-      call cfwure (iun, n2*4,    e_sch, 'e_sch')
-      call cfwure (iun, n2*4*ns, e_smo, 'e_smo')
+      call cfwure (iun, n2*ns, e_sna, 'e_sna')
+      call cfwure (iun, n2,    e_sne, 'e_sne')
+      call cfwure (iun, n2,    e_she, 'e_she')
+      call cfwure (iun, n2,    e_shi, 'e_shi')
+      call cfwure (iun, n2,    e_sch, 'e_sch')
+      call cfwure (iun, n2*ns, e_smo, 'e_smo')
 
       naver = 0
 

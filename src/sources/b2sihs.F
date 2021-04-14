@@ -486,7 +486,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
 *    ..contribution from electron-atom friction
 *      (a.k.a. Joule heating)
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+       call b2xehx (nx, ny, te, po, ne, ehx)                             !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
      &   call b2xehy (nx, ny, te, po, ne, ehy)                           !srv 13.01.17
        b2joule=0.0_R8

@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehx (nx, ny, hx, te, po, ne, ehx)       !srv 13.01.17
+      subroutine b2xehx (nx, ny, te, po, ne, ehx)                        !srv 13.01.17
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_subsys
@@ -10,7 +11,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     &   hx(-1:nx,-1:ny),
      &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

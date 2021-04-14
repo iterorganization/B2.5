@@ -167,7 +167,7 @@
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
+      call b2xehx (nx, ny, te, po, ne, ehx_)                             !srv 13.01.17 {
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
