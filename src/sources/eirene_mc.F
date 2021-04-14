@@ -1,6 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
-     1 BoRiS, sna0, smo0, she0, shi0, main_call, switch, geo, mpg, 
-     & pl, dv, rt, kin_frac_hyb,fnn_inc)
+     1 BoRiS, sna0, smo0, she0, shi0, shn0, main_call, switch, geo,  
+     & mpg, pl, dv, rt, kin_frac_hyb,fnn_inc)
 
 c  version : 26.07.2002 23:39
 
@@ -59,7 +59,7 @@ c  version : 26.07.2002 23:39
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
-     & she0(nCv,0:3), shi0(nCv,0:3)
+     & she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
       logical main_call                                           !dpc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -177,7 +177,8 @@ csw 26feb2014
       real (kind=R8) :: relax
 
       real (kind=R8), save, allocatable ::
-     .   sni_av(:,:,:),smo_av(:,:,:),sei_av(:,:),see_av(:,:)
+     .   sni_av(:,:,:),smo_av(:,:,:),sei_av(:,:),
+     .   see_av(:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      .   sni_av_papl(:,:,:),sni_av_pmpl(:,:,:),
      .   sni_av_pipl(:,:,:),sni_av_pppl(:,:,:),
@@ -422,6 +423,8 @@ csw 26feb2013
 
 !! set logical lneustra
       lneustra = switch%ineustra > 0
+!! set L_macro for EIRENE
+      L_macro = switch%L_macro_AFN
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then 
           kin_frac_hyb = 1.0_R8
@@ -2861,6 +2864,9 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               endif
 
               ssei(istrai)=ssei(istrai)+t0
+
+
+
 c ? RADARR ?
 csw 06mar2012 add l_neutrad
               if(l_neutrad.lt.0) then
@@ -3162,9 +3168,13 @@ c$$$                    endif
      &             eirene_mc_eppl_shi0to3(ic,0,istrai)+t0_p
                 endif
               end if !}
+
             end if !}
+
         end do !} ic
       end do !} istrai
+
+
 c
 c*** correct radiation losses for the molecule dissociation
 c

@@ -113,7 +113,7 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
-     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3),
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3),
      &  fatm_eir(nFc,0:1,nnatmi), datm_eir(nCv,nnatmi), !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli), dmol_eir(nCv,nnmoli), !IYS 27.01.17
      &  flxtmp(nCv)
@@ -315,6 +315,7 @@
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (nCv*4, 0.0_R8, she0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
+      call sfill (nCv*4, 0.0_R8, shn0_eir, 1)
       fatm_eir = 0.0_R8
       datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
@@ -578,7 +579,7 @@ c   --> better solution wanted here..
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
+     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
      &                 main_call, switch, geo, mpg, pl, dv, rt,
      &                 kin_frac_hyb,fnn_inc)
 
@@ -597,12 +598,12 @@ c   --> better solution wanted here..
 
 *   add eirene sources to running average when averaging
         if (switch%iav_run > 0) call running_average (nCv,ns,pl,dv,
-     &      sna0_eir, smo0_eir, she0_eir, shi0_eir)
+     &      sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir)
 
 *   get averaged sources
         if (switch%ird_aver > 0) then
           call run_av_get_sources(sna0_eir, smo0_eir, 
-     &                            she0_eir, shi0_eir, 
+     &                            she0_eir, shi0_eir, shn0_eir,
      &                            nCv, ns)
 
         endif
@@ -611,6 +612,15 @@ c   --> better solution wanted here..
         srw%smo0 = srw%smo0 + smo0_eir
         srw%she0 = srw%she0 + she0_eir
         srw%shi0 = srw%shi0 + shi0_eir
+        if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
+          srw%shi0 = srw%shi0 + shn0_eir 
+        elseif (switch%tn_style.eq.1) then !! pure ion energy equation
+          !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
+          call xertst (SUM(shn0_eir).eq.0,
+     &   'shn_eir.ne.0 is not allowed for tn_style = 1')
+        else                               !! separate neutral energy equation
+          srw%shn0 = srw%shn0 + shn0_eir 
+        endif
 
 
 
@@ -866,18 +876,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is) .and. switch%iout_b2wdat.eq.4) then
-!          do k=0,1 ! 3                                                  !srv 29.04.10 {
-!           write (chk,'(i1)') k
-!           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
-!     *              'b2stbr_smo_eir'//chk//chns)
-!          enddo
           wrk0=smo0_eir(:,0,is)+
      &         smo0_eir(:,1,is)*pl%ua(:,is)+
      &         smo0_eir(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smo0_eir(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_smo_eir'//chns)
-         endif
         else
 !        do k=0,3
 !         write (chk,'(i1)') k
@@ -896,7 +899,6 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
         if(switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is)) then
           if (switch%iout_b2wdat.ne.4) then
            do k=0,1                                                   !srv 29.04.10
             write (chk,'(i1)') k
@@ -906,7 +908,6 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           endif
           wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*pl%na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns)
-         endif
         else
 !        do k=0,1
 !         write (chk,'(i1)') k
@@ -961,6 +962,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,she0_eir(1,k),'b2stbr_she_eir'//chk)
           call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,0,shn0_eir(1,k),'b2stbr_shn_eir'//chk)
          enddo
         endif
         wrk0=she0_eir(:,0)+she0_eir(:,1)*pl%te+
@@ -969,6 +971,10 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         wrk0=shi0_eir(:,0)+shi0_eir(:,1)*pl%ti+
      &       shi0_eir(:,2)*dv%ni(:,0)+shi0_eir(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
+        wrk0=shn0_eir(:,0)+shn0_eir(:,1)*pl%tn+
+     &       shn0_eir(:,2)*(dv%ni(:,0)-dv%ni(:,1))+
+     &       shn0_eir(:,3)*pl%tn*(dv%ni(:,0)-dv%ni(:,1))
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_shn_eir')
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k

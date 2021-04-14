@@ -21,12 +21,12 @@
      .                             sna_mean(:,:),
      .                             smo_mean(:,:),
      .                             she_mean(:),
-     .                             shi_mean(:)
+     .                             shi_mean(:), shn_mean(:)
       real (kind=R8), allocatable, save ::
      .                             e_sna(:,:),
      .                             e_smo(:,:),
      .                             e_she(:),
-     .                             e_shi(:)
+     .                             e_shi(:), e_shn(:)
 
       integer, save :: naver, ntotdt
 
@@ -38,7 +38,7 @@
      
 
       subroutine running_average (nCv,ns,pl,dv,
-     &           sna0_eir, smo0_eir, she0_eir, shi0_eir)
+     &           sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir)
 
       use b2mod_types
       use b2mod_constants
@@ -55,12 +55,12 @@ c input
       type (B2Derivatives), intent (in) :: dv
       real (kind=R8), intent(in) ::
      *   sna0_eir(nCv,0:1,0:ns-1), smo0_eir(nCv,0:3,0:ns-1), 
-     *   she0_eir(nCv,0:3), shi0_eir(nCv,0:3)
+     *   she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 c local
       integer :: itp, is
       real (kind=R8) ::
      *   sna_tot(nCv,0:ns-1), smo_tot(nCv,0:ns-1), 
-     *   she_tot(nCv), shi_tot(nCv)
+     *   she_tot(nCv), shi_tot(nCv), shn_tot(nCv)
 
       call subini ('running_average')
 
@@ -80,6 +80,9 @@ cnh   Calculation of the total sources
      1  she0_eir(:,2)*dv%ne + she0_eir(:,3)*pl%te*dv%ne
       shi_tot = shi0_eir(:,0) + shi0_eir(:,1)*pl%ti +
      1  shi0_eir(:,2)*dv%ni(:,0) + shi0_eir(:,3)*pl%ti*dv%ni(:,0)
+      shn_tot = shn0_eir(:,0) + shn0_eir(:,1)*pl%tn +
+     1  shn0_eir(:,2)*(dv%ni(:,0)-dv%ni(:,1)) + 
+     1  shn0_eir(:,3)*pl%tn*(dv%ni(:,0)-dv%ni(:,1))
 
 
 *  calculate averaged plasma profiles and sources
@@ -93,6 +96,7 @@ cnh   Calculation of the total sources
       call batch_average (nCv*ns, sna_tot, sna_mean, itp, naver)
       call batch_average (nCv,    she_tot, she_mean, itp, naver)
       call batch_average (nCv,    shi_tot, shi_mean, itp, naver)
+      call batch_average (nCv,    shn_tot, shn_mean, itp, naver)
       call batch_average (nCv*ns, smo_tot, smo_mean, itp, naver)
 
 *  calculate squared averaged plasma profiles
@@ -106,6 +110,7 @@ cnh   Calculation of the total sources
       call batch_average_sq (nCv*ns, sna_tot, e_sna, itp, naver)
       call batch_average_sq (nCv,    she_tot, e_she, itp, naver)
       call batch_average_sq (nCv,    shi_tot, e_shi, itp, naver)
+      call batch_average_sq (nCv,    shn_tot, e_shn, itp, naver)
       call batch_average_sq (nCv*ns, smo_tot, e_smo, itp, naver)
 
       call subend ()
@@ -146,10 +151,12 @@ c local variables
          allocate (smo_mean(nCv,0:ns-1))
          allocate (she_mean(nCv))
          allocate (shi_mean(nCv))
+         allocate (shn_mean(nCv))
          allocate (e_sna(nCv,0:ns-1))
          allocate (e_smo(nCv,0:ns-1))
          allocate (e_she(nCv))
          allocate (e_shi(nCv))
+         allocate (e_shn(nCv))
 
       end if
 
@@ -172,10 +179,12 @@ c local variables
       sna_mean = 0.0_R8
       she_mean = 0.0_R8
       shi_mean = 0.0_R8
+      shn_mean = 0.0_R8
       smo_mean = 0.0_R8
       e_sna = 0.0_R8
       e_she = 0.0_R8
       e_shi = 0.0_R8
+      e_shn = 0.0_R8
       e_smo = 0.0_R8
 
       if (iav_cont > 0) then
@@ -218,6 +227,7 @@ c local variables
               call cfrure (iun, nCv*ns, sna_mean, 'sna_mean')
               call cfrure (iun, nCv,    she_mean, 'she_mean')
               call cfrure (iun, nCv,    shi_mean, 'shi_mean')
+              call cfrure (iun, nCv,    shn_mean, 'shn_mean')
               call cfrure (iun, nCv*ns, smo_mean, 'smo_mean')
             end if
 
@@ -235,6 +245,7 @@ c local variables
               call cfrure (iun, nCv*ns, e_sna, 'e_sna')
               call cfrure (iun, nCv,    e_she, 'e_she')
               call cfrure (iun, nCv,    e_shi, 'e_shi')
+              call cfrure (iun, nCv,    e_shn, 'e_shn')
               call cfrure (iun, nCv*ns, e_smo, 'e_smo')
             end if
 
@@ -275,10 +286,12 @@ c local variables
       deallocate (smo_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
+      deallocate (shn_mean)
       deallocate (e_sna)
       deallocate (e_smo)
       deallocate (e_she)
       deallocate (e_shi)
+      deallocate (e_shn)
 
       return
       end subroutine run_av_fin
@@ -337,6 +350,7 @@ c local variables
          call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
          call cfwure (iun, nCv, she_mean, 'she_mean')
          call cfwure (iun, nCv, shi_mean, 'shi_mean')
+         call cfwure (iun, nCv, shn_mean, 'shn_mean')
          call cfwure (iun, nCv*ns, smo_mean, 'smo_mean')
 
       end if
@@ -355,6 +369,7 @@ c local variables
          call cfwure (iun, nCv*ns, e_sna, 'e_sna')
          call cfwure (iun, nCv,    e_she, 'e_she')
          call cfwure (iun, nCv,    e_shi, 'e_shi')
+         call cfwure (iun, nCv,    e_shn, 'e_shn')
          call cfwure (iun, nCv*ns, e_smo, 'e_smo')
 
       end if
@@ -390,12 +405,12 @@ c local variables
 
 
       subroutine run_av_get_sources (sna_out, smo_out, she_out, shi_out,
-     &                          nCv, ns)
+     &                         shn_out, nCv, ns)
       implicit none
       integer, intent(in) :: nCv, ns
       real (kind=R8), intent(out) ::
      *  sna_out(nCv,0:1,0:ns-1), smo_out(nCv,0:3,0:ns-1),
-     &  she_out(nCv,0:3), shi_out(nCv,0:3)
+     &  she_out(nCv,0:3), shi_out(nCv,0:3), shn_out(nCv,0:3)
 
       call subini ('run_av_get_sources')
 
@@ -406,11 +421,13 @@ c when calling the averaged sources the linearisation must be overwritten (every
       smo_out(:,0,:) = smo_mean
       she_out(:,0) =   she_mean
       shi_out(:,0) =   shi_mean
+      shn_out(:,0) =   shn_mean
 
       sna_out(:,1,:) =   0.0_R8
       smo_out(:,1:3,:) = 0.0_R8
       she_out(:,1:3) =   0.0_R8
       shi_out(:,1:3) =   0.0_R8
+      shn_out(:,1:3) =   0.0_R8
 
       call subend ()
 
