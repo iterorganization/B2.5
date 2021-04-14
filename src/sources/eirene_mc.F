@@ -177,8 +177,7 @@ csw 26feb2014
       real (kind=R8) :: relax
 
       real (kind=R8), save, allocatable ::
-     .   sni_av(:,:,:),smo_av(:,:,:),sei_av(:,:),
-     .   see_av(:,:)
+     .   sni_av(:,:,:),smo_av(:,:,:),sei_av(:,:,:),see_av(:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      .   sni_av_papl(:,:,:),sni_av_pmpl(:,:,:),
      .   sni_av_pipl(:,:,:),sni_av_pppl(:,:,:),
@@ -186,18 +185,18 @@ csw 26feb2014
      .   smo_av_mipl(:,:,:),smo_av_cppv(:,:,:),
      .   see_av_eael(:,:), see_av_emel(:,:),
      .   see_av_eiel(:,:), see_av_epel(:,:),
-     .   sei_av_eapl(:,:), sei_av_empl(:,:),
-     .   sei_av_eipl(:,:), sei_av_eppl(:,:)
+     .   sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
+     .   sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:),
      &  smo_h(:,:,:,:),
-     &  see_h(:,:,:), sei_h(:,:,:),
+     &  see_h(:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:), rfluxa_h(:,:,:,:),
      &  pfluxm_h(:,:,:,:), rfluxm_h(:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:),
      &  smo_s(:,:,:),
-     &  see_s(:,:), sei_s(:,:),
+     &  see_s(:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:), rfluxa_s(:,:,:),
      &  pfluxm_s(:,:,:), rfluxm_s(:,:,:),
 ! _s is an abbreviation from 'sum'
@@ -209,16 +208,16 @@ csw 26feb2014
      &  smo_h_mipl(:,:,:,:),smo_h_cppv(:,:,:,:),
      &  see_h_eael(:,:,:), see_h_emel(:,:,:),
      &  see_h_eiel(:,:,:), see_h_epel(:,:,:),
-     &  sei_h_eapl(:,:,:), sei_h_empl(:,:,:),
-     &  sei_h_eipl(:,:,:), sei_h_eppl(:,:,:),
+     &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
+     &  sei_h_eipl(:,:,:,:), sei_h_eppl(:,:,:,:),
      &  sni_s_papl(:,:,:),sni_s_pmpl(:,:,:),
      &  sni_s_pipl(:,:,:),sni_s_pppl(:,:,:),
      &  smo_s_mapl(:,:,:),smo_s_mmpl(:,:,:),
      &  smo_s_mipl(:,:,:),smo_s_cppv(:,:,:),
      &  see_s_eael(:,:), see_s_emel(:,:),
      &  see_s_eiel(:,:), see_s_epel(:,:),
-     &  sei_s_eapl(:,:), sei_s_empl(:,:),
-     &  sei_s_eipl(:,:), sei_s_eppl(:,:)
+     &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
+     &  sei_s_eipl(:,:,:), sei_s_eppl(:,:,:)
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -1772,7 +1771,7 @@ c              style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
         allocate(sni_av(size(sni,1),size(sni,2), size(sni,3)))
         allocate(smo_av(size(smo,1),size(smo,2), size(smo,3)))
-        allocate(sei_av(size(sei,1),size(sei,2)))
+        allocate(sei_av(size(sei,1),size(sei,2), size(sei,3)))
         allocate(see_av(size(see,1),size(see,2)))
         sni_av=0.0_R8
         smo_av=0.0_R8
@@ -1787,10 +1786,10 @@ c              style)
           allocate(smo_av_mmpl(size(smo,1), size(smo,2), size(smo,3)))
           allocate(smo_av_mipl(size(smo,1), size(smo,2), size(smo,3)))
           allocate(smo_av_cppv(size(smo,1), size(smo,2), size(smo,3)))
-          allocate(sei_av_eapl(size(sei,1), size(sei,2)))
-          allocate(sei_av_empl(size(sei,1), size(sei,2)))
-          allocate(sei_av_eipl(size(sei,1), size(sei,2)))
-          allocate(sei_av_eppl(size(sei,1), size(sei,2)))
+          allocate(sei_av_eapl(size(sei,1), size(sei,2), size(sei,3)))
+          allocate(sei_av_empl(size(sei,1), size(sei,2), size(sei,3)))
+          allocate(sei_av_eipl(size(sei,1), size(sei,2), size(sei,3)))
+          allocate(sei_av_eppl(size(sei,1), size(sei,2), size(sei,3)))
           allocate(see_av_eael(size(see,1), size(see,2)))
           allocate(see_av_emel(size(see,1), size(see,2)))
           allocate(see_av_eiel(size(see,1), size(see,2)))
@@ -1894,7 +1893,7 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         sni_h(:,:,:,ihist) = sni
         smo_h(:,:,:,ihist) = smo
         see_h(:,:,ihist) = see
-        sei_h(:,:,ihist) = sei
+        sei_h(:,:,:,ihist) = sei
         if (balance_netcdf.ne.0) then !djm Jan2017
           sni_h_papl(:,:,:,ihist) = sni_papl
           sni_h_pmpl(:,:,:,ihist) = sni_pmpl
@@ -1908,10 +1907,10 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
           see_h_emel(:,:,ihist) = see_emel
           see_h_eiel(:,:,ihist) = see_eiel
           see_h_epel(:,:,ihist) = see_epel
-          sei_h_eapl(:,:,ihist) = sei_eapl
-          sei_h_empl(:,:,ihist) = sei_empl
-          sei_h_eipl(:,:,ihist) = sei_eipl
-          sei_h_eppl(:,:,ihist) = sei_eppl
+          sei_h_eapl(:,:,:,ihist) = sei_eapl
+          sei_h_empl(:,:,:,ihist) = sei_empl
+          sei_h_eipl(:,:,:,ihist) = sei_eipl
+          sei_h_eppl(:,:,:,ihist) = sei_eppl
         endif
         do iatm = 1,nnatmi
          pfluxa_h(:,iatm,1,ihist) = pfluxa(:,iatm,1)
@@ -1958,7 +1957,7 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
          sni_av = sni_av + sni_h(:,:,:,ih)
          smo_av = smo_av + smo_h(:,:,:,ih)
          see_av = see_av + see_h(:,:,ih)
-         sei_av = sei_av + sei_h(:,:,ih)
+         sei_av = sei_av + sei_h(:,:,:,ih)
          if (balance_netcdf.ne.0) then !djm Jan2017
            sni_av_papl = sni_av_papl + sni_h_papl(:,:,:,ih)
            sni_av_pmpl = sni_av_pmpl + sni_h_pmpl(:,:,:,ih)
@@ -1972,10 +1971,10 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
            see_av_emel = see_av_emel + see_h_emel(:,:,ih)
            see_av_eiel = see_av_eiel + see_h_eiel(:,:,ih)
            see_av_epel = see_av_epel + see_h_epel(:,:,ih)
-           sei_av_eapl = sei_av_eapl + sei_h_eapl(:,:,ih)
-           sei_av_empl = sei_av_empl + sei_h_empl(:,:,ih)
-           sei_av_eipl = sei_av_eipl + sei_h_eipl(:,:,ih)
-           sei_av_eppl = sei_av_eppl + sei_h_eppl(:,:,ih)
+           sei_av_eapl = sei_av_eapl + sei_h_eapl(:,:,:,ih)
+           sei_av_empl = sei_av_empl + sei_h_empl(:,:,:,ih)
+           sei_av_eipl = sei_av_eipl + sei_h_eipl(:,:,:,ih)
+           sei_av_eppl = sei_av_eppl + sei_h_eppl(:,:,:,ih)
          endif
          do iatm = 1,nnatmi
           dab2_s(:,iatm,1) = dab2_s(:,iatm,1)
@@ -2688,10 +2687,11 @@ c*** before correction (r), after correction (c), after iteration (i)
 
         if (switch%eirene_mc_iout.ne.0) then
           write (chistrai,'(i1)') istrai
-          call my_out_us(70,nCv,0,sei_av(:,istrai),'sei'//chistrai)
+          call my_out_us(70,nCv*ns,0,sei_av(:,:,istrai),'sei'//chistrai)
           if (istrai.eq.1) then
             write (chncall,'(i3.3)') ncall
-            call my_out_us(70,nCv,0,sei_av(:,istrai),'sei1_'//chncall)
+            call my_out_us(70,nCv*ns,0,sei_av(:,:,istrai),
+     .        'sei1_'//chncall)
           endif
         endif
         
@@ -2845,20 +2845,20 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
-              t0=sei_av(ic,istrai)*tflux(istrai)*
+              t0=sum(sei_av(ic,1:ns,istrai))*tflux(istrai)*
      1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1         dble(ih_end)
               if (balance_netcdf.ne.0) then
-                t0_a=sei_av_eapl(ic,istrai)*tflux(istrai)* !djm Jan2017
+                t0_a=sum(sei_av_eapl(ic,1:ns,istrai))*tflux(istrai)* !djm Jan2017
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_m=sei_av_empl(ic,istrai)*tflux(istrai)*
+                t0_m=sum(sei_av_empl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_i=sei_av_eipl(ic,istrai)*tflux(istrai)*
+                t0_i=sum(sei_av_eipl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_p=sei_av_eppl(ic,istrai)*tflux(istrai)*
+                t0_p=sum(sei_av_eppl(ic,1:ns,istrai))*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
@@ -3709,7 +3709,8 @@ c!###}
       allocate(smo_h(size(smo,1), 
      .               size(smo,2), size(smo,3), nhistd))
       allocate(see_h(size(see,1), size(see,2), nhistd))
-      allocate(sei_h(size(sei,1), size(sei,2), nhistd))
+      allocate(sei_h(size(sei,1), 
+     .               size(sei,2), size(sei,3), nhistd))
       if (balance_netcdf.ne.0) then !djm Jan2017
 #ifdef WG_TODO
         allocate(sni_h_papl(size(sni,1),
@@ -3732,10 +3733,14 @@ c!###}
         allocate(see_h_emel(size(see,1), size(see,2), nhistd))
         allocate(see_h_eiel(size(see,1), size(see,2), nhistd))
         allocate(see_h_epel(size(see,1), size(see,2), nhistd))
-        allocate(sei_h_eapl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_empl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_eipl(size(sei,1), size(sei,2), nhistd))
-        allocate(sei_h_eppl(size(sei,1), size(sei,2), nhistd))
+        allocate(sei_h_eapl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_empl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_eipl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
+        allocate(sei_h_eppl(size(sei,1), 
+     .                    size(sei,2), size(sei,3), nhistd))
 #endif
       endif
       allocate(pfluxa_h(nCv,natm,1,nhistd))
@@ -3826,7 +3831,8 @@ c!###}
       allocate(smo_s(size(smo,1), 
      .               size(smo,2), size(smo,3)))
       allocate(see_s(size(see,1), size(see,2)))
-      allocate(sei_s(size(sei,1), size(sei,2)))
+      allocate(sei_s(size(sei,1), 
+     .               size(sei,2), size(sei,3)))
       if (balance_netcdf.ne.0) then !djm Jan2017
         allocate(sni_s_papl(size(sni,1), 
      .                      size(sni,2), size(sni,3)))
@@ -3848,10 +3854,14 @@ c!###}
         allocate(see_s_emel(size(see,1), size(see,2)))
         allocate(see_s_eiel(size(see,1), size(see,2)))
         allocate(see_s_epel(size(see,1), size(see,2)))
-        allocate(sei_s_eapl(size(sei,1), size(sei,2)))
-        allocate(sei_s_empl(size(sei,1), size(sei,2)))
-        allocate(sei_s_eipl(size(sei,1), size(sei,2)))
-        allocate(sei_s_eppl(size(sei,1), size(sei,2)))
+        allocate(sei_s_eapl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_empl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_eipl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
+        allocate(sei_s_eppl(size(sei,1), 
+     .                      size(sei,2), size(sei,3)))
       endif
       allocate(pfluxa_s(nCv,natm,1))
       allocate(pfluxm_s(nCv,nmol,1))
