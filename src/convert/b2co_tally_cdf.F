@@ -30,7 +30,8 @@
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
-      character*256 filename, plasmastate
+      character*32 hlp_frm
+      character*256 filename, plasmastate, message
       character*13 :: cdata(0:ns-1)
       logical :: exists
       integer :: lnblnk
@@ -130,14 +131,14 @@ c prepare the b2tallies.nc.xxxx file
       extension='xxxx'
 #else
 #ifdef NAGFOR
-        call get_environment_variable('PLASMASTATE',
-     .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('PLASMASTATE',value=plasmastate)
-          extension=plasmastate(lenval-3:lenval)
-        elseif (ierror.eq.1) then
-          extension='xxxx'
-        endif
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
@@ -165,6 +166,17 @@ c read and rewrite data
           count(idim)=len
           start(idim)=1
         enddo
+        if (ndims.eq.0) then
+          write(message,'(a)') 'Processing '//trim(varname)//' ...'
+        elseif (ndims.eq.1) then
+          write(message,'(a,i6,a)') 'Processing '//trim(varname)//
+     .     ' with size ',len,' ...'
+        else
+          write(hlp_frm,'(a,i1,a)') '(3a,',ndims-1,'(i6,'',''),i6,a1)'
+          write(message,hlp_frm) 'Processing ',trim(varname),
+     .     ' with dimensions (',(count(idim),idim=1,ndims),')'
+        end if
+        write(*,'(a)') trim(message)
         if(varname.eq.'times') then
           if(itim.gt.0) then
             allocate(data1(dimsize(1)))
