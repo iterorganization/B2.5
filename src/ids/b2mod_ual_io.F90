@@ -324,7 +324,7 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u, v,         &
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u,            &
             &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
@@ -336,6 +336,9 @@ contains
             &             power_recomb_neutrals(4), power_radiated(4),       &
             &             recycled_flux(4)
         real(IDS_real), allocatable :: wrdtrg(:,:,:)
+#if IMAS_MINOR_VERSION > 30
+        real(IDS_real) :: v
+#endif
 
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
@@ -6065,6 +6068,7 @@ contains
             character*8 ggd_version, mscl_version
             character*32 SOLPS_git_version
             character*32 get_SOLPS_hash
+            character(len=ids_string_length) :: repository
 #ifdef B25_EIRENE
             character*8 eirene_version
             character*31 Eirene_git_version
@@ -6077,7 +6081,6 @@ contains
             type (amns_error_type) :: amns_status
 #endif
 #endif
-            character(len=ids_string_length) :: repository
             logical streql
             external streql
 
@@ -6282,6 +6285,7 @@ contains
 
         end subroutine write_sourced_string
 
+#if IMAS_MINOR_VERSION > 29
         subroutine write_timed_integer( ival, ivalue )
             type(ids_signal_int_1d), intent(inout) :: ival
                 !< Type of IDS data structure, designed for integer data handling
@@ -6295,7 +6299,9 @@ contains
             return
 
         end subroutine write_timed_integer
+#endif
 
+#if IMAS_MINOR_VERSION > 30
         subroutine write_timed_value( val, value )
             type(ids_signal_flt_1d), intent(inout) :: val
                 !< Type of IDS data structure, designed for scalar data handling
@@ -6309,6 +6315,7 @@ contains
             return
 
         end subroutine write_timed_value
+#endif
 
         subroutine add_sourced_value( val, value )
             type(ids_summary_dynamic_flt_1d_root_parent_2) :: val

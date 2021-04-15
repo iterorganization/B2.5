@@ -457,9 +457,22 @@ c   --> better solution wanted here..
           if(is_neutral(is).and.lnext(is,is+1)) then
             do iy=-1,ny
               do ix=-1,nx
-                f_redep(ix,iy,is) = 1.0_R8 /
-     1           ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
-     2           (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                if (redep_alpha.gt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb R. Dux et al., Nucl. Fusion 51 (2011) 053002
+                  f_redep(ix,iy,is) = 1.0_R8 /
+     1             ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                else if (redep_alpha.lt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb D. Tskhakaya et al., JNM 463 (2015) 624
+cxpb Recommended value is abs(redep_alpha) = 0.01
+cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
+                  f_redep(ix,iy,is) = 1.0_R8 / ( 1.0_R8 +
+     1              abs(redep_alpha)*(ti(ix,iy)/te(ix,iy))*
+     2             (qe*bb(ix,iy,3)/(am(ismain)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy))) )
+                end if
               enddo
             enddo
             if(main_call.and.output.ge.1) then
