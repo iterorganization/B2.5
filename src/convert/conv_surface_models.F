@@ -144,7 +144,7 @@
                     bndmdl = -ists
                   end where
                 end do
-!                exit            ! surface marked
+                exit            ! surface marked
               else if (artificial_slab) then
                 found = .true.
                 ix = ipos_b2(isf)
