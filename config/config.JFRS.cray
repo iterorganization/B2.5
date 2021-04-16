@@ -5,7 +5,7 @@ ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
 ifdef USE_MPI
-LD_NETCDF   ?= `pkg-config netcdf-parallel-fortran --libs`
+LD_NETCDF   ?= `pkg-config pnetcdf --libs`
 ifdef USE_OPENMP
 LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
 else
@@ -36,10 +36,8 @@ FCOPTS = -e0 -ez
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
 FCOPTS += -homp
-LDOPTS += -homp
 endif
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 8; echo $$?),0)
+else
 ifndef USE_OPENMP
 FCOPTS += -hnoomp
 endif
@@ -60,11 +58,11 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NETCDF}
 
 LD = ftn
-LDOPTS = -dynamic -hpic 
+LDOPTS = -dynamic -hpic
 # JFRS OPENMP
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
-LDOPTS = -dynamic -hpic -homp
+LDOPTS += -homp
 endif
 endif
 
