@@ -196,7 +196,7 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if (flag_optim) then
-        do ipar = 1, npar_opt - nsigma !loop over all design variables except sigmas
+        do ipar = 1, npar_opt - nsigma_opt !loop over all design variables except sigmas
           select case (partype(ipar))
           case (1) ! dna
             parm_dna(1) = par_opt_phys(ipar) ! FIXME to improve for multispecies
