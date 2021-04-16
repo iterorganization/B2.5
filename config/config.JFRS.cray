@@ -29,10 +29,20 @@ endif
 CPP = /lib/cpp -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+
 FC = ftn
 FCOPTS = -e0 -ez
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+FCOPTS += -homp
+LDOPTS += -homp
+endif
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 8; echo $$?),0)
 ifndef USE_OPENMP
 FCOPTS += -hnoomp
+endif
 endif
 ifdef SOLPS_DEBUG
 FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
