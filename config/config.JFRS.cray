@@ -60,7 +60,13 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NETCDF}
 
 LD = ftn
-LDOPTS = -dynamic -hpic
+LDOPTS = -dynamic -hpic 
+# JFRS OPENMP
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+LDOPTS = -dynamic -hpic -homp
+endif
+endif
 
 #!!!Local Variables:
 #!!! mode: Makefile
