@@ -2,6 +2,8 @@
       use b2mod_par_opt_diff
       use b2mod_main_diff
      , , only : b2mn_init_d, b2mn_fin_d
+      use b2mod_user_namelist_diff
+     , , only : nsigma, sigma
       implicit none
 
 !     include the Ipopt return codes
@@ -42,7 +44,7 @@
       integer IPADDNUMOPTION, IPADDINTOPTION
       integer IPOPENOUTPUTFILE
       double precision F
-      integer ipar, icon
+      integer ipar, icon, isigma
 
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
@@ -53,7 +55,26 @@
 
 !     ..START OF COMPUTATION
 
+!     Allocate and initialize par_opt variables to be used in B2.5
+
+      call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
+      allocate(par_opt_phys(npar_opt)) 
+      if (nsigma_opt.gt.0) then
+        sigmad = 0.0_R8
+        isigma = npar_opt - nsigma_opt + 1
+        do ipar = 1, nsigma
+!         only if sigma is being optimized!
+          if (sigma_opt(ipar)) then
+            sigmad(isigma,ipar) = 1.0_R8
+            isigma = isigma + 1
+          endif
+        end do
+      endif
+      par_opt_phys = 0.0_R8
+      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
+
+
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
       ncon = 1 ! FIXME to be updated whenever nonlinear constraints are needed
@@ -82,18 +103,6 @@
       end do
 ! FIXME Z_L/Z_U
 
-
-!     Allocate and initialize par_opt variables to be used in B2.5
-
-      call b2mn_init_d
-      allocate(par_opt_phys(npar_opt)) 
-      if (nsigma.gt.0) then
-        allocate(par_opt_physd(nbdirsmax, npar_opt))
-        par_opt_physd =0.0_R8
-        par_opt_physd(2,2) = 1.0_R8
-      endif
-      par_opt_phys = 0.0_R8
-      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
 !     First create a handle for the Ipopt problem (and read the options file)
       IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
@@ -225,7 +234,6 @@
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
       deallocate(par_opt_phys)
-      if (nsigma.gt.0) deallocate(par_opt_physd)
       stop 'b2optim'
  9990 continue
       write(*,*) 'Error setting an option'
@@ -238,6 +246,8 @@
      , , only : b2mn_step
       use b2mod_ad_diff
      , , only : nncf
+      use b2mod_user_namelist_diff
+     , , only : nsigma, sigma
       use b2mod_par_opt_diff
       implicit none
       integer npar, NEW_X
@@ -245,17 +255,28 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar
+      integer IER, ipar, isigma
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        do ipar = 1, npar
+        do ipar = 1, npar - nsigma_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
+        enddo
+        isigma = npar - nsigma_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = real(XX(isigma),kind=r8)
+            write(str,"(I1)") isigma
+            if (ipar.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &       sigma(ipar)
+            isigma = isigma + 1
+          endif
         enddo
         call b2mn_step(j)
       endif
@@ -270,6 +291,8 @@
      , , only : b2mn_step_d
       use b2mod_ad_diff
      , , only : nncf
+      use b2mod_user_namelist_diff
+     , , only : nsigma, sigma
       use b2mod_par_opt_diff
       implicit none
       integer npar, NEW_X
@@ -277,18 +300,29 @@
       real(kind=r8) j(nncf), jd(nncf), jb(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar
+      integer IER, ipar, isigma
       character*3 str
       save jd
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do ipar = 1, npar
+        do ipar = 1, npar - nsigma_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
+        enddo
+        isigma = npar - nsigma_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = real(XX(isigma),kind=r8)
+            write(str,"(I1)") isigma
+            if (ipar.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &       sigma(ipar)
+            isigma = isigma + 1
+          endif
         enddo
         call b2mn_step_d(j,jd)
       endif
