@@ -10,6 +10,8 @@
       use b2mod_par_opt_diff
       use b2mod_main_diff &
       , only : b2mn_init_d, b2mn_fin_d
+      use b2mod_user_namelist_diff &
+      , only : nsigma, sigma
       implicit none
 
       PetscErrorCode       ierr
@@ -19,7 +21,7 @@
       PetscReal            tol
       PetscViewer viewer
 
-      integer :: ncon, nele_jac, ipar
+      integer :: ncon, nele_jac, ipar, isigma
 
       external FormFunctionGradient
 
@@ -29,22 +31,27 @@
          stop
       endif
 
-      call read_b2mod_par_opt(ncon, nele_jac)
-
 !      call PetscPrintf(PETSC_COMM_SELF,'Solution should be f(1,1)=-2\n',ierr);CHKERRA(ierr)
-
-      call InitializeProblem(npar_opt,ierr);CHKERRA(ierr)
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       call b2mn_init_d
+      call read_b2mod_par_opt(ncon, nele_jac)
       allocate(par_opt_phys(npar_opt))
-      if (nsigma.gt.0) then
-        allocate(par_opt_physd(nbdirsmax, npar_opt))
-        par_opt_physd =0.0_R8
-        par_opt_physd(2,2) = 1.0_R8
+      if (nsigma_opt.gt.0) then
+        sigmad = 0.0_R8
+        isigma = npar_opt - nsigma_opt + 1
+        do ipar = 1, nsigma
+!         only if sigma is being optimized!
+          if (sigma_opt(ipar)) then
+            sigmad(isigma,ipar) = 1.0_R8
+            isigma = isigma + 1
+          endif
+        end do
       endif
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
+
+      call InitializeProblem(npar_opt,ierr);CHKERRA(ierr)
 
       call TaoCreate(PETSC_COMM_SELF,tao,ierr);CHKERRA(ierr) 
       call TaoSetType(tao,TAOBQNLS,ierr);CHKERRA(ierr) 
@@ -78,7 +85,6 @@
 
       call b2mn_fin_d
       deallocate(par_opt_phys)
-      if (nsigma.gt.0) deallocate(par_opt_physd)
       stop 'b2optim'
 
       stop
@@ -148,10 +154,12 @@
       , only : b2mn_step_d
       use b2mod_ad_diff &
       , only : nncf
+      use b2mod_user_namelist_diff &
+      , only : nsigma, sigma
       use b2mod_par_opt_diff
       implicit none
       real(kind=r8) j(nncf), jd(nncf)
-      integer ipar
+      integer ipar, isigma
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -170,11 +178,21 @@
 !     g_v(g_i) = 2.0*(x_v(x_i)-2.0) - 2.0
 !     gx2=2*(x2-2) -2
 !     g_v(g_i+1) = 2.0*(x_v(x_i+1)-2.0) - 2.0
-      do ipar = 1, npar_opt
+      do ipar = 1, npar_opt - nsigma_opt
         par_opt_phys(ipar) = x_v(x_i+ipar-1)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+      end do
+      isigma = npar_opt - nsigma_opt + 1
+      do ipar = 1, nsigma
+        if (sigma_opt(ipar)) then
+          sigma(ipar) = x_v(x_i+isigma-1)
+          write(str,"(I1)") isigma
+          if (isigma.ge.10) write(str,"(I2)") isigma
+          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
+          isigma = isigma + 1
+        endif
       end do
       call b2mn_step_d(j,jd)
       F = j(1)

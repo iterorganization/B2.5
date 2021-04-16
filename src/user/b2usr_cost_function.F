@@ -6,8 +6,7 @@
       use b2us_plasma
       use b2us_geo
       use b2mod_par_opt
-     & , only : nsigma, par_opt_phys, inf_opt, 
-     & npar_opt, read_b2mod_par_opt, x0  ! FIXME these can go...
+     & , only : npar_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -53,12 +52,9 @@
           yy(ii) = yy(ii) + normal_random(0.0_R8,0.1_R8)*yy(ii)
         end do
 #endif    
-        if (.not. allocated(par_opt_phys)) then
-          call read_b2mod_par_opt(ncon, nele_jac)
-          allocate(par_opt_phys(1:npar_opt))
-          par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-        endif
         if (cftype(1).eq.6) then
+          call xertst(npar_opt+nsigma.gt.0,'cftype 6 requires at '//
+     &    'least one sigma in b2.user.parameters')
           call xertst(cfend(1)-cfstart(1)+1.eq.nsigma, 'Each cost '//
      &    'function summed in cftype 6 must have a sigma value '//
      &    'assigned in b2.optimization.parameters')

@@ -1,6 +1,7 @@
       subroutine calc_loglikelihood(nn, ff, yy, lll, isigma)
       use b2mod_types
-      use b2mod_par_opt
+      use b2mod_user_namelist
+     & , only : sigma, scale_sigma
       use b2mod_constants
       implicit none
       integer, intent (in) :: nn, isigma
@@ -15,8 +16,11 @@
       call subini('calc_loglikelihood')
 ! sc  TO BE DONE: proper covariance matrix should be built here
 !     for the moment no correlation => only diagonal elements
-      RR = (ff*par_opt_phys(npar_opt-nsigma+isigma))**2 ! diagonal elements
-! FIXME non-scaled sigma to be added, add also case when sigma is known!
+      if (scale_sigma) then
+        RR = (ff*sigma(isigma))**2 ! diagonal elements
+      else
+        RR = sigma(isigma)**2
+      endif
       zz = ff - yy ! FIXME in principle also -mu
 !     solution of quadratic problem for DIAGONAL matrix
 ! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz

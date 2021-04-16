@@ -37,7 +37,13 @@
       logical, save :: cfread(nncf), cfomp(nncf)
       integer, save :: ncfdata(nncf), ncf, ntimescf(nncf)
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
-
+      integer nvmx, nsigmx
+      parameter (nvmx = 20, nsigmx=10)
+      integer, save :: prior_type(nvmx), nsigma !sc type of prior
+      real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
+      logical, save :: scale_sigma
+      real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
+      double precision, parameter :: inf_opt = 1.0e30
       private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -47,7 +53,9 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp, cfweight
+     ,  cfread, cftype, rzomp, cfomp, cfweight, 
+     ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
+     ,  sigma
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -131,6 +139,13 @@ c***  Standard setup:
       ncfdata = 0
       rzomp = 0.0_R8
       cfweight = 1.0_R8
+      nsigma = 0
+      scale_sigma = .true.
+      prior_type = -1
+      prior_par = -1.0_R8
+! sc  Set prior range to (-inf,+inf)
+      prior_range(:,1) = -inf_opt*10.0
+      prior_range(:,2) = inf_opt*10.0
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -268,7 +283,7 @@ c***  Standard setup:
         do icf = 1, ncf
           if (cfread(icf)) then
            call xertst(mod(ncfdata(icf),m%cfCvP(icf,2)).eq.0,
-     &      'b2mod_par_opt: number of data read for CF should be'//
+     &      'b2mod_user: number of data read for CF should be'//
      &      ' a multiple of the CVs in that CF (to be improved)')
            ntimescf(icf) = ncfdata(icf)/m%cfCvP(icf,2)
           endif
@@ -277,6 +292,24 @@ c***  Standard setup:
 
 ! now allocate vector that will be used to interpolate solps onto data grid in loglikelihood for Bayesian MAP
       if (any(cftype.eq.6)) then
+        call xertst(nsigma.gt.0.and.nsigma.le.nsigmx,
+     &   'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
+! sc  prior_type refers to the prior type for the design variables:
+!     1 - Uninformative, proper, Gaussian prior.
+!     2 - Uniform distribution.
+        call xertst(any(prior_type(1:nsigma).ge.0).and.
+     &   any(prior_type(1:nsigma).le.1),
+     &   'b2mod_user_namelist: prior_type<=0 or prior_type>=1')
+! sc  prior_par refers to the prior parameters:
+!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!     For prior_type = 2, not used?
+        do icf = 1, nsigma
+          if (prior_type(icf) .eq. 1) 
+     &      call xertst(prior_par(icf,2) .gt. 0.0_R8,
+     &     'b2mod_user_namelist: sigma prior <=0')
+          call xertst(prior_range(icf,1).lt.prior_range(icf,2),
+     &     'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
+        end do
         do icf  = 1, ncf
           if (cftype(icf).eq.6) is = icf
         enddo
