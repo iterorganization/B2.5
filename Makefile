@@ -92,7 +92,7 @@ ifdef USE_EIRENE
 endif
 ifdef SOLPSTOP
 NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
-NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
+NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
 ifdef LD_NETCDF
   NC2TXT = $(shell echo `which nc2text`)
 endif
@@ -278,6 +278,7 @@ PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe b2_ual_rewrite.exe b2_ual_write_b2mod.exe
 PROG_TT = test_shrink_label.exe
 PROG_NC = nc2text_simple.exe
+PROG_NR = nc_reduce.exe
 
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
@@ -297,6 +298,7 @@ MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 TTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TT}}
 NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
+NREXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NR}}
 
 .PHONY: DEFAULT NOPLOT ALL VERSION mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
@@ -330,9 +332,9 @@ NOPLOT: ${IDEXE}
 endif
 ifdef SOLPS_CPP
 ifdef LD_NETCDF
-DEFAULT: ${NCEXE} nc2text
-ALL: ${NCEXE} nc2text
-NOPLOT: ${NCEXE} nc2text
+DEFAULT: ${NCEXE} ${NREXE} nc2text
+ALL: ${NCEXE} ${NREXE} nc2text
+NOPLOT: ${NCEXE} ${NREXE} nc2text
 endif
 endif
 MAIN: VERSION ${MNEXE}
@@ -864,12 +866,24 @@ ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
-${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/nc2text_simple.o ${MAKES}
+${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
+ifndef SOLPS_DEBUG
+	@-ln -sf $@ ${NCODIR}/$*
 ifeq (,$(findstring nc2text,${NC2TXT}))
 	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+endif
+endif
+else
+	$(warning NETCDF library not present!)
+endif
+
+${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${MAKES}
+ifdef LD_NETCDF
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBJDIR}/b2mod_ipmain.o ${OBJDIR}/b2mod_lwimai.o ${OBJDIR}/b2mod_lwmain.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_xerset.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${LD_NETCDF}
+ifndef SOLPS_DEBUG
+	@-ln -sf $@ ${NCODIR}/$*
 endif
 else
 	$(warning NETCDF library not present!)
@@ -887,12 +901,22 @@ ${NCODIR}/nc2text: ${NCODIR}/nc2text_simple
 
 nc2text_simple: ${NCEXE}
 
+nc_reduce: ${NREXE}
+
 ${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
 ifdef LD_NETCDF
-	@- /bin/rm -f ${NCODIR}/$*.o
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
+else
+	$(warning NETCDF library not present!)
+endif
+
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90
+ifdef LD_NETCDF
+	@-mkdir -p ${NCODIR}
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${INCLUDE} ${INCMODS} -o $*.o $*.F90
 else
 	$(warning NETCDF library not present!)
 endif
@@ -1126,6 +1150,7 @@ echo:
 	@echo O9EXE=${O9EXE}
 	@echo IDEXE=${IDEXE}
 	@echo NCEXE=${NCEXE}
+	@echo NREXE=${NREXE}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 

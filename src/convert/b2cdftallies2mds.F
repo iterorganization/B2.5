@@ -78,9 +78,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i6,a)')
-     *   'variable: ',trim(varname),' has type ',xtypev,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
