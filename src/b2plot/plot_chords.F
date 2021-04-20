@@ -77,4 +77,4 @@ c
       if(lwidth .ne. 1.0_R8) call gslwsc_d(1.0_R8)
       call end_page
       return
-      end
+      end subroutine plot_chords
