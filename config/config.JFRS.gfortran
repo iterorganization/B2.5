@@ -28,8 +28,6 @@ FC = ftn
 
 DDBLOPTION = -Ad # ???
 
-INCMOD = -B
-
 ifdef USE_MPI
 INCMODS += ${MPI_CPP}
 LDLIBES += ${LD_MPI}

@@ -39,8 +39,6 @@ endif
 
 DDBLOPTION = -Ad # ???
 
-INCMOD = -B
-
 ifndef SOLPS_CPP
 DEFINES += -DITM
 endif
