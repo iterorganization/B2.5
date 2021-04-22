@@ -37,8 +37,6 @@ endif
 
 DDBLOPTION =
 
-INCMOD = -I
-
 ifeq (,$(findstring sdcc-login,${NODENAME}))
 LDLIBES = -limf -lm # Intel Math must be before -lm
 else

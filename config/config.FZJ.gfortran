@@ -22,8 +22,6 @@ FCOPTS = -freal-4-real-8
 
 DDBLOPTION = -Ad # ???
 
-INCMOD = -B
-
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
