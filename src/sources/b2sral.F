@@ -31,7 +31,7 @@
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd
+     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp
       use b2mod_ad

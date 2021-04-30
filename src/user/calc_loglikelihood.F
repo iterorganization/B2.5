@@ -17,7 +17,7 @@
 ! sc  TO BE DONE: proper covariance matrix should be built here
 !     for the moment no correlation => only diagonal elements
       if (scale_sigma) then
-        RR = (ff*sigma(isigma))**2 ! diagonal elements
+        RR = (yy*sigma(isigma))**2 ! diagonal elements
       else
         RR = sigma(isigma)**2
       endif
