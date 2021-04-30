@@ -23,7 +23,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd
+     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
       use b2mod_ad
      & , only : my_out_folder, my_out_sf, ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
