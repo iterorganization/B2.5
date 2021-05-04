@@ -182,7 +182,7 @@
 	<module name="b2mn.dat">
 		<routine name="b2cdci">
 			<purpose>
-				B2CDCI provides information about internal parameters of the B2 code. No computation is performed in this routine.
+				B2CDCI provides information about internal parameters of the B2.5 code. No computation is performed in this routine.
 			</purpose>
 			<introduction title="Overview and naming conventions.">
 				Here we list the switches in alphabetical order. By convention, a switch name starts with the name of the routine in which it is used. Unless noted otherwise, the desired switches are to be declared at the end of the b2mn.dat input file.
@@ -2435,7 +2435,7 @@
 					2 --- Pfirsch-Schlueter contribution
 					3 --- both banana and PS
 					4 --- all contributions
-					mind that B2 already calculates the classical transport !
+					mind that B2.5 already calculates the classical transport !
 					avoid double transport, 0+4 for cross-checks only !
 				</description>
 			</switch>
@@ -3134,7 +3134,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
+					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2.5 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
 				</description>
 			</switch>
 			<switch>
@@ -4272,7 +4272,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Specifies the frequency (in units of full B2 timesteps) at which an externally coupled code providing additional source (for instance a kinetic treatment of trace impurity ions such as IMPGYRO) should be called.
+					Specifies the frequency (in units of full B2.5 timesteps) at which an externally coupled code providing additional source (for instance a kinetic treatment of trace impurity ions such as IMPGYRO) should be called.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4561,7 +4561,7 @@
 	<module name="b2.parameters" type="namelist">
 		<routine name="b2cdcn">
 			<purpose>
-				B2CDCN provides information about namelists of the B2 code.
+				B2CDCN provides information about namelists of the B2.5 code.
 				No computation is performed in this routine.
 
 				The namelists are listed in no particular order. Each description will begin with the file from which the code expects to read the namelist and its general purpose. Then, each namelist variable will be listed with its use and size.
@@ -4571,7 +4571,7 @@
 			<introduction>
 				<namelist>NEUTRALS</namelist>
 				<description>
-					This namelist is used to either set parameters for the B2 neutral fluid model or for the Eirene Monte Carlo neutrals run.
+					This namelist is used to either set parameters for the B2.5 neutral fluid model or for the Eirene Monte Carlo neutrals run.
 					When coupling to Eirene, it is essential that the neutral boundaries conditions declared here be in the same exact order than they are in the Eirene input file.
 					For coupled cases, some of the parameters will become active only on the second call to Eirene, while values inherited from the Eirene input file will be used for the first call. In such cases, use of the switch 'eirene_repeat_first_call' is recommended.
 					This namelist is read if either 'b2stbr_neutrals_namelist' or 'b2mndr_eirene' are set to 1.
@@ -4592,7 +4592,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Position in the B2 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist.
+					Position in the B2.5 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -4600,7 +4600,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Start coordinate on the B2 grid the strata. Similar use as BCSTART from /BOUNDARY/ namelist.
+					Start coordinate on the B2.5 grid the strata. Similar use as BCSTART from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -4608,7 +4608,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					End coordinate on the B2 grid of the strata. Similar use as BCEND from /BOUNDARY/ namelist.
+					End coordinate on the B2.5 grid of the strata. Similar use as BCEND from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -4640,7 +4640,7 @@
 				<default>b2stbr_sput_dst</default>
 				<type>integer array of size (NSTRAT,NTRACK)</type>
 				<description>
-					Identifies the base material(s) of this stratum wall. The number corresponds to the B2 species index produced by sputtering. Check b2cdci for details. If the bulk species is not sputtered, should contain -1.
+					Identifies the base material(s) of this stratum wall. The number corresponds to the B2.5 species index produced by sputtering. Check b2cdci for details. If the bulk species is not sputtered, should contain -1.
 				</description>
 			</switch>
 			<switch>
@@ -4656,7 +4656,7 @@
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the particle recycling coefficients of species (is) on stratum (istra). Defaults to 1.0 for non-carbon species and 0.0 for carbon species. Particles recycle into the neutral species associated to their homonuclear sequence.
-					Applies to B2 neutral fluid species.
+					Applies to B2.5 neutral fluid species.
 					Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set to 0 (see b2cdci for details).
 				</description>
 			</switch>
@@ -4665,7 +4665,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
-					Stores the parallel momentum recycling coefficients of species (is) on stratum (istra). The parallel momentum is carried back by the recycled neutrals. Applies only to B2 neutral fluid species.
+					Stores the parallel momentum recycling coefficients of species (is) on stratum (istra). The parallel momentum is carried back by the recycled neutrals. Applies only to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
@@ -4673,7 +4673,7 @@
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
 					Stores the energy recycling coefficients of species (is) on stratum (istra). Defaults to 0.3 for non-carbon species and 0.0 for carbon species. The energy is carried back by the recycled neutrals.
-					Applies only to B2 neutral fluid species.
+					Applies only to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
@@ -4681,7 +4681,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
-					Stores the particle-into-ion recycling coefficients of species (is) on stratum (istra). Particles recycle into the next ionised species associated to their homonuclear sequence. Applies only to B2 neutral fluid species.
+					Stores the particle-into-ion recycling coefficients of species (is) on stratum (istra). Particles recycle into the next ionised species associated to their homonuclear sequence. Applies only to B2.5 neutral fluid species.
 				</description>
 			</switch>
 			<switch>
@@ -4708,7 +4708,7 @@
 					Contains the type of stratum for Eirene. Possible options include:
 					'N','S','W','E' - topological mesh boundaries (same use as BCCHAR in /BOUNDARY/ namelist)
 					'V' - volume recombination source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored).
-					'C' - constant or feedback gas puff source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Gas puffs for B2 fluid neutrals are handled via b2.boundary.parameters. Unless specified otherwise by use of 'eirene_nesepm_istra', it is the first 'C' stratum that is used for feedback puff schemes. See b2cdci for details.
+					'C' - constant or feedback gas puff source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Gas puffs for B2.5 fluid neutrals are handled via b2.boundary.parameters. Unless specified otherwise by use of 'eirene_nesepm_istra', it is the first 'C' stratum that is used for feedback puff schemes. See b2cdci for details.
 					'T' - time-dependent source for Eirene (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Long-lived Eirene neutrals are stored in this stratum. See EIRENE_STEP_DT below.
 				</description>
 			</switch>
@@ -4725,7 +4725,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
-					Stores the physical sputtering multiplier for B2 species (is) sputtering on the wall of stratum (istra). Must be non-zero for physical sputtering to occur. Only applies if using B2 fluid neutral model.
+					Stores the physical sputtering multiplier for B2.5 species (is) sputtering on the wall of stratum (istra). Must be non-zero for physical sputtering to occur. Only applies if using B2.5 fluid neutral model.
 				</description>
 			</switch>
 			<switch>
@@ -4733,7 +4733,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NS-1,NSTRAT)</type>
 				<description>
-					Stores the chemical sputtering multiplier for B2 species (is) sputtering on the wall of stratum (istra). Must be non-zero for chemical sputtering to occur. Only applies if using B2 fluid neutral model.
+					Stores the chemical sputtering multiplier for B2.5 species (is) sputtering on the wall of stratum (istra). Must be non-zero for chemical sputtering to occur. Only applies if using B2.5 fluid neutral model.
 				</description>
 			</switch>
 			<switch>
@@ -4756,7 +4756,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Frequency of Eirene calls. Eirene is called every EIRENE_MOD full B2 iterations.
+					Frequency of Eirene calls. Eirene is called every EIRENE_MOD full B2.5 iterations.
 				</description>
 			</switch>
 			<switch>
@@ -4789,7 +4789,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the first B2 species involved in stratum (istra).
+					Specifies the index of the first B2.5 species involved in stratum (istra).
 				</description>
 			</switch>
 			<switch>
@@ -4797,7 +4797,7 @@
 				<default>ns-1</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Specifies the index of the last B2 species involved in stratum (istra).
+					Specifies the index of the last B2.5 species involved in stratum (istra).
 				</description>
 			</switch>
 			<switch>
@@ -4813,7 +4813,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(NEUTRALS_TIME_MOD), exceeds NEUTRALS_TIME_SWITCH, reads the new namelist from NEUTRALS_FILENAME. Also switches to the new namelist if the ELM count (here time/NEUTRALS_TIME_MOD) changes. Only active if NEUTRALS_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(NEUTRALS_TIME_MOD), exceeds NEUTRALS_TIME_SWITCH, reads the new namelist from NEUTRALS_FILENAME. Also switches to the new namelist if the ELM count (here time/NEUTRALS_TIME_MOD) changes. Only active if NEUTRALS_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -4821,7 +4821,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new NEUTRALS namelist is read.
+					If NEUTRALS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new NEUTRALS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NEUTRALS namelist file from NEUTRALS_FILENAME.
+					Only active if NEUTRALS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -4837,7 +4839,7 @@
                 <default>0 for coupled cases, -1 otherwise</default>
 				<type>integer</type>
 				<description>
-					If l_neutflux &gt;=0, then correct treatment of the incident fluxes in B2 and b2plot; if &lt;0, then old (approximate) treatment
+					If l_neutflux &gt;=0, then correct treatment of the incident fluxes in B2.5 and b2plot; if &lt;0, then old (approximate) treatment
 				</description>
 			</switch>
 			<switch>
@@ -4849,34 +4851,34 @@
 			</switch>
 			<switch>
 				<name>B2EATCR</name>
-				<default>ordering of the B2 isonuclear sequences</default>
+				<default>ordering of the B2.5 isonuclear sequences</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
-					Contains the index of the Eirene atomic species corresponding to the B2 species (is).
+					Contains the index of the Eirene atomic species corresponding to the B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>B2ESPCR</name>
-				<default>ordering of the B2 isonuclear sequences</default>
+				<default>ordering of the B2.5 isonuclear sequences</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
-					Contains the isonuclear sequence index of the B2 species (is).
+					Contains the isonuclear sequence index of the B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
 				<name>EB2ATCR</name>
-				<default>first B2 species of each isonuclear sequence</default>
+				<default>first B2.5 species of each isonuclear sequence</default>
 				<type>integer array of size (NATM)</type>
 				<description>
-					Contains the index of the B2 neutral fluid species corresponding to the Eirene atomic species (iatm).
+					Contains the index of the B2.5 neutral fluid species corresponding to the Eirene atomic species (iatm).
 				</description>
 			</switch>
 			<switch>
 				<name>EB2SPCR</name>
-				<default>first B2 species of each isonuclear sequence</default>
+				<default>first B2.5 species of each isonuclear sequence</default>
 				<type>integer array of size (NSPECIES)</type>
 				<description>
-					Contains the index of the first B2 fluid for each species.
+					Contains the index of the first B2.5 fluid for each species.
 				</description>
 			</switch>
 			<switch>
@@ -4983,7 +4985,7 @@
 				<default>1 for species sput_dst, 0 for all others</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
-					Specifies the mixed material species index related to B2 species (is).
+					Specifies the mixed material species index related to B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
@@ -5232,7 +5234,7 @@
 				<namelist>WALL_SAVE</namelist>
 				<description>
 					Read if present in the run directory.
-					Automatically generated by B2 but can be modified by user.
+					Automatically generated by B2.5 but can be modified by user.
 					Contains data describing the state of the walls lining the vacuum vessel.
 					These data are used for smooth restarts and are not really intended for human use.
 				</description>
@@ -5369,7 +5371,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the chemical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2 species (is).
+					Contains the chemical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
@@ -5377,7 +5379,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the physical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2 species (is).
+					Contains the physical sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
@@ -5385,7 +5387,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the fraction of returned energy carried by sputtered particles of species 'sput_dst' or 'sput_dst_bulk' species from wall element (iwall) caused by B2 species (is).
+					Contains the fraction of returned energy carried by sputtered particles of species 'sput_dst' or 'sput_dst_bulk' species from wall element (iwall) caused by B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
@@ -5393,7 +5395,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the RES sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2 species (is).
+					Contains the RES sputter yield of 'sput_dst' or 'sput_dst_bulk' species on wall element (iwall) caused by B2.5 species (is).
 				</description>
 			</switch>
 			<switch>
@@ -5409,7 +5411,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the backscattering fraction for incoming B2 species (is) onto wall element (iwall).
+					Contains the backscattering fraction for incoming B2.5 species (is) onto wall element (iwall).
 				</description>
 			</switch>
 			<switch>
@@ -5417,7 +5419,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (NWALL,0:NS-1)</type>
 				<description>
-					Contains the backscattered energy fraction for incoming B2 species (is) onto wall element (iwall).
+					Contains the backscattered energy fraction for incoming B2.5 species (is) onto wall element (iwall).
 				</description>
 			</switch>
 			<switch>
@@ -5432,7 +5434,7 @@
 				<name>PLATE_AREA</name>
 				<type>real*8 array of size (NWALL)</type>
 				<description>
-					Indicates the wall area (in square metres) for wall element (iwall). Defaults to the area computed from the B2 grid information.
+					Indicates the wall area (in square metres) for wall element (iwall). Defaults to the area computed from the B2.5 grid information.
 				</description>
 			</switch>
 			<switch>
@@ -5949,8 +5951,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes.
-					Only active if BOUNDARY_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes. Only active if BOUNDARY_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5958,7 +5959,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /BOUNDARY/ namelist is read.
+					If BOUNDARY_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new BOUNDARY namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next BOUNDARY namelist file from BOUNDARY_FILENAME.
+					Only active if BOUNDARY_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5985,7 +5988,7 @@
 				<namelist>FEEDBACK</namelist>
 				<description>
 					Read if present in the run directory.
-					Used internally by B2 to regulate feedback loops and restarts.
+					Used internally by B2.5 to regulate feedback loops and restarts.
 					Not really intended for human use.
 					See b2cdci and SOLPS manual for description of the feedback schemes.
 				</description>
@@ -6011,7 +6014,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Last value used for the core particle radial flux feedback. Corresponds to 'isfeedback' B2 species.
+					Last value used for the core particle radial flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
 			</switch>
 			<switch>
@@ -6027,7 +6030,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Last value used for the radial inner PFR boundary flux feedback. Corresponds to 'isfeedback' B2 species.
+					Last value used for the radial inner PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
 			</switch>
 			<switch>
@@ -6035,7 +6038,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Last value used for the radial outer PFR boundary flux feedback. Corresponds to 'isfeedback' B2 species.
+					Last value used for the radial outer PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
 				</description>
 			</switch>
 			<switch>
@@ -6043,7 +6046,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2 species.
+					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2.5 species.
 				</description>
 			</switch>
 			<switch>
@@ -6364,7 +6367,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(SOURCES_TIME_MOD),exceeds SOURCES_TIME_SWITCH, reads the new namelist from SOURCES_FILENAME. Also switches to the new namelist if the ELM count (here time/SOURCES_TIME_MOD) changes. Only active if SOURCES_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(SOURCES_TIME_MOD), exceeds SOURCES_TIME_SWITCH, reads the new namelist from SOURCES_FILENAME. Also switches to the new namelist if the ELM count (here time/SOURCES_TIME_MOD) changes. Only active if SOURCES_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6372,7 +6375,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /PROFILE/ namelist is read.
+					If SOURCES_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new PROFILE namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next PROFILE namelist file from SOURCES_FILENAME.
+					Only active if SOURCES_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 		</category>
@@ -6437,7 +6442,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD),exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6445,7 +6450,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6575,7 +6582,7 @@
 			<introduction>
 				<namelist>NUMERICS</namelist>
 				<description>
-					Used to specifiy time multipliers per equation and per region for the B2 solver.
+					Used to specifiy time multipliers per equation and per region for the B2.5 solver.
 					Active if 'b2srdt_numerics_namelist' is set to 1 or greater.
 					It is recommended to use the same multiplier for all equations within one region.
 				</description>
@@ -6733,7 +6740,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(NUMERICS_TIME_MOD), exceeds NUMERICS_TIME_SWITCH, reads the new namelist from NUMERICS_FILENAME. Also switches to the new namelist as the ELM count (here time/NUMERICS_TIME_MOD) changes. Only active if NUMERICS_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(NUMERICS_TIME_MOD), exceeds NUMERICS_TIME_SWITCH, reads the new namelist from NUMERICS_FILENAME. Also switches to the new namelist as the ELM count (here time/NUMERICS_TIME_MOD) changes. Only active if NUMERICS_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6741,7 +6748,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /NUMERICS/ namelist is read.
+					If NUMERICS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new NUMERICS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NUMERICS namelist file from NUMERICS_FILENAME.
+					Only active if NUMERICS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6923,8 +6932,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes.
-					Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6932,7 +6940,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle after which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switchgroup>
@@ -7146,7 +7156,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Western divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
+					B2.5 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Western divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -7154,7 +7164,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Eastern divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
+					B2.5 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Eastern divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -7162,7 +7172,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Western divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2.5 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Western divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -7170,7 +7180,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Eastern divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2.5 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Eastern divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>

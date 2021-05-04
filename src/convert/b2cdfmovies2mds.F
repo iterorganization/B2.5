@@ -162,7 +162,8 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+     *       descr2(idtype_double,dimsize(1),dimsize(2),0),
+     *       data2,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
