@@ -126,7 +126,8 @@
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
-     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
+     *  ihyb = 0
       logical lwti, lwav, lrav, lrer
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
@@ -1302,6 +1303,7 @@ csw 09oct2012
       NFLAI = NFL
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
+      if (ihyb.eq.1) EIRHYB = .TRUE.
       CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
