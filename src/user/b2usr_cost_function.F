@@ -11,6 +11,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : vold, cfnorm, nncf, ffdata
+#ifdef TEST_MAP
+      use b2mod_transport_namelist
+     & , only : parm_dna
+#endif
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
@@ -43,13 +47,6 @@
             xx(ij) = real(jj,kind=r8) 
             ij = ij + 1
           end do
-        end do
-        do ii=1,nn
-          yy(ii) = 10.0*sqrt(xx(ii)**3)
-        end do
-        call srand(4)
-        do ii=1,nn
-          yy(ii) = yy(ii) + normal_random(0.0_R8,0.1_R8)*yy(ii)
         end do
 #endif    
         if (cftype(1).eq.6) then
@@ -149,11 +146,15 @@
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
 #ifdef TEST_MAP
+            isigma = 1
+            iicf = 2
             do ii=1,nn
-              ff(ii) = par_opt_phys(1)*(xx(ii)**1.5)
+              ff(ii) = parm_dna(1)*(xx(ii)**1.5)
             end do
             call calc_prior(prior, inrange)
-            call calc_loglikelihood(nn, ff, yy ,lll_cum)
+            ndata1 = ncfdata(iicf)
+            call calc_loglikelihood(ndata1, ff, cfdata(iicf,3,1:ndata1),
+     &       lll_cum, isigma)
 #else
             call calc_prior(prior, inrange)
             lll_cum = 0.0_R8
