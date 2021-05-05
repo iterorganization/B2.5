@@ -29,7 +29,9 @@
       end do 
 !     rest = Z'*invCov_z
 !     Calculate log-likelihood
-      lll = -0.5_R8*(log(2.0_R8*pi) + 2.0_R8*sum(log(RR)) + sum(invC_z))
+      RR = sqrt(RR) ! FIXME, should go away when real cholezky factorization is there
+      lll = -0.5_R8*(nn*log(2.0_R8*pi) + sum(2.0_R8*log(RR)) 
+     &               + sum(invC_z))
       
      
       call subend ()
