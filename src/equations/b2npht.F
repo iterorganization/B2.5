@@ -17,6 +17,8 @@
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
+      use b2mod_sources
+     & , only : shedt, shidt                                            !srv 31.01.21
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
@@ -90,7 +92,8 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
      2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                           !srv 18.09.09
+     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                           !srv 18.09.09
+     4  te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)                        !srv 26.02.21
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -243,6 +246,13 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        te_inp=te
+        call my_out(70,nx,ny,te,'b2nph_te_inp')
+        ti_inp=ti
+        call my_out(70,nx,ny,ti,'b2nph_ti_inp')
+      endif                                                              !srv 31.01.21
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -323,6 +333,18 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')
+        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
+        call my_out(70,nx,ny,wrk0,'b2nph_nedtedt')
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed through te_inp
+        call my_out(70,nx,ny,wrk0,'b2nph_tednedt')
+        wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph_dnetedt')
+        wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph_nidtidt')
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) !it is supposed that the shidt(:,:,0) was computed through ti_inp
+        call my_out(70,nx,ny,wrk0,'b2nph_tidnidt')
+        wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph_dnitidt')                     !srv 31.01.21 }
       endif                                                           !srv 17.07.05 }
       if (solving(4)) then
 *   ..compute correction
@@ -343,8 +365,6 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npht_ua'//chns)
        enddo
-       call my_out(70,nx,ny,te,'b2npht_te')
-       call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,po,'b2npht_po')
       endif                                                           !srv 17.07.05 }
 *   ..set error parameter and return

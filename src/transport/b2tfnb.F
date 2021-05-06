@@ -1001,10 +1001,14 @@ cdjm Jan2017 store components of fnb for balance
      &                          vol(leftix(ix,iy),leftiy(ix,iy))/
      &                          hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-               else
+               elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then
                 fna_drift(ix,iy,0,isb) = ubdia(ix,iy,0)*
      &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+               elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then
+                fna_drift(ix,iy,0,isb) = ubdia(ix,iy,0)*
+     &           gs(ix,iy,0)*qc(ix,iy)*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
                endif
                fna_nanom(ix,iy,0,isb) = -con(ix,iy)*
@@ -1123,10 +1127,13 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
      &           2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)+
      &                          vol(leftix(ix,iy),leftiy(ix,iy))/
      &                          hx(leftix(ix,iy),leftiy(ix,iy)))*t2
-             else
+             elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
               fna_drift(ix,iy,0,isb) = ubdia(ix,iy,0)*
      &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*t2
+             elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
+              fna_drift(ix,iy,0,isb) = ubdia(ix,iy,0)*
+     &           gs(ix,iy,0)*qc(ix,iy)*t2
              endif
              fna_nanom(ix,iy,0,isb) = -con(ix,iy)*
      &          (nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))
@@ -1221,8 +1228,21 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           wrk2(ix,iy) = term(ix,iy)*
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-          wrk3(ix,iy) = vbecrb(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) *     !IYS 04.03.2019
-     &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          if (drift_style.eq.0) then
+            wrk3(ix,iy) =  
+     1         (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     5         2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
+     6         +vol(leftix(ix,iy),leftiy(ix,iy))/
+     7         hx(leftix(ix,iy),leftiy(ix,iy)))
+          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
+            wrk3(ix,iy) = vbecrb(ix,iy,0) * 
+     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *               !IYS 04.03.2019
+     &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
+            wrk3(ix,iy) = vbecrb(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) *     !IYS 04.03.2019
+     &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          endif
           wrk4(ix,iy) = -con_2dia(ix,iy)*(nb(ix,iy)-
      &     nb(leftix(ix,iy),leftiy(ix,iy)))
           wrk5(ix,iy) = -cdpb(ix,iy,0)*(pb(ix,iy)-
@@ -1499,10 +1519,13 @@ cdjm Jan2017 store components of fnb for balance
      &                      vol(bottomix(ix,iy),bottomiy(ix,iy))/
      &                      hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-              else
+              elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then
                 fna_drift(ix,iy,1,isb) = ubdia(ix,iy,1)*
      &            (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      &            (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+              elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then
+                fna_drift(ix,iy,1,isb) = ubdia(ix,iy,1)*gs(ix,iy,1)*
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               endif
             else
@@ -1685,15 +1708,29 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           wrk7(ix,iy) = 0.0_R8
           wrk8(ix,iy) = 0.0_R8                                          !iys 17.04.2012
          else
-          wrk3(ix,iy) = vbecrb(ix,iy,1)*gs(ix,iy,1)*
-     &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-          wrk4(ix,iy) = -con_2dia(ix,iy)*
+           if (drift_style.eq.0) then
+             wrk3(ix,iy) =
+     &         0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
+     &         +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+     &         vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &         /hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+           elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
+             wrk3(ix,iy) = vbecrb(ix,iy,1)*
+     5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          
+     6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+           elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
+             wrk3(ix,iy) = vbecrb(ix,iy,1)*gs(ix,iy,1)*
+     &         (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+           endif
+           wrk4(ix,iy) = -con_2dia(ix,iy)*
      &                   (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
-          wrk5(ix,iy) = -cdpb(ix,iy,1)*(pb(ix,iy)
+           wrk5(ix,iy) = -cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          wrk7(ix,iy) = -con_mdf(ix,iy)*
+           wrk7(ix,iy) = -con_mdf(ix,iy)*
      &                   (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
-          wrk8(ix,iy) = cvlb(ix,iy,1)*                                  !iys 17.04.2012
+           wrk8(ix,iy) = cvlb(ix,iy,1)*                                  !iys 17.04.2012
      &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
          endif
         enddo

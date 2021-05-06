@@ -14,7 +14,7 @@
       use b2mod_constants
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
-     2          smpr, smpt, smfr, smcf
+     2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
@@ -162,6 +162,8 @@
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
+      real (kind=R8) ::
+     &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
@@ -317,6 +319,9 @@
       if (iout.ne.0) then
        call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
       endif
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 09.03.21 {
+        ua_inp = ua
+      endif                                                             !srv 09.03.21 }
 *   ..initialise
       call sfill (n2*4, 0.0_R8, smt, 1)
       call sfill (n2*2, 0.0_R8, flct, 1)
@@ -744,11 +749,38 @@ csw 21feb2014, execute simultaneous corrections always
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
+        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)  !srv 09.03.21 {
+        call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
+        wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
+     &             -smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
+!        wrks = resmo(:,:,is)-wrks
+!        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
+        
+        wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
+     &             smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)       !srv 09.03.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
        call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pcca0_'//chns)
+        call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pcca1_'//chns)
+        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)  !srv 09.03.21 {
+        call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
+        wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
+     &             -smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
+!        wrks = resmo(:,:,is)-wrks
+!        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
+        
+        wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
+     &             smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)       !srv 09.03.21 }
+       enddo
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
