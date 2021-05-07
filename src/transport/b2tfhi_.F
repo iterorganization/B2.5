@@ -64,8 +64,6 @@ cpax
      *   tif(nFc), tnf(nFc),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
      *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1)
-      real (kind=R8), save :: fflokt = 0.0_R8, fconkt = 0.0_R8
-      real (kind=R8), save :: fkt_hie = 0.0_R8
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -105,9 +103,6 @@ c       call ipgeti ('b2tfhi_b2vis', b2vis)
 c       call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
 c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
 c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
-       call ipgetr ('b2tfhi_fflokt', fflokt)
-       call ipgetr ('b2tfhi_fconkt', fconkt)
-       call ipgetr ('b2tfhi_fkt_hie', fkt_hie)
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -339,9 +334,9 @@ cwdk    fflokt and fconkt: fudge factors to approximate enhanced parallel
 cwdk    transport of k due to term
 cwdk    related to (fluctuations in parallel current) * (fluctuations in potential)
 cwdk    in principle: models same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0)
-        flokt0(:,0) = (1.0_R8 + fflokt)*dv%fna(:,0,ismain) 
+        flokt0(:,0) = (1.0_R8 + switch%b2tfhi_fflokt)*dv%fna(:,0,ismain)
         flokt0(:,1) = dv%fna(:,1,ismain) 
-        cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + fconkt)
+        cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + switch%b2tfhi_fconkt)
         cdkt0(:,1) = co%cdkt(:,1)
 *     ..apply discretization scheme
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
@@ -351,7 +346,8 @@ cwdk    at the moment: experimental; it is expected that this contriution
 cwdk    is at least partially compensated by the (divergence of the) term
 cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in potential)
         dv%fkt = dv%fkt + 
-     &           fkt_hie*2.0_R8/3.0_R8*(dv%fhi_ExB + dv%fhe_ExB)
+     &           switch%b2tfhi_fkt_hie*2.0_R8/3.0_R8*
+     &           (dv%fhi_ExB + dv%fhe_ExB)
 *     ..compute flokt, conkt
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &    dv%flokt,dv%conkt)
