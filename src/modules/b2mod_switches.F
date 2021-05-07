@@ -343,7 +343,9 @@ c k-enstrophy model
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
-
+      real (kind=R8) :: b2tfhi_fflokt
+      real (kind=R8) :: b2tfhi_fconkt
+      real (kind=R8) :: b2tfhi_fkt_hie
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -755,6 +757,9 @@ c k-enstrophy model
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
+      s % b2tfhi_fflokt = 0.0_R8
+      s % b2tfhi_fconkt = 0.0_R8
+      s % b2tfhi_fkt_hie = 0.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1189,6 +1194,9 @@ c k-enstrophy model
       call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
+      call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
+      call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
+      call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1555,10 +1563,47 @@ c b2mwqt
 
 
 c k-enstrophy model
+      call xertst (0.le.s%solve_keps .and. s%solve_keps.le.1,
+     &  'b2mndr_solve_keps value not coded')
+      call xertst (0.le.s%keps_local .and. s%keps_local.le.1,
+     &  'b2tqna_keps_local value not coded')
       call xertst (0.le.s%transport_keps .and. s%transport_keps.le.1,
      &  'b2tqna_transport_keps value not coded')
-      call xertst (0.0_R8.le.s%keps_dkt,
+      call xertst (0.0_R8.lt.s%keps_dkt,
      &  'keps_dkt must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%keps_cd,
+     &  'keps_cd must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%keps_heat,
+     &  'keps_heat must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%keps_heat_i,
+     &  'keps_heat_i must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%dna_min,
+     &  'dna_min must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%keps_visc,
+     &  'keps_visc must be .gt. 0.0')
+      call xertst (0.0_R8.le.s%keps_shear,
+     &  'keps_shear must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2sikt_fac_aniso,
+     &  'b2sikt_fac_aniso must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2sikt_fac_sheath,
+     &  'b2sikt_fac_sheath must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2sikt_fac_sheath_core,
+     &  'b2sikt_fac_sheath_core must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fflokt,
+     &  'b2tfhi_fflokt must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fconkt,
+     &  'b2tfhi_fconkt must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
+     &  'b2tfhi_fkt_hie must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%keps_inc,
+     &  'keps_inc must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%keps_fac,
+     &  'keps_fac must be .ge. 0.0')
+      call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
+     &  'b2sikt_local must be either 0 or 1')
+      call xertst (0.le.s%b2sikt_sheath_local .and. 
+     &  s%b2sikt_sheath_local.le.1,
+     &  'b2sikt_sheath_local must be either 0 or 1')
 
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,

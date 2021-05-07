@@ -9696,7 +9696,8 @@ c end of implementation
             endif
           enddo
           srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -
-     &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -
+     &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))*
+     &      (1.0_R8 + switch%b2tfhi_fflokt)  -
      &      enkpar(ib,2)*t1*geo%fcS(iFc)          
 cwdk    Todo: corrections for BCCON.ne.14
         enddo
