@@ -4,6 +4,8 @@
      , , only : b2mn_init_d, b2mn_fin_d
       use b2mod_user_namelist_diff
      , , only : nsigma, sigma
+      use b2mod_transport_namelist_diff
+      use b2mod_input_profile_diff
       implicit none
 
 !     include the Ipopt return codes
@@ -44,7 +46,7 @@
       integer IPADDNUMOPTION, IPADDINTOPTION
       integer IPOPENOUTPUTFILE
       double precision F
-      integer ipar, icon, isigma
+      integer ipar, icon, isigma, idir, i
 
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
@@ -59,7 +61,41 @@
 
       call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
-      allocate(par_opt_phys(npar_opt)) 
+      allocate(par_opt_phys(npar_opt))
+!     Initialize derivatives for diffusion coefficients
+!     FIXME initialization to 0.0_R8 should be done elsewhere?
+!     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be commented-out
+      tdatad = 0.0_R8
+      parm_dnad = 0.0_R8
+      parm_dpad = 0.0_R8
+      parm_hced = 0.0_R8
+      parm_hcid = 0.0_R8
+      idir = 1 !this indicates the different directions of multidirectional derivative mode
+      do ipar = 1, nnvar - nsigma_opt
+        if (spatial_dep(ipar)) then
+!         spatially dependent coefficient
+          do i = 1, spatial_points(ipar)
+            tdatad(idir,2,i,partype(ipar),1) = 1.0_R8
+            idir = idir + 1
+          end do
+        else
+!         non spatially dependent --> specified in b2tqna
+          select case (partype(ipar))
+          case (1) ! dna
+            parm_dnad(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
+          case (2) ! dpa
+            parm_dpad(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
+          case (3) ! hci
+            parm_hcid(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
+          case (4) ! hce
+            parm_hced(idir) = 1.0_R8 ! FIXME to improve for multispecies
+          case default
+            write(*,*) partype(ipar)
+            call xerrab ('partype out of bounds')
+          end select
+          idir = idir + 1
+        endif
+      end do
       if (nsigma_opt.gt.0) then
         sigmad = 0.0_R8
         isigma = npar_opt - nsigma_opt + 1
@@ -73,7 +109,6 @@
       endif
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
-
 
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'

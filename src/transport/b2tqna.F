@@ -116,7 +116,7 @@
       real (kind=R8) ::
      *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
-      integer elm_count, ipar
+      integer elm_count, ivar
       save jxi, jxa, jsep
       logical catch_up
 *   ..procedures
@@ -196,18 +196,33 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if (flag_optim) then
-        do ipar = 1, npar_opt - nsigma_opt !loop over all design variables except sigmas
-          select case (partype(ipar))
-          case (1) ! dna
-            parm_dna(1) = par_opt_phys(ipar) ! FIXME to improve for multispecies
-          case (2) ! hce
-            parm_hce = par_opt_phys(ipar)
-          case (3) ! hci
-            parm_hci(1) = par_opt_phys(ipar) ! FIXME to improve for multispecies
-          case default
-            write(*,*) partype(ipar)
-            call xerrab ('partype out of bounds')
-          end select
+        ic = 1
+!       loop over all specified variables except sigmas
+!       the meaning here is that par_opt_phys is longer than partype because
+!       it contains all points of the spatially dependent coefficients, while
+!       partype specifies the type of coefficient only once for the spatially dependent
+!       example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
+!       --> par_opt_phys = [1 2 3 4 5] [6] [7 8 9 10 11]
+        do ivar = 1, nnvar - nsigma_opt         
+          if (spatial_dep(ivar)) then
+!           spatially dependent coefficient -> par_opt_phys(ic:ic+spatial_points(ipar)) skipped
+            ic = ic + spatial_points(ivar)
+          else
+            select case (partype(ivar))
+            case (1) ! dna
+              parm_dna(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
+            case (2) ! dpa
+              parm_dpa(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
+            case (3) ! hci
+              parm_hci(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
+            case (4) ! hce
+              parm_hce = par_opt_phys(ic)
+            case default
+              write(*,*) partype(ivar)
+              call xerrab ('partype out of bounds')
+            end select
+            ic = ic + 1
+          endif
         end do
       endif
       if(switch%b2tqna_transport_namelist.eq.1) then
