@@ -192,7 +192,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
 
 *   ..compute differential anomalous transport coefficients
       call b2tqna (nx, ny, ns, nscx, iscx, bb,
-     & na, te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,             !srv 15.12.05
+     & na, te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,         !srv 15.12.05
      & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      & hvi0, hve0, wrk)
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15

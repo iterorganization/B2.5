@@ -978,7 +978,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      +nb(ix,iy))/2.0_R8-
      &      con_2dia(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpbhz(ix,iy,0)*
-     &     (pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))                    !srv 01.10.99 09.01.01
+     &     (pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))                  !srv 01.10.99 09.01.01
            fnb_mdf(ix,iy,0) = flo_mdf*(nb(leftix(ix,iy),leftiy(ix,iy))  !srv 13.10.06 {
      &      +nb(ix,iy))/2.0_R8-
      &      con_mdf(ix,iy)*
