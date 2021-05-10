@@ -596,7 +596,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
        endif                                                           !srv 12.07.02 }
 
        if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
-        solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
+         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
          new_matrix = .false.
          do ireg = 0, nnreg(0)

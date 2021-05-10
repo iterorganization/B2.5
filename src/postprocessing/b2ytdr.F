@@ -487,7 +487,7 @@ c 2002-09-11: logic revised
       character*500 line
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
-      character*96, allocatable :: REAC_LINE(:)
+      character*98, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
       character*80 MESSAGE
       character*24 TXTSPC, TXTUNT, TEXTLA
@@ -538,9 +538,11 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac, keep_contr,
-     .        no_sputtering, cpath_written, new_path, bundled
+     .        no_sputtering, cpath_written, new_path, bundled,
+     .        adas_correct
 #endif
-      logical todo, wait, same_bundling, same_atoms, non_default
+      logical todo, wait
+      logical same_bundling, same_atoms, same_grid, non_default
       logical averaging, hydrogen
       logical ismain_done, ismain0_done, ycur_done
       logical first_pass, do_scale
@@ -902,6 +904,7 @@ c 2002-09-11: logic revised
      . 'increase size of DEF_NSD in DIMENSIONS.F')
       call ipgeti ('b2ytdr_non_commensurate', non_commensurate)
       if (non_commensurate.eq.1 .or. nx.ne.nx1 .or. ny.ne.ny1) then
+        same_grid = .false.
 *   ..check for and open old geometry file
         call xertst (open_file(70,'b2fgmtry.old',''),
      .   'Geometry translation requires b2fgmtry.old file')
@@ -954,6 +957,7 @@ c 2002-09-11: logic revised
 *   ..easy case where we keep the same grid geometry
 *   ..simply re-read the file to populate the b2mod_geo arrays
         flip = .false.
+        same_grid = .true.
         rewind(ninp(3))
         call cfverr (ninp(3), b2fgmtry_oldversion)
         call cfruin (ninp(3), 2, idum, 'nx,ny')
@@ -1898,16 +1902,28 @@ c 2002-09-11: logic revised
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
 
 *  ..rewrite boundary namelist
+      first_pass = .true.
       filename='b2.boundary.parameters'
       call find_file(filename,todo)
       new_filename = 'b2.boundary.parameters.2'
       inquire(file=trim(new_filename),exist=found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
-        call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-        call xertst (nniso.le.nnisod,
-     .   'increase DEF_NISO in DIMENSIONS.F')
+       call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
+       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+       call xertst (nniso.le.nnisod,
+     .  'increase DEF_NISO in DIMENSIONS.F')
+       if (same_bundling.and.same_grid) then
+        if (first_pass) then
+          write(nout(5),'(a)') 'b2.boundary.parameters'
+          write(*,*) 'No changes needed in b2.boundary.parameters'
+        endif
+        if (.not.streql(boundary_filename,'b2.boundary.parameters'))
+     >   then
+          write(nout(5),'(a)') trim(boundary_filename)
+          write(*,*) 'No changes needed in ', trim(boundary_filename)
+        endif
+       else
         nbc1 = nbc
         do ib = 1, nbc
           call convert_bundle_i
@@ -2345,20 +2361,22 @@ c 2002-09-11: logic revised
      >   'WRITE_NML_BND=',write_nml_bnd,','
         write(99,'(a)') '/'
         close(99)
-        if (.not.streql(boundary_filename,'b2.boundary.parameters'))
-     >   then
-          new_filename =
+       end if
+       if (.not.streql(boundary_filename,'b2.boundary.parameters'))
+     >  then
+         first_pass = .false.
+         new_filename =
      .     boundary_filename(1:lnblnk(boundary_filename))//'.2'
-          filename = boundary_filename
-          call find_file(filename,todo)
-          call find_file(new_filename,found)
-          if (found) write(6,*) trim(new_filename), ' already present!'
-        else
-          todo = .false.
-          found = .true.
-        endif
-        boundary_namelist = 0
-        boundary_namelist_set = .false.
+         filename = boundary_filename
+         call find_file(filename,todo)
+         call find_file(new_filename,found)
+         if (found) write(6,*) trim(new_filename), ' already present!'
+       else
+         todo = .false.
+         found = .true.
+       endif
+       boundary_namelist = 0
+       boundary_namelist_set = .false.
       enddo
       call get_boundary_namelist
       if (istyle_cur_contr_on_S_and_N.ne.2) write(nout(2),'(a,i1,a1)')
@@ -2573,7 +2591,7 @@ c 2002-09-11: logic revised
         open(99,file=trim(filename))
         read(99,transport,err=999)
         close(99)
-        if(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1) then
+        if(same_bundling.and.same_grid) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.transport.inputfile'
             write(*,*) 'No changes needed in b2.transport.inputfile'
@@ -2861,6 +2879,7 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(dsa,dsa1,deta)
         deallocate(eta_hce_mult1)
       else if (todo) then
+        write(nout(5),'(a)') 'b2.transport_models_save.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       endif
 
@@ -2883,17 +2902,29 @@ cxpb We must ensure we have not already listed this additional species
       s1data(:,:,:,:)=0.0_R8
       nx1data(:,:,:)=0
       x1data(:,:,:,:)=0.0_R8
+      first_pass= .true.
       filename='b2.sources.profile'
       call find_file(filename,todo)
       new_filename = 'b2.sources.profile.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((sources_inputfile.eq.1.or.todo).and..not.found)
-        filename = sources_filename
-        call find_file(filename,ex)
-        open(92,file=trim(filename))
-        read(92,profile,err=999)
-        close(92)
+       filename = sources_filename
+       call find_file(filename,ex)
+       open(92,file=trim(filename))
+       read(92,profile,err=999)
+       close(92)
+       if(same_bundling.and.same_grid) then
+        if (first_pass) then
+         write(nout(5),'(a)') 'b2.sources.profile'
+         write(*,*) 'No changes needed in b2.sources.profile'
+        endif
+        if (.not.streql(sources_filename,'b2.sources.profile'))
+     >   then
+          write(nout(5),'(a)') trim(sources_filename)
+          write(*,*) 'No changes needed in ',trim(sources_filename)
+        endif
+       else
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
         open(99,file=new_filename)
@@ -3378,19 +3409,21 @@ cxpb This will need to be checked !!!
         endif
         write(99,'(a1)') '/'
         close(99)
-        if (.not.streql(sources_filename,'b2.sources.profile'))
-     >   then
-          new_filename =
-     .     sources_filename(1:lnblnk(sources_filename))//'.2'
-          filename = sources_filename
-          call find_file(filename,todo)
-          call find_file(new_filename,found)
-          if (found) write(6,*) trim(new_filename), ' already present!'
-        else
-          todo = .false.
-          found = .true.
-        endif
-        sources_inputfile = 0
+       end if
+       if (.not.streql(sources_filename,'b2.sources.profile'))
+     >  then
+         first_pass = .false.
+         new_filename =
+     .    sources_filename(1:lnblnk(sources_filename))//'.2'
+         filename = sources_filename
+         call find_file(filename,todo)
+         call find_file(new_filename,found)
+         if (found) write(6,*) trim(new_filename), ' already present!'
+       else
+         todo = .false.
+         found = .true.
+       endif
+       sources_inputfile = 0
       enddo
       deallocate(s1data)
       deallocate(ns1data)
@@ -3689,6 +3722,7 @@ cxpb This will need to be checked !!!
         write(99,'(a1)') '/'
         close(99)
       else if (same_bundling.and.todo) then
+        write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       endif
 
@@ -3794,8 +3828,19 @@ cxpb start by identifying the correspondence with the new run species
             no_sputtering = .false.
           end select
         end do
-        if (streql(eirene_format,'iter') .and. same_bundling .and.
-     .      nx.eq.nx1 .and. ny.eq.ny1 .and. non_commensurate.eq.0) then
+        adas_correct = .true.
+        do jatm = 1, natmi
+          if (iatm1(jatm).eq.0) cycle
+          select case (is_codes(eb2atcr(jatm)))
+          case ('H','D','T','He','C','Ne','Ar','N','Be')
+            continue
+          case default
+            adas_correct = b2fstate_version.gt.'03.000.007'
+          end select
+        end do
+        if (streql(eirene_format,'iter') .and.
+     .      same_bundling .and. same_grid .and. adas_correct) then
+          write(nout(5),'(a)') 'input.dat'
           write(*,*) 'No changes needed in input.dat'
           goto 8688  ! no need to convert input.dat file
         endif
@@ -4664,6 +4709,41 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               WRITE(REAC_LINE(ILINE)(IEND+1:IEND+4),'(A3,A1)')
      .         CRC,' '
               IEND=IEND+4
+              IF (INDEX(REACZEILE,'ADAS') .NE. 0 .and.
+     &           (INDEX(REACZEILE,'plt') .NE. 0 .or.
+     &            INDEX(REACZEILE,'prb') .NE. 0) .and.
+     &            DPP .EQ. 0.0_R8) THEN ! Add missing ionization potential
+                found = .false.
+                is = 1
+                do while (.not.found.and.is.le.92)
+                  found = idum(1).eq.nuclear_mass(is)
+                  if (found) then
+                    nc = is
+                  else
+                    is = is+1
+                  end if
+                end do
+                if(found) then
+                  filename='ionization_potentials'
+                  call find_file(filename,ex)
+                  if(silent_open(97,filename,
+     .             'data.local|modules/B2.5/Database',adasfile)) then
+                    rewind(97)
+                    do is = 1, nc-1
+                      read(97,*)
+                    end do
+                    read(97,*) DPP
+                    if (INDEX(REACZEILE,'plt').NE.0) DPP = -DPP
+                    close(97)
+                  end if
+                else
+                  write(*,'(a,i3,a)') 'Reaction ',IREAC1(I),
+     .             ' is missing the ionization potential value.'
+                  write(*,*) 'Could not find a species match!'
+                  write(*,*) 'Needs to be added in by hand'
+                  write(*,*) 'Check the Eirene input files!'
+                end if
+              END IF
               write(hlp_frm,'(a,i1,a,i1,a)')
      .         '(i',size_mp+1,',i',size_mt+1,',1P,5(1X,E11.4))'
               WRITE(REAC_LINE(ILINE)(IEND+1:IEND+size_mp+size_mt+2+60),
@@ -4724,7 +4804,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 filename='ratadas.filelist'
                 call find_file(filename,ex)
                 if(silent_open(97,filename,
-     .             'data.local|modules/B2.5/Database',adasfile)) then !{
+     .            'data.local|modules/B2.5/Database',adasfile)) then !{
                   read(97,*) ZEILE
                   read(97,*) maxne
                   if (nc.gt.maxne) then !{
@@ -10082,8 +10162,7 @@ cxpb  Convert fort.44 file if needed
         filename=fort_lc//'44'
         inquire(file=filename,exist=todo)
         if (todo.and.(.not.streql(solps_version,'iter').or.
-     &     .not.same_bundling.or.
-     &      non_commensurate.eq.1.or.nx.ne.nx1.or.ny.ne.ny1)) then
+     &     .not.same_bundling.or..not.same_grid)) then
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
@@ -10097,6 +10176,7 @@ cxpb  Convert fort.44 file if needed
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
+          write(nout(5),'(a)') 'fort.44'
           write(*,*) 'No changes needed in '//fort_lc//'44'
         endif
 cxpb  Convert fort.46 file if needed
@@ -10106,8 +10186,17 @@ cxpb  Convert fort.46 file if needed
           call b2yt_ntread(natmi1, iatm1, nmol1, imol1, nion1, iion1)
           write(nout(5),'(a)') fort_lc//'46.2'
         else if (todo) then
+          write(nout(5),'(a)') 'fort.46'
           write(*,*) 'No changes needed in '//fort_lc//'46'
         endif
+        if (.not.(streql(solps_version,'iter').and.
+     &            same_bundling.and.same_grid.and.adas_correct)) then
+          deallocate(e_bundle_start)
+          deallocate(e_bundle_end)
+          deallocate(e_bundle_contr)
+          deallocate(zemin1)
+          deallocate(zemax1)
+        end if
       else
         allocate(eb2atcr1(natm1))
         allocate(mlcmp1(natm1,nmol1))
@@ -10221,6 +10310,7 @@ cxpb  Convert fort.46 file if needed
 
 *  ..rewrite neutrals namelist
 *  ..recall it was already read earlier
+      first_pass = .true.
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       new_filename = 'b2.neutrals.parameters.2'
@@ -10228,6 +10318,17 @@ cxpb  Convert fort.46 file if needed
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo)
      & .and..not.found)
+       if(same_bundling.and.same_grid) then
+        if (first_pass) then
+          write(nout(5),'(a)') 'b2.neutrals.parameters'
+          write(*,*) 'No changes needed in b2.neutrals.parameters'
+        endif
+        if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
+     >   then
+          write(nout(5),'(a)') trim(neutrals_filename)
+          write(*,*) 'No changes needed in ',trim(neutrals_filename)
+        endif
+       else
         allocate(recyc1(0:ns1-1,nstrat1))
         allocate(mrecyc1(0:ns1-1,nstrat1))
         allocate(erecyc1(0:ns1-1,nstrat1))
@@ -10914,21 +11015,6 @@ cxpb as they no longer necessarily point to the same species
      >   'WRITE_NML_NEUT=',write_nml_neut,','
         write(99,'(a)') '/'
         close(99)
-        if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
-     >   then
-          filename = neutrals_filename
-          new_filename =
-     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
-          call find_file(filename,todo)
-          call read_neutrals_namelist(nx, ny, ns, .false.)
-          call xertst (nstrai.le.nstraid,
-     >      'Increase DEF_NSTRA in DIMENSIONS.F')
-          call find_file(new_filename,found)
-          if (found) write(6,*) trim(new_filename), ' already present!'
-        else
-          todo = .false.
-          found = .true.
-        endif
         deallocate(istra1)
         deallocate(recyc1)
         deallocate(mrecyc1)
@@ -10943,6 +11029,23 @@ cxpb as they no longer necessarily point to the same species
         deallocate(gpdata1)
         deallocate(lsns1)
         deallocate(ksns1)
+       end if
+       if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
+     >  then
+         first_pass = .false.
+         filename = neutrals_filename
+         new_filename =
+     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
+         call find_file(filename,todo)
+         call read_neutrals_namelist(nx, ny, ns, .false.)
+         call xertst (nstrai.le.nstraid,
+     >      'Increase DEF_NSTRA in DIMENSIONS.F')
+         call find_file(new_filename,found)
+         if (found) write(6,*) trim(new_filename), ' already present!'
+       else
+         todo = .false.
+         found = .true.
+       endif
       enddo
 
 * ..now read and convert the sputtering and wall data if they exist
@@ -10978,7 +11081,8 @@ cxpb as they no longer necessarily point to the same species
           call get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
         endif ! wall_namelist_used
 *  ..read in the namelist data
-        if(sputter_namelist_used) then
+        if(sputter_namelist_used.and.
+     &    (.not.same_bundling.or..not.same_grid)) then
           filename='b2.sputter_save.parameters'
           call find_file(filename,ex)
           open(99,file=filename)
@@ -11087,6 +11191,9 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(a1)') '/'
             close(99)
           endif
+        else if (sputter_namelist_used) then
+          write(nout(5),'(a)') 'b2.sputter_save.parameters'
+          write(*,*) 'No changes needed in b2.sputter_save.parameters'
         endif  ! sputter_namelist_used
       endif
 
@@ -11152,6 +11259,7 @@ cxpb as they no longer necessarily point to the same species
           end if
         end if
       else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_save.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11162,8 +11270,7 @@ cxpb as they no longer necessarily point to the same species
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
-     .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1.or.
-     .    non_commensurate.eq.1)) then
+     .   (.not.same_atoms.or..not.same_grid)) then
         allocate(na_feedback_target1(0:nspecies1-1))
         allocate(na_feedback_choice1(0:nspecies1-1))
         allocate(na_feedback_option1(0:nspecies1-1))
@@ -11373,6 +11480,7 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
       else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11383,7 +11491,7 @@ cxpb as they no longer necessarily point to the same species
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
-     .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
+     .   (.not.same_atoms.or..not.same_grid)) then
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
         call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
@@ -11636,6 +11744,7 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         call dealloc_b2mod_user
       else if (todo) then
+        write(nout(5),'(a)') 'b2.user.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11661,6 +11770,7 @@ cxpb as they no longer necessarily point to the same species
   983     continue
           close(99)
         else if (same_bundling) then
+          write(nout(5),'(a)') 'b2yq.dat'
           write(*,*) 'No changes needed in ',trim(filename)
         end if
         close(98)
@@ -11789,6 +11899,7 @@ cxpb as they no longer necessarily point to the same species
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       else
+        write(nout(5),'(a)') 'b2ah.dat'
         write(*,*) 'No changes needed in b2ah.dat'
       endif
 
@@ -11836,6 +11947,7 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(1p,1e9.2)') ttini
         close(nout(4))
       else
+        write(nout(5),'(a)') 'b2ai.dat'
         write(*,*) 'No changes needed in b2ai.dat'
       endif
       deallocate(nbini)
@@ -11855,6 +11967,7 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         deallocate(species_name)
       else
+        write(nout(5),'(a)') 'SOLPS_FLUIDS'
         write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 

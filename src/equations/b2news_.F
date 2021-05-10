@@ -418,7 +418,7 @@ csw 01oct2012 initialize potential if necessary
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),
@@ -631,7 +631,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),
@@ -1212,7 +1212,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),
