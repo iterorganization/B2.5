@@ -37,8 +37,6 @@ endif
 
 DDBLOPTION =
 
-INCMOD = -B
-
 LDLIBES = -limf -lm # Intel Math must be before -lm
 
 GGD_VERSION ?= `pkg-config ggd --modversion`

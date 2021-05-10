@@ -1104,7 +1104,7 @@ c
         call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'new' format"
+     1     "Reading the geometry file assuming the Carre format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,'(a,4i5)')
@@ -1159,7 +1159,7 @@ c
      .   //'|modules/DivGeo/device/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'old' format"
+     1     "Reading the geometry file assuming the Sonnet format"
           write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
      1     '  file  ',trim(local_sonnet)
    20     read (lun,'(a)', end=990) uline

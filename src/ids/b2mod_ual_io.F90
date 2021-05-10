@@ -5383,7 +5383,8 @@ contains
            &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) ) )
           call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(itrg(1)) )
 #if IMAS_MINOR_VERSION > 31
-          call write_sourced_value( summary%local%limiter%power_flux_peak, power_flux_peak(itrg(i)) )
+          u = max( power_flux_peak(itrg(1)), power_flux_peak(itrg(2)) )
+          call write_sourced_value( summary%local%limiter%power_flux_peak, u )
 #endif
         end if
 

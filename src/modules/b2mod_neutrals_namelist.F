@@ -515,6 +515,8 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       character*260 filename
 
       filename=neutrals_filename
+      neutrals_time_mod = 0.0_R8
+      neutrals_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
