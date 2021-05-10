@@ -333,18 +333,18 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')
-        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
+        wrk0 = -corte*shedt(:,:,3)*ne                                 !srv 31.01.21 {
         call my_out(70,nx,ny,wrk0,'b2nph_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed through te_inp
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
         call my_out(70,nx,ny,wrk0,'b2nph_tednedt')
         wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph_dnetedt')
         wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) !it is supposed that the shidt(:,:,0) was computed through ti_inp
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
         call my_out(70,nx,ny,wrk0,'b2nph_tidnidt')
         wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph_dnitidt')                     !srv 31.01.21 }
+        call my_out(70,nx,ny,wrk0,'b2nph_dnitidt')                    !srv 31.01.21 }
       endif                                                           !srv 17.07.05 }
       if (solving(4)) then
 *   ..compute correction

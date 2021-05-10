@@ -319,9 +319,9 @@
       if (iout.ne.0) then
        call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
       endif
-      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 09.03.21 {
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                        !srv 09.03.21 {
         ua_inp = ua
-      endif                                                             !srv 09.03.21 }
+      endif                                                            !srv 09.03.21 }
 *   ..initialise
       call sfill (n2*4, 0.0_R8, smt, 1)
       call sfill (n2*2, 0.0_R8, flct, 1)
@@ -749,7 +749,7 @@ csw 21feb2014, execute simultaneous corrections always
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
-        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)  !srv 09.03.21 {
+        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)       !srv 09.03.21 {
         call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
         wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
      &             -smodt(:,:,0,is)
@@ -759,7 +759,7 @@ csw 21feb2014, execute simultaneous corrections always
         
         wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
      &             smodt(:,:,0,is)
-        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)       !srv 09.03.21 }
+        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
@@ -769,7 +769,7 @@ csw 21feb2014, execute simultaneous corrections always
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pcca0_'//chns)
         call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pcca1_'//chns)
-        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)  !srv 09.03.21 {
+        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)       !srv 09.03.21 {
         call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
         wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
      &             -smodt(:,:,0,is)
@@ -779,7 +779,7 @@ csw 21feb2014, execute simultaneous corrections always
         
         wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
      &             smodt(:,:,0,is)
-        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)       !srv 09.03.21 }
+        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }
        enddo
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter

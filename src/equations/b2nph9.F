@@ -330,13 +330,13 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,po,'b2nph9_po')
         wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
         call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed through te_inp
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
         call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
         wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
         wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) !it is supposed that the shidt(:,:,0) was computed through ti_inp
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
         call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
         wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
@@ -345,17 +345,16 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,ti,'b2nph9_ti')
         wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
         call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed through te_inp
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
         call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
         wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
         wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) !it is supposed that the shidt(:,:,0) was computed through ti_inp
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
         call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
         wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
-      elseif (iout_b2wdat.eq.4) then
       end if
 
 * ..return
