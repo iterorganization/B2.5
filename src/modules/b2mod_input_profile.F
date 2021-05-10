@@ -407,29 +407,29 @@ cdjm Jan2017 Keep linearised sources for balance
 
       subroutine read_source_profile
 
-      character*260 filename
+      character*260 filenames
       logical file_ok
 
       namelist/profile/nsdata,nxdata,sdata,xdata,divheat,
      . sources_time_mod,sources_time_switch,sources_filename
 
 !  read the profile data
-      filename=sources_filename
-      call find_file(filename,file_ok)
+      filenames=sources_filename
+      call find_file(filenames,file_ok)
       if(file_ok) then
-        open(92,file=filename)
+        open(92,file=filenames)
         write(*,*) 
-     .   'Reading sources profile namelist from ', trim(filename)
+     .   'Reading sources profile namelist from ', trim(filenames)
 #ifdef USE_MPI
         read(92,profile,err=999)
 #else
         read(92,profile)
 #endif
         write(*,*) 
-     .   'Read sources profile namelist from ',trim(filename)
+     .   'Read sources profile namelist from ',trim(filenames)
         close(92)
       else
-        call xerrab ('No '//trim(filename))
+        call xerrab ('No '//trim(filenames))
       endif
 !     write(*,profile)
       return
@@ -456,6 +456,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
+      use b2mod_par_opt
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -477,9 +478,9 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
       real (kind=R8) :: poloidal_scale_factor, rsep
-      integer, save :: nlbl
+      integer, save :: nlbl, ivar
       logical, save :: elm_time, elm_region, elm_data, found
-      character*260 filename
+      character*260 filenamet
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
       intrinsic sqrt
@@ -487,7 +488,7 @@ cdjm Jan2017 Keep linearised sources for balance
       if(ncall.eq.0) then
         call xertst(CVREGMAX.ge.mpg%nnreg(0),
      1   'Increase CVREGMAX in b2mod_numerics_namelist')
-        filename=transport_ip_filename
+        filenamet=transport_ip_filename
         tr_ip_new_files = .true.
         call read_transport_input         
 !  read the profile data
@@ -502,7 +503,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_ip_time_mod).gt.transport_ip_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filename=transport_ip_filename
+            filenamet=transport_ip_filename
             call read_transport_input
             catch_up=transport_ip_time_mod.gt.0.0_R8
           else
@@ -526,7 +527,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1     transport_ip_time_switch.or.
      2     int(tim/transport_ip_time_mod).gt.tr_ip_elm_count) then
             tr_ip_elm_count=tim/transport_ip_time_mod
-            filename=transport_ip_filename
+            filenamet=transport_ip_filename
             tr_ip_new_files = .true.
             call read_transport_input
           endif
@@ -578,6 +579,32 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
+      if (flag_optim) then
+!       loop over all specified variables except sigmas
+!       the meaning here is that par_opt_phys is longer than partype because
+!       it contains all points of the spatially dependent coefficients, while
+!       partype specifies the type of coefficient only once for the spatially dependent
+!       example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
+!       --> par_opt_phys = [1 2 3 4 5] [6] [7 8 9 10 11]
+! FIXME perhpas not the best, most efficient solution now, but should work
+        ic = 0 !this indicates the different directions of multidirectional derivative mode
+        do ivar = 1, nnvar - nsigma_opt
+          if (spatial_dep(ivar)) then
+!           spatially dependent coefficient
+            if (partype(ivar).eq.kind_coeff) then
+            if (spatial_points(ivar).ne.ndat) 
+     &        call xerrab('spatial_points =/ ndat')
+              do i = 1, ndat
+                f(i) = par_opt_phys(ic + i)
+              end do
+            endif
+            ic = ic + spatial_points(ivar)
+          else
+!           non spatially dependent --> specified in b2tqna
+            ic = ic + 1
+          endif
+        end do
+      endif
 #ifdef WG_TODO
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
@@ -722,9 +749,9 @@ cdjm Jan2017 Keep linearised sources for balance
                       endif
                     endif
                   enddo !ic
-                enddo !ift
-              enddo !iy
-            enddo !is
+                enddo !ift=1,mpg%nFt
+              enddo !iy=1,ndim
+            enddo !is=1,nspec
             if (ncall.eq.0) then
               if (elm_data) then
                 write(hlp_frm,'(a,i3,a)') 
@@ -796,9 +823,9 @@ cdjm Jan2017 Keep linearised sources for balance
 !           deallocate(f,r,pr,pf,felm,pelm)
             iloop=iloop+1
   1         continue
-          enddo
-        enddo
-      enddo
+          enddo !kind_data
+        enddo !spec=0,ns-1
+      enddo !kind_coeff
        
       goto 100
  99   write (*,*) 'Error in reading the dsp file'
@@ -837,20 +864,20 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
-      call find_file(filename,file_ok)
+      call find_file(filenamet,file_ok)
       if (file_ok) then
-        open(99,file=filename)
-        write(*,*) 'Reading namelist transport_ip from ',trim(filename)
+        open(99,file=filenamet)
+        write(*,*) 'Reading namelist transport_ip from ',trim(filenamet)
 #ifdef USE_MPI
         read(99,transport,err=999)
 #else
         read(99,transport)
 #endif
-        write(*,*) 'Read namelist transport_ip from ',trim(filename)
+        write(*,*) 'Read namelist transport_ip from ',trim(filenamet)
         write(*,transport)
         close(99)
       else
-        call xerrab (' No '//trim(filename))
+        call xerrab (' No '//trim(filenamet))
       endif
       return
  999  call xerrab ('Error while reading TRANSPORT inputfile!')
@@ -873,7 +900,7 @@ c*** Clear data to forget previous profiles
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
-      character*256 filename
+      character*256 filenamer
       logical exist
       external ipgetr, subini, subend
       external get_jsep
@@ -901,10 +928,10 @@ c*** Clear data to forget previous profiles
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
-      filename='dsp'
-      call find_file(filename,exist)
+      filenamer='dsp'
+      call find_file(filenamer,exist)
       if (exist) then
-        open(unit=91,file=filename)
+        open(unit=91,file=filenamer)
       else
         ifa=1
         call subend()

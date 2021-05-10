@@ -19,11 +19,17 @@
       double precision, save :: cpu_opt=0.0, tol_opt=1.0e-7
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0 
       logical, save :: sigma_opt(nsigmx)
+      logical, save :: spatial_dep(nvmx)
+      integer, save :: spatial_points(nvmx) = 0
+      integer :: partypeold(nvmx),x0old(nvmx),xlold(nvmx),xuold(nvmx),
+     &           glold(nvmx),guold(nvmx), idd, ipp
       logical :: file_ok
+      real (kind=R8) :: typeold(nvmx), rangeold(nvmx,2), parold(nvmx,2)
       private optimization
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
-     & limited_memory_update_type, partype, sigma_opt
+     & limited_memory_update_type, partype, sigma_opt, spatial_dep,
+     & spatial_points
 
       contains
 
@@ -48,6 +54,8 @@
       jj = 0.0
       partype = -1
       sigma_opt = .true.
+      spatial_dep = .false.
+      spatial_points = 0
 ! FIXME set if (read_file)
       call find_file(filename,file_ok)
       if(file_ok) then
@@ -73,13 +81,18 @@
       call xertst(nncon.ge.0,'b2mod_par_opt: nncon<0')
       call xertst(nnjac.ge.0,'b2mod_par_opt: nnjac<0')
 !     partype refers to the type of design variable:
-!     1 - D, particle diffusion coefficient
-!     2 - X_e, electron heat diffusion coefficient
+!     0 - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
+!     1 - Dna, density driven particle diffusion coefficient
+!     2 - Dpa, pressure driven particle diffusion coefficient
 !     3 - X_i, ion heat diffusion coefficient
-!     4 - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
-      call xertst(any(partype(1:nnvar).gt.0).and.
+!     4 - X_e, electron heat diffusion coefficient
+      call xertst(any(partype(1:nnvar).ge.0).and.
      &  any(partype(1:nnvar).le.4),
-     &  'b2mod_par_opt: partype<=0 or partype>=4')
+     &  'b2mod_par_opt: partype<0 or partype>4')
+      call xertst(any(spatial_points(1:nnvar).ge.0),
+     &  'b2mod_par_opt: spatial_points<0')
+      call xertst(sum(spatial_points(1:nnvar)).le.nvmx,
+     &  'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
       if (nsigma.gt.0 .and. any(sigma_opt(1:nsigma))) then
 !      calculate first how many sigmas are being optimized
        nsigma_opt = 0
@@ -89,15 +102,8 @@
 !      check if sigmas are at the end of the parameter vector, if not, issue error
        isigma = nnvar - nsigma_opt + 1 ! position of first sigma in partype
        do ii = 1, nsigma_opt
-        call xertst(partype(ii+isigma-1).eq.4,'b2mod_par_opt: '//
-     &   'partype 4 variables MUST be at the end of the vector')
-       end do
-       do ii = 1, nsigma
-!       only assign initial value from x0 if that sigma is being optimized
-        if (sigma_opt(ii)) then
-         sigma(ii) = dble(x0(isigma))
-         isigma = isigma + 1 !next sigma in inital vector x0
-        endif
+        call xertst(partype(ii+isigma-1).eq.0,'b2mod_par_opt: '//
+     &   'partype 0 variables MUST be at the end of the vector')
        end do
       endif
 !     Suppose MAP estimation is turned on only when cftype(1)=6
@@ -107,7 +113,7 @@
 !      2 - Uniform distribution.
        call xertst(any(prior_type(1:nnvar).ge.0).and.
      &  any(prior_type(1:nnvar).le.1),
-     &  'b2mod_par_opt: prior_type<=0 or prior_type>=1')
+     &  'b2mod_par_opt: prior_type<0 or prior_type>1')
 !      prior_par refers to the prior parameters:
 !      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
 !      For prior_type = 2, not used?
@@ -128,7 +134,41 @@
      & 'b2mod_par_opt: jrow>nvar')
       endif
 
-      npar_opt = nnvar
+!     adjust some arrays when there are radially dependent coefficients
+!     x0, xl, xu are supposed to have the correct dimension already, i.e. one for each spatial point
+!     priors parameters are not
+      npar_opt = 0
+      idd = 1
+      typeold = prior_type
+      parold = prior_par
+      rangeold = prior_range
+      do ipp = 1, nnvar + (nsigma - nsigma_opt)
+       prior_type(idd) = typeold(ipp)
+       prior_par(idd,1) = parold(ipp,1)
+       prior_par(idd,2) = parold(ipp,2)
+       prior_range(idd,1) = rangeold(ipp,1)
+       prior_range(idd,2) = rangeold(ipp,2)
+       if (spatial_dep(ipp)) then
+        prior_type(idd:idd+spatial_points(ipp)-1) = typeold(ipp)
+        prior_par(idd:idd+spatial_points(ipp)-1,1) = parold(ipp,1)
+        prior_par(idd:idd+spatial_points(ipp)-1,2) = parold(ipp,2)
+        prior_range(idd:idd+spatial_points(ipp)-1,1) = rangeold(ipp,1)
+        prior_range(idd:idd+spatial_points(ipp)-1,2) = rangeold(ipp,2)
+        npar_opt = npar_opt + spatial_points(ipp) - 1 
+        idd = idd + spatial_points(ipp) - 1 !next index
+       end if
+       npar_opt = npar_opt + 1
+       idd = idd + 1 !next index
+      enddo
+      npar_opt = npar_opt - (nsigma - nsigma_opt)
+      isigma = npar_opt - nsigma_opt + 1 ! position of first sigma in x0
+      do ii = 1, nsigma
+!      only assign initial value from x0 if that sigma is being optimized
+       if (sigma_opt(ii)) then
+        sigma(ii) = dble(x0(isigma))
+        isigma = isigma + 1 !next sigma in inital vector x0
+       endif
+      end do
       ncon = nncon
       nele_jac = nnjac
 

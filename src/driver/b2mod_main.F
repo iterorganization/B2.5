@@ -303,6 +303,8 @@ csw
       use b2mod_boundary_namelist
       use b2mod_user_namelist
      , , only : sigma
+      use b2mod_input_profile
+     , , only : tdata
       use b2mod_ad
      , , only: nncf
       implicit none
