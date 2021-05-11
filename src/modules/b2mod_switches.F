@@ -345,6 +345,7 @@ c k-enstrophy model
       real(kind=R8) :: b2sikt_fac_sheath_core
       real (kind=R8) :: b2tfhi_fflokt
       real (kind=R8) :: b2tfhi_fconkt
+      real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
 
 c b2tqna
@@ -759,6 +760,7 @@ c k-enstrophy model
       s % b2sikt_fac_sheath_core = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
+      s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
 
 c b2tqna
@@ -1196,6 +1198,7 @@ c k-enstrophy model
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
+      call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
 
 c b2tqna
@@ -1593,6 +1596,8 @@ c k-enstrophy model
      &  'b2tfhi_fflokt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fconkt,
      &  'b2tfhi_fconkt must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fsigkt,
+     &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
      &  'b2tfhi_fkt_hie must be .ge. 0.0')
       call xertst (0.0_R8.le.s%keps_inc,
