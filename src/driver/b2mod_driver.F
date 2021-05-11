@@ -1982,7 +1982,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(ns, mpg, state, geo, J)
+        call b2usr_cost_function(nCv, nFc, nVx, ns, mpg, state, geo, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)

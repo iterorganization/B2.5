@@ -1,4 +1,4 @@
-      subroutine b2usr_cost_function(ns, mpg, st, geo, J)
+      subroutine b2usr_cost_function(nCv, nFc, nVx, ns, mpg, st, geo, J)
       use b2mod_types
       use b2mod_constants
       use b2mod_user_namelist
@@ -20,12 +20,13 @@
       type(geometry), intent (in)   :: geo
       type(B2State), intent (in)    :: st
       real(kind=R8) :: BoRiS, J(nncf)
-      integer :: ns
+      integer :: nCv, nFc, nVx, ns
       integer :: icf, ic1, ic2, iCv, ncall, ndata1, ndata2, ii,
      &           ifc, ifc1, ifc2, is, iicf, jj
       logical, save :: first_call=.true.
       logical :: inrange
       real (kind=R8) :: qq, prior, lll, lll_cum
+      real (kind=R8) :: gradr(nCv), funv(nVx)
 #ifdef TEST_MAP
       integer, parameter :: nn=50
       real (kind=R8), save :: xx(nn), yy(nn), ff(nn)
@@ -181,6 +182,27 @@
                   ffdata(ii,ndata2*(jj-1)+1:ndata2*jj) = 
      &             st%pl%ti(mpg%cfCv(ic1:ic2))/ev
                 enddo
+              case (7) !electron density radial gradient
+                call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%dv%ne, 
+     &            funv, gradr)
+                do jj = 1, ntimescf(iicf)
+                  ffdata(ii,ndata2*(jj-1)+1:ndata2*jj) = 
+     &             gradr(mpg%cfCv(ic1:ic2))
+                enddo
+              case (8) !electron temperature radial gradient
+                call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
+     &            funv, gradr)
+                do jj = 1, ntimescf(iicf)
+                  ffdata(ii,ndata2*(jj-1)+1:ndata2*jj) = 
+     &             gradr(mpg%cfCv(ic1:ic2))/ev
+                enddo
+              case (9) !ion temperature radial gradient
+                call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
+     &            funv, gradr)
+                do jj = 1, ntimescf(iicf)
+                  ffdata(ii,ndata2*(jj-1)+1:ndata2*jj) = 
+     &             gradr(mpg%cfCv(ic1:ic2))/ev
+                enddo
               case default
                write(*,*) cftype(iicf)
                call xerrab ('cftype for sum out of bounds for cftype=6')
@@ -196,6 +218,45 @@
             else
               J(icf) = inf_opt
             endif
+          case (7) !electron density radial gradient
+            jj = 1 !counter for cfdata
+            call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%dv%ne, 
+     &        funv, gradr)
+            do ii = 1, ntimescf(icf)
+              do iCv = ic1, ic2
+                J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
+     &                   gradr(mpg%cfCv(iCv))
+     &                   - cfdata(icf,3,jj) )**2
+                jj = jj + 1
+              enddo
+            enddo
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+          case (8) !electron temperature radial gradient
+            jj = 1 !counter for cfdata
+            call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
+     &        funv, gradr)
+            do ii = 1, ntimescf(icf)
+              do iCv = ic1, ic2
+                J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
+     &                   gradr(mpg%cfCv(iCv))/ev
+     &                   - cfdata(icf,3,jj) )**2
+                jj = jj + 1
+              enddo
+            enddo
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+          case (9) !ion temperature radial gradient
+            jj = 1 !counter for cfdata
+            call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
+     &        funv, gradr)
+            do ii = 1, ntimescf(icf)
+              do iCv = ic1, ic2
+                J(icf) = J(icf) + geo%cvVol(mpg%cfCv(iCv))*(
+     &                   gradr(mpg%cfCv(iCv))/ev
+     &                   - cfdata(icf,3,jj) )**2
+                jj = jj + 1
+              enddo
+            enddo
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')
