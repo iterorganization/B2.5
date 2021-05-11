@@ -213,7 +213,7 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.6) call xerrab ('cftype>6 not coded ')
+          if (cftype(icf).gt.9) call xerrab ('cftype>9 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
@@ -222,6 +222,9 @@ c***  Standard setup:
      &     'only cftype(1) should be =6')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
      &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
+     &         ' read experimental profile')
+          if ((cftype(icf).ge.7 .and. cftype(icf).le.9) .and.
+     &         .not.cfread(icf)) call xerrab ('cftype=7,8,9 need to'//
      &         ' read experimental profile')
           if (cfread(icf)) then
             write (str,'(I1)') icf
