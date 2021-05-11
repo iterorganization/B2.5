@@ -84,7 +84,7 @@
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
+     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
@@ -215,11 +215,11 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
       if (switch%user_transport.eq.10) then 
        do is = 0, ns-1
          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-           wrk_afn =  co%dpa0(:,is)*abs(geo%cvbb(:,2)/geo%cvbb(:,3))
+           wrkc =  co%dpa0(:,is)*abs(geo%cvbb(:,2)/geo%cvbb(:,3))
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &                 wrk_afn, co%cdpa(1,0,is))   
+     &                 wrkc, co%cdpa(1,0,is))   
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &                 wrk_afn, co%cdpahz(1,0,is))
+     &                 wrkc, co%cdpahz(1,0,is))
          endif
        enddo
       endif
@@ -248,8 +248,9 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  co%alf0, co%calf(1,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%alf0, co%calf(1,1))
+      wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%dkt0, co%cdkt(1,0))
+     &  wrkc, co%cdkt(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%dkt0, co%cdkt(1,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 

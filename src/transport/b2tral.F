@@ -80,7 +80,7 @@
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
-     4  chce0(nFc,0:1), chve0(nFc,0:1),
+     4  chce0(nFc,0:1), chve0(nFc,0:1), cdkt0(nFc,0:1),
      1	ft,                                                             !srv 16.10.17
      *  wrk(nFc), wrkmin
       character*72 message
@@ -116,7 +116,7 @@
 *   ..compute classical terms
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10
      1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,        !srv 09.01.01 03.06.03
-     3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0,          !xpb
+     3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, cdkt0,   !xpb
      4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..add to previous contributions=
@@ -144,6 +144,7 @@
       call b2saxpy (nFc*2, 1.0_R8, chvi0, 1, co%chvi, 1)
       call b2saxpy (nFc*2, 1.0_R8, csig0, 1, co%csig, 1)
       call b2saxpy (nFc*2, 1.0_R8, calf0, 1, co%calf, 1)
+      call b2saxpy (nFc*2, 1.0_R8, cdkt0, 1, co%cdkt, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       do is = 0, ns-1
        if(.not.is_neutral(is)) then

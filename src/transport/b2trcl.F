@@ -3,7 +3,7 @@
 
       subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
      1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
-     3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
+     3  cvsa, chce, chve, chci, chvi, csig, calf, cdkt, csigin,          !xpb
      4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
@@ -41,6 +41,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  chce(nFc,0:1), chve(nFc,0:1),
      &  chci(nFc,0:1), chvi(nFc,0:1),
      &  csig(nFc,0:1), calf(nFc,0:1),
+     &  cdkt(nFc,0:1),
      &  csigin(nFc,0:1,0:ns-1,0:ns-1),				 !xpb
      &  cthe(nFc,0:ns-1), cthi(nFc,0:ns-1),
      &  vsaf_cl(nFc,0:1,0:ns-1),
@@ -102,7 +103,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
-     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx)                              !srv 01.07.99 09.01.01
+     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv)                   !srv 01.07.99 09.01.01
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
@@ -626,7 +627,15 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &   pl%ti, pl%ua(:,is), co%vsaf_cl(:,0,is), cvsa(:,0,is),
      &   cvsahz(:,0,is), fllimvisc(:,is))
       enddo
-*   .. save the classical transport coefficients
+*   ..computation conductivity of kt due to classical parallel current
+!wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
+      wrkc = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
+     &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
+      wrkc = sigx_c*wrkc**2/(am(ismain)*mp)*switch%b2tfhi_fsigkt
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  wrkc, cdkt(:,0))
+      cdkt(:,1) = 0.0_R8
+*   ..save the classical transport coefficients
       csig_cl = csig
       calf_cl = calf
       cvsa_cl=cvsa

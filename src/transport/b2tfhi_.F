@@ -333,10 +333,11 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 cwdk    fflokt and fconkt: fudge factors to approximate enhanced parallel
 cwdk    transport of k due to term
 cwdk    related to (fluctuations in parallel current) * (fluctuations in potential)
+cwdk    factor fconkt now included in b2trno
 cwdk    in principle: models same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0)
         flokt0(:,0) = (1.0_R8 + switch%b2tfhi_fflokt)*dv%fna(:,0,ismain)
         flokt0(:,1) = dv%fna(:,1,ismain) 
-        cdkt0(:,0) = co%cdkt(:,0)*(1.0_R8 + switch%b2tfhi_fconkt)
+        cdkt0(:,0) = co%cdkt(:,0)
         cdkt0(:,1) = co%cdkt(:,1)
 *     ..apply discretization scheme
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
