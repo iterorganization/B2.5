@@ -32,8 +32,10 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
+#ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp
+#endif
       use b2mod_ad
      & , only : b2sral_elm_count, my_out_folder, my_out_sf,
      &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
