@@ -35,7 +35,7 @@
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
      &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
       use b2mod_transport_namelist
-     & , only : parm_hce, parm_hci, parm_dna
+     & , only : parm_hce, parm_hci, parm_dna, parm_dpa
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l

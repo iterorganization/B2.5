@@ -345,6 +345,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fflokt
       real (kind=R8) :: b2tfhi_fconkt
       real (kind=R8) :: b2tfhi_fkt_hie
+      integer :: b2sikt_min_source
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -758,6 +759,7 @@ c k-enstrophy model
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
+      s % b2sikt_min_source = 0
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1194,6 +1196,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
+      call ipgeti ('b2sikt_min_source',s % b2sikt_min_source)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1601,6 +1604,9 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_sheath_local .and. 
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
+      call xertst (0.le.s%b2sikt_min_source .and. 
+     &  s%b2sikt_min_source.le.1,
+     &  'b2sikt_min_source must be either 0 or 1')
 
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
