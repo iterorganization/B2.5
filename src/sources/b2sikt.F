@@ -60,7 +60,6 @@ c      use b2mod_keps
      &  pz(nCv), cs(nCv), t0, t1, t2, wrk0(nCv), wrk1(nCv), wrk2(nCv),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv)
-      integer, save :: min_source = 0
       character chk*1
 *   ..procedures
       intrinsic min, max, sqrt
@@ -75,7 +74,6 @@ c      use b2mod_keps
       call subini ('b2sikt')
 *   ..set internal parameters on first call
       if (ncall_b2sikt.eq.0) then
-       call ipgeti('b2sikt_min_source',min_source)
        if ((switch%b2sikt_local.ne.1).or.
      &     (switch%b2sikt_sheath_local.ne.1)) then
         call xertst(nomp.gt.0,
@@ -163,7 +161,8 @@ cwdk     parallel transport due to parallel current fluctuations
          t0 = wrk0(ic)
          t1 = wrk1(ic)
          t2 = fac_sheath*wrk2(ic)
-         if (min_source.eq.1 .and. (t0+t1-t2).lt.0.0_R8) then
+         if (switch%b2sikt_min_source.eq.1 .and.
+     &       (t0+t1-t2).lt.0.0_R8) then
            t0 = 0.0_R8
            t1 = 0.0_R8
            t2 = 0.0_R8
