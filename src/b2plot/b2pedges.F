@@ -280,7 +280,7 @@ c*** Write the header
 
       write (lun,'(2a)') '# Ion fluxes across the outer grid edge.',
      ,                                         '   Version : 05.05.2004'
-      write (lun,'(2a)') '# ',label
+      write (lun,'(2a)') '# ',trim(label)
       write (lun,*)
       write (lun,'(a,3i5)') '# nx,ny,ns = ',nx,ny,ns
       write (hlp_frmr,'(a,i2,a)') '(a,i3,',nspecies,'i3)'

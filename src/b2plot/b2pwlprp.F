@@ -84,8 +84,8 @@ c      print '(a,8i6)','mtrgedge = ',mtrgedge
 c
 cc+++ layout-a.dat: wall as read from DG
 c      open(lun_w,file='layout-a.dat')
-c      write(lun_w,'(6a)') '#Wall layout (dg): ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (dg): ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp !{
 c       write(lun_w,*) pp1(1,i),tab,pp1(2,i)
 c       write(lun_w,*) pp2(1,i),tab,pp2(2,i)
@@ -162,11 +162,11 @@ c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 c
 c      open(lun_w,file='layout-d.dat')
-c      write(lun_w,'(6a)') '#Wall layout (DG) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (DG) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do
 c      close(lun_w)
@@ -281,7 +281,7 @@ c*** segment input from DG does not coincide with the corresponding
 c*** segment saved by Eirene, its number becomes negative, and no
 c*** neutral-related data will be plotted for it.
 
-c<<<
+c#ifdef DBG
 c      print *,'After sorting. nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
@@ -292,7 +292,7 @@ c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
-c>>>
+c#endif
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
@@ -369,11 +369,11 @@ c     , (i,(pp1(j,i+1+lppp)   ,pp2(j,i+1+lppp)   ,j=1,2),
 c     ,    (pp1(j,i+1+lppp+ny),pp2(j,i+1+lppp+ny),j=1,2),i=0,ny-1)
 c
 c      open(lun_w,file='layout-g.dat')
-c      write(lun_w,'(6a)') '#Wall layout (g) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (g) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp+2*ny
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do
 c      close(lun_w)
@@ -449,24 +449,24 @@ c          print *,'pp2: l,ix,iy ',l,ix,iy !###
 
 c<<<
 c      open(lun_w,file='layout-h.dat')
-c      write(lun_w,'(6a)') '#Wall layout (h) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (h) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp !{
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c+++ layout-t.dat: the grid edges - must ~ coincide with targets
 c      open(lun_w,file='layout-t.dat')
-c      write(lun_w,'(6a)') '#Target layout (h) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Target layout (h) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      k=lppp
 c      do j=1,ntrgts !{
 c       if(pp1(1,k+1).gt.0. .or. pp2(1,k+1).gt.0) then !{
 c         do i=k+1,k+nytg !{
-c           write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c           write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c           write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c           write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c           write(lun_w,*)
 c         end do !}
 c       end if !}
@@ -941,13 +941,13 @@ c*** structure and of the plot zones
 c*** The whole wall including the refined targets (shadowing)
 
       open(lun_w,file='shadow.dat')
-      write(lun_w,'(6a)') '#Wall layout : ',label
-      write(lun_w,'(6a)') '#R',tab,'Z'
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
       do i=1,nwldlis(1) !{
         k=iabs(lwldlis(i,1))
-        write(lun_w,*) pp1(1,k),tab,pp1(2,k)
+        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
       end do !}
-      write(lun_w,*) pp2(1,k),tab,pp2(2,k)
+      write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance

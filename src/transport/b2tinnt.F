@@ -115,7 +115,7 @@
           call xertst(is_neutral(ismain0),
      .   'ismain0 not a neutral species!')
           call xertst(nint(zn(ismain)).eq.1.and.nint(zn(ismain0)).eq.1,
-     .   'ion-neutral current computation only supported for H/D/T !') 
+     .   'ion-neutral current computation only supported for H/D/T !')
           iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
 !*   ..get density in the guard cells (boundaries)
 !      do ix = -1, nx

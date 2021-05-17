@@ -1113,7 +1113,7 @@ c
         call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'new' format"
+     1     "Reading the geometry file assuming the Carre format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,'(a,4i5)')
@@ -1141,8 +1141,10 @@ c
           close(lun)
 ! If the toroidal flux function is not provided, compute it
           if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
-            write(*,*) 'Toroidal flux function missing!'
-            write(*,*) 'Trying to fix this automatically'
+            if (isymm.eq.1 .or. isymm.eq.3) then
+              write(*,*) 'Toroidal flux function missing!'
+              write(*,*) 'Trying to fix this automatically'
+            end if
             t0 = 0.0_R8
             do iy=0,ny+1
               do ix=0,nx+1
@@ -1163,7 +1165,7 @@ c
      .   //'|modules/DivGeo/device/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'old' format"
+     1     "Reading the geometry file assuming the Sonnet format"
           write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
      1     '  file  ',trim(local_sonnet)
    20     read (lun,'(a)', end=990) uline
@@ -1177,7 +1179,7 @@ c
             go to 20
           end if
 c----------------------------------------------------------------------
-          if(ubr.eq.0.0_R8) then
+          if(ubr.eq.0.0_R8.and.(isymm.eq.1.or.isymm.eq.3)) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
             write(*,*)
      1       'It must be defined in the header of the grid file '
@@ -1301,8 +1303,8 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           fpsi=0.0_R8
           ffbz=0.0_R8
 
-          write(*,*) "Somebody has filled ffbz with zeroes"
-          write(*,*) " ... and is going to read it from some file again"
+!          write(*,*) "Somebody has filled ffbz with zeroes"
+!          write(*,*) " ... and is going to read it from some file again"
 
 ! IYS 21.02.2020
 ! I could not find a solution without 'GOTO' here
@@ -1312,9 +1314,11 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           GOTO 211    ! Wenn es meine Wille gaebe...
   210     no_flux_data = .TRUE.
   211     if (no_flux_data) then
-            ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
-            write(*,*) "No flux data is found the 'old' format file"
-            write(*,*) "Trying to recover ffbz using RTOR*BTOR"
+            if (isymm.eq.1.or.isymm.eq.3) then
+              ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+              write(*,*) "No flux data is found the 'old' format file"
+              write(*,*) "Trying to recover ffbz using Rtor*Btor"
+            endif
           else
             backspace (lun)
             do iy=0,ny+1

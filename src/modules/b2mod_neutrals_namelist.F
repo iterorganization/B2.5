@@ -362,8 +362,10 @@ cwdk 0% momentum recycling, for backwards compatibility
       lsns=0
       msns=0
       gpfc=0.0_R8
-      dbg_eir_mc=100                     !srv 08.06.13
+      dbg_eir_mc=0
       debug_flags=0
+      debug_flags(90)=-1
+      debug_flags(92:95)=-1
       neut_scl_lim=2
       call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.eq.0) then
@@ -871,6 +873,25 @@ c<<<
         print '(3x,50i5)',(msns(2,j),j=1,n)
       end if !}
 c>>>
+      if (debug_flags(90).gt.0) then !{
+        if (debug_flags(91).eq.0) debug_flags(91)=nnstsi-1
+        call xertst(debug_flags(90).le.nsts.and.
+     .              debug_flags(91).le.nsts.and.
+     .              debug_flags(91).ge.debug_flags(90),
+     .   'faulty non-standard surface number in debug_flags')
+        if (debug_flags(92).eq.-1) debug_flags(92)=1
+        if (debug_flags(93).eq.-1) debug_flags(93)=nstrat
+        if (debug_flags(94).eq.-1) debug_flags(94)=0
+        if (debug_flags(95).eq.-1) debug_flags(95)=0
+        call xertst(
+     .    debug_flags(92).ge.0.and.debug_flags(92).le.nstrat.and.
+     .    debug_flags(93).le.nstrat.and.
+     .    debug_flags(93).ge.debug_flags(92).and.
+     .    debug_flags(94).ge.0.and.debug_flags(94).le.nstrat.and.
+     .    debug_flags(95).le.nstrat.and.
+     .    debug_flags(95).ge.debug_flags(94),
+     .   'faulty stratum number in debug_flags')
+      end if !}
 
       do j=1,nstrai !{
         hlp=0.0_R8

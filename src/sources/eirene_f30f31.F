@@ -542,9 +542,10 @@ c
       integer, save :: exp_location, dot_location, spacing
       character*1 :: ldum(0:3)
       character*80 line
+      character*256 filenamecat
       data new_format/1/
-      logical open_file, streql
-      external open_file, streql
+      logical silent_open, streql
+      external silent_open, streql
 #else
       data new_format/2/
 #endif
@@ -608,7 +609,7 @@ c
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
       filename=fort_lc//'33'
-      if (open_file(33,trim(filename),'')) then
+      if (silent_open(33,trim(filename),'',filenamecat)) then
         rewind(33)
         read(33,*,end=933,err=933) idum
         if (nrknot.eq.0) nrknot = idum
@@ -661,6 +662,10 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
 #endif
       write(*,'(4a)')
      . 'Writing ',fort_lc,'30 with ', format_string(new_format)
+#ifdef B25_EIRENE
+      if (.not.streql(filenamecat,'')) write(*,'(3a)')
+     . ' to match ',trim(filenamecat),' format'
+#endif
       rewind(30)
       write (30,*) 'Geometry from B2'
       write (30,*) ' '

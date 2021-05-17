@@ -117,9 +117,9 @@ c*** ... and produce the output file
       end do
       open (lun,file='wlld.dat')
       write (hlp_frm,'(a,i2,a)')
-     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
-     .      '(3x,a4,a4,1x),4(5x,a4,3x))'
+     .      '(a4,a8),2(1x,a8,3x))'
       if (nmoli.gt.0) then
         write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
@@ -127,23 +127,22 @@ c*** ... and produce the output file
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
-     ,      'net_','ersn','grs_','ersn'
+     ,      'net_ersn','grs_ersn'
       else
         write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
-     ,      'net_','ersn','grs_','ersn'
+     ,      'net_ersn','grs_ersn'
       end if
-c<<<
-c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
-c      do il=1,nwldprt
-c        write (hlp_frm,'(a,i2,a)') '(1x,',nwldlis(il)+1,'i4)'
-c        print '(1x,2i4)',il,nwldlis(il)
-c        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+#ifdef DBG
+      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
+      do il=1,nwldprt
+        print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
+        write (6,'(1x,20i4)') (lwldlis(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c
 c*** Check whether carbon atoms are present in the calculation
 c

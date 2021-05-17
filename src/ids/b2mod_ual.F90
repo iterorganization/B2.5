@@ -93,7 +93,7 @@ contains
         integer :: status
 
         !! Set data to edge_profiles IDS
-        write(0,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+        write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
@@ -154,7 +154,8 @@ contains
         call imas_close( idx, status )
         call xertst( status.eq.0, 'Error closing IMAS database !')
 
-        write(0,*) "IDS write finished"
+        write(*,*) "IDS write finished"
+        return
 
     end subroutine put_ids_edge
 #endif

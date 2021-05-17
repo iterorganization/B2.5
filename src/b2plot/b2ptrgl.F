@@ -749,7 +749,7 @@ c
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
           if (i1.ne.i2) then
-           write(lun,'(a5,a1,24(a1,2a))') '#time',tab,
+           write(lun,'(a6,a1,24(a1,2a))') '# time',tab,
      -      tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
      ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
      ,      tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
@@ -1542,7 +1542,7 @@ c
         do imol=1,nmoli
           ssmol=textmn(imol-1)
           ssmol=adjustl(ssmol)
-          write(lun,fmt_peak) trim(ssmol)//' molecules on',
+          write(lun,fmt_peak) trim(ssmol)//' mols on',
      ,                        (sjm_w(i,imol),i=1,ntrgts),sjm_w(0,imol)
         end do
 #endif

@@ -536,8 +536,7 @@ c*** Write the header
   700 format(a8,i2,a1,i2,a3,a1,a1,i4,a2,i2,a1,i2,a3,a1,a2)
 c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
 c=======================================================================
-      end
-
+      end subroutine combfile
 
 c*** Dummy data transformation routine
 

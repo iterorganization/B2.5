@@ -20,6 +20,8 @@
      & ,only : update_balance_sources_particles, balance_netcdf,      !djm Jan2017
      &         tot_sna0to1, fna_tot                                   !djm Mar2019
       use b2mod_openmp
+      use b2mod_sources
+     ,  , only : snadt                                                !srv 31.01.21
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
@@ -239,6 +241,8 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
+        call my_out(70,nx,ny,wrk0,'b2npco_dnadt'//chns)                 !srv 09.03.21
        endif
       endif                                                             !srv 12.07.02 }
 
@@ -254,6 +258,8 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
+        call my_out(70,nx,ny,wrk0,'b2npco_dnadt'//chns)                 !srv 09.03.21
        endif
       endif
 

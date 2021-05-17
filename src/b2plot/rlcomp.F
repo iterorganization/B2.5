@@ -59,8 +59,8 @@ c<<<
       if (uu_dbg) then
         print *,'rlcomp: nsrc,ntrg = ',nsrc,ntrg
         open(lun_s,file='sources.dat')
-        write(lun_s,'(6a)') '#Radiation sources : ',label
-        write(lun_s,'(6a)') '#R',tab,'Z',tab,'S'
+        write(lun_s,'(2a)') '# Radiation sources : ',trim(label)
+        write(lun_s,'(5a)') '# R',tab,'Z',tab,'S'
       end if
 c>>>
       ttsrc=0.e0_R8
@@ -82,12 +82,15 @@ c
 c<<<
         if(uu_dbg.and.i.eq.1) then
           open(lun_t,file='targ-rlc.dat')
-          write(lun_t,'(6a)') '#Target geometry : ',label
-          write(lun_t,'(20a)') '#Rb',tab,'Zb',tab,'Re',tab,'Ze',tab,
-     ,    'ddx',tab,'ddy',tab,'uda',tab,'anglb',tab,'angle',tab,'radld'
+          write(lun_t,'(2a)') '# Target geometry : ',trim(label)
+          write(lun_t,
+     ,     '(a1,4x,a2,12x,a2,12x,a2,12x,a2,11x,'//
+     ,      'a3,11x,a3,11x,a3,10x,a5,9x,a5,9x,a5)')
+     ,      '#','Rb','Zb','Re','Ze',
+     ,      'ddx','ddy','uda','anglb','angle','radld'
           open(lun_l,file='layout-t.dat')
-          write(lun_l,'(6a)') '#Target layout : ',label
-          write(lun_l,'(20a)') '#R',tab,'Z'
+          write(lun_l,'(2a)') '# Target layout : ',trim(label)
+          write(lun_l,'(3a)') '# R',tab,'Z'
         end if
 c>>>
         do j=1,ntrg
@@ -173,9 +176,8 @@ c>>>
           end if
 c<<<
           if(uu_dbg) then
-            write(lun_t,'(1p,10(e12.5,a1))')
-     ,         xb,tab,yb,tab,uu_xe,tab,uu_ye,tab,
-     ,        ddx,tab,ddy,tab,uda/udpi,tab,anglb,tab,angle,tab,radld(j)
+            write(lun_t,'(1p,10(e12.5,2x))')
+     ,         xb,yb,uu_xe,uu_ye,ddx,ddy,uda/udpi,anglb,angle,radld(j)
             if (i.eq.1) then
               write(lun_l,*) xb,tab,yb
               write(lun_l,*) uu_xe,tab,uu_ye

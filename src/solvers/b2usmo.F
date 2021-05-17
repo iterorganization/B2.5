@@ -253,7 +253,8 @@ cxpb
        enddo
       enddo
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name
+      write(*,'(1x,a,a,a,i3)')
+     . 'Calling b2ux5p from ',name,' for species ',isb
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {

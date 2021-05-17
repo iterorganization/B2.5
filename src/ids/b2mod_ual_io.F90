@@ -5941,7 +5941,7 @@ contains
 
     !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
-    edgecpo%datainfo%dataprovider="IPP"
+    edgecpo%datainfo%dataprovider="ITER"
     allocate(edgecpo%codeparam%codename(1))
     edgecpo%codeparam%codename(1)="B2.5"
     edgecpo%time= 0.0D0

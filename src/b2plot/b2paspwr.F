@@ -203,6 +203,6 @@ c*** Write the data
       return
 c======================================================================
   900 write(0,*) 'b2paspwr: unable to open ',hlp_fn
-      stop
+      call xerrab ('Unable to open spec_pwr.dat file!')
 c======================================================================
       end subroutine b2paspwr

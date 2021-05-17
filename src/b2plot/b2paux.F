@@ -193,9 +193,9 @@ c-----------------------------------------------------------------------
         n=nspecies+2*(natmi+nmoli)+1
         open(lun,file='particle.flx')
         write(lun,'(2a)')
-     ,    '#Total fluxes of neutrals and plasma onto, ',
+     ,    '# Total fluxes of neutrals and plasma onto, ',
      ,    'and of neutrals and sputtered material from the targets'
-        write(lun,'(2a)') '#',label
+        write(lun,'(2a)') '# ',trim(label)
         write(frm,720) n,tab
   720   format('(2h# ,',i3,'(1h',a1,',a8))')
         if (nmoli.gt.0) then
@@ -374,10 +374,10 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='pr.dat')
-        write(lun,'(2a)') '#  Plasma pressure:  ',label
-        write(frm,700) nx+2,tab
+        write(lun,'(2a)') '#  Plasma pressure:  ',trim(label)
+        write(frm,700) nx,tab
   700   format('(2h# ,i3,',i3,'(1h',a1,',i3))')
-        write(lun,frm) (i,i=-1,nx)
+        write(lun,frm) (i,i=0,nx-1)
         write(frm,710) nx,tab
   710   format('((1p,1x,i3,',i3,'(1h',a1,',e11.4)))')
         write(lun,frm) (j,(mach(i,j,1),i=0,nx-1),j=0,ny-1)
@@ -398,15 +398,15 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='prn.dat')
-        write(lun,'(2a)') '#  Neutral pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
+        write(lun,'(2a)') '#  Neutral pressure:  ',trim(label)
+        write(frm,700) nx,tab
+        write(lun,frm) (i,i=0,nx-1)
         write(frm,710) nx,tab
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
         open(lun,file='prt.dat')
-        write(lun,'(2a)') '#  Total pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
+        write(lun,'(2a)') '#  Total pressure:  ',trim(label)
+        write(frm,700) nx,tab
+        write(lun,frm) (i,i=0,nx-1)
         write(frm,710) nx,tab
         write(lun,frm) (j,(mach(i,j,1)+mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
@@ -424,9 +424,9 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='sm.dat')
-        write(lun,'(2a)') '#  Neutral momentum source:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
+        write(lun,'(2a)') '#  Neutral momentum source:  ',trim(label)
+        write(frm,700) nx,tab
+        write(lun,frm) (i,i=0,nx-1)
         write(frm,710) nx,tab
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
@@ -571,7 +571,7 @@ c-----------------------------------------------------------------------
           if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
         end do
         open(lun,file='diagno.dat')
-        write (lun,'(a)') label
+        write (lun,'(a)') '# '//trim(label)
         write (lun,'(a)')
      ,  '# ix, iy   : poloidal and radial indices in the grid;'
         write (lun,'(a)')

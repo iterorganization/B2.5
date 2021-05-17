@@ -134,8 +134,8 @@
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')               !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')               !srv 13.10.06 }
 !*    ..test edge values of pccb1                                   !srv 15.04.05
 !       call b2xvfx (nx, ny, pccb1, 'pccb1')                        !srv 15.04.05
       endif

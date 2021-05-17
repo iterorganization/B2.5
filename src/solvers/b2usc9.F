@@ -115,11 +115,11 @@
        endif                                                            !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')               !srv 13.10.06 }
-!*    ..test edge values of pccb1                                   !srv 15.04.05
-!       call b2xvfx (nx, ny, pccb1, 'pccb1')                        !srv 15.04.05
+       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                   !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                   !srv 13.10.06 }
+!*    ..test edge values of pccb1                                       !srv 15.04.05
+!       call b2xvfx (nx, ny, pccb1, 'pccb1')                            !srv 15.04.05
       endif
 
       aa9 = 0.0e0_R8
@@ -246,6 +246,9 @@
       enddo
       if (iout.ne.0) then                                               !srv 17.06.02 {
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa9(-1,-1,-6),name//'_aa9m6'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-5),name//'_aa9m5'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-4),name//'_aa9m4'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)
@@ -253,6 +256,9 @@
         call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 4),name//'_aa9p4'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 5),name//'_aa9p5'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 6),name//'_aa9p6'//chns)
         call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
         call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
         call my_out(70,nx,ny,nb,name//'_na'//chns)

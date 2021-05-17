@@ -137,7 +137,8 @@ c
 c
       character*256 solpstop,filenamecat,localarea,copyarea
       integer lnblnk, iend
-      logical first
+      logical first, streql
+      external streql
 c
       save first, solpstop
       data first /.true./
@@ -217,7 +218,8 @@ c
       silent_open=.false.
       write(*,'(a,a)') 'Failed opening ', filename(1:lnblnk(filename))
       write(*,'(a,a)') 'SOLPSTOP = ', solpstop(1:lnblnk(solpstop))
-      write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
+      if(.not.streql(area,''))
+     > write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
       filenamecat=''
       return
 c

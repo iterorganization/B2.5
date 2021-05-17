@@ -42,9 +42,9 @@ c=======================================================================
         ofile='gm_sep.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# Separatrix shape'
-        write(lun,'(3a)',err=998) '#',label
-        write(lun,'(3a)',err=998) '#R',tab,'Z'
+        write(lun,' (a)',err=998) '# Separatrix shape'
+        write(lun,'(2a)',err=998) '# ',trim(label)
+        write(lun,'(3a)',err=998) '# R',tab,'Z'
         do i=0,nx !{
           write(lun,'(1p,e15.7,a,e15.7)',err=998) crx(i,k,2),tab,
      ,                                                        cry(i,k,2)
@@ -54,8 +54,8 @@ c=======================================================================
         ofile='gm_SOL.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# SOL magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
+        write(lun,' (a)',err=998) '# SOL magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
         write(hlp_frmr,'(a,i3,a)')
      -    '(1h#,',ny-k,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=k,ny-1)
@@ -69,8 +69,8 @@ c=======================================================================
         ofile='gm_PFR.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# PFR magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
+        write(lun,' (a)',err=998) '# PFR magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
         write(hlp_frmr,'(a,i2,a)')
      ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)
@@ -92,8 +92,8 @@ c=======================================================================
         ofile='gm_core.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# core magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
+        write(lun,' (a)',err=998) '# Core magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
         write(hlp_frmr,'(a,i2,a)')
      ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)

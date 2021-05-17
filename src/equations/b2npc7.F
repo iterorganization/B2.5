@@ -176,7 +176,7 @@ csw 11dec2012, check for solv flags
 *   ..compute correction
        call b2usc7 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,
      &  itcnt, rxg, pcm1, vol, pbs, ti, nb, pb, snb(-1,-1,1), flob,
-     &  conb, pccb(-1,-1,1), rescb, corpb, aa7, 'b2usc7_'//chns)        !srv 02.04.18
+     &  conb, pccb(-1,-1,1), rescb, corpb, aa7, '_b2usc7_'//chns)       !srv 02.04.18
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                     ! IYS 19.12.2017
@@ -219,7 +219,7 @@ csw 11dec2012, check for solv flags
       if (iout.ne.0) then                                            !srv 12.07.02 {
        if (in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         write(*,*) 'B2NPC7 will not write to file in parallel mode'
          !$OMP END MASTER
        else
         call my_out(70,nx,ny,pb,'b2npc7_pa'//chns)
@@ -238,7 +238,7 @@ csw 11dec2012, check for solv flags
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         write(*,*) 'B2NPC7 will not write to file in parallel mode'
          !$OMP END MASTER
        else
         call my_out(70,nx,ny,nb,'b2npc7_na'//chns)

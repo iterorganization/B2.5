@@ -2824,6 +2824,7 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(dsa,dsa1,deta)
         deallocate(eta_hce_mult1)
       else if (todo) then
+        write(nout(5),'(a)') 'b2.transport_models_save.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       endif
 
@@ -3652,6 +3653,7 @@ cxpb This will need to be checked !!!
         write(99,'(a1)') '/'
         close(99)
       else if (same_bundling.and.todo) then
+        write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       endif
 
@@ -9994,6 +9996,7 @@ cxpb  Convert fort.44 file if needed
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
+          write(nout(5),'(a)') 'fort.44'
           write(*,*) 'No changes needed in '//fort_lc//'44'
         endif
 cxpb  Convert fort.46 file if needed
@@ -10003,6 +10006,7 @@ cxpb  Convert fort.46 file if needed
           call b2yt_ntread(natmi1, iatm1, nmol1, imol1, nion1, iion1)
           write(nout(5),'(a)') fort_lc//'46.2'
         else if (todo) then
+          write(nout(5),'(a)') 'fort.46'
           write(*,*) 'No changes needed in '//fort_lc//'46'
         endif
       else
@@ -10790,8 +10794,37 @@ cxpb as they no longer necessarily point to the same species
      .     '(1x,a,',n_spcsrf,'('''''''',a8,'''''''','',''))'
           write(99, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
         endif
+        if (debug_flags(92).gt.0)
+     .   debug_flags(92)=istra1(debug_flags(92))
+        if (debug_flags(93).gt.0)
+     .   debug_flags(93)=istra1(debug_flags(93))
+        if (debug_flags(94).gt.0)
+     .   debug_flags(94)=istra1(debug_flags(94))
+        if (debug_flags(95).gt.0)
+     .   debug_flags(95)=istra1(debug_flags(95))
         do ib = 1, 100
-          if (debug_flags(ib).ne.0) write(99,'(1x,a,i3,a,i3,a)')
+          non_default = ib.eq.90 .and. debug_flags(ib).ne.-1
+          non_default = non_default .or.
+     .    (ib.eq.91 .and. debug_flags(ib).ne.nnstsi-1
+     .              .and. debug_flags(ib).ne.0)
+          non_default = non_default .or.
+     .    (ib.eq.92 .and. debug_flags(ib).ne.1
+     .              .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.93 .and. debug_flags(ib).ne.nstrat1
+     .              .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.94 .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.eq.95 .and.(debug_flags(ib).ne.0.and.debug_flags(90).gt.0)
+     .              .and. debug_flags(ib).ne.-1)
+          non_default = non_default .or.
+     .    (ib.lt.90 .and. debug_flags(ib).ne.0) .or.
+     .    (ib.gt.95 .and. debug_flags(ib).ne.0)
+          if (non_default) write(99,'(1x,a,i3,a,i3,a)')
      .     'DEBUG_FLAGS(',ib,')=',debug_flags(ib),','
         end do
         if (dbg_eir_mc.ne.0) write(99,'(1x,a,i3,a)')
@@ -10969,6 +11002,9 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(a1)') '/'
             close(99)
           endif
+        else if (sputter_namelist_used) then
+          write(nout(5),'(a)') 'b2.sputter_save.parameters'
+          write(*,*) 'No changes needed in b2.sputter_save.parameters'
         endif  ! sputter_namelist_used
       endif
 
@@ -11034,6 +11070,7 @@ cxpb as they no longer necessarily point to the same species
           end if
         end if
       else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_save.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11255,6 +11292,7 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
       else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11518,6 +11556,7 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         call dealloc_b2mod_user
       else if (todo) then
+        write(nout(5),'(a)') 'b2.user.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
@@ -11543,6 +11582,7 @@ cxpb as they no longer necessarily point to the same species
   983     continue
           close(99)
         else if (same_bundling) then
+          write(nout(5),'(a)') 'b2yq.dat'
           write(*,*) 'No changes needed in ',trim(filename)
         end if
         close(98)
@@ -11671,6 +11711,7 @@ cxpb as they no longer necessarily point to the same species
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       else
+        write(nout(5),'(a)') 'b2ah.dat'
         write(*,*) 'No changes needed in b2ah.dat'
       endif
 
@@ -11718,6 +11759,7 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(1p,1e9.2)') ttini
         close(nout(4))
       else
+        write(nout(5),'(a)') 'b2ai.dat'
         write(*,*) 'No changes needed in b2ai.dat'
       endif
       deallocate(nbini)
@@ -11737,6 +11779,7 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         deallocate(species_name)
       else
+        write(nout(5),'(a)') 'SOLPS_FLUIDS'
         write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 

@@ -46,9 +46,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i2,a)')
-     *   'variable: ',trim(varname),' has type ',xtype,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -131,7 +137,7 @@ c first deal with the time vector
           call mds_err_msg(status)
           deallocate(data1)
         elseif(ndims.eq.2) then     ! NOT USED AT THE MOMENT
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -171,14 +177,15 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(2),dimsize(1),0),data2T,0)
+     *       descr2(idtype_double,dimsize(2),dimsize(1),0),
+     *       data2T,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data2T)
           endif
           deallocate(data2)
         elseif(ndims.eq.3) then
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -228,7 +235,7 @@ c first deal with the time vector
           endif
           deallocate(data3)
         elseif(ndims.eq.4) then
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=

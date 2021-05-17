@@ -5882,7 +5882,7 @@ cxpb code segment analog to b2tfhe
             endif                                                      !srv 16.02.12 }
           ELSE
             CALL XERRAB
-     1       ('B2STBC -- BCENE=16, NOT AVAILABLE FOR N,W,E')
+     1       ('B2STBC -- BCENE=16, ONLY AVAILABLE FOR CORE!')
           ENDIF
         else
           CALL XERRAB
@@ -7792,7 +7792,7 @@ cxpb          endif
            endif                                                       !srv 16.02.12 }
          ELSE
            CALL XERRAB
-     1         ('B2STBC -- BCENI=16, NOT AVAILABLE FOR N,W,E')
+     1         ('B2STBC -- BCENI=16, ONLY AVAILABLE FOR CORE!')
          ENDIF
         else
          CALL XERRAB (' Incorrect style of boundary condition')

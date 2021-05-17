@@ -244,7 +244,7 @@ cxpb
      &    (cry1(ix,iy,2)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,1)))
          if(qcb1(ix,iy).le.0.0_R8) then
           write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qcb1(ix,iy) <= 0',qcb1(ix,iy),ix,iy
+     1     'Problem in b2ytgm: qcb1(ix,iy) <= 0',qcb1(ix,iy),ix,iy
           write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
          endif

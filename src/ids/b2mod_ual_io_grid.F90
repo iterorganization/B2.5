@@ -286,7 +286,7 @@ module b2mod_ual_io_grid
        &    'All faces (1D objects)                                                                       ' , &
        &    'All x-aligned (poloidally) aligned faces                                                     ' , &
        &    'All y-aligned (radially) aligned faces                                                       ' , &
-       &    'All cells                                                                                    ' , &
+       &    'All cells (2D objects)                                                                       ' , &
        &    'X-points                                                                                     ' , &
        &    'y-aligned faces inside the separatrix connecting to the x-point                              ' , &
        &    'y-aligned faces in the private flux region connecting to the x-point                         ' , &
@@ -496,8 +496,12 @@ contains
         !! Coordinate types
         !! dimension of space = NDIM = size( coordtype )
 
+        grid_ggd%space( SPACE_POLOIDALPLANE )%geometry_type%index = 0
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%geometry_type%name(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%geometry_type%name = 'Poloidal'
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%geometry_type%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%geometry_type%description = &
+            &   'Poloidal plane cross-section'
 
         !! Set the space coordinates, also defining the dimension of the space
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(NDIM) )
@@ -1131,6 +1135,7 @@ contains
         integer :: iInd    !< indexList iterator
         integer :: isize
         integer :: jxi, jxa, jsep, nxtl, nxtr
+        character*128 RegionDescription
 
         geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
         call get_jsep( nx, ny, jxi, jxa, jsep )
@@ -1189,9 +1194,10 @@ contains
         !! GRID_SUBSET_X_ALIGNED_FACES: x-aligned faces. One implicit object
         !! list, range over x faces
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                                     &
-            &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),    &
-            &   GRID_SUBSET_X_ALIGNED_FACES, 'x-aligned faces' )
+        call createEmptyGridSubset(                                    &
+            &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),   &
+            &   GRID_SUBSET_X_ALIGNED_FACES, 'x-aligned faces',        &
+            &   "All X-aligned faces (1D objects) in the domain." )
         !! Initialize implicit object list for faces (class (/2/) )
         allocate(indexList1d(gmap%nFcx))
         indexList1d = (/ (i, i = 1, gmap%nFcx) /)
@@ -1213,9 +1219,10 @@ contains
         !! GRID_SUBSET_Y_ALIGNED_FACES: y-aligned faces. One implicit object
         !! list, range over y faces
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                                     &
-            &   grid_ggd%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),    &
-            &   GRID_SUBSET_Y_ALIGNED_FACES, 'y-aligned faces' )
+        call createEmptyGridSubset(                                    &
+            &   grid_ggd%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),   &
+            &   GRID_SUBSET_Y_ALIGNED_FACES, 'y-aligned faces',        &
+            &   "All Y-aligned faces (1D objects) in the domain." )
         !! Initialize implicit object list for faces (class (/2/) )
         deallocate(indexList1d)
         allocate(indexList1d(gmap%nFcy))
@@ -1248,9 +1255,10 @@ contains
         xpoints = 1
         xpoints(:, SPACE_POLOIDALPLANE) = gmap%svi(1:gmap%nsv)
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                                     &
-            &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),           &
-            &   GRID_SUBSET_X_POINTS, 'x-points' )
+        call createEmptyGridSubset(                                  &
+            &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),        &
+            &   GRID_SUBSET_X_POINTS, 'x-points',                    &
+            &   "All X-points (0D objects) in the domain." )
         !! Initialize explicit object list for faces (class (/1/) )
         !! TODO: xpoints(:, 1 ) -> taking values for first space only. Set for
         !! all spaces.
@@ -1280,18 +1288,30 @@ contains
             do iRegion = 1, regionCount(geoId, iType)
                 iPrivateB2 = iPrivateB2 - 1
                 GSubsetCount = GSubsetCount + 1
+                select case(iType)
+                case( REGIONTYPE_CELL )
+                  RegionDescription = "Volumetric B2.5 internal region #"// &
+                    &   int2str(iRegion)
+                case( REGIONTYPE_XFACE )
+                  RegionDescription = "Y-aligned B2.5 internal region #"//  &
+                    &   int2str(iRegion)
+                case( REGIONTYPE_YFACE )
+                  RegionDescription = "X-aligned B2.5 internal region #"//  &
+                    &   int2str(iRegion)
+                end select
 
-                call logmsg( LOGDEBUG,                                          &
-                    &   "b2_IMAS_Fill_Grid_Desc: add (private) grid subset #"// &
-                    &   idsInt2str(GSubsetCount)//                              &
-                    &   " for iType "//idsInt2str( iType )//                    &
-                    &   ", iRegion "//idsInt2str( iRegion )//": "//             &
+                call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"// &
+                    &   " add (private) grid subset #"//           &
+                    &   idsInt2str(GSubsetCount)//                 &
+                    &   " for iType "//idsInt2str( iType )//       &
+                    &   ", iRegion "//idsInt2str( iRegion )//": "//&
                     &   regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list
-                call createEmptyGridSubset(                     &
-                    &   grid_ggd%grid_subset( GSubsetCount ),   &
-                    &   iPrivateB2, regionName( geoId, iType, iRegion ) )
+                call createEmptyGridSubset(                              &
+                    &   grid_ggd%grid_subset( GSubsetCount ),            &
+                    &   iPrivateB2, regionName( geoId, iType, iRegion ), &
+                    &   RegionDescription )
 
                 !! Get explicit object list of the grid subset using
                 !! subroutine collectIndexListForRegionSubroutine
@@ -1683,7 +1703,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                &   grid_ggd%grid_subset( GSubsetCount ),    &
-               &   iSubset, gridSubsetName ( iSubset )  )
+               &   iSubset, gridSubsetName ( iSubset ),     &
+               &   gridSubsetDescription( iSubset )  )
 
             !! Get explicit object list of the grid subset using
             !! subroutine collectIndexListForRegionSubroutine
@@ -1736,9 +1757,10 @@ contains
 
         GSubsetCount = GSubsetCount + 1
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                     &
-            &   grid_ggd%grid_subset( GSubsetCount ),   &
-            &   GRID_SUBSET_INNER_MIDPLANE, "Inner Midplane" )
+        call createEmptyGridSubset(                           &
+            &   grid_ggd%grid_subset( GSubsetCount ),         &
+            &   GRID_SUBSET_INNER_MIDPLANE, "Inner Midplane", &
+            &   "All nodes (0D objects) along the inner midplane." )
 
         !! Get explicit object list of the grid subset using
         !! subroutine collectRadialVertexIndexListSubroutine
@@ -1755,9 +1777,10 @@ contains
         GSubsetCount = GSubsetCount + 1
 
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                     &
-            &   grid_ggd%grid_subset( GSubsetCount ),   &
-            &   GRID_SUBSET_OUTER_MIDPLANE, "Outer Midplane" )
+        call createEmptyGridSubset(                           &
+            &   grid_ggd%grid_subset( GSubsetCount ),         &
+            &   GRID_SUBSET_OUTER_MIDPLANE, "Outer Midplane", &
+            &   "All nodes (0D objects) along the outer midplane." )
 
         !! Get explicit object list of the grid subset using
         !! subroutine collectRadialVertexIndexListSubroutine
@@ -1791,7 +1814,8 @@ contains
                     !! Create grid subset with one object list
                     call createEmptyGridSubset(                     &
                         &   grid_ggd%grid_subset( GSubsetCount ),   &
-                        &   iSubset, gridSubsetName ( iSubset ) )
+                        &   iSubset, gridSubsetName ( iSubset ),    &
+                        &   gridSubsetDescription( iSubset ) )
 
                     nInd = gmap%b2nx
                     allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -1824,7 +1848,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             nInd = gmap%b2nx
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -1855,7 +1880,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
@@ -1890,7 +1916,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
@@ -1950,7 +1977,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
@@ -1972,7 +2000,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
@@ -2032,7 +2061,8 @@ contains
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                 &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   iSubset, gridSubsetName ( iSubset ) )
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
@@ -2053,10 +2083,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,  &
-                &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX ) )
+            call createEmptyGridSubset(                                 &
+                &   grid_ggd%grid_subset( GSubsetCount ),               &
+                &   GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,              &
+                &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX ), &
+                &   gridSubsetDescription ( GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -2078,10 +2109,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,  &
-                &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ) )
+            call createEmptyGridSubset(                                   &
+                &   grid_ggd%grid_subset( GSubsetCount ),                 &
+                &   GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,                &
+                &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ), &
+                &   gridSubsetDescription ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -2126,10 +2158,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT,  &
-                &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT ) )
+            call createEmptyGridSubset(                                 &
+                &   grid_ggd%grid_subset( GSubsetCount ),               &
+                &   GRID_SUBSET_OUTER_STRIKEPOINT,                      &
+                &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT ),   &
+                &   gridSubsetDescription ( GRID_SUBSET_OUTER_STRIKEPOINT ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -2173,10 +2206,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_INNER_STRIKEPOINT,  &
-                &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ) )
+            call createEmptyGridSubset(                                 &
+                &   grid_ggd%grid_subset( GSubsetCount ),               &
+                &   GRID_SUBSET_INNER_STRIKEPOINT,                      &
+                &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT ),   &
+                &   gridSubsetDescription ( GRID_SUBSET_INNER_STRIKEPOINT ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -2211,10 +2245,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,  &
-                &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
+            call createEmptyGridSubset(                                 &
+                &   grid_ggd%grid_subset( GSubsetCount ),               &
+                &   GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,             &
+                &   gridSubsetName ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ), &
+                &   gridSubsetDescription ( GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
@@ -2249,10 +2284,11 @@ contains
                 &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
 
             !! Create grid subset with one object list
-            call createEmptyGridSubset(                     &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
-                &   GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-                &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
+            call createEmptyGridSubset(                                 &
+                &   grid_ggd%grid_subset( GSubsetCount ),               &
+                &   GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,             &
+                &   gridSubsetName ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ), &
+                &   gridSubsetDescription ( GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE ) )
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )

@@ -11,7 +11,7 @@ ifndef SOLPS_CPP
 DEFINES += -DNAGFOR
 endif
 
-CPP = /lib/cpp -C -ffreestanding
+CPP = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 

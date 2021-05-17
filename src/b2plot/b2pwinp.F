@@ -71,7 +71,4 @@ c
       call subend ()
       return
 c======================================================================
-  998 write(*,*) 'Error opening the file ',ufile
-      call xerrab ('Error opening file in b2pwinp')
-c======================================================================
       end subroutine b2pwinp

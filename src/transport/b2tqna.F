@@ -3502,7 +3502,7 @@ c      close(14)
 !           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
 !           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
 !           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
-!           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
+!           write(15) ((hy1(ix,iy),ix=-1,nx),iy=-1,ny)
 !           do ispecies=0, nsl-1
 !             write(15) m(ispecies)
 !             if (ispecies.ne.nsl-1) then

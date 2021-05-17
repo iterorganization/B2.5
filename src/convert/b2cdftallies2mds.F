@@ -52,9 +52,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i6,a)')
-     *   'variable: ',trim(varname),' has type ',xtypev,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -130,7 +136,7 @@ c first deal with the time vector
           call mds_err_msg(status)
           deallocate(data1)
         elseif(ndims.eq.3) then
-          mds_signal_name='\TOP.TALLIES:' // varname
+          mds_signal_name='\TOP.TALLIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -180,7 +186,7 @@ c first deal with the time vector
           endif
           deallocate(data3)
         elseif(ndims.eq.2) then
-          mds_signal_name='\TOP.TALLIES:' // varname
+          mds_signal_name='\TOP.TALLIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=

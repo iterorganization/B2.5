@@ -153,7 +153,7 @@ TAGSLIST += ${INCLOCAL}/*.*
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
-TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml
+TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml ${DOCDIR}/*.py
 
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
@@ -948,7 +948,7 @@ ifneq (${MOD},o)
 endif
 ifdef SOLPSTOP
 ifdef LD_NETCDF
-	-rm ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
+	-rm -f ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
 endif
 endif
 	-rm -rf ${OBJDIR}/.delete &

@@ -202,7 +202,7 @@ cank
       allocate(texttargsp(ntrack))
 #else
       call xertst(nsd   .le.DEF_NPLS,
-     . 'increase size of textpl array')
+     . 'increase size of DEF_NPLS in DIMENSIONS.F')
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif

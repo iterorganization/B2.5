@@ -1269,7 +1269,9 @@
 
                end select
 
-               write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ', 
+               if (na_feedback_actuator(ispecies).eq.1 .or.
+     &             na_feedback_actuator(ispecies).eq.3)
+     >          write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ',
      &              ispecies+1, saved_na_feedback_actuator(ispecies)
 
                if(na_feedback_choice(ispecies).eq.6)

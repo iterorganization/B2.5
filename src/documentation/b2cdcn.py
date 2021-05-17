@@ -9,26 +9,8 @@ from xml.etree.ElementTree import tostring
 import textwrap
 from itertools import chain
 import re
-
+import os
 import sys
-
-if sys.version_info[0] >= 3:
-    def stringify_children(node):
-        parts = ([node.text] +
-                list(chain(*([tostring(c).split()[0], c.tail] for c in node))) +
-                [node.tail])
-        # filter removes possible Nones in texts and tails
-        text = ''.join([i.decode() if type(i) == bytes else i for i in filter(None, parts)])
-        return replace_tags(text)
-else:
-    def stringify_children(node):
-        parts = ([node.text] +
-                list(chain(*([tostring(c).split()[0], c.tail] for c in node.getchildren()))) +
-                [node.tail])
-        # filter removes possible Nones in texts and tails
-        text = ''.join(filter(None, parts))
-        return replace_tags(text)
-
 
 def get_default(text):
     base = ' Defaults to '
@@ -44,48 +26,40 @@ def get_default(text):
             return base + text + end
     else:
         return ''
-def bracketize_args(string):
-    if len(string.split()) > 1:
-        return True
-    if '-' in string or ',' in string:
-        return True
-    return False
 
 def replace_tags(text):
-    # Replacing st
-    # First find all occurances of <sup>STRING</sup>
-    pattern = "<sup>(.+?)</sup>"
-    sup_strings = re.findall(pattern, text, re.DOTALL)
-    to_replace = []
-    for string in sup_strings:
-        if string in to_replace:
-            continue
-        else:
-            to_replace.append(string)
-        replacement = '^'
-        if bracketize_args(string):
-            replacement += '{' + string + '}'
-        else:
-            replacement += string
+    """To be used before loading the XML text into ElementTree. BE CAREFUL ON
+    WHAT TAGS YOU WISH TO REPLACE!!!
 
-        text = text.replace('<sup>' + string + '</sup>', replacement)
-    # Second for all occurances of <sub>STRING</sub>
-    pattern = "<sub>(.+?)</sub>"
-    sub_strings = re.findall(pattern, text, re.DOTALL)
-    to_replace =[]
-    for string in sub_strings:
-        if string in to_replace:
-            continue
-        else:
-            to_replace.append(string)
-        replacement = '_'
-        if bracketize_args(string):
-            replacement += '{' + string + '}'
-        else:
-            replacement += string
-        text = text.replace('<sub>' + string + '</sub>', replacement)
+    Resolve <sup>*</sup>, <sub>*</sub>, ... tags before proceeding with
+    parsing the XML:
 
-    return text
+    x<sup>a<sup> -> x^a
+    x<sup>a,b,c<sup> -> x^{a,b,c}
+
+    Arguments:
+        text (str): Input text that contains tags we wish to replace.
+    Returns:
+        out (str): Output text with replaced tags.
+
+    """
+    # Define type of tags and their replacement. LaTeX notation.
+    tags = {"sup": "^", "sub": "_"}
+    out = text
+    for tag in tags:
+        pattern = f"<{tag}>(.+?)</{tag}>"
+        matches = set(re.findall(pattern, text))
+        for match in matches:
+            replacement = f"{tags[tag]}"
+            if len(match) > 1:
+                # Add curly braces around. When using f-strings {{}} escapes
+                # the curly braces.
+                replacement += f"{{{match}}}"
+            else:
+                replacement += f"{match}"
+
+            out = out.replace(f"<{tag}>{match}</{tag}>", replacement)
+    return out
 
 def dedent(description, prefix = '\n*    ', width=75):
     """ Removes first empty fort from description and any leading tabs
@@ -127,18 +101,55 @@ def add_to_fort(text):
     fort += text[:-1]
 
 xml_name = "b2input.xml"
-dtd_name = "xhtml-symbol.ent"
-xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
 
 f = open(xml_name, 'r')
 xml_text = f.read()
 f.close()
 
-f = open(dtd_name, 'r')
-dtd_text = f.read()
-f.close()
+"""PRE-PARSING
 
-text_to_process = xml_text.replace(xml_entities, dtd_text)
+Resolve super-scripts and sub-scripts, which resides in <description> tags.
+"""
+xml_text = replace_tags(xml_text)
+
+"""Controlling entities
+
+Instead of writing greek letters as UTF-8 symbols for which pdflatex has
+issues, generate a separate .F file that contains the latex commands for greek
+letters.
+
+Instead of hardcoding which are inside, use the:
+
+set(re.findall("&(.+?);", text))
+
+to get all unique commands.
+"""
+
+# The following flag deactivates resolving entities, namely Greek and math
+# symbols from the definitions dtd file. Default entities such as &lt; &gt;
+# &amp; are resolved by ElementTree
+if 'DO_NOT_RESOLVE_ENTITIES' in os.environ:
+    DO_NOT_RESOLVE_ENTITIES=1
+else:
+    DO_NOT_RESOLVE_ENTITIES=0
+
+if DO_NOT_RESOLVE_ENTITIES:
+    commands = set(re.findall('&(.+?);', xml_text))
+    text_to_process = xml_text
+    for command in commands:
+        # The following entities are supported by default.
+        if command in ["lt", "gt", "amp"]:
+            continue
+        text_to_process = text_to_process.replace(f'&{command};', f'\{command}')
+else:
+    dtd_name = "xhtml-symbol.ent"
+    xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
+
+    f = open(dtd_name, 'r')
+    dtd_text = f.read()
+    f.close()
+    text_to_process = xml_text.replace(xml_entities, dtd_text)
+
 tree = ET.ElementTree(ET.fromstring(text_to_process))
 root = tree.getroot()
 
@@ -189,9 +200,9 @@ for category in categories:
     for element in category:
         if element.tag == 'switch':
             text = ''
-            text +=  element.findtext('name') + ' - '
-            text +=  element.findtext('type') + '. '
-            text +=  dedent_without_wraping(stringify_children(element.find('description')))[:-1]
+            text += element.findtext('name') + ' - '
+            text += element.findtext('type') + '. '
+            text += dedent_without_wraping(element.find('description').text)
             text += get_default(element.findtext('default'))
             add_to_fort(text)
         elif element.tag == 'switchgroup':
@@ -200,14 +211,15 @@ for category in categories:
             for switch in element.findall('switch'):
                 counter+=1
                 text = ''
-                text +=  switch.findtext('name') + ' - '
-                text +=  switch.findtext('type') + '. '
-                text +=  dedent_without_wraping(stringify_children(switch.find('description')))[:-1]
+                text += switch.findtext('name') + ' - '
+                text += switch.findtext('type') + '. '
+                text += dedent_without_wraping(switch.find('description').text)
                 default = get_default(switch.findtext('default'))
                 if default:
                     text += get_default(switch.findtext('default'))
                 if counter == N and element.findtext('description'):
-                    text += dedent_without_wraping(stringify_children(element.find('description')))
+                    text += '\n'
+                    text += dedent_without_wraping(element.find('description').text)
 
                 add_to_fort(text)
 

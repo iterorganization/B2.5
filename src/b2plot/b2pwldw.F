@@ -321,7 +321,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         nclm_nm=nmoli
 #endif
         do ia=1,nclm_na
-          sfpr_a(ia)=adjustl(TEXTA(ia))
+          sfpr_a(ia)=TEXTA(ia)(1:2)
         end do
 c        print *,'First call. format:',frmt_hlp,':'                  !###
 c        print *,'n_sfpr_s=',n_sfpr_s                                !###

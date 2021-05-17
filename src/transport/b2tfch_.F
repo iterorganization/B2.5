@@ -270,7 +270,7 @@
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch__cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch__cvispery')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__fch_px')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_fch_py')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__csig_any')
        call my_out(70,nx,ny,csig(-1,-1,0),'b2tfch__csigx')
