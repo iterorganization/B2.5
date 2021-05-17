@@ -5788,7 +5788,7 @@
 						10 : feedback option for core, ENIPAR(,1) not used, derived from cbshi(0,ISMAIN,coreregno)
 						11 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> n<sub>a</sub> C<sub>s,a</sub>
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>
-						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup> .J<sup>-1</sup> (the temperature here in J)
+						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>
 						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
 						16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
@@ -6948,7 +6948,7 @@
 			<switchgroup>
 				<name>CFL*</name>
 				<description>
-				  For the electron, ion, and viscous heat flux limit coefficients, if the main multiplier is not specified but CFLM*_CORE and CFLM*_SOL are set to equal non-zero values, their value will be used. If CFLM*_CORE and CFLM*_SOL are different and non-zero, then a radial tanh profile, centered at radial OMP position CFLM*_TANH_A (in metres) and of width CFLM*_TANH_B is applied. The flux limit coefficients in the PFR are set to a constant value equal to that at the separatrix. The OMP is located at the poloidal index provided by 'b2news_fac_ref', or, if not specified, 'b2mwti_jxa'.
+					For the electron, ion, and viscous heat flux limit coefficients, if the main multiplier is not specified but CFLM*_CORE and CFLM*_SOL are set to equal non-zero values, their value will be used. If CFLM*_CORE and CFLM*_SOL are different and non-zero, then a radial tanh profile, centered at radial OMP position CFLM*_TANH_A (in metres) and of width CFLM*_TANH_B is applied. The flux limit coefficients in the PFR are set to a constant value equal to that at the separatrix. The OMP is located at the poloidal index provided by 'b2news_fac_ref', or, if not specified, 'b2mwti_jxa'.
 					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter. Otherwise, the multipliers must be positive.
 				</description>
 				<switch>

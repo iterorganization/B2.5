@@ -6278,6 +6278,7 @@ contains
                 !< Type of IDS data structure, designed for sourced string data handling
             character(len=ids_string_length), intent(in) :: string
 
+            allocate( val%value(1) )
             val%value = string
             allocate( val%source(1) )
             val%source = source

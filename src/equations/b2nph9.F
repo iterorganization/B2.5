@@ -19,7 +19,7 @@
      &          balance_netcdf
       use b2mod_subsys
       use b2mod_sources
-     , , only : shedt,shidt                                             !srv 31.01.21
+     , , only : shedt, shidt                                            !srv 31.01.21
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17

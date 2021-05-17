@@ -245,7 +245,7 @@ csw 11dec2012, check for solv flags
         wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
         call my_out(70,nx,ny,wrk0,'b2npco_dnadt'//chns)                 !srv 09.03.21
        endif
-      endif                                                          !srv 12.07.02 }
+      endif                                                             !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then
