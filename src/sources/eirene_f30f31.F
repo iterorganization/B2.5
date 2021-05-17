@@ -359,7 +359,8 @@ c     internal cell -> full diamagnetic drift
       elseif(switch%eirene_extrap.eq.1) then
 c we derive the guard cell value from its neighbouring interior cell
         do ic = mpg%nCi+1, mpg%nCv
-          ic2 = mpg%rcCv(ian+i-1,2)   ! index of plasma cell
+          iFc = mpg%cvFc(ic)
+          ic2 = min(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))   ! index of plasma cell
           teb(ic)=teb(ic2)
           tib(ic)=tib(ic2)
           tnb(ic)=tnb(ic2)
