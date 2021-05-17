@@ -109,7 +109,7 @@
 !!
 !!      @note   b2_ual_write_deprecated and b2_ual_write_gsl are OUTDATED codes,
 !!              but were left in the repository for documentation purposes and
-!!              as an extra examples.
+!!              as extra examples.
 !!
 !!      @subsection b2uw_b2mod_run Running the code:
 !!      The examples are available on ITER portal:
@@ -157,7 +157,6 @@
 !!      result of a B2 calculation.
 !!      This program unit opens and closes the input/output units, and
 !!      may perform some other system-dependent operations.
-
 !!
 !!      The input units are:
 !!          - ninp(0): formatted, provides output control parameters.
@@ -192,8 +191,9 @@
 !!                    data access operation
 !!      @param  run - The run number of the database being created
 !!      @param  shot - The shot number of the database being created
-!!      @param  treename - the name of the IMAS IDS database,
-!!              (i.e. "edge_profiles" (mandatory) )
+!!      @param  treename - the name of the IMAS IDS database
+!!              (local $DEVICE environment variable by default if defined,
+!!               otherwise "solps-iter" if argument is not provided)
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
@@ -282,9 +282,10 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
 
-    !! Set default value for number of steps
+    !! Set default value for IMAS major version and number of steps
     num_step = -1
     version = "3"
+    treename = 'ids'
 
     !! Check if arguments are found
     narg = command_argument_count()
@@ -348,13 +349,6 @@ program b2_ual_write_b2mod
         write(0,*) "b2mn_step() completed"
     end if
 
-
-    ! write(0,*) " Running b2mn_fin"
-    ! call b2mn_fin
-    ! write(0,*) "b2mn_fin completed"
-
-    treename = 'ids'
-
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
@@ -379,8 +373,9 @@ program b2_ual_write_b2mod
 #endif
         &   treename, shot, run, idx, username, database, version )
 
-    ! call read_ids(treename, shot, run, idx, username, &
-    !                                     & database, version )
+    ! write(0,*) " Running b2mn_fin"
+    ! call b2mn_fin
+    ! write(0,*) "b2mn_fin completed"
 
 contains
 
@@ -418,7 +413,7 @@ contains
         !! Internal variables
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
-            !< data in edge plasma profiles  (includes the scrape-off layer and
+            !< data in edge plasma profiles (includes the scrape-off layer and
             !<  possibly part of the confined plasma)
         integer :: status
 

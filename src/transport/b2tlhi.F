@@ -6,7 +6,7 @@
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *  mp, cflmi, 
+     *  mp, cflmi,
      *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
      *  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      *  nirm(-1:nx,-1:ny), ti(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
@@ -16,7 +16,7 @@
 *   ..local variables
       integer ncall, ix, iy, area_fix, model
       real (kind=R8) ::
-     *   t0,t1
+     *   t0, t1
       save ncall, area_fix, model
 *   ..procedures
       real (kind=R8) :: pit
@@ -43,7 +43,7 @@
         if(leftix(ix,iy).eq.-2) then
          chvimx(ix,iy) = 0.0_R8
         else
-cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model, 
+cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model,
 c    because now both options are interchangeable
           if (model.eq.1) then  ! SOLPS5.0 treatments
             t0 = max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy))
@@ -56,12 +56,12 @@ c    because now both options are interchangeable
           else if (model.eq.2) then  ! SOLPS4.0 treatment
             t0 = ti(ix,iy)
             t1 = ti(leftix(ix,iy),leftiy(ix,iy))
-cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same information 
+cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same information
 c           as case b2tqca_model.eq.1
-c           Removes need for different treatment later on in the code (b2tfhi), and 
+c           Removes need for different treatment later on in the code (b2tfhi), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
             chvimx(ix,iy) = cflmi*gs(ix,iy,0)*
-     &       (nirm(ix,iy)*pit(ix,iy)*sqrt(t0/mp)*t0 + 
+     &       (nirm(ix,iy)*pit(ix,iy)*sqrt(t0/mp)*t0 +
      &        nirm(leftix(ix,iy),leftiy(ix,iy))*
      &        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/mp)*t1)/
      &       ((ni(leftix(ix,iy),leftiy(ix,iy),0)+

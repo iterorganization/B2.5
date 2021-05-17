@@ -6,7 +6,7 @@
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_geo
-     &   , only : hyl, hxb                 ! IYS 04.03.2019
+     &   , only : hyl, hxb                       ! IYS 04.03.2019
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -14,7 +14,8 @@
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1)
+     &  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  uadia(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchdia(-1:nx,-1:ny,0:1)
@@ -146,8 +147,8 @@
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))        !srv
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
             endif                                                        !srv 26.11.02
-           enddo                                                          !srv
-         enddo                                                            !srv
+           enddo                                                         !srv
+         enddo                                                           !srv
 
         else  ! drift_style                                              !IYS 11.02.2020
 
@@ -168,17 +169,15 @@
          do iy=0,ny
            do ix=0,nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
-            fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
+             fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
      &   0.5e0_R8 * (pz(ix,iy) + pz(bottomix(ix,iy),bottomiy(ix,iy))) *  ! IYS 04.03.2019
      &         gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
      &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))   !srv
             endif                                                        !srv 26.11.02
-           enddo                                                          !srv
-         enddo                                                            !srv
+           enddo                                                         !srv
+         enddo                                                           !srv
 
-        endif  ! drift_style                                              !IYS 11.02.2020
-
-  
+        endif  ! drift_style                                             !IYS 11.02.2020
 
 #ifdef CLASSICAL_CURRENT
 crfs inertia terms
@@ -203,7 +202,7 @@ crfs inertia terms
      &       .and. leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &       .and. region(ix,iy,0).ne.0) then
 cxpb  Must check for case of the island X-point
-                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
+                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then        !xpb
 cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,is)+
@@ -217,7 +216,7 @@ cxpb  Island X-point cells
      2               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   endif
-                endif                                           	 !xpb
+                endif                                                    !xpb
               enddo
             enddo
           endif

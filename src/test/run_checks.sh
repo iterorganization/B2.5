@@ -38,8 +38,8 @@ fi
 # For most of the variables we compare the maximum error to the average array value
 # (and this average is the average of abs(var)).
 # We have a large tolerance for most of the variables (1e-7).
-# For basic quantities like te, ti, na, ni, ne, po, ua we use more strick tolerance level.
-# Except for the velocity, the we check the maximum relative error for the basic quantities'
+# For basic quantities like te, ti, na, ni, ne, po, ua, we use a stricter tolerance level.
+# Except for the velocity, we check the maximum relative error for the basic quantities.
 $MYPATH/b2diff.py --tolerance 1e-7 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-10 te 1e-11 ti 1e-11 po 1e-11' -i 'time|del*|res*|b2stbc_smo' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py

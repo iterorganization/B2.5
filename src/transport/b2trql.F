@@ -12,7 +12,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), 
+     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -92,13 +92,13 @@
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test range of qz, qc
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &   'faulty argument range qz(,,0)')
        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &   'faulty argument range qz(,,1)')
        call xertst (0.0_R8.lt.smin(n2,qc,1).and.
-     &   smax(n2,qc,1).le.1.0_R8, 
+     &   smax(n2,qc,1).le.1.0_R8,
      &   'faulty argument range qc')
 *    ..test sign of na, te, ti, ne2
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
@@ -106,13 +106,13 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
       endif
-*   ..compute nirm (atom density weighted by 1/sqrt(am)
+*   ..compute nirm (atom density weighted by 1/sqrt(am))
       call b2xpnr (nx, ny, ns, am, na, nirm)
 
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
       cflme = cflim(0)
-      call b2tlhe (nx, ny, me, cflme, bb, gs, pbs(-1,-1,0), qc, ne, te, 
+      call b2tlhe (nx, ny, me, cflme, bb, gs, pbs(-1,-1,0), qc, ne, te,
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
@@ -127,4 +127,4 @@
 *-----------------------------------------------------------------------
 *.end b2trql
 
-      end
+      end subroutine b2trql

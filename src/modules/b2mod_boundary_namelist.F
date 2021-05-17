@@ -18,24 +18,24 @@ cank }
       parameter (NBCD=DEF_NBC,NNISOD=DEF_NISO)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   CONPAR(:,:,:), 
-     *   MOMPAR(:,:,:), 
-     *   ENEPAR(:,:), 
-     *   ENIPAR(:,:), 
-     *   POTPAR(:,:), 
+     *   CONPAR(:,:,:),
+     *   MOMPAR(:,:,:),
+     *   ENEPAR(:,:),
+     *   ENIPAR(:,:),
+     *   POTPAR(:,:),
      *   NIISO(:)
       integer, allocatable, save ::
-     *   BCPOS(:), 
-     *   BCSTART(:), 
-     *   BCEND(:), 
-     *   BCCON(:,:), 
-     *   BCMOM(:,:), 
-     *   BCENE(:), 
-     *   BCENI(:), 
-     *   BCPOT(:), 
-     *   NXISO1(:), 
-     *   NXISO2(:), 
-     *   NYISO1(:), 
+     *   BCPOS(:),
+     *   BCSTART(:),
+     *   BCEND(:),
+     *   BCCON(:,:),
+     *   BCMOM(:,:),
+     *   BCENE(:),
+     *   BCENI(:),
+     *   BCPOT(:),
+     *   NXISO1(:),
+     *   NXISO2(:),
+     *   NYISO1(:),
      *   NYISO2(:),
      *   lcbs(:),
      *   BC_LIST_SIZE(:),
@@ -80,7 +80,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
-      logical, save :: lbndusr,lfeedback
+      logical, save :: lbndusr, lfeedback
       logical, save :: write_nml_bnd = .true.
       character*256, save :: boundary_filename
       real (kind=R8), save :: boundary_time_mod
@@ -97,7 +97,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
      6 lcbs, write_nml_bnd
-      
+
       contains
 
       subroutine get_boundary_namelist
@@ -113,7 +113,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       boundary_namelist_set = .true.
       return
       end subroutine get_boundary_namelist
-      
+
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
       integer nx ,ny, ns
@@ -124,7 +124,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      call xertst (nniso.le.nnisod, 
+      call xertst (nniso.le.nnisod,
      1     'increase DEF_NISO in DIMENSIONS.F')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
@@ -134,19 +134,19 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       endif
       catch_up=boundary_time_mod.gt.0.0_R8
       do while(catch_up)
-         if(mod(tim,boundary_time_mod).gt.boundary_time_switch)
+        if(mod(tim,boundary_time_mod).gt.boundary_time_switch)
      1        then
-            write(*,*) 'b2stbc: catching up ...'
-            call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-            call xertst (nbc.le.nbcd, 
+          write(*,*) 'b2stbc: catching up ...'
+          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+          call xertst (nbc.le.nbcd,
      1           'increase DEF_NBC in DIMENSIONS.F')
-            call xertst (nniso.le.nnisod, 
+          call xertst (nniso.le.nnisod,
      1           'increase DEF_NISO in DIMENSIONS.F')
-            call write_b2mod_boundary_namelist
-            catch_up=boundary_time_mod.gt.0.0_R8
-         else
-            catch_up=.false.
-         endif
+          call write_b2mod_boundary_namelist
+          catch_up=boundary_time_mod.gt.0.0_R8
+        else
+          catch_up=.false.
+        endif
       enddo
       if(nniso.gt.0) then
          done=.true.
@@ -238,22 +238,23 @@ cxpb overwrite the defaults with the namelist data
       real (kind=R8) :: tim
 
       if(boundary_time_mod.gt.0.0_R8) then
-         write(*,'(a,1p,3(1x,e14.7),2i4)') 
+        write(*,'(a,1p,3(1x,e14.7),2i4)')
      .       'ELM: ', tim, mod(tim,boundary_time_mod),
      1        boundary_time_switch,
      2        int(tim/boundary_time_mod),
      3        bc_elm_count
-         if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
+        if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
      1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-            bc_elm_count=int(tim/boundary_time_mod)
-            call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-            call xertst (nbc.le.nbcd, 
-     1           'increase DEF_NBC in DIMENSIONS.F')
-            call xertst (nniso.le.nnisod, 
-     1           'increase DEF_NISO in DIMENSIONS.F')
-            call write_b2mod_boundary_namelist
-         endif
+          bc_elm_count=int(tim/boundary_time_mod)
+          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+          call xertst (nbc.le.nbcd,
+     1         'increase DEF_NBC in DIMENSIONS.F')
+          call xertst (nniso.le.nnisod,
+     .                           'increase DEF_NISO in DIMENSIONS.F')
+          call write_b2mod_boundary_namelist
+        endif
       endif
+      return
 
       end subroutine catchup_b2mod_boundary
 
@@ -420,7 +421,7 @@ cxpb Have to do this here already in case the namelist is not used
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
-      logical :: file_ok, todo, assigned
+      logical file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
 
@@ -446,13 +447,13 @@ cxpb Have to do this here already in case the namelist is not used
           if (bc_list_size(ib).eq.0) then
             old_style(ib) = .true.
             bc_list_size(ib) = bcend(ib) - bcstart(ib) + 1
-            if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S' .or. 
+            if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S' .or.
      &          bcchar(ib).eq.'X') then
               do ix = bcstart(ib), bcend(ib)
                 bc_list_x(ix-bcstart(ib)+1,ib) =  ix
               end do
               bc_list_y(1:bc_list_size(ib),ib) = bcpos(ib)
-            else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or. 
+            else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or.
      &               bcchar(ib).eq.'Y') then
               bc_list_x(1:bc_list_size(ib),ib) = bcpos(ib)
               do iy = bcstart(ib), bcend(ib)
@@ -566,9 +567,9 @@ c.. Make a list of core boundaries
       call xertst (0.0_R8.le.gammai, 'faulty input gammai')
       call xertst (0.0_R8.lt.teiso, 'faulty input teiso')
       call xertst (0.0_R8.lt.tiiso, 'faulty input tiiso')
-      call xertst (0.0_R8.le.boundary_time_mod, 
+      call xertst (0.0_R8.le.boundary_time_mod,
      . 'faulty input boundary_time_mod')
-      call xertst (0.0_R8.le.boundary_time_switch, 
+      call xertst (0.0_R8.le.boundary_time_switch,
      . 'faulty input boundary_time_switch')
       do is = 0, ns-1
         call xertst (0.0_R8.lt.niiso(is), 'faulty input niiso')
@@ -586,10 +587,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (1.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (North)') 
+     .                     'faulty input bc_list_y (North)')
               call xertst (-1.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (North)') 
+     .                     'faulty input bc_list_x (North)')
             end do
           endif
         else if (bcchar(ib).eq.'S') then
@@ -604,10 +605,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (-1.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny-1,
-     .                     'faulty input bc_list_y (South)') 
+     .                     'faulty input bc_list_y (South)')
               call xertst (-1.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (South)') 
+     .                     'faulty input bc_list_x (South)')
             end do
           endif
         else if (bcchar(ib).eq.'E') then
@@ -622,10 +623,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (-1.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (East)') 
+     .                     'faulty input bc_list_y (East)')
               call xertst (1.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (East)') 
+     .                     'faulty input bc_list_x (East)')
             end do
           endif
         else if (bcchar(ib).eq.'W') then
@@ -640,10 +641,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (-1.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (West)') 
+     .                     'faulty input bc_list_y (West)')
               call xertst (-1.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx-1,
-     .                     'faulty input bc_list_x (West)') 
+     .                     'faulty input bc_list_x (West)')
             end do
           endif
         else if (bcchar(ib).eq.'X') then
@@ -658,10 +659,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (0.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny,
-     .                     'faulty input bc_list_y (X)') 
+     .                     'faulty input bc_list_y (X)')
               call xertst (-1.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (X)') 
+     .                     'faulty input bc_list_x (X)')
             end do
           endif
         else if (bcchar(ib).eq.'Y') then
@@ -676,10 +677,10 @@ c.. Make a list of core boundaries
             do ic = 1, bc_list_size(ib)
               call xertst (-1.le.bc_list_y(ic,ib).and.
      .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (Y)') 
+     .                     'faulty input bc_list_y (Y)')
               call xertst (0.le.bc_list_x(ic,ib).and.
      .                     bc_list_x(ic,ib).le.nx,
-     .                     'faulty input bc_list_x (Y)') 
+     .                     'faulty input bc_list_x (Y)')
             end do
           endif
         endif
@@ -753,16 +754,16 @@ c..  we exclude corners from this test
           guard_cell = region(ix,iy,0).ne.0 .and.
      &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
-          corner = 
+          corner =
      &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .and.
      &     (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
           covered = .false.
           do ib = 1, nbc
             if (old_style(ib)) then
-              if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') 
+              if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S')
      >         covered = covered .or. (iy.eq.bcpos(ib) .and.
      &         ix.ge.bcstart(ib) .and. ix.le.bcend(ib))
-              if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') 
+              if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W')
      >         covered = covered .or. (ix.eq.bcpos(ib) .and.
      &         iy.ge.bcstart(ib) .and. iy.le.bcend(ib))
             else
@@ -784,13 +785,13 @@ c..  test that boundary cells are guard cells
         if (bcchar(ib).eq.'N') then
           if (old_style(ib)) then
             do ix = bcstart(ib), bcend(ib)
-              call xertst(topiy(ix,bcpos(ib)).eq.ny+1, 
+              call xertst(topiy(ix,bcpos(ib)).eq.ny+1,
      &         'inconsistent North boundary!')
             enddo
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
-     .         topiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.ny+1, 
+     .         topiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.ny+1,
      &         'inconsistent North boundary!')
             end do
           endif
@@ -798,13 +799,13 @@ c..  test that boundary cells are guard cells
         if (bcchar(ib).eq.'S') then
           if (old_style(ib)) then
             do ix = bcstart(ib), bcend(ib)
-              call xertst(bottomiy(ix,bcpos(ib)).eq.-2, 
+              call xertst(bottomiy(ix,bcpos(ib)).eq.-2,
      &         'inconsistent South boundary!')
             enddo
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
-     .         bottomiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2, 
+     .         bottomiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
      &         'inconsistent South boundary!')
             end do
           endif
@@ -812,13 +813,13 @@ c..  test that boundary cells are guard cells
         if (bcchar(ib).eq.'E') then
           if (old_style(ib)) then
             do iy = bcstart(ib), bcend(ib)
-              call xertst(rightix(bcpos(ib),iy).eq.nx+1, 
+              call xertst(rightix(bcpos(ib),iy).eq.nx+1,
      &         'inconsistent East boundary!')
             enddo
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
-     .         rightix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.nx+1, 
+     .         rightix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.nx+1,
      &         'inconsistent East boundary!')
             end do
           endif
@@ -826,13 +827,13 @@ c..  test that boundary cells are guard cells
         if (bcchar(ib).eq.'W') then
           if (old_style(ib)) then
             do iy = bcstart(ib), bcend(ib)
-              call xertst(leftix(bcpos(ib),iy).eq.-2, 
+              call xertst(leftix(bcpos(ib),iy).eq.-2,
      &         'inconsistent West boundary!')
             enddo
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
-     .         leftix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2, 
+     .         leftix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
      &         'inconsistent West boundary!')
             end do
           endif
@@ -856,7 +857,7 @@ c.. Test consistency with region boundaries
             end do
           end if
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch (1) with region boundaries (South) !')
         found = .false.
         ib = 0
@@ -874,7 +875,7 @@ c.. Test consistency with region boundaries
             end do
           end if
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch (2) with region boundaries (South) !')
         found = .false.
         ib = 0
@@ -890,9 +891,9 @@ c.. Test consistency with region boundaries
      .                bc_list_y(ix,ib).le.topcut(ic)
               ix = ix + 1
             end do
-          end if   
+          end if
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch (3) with region boundaries (South) !')
         found = .false.
         ib = 0
@@ -910,7 +911,7 @@ c.. Test consistency with region boundaries
             end do
           end if
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch (4) with region boundaries (South) !')
       end do
       return

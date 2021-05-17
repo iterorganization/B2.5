@@ -47,20 +47,25 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),        !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
+     &  pbs(-1:nx,-1:ny,0:1),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     &  kinrgy(-1:nx,-1:ny,0:ns-1),
+     &  wedia(-1:nx,-1:ny,0:1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fht(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
@@ -72,21 +77,23 @@
      *  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),            !srv 28.10.02
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
-     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06 25.12.06
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),              !srv 23.10.09
-     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
+     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1),
+     &  fne_eir(-1:nx,-1:ny,0:1),
      &  fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
 *     (transport coefficients)                                           !xpb
       real (kind=R8) ::                                                  !xpb
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
-     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
-     5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
+     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     5  cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     6  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
      *  rlsa(-1:nx,-1:ny,0:1,0:ns-1), rlra(-1:nx,-1:ny,0:1,0:ns-1),
@@ -272,20 +279,21 @@
 *   ..recompute currents
        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
-     &                       fac_vis, fchvispar)
-       call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &               fac_vis, fchvispar)
+       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,
+     &               facdrift, fchinert)
        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,           !srv 10.10.17
+     &               po, ti, na, avisper, bvisper, cvisper, fchvisper)
+       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
+     &  vol, hx, hy, hz, qz, gs, qc, bb, pbs,
+     &  ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,   !srv 05.06.18
-     &  wedia, uadia,
+     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  veecrb, vaecrb, wadia, ve, wedia, uadia,                        !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
@@ -349,8 +357,8 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
-     &  te, ti, po, ne, ni,
+     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,            !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells

@@ -71,28 +71,28 @@
       iret=nf_get_vara_double(ncidcdf,varid,start,count,na)
       call check_cdf_status(iret)
       if(natmi.gt.0) then
-	allocate(dummy(0:nx+1,0:ny+1,1:natmi))
-	count(3)=natmi
-	write(*,*) 'Getting dab2 for slice ',istep
-	iret=nf_inq_varid(ncidcdf,'dab2',varid)
-	call check_cdf_status(iret)
-	iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
-	call check_cdf_status(iret)
-	dab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
-	deallocate(dummy)
+        allocate(dummy(0:nx+1,0:ny+1,1:natmi))
+        count(3)=natmi
+        write(*,*) 'Getting dab2 for slice ',istep
+        iret=nf_inq_varid(ncidcdf,'dab2',varid)
+        call check_cdf_status(iret)
+        iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
+        call check_cdf_status(iret)
+        dab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
+        deallocate(dummy)
       endif
       if(nmoli.gt.0) then
-	allocate(dummy(0:nx+1,0:ny+1,1:nmoli))
-	count(3)=nmoli
-	write(*,*) 'Getting dmb2 for slice ',istep
-	iret=nf_inq_varid(ncidcdf,'dmb2',varid)
-	call check_cdf_status(iret)
-	iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
-	call check_cdf_status(iret)
-	dmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
-	deallocate(dummy)
+        allocate(dummy(0:nx+1,0:ny+1,1:nmoli))
+        count(3)=nmoli
+        write(*,*) 'Getting dmb2 for slice ',istep
+        iret=nf_inq_varid(ncidcdf,'dmb2',varid)
+        call check_cdf_status(iret)
+        iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
+        call check_cdf_status(iret)
+        dmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
+        deallocate(dummy)
       endif
 #endif
       call subend ()
       return
-      end
+      end subroutine get_from_movie_cdf

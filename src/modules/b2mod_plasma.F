@@ -7,12 +7,12 @@
      *  fch(:,:,:),  fch0(:,:,:),  fchp(:,:,:),  fch_32(:,:,:),
      *  fch_52(:,:,:),
      *  fna_32(:,:,:,:),  fna_52(:,:,:,:),
-     *  fni_32(:,:,:),  fni_52(:,:,:),
-     *  fne_32(:,:,:),  fne_52(:,:,:),
+     *  fni_32(:,:,:),    fni_52(:,:,:),
+     *  fne_32(:,:,:),    fne_52(:,:,:),
      *  fhe(:,:,:),  fhe0(:,:,:),  fhep(:,:,:),  fhet(:,:,:),
      *  fhi(:,:,:),  fhi0(:,:,:),  fhip(:,:,:),  fhit(:,:,:),
      *  fna(:,:,:,:),  fna0(:,:,:,:),  fnap(:,:,:,:),
-     *  fne(:,:,:),  fni(:,:,:),
+     *  fne(:,:,:),    fni(:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
      *  ni(:,:,:),  ni0(:,:,:),
@@ -24,11 +24,12 @@
      *  uadia(:,:,:,:),  fchdia(:,:,:),
      *  fch_p(:,:,:), fch_pi_c(:,:,:), fch_pi_f(:,:,:),                  !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:), fhp(:,:,:,:), fhj(:,:,:), fht(:,:,:),
-     *  fhe_mdf(:,:,:), fhePSch(:,:,:), fhi_mdf(:,:,:), fhiPSch(:,:,:),  !srv 13.10.06
-     *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:), 
+     *  fhe_mdf(:,:,:), fhePSch(:,:,:),
+     *  fhi_mdf(:,:,:), fhiPSch(:,:,:),                                  !srv 13.10.06
+     *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:),
      *  fna_fcor(:,:,:,:), fna_he(:,:,:,:),                              !srv 01.10.99 21.01.00
      *  fna_eir(:,:,:,:), fne_eir(:,:,:), fhe_eir(:,:,:),                !srv 14.07.10
-     *  fhi_eir(:,:,:), 
+     *  fhi_eir(:,:,:),
      *  fna_32nd(:,:,:,:), fna_52nd(:,:,:,:)                             !srv 18.06.08
 
       real (kind=R8), allocatable, save ::
@@ -37,7 +38,7 @@
      *  vadia(:,:,:,:), vedia(:,:,:), wadia(:,:,:,:),                    !xpb
      *  vaecrb(:,:,:,:), veecrb(:,:,:),
      *  wedia(:,:,:), ve(:,:),                                           !srv 14.07.10
-     *  fna_nodrift(:,:,:,:), 
+     *  fna_nodrift(:,:,:,:),
      *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
      *  fmo(:,:,:,:)
       real (kind=R8), allocatable, save ::
@@ -92,7 +93,7 @@
       fna_eir = 0.0_R8
       fne_eir = 0.0_R8
       fhe_eir = 0.0_R8
-      fhi_eir = 0.0_R8  
+      fhi_eir = 0.0_R8
       fna_fcor = 0.0_R8                                            !srv 14.07.10 }
       allocate(fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fna0(-1:nxd,-1:nyd,0:1,0:nsd-1))
@@ -271,10 +272,10 @@
       integer nxd,nyd,nsd,nread
       integer is
 
-      call cfrure (nread, size(fch), fch, 'fch')
+      call cfrure (nread, size(fch),  fch,  'fch')
       call cfrure (nread, size(fch0), fch0, 'fch0')
       call cfrure (nread, size(fchp), fchp, 'fchp')
-      call cfrure (nread, size(fhe), fhe, 'fhe')
+      call cfrure (nread, size(fhe),  fhe,  'fhe')
       call cfrure (nread, size(fhe0), fhe0, 'fhe0')
       call cfrure (nread, size(fhep), fhep, 'fhep')
       if(b2fplasma_version.gt.'01.001.003') then
@@ -282,7 +283,7 @@
       else
         fhet = fhe
       endif
-      call cfrure (nread, size(fhi), fhi, 'fhi')
+      call cfrure (nread, size(fhi),  fhi,  'fhi')
       call cfrure (nread, size(fhi0), fhi0, 'fhi0')
       call cfrure (nread, size(fhip), fhip, 'fhip')
       if(b2fplasma_version.gt.'01.001.003') then
@@ -320,7 +321,7 @@
       call cfrure (nread, size(uadia), uadia, 'uadia')
       call cfrure (nread, size(fchdia), fchdia, 'fchdia')
       if(b2fplasma_version.ge.'01.001.008') then
-        call cfrure (nread, size(fmo), fmo, 'fmo')
+        call cfrure (nread, size(fmo),    fmo,    'fmo')
         call cfrure (nread, size(fna_32), fna_32, 'fna_32')
         call cfrure (nread, size(fna_52), fna_52, 'fna_52')
         call cfrure (nread, size(fni_32), fni_32, 'fni_32')
@@ -329,9 +330,9 @@
         call cfrure (nread, size(fne_52), fne_52, 'fne_52')
       else
         do is = 0, nsd-1
-          fmo(-1:nxd,-1:nyd,0,is) = am(is) * mp * ua(-1:nxd,-1:nyd,is) *
+          fmo(-1:nxd,-1:nyd,0,is) = am(is)*mp*ua(-1:nxd,-1:nyd,is)*
      .     fna(-1:nxd,-1:nyd,0,is)
-          fmo(-1:nxd,-1:nyd,1,is) = am(is) * mp * ua(-1:nxd,-1:nyd,is) *
+          fmo(-1:nxd,-1:nyd,1,is) = am(is)*mp*ua(-1:nxd,-1:nyd,is)*
      .     fna(-1:nxd,-1:nyd,1,is)
         enddo
         fna_32 = fna
@@ -398,49 +399,49 @@
       implicit none
       integer nwrite
 
-      call cfwure (nwrite, size(fch), fch, 'fch')
+      call cfwure (nwrite, size(fch),  fch,  'fch')
       call cfwure (nwrite, size(fch0), fch0, 'fch0')
       call cfwure (nwrite, size(fchp), fchp, 'fchp')
-      call cfwure (nwrite, size(fhe), fhe, 'fhe')
+      call cfwure (nwrite, size(fhe),  fhe,  'fhe')
       call cfwure (nwrite, size(fhe0), fhe0, 'fhe0')
       call cfwure (nwrite, size(fhep), fhep, 'fhep')
       if(newversion.gt.'01.001.003') then
         write(*,*) newversion,'fhet --- fhit'
         call cfwure (nwrite, size(fhet), fhet, 'fhet')
       endif
-      call cfwure (nwrite, size(fhi), fhi, 'fhi')
+      call cfwure (nwrite, size(fhi),  fhi,  'fhi')
       call cfwure (nwrite, size(fhi0), fhi0, 'fhi0')
       call cfwure (nwrite, size(fhip), fhip, 'fhip')
       if(newversion.gt.'01.001.003') then
         call cfwure (nwrite, size(fhit), fhit, 'fhit')
       endif
-      call cfwure (nwrite, size(fna), fna, 'fna')
+      call cfwure (nwrite, size(fna),  fna,  'fna')
       call cfwure (nwrite, size(fna0), fna0, 'fna0')
       call cfwure (nwrite, size(fnap), fnap, 'fnap')
-      call cfwure (nwrite, size(fne), fne, 'fne')
-      call cfwure (nwrite, size(fni), fni, 'fni')
-      call cfwure (nwrite, size(na), na, 'na')
-      call cfwure (nwrite, size(na0), na0, 'na0')
-      call cfwure (nwrite, size(nap), nap, 'nap')
-      call cfwure (nwrite, size(ne), ne, 'ne')
-      call cfwure (nwrite, size(ne0), ne0, 'ne0')
-      call cfwure (nwrite, size(ne2), ne2, 'ne2')
-      call cfwure (nwrite, size(nep), nep, 'nep')
-      call cfwure (nwrite, size(ni), ni, 'ni')
-      call cfwure (nwrite, size(ni0), ni0, 'ni0')
-      call cfwure (nwrite, size(pb), pb, 'pb')
-      call cfwure (nwrite, size(po), po, 'po')
-      call cfwure (nwrite, size(po0), po0, 'po0')
-      call cfwure (nwrite, size(pop), pop, 'pop')
-      call cfwure (nwrite, size(te), te, 'te')
-      call cfwure (nwrite, size(te0), te0, 'te0')
-      call cfwure (nwrite, size(tep), tep, 'tep')
-      call cfwure (nwrite, size(ti), ti, 'ti')
-      call cfwure (nwrite, size(ti0), ti0, 'ti0')
-      call cfwure (nwrite, size(tip), tip, 'tip')
-      call cfwure (nwrite, size(ua), ua, 'ua')
-      call cfwure (nwrite, size(ua0), ua0, 'ua0')
-      call cfwure (nwrite, size(uap), uap, 'uap')
+      call cfwure (nwrite, size(fne),  fne,  'fne')
+      call cfwure (nwrite, size(fni),  fni,  'fni')
+      call cfwure (nwrite, size(na),   na,   'na')
+      call cfwure (nwrite, size(na0),  na0,  'na0')
+      call cfwure (nwrite, size(nap),  nap,  'nap')
+      call cfwure (nwrite, size(ne),   ne,   'ne')
+      call cfwure (nwrite, size(ne0),  ne0,  'ne0')
+      call cfwure (nwrite, size(ne2),  ne2,  'ne2')
+      call cfwure (nwrite, size(nep),  nep,  'nep')
+      call cfwure (nwrite, size(ni),   ni,   'ni')
+      call cfwure (nwrite, size(ni0),  ni0,  'ni0')
+      call cfwure (nwrite, size(pb),   pb,   'pb')
+      call cfwure (nwrite, size(po),   po,   'po')
+      call cfwure (nwrite, size(po0),  po0,  'po0')
+      call cfwure (nwrite, size(pop),  pop,  'pop')
+      call cfwure (nwrite, size(te),   te,   'te')
+      call cfwure (nwrite, size(te0),  te0,  'te0')
+      call cfwure (nwrite, size(tep),  tep,  'tep')
+      call cfwure (nwrite, size(ti),   ti,   'ti')
+      call cfwure (nwrite, size(ti0),  ti0,  'ti0')
+      call cfwure (nwrite, size(tip),  tip,  'tip')
+      call cfwure (nwrite, size(ua),   ua,   'ua')
+      call cfwure (nwrite, size(ua0),  ua0,  'ua0')
+      call cfwure (nwrite, size(uap),  uap,  'uap')
       call cfwure (nwrite, size(uadia), uadia, 'uadia')
       call cfwure (nwrite, size(fchdia), fchdia, 'fchdia')
       if(newversion.ge.'01.001.008') then
@@ -453,7 +454,7 @@
         call cfwure (nwrite, size(fne_52), fne_52, 'fne_52')
       endif
       if(newversion.ge.'01.001.010') then
-        call cfwure (nwrite, size(wadia), wadia, 'wadia')
+        call cfwure (nwrite, size(wadia),  wadia,  'wadia')
         call cfwure (nwrite, size(vaecrb), vaecrb, 'vaecrb')
       endif
       if(newversion.ge.'01.001.012') then

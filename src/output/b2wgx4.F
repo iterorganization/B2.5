@@ -117,11 +117,9 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf,
-     &   yc, yf)
+       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
-       call b2wgxq (nx, ny, header, xc, xf, yc, yf,
-     &   fun, iloc, scal)
+       call b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc, scal)
       enddo
 
 * ..return
@@ -131,4 +129,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx4
 
-      end
+      end subroutine b2wgx4

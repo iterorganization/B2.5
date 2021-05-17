@@ -471,7 +471,7 @@ cdjm Jan2017 Keep linearised sources for balance
      5   elm_ix_begin, elm_ix_end, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
-     1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
+     1 transport_time_mod/0.0_R8/, transport_time_switch/0.0_R8/
 
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
@@ -488,7 +488,7 @@ cdjm Jan2017 Keep linearised sources for balance
         catch_up=transport_time_mod.gt.0.0_R8
         do while(catch_up) 
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1     then           
+     1     then
             write(*,*) 'transport_input: catching up ...'
             filename=transport_filename
             call read_transport_input

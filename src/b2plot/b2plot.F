@@ -879,7 +879,8 @@ cxpb  Western boundary
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
-     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
+     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/
+     &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
      &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo
@@ -2041,12 +2042,12 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          call b2xehx (nx, ny, hx, te, po, ne, mach(-1,-1,0))           !srv 13.01.17
+          call b2xehx(nx, ny, hx, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
           nz=1
-          call b2xehy (nx, ny, hy, qz, te, po, ne, mach(-1,-1,0))       !srv 13.01.17
+          call b2xehy(nx, ny, hy, qz, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'
@@ -6121,11 +6122,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     mach(ix,iy,0)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                   mach(ix,iy,0)
             enddo
           enddo
           do IX = -1,NX
@@ -6158,11 +6159,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     (mach(ix,iy,is),is=0,nz-1)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                  (mach(ix,iy,is),is=0,nz-1)
             enddo
           enddo
           do IX = -1,NX
@@ -6195,11 +6196,11 @@ c          write(*,*) 'Read a new geometry'
           do ix=-1,nx
             do iy=-1,ny
               read(99,*) cr(ix,iy),cz(ix,iy),
-     1     crx(ix,iy,1),cry(ix,iy,1),
-     2     crx(ix,iy,3),cry(ix,iy,3),
-     3     crx(ix,iy,0),cry(ix,iy,0),
-     4     crx(ix,iy,2),cry(ix,iy,2),
-     5     (mach(ix,iy,is),is=0,nz-1)
+     1                   crx(ix,iy,1),cry(ix,iy,1),
+     2                   crx(ix,iy,3),cry(ix,iy,3),
+     3                   crx(ix,iy,0),cry(ix,iy,0),
+     4                   crx(ix,iy,2),cry(ix,iy,2),
+     5                  (mach(ix,iy,is),is=0,nz-1)
             enddo
           enddo
           do IX = -1,NX

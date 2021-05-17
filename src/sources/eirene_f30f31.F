@@ -129,16 +129,16 @@ c
       vaecrbc = vaecrb
       wadiac  = wadia
       vadiac  = vadia
-      if (drift_style.gt.0) then
-        do is=0,ns-1
+      do is=0,ns-1
+        if (drift_style.gt.0) then
           call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
           call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)
           call mapx(nx,ny,1,wadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,wadiac(:,:,1,is),wrk)
           call mapx(nx,ny,1,vadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,vadiac(:,:,1,is),wrk)
-        enddo
-      endif
+        endif
+      enddo
 
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1
@@ -238,7 +238,7 @@ c
               prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
      1         dnib(ix+1,iy+1,nflai)
 c     Velocities uub, vvb, wwb
-c     * cell centered
+c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
               if(eirene_uub_style.eq.0) then

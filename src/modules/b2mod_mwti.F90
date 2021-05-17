@@ -21,9 +21,11 @@ module b2mod_mwti
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
+
 #ifndef NO_CDF
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
 #endif
+
 contains
 
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
@@ -96,8 +98,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), tpmxip(nncutmax), &
-         tpmxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         tpmxip(nncutmax), tpmxap(nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
@@ -3022,7 +3024,7 @@ contains
   end subroutine b2crtimecdf
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
-#     include <netcdf.inc>
+#   include <netcdf.inc>
 
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen

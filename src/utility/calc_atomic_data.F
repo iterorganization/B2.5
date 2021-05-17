@@ -384,4 +384,4 @@ c           write(*,*) 'Do not yet know about ',i_n,i_m,i_l,i_k
 
       stop
 
-      end
+      end program calc_atomic_data

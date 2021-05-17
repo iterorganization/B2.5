@@ -109,7 +109,7 @@ c
       open_file=.false.
       return
 c
-      end
+      end function open_file
 
       logical function silent_open(lu,filename,area,filenamecat)
       use b2mod_types
@@ -221,7 +221,7 @@ c
       filenamecat=''
       return
 c
-      end
+      end function silent_open
 
       subroutine find_file(filename,exist)
       implicit none
@@ -258,5 +258,4 @@ c
       endif
 
       return
-      end
-
+      end subroutine find_file

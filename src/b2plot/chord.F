@@ -210,8 +210,8 @@ c
         call chord_find(nx,ny,crx,cry,x,y,z,found,ix,iy)
         if(found) then
           score(ix,iy)=score(ix,iy)+dl*
-     1   chord_value(nx,ny,tt,crx,cry,bb,
-     2   x,y,z,dxp,dyp,dzp,vector)
+     1     chord_value(nx,ny,tt,crx,cry,bb,
+     2                 x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo
 

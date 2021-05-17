@@ -76,7 +76,7 @@
          flub(ix,iy,0) = 0
         else
          flub(ix,iy,0) = (mb/2)*
-     1	  (fnb(ix,iy,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0))
+     1    (fnb(ix,iy,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0))
         endif
        enddo
       enddo
@@ -89,7 +89,7 @@
          flub(ix,iy,1) = 0
         else
          flub(ix,iy,1) = (mb/2)*
-     1	  (fnb(topix(ix,iy),topiy(ix,iy),1)+fnb(ix,iy,1))
+     1    (fnb(topix(ix,iy),topiy(ix,iy),1)+fnb(ix,iy,1))
         endif
        enddo
       enddo
@@ -102,4 +102,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfm
 
-      end
+      end subroutine b2nxfm

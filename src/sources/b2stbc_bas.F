@@ -1,11 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
-     1  facdrift, vol, hx, hy, qz, qc, gs,                              !xpb
-     1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1  facdrift, vol, hx, hy, qz, qc, gs, pbs, bb,                     !xpb
+     1  na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
-     &  wrong_flow, main_call, diagno,     !xpb
+     &  wrong_flow, main_call, diagno,                                  !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
      &  area_fix, sheath_drift_fix)
@@ -22,13 +22,14 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), 
+     *  facdrift(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),    !xpb
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -309,21 +310,21 @@
         smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+cbsmo(0,is,ireg)*s0
         smo0(ix,-1,1,is) = smo0(ix,-1,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(ix,-1,2,is) = smo0(ix,-1,2,is)+
-     &    cbsmo(1,is,ireg)*(-csb)*pbs(topix(ix,-1),topiy(ix,-1),1)+
-     &    cbsmo(2,is,ireg)*(-cst)*pbs(topix(ix,-1),topiy(ix,-1),1)+
-     &    cbsmo(5,is,ireg)*
-     &     max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,is))/na(ix,-1,is)
+     &   cbsmo(1,is,ireg)*(-csb)*pbs(topix(ix,-1),topiy(ix,-1),1)+
+     &   cbsmo(2,is,ireg)*(-cst)*pbs(topix(ix,-1),topiy(ix,-1),1)+
+     &   cbsmo(5,is,ireg)*
+     &   max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,is))/na(ix,-1,is)
         smo0(ix,-1,3,is) = smo0(ix,-1,3,is)+
-     &    cbsmo(3,is,ireg)*s0+
-     &    cbsmo(4,is,ireg)*s1+
-     &    cbsmo(6,is,ireg)*
-     &     max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,is))/na(ix,-1,is)
+     &   cbsmo(3,is,ireg)*s0+
+     &   cbsmo(4,is,ireg)*s1+
+     &   cbsmo(6,is,ireg)*
+     &   max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,is))/na(ix,-1,is)
 *     ..compute atom heat source
         t0 = na(ix,-1,is)/ni(ix,-1,0)
         shi0(ix,-1,0) = shi0(ix,-1,0)+
      &    cbshi(0,is,ireg)*t0*s0+
      &    cbshi(6,is,ireg)*
-     &     max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,is))
+     &    max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,is))
         shi0(ix,-1,1) = shi0(ix,-1,1)+
      &    cbshi(1,is,ireg)*t0*s0
         shi0(ix,-1,3) = shi0(ix,-1,3)+
@@ -332,7 +333,7 @@
      &    cbshi(4,is,ireg)*t0*cst*s0+
      &    cbshi(5,is,ireg)*t0*cst*s1+
      &    cbshi(7,is,ireg)*
-     &     max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,is))/ni(ix,-1,0)
+     &    max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,is))/ni(ix,-1,0)
        enddo
 *    ..compute electron heat source
        she0(ix,-1,0) = she0(ix,-1,0)+
@@ -734,8 +735,8 @@ c         fchi=0.0_R8
        endif
 *    ..compute electron heat source
        she0(-1,iy,0) = she0(-1,iy,0)+
-     &   cbshe(0,ireg)*s0+
-     &   cbshe(6,ireg)*max(0.0_R8,fne(rightix(-1,iy),rightiy(-1,iy),0))
+     &  cbshe(0,ireg)*s0+
+     &  cbshe(6,ireg)*max(0.0_R8,fne(rightix(-1,iy),rightiy(-1,iy),0))
        she0(-1,iy,1) = she0(-1,iy,1)+
      &   cbshe(1,ireg)*s0
        she0(-1,iy,3) = she0(-1,iy,3)+

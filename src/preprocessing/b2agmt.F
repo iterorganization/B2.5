@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (nx, ny, isymm, 
+      subroutine b2agmt (nx, ny, isymm,
      & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
      & cell_width, cell_height, leftix, leftiy, bottomiy)
       use b2mod_types
@@ -10,14 +10,14 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
       integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
-     &  bottomiy(-1:nx,-1:ny) 
+     &  bottomiy(-1:nx,-1:ny)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  gs(-1:nx,-1:ny,0:2), qcb(-1:nx,-1:ny),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
@@ -43,13 +43,13 @@
 *
 *     isymm - integer, input.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
@@ -82,11 +82,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     qcb - (-1:nx,-1:ny) real*8 array, output.
@@ -178,7 +178,7 @@
         hy(ix,iy) = norm((crx(ix,iy,2)+crx(ix,iy,3))/2.0_R8-
      &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
      &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
-     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
+     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8)
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -369,7 +369,7 @@
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 
-*   ..improved computation of qc 
+*   ..improved computation of qc
 cwdk  based on average field direction of neighboring cells
 cwdk  avoids artificial reduction of poloidal contact area at faces for
 cwdk  curvilinear grids; angle between left face and average direction of top/bottom
@@ -378,7 +378,7 @@ cwdk  faces is not representative for orthogonality of left face to field!
 cwdk   poloidal unit vector in cell centers, ebc
        do iy = -1, ny
         do ix = -1, nx
-         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2))
          t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
          ebc(ix,iy,0) = t0/norm(t0,t1)
          ebc(ix,iy,1) = t1/norm(t0,t1)
@@ -392,7 +392,7 @@ cwdk   computation of qc
         do ix = -1, nx
 cwdk     note: qc in left ghosts unchanged
          if (leftix(ix,iy).ne.-2) then
-          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
+          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1),
      &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
          endif
          if(qc(ix,iy).le.0.0_R8) then
@@ -425,7 +425,7 @@ C                                           0-1
       implicit none
       real (kind=R8) :: XquadCentroid
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       XquadCentroid =
      & ( XtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)
@@ -442,7 +442,7 @@ C                                           0-1
       implicit none
       real (kind=R8) :: YquadCentroid
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       YquadCentroid =
      & ( YtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)

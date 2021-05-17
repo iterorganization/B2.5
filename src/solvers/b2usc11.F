@@ -2,8 +2,9 @@
 *.specification
 
       subroutine b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvereg,  !srv 13.10.06 26.09.12 02.04.18
-     &   itcnt, rxg, pcm1, pbs, po, ti, nb, pb, snbv, flob, conb, pccb1,
-     &    rescb, corpb, aa11, name)                                      !srv 18.05.02
+     &   itcnt, rxg, pcm1,
+     &   pbs, po, ti, nb, pb, snbv, flob, conb, pccb1,
+     &   rescb, corpb, aa11, name)                                       !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
@@ -20,10 +21,10 @@
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   corpb(-1:nx,-1:ny)
+     *  corpb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
+     *  aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -176,24 +177,27 @@
         if(leftix(ix,iy).eq.-2) then
           aa11(ix,iy,-1) = 0.0e0_R8
         else                                                           !srv 26.11.02 }
-          t0 =  flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
+          t0 =  flob(ix,iy,0)/2.0_R8
+     &        - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,1)                                        !srv 13.10.06
-          t1 = -flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
+          t1 = -flob(ix,iy,0)/2.0_R8
+     &        - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,2)                                        !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-          if (solvereg(ileft))
-     >     aa11(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa11(ix,iy,0) = aa11(ix,iy,0) - t0*rscal(pb(ix,iy))
-          if (solvereg(ileft))
-     >     aa11(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy),0)
-     &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-          if (solvereg(ireg))
-     >     aa11(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+          if (solvereg(ileft)) then
+           aa11(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
+           aa11(leftix(ix,iy),leftiy(ix,iy),0) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy),0) -
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+          endif
+          if (solvereg(ireg)) then
+           aa11(ix,iy,0)  = aa11(ix,iy,0) - t0*rscal(pb(ix,iy))
+           aa11(ix,iy,-1) =
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif                                                        !srv 26.11.02
+        endif
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa11(ix,iy,1) = 0.0e0_R8                                       !srv 26.11.02
+     >   aa11(ix,iy,1) = 0.0e0_R8                                      !srv 26.11.02
        enddo
       enddo
 
@@ -204,19 +208,23 @@
          if(bottomiy(ix,iy).eq.-2) then
           aa11(ix,iy,-3) = 0.0_R8
          else
-          t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)     !srv 13.10.06
-          t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)     !srv 13.10.06
+          t0 = 0.5_R8*flob(ix,iy,1)
+     &       - conb(ix,iy,1,0) - conb(ix,iy,1,1)                       !srv 13.10.06
+          t1 =-0.5_R8*flob(ix,iy,1)
+     &       - conb(ix,iy,1,0) - conb(ix,iy,1,2)                       !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa11(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa11(ix,iy,0) = aa11(ix,iy,0)-t0*rscal(pb(ix,iy))
-          if (solvereg(ibot))
-     >     aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
+          if (solvereg(ibot)) then
+           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &       t0*rscal(pb(ix,iy))
+           aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa11(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if (solvereg(ireg)) aa11(ix,iy,-3) =
-     >     t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
+          if (solvereg(ireg)) then
+           aa11(ix,iy,0)  = aa11(ix,iy,0)-t0*rscal(pb(ix,iy))
+           aa11(ix,iy,-3) =
+     &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
          endif
        enddo
       enddo
@@ -225,7 +233,7 @@
 *   ..add matrix from contribution nine- and eleven-point stencils
       if(iadd_11 .eq. 1) then
         call b2uxm11 (nx, ny, isb, zb, fac_vis, nnreg(0), itcnt,
-     &       solvereg, po, ti, nb, pb, conb(-1,-1,0,3), aa11, name)      !srv 02.04.18
+     &       solvereg, po, ti, nb, pb, conb(-1,-1,0,3), aa11, name)    !srv 02.04.18
        endif
 
       do iy=-1,ny
@@ -247,7 +255,7 @@
       enddo
 
 *   ..solve the correction equation
-      call b2ux11p (nx, ny, aa11, itcnt, rescb, corpb, name)             !srv 02.04.18
+      call b2ux11p (nx, ny, aa11, itcnt, rescb, corpb, name)           !srv 02.04.18
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx
@@ -284,4 +292,4 @@
 *-----------------------------------------------------------------------
 *.end b2usc11
 
-      end                                                              !srv 02.04.18 }
+      end subroutine b2usc11                                           !srv 02.04.18 }

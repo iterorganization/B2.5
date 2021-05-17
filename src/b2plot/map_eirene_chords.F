@@ -69,4 +69,4 @@ c
       close(90)
 #endif
       return
-      end
+      end subroutine map_eirene_chords

@@ -52,7 +52,6 @@ c
       mimp=lun
       ufile='param.dg'
       call find_file(ufile,file_ok)
-c      open(lun,file=ufile,status='old',err=998)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'

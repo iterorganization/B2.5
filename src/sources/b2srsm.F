@@ -325,14 +325,14 @@ cdjm Store the total change in linearised sources for balance
       endif
 
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
-         do is = 0, ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
 !         call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
 !     &        smosm(:,:,1,is)*ua(:,:,is)+
 !     &        smosm(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smosm(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
 !     &        'b2srsm_smosm'//chns)
-         enddo
+        enddo
       endif
       if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
      &    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 ) then             !srv 02.04.18
@@ -381,4 +381,4 @@ cdjm Store the total change in linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2srsm
 
-      end
+      end subroutine b2srsm

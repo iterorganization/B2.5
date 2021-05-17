@@ -13,8 +13,8 @@
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &   conc(-1:nx,-1:ny,0:1), sch(-1:nx,-1:ny,0:3)
-     3  ,avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
+     &   conc(-1:nx,-1:ny,0:1), sch(-1:nx,-1:ny,0:3),
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
      4   cvisper(-1:nx,-1:ny,0:1)                                 !srv 27.01.00
       logical solving, solvereg(0:nregionv)                       !srv 22.05.18
 *   ..input/output arguments
@@ -146,4 +146,4 @@
 *-----------------------------------------------------------------------
 *.end b2npp7
 
-      end
+      end subroutine b2npp7

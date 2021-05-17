@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2txnpsch (nx, ny, isb, guard_flows, facdrift, !xpb !iyv 06.02.14 02.04.18 {
-     &        kmprti, cddb, conb)                               !srv 09.01.01 13.10.06
+      subroutine b2txnpsch (nx, ny, isb, guard_flows, facdrift,    !xpb !iyv 06.02.14 02.04.18 {
+     &        kmprti, cddb, conb)                                       !srv 09.01.01 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -85,7 +85,8 @@
 !           conb(ix,iy,0,3) = 0.25e0_R8*PSch*cddb(ix,iy,1)*ti(ix,iy)    !srv 21.10.10 {
 !           conb(ix,iy,0,4) = 0.25e0_R8*PSch*cddb(ix,iy,1)*
 !     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*kmprti(ix,iy,1)
+           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*
+     &                       kmprti(ix,iy,1)
            conb(ix,iy,0,4) = conb(ix,iy,0,3)                            !srv 21.10.10 }
           endif
          enddo
@@ -101,7 +102,8 @@
 !            conb(ix,iy,0,3) = 0.25e0_R8*PSch*cddb(ix,iy,1)*ti(ix,iy)   !srv 21.10.10 {
 !            conb(ix,iy,0,4) = 0.25e0_R8*PSch*cddb(ix,iy,1)*
 !     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*kmprti(ix,iy,1)
+           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*
+     &                       kmprti(ix,iy,1)
            conb(ix,iy,0,4) = conb(ix,iy,0,3)                            !srv 21.10.10 }
           endif
          enddo
@@ -120,7 +122,8 @@
 !           conb(ix,iy,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0)*ti(ix,iy)    !srv 21.10.10 {
 !           conb(ix,iy,1,4) = 0.25e0_R8*PSch*cddb(ix,iy,0)*
 !     &                        ti(leftix(ix,iy),leftiy(ix,iy))
-           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*kmprti(ix,iy,0)
+           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*
+     &                       kmprti(ix,iy,0)
            conb(ix,iy,1,4) = conb(ix,iy,1,3)                            !srv 21.10.10 }
           endif
          enddo
@@ -135,7 +138,8 @@
 !           conb(ix,iy,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0)*ti(ix,iy)    !srv 21.10.10 {
 !           conb(ix,iy,1,4) = 0.25e0_R8*PSch*cddb(ix,iy,0)*
 !     &                        ti(leftix(ix,iy),leftiy(ix,iy))
-           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*kmprti(ix,iy,0)
+           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*
+     &                       kmprti(ix,iy,0)
            conb(ix,iy,1,4) = conb(ix,iy,1,3)                            !srv 21.10.10 }
           endif
          enddo

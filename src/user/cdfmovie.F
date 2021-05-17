@@ -48,11 +48,11 @@
           else
             write(6,'(a)') trim(filename)//' will be created'
           end if
-	  call create_cdf_start(ncid, filename, nx+2, ny+2, ns,
-     &	   nnatmi, nnmoli)
-	  call create_cdf_field2(ncid, 'te',
+          call create_cdf_start(ncid, filename, nx+2, ny+2, ns,
+     &     nnatmi, nnmoli)
+          call create_cdf_field2(ncid, 'te',
      1     'Electron temperature', 'eV')
-	  call create_cdf_field2(ncid, 'ti',
+          call create_cdf_field2(ncid, 'ti',
      1     'Ion temperature', 'eV')
           call create_cdf_field2(ncid, 'ne',
      1     'Electron density', 'm^-3')
@@ -62,15 +62,15 @@
      1     'Electron cooling rate', 'W m^-3')
           call create_cdf_field2(ncid, 'rqradsum',
      1     'Radiation rate', 'W m^-3')
-	  if(nnatmi.gt.0) then
-	    call create_cdf_field3(ncid, 'dab2', 2,
-     1	     'Atom density', 'm^-3')
-	  endif
-	  if(nnmoli.gt.0) then
-	    call create_cdf_field3(ncid, 'dmb2', 3,
-     1	     'Molecular density', 'm^-3')
-	  endif
-	  call create_cdf_end(ncid)
+          if(nnatmi.gt.0) then
+            call create_cdf_field3(ncid, 'dab2', 2,
+     1       'Atom density', 'm^-3')
+          endif
+          if(nnmoli.gt.0) then
+            call create_cdf_field3(ncid, 'dmb2', 3,
+     1       'Molecular density', 'm^-3')
+          endif
+          call create_cdf_end(ncid)
         endif
       endif
 
@@ -111,16 +111,16 @@
       write(*,*) 'put_cdf_field2: rqradsum'
       call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
       if(nnatmi.gt.0) then
-	dummy3=0.0_R8
-	dummy3(-1:nx,-1:ny,1:nnatmi)=dab2(0:nx+1,0:ny+1,1:nnatmi,1)
-	write(*,*) 'put_cdf_field3: dab2'
-	call put_cdf_field3(ncid,'dab2',dummy3,nx+2,ny+2,nnatmi)
+        dummy3=0.0_R8
+        dummy3(-1:nx,-1:ny,1:nnatmi)=dab2(0:nx+1,0:ny+1,1:nnatmi,1)
+        write(*,*) 'put_cdf_field3: dab2'
+        call put_cdf_field3(ncid,'dab2',dummy3,nx+2,ny+2,nnatmi)
       endif
       if(nnmoli.gt.0) then
-	dummy3=0.0_R8
-	dummy3(-1:nx,-1:ny,1:nnmoli)=dmb2(0:nx+1,0:ny+1,1:nnmoli,1)
-	write(*,*) 'put_cdf_field3: dmb2'
-	call put_cdf_field3(ncid,'dmb2',dummy3,nx+2,ny+2,nnmoli)
+        dummy3=0.0_R8
+        dummy3(-1:nx,-1:ny,1:nnmoli)=dmb2(0:nx+1,0:ny+1,1:nnmoli,1)
+        write(*,*) 'put_cdf_field3: dmb2'
+        call put_cdf_field3(ncid,'dmb2',dummy3,nx+2,ny+2,nnmoli)
       endif
       write(*,*) 'put_cdf_end'
       call put_cdf_end(ncid)

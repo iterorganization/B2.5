@@ -16,7 +16,7 @@ c
                work(ix,iy,is)=field(ix,iy,is)
              else
                work(ix,iy,is)=0.5_R8*
-     1	       (field(topix(ix,iy),topiy(ix,iy),is)+field(ix,iy,is))
+     1         (field(topix(ix,iy),topiy(ix,iy),is)+field(ix,iy,is))
              endif
            enddo
          enddo
@@ -29,4 +29,4 @@ c
          enddo
       enddo
       return
-      end
+      end subroutine mapy

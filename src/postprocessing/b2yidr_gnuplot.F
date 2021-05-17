@@ -30,7 +30,7 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for B2. It reads and displays the
+*     B2YIDR_GNUPLOT is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *

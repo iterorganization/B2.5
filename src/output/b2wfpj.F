@@ -185,7 +185,8 @@
        write (nprt,106)
        do ix = 0, nx
         write (nprt,'(2x,i4,1p,(t10,5e11.3))')
-     &    ix, rfnex(ix), rfnix(ix), rfhex(ix), rfhix(ix), rfchx(ix)
+     &    ix, rfnex(ix), rfnix(ix), rfhex(ix),
+     &        rfhix(ix), rfchx(ix)
        enddo
       endif
 *   ..write pfny segment?
@@ -205,7 +206,8 @@
        write (nprt,108)
        do iy = 0, ny
         write (nprt,'(2x,i4,1p,(t10,5e11.3))')
-     &    iy, rfney(iy), rfniy(iy), rfhey(iy), rfhiy(iy), rfchy(iy)
+     &    iy, rfney(iy), rfniy(iy),
+     &        rfhey(iy), rfhiy(iy), rfchy(iy)
        enddo
       endif
 *   ..write pzso segment?
@@ -335,4 +337,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfpj
 
-      end
+      end subroutine b2wfpj

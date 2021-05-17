@@ -233,4 +233,4 @@ c
       close(lun)
       deallocate(qpr_tmp,qpz_tmp)
       return
-      end
+      end subroutine b2pplentd

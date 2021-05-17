@@ -36,7 +36,6 @@ c
       endif
       len=lnblnk(string)
       if(izmax .gt. izmin) then
-        len=lnblnk(string)
         string(len+1:len+1)='_'
         if(izmax .gt. 0) string(len+2:len+2)='+'
         len=lnblnk(string)
@@ -49,6 +48,6 @@ c
         endif
       endif
       len=lnblnk(string)
-      if(decorate) string(len+1:len+1)='}'      
+      if(decorate) string(len+1:len+1)='}'
       return
       end subroutine species

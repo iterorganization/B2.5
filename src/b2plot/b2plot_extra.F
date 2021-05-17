@@ -116,9 +116,9 @@ c     filling array and computing rate
      &         (ic.eq.ncnct-1.and.last_stage).or.
      &         (ic.gt.0.and.ic.lt.ncnct-1)) then
               if(first_stage) then
-	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
+                DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
               else
-	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
+                DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
               endif
             elseif (id.lt.10) then
               DTMP(1:ITMAXD,1:IDMAXD)=6.0_R8

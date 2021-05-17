@@ -19,7 +19,7 @@
      1 csig_an(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &    fchanml(-1:nx,-1:ny,0:1)
+     & fchanml(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -144,4 +144,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end                                                             !srv 20.09.06 }
+      end subroutine b2tanml                                            !srv 20.09.06 }

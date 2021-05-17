@@ -1,5 +1,5 @@
-      subroutine b2tepsch(nx, ny, ns, facdrift, cddi, te, ne,
-     & cone, fhePSch)
+      subroutine b2tepsch(nx, ny, ns, facdrift,
+     &                    cddi, te, ne, cone, fhePSch)
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
@@ -92,9 +92,9 @@
      &       (ne(ix,iy)*te(ix,iy)**2-ne(bottomix(ix,iy),bottomiy(ix,iy))
      &                          *te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-             cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !srv 02.01.07
-     *                                         ne(ix,iy)*te(ix,iy)
-             cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !srv 02.01.07
+            cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*           ! 0.25*2  !srv 02.01.07
+     *                                             ne(ix,iy)*te(ix,iy)
+            cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*           ! 0.25*2  !srv 02.01.07
      &                      ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                      te(bottomix(ix,iy),bottomiy(ix,iy))
            endif
@@ -113,12 +113,12 @@
                 fhePSch(ix,iy,0)= 0.0e0_R8
                 cone(ix,iy,0,:) = 0.0e0_R8
               else
-                fhePSch(ix,iy,0) = -PSch*                                    !
+                fhePSch(ix,iy,0) = -PSch*
      &          (nete2c(topix(ix,iy),topiy(ix,iy))-nete2c(ix,iy))*
      &          bzbl(ix,iy)*hzl(ix,iy)/qe
-                cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !srv 02.01.07
+                cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*       ! 0.25*2  !srv 02.01.07
      *                                         ne(ix,iy)*te(ix,iy)
-                cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !srv 02.01.07
+                cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*       ! 0.25*2  !srv 02.01.07
      &                      ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                      te(bottomix(ix,iy),bottomiy(ix,iy))
 
@@ -137,7 +137,6 @@
          fhePSch(:,iy,1)=0.0e0_R8
          do iy = 0, ny
           do ix = -1, nx
-
            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
             fhePSch(ix,iy,1) = 0.0e0_R8
             cone(ix,iy,1,:) = 0.0e0_R8
@@ -164,11 +163,11 @@
      &                      -ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                       te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*ne(ix,iy)*   ! 0.25*2 !srv 02.01.07 {
+            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*ne(ix,iy)* ! 0.25*2 !srv 02.01.07 {
      &                                                te(ix,iy)
-            cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*         ! 0.25*2
+            cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*           ! 0.25*2
      &                        ne(leftix(ix,iy),leftiy(ix,iy))*
-     &                        te(leftix(ix,iy),leftiy(ix,iy))          !srv 02.01.07 }
+     &                        te(leftix(ix,iy),leftiy(ix,iy))            !srv 02.01.07 }
            endif
           enddo
          enddo
@@ -183,22 +182,22 @@
               fhePSch(ix,iy,1) = PSch*                                  
      &        (nete2c(rightix(ix,iy),rightiy(ix,iy))-nete2c(ix,iy))*
      &        bzbv(ix,iy)*hzb(ix,iy)/qe
-              cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*   ! 0.25*2 !srv 02.01.07 {
+              cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*         ! 0.25*2 !srv 02.01.07 {
      &                                           ne(ix,iy)*te(ix,iy)
               cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*         ! 0.25*2
      &                        ne(leftix(ix,iy),leftiy(ix,iy))*
-     &                        te(leftix(ix,iy),leftiy(ix,iy))          !srv 02.01.07 }
+     &                        te(leftix(ix,iy),leftiy(ix,iy))            !srv 02.01.07 }
             endif
            enddo
           enddo
         endif
 
-      
          do iy = -1, ny
-          do ix = -1, nx                                               !srv 26.11.02 {
-           fhePSch(ix,iy,:)=2.5e0_R8*fhePSch(ix,iy,:)*facdrift(ix,iy)
-           cone(ix,iy,:,1:2) = cone(ix,iy,:,1:2)*facdrift(ix,iy)       !srv 02.01.07
-!           cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)          !srv 02.01.07
+          do ix = -1, nx                                                 !srv 26.11.02 {
+           fhePSch(ix,iy,:) =
+     &       2.5e0_R8*fhePSch(ix,iy,:)*facdrift(ix,iy)
+           cone(ix,iy,:,1:2) = cone(ix,iy,:,1:2)*facdrift(ix,iy)         !srv 02.01.07
+!           cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)            !srv 02.01.07
           enddo
          enddo
         endif

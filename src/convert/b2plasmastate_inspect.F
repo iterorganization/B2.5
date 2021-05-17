@@ -107,7 +107,7 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)                         !xpb
 
 *     ..read initial state
-      call cfverr (ninp(4), plasmastate_version) !xpb
+      call cfverr (ninp(4), plasmastate_version)                        !xpb
       call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,

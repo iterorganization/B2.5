@@ -172,12 +172,14 @@
       write(*,*) 'Found NS = ',ns
       call xertst (1.le.ns, 'faulty parameter ns')
       status=mdsvalue2('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
-     1 descr2(idtype_cstring,0,10),plasmastate_version,0,retlen)
+     1 descr2(idtype_cstring,0,10),
+     2 plasmastate_version,0,retlen)
       call mds_err_msg(status)
       write(*,*) 'Reading plasma state version number = ',
      1 plasmastate_version
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
-     1 descr2(idtype_long,0),dbversion,0,retlen)
+     1 descr2(idtype_long,0),
+     2 dbversion,0,retlen)
       call mds_err_msg(status)
       write(*,*) 'MDSplus database version = ',dbversion
 
@@ -193,18 +195,22 @@
 *   ..read species data
       if (dbversion.ge.9) then
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMIN'//char(0),
-     1   descr2(idtype_double,NS,0),zamin(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,0),
+     2   zamin(0:ns-1),0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
-     1   descr2(idtype_double,NS,0),zamax(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,0),
+     2   zamax(0:ns-1),0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:RZA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,0),rza,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,NS,0),
+     2   rza,0,retlen)
         call mds_err_msg(status)
       else
         allocate(za(0:ns-1))
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
-     1   descr2(idtype_double,NS,0),za(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,0),
+     2   za(0:ns-1),0,retlen)
         call mds_err_msg(status)
         zamin(0:ns-1)=za(0:ns-1)
         zamax(0:ns-1)=za(0:ns-1)
@@ -214,32 +220,40 @@
         deallocate(za)
       endif
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
-     1 descr2(idtype_double,NS,0),zn(0:ns-1),0,retlen)
+     1 descr2(idtype_double,NS,0),
+     2 zn(0:ns-1),0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
-     1 descr2(idtype_double,NS,0),am(0:ns-1),0,retlen)
+     1 descr2(idtype_double,NS,0),
+     2 am(0:ns-1),0,retlen)
       call mds_err_msg(status)
 
 *   ..read plasma data
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),ne,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 ne,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,0),na,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,NS,0),
+     2 na,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:UA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,0),ua,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,NS,0),
+     2 ua,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),te,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 te,0,retlen)
       te=te*qe
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TI'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),ti,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 ti,0,retlen)
       ti=ti*qe
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:PO'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),po,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 po,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,NS,0),
@@ -314,7 +328,8 @@
         enddo
       else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),uadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
+     2   uadia,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_32'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),
@@ -342,7 +357,8 @@
         fch_p(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,0),kinrgy,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,NS,0),
+     2   kinrgy,0,retlen)
         call mds_err_msg(status)
       endif
       if (dbversion.ge.22) then
@@ -577,19 +593,24 @@
         fchinert(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),vadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
+     2   vadia,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:WADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),wadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
+     2   wadia,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),vaecrb,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
+     2   vaecrb,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,0),vedia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,0),
+     2   vedia,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,0),veecrb,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,0),
+     2   veecrb,0,retlen)
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),
@@ -649,67 +670,85 @@
 
 *   ..read geometry data
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),crx,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,0),
+     2 crx,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),cry,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,0),
+     2 cry,0,retlen)
       call mds_err_msg(status)
       fpsi = 0.0_R8
       ffbz = 0.0_R8
       status=mdsvalue2('_s=\TOP.SNAPSHOT:B'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),bb,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,0),
+     2 bb,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:VOL'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),vol,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 vol,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HX'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),hx,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 hx,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),hy,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,0),
+     2 hy,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:QZ'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,2,0),qz,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,2,0),
+     2 qz,0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,0),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 region(:,:,0),0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,1),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 region(:,:,1),0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,2),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 region(:,:,2),0,retlen)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       leftix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       leftiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       rightix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       rightiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       bottomix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       bottomiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       topix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,0),
+     2 idummy,0,retlen)
       call mds_err_msg(status)
       topiy = idummy - 1
       nncut = maxval(region(:,:,0)/4)

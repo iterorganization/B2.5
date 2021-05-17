@@ -51,6 +51,7 @@
       use b2mod_b2cmfs
       use b2mod_external
       implicit none
+
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"

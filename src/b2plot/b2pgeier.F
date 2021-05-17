@@ -58,7 +58,8 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
         open(lun,file=ftrg(jj))
         write(fmt_peak,710) tab,ns,tab
 c        print *,trim(fmt_peak)  !###
-        write(lun,740) 'Ion fluxes on the target - ',trg_label(jj),label
+        write(lun,740) 'Ion fluxes on the target - ',
+     ,      trim(trg_label(jj)),trim(label)
         write(lun,fmt_peak) 'cell',
      ,    ((trim(adjustl(species_list(is))),i,i=0,nfluids(is)),
      ,                                          is=1,nspecies)
@@ -81,4 +82,4 @@ c=======================================================================
   720 format('(1x,i3,1p,',i3,'(e12.4,1h',a1,'))')
   740 format('# ',2a,' : ',a)
 c=======================================================================
-      end
+      end subroutine b2pgeier

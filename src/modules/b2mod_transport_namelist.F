@@ -55,7 +55,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      4   parm_hce,parm_sig,parm_alf,
      5   transport_filename,transport_time_mod,transport_time_switch,
      6   cflme,cflmi,cflmv,cflal,cflab,
-     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml_transp
+     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv,write_nml_transp
 
       contains
 

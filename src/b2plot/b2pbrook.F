@@ -66,5 +66,6 @@ c
       end do
       close (lun)
       deallocate(mz_hlp,hlp_al)
+      return
 c
-      end
+      end subroutine b2pbrooks

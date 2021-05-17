@@ -204,9 +204,12 @@ c 2002-09-11: logic revised
      2 fni_321(-1:nx1,-1:ny1,0:1), fni_521(-1:nx1,-1:ny1,0:1),
      3 fne_321(-1:nx1,-1:ny1,0:1), fne_521(-1:nx1,-1:ny1,0:1),
      4 fchdia1(-1:nx1,-1:ny1,0:1), fchin1(-1:nx1,-1:ny1,0:1),
-     5 fchvispar1(-1:nx1,-1:ny1,0:1), fchvisper1(-1:nx1,-1:ny1,0:1),
-     6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
-     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1),
+     5 fchvispar1(-1:nx1,-1:ny1,0:1),
+     5 fchvisper1(-1:nx1,-1:ny1,0:1),
+     6 fchvisq1(-1:nx1,-1:ny1,0:1),
+     6 fchinert1(-1:nx1,-1:ny1,0:1),
+     7 floe_noc1(-1:nx1,-1:ny1,0:1),
+     7 floi_noc1(-1:nx1,-1:ny1,0:1),
      8 veecrb1(-1:nx1,-1:ny1,0:1), vedia1(-1:nx1,-1:ny1,0:1)
       real (kind=R8), allocatable ::
      . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
@@ -232,7 +235,8 @@ c 2002-09-11: logic revised
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
      3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:),
-     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
+     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:),
+     4 fna_he1(:,:,:,:),
      5 fnaPSch1(:,:,:,:), fna_eir1(:,:,:,:),
      6 fna_321(:,:,:,:), fna_521(:,:,:,:),
      7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
@@ -4681,7 +4685,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 filename='ratadas.filelist'
                 call find_file(filename,ex)
                 if(silent_open(97,filename,
-     .             'data.local|modules/B2.5/Database',adasfile)) then !{
+     .            'data.local|modules/B2.5/Database',adasfile)) then !{
                   read(97,*) ZEILE
                   read(97,*) maxne
                   if (nc.gt.maxne) then !{
@@ -8618,7 +8622,7 @@ cxpb Read first, transform and rewrite
               ILINE = ILINE+3
               NADV1 = NADV1+1
             END IF
-          ELSE
+          ELSE ! default case: we keep the tally
             WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
             ILINE = ILINE+3
             NADV1 = NADV1+1
@@ -8666,7 +8670,7 @@ cxpb Read first, transform and rewrite
               ILINE = ILINE+3
               NCLV1 = NCLV1+1
             END IF
-          ELSE
+          ELSE ! default case: we keep the tally
             WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
             ILINE = ILINE+3
             NCLV1 = NCLV1+1
@@ -8788,7 +8792,7 @@ cxpb Read first, transform and rewrite
               ILINE = ILINE+3
               NADS1 = NADS1+1
             END IF
-          ELSE
+          ELSE ! default case: we keep the tally
             WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
             ILINE = ILINE+3
             NADS1 = NADS1+1

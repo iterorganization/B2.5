@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
-     &  floi, coni)
+      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+     &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -12,12 +12,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),           !srv 02.01.07
-     &  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)             !srv 02.01.07
+     *  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),               !srv 02.01.07
+     &  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)                !srv 02.01.07
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.declarations
@@ -106,6 +106,7 @@
         enddo
        enddo
       enddo
+
 *   ..correct y-components
       do is = 0, ns-1
        do iy = -1, ny
@@ -150,4 +151,4 @@
 *-----------------------------------------------------------------------
 *.end b2tfcc
 
-      end
+      end subroutine b2tfcc

@@ -53,7 +53,7 @@ C A PIECE OF CODE FROM B2PLOT
         ltrgpos(k)=nx-1
 C AREAS OF THE SURFACE ELEMENTS
         l=0
-        do j=1,nncut*2
+        do j=1,nncut*2 !{
           k=ltrgpos(j)
           wtarg_max(j)=0.0_R8
           do iy=0,ny-1
@@ -61,25 +61,25 @@ C AREAS OF THE SURFACE ELEMENTS
           end do
           call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
           if(shift(j).eq.-1) then
-            write(*,*) "Error in b2usr_loads: the EIRENE data ",
+            write(*,*) "Error in b2usr_loads: the EIRENE data "//
      w                 "is apparently missing. ",
      w                 "No neutral fluxes will be calculated."
           else if(shift(j).lt.0) then
-            write(*,*) "Error in b2usr_loads: the EIRENE data on ",
+            write(*,*) "Error in b2usr_loads: the EIRENE data on "//
      w                 "neutral fluxes is incorrect. ",
      w                 "No neutral fluxes will be calculated."
           else
             call b2neut_surfcheck(strg(0,j),j,ny,shift(j))
           end if
           l=1-l
-        end do
+        end do !}
         ifirst=.false.
       end if
 
       write(*,*) "Calculating incident power flux in b2usr_loads"
 
       l=0
-      do j=1,ntrgs
+      do j=1,ntrgs !{
         k=ltrgpos(j)
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
@@ -96,7 +96,7 @@ C AREAS OF THE SURFACE ELEMENTS
 csw 02jan2017 corrected flip of l variable (i.e. put it AFTER iy loop)
         end do
         l=1-l
-      end do
+      end do !}
 
       if(debug_flags(81).gt.0) then
         write(frm,700) ntrgs,char(9) !format string
@@ -125,5 +125,5 @@ C plasma
         end do
         close(3)
       end if
-
+      return
       end subroutine b2usr_loads

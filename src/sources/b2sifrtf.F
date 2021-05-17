@@ -11,8 +11,6 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-!      use b2mod_plasma
-!     , , only : po
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -462,4 +460,4 @@ c   .. apply flux limit
 *-----------------------------------------------------------------------
 *.end b2sifrtf
 
-      end                                                               !srv 01.07.05 }
+      end subroutine b2sifrtf                                           !srv 01.07.05 }

@@ -251,7 +251,7 @@
       call b2wfcp (nout(0), 0, ns)
 *   ..write header to nout(1)
       idum(0) = ns
-      call cfverw (nout(1), newversion)					 !xpb
+      call cfverw (nout(1), newversion)                                 !xpb
       call cfwuin (nout(1), 1, idum, 'ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
 *   ..save physics parameters to nout(1)
@@ -260,15 +260,15 @@
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(2), newversion)					 !xpb
+      call cfverw (nout(2), newversion)                                 !xpb
       call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(3), newversion)					 !xpb
+      call cfverw (nout(3), newversion)                                 !xpb
       call cfwuin (nout(3), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(3), 120, lblmn, 'label')
       call b2wuzd (nout(3), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(5), newversion)					 !xpb
+      call cfverw (nout(5), newversion)                                 !xpb
       call cfwuin (nout(5), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)

@@ -186,7 +186,7 @@ csw 11dec2012, check for solv flags
      &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_'//chns)        !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
-     &  vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                     ! IYS 19.12.2017
+     &  vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                     !IYS 19.12.2017
        if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then
 *   ..replace the incorrect corner values by the interpolated values
@@ -223,7 +223,7 @@ csw 11dec2012, check for solv flags
        endif                                                            !srv 06.07.08 }
       endif
 
-      if (iout.ne.0) then                                            !srv 12.07.02 {
+      if (iout.ne.0) then                                               !srv 12.07.02 {
        if (in_parallel()) then
          !$OMP MASTER
          write(*,*) 'B2NPCO will not write to file in parallel mode'
@@ -240,7 +240,7 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
        endif
-      endif                                                          !srv 12.07.02 }
+      endif                                                             !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then

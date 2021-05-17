@@ -124,7 +124,7 @@ module b2mod_ual_io_grid
     !! Primary IDS classes are:
     !!      Class 1 - nodes/vertices (0D objects)
     !!      Class 2 - edges/faces (1D objects)
-    !!      Class 2 - 2D cells (2D objects)
+    !!      Class 3 - 2D cells (2D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
     !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
@@ -201,9 +201,9 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned faces defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
-    !> Point on active separatrix at outer mid-plane
+    !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
-    !> Point on active separatrix at inner mid-plane
+    !> Point on active separatrix at inner midplane
     integer, parameter :: GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX = 102
     !> Point on active separatrix at outer active target
     integer, parameter :: GRID_SUBSET_OUTER_STRIKEPOINT = 103
@@ -330,8 +330,8 @@ module b2mod_ual_io_grid
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US,                                                                  &
-       &    'Point on active separatrix at outer mid-plane                                                ' , &
-       &    'Point on active separatrix at inner mid-plane                                                ' , &
+       &    'Point on active separatrix at outer midplane                                                 ' , &
+       &    'Point on active separatrix at inner midplane                                                 ' , &
        &    'Point on active separatrix at outer active target                                            ' , &
        &    'Point on active separatrix at inner active target                                            ' , &
        &    'Point on non-active separatrix at outer active target                                        ' , &
@@ -504,37 +504,38 @@ contains
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1) = COORDTYPE_R
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
 
-        !! Have two types of objects: 0d nodes, 1d edges, 2d cells
+        !! Three types of objects: 0D vertices/nodes, 1D faces/edges, 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( NDIM + 1 ) )
 
-        !! Allocate the number of objects of each type
-        !! nodes
+        !! Allocate the number of objects of each type:
+        !! 0D vertices/nodes
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(1)%object( gmap%nVx ) )
-        !! edges
-        !! For SN: gmap%nFcx + gmap%nFcy = nx*( ny+1 ) + ( nx+1 ) * ny
+        !! 1D faces/edges
+        !! For SN: gmap%nFcx + gmap%nFcy = nx*( ny+1 ) + ( nx+1 )*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
-        !! cells
+        !! 2D cells
         !! For SN: gmap%nCv = nx*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(3)%object( gmap%nCv ) )
 
-        !! Fill in node information
+        !! Fill in vertex/node information
         do iVx = 1, gmap%nVx
-            !! Allocate geometry leaf for each node
+            !! Allocate geometry leaf for each vertex/node
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( iVx )%geometry(2) )
-            !! Set geometry (R and Z coordinates) of each node
-            !! The way of writing nodes data identically to the to IDS converted
+            !! Set geometry (R and Z coordinates) of each vertex/node
+            !! The way of writing vertices/nodes data identically to the
+            !! conversion to IDS of
             !! CPO 16151/1000 case, available on (written in 11 October 2017)
-            !! ITER HPC custer in directory
+            !! ITER HPC cluster in directory
             !! /home/ITER/penkod/public/imasdb/solps-iter/3/0
             !! or
             !! /home/ITER/kosl/public/imasdb/solps-iter/3/0
-            !! while on GateWay Marconi
+            !! while on Marconi Gateway
             !! /marconi_work/eufus_gw/work/g2penkod/imasdb/solps-iter/3/0
             !! or
             !! /marconi_work/eufus_gw/work/g2kosl/imasdb/solps-iter/3/0
@@ -542,25 +543,25 @@ contains
               grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
                   &   object( iVx )%geometry(1) = crx( gmap%mapVxix( iVx ),    &
                                                    & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ))
+                                                   & gmap%mapVxIVx( iVx ) )
               grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
                   &   object( iVx )%geometry(2) = cry( gmap%mapVxix( iVx ),    &
                                                    & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ))
+                                                   & gmap%mapVxIVx( iVx ) )
             else if (isymm.eq.3 .or. isymm.eq.4) then
               grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
                   &   object( iVx )%geometry(1) = cry( gmap%mapVxix( iVx ),    &
                                                    & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ))
+                                                   & gmap%mapVxIVx( iVx ) )
               grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
                   &   object( iVx )%geometry(2) = crx( gmap%mapVxix( iVx ),    &
                                                    & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ))
+                                                   & gmap%mapVxIVx( iVx ) )
             end if
 
-            !! Set additional node index (REQUIRED!)
+            !! Set additional vertex/node index (REQUIRED!)
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( iVx )%nodes(1))
+                &   objects_per_dimension(1)%object( iVx )%nodes(1) )
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
                 &   object( iVx )%nodes(1) = iVx
         end do
@@ -569,7 +570,7 @@ contains
         !! Set geometry (R and Z coordinates) of each node
         !! (original b2mod. This node writing order does not work well with the
         !! code used to write 1D objects data (faces/edges). Thats why it is
-        !! currently not used (#if 0) and the the method above is used instead)
+        !! currently not used (#if 0) and the method above is used instead)
         iVx = 0
         do iy = 0, ny-1
             do ix = 0, nx-1
@@ -965,28 +966,28 @@ contains
         !! If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
           if (isymm.eq.0) then
-                call ipgetr ('b2agmt_1d_width', width)
-                call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
-                    &   (/                                                        &
-                    &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
-                    &   /),                                                       &
-                    &   .false. ) !! periodic = .false.
+            call ipgetr ('b2agmt_1d_width', width)
+            call gridSetupStruct1dSpace(                                      &
+                &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
+                &   (/                                                        &
+                &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
+                &   /),                                                       &
+                &   .false. ) !! periodic = .false.
           else
             if ( TOROIDAL_PERIODIC ) then
-                call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
-                    &   (/                                                        &
-                    &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
-                    &   /),                                                       &
-                    &   .true. ) !! periodic = .true.
+              call gridSetupStruct1dSpace(                                      &
+                  &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
+                  &   (/                                                        &
+                  &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
+                  &   /),                                                       &
+                  &   .true. ) !! periodic = .true.
             else
-                call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
-                    &   (/                                                        &
-                    &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
-                    &   /),                                                       &
-                    &   .false. ) !! periodic = .false.
+              call gridSetupStruct1dSpace(                                      &
+                  &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
+                  &   (/                                                        &
+                  &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
+                  &   /),                                                       &
+                  &   .false. ) !! periodic = .false.
             end if
           end if
         end if
@@ -1238,7 +1239,7 @@ contains
         call createGridSubsetForClass( grid_ggd,                &
             &   grid_ggd%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
-            &   "All faces (1D objects) in the domain."  )
+            &   "All faces (1D objects) in the domain." )
 
         !! Grid subset of all x-points
         !! (in one poloidal plane at toroidal index 1)
@@ -1257,7 +1258,7 @@ contains
                 &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),   &
                 &   IDS_CLASS_NODE , xpoints(:, 1), IDS_CLASS_NODE, 1)
 
-        !! Set up specific grid subset by collection faces for regions
+        !! Set up specific grid subset by collecting faces for regions
 
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
@@ -1296,13 +1297,10 @@ contains
                 !! subroutine collectIndexListForRegionSubroutine
                 !! (function collectIndexListForRegion transferred to subroutine,
                 !! as array of certain dimension is required as an output)
-                call collectIndexListForRegionSubroutine( gmap, cflag, region,   &
+                call collectIndexListForRegionSubroutine( gmap, cflag, region, &
                     &   iType, iRegion, indexList2d )
 
                 !! Initialize explicit object list for grid subset
-                !! TODO: Currently taking object indices only from space 1
-                !!      ( %space(1) ). Set
-                !!       to search all spaces
                 call createExplicitObjectListSingleSpace( grid_ggd,     &
                     &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                     &   indexList2d(:,1), sum(cls), 1)
@@ -1679,7 +1677,8 @@ contains
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   idsInt2str(GSubsetCount)//": "//                    &
-               &   trim(gridSubsetName ( iSubset ))//", iType "//idsInt2str(iType) )
+               &   trim(gridSubsetName ( iSubset ))//                  &
+               &   ", iType "//idsInt2str(iType) )
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
@@ -1711,9 +1710,6 @@ contains
             indexList2d(1:isize,:) = indextmp2d(1:isize,:)
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls) , &
                &   indexList2d(:,1), sum(cls), 1)
@@ -1752,9 +1748,6 @@ contains
             &   topix, topiy, indexList2d)
 
         !! Initialize explicit object list for grid subset
-        !! TODO: Currently taking object indices only from space 1
-        !!      ( %space(1) ). Set
-        !!       to search all spaces
         call createExplicitObjectListSingleSpace( grid_ggd,             &
             &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
             &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -1774,9 +1767,6 @@ contains
             &   topix, topiy, indexList2d)
 
         !! Initialize explicit object list for grid subset
-        !! TODO: Currently taking object indices only from space 1
-        !!      ( %space(1) ). Set
-        !!       to search all spaces
         call createExplicitObjectListSingleSpace( grid_ggd,             &
             &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
             &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -1793,9 +1783,9 @@ contains
                 if ( jsep .ne. B2_GRID_UNDEFINED ) then
                     GSubsetCount = GSubsetCount + 1
 
-                    call logmsg( LOGDEBUG,                                      &
-                        &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                        &   idsInt2str(GSubsetCount)//": "//                    &
+                    call logmsg( LOGDEBUG,                                &
+                        &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"// &
+                        &   idsInt2str(GSubsetCount)//": "//              &
                         &   gridSubsetName ( iSubset ) )
 
                     !! Create grid subset with one object list
@@ -1813,9 +1803,6 @@ contains
                     end do
 
                     !! Initialize explicit object list for grid subset
-                    !! TODO: Currently taking object indices only from space 1
-                    !!      ( %space(1) ). Set
-                    !!       to search all spaces
                     call createExplicitObjectListSingleSpace( grid_ggd,     &
                         &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                         &   indexList2d(:,1), sum(cls), 1)
@@ -1849,9 +1836,6 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -1887,9 +1871,6 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -1935,9 +1916,6 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -1975,9 +1953,6 @@ contains
                 &   iSubset, gridSubsetName ( iSubset ) )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -2023,9 +1998,6 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -2063,9 +2035,6 @@ contains
                 &   iSubset, gridSubsetName ( iSubset ) )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                 &   indexList2d(:,1), sum(cls), 1)
@@ -2091,12 +2060,10 @@ contains
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
-            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( jxa, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_POLOIDALPLANE ) =  &
+                &   gmap%mapVxI( jxa, jsep, VX_UPPERLEFT )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2105,9 +2072,9 @@ contains
         !! Inner midplane separatrix
             GSubsetCount = GSubsetCount + 1
 
-            call logmsg( LOGDEBUG,                                      &
-                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   idsInt2str(GSubsetCount)//": "//                    &
+            call logmsg( LOGDEBUG,                                        &
+                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//         &
+                &   idsInt2str(GSubsetCount)//": "//                      &
                 &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX ) )
 
             !! Create grid subset with one object list
@@ -2118,12 +2085,10 @@ contains
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
-            indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( jxi, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_POLOIDALPLANE ) =    &
+                &   gmap%mapVxI( jxi, jsep, VX_UPPERLEFT )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2171,9 +2136,6 @@ contains
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2221,9 +2183,6 @@ contains
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2262,9 +2221,6 @@ contains
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2303,9 +2259,6 @@ contains
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
 
             !! Initialize explicit object list for grid subset
-            !! TODO: Currently taking object indices only from space 1
-            !!      ( %space(1) ). Set
-            !!       to search all spaces
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
                 &   indexList2d(:,1), IDS_CLASS_NODE, 1)
@@ -2365,7 +2318,7 @@ contains
                 &   IDS_CLASS_POLOIDALRADIAL_FACE ), &
                 & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
-            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
+            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &
                 &   BOTTOM, &
                 & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
@@ -2388,6 +2341,7 @@ contains
             &   "find_Midplane_Cells: did not find inner midplane position")
         call xertst( xOut /= huge( xOut ),  &
             &   "find_Midplane_Cells: did not find outer midplane position")
+
     end subroutine find_Midplane_Cells
 
 #endif
@@ -2619,7 +2573,7 @@ contains
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(iCv, 2, 1, 1) = iy
           !! put faces composing the quadrilateral in the list: left face (y-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 1 ) = gmap % mapFcI( ix, iy, LEFT )
-          !! bottom face (x-aligned
+          !! bottom face (x-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 2 ) = gmap % mapFcI( ix, iy, BOTTOM )
           !! right face (y-aligned)
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( iCv, 3 ) = gmap % mapFcI( ix, iy, RIGHT )
@@ -2694,7 +2648,7 @@ contains
       nSubgrid = nSubgrid + 2
 
       call logmsg( LOGDEBUG, "b2ITMFillGridDescription: expecting total of "&
-          &//Int2str(nSubgrid)//" subgrids" )
+          &//int2str(nSubgrid)//" subgrids" )
       allocate( itmgrid % subgrids( nSubgrid ) )
 
       !! Set up generic subgrids
@@ -2726,9 +2680,11 @@ contains
 
       !! B2_SUBGRID_FACES_Y: y-aligned faces.
       !! One implicit object list, range over y faces. Same procedure.
-      call createSubGrid( itmgrid % subgrids( B2_SUBGRID_FACES_Y ), 1, 'y-aligned faces' )
-      call createImplicitObjectList( itmgrid, itmgrid % subgrids( B2_SUBGRID_FACES_Y ) % list(1)&
-          & , CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
+      call createSubGrid( itmgrid % subgrids( B2_SUBGRID_FACES_Y ),  &
+          &   1, 'y-aligned faces' )
+      call createImplicitObjectList( itmgrid,                        &
+          &   itmgrid % subgrids( B2_SUBGRID_FACES_Y ) % list(1),    &
+          &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
       itmgrid % subgrids( B2_SUBGRID_FACES_Y ) % list(1) % indset(1) &
           & = createIndexListForRange( gmap%nFcx + 1, gmap%nFcx + gmap%nFcy )
       if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
@@ -2741,10 +2697,11 @@ contains
       allocate( xpoints(gmap%nsv, SPACE_COUNT) )
       xpoints = 1
       xpoints(:, SPACE_POLOIDALPLANE) = gmap%svi(1:gmap%nsv)
-      call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
+      call createSubGridForExplicitList( itmgrid,     &
+          & itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
 
-      !! Set up specific subgrids by collection faces for regions
+      !! Set up specific subgrids by collecting faces for regions
 
       !! Start counting from end of generic subgrids
       subgridCount = B2_GENERIC_SUBGRID_COUNT
@@ -2914,7 +2871,7 @@ contains
         end do
 
         allocate( indexList(nVx, SPACE_COUNT) )
-        if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE) &
             & indexList(:,SPACE_TOROIDALANGLE) = 1
 
         !! collect indices: repeat above loop with storing indices

@@ -16,7 +16,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
       real (kind=R8) ::
-     *   rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
+     *  rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      &  fac_vis(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1),
@@ -171,13 +171,15 @@ cdjm Jan2017 update particle source components for balance
         enddo
        enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
-      endif                                                             !srv 22.05.18
+      endif                                                           !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:nnreg(0)))) then                  !srv 22.05.18
         call b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,   !srv 13.10.06 26.09.12
-     &    itcnt, rxg, pcm1, pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
-     &    conb, pccb(-1,-1,1), rescb, corpb, aa11, '_b2usc11_'//chns) !srv 18.05.02 02.04.18
+     &    itcnt, rxg, pcm1,
+     &    pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
+     &    conb, pccb(-1,-1,1), rescb, corpb, aa11,
+     &    '_b2usc11_'//chns)                                          !srv 18.05.02 02.04.18
 *   ..apply correction
         call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &   vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                  !IYS 19.12.2017
@@ -191,13 +193,13 @@ cdjm Jan2017 update particle source components for balance
      .         log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .         log(nb(topix(ix,iy),topiy(ix,iy))) -
      &         log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
-     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
+     &                topiy(rightix(ix,iy),rightiy(ix,iy)))))
             if(rightix(ix,iy).eq.nx+1 )
      &        nb(ix,iy) = exp(
      .          log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .          log(nb(topix(ix,iy),topiy(ix,iy))) -
      &          log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
-     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+     &                 topiy(leftix(ix,iy),leftiy(ix,iy)))))
           enddo
           iy=ny
           do ix = -1, nx
@@ -206,13 +208,13 @@ cdjm Jan2017 update particle source components for balance
      .          log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .          log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &          log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
+     &                 bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
             if(rightix(ix,iy).eq.nx+1 )
      &        nb(ix,iy) = exp(
      .          log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .          log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &          log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+     &                 bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
           enddo                                                       !srv 27.06.08 }
         endif                                                         !srv 06.07.08 }
       endif                                                           !srv 22.05.18
@@ -262,4 +264,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2npc11
 
-      end                                                           !srv 02.04.18 }
+      end subroutine b2npc11                                          !srv 02.04.18 }

@@ -10,7 +10,6 @@ cxpb
 cxpb
 
       write(*,*) 'Too many data values on work stack'
-cxpb
       write(*,*) 'Dropping the bottom element!'
       do i = 2,iwrk
         ndim(1,i-1) = ndim(1,i)
@@ -28,19 +27,16 @@ cxpb
         graphlabel(i-1) = graphlabel(i)
       end do
       iwrk = iwrk-1
-cxpb
       return
-      end
+      end subroutine dropstackbottom
 
       subroutine dropeirenestackbottom()
       use b2mod_types
       use b2mod_b2plot
       implicit none
-cxpb
       integer i, iw, is
 
       write(*,*) 'Too many data values on Eirene stack'
-cxpb
       write(*,*) 'Dropping the bottom element!'
       do i = 2,iewrk
         nedim(1,i-1) = nedim(1,i)
@@ -54,19 +50,16 @@ cxpb
         eirene_label(i-1) = eirene_label(i)
       end do
       iewrk = iewrk-1
-cxpb
       return
-      end
+      end subroutine dropeirenestackbottom
 
       subroutine dropwallstackbottom()
       use b2mod_types
       use b2mod_b2plot
       implicit none
-cxpb
       integer i, iw, is
 
       write(*,*) 'Too many data values on wall stack'
-cxpb
       write(*,*) 'Dropping the bottom element!'
       do i = 2,iwwrk
         nwdim(1,i-1) = nwdim(1,i)
@@ -80,20 +73,17 @@ cxpb
         wall_label(i-1) = wall_label(i)
       end do
       iwwrk = iwwrk-1
-cxpb
       return
-      end
+      end subroutine dropwallstackbottom
 
       subroutine droptargetstackbottom()
       use b2mod_types
       use b2mod_wall
       use b2mod_b2plot
       implicit none
-cxpb
       integer i, iw, id
 
       write(*,*) 'Too many data values on target stack'
-cxpb
       write(*,*) 'Dropping the bottom element!'
       do i = 2,itwrk
         do id = 1,ndepth_nml
@@ -104,6 +94,5 @@ cxpb
         target_label(i-1) = target_label(i)
       end do
       itwrk = itwrk-1
-cxpb
       return
-      end
+      end subroutine droptargetstackbottom

@@ -4,7 +4,7 @@
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &  fun(-1:nx,-1:ny), funsx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXSX computes the integrals over cell x-faces of a function
@@ -49,4 +49,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txsx

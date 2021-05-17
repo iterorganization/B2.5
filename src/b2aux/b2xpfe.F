@@ -36,30 +36,34 @@
       do iy = -1, ny
         do is = 0, ns-1
           do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) 
-     >        fne(ix,iy,0) = fne(ix,iy,0) + fna(ix,iy,0,is)*
+            if (leftix(ix,iy).ne.-2) then
+              fne(ix,iy,0) = fne(ix,iy,0) + fna(ix,iy,0,is)*
      .         (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
      .          rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            if (bottomiy(ix,iy).ne.-2) 
-     >        fne(ix,iy,1) = fne(ix,iy,1) + fna(ix,iy,1,is)*
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              fne(ix,iy,1) = fne(ix,iy,1) + fna(ix,iy,1,is)*
      .         (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      .          rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            endif
           enddo
         enddo
         do is = 0, ns_ext-1
           do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) 
-     >        fne(ix,iy,0) = fne(ix,iy,0) + fa_ext(ix,iy,0,is)*
+            if (leftix(ix,iy).ne.-2) then
+              fne(ix,iy,0) = fne(ix,iy,0) + fa_ext(ix,iy,0,is)*
      .         (za_ext(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
      .          za_ext(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            if (bottomiy(ix,iy).ne.-2) 
-     >        fne(ix,iy,1) = fne(ix,iy,1) + fa_ext(ix,iy,1,is)*
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              fne(ix,iy,1) = fne(ix,iy,1) + fa_ext(ix,iy,1,is)*
      .         (za_ext(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      .          za_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            endif
           enddo
         enddo
       enddo

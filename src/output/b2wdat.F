@@ -340,8 +340,10 @@
       call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')           !srv
       call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')           !srv
       if (ismain0.ne.ismain) then
-        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),'csig_inx') !srv
-        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),'csig_iny') !srv
+        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),
+     &                      'csig_inx')                           !srv
+        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),
+     &                      'csig_iny')                           !srv
       endif
       call my_out(70,nx,ny,cvsa(-1,-1,0,ismain),'cvsa')           !srv
       call my_out(70,nx,ny,cvsa_cl(-1,-1,0,ismain),'cvsa_cl')     !srv
@@ -441,7 +443,8 @@
       open(70,file=trim(folder)//'splne.dat')                      !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 
@@ -449,7 +452,8 @@
       open(70,file=trim(folder)//'splte.dat')                     !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 
@@ -457,7 +461,8 @@
       open(70,file=trim(folder)//'splti.dat')                    !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
-     &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),bsp,csp,dsp)
+     &   dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),
+     &          bsp,csp,dsp)
       enddo
       close(70)
 
@@ -476,9 +481,9 @@
         write(70,"(1x,2(es14.6))") crdy_c_cell(nmdpl,iy), ti(nmdpl,iy)
       enddo
       close(70)
-*   ..calculate total energy flux
+*   ..calculate total core energy flux
       iy = 0
-      power=0.0_R8
+      power = 0.0_R8
       do ix = -1, nx
         if(on_closed_surface(ix,iy)) then                     ! for CORE
           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
@@ -721,7 +726,7 @@
       do iy=0,ny-1 !{
         wrk0(5,iy)=wrk0(5,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                                hlp_neu_peak/hlp_s
-      enddo
+      enddo !}
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
@@ -737,7 +742,7 @@
         do iy=0,ny-1 !{
           wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
-        enddo
+        enddo !}
       endif
 #endif
 
@@ -759,7 +764,7 @@
         do iy=0,ny-1 !{
           wrk0(14,iy)=wrk0(14,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                                       hlp_neu_peak/hlp_s
-        enddo
+        enddo !}
 #endif
 ! inner upper target
         hlp_s=0.0_R8
@@ -775,7 +780,7 @@
         do iy=0,ny-1 !{
           wrk0(13,iy)=wrk0(13,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                                 hlp_neu_peak/hlp_s
-        enddo
+        end do !}
 #endif
       end if !}
 
@@ -1056,9 +1061,9 @@
      *     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
        enddo
        close(70)
-*   ..calculate total energy flux
+*   ..calculate total core energy flux
        iy = 0
-       power=0.0_R8
+       power = 0.0_R8
        do ix = -1, nx
          if(on_closed_surface(ix,iy)) then                ! for CORE
            power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
@@ -1319,7 +1324,7 @@
        wrk1=0.0e0_R8
        wrk2=0.0e0_R8
        do iy = 0,mintopcut-1
-         do ix=0,nx
+         do ix = 0,nx
            if(on_closed_surface(ix,iy)) then
              uvbtot=uvbtot+
      &              ua(ix,iy,ismain)*vol(ix,iy)*bb(ix,iy,3)
@@ -1334,7 +1339,7 @@
          enddo
        enddo
        do iy = 0,mintopcut-1
-         do ix=0,nx
+         do ix = 0,nx
            if(on_closed_surface(ix,iy)) then
              wrk2(ix,iy) = -uvbtot/voltot*bb(ix,iy,0)/bb(ix,iy,3)+
      &           (ti(ix,iy)/ne(ix,iy)*
@@ -1452,7 +1457,7 @@
      &   'of the dead region NYISO1', (NYISO1(IS),IS=1,NNISO)
        write (70,*) ' Row number of top right corner ',
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
-       close (70)                                                  !srv
+       close (70)                                                   !srv
 
        open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 

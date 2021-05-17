@@ -136,7 +136,7 @@ c
       end if
 c
 c*** Convert the input wall coordinates into double precision
-c*** and scale them to meters.
+c*** and scale them to metres.
 c*** We have now two sets of the wall segments, one saved by Eirene
 c*** and (another) one read from DG file. Only the segments which are
 c*** identical in both sets are to be used for neutral loading, the rest
@@ -195,7 +195,7 @@ c*** Check the topology of the grid and the list of target edges
           end do
         else if (boundary_namelist.ne.0) then
           ntrgts=0
-          do i=1,nbc
+          do i = 1, nbc
             if(bcchar(i).eq.'E'.or.bcchar(i).eq.'W') then
               if(bcene(i).eq. 3.or.bcene(i).eq.12.or.
      &           bcene(i).eq.15) ntrgts=ntrgts+1
@@ -746,7 +746,7 @@ c*** Limiter configuration. Add the CCW target face
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
                     end if !}
-                 else !}{
+                  else !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
                         write(*,*) 'b2pwlprp: unexpected error. ',

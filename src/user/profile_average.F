@@ -1,13 +1,11 @@
 
       subroutine profile_average (laststep,itim,ntim_batch,nx,ny,ns)
-
       use b2mod_types
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
-
       implicit none
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns
@@ -126,9 +124,9 @@ ctb..as the mean of the product does not equal the product of the means etc.
                call cfruin (iun, 1, idum, 'ntotdt')
                ntotdt = idum(0)
                call cfrure (iun, n2*ns, na_mean, 'na_mean')
-               call cfrure (iun, n2, te_mean, 'te_mean')
-               call cfrure (iun, n2, ti_mean, 'ti_mean')
-               call cfrure (iun, n2, po_mean, 'po_mean')
+               call cfrure (iun, n2,    te_mean, 'te_mean')
+               call cfrure (iun, n2,    ti_mean, 'ti_mean')
+               call cfrure (iun, n2,    po_mean, 'po_mean')
                call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
 
                call cfrure (iun, n2*2*ns, sna_mean, 'sna_mean')
@@ -267,9 +265,9 @@ ctb..as the mean of the product does not equal the product of the means etc.
         call cfwuin (iun, 1, idum, 'ntotdt')
 
         call cfwure (iun, n2*ns, na_mean, 'na_mean')
-        call cfwure (iun, n2, te_mean, 'te_mean')
-        call cfwure (iun, n2, ti_mean, 'ti_mean')
-        call cfwure (iun, n2, po_mean, 'po_mean')
+        call cfwure (iun, n2,    te_mean, 'te_mean')
+        call cfwure (iun, n2,    ti_mean, 'ti_mean')
+        call cfwure (iun, n2,    po_mean, 'po_mean')
         call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
 
         call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')

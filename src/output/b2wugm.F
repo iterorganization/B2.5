@@ -271,7 +271,7 @@ c check right neighbours
      2       'dist=',distval
             endif
             distval=
-     1     dist(cry(ix,iy,3),cry(ixr,rightiy(ix,iy),2))
+     1       dist(cry(ix,iy,3),cry(ixr,rightiy(ix,iy),2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
@@ -292,7 +292,7 @@ c check left neighbours
      .      ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1     dist(cry(ix,iy,0),cry(ixl,leftiy(ix,iy),1))
+     1       dist(cry(ix,iy,0),cry(ixl,leftiy(ix,iy),1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)

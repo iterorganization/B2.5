@@ -21,9 +21,9 @@
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                       !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
+     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1), 
+     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -38,7 +38,7 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-     
+
 *   ..local variables
       integer, save :: pot_eq = 1                                         !srv 26.07.06
       integer, save :: mode = 1
@@ -59,7 +59,8 @@
      *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
+     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny),
+     &   csigia(-1:nx,-1:ny,0:1),                                         !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
 *   ..procedures
       real (kind=R8) ::
@@ -199,7 +200,7 @@
 
 *      ..interpolate fluxes in the cell face
           call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,ismain0),
-     &                                        fnan(-1,-1,0,ismain0))
+     &                                          fnan(-1,-1,0,ismain0))
           if(style.eq.0) then
             do iy=0,ny-1
               do ix=-1,nx
@@ -212,9 +213,9 @@
      &                    log(na(leftix(ix,iy),leftiy(ix,iy),ismain))))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -232,9 +233,9 @@
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -258,10 +259,10 @@
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &            -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &              tib(ix,iy)*(log(na(ix,iy,ismain))-
-     &                  log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain)))
-     &              )/(qe*rza(ix,iy,ismain))
+     &                log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain))))/
+     &              (qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -280,7 +281,7 @@
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -491,4 +492,4 @@
 *-----------------------------------------------------------------------
 *.end b2tinnt
 
-      end
+      end subroutine b2tinnt

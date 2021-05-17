@@ -271,8 +271,8 @@ cxpb  neutrals to be eion=shi/sna.
      *       (vion+vexc)/(vcx+vion+vexc+vnn) 
             dist_end=dist_end-dist_deposit
             if(dist_end.le.0.0_R8) then
-	      ixend = ix
-	      iyend = iy
+              ixend = ix
+              iyend = iy
               exit
             endif
             ptr = ptr + 1

@@ -25,7 +25,8 @@
      *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -365,7 +366,6 @@ ctmp.dpc
            enddo
         enddo
       endif
-
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

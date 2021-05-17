@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl, !srv 20.09.06 { 16.10.17
-     &                    fac_vis, fchvispar)                           !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,         !srv 20.09.06 { 16.10.17
+     &           cvsa_cl, fac_vis, fchvispar)                          !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -43,8 +43,8 @@
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
-     *   dvpar(-1:nx,-1:ny)
-     *  , wrk0(-1:nx,-1:ny)
+     *   dvpar(-1:nx,-1:ny),
+     *   wrk0(-1:nx,-1:ny)
       save ncall, vis_par
 *   ..procedures
       external subini, subend, xertst
@@ -68,7 +68,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of cvsa_cl
-       call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                         !srv 16.10.17
+        call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                        !srv 16.10.17
       endif
 
 c Drift terms
@@ -139,7 +139,7 @@ c Drift terms
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 18.02.00
      &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv
-     &        /3.0e0_R8                                                 !srv 18.02.00
+     &       /3.0e0_R8                                                  !srv 18.02.00
             endif                                                       !srv 26.11.02
           enddo
         enddo
@@ -167,4 +167,4 @@ c Drift terms
 *-----------------------------------------------------------------------
 *.end b2tvspa
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tvspa                                            !srv 20.09.06 }

@@ -4,8 +4,8 @@
       subroutine b2usmo (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
      &  rxg, vol, hx, hz, bb, rob, rzb, pb, pz, ub,                  !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
-      use b2mod_indirect
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
       use b2mod_openmp
@@ -141,8 +141,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-1) = 0.0_R8
         else
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          t0 =  flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
-          t1 = -flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t0 =  flcb(ix,iy,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t1 = -flcb(ix,iy,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
          else
           t0 =  flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
           t1 = -flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
@@ -176,8 +178,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-2) = 0.0_R8
         else
          if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
-          t1 = -flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t0 =  flcb(ix,iy,1)/2.0_R8 -
+     &          hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t1 = -flcb(ix,iy,1)/2.0_R8 -
+     &          hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
          else
           t0 =  flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
           t1 = -flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
@@ -197,10 +201,10 @@ cxpb
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
      &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
-           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2-
+           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2.0_R8-
      &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                cvsb(topix(ix,iy),topiy(ix,iy),1))
-            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
+            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2.0_R8-
      &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                 cvsb(topix(ix,iy),topiy(ix,iy),1))
             itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -271,4 +275,4 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2usmo
 
-      end
+      end subroutine b2usmo

@@ -23,7 +23,8 @@
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
-     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
+     &  fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -240,10 +241,10 @@
         write (header,fmth2) 'PARALLEL VELOCITY (m/s).', is, t0/100
         write (nprt,fmtp) '+cpua', header
         call b2wgx2 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
-     1	 1.0_R8,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
-     1	 1.0_R8,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
      &    wrkx, wrky)
        enddo

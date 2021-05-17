@@ -700,8 +700,8 @@
      &  (hy1(topix(ixref,-1),topiy(ixref,-1))+
      &   hy1(topix(topix(ixref,-1),topiy(ixref,-1)),
      &       topiy(topix(ixref,-1),topiy(ixref,-1))))
-       do ispecies=0, nsl-1
-         do istate=0, ncl(ispecies)-1
+       do ispecies=0,nsl-1
+         do istate=0,ncl(ispecies)-1
            if (on_closed_surface(ixref,-1)) then
              dd(ispecies,istate,-1)=dd(ispecies,istate,
      &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,

@@ -19,7 +19,8 @@
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
-     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
+     &  fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -217,34 +218,34 @@
       if (strmas(idout,'cphe')) then
        t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,0),1))
        write (header,fmth)
-     1	'x-directed electron heat flux (unit).', t0/100.
+     1  'x-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,0),
-     1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
+     1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
        t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,1),1))
        write (header,fmth)
-     1	'y-directed electron heat flux (unit).', t0/100.
+     1  'y-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,1),
-     1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
+     1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
       endif
 *   ..make contour plots of all atom heat flux
       if (strmas(idout,'cphi')) then
        t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,0),1))
        write (header,fmth)
-     1	'x-directed all atom heat flux (unit).', t0/100.
+     1  'x-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,0),
-     1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
+     1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
        t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,1),1))
        write (header,fmth)
-     1	'y-directed all atom heat flux (unit).', t0/100.
+     1  'y-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,1),
-     1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
+     1   0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
       endif
 
@@ -315,7 +316,7 @@
       if (strmas(idout,'fhex')) then
        write (header,'(a,t44,a)')
      &   'Y-DIRECTED ELECTRON (ATOM) HEAT FLUX (SO)',
-     1	 'AS FUNCTION OF X'
+     1   'AS FUNCTION OF X'
        write (nprt,fmtp) '+fhex', header
        call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fhex',
      &   header)

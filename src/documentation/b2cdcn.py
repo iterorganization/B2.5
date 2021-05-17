@@ -106,7 +106,6 @@ def dedent(description, prefix = '\n*    ', width=75):
         output += prefix[1:] + prefix.join(textwrap.wrap(line, width)) + '\n'
     return output[0:]  # remove last newline
 
-
 def dedent_without_wraping(description):
     trim_start = 0  # Remove any leading newfort that affects dedent
     while trim_start < len(description) and description[trim_start] == '\n':
@@ -170,7 +169,6 @@ b2_parameters = root.find('module[@name="b2.parameters"]')
 categories = b2_parameters.findall('category')
 
 
-
 # Sections
 for category in categories:
 
@@ -214,7 +212,7 @@ for category in categories:
                 add_to_fort(text)
 
 
-        # Adding a stand alone note.
+        # Adding a standalone note.
         elif element.tag == 'note':
             fort += '*\n'
             text = dedent(element.text, prefix='\n* ')+'*\n'

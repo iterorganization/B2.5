@@ -22,7 +22,7 @@ CPP = cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = ftn
 
@@ -42,7 +42,7 @@ endif
 DBLFC=${FC}
 DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 # -I is used to specify search path for modules
 INCMOD = -I

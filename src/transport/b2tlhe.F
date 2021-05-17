@@ -1,4 +1,4 @@
-      subroutine b2tlhe (nx, ny, me, cflme, bb, gs, pbsx, qc, ne, te, 
+      subroutine b2tlhe (nx, ny, me, cflme, bb, gs, pbsx, qc, ne, te,
      &  chvemx)
       use b2mod_types
       use b2mod_indirect
@@ -52,7 +52,7 @@
         if(leftix(ix,iy).eq.-2) then
           chvemx(ix,iy) = 0.0_R8
         else
-cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_model, 
+cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_model,
 c    because now both options are interchangeable
           if (model.eq.1.or.model.eq.3) then  ! SOLPS5.0 treatments
             t0 = max(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
@@ -61,15 +61,15 @@ c    because now both options are interchangeable
           else if (model.eq.2) then  ! SOLPS4.0 treatment
             t0 = te(ix,iy)
             t1 = te(leftix(ix,iy),leftiy(ix,iy))
-cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same information 
+cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same information
 c           as case b2tqce_model.eq.1
-c           Removes need for different treatment later on in the code (b2tfhe), and 
+c           Removes need for different treatment later on in the code (b2tfhe), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
             chvemx(ix,iy) = cflme * gs(ix,iy,0) *
      .       (ne(ix,iy)*pit(ix,iy)*sqrt(t0/me)*t0 +
      .        ne(leftix(ix,iy),leftiy(ix,iy))*
      .        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/
-     .       ((ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*max(t0,t1))  
+     .       ((ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*max(t0,t1))
             if (area_fix.ge.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy)
           endif
         endif

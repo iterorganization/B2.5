@@ -1,5 +1,5 @@
-      subroutine b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,              !srv 10.10.17
-     &   qz, bb, avisper, bvisper, cvisper)
+      subroutine b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
+     &   avisper, bvisper, cvisper)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -12,11 +12,11 @@
       integer nx, ny, ns
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3) 
+     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1)
+     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
+     &   cvisper(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.declarations
 

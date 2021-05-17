@@ -38,7 +38,6 @@ program b2_ual_write
     use eirmod_comusr
     use eirmod_extrab25
 #endif
-
     implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror
@@ -122,7 +121,7 @@ program b2_ual_write
     device_env = ' '
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device_env)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
@@ -177,7 +176,7 @@ program b2_ual_write
 #endif
         &  tim, dtim, shot, run, database, version )
 
-    !! Create Write the set data to IDSs
+    !! Create/Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &

@@ -129,8 +129,8 @@ c         frequency.
 
           else
 
-           call viscol(nsdecl, nzdecl, nsl, is, ic, ntau, m, t, xi, 
-     +                 ncl, x, den, nud, nue)
+           call viscol(nsdecl, nzdecl, nsl, is, ic, ntau, m, t,
+     +                 xi, ncl, x, den, nud, nue)
            nut = 3*nud + real(nenergy)*nue
 
 
@@ -242,6 +242,6 @@ c         frequency.
          
 
       return 
-      end
+      end subroutine viscos
 
 

@@ -31,7 +31,7 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
       INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
-      real, ALLOCATABLE :: MM(:,:),BB(:,:), rr(:),zz(:),rout(:),zout(:),
+      real, ALLOCATABLE :: MM(:,:),BB(:,:),rr(:),zz(:),rout(:),zout(:),
      . dd(:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat',
      . OUTFILE0 = 'mnb_in.dat'

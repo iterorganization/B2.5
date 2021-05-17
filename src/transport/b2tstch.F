@@ -59,10 +59,10 @@
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
-     &	 'faulty internal parameter sig_stoch')
+     &   'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
-     &	 'faulty internal parameter delta_stoch')
+     &   'faulty internal parameter delta_stoch')
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)
@@ -118,4 +118,4 @@
 *-----------------------------------------------------------------------
 *.end b2tstch
 
-      end                                                              !lk 31.01.08 }
+      end subroutine b2tstch                                            !lk 31.01.08 }

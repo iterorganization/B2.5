@@ -11,7 +11,7 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
+     *  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
@@ -281,7 +281,7 @@
        if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+      if (iout.ne.0) then
         allocate(w1(-1:nx,-1:ny))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -306,11 +306,11 @@
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
-       endif
+      endif
 
 *   ..return
       ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlh0

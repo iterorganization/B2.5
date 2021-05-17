@@ -60,8 +60,8 @@
 *   ..calculate the coefficients in difference approximation
 *     of viscosity perpendicular current
       kmpr = nb/pb
-      call b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz,            !srv 02.04.18
-     &    bb, zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
+      call b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz, bb,   !srv 02.04.18
+     &    zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
 
       aa7 = 0.0_R8
 

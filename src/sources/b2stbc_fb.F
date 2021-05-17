@@ -27,7 +27,7 @@
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
 *   ..common blocks
@@ -218,8 +218,10 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhm(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhe(-1:nx,-1:ny,0:1),
+     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -622,7 +624,7 @@
      .            bccon(isfeedback,ib).eq.12
                end if
              end if
-             if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8) 
+             if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8)
      >        then
                if (mod(region(bc_list_x(1,ib),
      >                        bc_list_y(1,ib),0),4).eq.3) then
@@ -897,15 +899,14 @@
                   endif
                   na_feedback_current = 0.0_R8
                   sum_e = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
+                  is_start = -1
+                  is_end = -1
+                  do is = 0, ns-1
                     if(b2espcr(is).eq.ispecies+1) then
                       if(is_start.eq.-1) is_start=is
                       if(is_neutral(is).and.use_eirene.ne.0) cycle
                       do ix = 0, nx-1
-                        if(on_closed_surface(ix,jsep))
-     >                      then
+                        if(on_closed_surface(ix,jsep)) then
                           na_feedback_current =
      &                           na_feedback_current + (na(ix,jsep,is) +
      &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
@@ -917,7 +918,7 @@
                           end if
                         endif
                       enddo
-                      is_end=is
+                      is_end = is
                     endif
                   enddo
                   na_feedback_current = na_feedback_current/sum_e
@@ -1093,7 +1094,7 @@
                        na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
-                       do is=0, ns-1
+                       do is = 0, ns-1
                          if(b2espcr(is).eq.ispecies+1) then
                            if(is_start.eq.-1) is_start=is
                            do iy = -1, ny
@@ -1140,7 +1141,7 @@
                end select
 
                write(*,'(a,1x,1p,i3,6g15.6)')
-     &              'na_feedback_rescale ', ispecies+1, 
+     &              'na_feedback_rescale ', ispecies+1,
      &              na_feedback_current,
      &              na_feedback_target(ispecies),
      &              na_feedback_rescale,
@@ -1684,7 +1685,7 @@ c new attempt
             nesepm_integral_error =
      1       nesepm_gamma * nesepm_integral_error +
      1       (1-nesepm_gamma)* nesepm_error
-            write(*,'(a,1p,2e15.7)') 
+            write(*,'(a,1p,2e15.7)')
      .       'nesepm_error, nesepm_integral_error= ',
      1        nesepm_error, nesepm_integral_error
             cbsna(0,isfeedback,solregno) =

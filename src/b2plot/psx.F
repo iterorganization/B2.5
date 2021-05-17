@@ -24,7 +24,7 @@ c
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine psx
 c
       subroutine psxperp()
       use b2mod_types
@@ -52,4 +52,4 @@ c
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine psxperp

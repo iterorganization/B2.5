@@ -622,7 +622,8 @@ cxpb and far enough away from the OAp line
      .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
               distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
      .         sqrt((yap-yo)**2+(xo-xap)**2)
-              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8)) then
+              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8))
+     .         then
                 ik = min(ik,i)
                 xbp = xo + (xbm-xo) + (xap-xo)
                 ybp = yo + (ybm-yo) + (yap-yo)
@@ -754,8 +755,9 @@ cxpb          North boundary
               enddo
             else if (leftix(imapx(ibnd),imapy(ibnd)).eq.-2) then
 cxpb          West boundary
-              qpl = max(0.0_R8,-fht(rightix(imapx(ibnd),imapy(ibnd)),
-     &                              rightiy(imapx(ibnd),imapy(ibnd)),0))
+              qpl = max(0.0_R8,
+     &                 -fht(rightix(imapx(ibnd),imapy(ibnd)),
+     &                      rightiy(imapx(ibnd),imapy(ibnd)),0))
      &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
      &               rightiy(imapx(ibnd),imapy(ibnd)),0)
               qex = max(0.0_R8,

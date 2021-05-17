@@ -3,11 +3,12 @@
 
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
-     &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
+     &  rxf, BoRiS, fac_ExB,
+     &  hx, hy, qz, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht,  !srv 10.11.02
-     &  corte, corti, ierr)
+     &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
+     &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_tallies                                                 !srv 22.05.18
@@ -21,7 +22,7 @@
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
-     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
+     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                         !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
@@ -34,8 +35,9 @@
      *  na(-1:nx,-1:ny,0:ns-1), fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)   !srv 07.07.09
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)                                  !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvtreg(0:nregionv),                                           !srv 22.05.18
@@ -47,7 +49,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *   reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
+     *  reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
      &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                    !srv 10.11.02
 *   ..common blocks
@@ -189,11 +191,9 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, qz, vol, bb, pbs,                                       !xpb !srv 05.07.17
-     &  lnlam, na, ua, ue, te, ti, po, ne, ni,                          !srv 01.07.09
-     &  fch, cvsa, fchdia, uadia, wadia, vaecrb,                        !xpb
-     &  she0, shi0)                                                     !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz,
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,            !srv 01.07.09
+     &  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)            !xpb
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qz, vol, bb, pbs, lnlam,
@@ -249,7 +249,7 @@ cdjm Jan2017 update particle source components for balance
      &    .or.get_residuals.eq.1) reshe = reshe - shei
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) reshi = reshi + shei
-      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0            
+      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
      &   resht = reshe + reshi                                          !srv 22.05.18 }
 
@@ -329,4 +329,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2nph9                                                            !srv 02.01.07 }
 
-      end
+      end subroutine b2nph9

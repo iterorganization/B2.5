@@ -142,10 +142,10 @@
       call cfopen (nout(5),'b2yt.files','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(4), b2frates_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(4), b2frates_version)                            !xpb
       call cfverr (ninp(8), b2fparam_version)                            !xpb
 *   ..obtain nx, ny, ns from old state file
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')

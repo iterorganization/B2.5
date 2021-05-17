@@ -34,7 +34,7 @@
 *$$$  call subend ()
       return
 *     -----------------------------------------------------------------
-      end
+      end subroutine b2xvfy
 
 *     -----------------------------------------------------------------
       subroutine b2xvfy1(nx, ny, funy, vrname, bottomiy1)
@@ -65,4 +65,4 @@
 *$$$  call subend ()
       return
 *     -----------------------------------------------------------------
-      end
+      end subroutine b2xvfy1

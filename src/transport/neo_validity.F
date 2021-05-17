@@ -450,7 +450,7 @@ c     conversion of constants to CGS units
 *   ..return
       call subend ()
       return
-      end
+      end subroutine neo_validity
 
       subroutine chang_hinton(nx,ny,ns,jsep,jxa,lambda,safetyfactor,
      1 cr,cz,crx,bb,ne,te,ti,na,transport)
@@ -611,7 +611,7 @@ c#     include "b2cmpa.h"
       enddo
       call subend ()
       return
-      end
+      end subroutine chang_hinton
 
 
 

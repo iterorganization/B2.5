@@ -2822,10 +2822,10 @@ cdjm Update ion heat sources
       call write_cdf_text(ncid,'species',species_name(0:nsd-1),vdims,2)
 *   ..b2mndr_eirene:
       use_eirene=0
-      call ipgeti ('b2mndr_eirene',use_eirene)
+      call ipgeti ('b2mndr_eirene', use_eirene)
       call write_cdf_int_single(ncid,'b2mndr_eirene',use_eirene,n1id)
 *   ..fac_hz:
-      call ipgetr ('b2mndr_hz',fac_hz)
+      call ipgetr ('b2mndr_hz', fac_hz)
       call write_cdf_double_single(ncid,'b2mndr_hz',fac_hz,n1id)
 *   ..za:
       vdims(1)=nsid

@@ -8,7 +8,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_geo
-     &    , only : hx, hy, vol, bb
+     & , only : hx, hy, vol, bb
       use b2mod_plasma
      & , only : fch_pi_f, fch_pi_c                                       !srv 13.01.17
       use b2mod_rates
@@ -21,7 +21,8 @@
      &   csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   ehx(-1:nx,-1:ny), zeff(-1:nx,-1:ny), fch_p(-1:nx,-1:ny,0:1)
+     &   ehx(-1:nx,-1:ny), zeff(-1:nx,-1:ny),
+     &   fch_p(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -118,4 +119,4 @@
 *-----------------------------------------------------------------------
 *.end b2tcpa
 
-      end
+      end subroutine b2tcpa

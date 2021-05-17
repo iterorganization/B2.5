@@ -15,7 +15,7 @@
      &  na(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *	sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1)                   !sv 01.07.99 !xpb
+     *  sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1)                   !sv 01.07.99 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -140,4 +140,4 @@
 *-----------------------------------------------------------------------
 *.end b2tqin
 
-      end
+      end subroutine b2tqin

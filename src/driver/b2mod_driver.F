@@ -113,7 +113,8 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
+      integer n2, itim, ierr, edition, b2time, coronal,
+     *  use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -884,12 +885,12 @@
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
-       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
+       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1161,7 +1162,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
          call xertst (nscx.lt.nscxmax,
-     1    'too many neutral hydrogen species')
+     1    'too many neutral hydrogenic species')
          iscx(nscx) = is
          nscx = nscx+1
         endif
@@ -1580,17 +1581,18 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
            na(:,:,is) = na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+
      .             na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0_R8)
-           fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
-           fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
-           fna_fcor(:,:,0:1,is) =
-     .      fna_fcor(:,:,0:1,is)*(-density_rescale)
-           fna_nodrift(:,:,0:1,is) =
-     .      fna_nodrift(:,:,0:1,is)*(-density_rescale)
-           fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*(-density_rescale)
-           fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*(-density_rescale)
-           fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
-           fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
-           fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
+           fna(:,:,:,is) = fna(:,:,:,is)*(-density_rescale)
+           fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*(-density_rescale)
+           fna_fcor(:,:,:,is) =
+     .      fna_fcor(:,:,:,is)*(-density_rescale)
+           fna_nodrift(:,:,:,is) =
+     .      fna_nodrift(:,:,:,is)*(-density_rescale)
+           fna_he(:,:,:,is) = fna_he(:,:,:,is)*(-density_rescale)
+           fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*(-density_rescale)
+           fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*(-density_rescale)
+           fna_32(:,:,:,is) = fna_32(:,:,:,is)*(-density_rescale)
+           fna_52(:,:,:,is) = fna_52(:,:,:,is)*(-density_rescale)
+           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1640,16 +1642,16 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
         do is=0,ns-1
           if(is_neutral(is)) then
             na(:,:,is) = na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
-            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
-            fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
-            fna_nodrift(:,:,0:1,is) =
-     .       fna_nodrift(:,:,0:1,is)*neutral_rescale
-            fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*neutral_rescale
-            fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*neutral_rescale
-            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
-            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
-            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
+            fna(:,:,:,is) = fna(:,:,:,is)*neutral_rescale
+            fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*neutral_rescale
+            fna_fcor(:,:,:,is) = fna_fcor(:,:,:,is)*neutral_rescale
+            fna_nodrift(:,:,:,is) =
+     .       fna_nodrift(:,:,:,is)*neutral_rescale
+            fna_he(:,:,:,is) = fna_he(:,:,:,is)*neutral_rescale
+            fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*neutral_rescale
+            fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*neutral_rescale
+            fna_32(:,:,:,is) = fna_32(:,:,:,is)*neutral_rescale
+            fna_52(:,:,:,is) = fna_52(:,:,:,is)*neutral_rescale
             kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
@@ -1940,8 +1942,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nx, ny, ns, nxtl, nxtr,
-     &     ismain, ismain0, nscx, iscx, itim, dtim, ntim, ierr)
+          call b2mndt (nout, nx, ny, ns, nxtl, nxtr, ismain, ismain0,
+     &     nscx, iscx, itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2124,8 +2126,6 @@ c new CDF movie option
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         endif
-c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
-c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)

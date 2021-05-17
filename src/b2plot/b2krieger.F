@@ -100,4 +100,4 @@ c
       deallocate(n_hlp,v_hlp)
       return
 c=======================================================================
-      end
+      end subroutine b2krieger

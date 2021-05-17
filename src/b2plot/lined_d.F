@@ -24,9 +24,9 @@ c      write(*,*) 'lined: ',xas,yas,xbs,ybs
         else
           call clip_line(xas,yas,xbs,ybs,xlo,ylo,xhi,yhi)
           if(xlo.le.xas.and.xas.le.xhi.and.
-     1	     ylo.le.yas.and.yas.le.yhi.and.
-     1	     xlo.le.xbs.and.xbs.le.xhi.and.
-     1	     ylo.le.ybs.and.ybs.le.yhi) call lined(xas,yas,xbs,ybs)
+     1       ylo.le.yas.and.yas.le.yhi.and.
+     1       xlo.le.xbs.and.xbs.le.xhi.and.
+     1       ylo.le.ybs.and.ybs.le.yhi) call lined(xas,yas,xbs,ybs)
         endif
       elseif(yas.lt.0.and.ybs.lt.0) then
         call lastd

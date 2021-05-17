@@ -35,7 +35,7 @@ module b2mod_ual_io_data
      &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
      &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
      &          IDS_CLASS_POLOIDALRADIAL_FACE
-    use ids_grid_subgrid  & ! IGNORE
+    use ids_grid_subgrid  &    ! IGNORE
      & , only : getGridSubsetSize
 
     implicit none
@@ -156,11 +156,11 @@ contains
             !< handing data field values
 
         !! Internal variables
-        integer :: nobjs    !< Total number of objects
-        integer :: iobj     !< Object index (iterator)
-        integer :: ifc      !< Face index
-        integer :: icv      !< Cell index
-        integer :: ivx      !< vertex index
+        integer :: nObjs    !< Total number of objects
+        integer :: iObj     !< Object index (iterator)
+        integer :: iFc      !< Face index
+        integer :: iCv      !< Cell index
+        integer :: iVx      !< vertex index
         type(GridObject) :: curObj
 
         !! .neqv. is xor (exclusive or)
@@ -168,12 +168,12 @@ contains
         !! TODO: FIX
         !call assert( present(b2CellData) .neqv. present(b2FaceData) )
         !! Allocate result vector according to grid subset size
-        nobjs = getGridSubsetSize( grid%grid_subset( gridSubsetInd ) )
-        allocate( idsdata( nobjs ) )
+        nObjs = getGridSubsetSize( grid%grid_subset( gridSubsetInd ) )
+        allocate( idsdata( nObjs ) )
         !! Collect all data items for the grid subset objects
-        do iobj = 1, nobjs
+        do iObj = 1, nObjs
             !! Get the object descriptor
-            curObj = getGridSubsetObject( grid%grid_subset( gridSubsetInd ), iobj )
+            curObj = getGridSubsetObject( grid%grid_subset( gridSubsetInd ), iObj )
             if( present( b2CellData ) ) then
                 !! Cell data case
                 !! check that it is a cell
@@ -181,13 +181,13 @@ contains
                     &   "Assert error 1 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
                 !! get the subobject index for the face in the 2d poloidal
                 !! plane space
-                icv = curObj%ind(SPACE_POLOIDALPLANE)
-                if( icv .eq. 0 ) then
-                   idsdata( iobj ) = 0.0 !! TODO DP skip when no index present
+                iCv = curObj%ind(SPACE_POLOIDALPLANE)
+                if( iCv .eq. 0 ) then
+                   idsdata( iObj ) = 0.0 !! TODO DP skip when no index present
                 else
                                 !! copy data
-                   idsdata( iobj ) =   &
-                      & b2CellData( gmap%mapCvix( icv ), gmap%mapCviy( icv ) )
+                   idsdata( iObj ) =   &
+                      & b2CellData( gmap%mapCvix( iCv ), gmap%mapCviy( iCv ) )
                 end if
             else if( present( b2FaceData ) ) then
                 !! Face data case
@@ -197,10 +197,10 @@ contains
                     &   "Assert error 2 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
                 !! get the subobject index for the face in the 2d poloidal
                 !! plane space
-                ifc = curObj%ind( SPACE_POLOIDALPLANE )
+                iFc = curObj%ind( SPACE_POLOIDALPLANE )
                 !! copy data
-                idsdata( iobj ) = b2FaceData( gmap%mapFcix( ifc ),  &
-                    &   gmap%mapFciy( ifc ), gmap%mapFcIFace( ifc ) )
+                idsdata( iObj ) = b2FaceData( gmap%mapFcix( iFc ),  &
+                    &   gmap%mapFciy( iFc ), gmap%mapFcIFace( iFc ) )
             else if( present( b2VertexData )) then
                 !! Vertex/Node data case
                 !! check that it is a vertex
@@ -208,10 +208,10 @@ contains
                     &   "Assert error 3 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
                 !! get the subobject index for the face in the 2d poloidal
                 !! plane space
-                ivx = curObj%ind( SPACE_POLOIDALPLANE )
+                iVx = curObj%ind( SPACE_POLOIDALPLANE )
                 !! copy data
-                idsdata( iobj ) =   &
-                    &   b2VertexData( gmap%mapVxix( ivx ), gmap%mapVxiy( ivx ) )
+                idsdata( iObj ) =   &
+                    &   b2VertexData( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ) )
             end if
         end do
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
@@ -291,7 +291,7 @@ contains
     real(ITM_R8), intent(in), optional :: b2VertexData(-1:gmap%b2nx, -1:gmap%b2ny)
 
     !! internal
-    integer :: nobjs, iobj, ifc, icv, ivx
+    integer :: nObjs, iObj, iFc, iCv, iVx
     type(GridObject) :: curObj
 
     !! .neqv. is xor (exclusive or)
@@ -300,13 +300,13 @@ contains
     !call assert( present(b2CellData) .neqv. present(b2FaceData) )
 
     !! Allocate result vector according to subgrid size
-    nobjs = gridSubGridSize( grid%subgrids(subgridId) )
-    allocate( cpodata(nobjs) )
+    nObjs = gridSubGridSize( grid%subgrids(subgridId) )
+    allocate( cpodata(nObjs) )
 
     !! Collect all data items for the subgrid objects
-    do iobj = 1, nobjs
+    do iObj = 1, nObjs
         !! Get the object descriptor
-        curObj = subGridGetObject( grid%subgrids(subgridId), iobj )
+        curObj = subGridGetObject( grid%subgrids(subgridId), iObj )
 
         if (present(b2CellData)) then
             !! Cell data case
@@ -314,27 +314,27 @@ contains
             call xertst( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ), &
                 "Assert error 1 (cell test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
-            icv = curObj%ind(SPACE_POLOIDALPLANE)
+            iCv = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2CellData( gmap%mapCvix(icv), gmap%mapCviy(icv) )
+            cpodata(iObj) = b2CellData( gmap%mapCvix(iCv), gmap%mapCviy(iCv) )
         else if (present(b2FaceData)) then
             !! Face data case
             !! check that it is a face
             call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ), &
                 "Assert error 2 (face test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
-            ifc = curObj%ind(SPACE_POLOIDALPLANE)
+            iFc = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2FaceData( gmap%mapFcix(ifc), gmap%mapFciy(ifc), gmap%mapFcIFace(ifc) )
+            cpodata(iObj) = b2FaceData( gmap%mapFcix(iFc), gmap%mapFciy(iFc), gmap%mapFcIFace(iFc) )
         else if (present(b2VertexData)) then
             !! Vertex/Node data case
             !! check that it is a vertex
             call xertst( all( curObj%cls == CLASS_NODE(1:SPACE_COUNT) ), &
                 "Assert error 3 (vertex test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
-            ivx = curObj%ind(SPACE_POLOIDALPLANE)
+            iVx = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2VertexData( gmap%mapVxix(ivx), gmap%mapVxiy(ivx) )
+            cpodata(iObj) = b2VertexData( gmap%mapVxix(iVx), gmap%mapVxiy(iVx) )
         end if
 
     end do

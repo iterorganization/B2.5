@@ -109,7 +109,7 @@ C Done.
       enddo
 #endif
       RETURN
-      END
+      END SUBROUTINE COLOR
 c
       integer function no_available_colors(ityp)
       use b2mod_types
@@ -138,7 +138,7 @@ c
         else
           choose_color=MOD(icol,int(NCOL*partition_colors))+2
         endif
-      else
+       else
         if(fill_option.eq.0) then
           choose_color=(icol)*NCOL*(1-partition_colors)/(ncont+3)+2+
      1     (NCOL*partition_colors)
@@ -152,10 +152,10 @@ c
         choose_color=(icol)*NCOL/(ncont+3)+2
       else
         choose_color=MOD(icol,NCOL)+2
-      endif
+       endif
       endif
       return
-      end
+      end function choose_color
 c
       subroutine set_partition_colors(val)
       use b2mod_types
@@ -168,5 +168,5 @@ c
       partition_colors=val
       endif
       return
-      end
+      end subroutine set_partition_colors
 

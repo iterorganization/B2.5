@@ -1010,7 +1010,6 @@ cxpb  Use explicit writing of non-default elements only
       write(99,'(a1)') '/'
       close(99)
       return
-
       end subroutine b2yt_wall
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,

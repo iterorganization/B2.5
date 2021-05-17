@@ -4,7 +4,7 @@
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
+     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  vol(-1:nx,-1:ny), fch_pi_c(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

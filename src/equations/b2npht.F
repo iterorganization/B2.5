@@ -33,7 +33,8 @@
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)                                   !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvtreg(0:nregionv),                                            !srv 22.05.18
@@ -80,7 +81,7 @@
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
-      integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
@@ -197,9 +198,9 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, vol,  !xpb !srv 05.07.17
-     &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,              !srv 01.07.09
-     &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)                   !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz,       !xpb !srv 05.07.17
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,              !srv 01.07.09
+     &  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)              !xpb
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qz, vol, bb, pbs, lnlam,

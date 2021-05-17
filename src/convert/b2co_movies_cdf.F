@@ -126,14 +126,14 @@ c prepare the b2movies.nc.xxxx file
       extension='xxxx'
 #else
 #ifdef NAGFOR
-        call get_environment_variable('PLASMASTATE',
-     .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('PLASMASTATE',value=plasmastate)
-          extension=plasmastate(lenval-3:lenval)
-        elseif (ierror.eq.1) then
-          extension='xxxx'
-        endif
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)

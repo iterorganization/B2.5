@@ -60,7 +60,7 @@
 *!!   IMPORTANT NOTE 0: This STRAHL package does not include rate
 *!!   coefficients for charge exchange. The value returned by the
 *!!   present code is the responsibility of BJB, who has no expertise
-*!!   in this matter. The cx rate coefficients supplied here for
+*!!   in this matter. The CX rate coefficients supplied here for
 *!!   helium might be particularly bad. (See the code for further
 *!!   comments.)
 *
@@ -179,7 +179,7 @@
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
      &  zs7, zz, zzz, cxcoef, temp, dens
       real (kind=R8) ::
-     *   cutlo, cutll, t0, t1, t2
+     *  cutlo, cutll, t0, t1, t2
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 

@@ -316,7 +316,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                         !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
@@ -716,9 +716,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      2            fchdia(ix,iy,1))*uadia(ix,iy,0,is))
 *   ..case where the mesh is discontinuous
               else
-                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0)*uadia(ix,iy,1,is)-
-     1           0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1)+
-     2                   fchdia(ix,iy,1))*uadia(ix,iy,0,is))
+                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0)*
+     1            uadia(ix,iy,1,is)
+     1           -0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1)+
+     2                    fchdia(ix,iy,1))*uadia(ix,iy,0,is))
               endif
               she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)
               she0(ix,iy,3) = she0(ix,iy,3)+
@@ -742,8 +743,8 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
       end subroutine b2sihs
 c
-      subroutine b2sdia (nx, ny, ns, na, ne, ti, te, 
-     . bb, vol, hx, hy, qz,
+      subroutine b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,
+     . hy, qz,
      1 she, shi, facdrift)                                               !xpb
       use b2mod_types
       use b2mod_rates

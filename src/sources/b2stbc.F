@@ -1,12 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
+      subroutine b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
-     1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
+     1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
@@ -34,7 +34,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), 
+     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
@@ -47,8 +47,10 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1), 
-     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  fhe(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
@@ -60,7 +62,8 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
      &  fchinert(-1:nx,-1:ny,0:1),                                       !srv 21.10.02 }
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 25.02.00
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1),       !srv 13.10.06
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06
+     &  fchanml(-1:nx,-1:ny,0:1),
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)             !srv 28.10.02
       real (kind=R8) ::
@@ -70,7 +73,7 @@
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
@@ -120,7 +123,7 @@
      1   shi0ep/1.0e-36_R8/, diagno/0/,
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
-     4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
+     4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/,
      5   sheath_drift_fix/1/
 *-----------------------------------------------------------------------
 *.computation
@@ -131,13 +134,13 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2stbc_sna0ep', sna0ep)
-       call xertst (0.0_R8.le.sna0ep, 
+       call xertst (0.0_R8.le.sna0ep,
      .  'faulty internal parameter sna0ep')
        call ipgetr ('b2stbc_she0ep', she0ep)
-       call xertst (0.0_R8.le.she0ep, 
+       call xertst (0.0_R8.le.she0ep,
      .  'faulty internal parameter she0ep')
        call ipgetr ('b2stbc_shi0ep', shi0ep)
-       call xertst (0.0_R8.le.shi0ep, 
+       call xertst (0.0_R8.le.shi0ep,
      .  'faulty internal parameter shi0ep')
        call get_boundary_namelist
        call ipgeti ('b2stbc_diagno',diagno)                              !xpb
@@ -182,7 +185,7 @@
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
-       call b2xvps (nx, ny, ns, 
+       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
        call b2xvff (nx, ny, fne, 'fne')
@@ -197,22 +200,15 @@
        call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
       endif
 *   ..test facdrift           !xpb
-      call xertst (0.0_R8.le.minval(facdrift) .and. 
+      call xertst (0.0_R8.le.minval(facdrift) .and.
      & 1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-!      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
-!        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
-!          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
-!        else                                                             !xpb
-!          write (*,*) 'b2stbc_fchy_dia =', b2stbc_fchy_dia               !xpb
-!        endif                                                            !xpb
-!      endif
 *   ..check kinetic secondary electron emission model
       if (ncall.eq.0 .and. secmodel.eq.1) then
-        call xertst (nint(zn(ismain)).eq.1, 
+        call xertst (nint(zn(ismain)).eq.1,
      &   'Kinetic secondary emission model only for hydrogen plasmas!')
         write (*,*) 'Kinetic secondary emission model turned on'
         write (*,*) 'Graphite target plates are assumed'
-        if (nint(zamax(ismain)).ne.1) write(*,*) 
+        if (nint(zamax(ismain)).ne.1) write(*,*)
      .   'WARNING! Kinetic secondary emission expects HYDROGEN plasmas!'
       endif
 *   ..initialise sources to 0
@@ -394,10 +390,11 @@
       if(boundary_namelist.ge.1) then
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
-     1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fhm, fch,
-     &        sna0, smo0, she0, shi0, sch0, sne0, 
-     &        main_call, diagno)
+     1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
+     1      vol, gs, na, ne, ni, te, ti,
+     &      fna, fhe, fhi, fhm, fch,
+     &      sna0, smo0, she0, shi0, sch0, sne0,
+     &      main_call, diagno)
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
@@ -410,12 +407,12 @@
      &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &   fchanml,
      &   cdna, chce, chve, chci, chvi, calf,                             !srv 25.09.09
-     &   sna0, smo0, she0, shi0, sch0, sne0, 
+     &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &   b2stbc_fchy_dia_coreonly, secmodel, area_fix,
      &   sheath_drift_fix)
-        if(wrong_flow) write(*,*) 
+        if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
         if(lbndusr) then
           if(ncall.eq.0) write(*,*) 'BNDUSR called'
@@ -423,32 +420,32 @@
      1     facdrift, vol, hx, hy, qz, qc, gs,
      1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &     sna0, smo0, she0, shi0, sch0, sne0, 
+     &     sna0, smo0, she0, shi0, sch0, sne0,
      &     wrong_flow, main_call, diagno,
      &     b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
      &     area_fix, sheath_drift_fix)
-          if(wrong_flow) write(*,*) 
+          if(wrong_flow) write(*,*)
      &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
       else      !boundary_namelist.ge.1
-        
+
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, vol, hx, hy, qz, qc, gs,
      1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &   sna0, smo0, she0, shi0, sch0, sne0, 
+     &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
      &   area_fix, sheath_drift_fix)
-        if(wrong_flow) write(*,*) 
+        if(wrong_flow) write(*,*)
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
      1 call b2stbc_fb_post(nx, ny, ns, ismain,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
-     &	sna0, smo0, she0, shi0, sch0, sne0, 
+     &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
 
 * ..compute conditions on the cuts
@@ -474,10 +471,10 @@ c from diamagnetic drifts
         do ix=-1,nx
           iy=0                                        ! south side
           if(.not.on_closed_surface(ix,iy) .and.
-     &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux 
+     &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux
             do is=0,ns-1
               if(.not.is_neutral(is)) then
-                t0 = 
+                t0 =
      &           -2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -492,7 +489,7 @@ c from diamagnetic drifts
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
                 she0(ix,-1,0) = she0(ix,-1,0) + t0
                 testqe = testqe + t0
-                t0 = 
+                t0 =
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -542,7 +539,7 @@ c from diamagnetic drifts
      &           b2stbc_fchy_dia_coreonly.eq.0) then  ! North boundary
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                t0 = 
+                t0 =
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -683,23 +680,23 @@ c      write(*,*) 'Copied s..0 to b2stbc_s..'
 
 ! { IYS 04.06.2018
       sna_stbc_neut = 0.0_R8
-      if (ank_tracing .gt. 0) then    
+      if (ank_tracing .gt. 0) then
         do is = 1,nspecies  ! is stands here for the ls - the index of isonuclear sequences.  Do not mix with the fluid index!!!
           do iy = 1, nbc  ! iy stands here for the boundary index
             do ix = 1, BC_LIST_SIZE(iy) ! ix stands here for the index which conuts cells along the boundary
-!           avoid corner cells 
+!           avoid corner cells
               if ( .not. (
-     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and.
      &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
-     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and.
      &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) .or.
-     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and.
      &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
-     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and.
      &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) ) )
      &        sna_stbc_neut(is,iy) = sna_stbc_neut(is,iy) +
-     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),0,EB2SPCR(is)) + 
-     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),1,EB2SPCR(is)) * 
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),0,EB2SPCR(is)) +
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),1,EB2SPCR(is)) *
      &           na(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),EB2SPCR(is))
             enddo
           enddo

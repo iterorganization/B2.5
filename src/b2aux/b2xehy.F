@@ -9,8 +9,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny),
-     &   po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   ehy(-1:nx,-1:ny)
@@ -40,7 +40,7 @@
       external b2xvsg
       real (kind=R8) ::
      *   hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08 04.07.14
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                 !srv 07.05.08 04.07.14
 *   ..initialization
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -114,4 +114,4 @@
 *-----------------------------------------------------------------------
 *.end b2xehy
 
-      end
+      end subroutine b2xehy

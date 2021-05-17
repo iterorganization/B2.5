@@ -72,7 +72,7 @@
       real (kind=R8) ::
      *   xlohi(0:1), ylohi(0:1)
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, 
+      external subini, subend, xertst, pagini, pagend,
      & gpm_d, gpl_d, gsln
       external b2wgxb
 
@@ -171,4 +171,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx1
 
-      end
+      end subroutine b2wgx1

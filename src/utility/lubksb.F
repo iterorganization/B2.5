@@ -34,4 +34,4 @@
         b(i)=sum/a(i,i)
       enddo
       return
-      end
+      end subroutine lubksb

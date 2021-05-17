@@ -19,7 +19,7 @@
 ! outputs
       real (kind=R8) ::
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fhp(-1:nx,-1:ny,0:1,0:ns-1),
-     1  fhj(-1:nx,-1:ny,0:1), fht(-1:nx,-1:ny,0:1)
+     1  fhj(-1:nx,-1:ny,0:1),        fht(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *     B2XPEN computes contributions to the total energy fluxes,
 *     as well as the total energy fluxes
@@ -84,10 +84,9 @@ c calculate additional fluxes (fhj, fhm, fhp)
         enddo
       enddo
 c calculate total fluxes (fht)
-      fht(:,:,:)=fhe(:,:,:)+fhi(:,:,:)+fhj(:,:,:)+
-     .           fnt(:,:,:)*(1.0_R8-BoRiS)
+      fht = fhe + fhi + fhj + fnt*(1.0_R8-BoRiS)
       do is=0,ns-1
-        fht(:,:,:)=fht(:,:,:)+fhp(:,:,:,is)+fhm(:,:,:,is)*(1.0_R8-BoRiS)
+        fht = fht + fhp(:,:,:,is) + fhm(:,:,:,is)*(1.0_R8-BoRiS)
       enddo
 *$$$  call subend ()
       return

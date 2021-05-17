@@ -342,7 +342,7 @@ cc!###}
       if(ex) then !{
         if(iret.gt.0) then !{
 
-c*** Find a free i/o unit for re-writing the file
+c*** Find a free I/O unit for re-writing the file
 
           op=.true.
           lrd=0
@@ -394,11 +394,11 @@ c*** Produce the header
           do i=1,ltrl !{
             chdw(i+nhdr)=chdf(int_hlp(i))
           end do !}
-c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
+c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lnrw) !###
           if(nmrk.gt.0) then !{
             write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
             write(lun,frmhdr) mrks
-            write(lun,'(2a)') '#  ',titel
+            write(lun,'(2a)') '#  ',trim(titel)
           end if !}
           write(frmhdr,'(a5,i4,a2)') '(1h#,',2*lnrw,'a)'
           write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
@@ -519,7 +519,7 @@ c*** Write the header
         if(nmrk.gt.0) then !{
           write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
           write(lun,frmhdr) mrks
-          write(lun,'(2a)') '#  ',titel
+          write(lun,'(2a)') '#  ',trim(titel)
         end if !}
         write(frmhdr,'(a5,i4,a2)') '(1h#,',2*nhdr,'a)'
         write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)

@@ -15,8 +15,8 @@ module b2mod_ual
     use b2mod_ual_io
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-    use euITM_schemas  ! IGNORE
-    use euITM_routines ! IGNORE
+    use euITM_schemas   ! IGNORE
+    use euITM_routines  ! IGNORE
 # endif
 #endif
 
@@ -54,7 +54,7 @@ contains
 #endif
             &   treename, shot, run, idx, username, database, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
-            !< designed to store data on edge plasma profiles  (includes the
+            !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
             !< designed to store data on edge plasma sources. Energy terms
@@ -82,8 +82,8 @@ contains
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(out) :: idx  !< The returned identifier to be used in the subsequent
-            !< data access operation
+        integer, intent(out) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
@@ -114,7 +114,7 @@ contains
 
         !! Put data to IDS
         ! call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
-        ! call ids_put_slice( idx, "edge_transport", edge_sources, status )
+        ! call ids_put_slice( idx, "edge_sources", edge_sources, status )
         ! call ids_put_slice( idx, "edge_transport", edge_transport, status )
         ! call ids_put_slice( idx, "radiation", radiation, status )
         ! call ids_put_slice( idx, "dataset_description", description, status )
@@ -340,7 +340,7 @@ contains
     !! closes the IDS)
     subroutine close_ual(idx)
         integer, intent(in) :: idx  !< The returned identifier to be used in the
-                                !< subsequent data access operation
+                                    !< subsequent data access operation
 #ifdef IMAS
         integer :: status
 

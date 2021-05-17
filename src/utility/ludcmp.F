@@ -67,4 +67,4 @@
       enddo
       call subend ()
       return
-      end
+      end subroutine ludcmp

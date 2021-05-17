@@ -43,9 +43,9 @@
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
-      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:),qcdiff(:,:),
-     .           vldiff(:,:),sxdiff(:,:),hxdiff(:,:), hydiff(:,:)
-      real (kind=R8) :: pi, s213,r213,s143,r143, t0
+      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:), qcdiff(:,:),
+     .           vldiff(:,:), sxdiff(:,:), hxdiff(:,:), hydiff(:,:)
+      real (kind=R8) :: pi, s213, r213, s143, r143, t0
 
 *-----------------------------------------------------------------------
 *.documentation-internal

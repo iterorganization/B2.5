@@ -3,7 +3,7 @@ C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
 *//B2YT_NTREAD//
 *=======================================================================
-*                 S U B R O U T I N E  B 2 Y T _ N G R E A D
+*                 S U B R O U T I N E  B 2 Y T _ N T R E A D
 *=======================================================================
 *
 *
@@ -526,7 +526,7 @@ C
       close(47)
 C
       call subend ()
-      RETURN
+      return
 
 *=======================================================================
 *//END B2YT_NTREAD//

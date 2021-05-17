@@ -44,6 +44,8 @@ c*** and for the power flux.
       external streql, ipgetr
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
+c*** Input the DG data and prepare the geometry
+c
       call ipgetr ('b2agmt_1d_width', width)
 c*** Set the default values
       npumplis=0
@@ -172,7 +174,8 @@ c
             ib=iabs(ia)
             is=leirlis(i,il)
             h=dist
-            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+(pp1(2,ib)-pp2(2,ib))**2)
+            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                (pp1(2,ib)-pp2(2,ib))**2)
             if (isymm.eq.0) then
               a=width*dist
             else if (isymm.eq.1 .or. isymm.eq.2) then
@@ -180,10 +183,10 @@ c
             else if (isymm.eq.3 .or. isymm.eq.4) then
               a=pi*(pp1(2,ib)+pp2(2,ib))*dist
             end if
+            aa=1.e-6_R8/a
             dist=0.5e0_R8*dist
             x=x+h+dist
-            if(is .gt. 0) then
-              aa=1.e-6_R8/a
+            if(is.gt.0) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -457,7 +460,7 @@ c                  print *,'do jj:',jj,is,goup,placed(jj)
                     js=lwldlis(jj,il)
 c                    print *,'js:',js,is,goup
                     if(goup) then
-                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
@@ -467,7 +470,7 @@ c                    print *,'js:',js,is,goup
 c                        print *,'2->1:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -478,7 +481,7 @@ c                        print *,'2->2:',is,nwsrtwrk
                         go to 100
                       end if
                     else
-                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -488,7 +491,7 @@ c                        print *,'2->2:',is,nwsrtwrk
 c                        print *,'1->2:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
