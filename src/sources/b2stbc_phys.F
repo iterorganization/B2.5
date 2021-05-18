@@ -25,9 +25,7 @@
       use eirmod_extrab25
       use eirmod_braeir
 #endif
-#ifdef PAR_OPT
       use b2mod_par_opt
-#endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -129,7 +127,7 @@
       real (kind=R8) ::
      *  rz(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
-      integer isfeedback, fix_fch_in_fhe_sheath
+      integer isfeedback, fix_fch_in_fhe_sheath, ic, ivar
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac
@@ -266,7 +264,26 @@ c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04
       UBIG=UP00 / EPSLON
       VBIG=1.0e-2_R8*UBIG
       PBIG=UP00
-
+! $AD DO-NOT-DIFF
+      if (flag_optim) then
+        ic = 1
+!       loop over all specified variables except sigmas
+        do ivar = 1, nnvar - nsigma_opt         
+          if (spatial_dep(ivar)) then
+!           spatially dependent coefficient -> par_opt_phys(ic:ic+spatial_points(ipar)) skipped
+            ic = ic + spatial_points(ivar)
+          else
+!           Will do better in future, e.g. having a second parameter indicating which type of BC (1-cont, 2-mom, etc.)
+!           which boundary (standard numbering as in b2.boundary.parameters) and which species (standard numbering)
+            select case (partype(ivar))
+            case (10) ! enkpar(1,1)
+              enkpar(1,1) = par_opt_phys(ic)
+            end select
+            ic = ic + 1
+          endif
+        end do
+      endif
+! $AD END-DO-NOT-DIFF
       sna0_no_mdf = 0.0_R8
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
