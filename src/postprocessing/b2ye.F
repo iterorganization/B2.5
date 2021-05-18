@@ -41,9 +41,7 @@
       logical b2ye_tprf, ex
       character(5) :: rw
       integer :: io, iex, iun, idum(3), ns, varid, nbatch
-      character lble*120, lbli*120, check*10
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
+      character lbli*120, check*10
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
       intrinsic floor

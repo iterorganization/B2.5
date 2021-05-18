@@ -19,6 +19,7 @@
      &  she1_mean, shi1_mean, sch1_mean,
      &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
       use b2mod_types
+      use b2mod_version
       implicit none
 *   ..input arguments (unchanged on exit)
       character*256 filename
@@ -112,8 +113,6 @@
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na_new, na_min, sum,
      *   zpdum(0:ns-1,4)
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
       character*120 :: label
       save na_new, na_min
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/
