@@ -22,15 +22,27 @@ SED =
 LINK_MOD = 
 
 FC = ifort
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 DEFINES += -D_OPENMP
 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifdef SOLPS_DEBUG
-FCOPTS = -openmp -g -C -debug all
+FCOPTS = -g -C -debug all
 else
-FCOPTS = -openmp -O3 -vec_report0
+FCOPTS = -O3
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
+LDOPTS  += -i_dynamic
 endif
 
 DBLFC=${FC}
@@ -59,7 +71,6 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD = ${FC}
-LDOPTS = -openmp
 
 LCPP = ${LD_SONNET}
 

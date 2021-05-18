@@ -524,7 +524,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         write(*,*) 'Read namelist neutrals from ',trim(filename)
         close(99)
       else
-        call xerrab ('No '//trim(filename))
+        write(*,*) 'No '//trim(filename)
+        call xertst (.not.dotest,
+     .   'Did not find expected b2.neutrals.parameters file!')
       endif
       if (nstrai.gt.0) then
 cxpb  In Eirene facelift the time stratum is handled separately

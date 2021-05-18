@@ -274,6 +274,10 @@ program b2_ual_write_b2mod
     character(len=24) :: num_step_string
     character(len=24) :: argName
 
+    !! Procedures
+    logical streql
+    external streql
+
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
     call checkFileAndDelete( "b2mn.prt" )
@@ -334,6 +338,11 @@ program b2_ual_write_b2mod
             &  --database solps-iter --version 3 --step 250"
         call exit(0)
     end if
+
+    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
+    call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    call xertst( .not.streql(database,' '), 'Database not defined !')
 
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"

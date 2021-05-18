@@ -225,6 +225,7 @@ cxpb
        enddo
       enddo
 *   ..compute pccb
+      pccb = 0.0_R8
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -234,8 +235,6 @@ cxpb
          pccb(ix,iy,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
-         pccb(ix,iy,0) = 0.0_R8
-         pccb(ix,iy,1) = 0.0_R8
          resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
         endif
        enddo

@@ -89,7 +89,7 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )

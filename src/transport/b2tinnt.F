@@ -303,12 +303,15 @@
         else
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
-*    ..test sign of ne, te, csigin, chce
+*    ..test sign of ne, te, chce
             call b2xvsg (n2, te, 1, 'te', '.gt.')
-            call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
-*    ..test edge values of csigin
+*    ..test edge values and sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
+                call b2xvsg (n2, csigin(-1,-1,0,is,is0), 1, 'csigin',
+     .            '.ge.')
+                call b2xvsg (n2, csigin(-1,-1,1,is,is0), 1, 'csigin',
+     .            '.ge.')
                 call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
               enddo
             enddo

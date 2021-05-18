@@ -3,6 +3,7 @@ c
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
+      implicit none
 #include <graphics_vars.h>
       character*(*) shotinfo
       integer nx,ny
@@ -24,15 +25,16 @@ c
      2 rin(lin),zin(lin),br(lin),bz(lin),bt(lin),fpf(lin),fjp(lin)
 
       integer i,j
-      logical main
+      logical main, streql
+      external streql
 
       data nshot /0/
 
       save nshot
 
-      if(shotinfo.eq.' ') then
-	nshot=0
-	return
+      if(streql(shotinfo,' ')) then
+        nshot=0
+        return
       endif
 
       call init_page(

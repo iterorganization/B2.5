@@ -322,6 +322,7 @@ csw 26feb2014 some extra variables
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
       rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
+      if (rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
       rxf3 = rxf*xfm3
 
 csw 01oct2012 initialize potential if necessary

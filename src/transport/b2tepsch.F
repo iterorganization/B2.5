@@ -14,13 +14,11 @@
       integer nx, ny, ns
       real (kind=R8) ::
      &  facdrift(-1:nx,-1:ny), cddi(-1:nx,-1:ny,0:1,0:ns-1),
-     &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &  nete2c(-1:nx,-1:ny),nete2(-1:nx,-1:ny)
+     &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  cone(-1:nx,-1:ny,0:1,0:2),        !srv 02.01.07
-     &  fhePSch(-1:nx,-1:ny,0:1),         !srv 13.10.06
-     &  weight(-1:nx,-1:ny)  
+     &  cone(-1:nx,-1:ny,0:1,0:2),                                      !srv 02.01.07
+     &  fhePSch(-1:nx,-1:ny,0:1)                                        !srv 13.10.06
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -40,7 +38,8 @@
       integer, save :: PSch_style
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
-     &  facdriftm
+     &  facdriftm, nete2(-1:nx,-1:ny), nete2c(-1:nx,-1:ny),
+     &  wght(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -64,6 +63,12 @@
       cone    = 0.0e0_R8                                                 !srv 02.01.07
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0e0_R8) then
+
+*   ..precompute differences
+        wght = 1.0_R8
+        nete2=ne*te*te
+        call intcor(nx,ny,wght,nete2,nete2c)
+
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
         do is = 0,ns-1                                                   !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
@@ -103,9 +108,6 @@
          enddo
         else
 !          print *,'style=2'
-          nete2(:,:)=ne(:,:)*te(:,:)*te(:,:)
-          weight = 1.0e0_R8
-          call intcor(nx,ny,weight,nete2,nete2c)
           do iy = -1, ny
              do ix = -1, nx
                if(topiy(ix,iy).eq.ny+1 .or. bottomiy(ix,iy).eq.-2 

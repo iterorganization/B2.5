@@ -161,9 +161,11 @@
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     * 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of bb

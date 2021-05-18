@@ -4,6 +4,7 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: ZLOD,ZHID,ZVALIN
       integer linlog

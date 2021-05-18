@@ -370,9 +370,11 @@
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -389,7 +391,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -400,6 +403,7 @@
 *   ..test edge values of fluxes
       do is = 0, ns-1
        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       call b2xvff (nx, ny, fna_mdf(-1,-1,0,is), 'fna_mdf')
       enddo
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')
@@ -766,9 +770,13 @@ c   --> better solution wanted here..
           endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)

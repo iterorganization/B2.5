@@ -547,10 +547,10 @@ c.. Make a list of core boundaries
           end if
         end if
         do ib = 1, ncbs
-          call xertst (done(ib), 
-     .     'Did not find all declared core boundaries!')
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
+          call xertst (done(lcbs(ib)),
+     .     'Did not find all declared core boundaries!')
         enddo
         deallocate(done)
       endif

@@ -273,8 +273,10 @@
 
 !      CALL PHYPRT (NS, MI, ZI, NPRT)
 
-      IF (MINVAL(AM(1:NS)) .LT. 0 .OR.
-     .      MINVAL(ZN(1:NS)) .LT. 0) THEN
+      IF (MINVAL(AM(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZN(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZAMIN(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZAMAX(0:NS-1)) .LT. 0) THEN
          CALL XERRAB ('B2WAOS -- FAULTY ARGUMENT MI, ZI')
       END IF
 

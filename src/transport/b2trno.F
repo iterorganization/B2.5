@@ -154,7 +154,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -169,6 +170,25 @@
       endif
 
 * ..compute transport coefficients
+*   ..initialize to zero
+cwdk  tmp: needed as long as not all contributions are filled later on
+      cdna   = 0.0_R8
+      cdpa   = 0.0_R8
+      cvla   = 0.0_R8
+      cvsa   = 0.0_R8
+      chcb   = 0.0_R8
+      cdnahz = 0.0_R8
+      cdpahz = 0.0_R8
+      cvlahz = 0.0_R8
+      cvsahz = 0.0_R8
+      cvmahz = 0.0_R8
+      chve   = 0.0_R8
+      chvi   = 0.0_R8
+      chce   = 0.0_R8
+      chci   = 0.0_R8
+      calf   = 0.0_R8
+      csig   = 0.0_R8
+
 *   ..compute differential anomalous transport coefficients
       call b2tqna (nx, ny, ns, nscx, iscx, bb,
      & na, te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,     !srv 15.12.05

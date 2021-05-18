@@ -427,18 +427,18 @@ contains
         num_time_slices = 1
         !! If present, set time step values
         if( present( time_step_IN ) ) time_step = time_step_IN
-        if( present( time_slice_ind_IN ) ) then
-            time_sind = time_slice_ind_IN
-        !! Get time slice value
-            time_slice_value = time_sind * time_step
-        else
-            time_slice_value = time
-        end if
-        if( present( num_time_slices_IN ) ) num_time_slices = num_time_slices_IN
+!        if( present( time_slice_ind_IN ) ) time_sind = time_slice_ind_IN
+!        if( present( num_time_slices_IN ) ) num_time_slices = num_time_slices_IN
         !! Check if num_time_slices >= time_sind
         call xertst( num_time_slices .ge. time_sind, &
             & "B25_process_ids: Time step index cannot be greater " // &
             & "than total number of time steps!" )
+        if( present( time_slice_ind_IN ) ) &
+            & call xertst( time_slice_ind_IN .ge. 1, &
+            & "faulty argument time_slice_ind_IN" )
+        if( present( num_time_slices_IN ) ) &
+            & call xertst( num_time_slices_IN .ge. 1, &
+            & "faulty argument num_time_slices_IN" )
 
         !! Preparing edge_profiles IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -4951,6 +4951,12 @@ contains
           summary%scrape_off_layer%power_radiated%source(1) = source
         end if
         select case (geometryType)
+        case (GEOMETRY_LINEAR, GEOMETRY_CYLINDER)
+          if (ntrgts.ge.1) then
+            ix = jxa
+          else
+            ix = -2
+          end if
         case (GEOMETRY_LIMITER)
           if (LSN) then
             ix = nx-1
@@ -5071,6 +5077,8 @@ contains
             implicit none
             character*2 compname
             integer is, iatm
+            logical streql
+            external streql
 
             get_atom_number = 0
             do iatm = 1, natmi

@@ -1289,7 +1289,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &              vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
-                else
+                else if (drift_style.gt.0) then
                   t0 =
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*0.5_R8*
@@ -1333,7 +1333,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &             vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-                else
+                else if (drift_style.gt.0) then
                   t0 =
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*0.5_R8*

@@ -254,6 +254,10 @@
         endif
        enddo
       enddo
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,0), 'b2agmt: qz(,,0)')
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
+      call nancheck(nx, ny, qc, 'b2agmt: qc')
+      call nancheck(nx, ny, qcb, 'b2agmt: qcb')
 *   ..test sign of qz(,,1) and qc(,)
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in

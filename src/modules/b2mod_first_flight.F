@@ -295,6 +295,8 @@ cxpb  neutrals to be eion=shi/sna.
       subroutine read_b2mod_first_flight(nread)
       implicit none
       integer nread
+      call xertst(1.le.nread, 'faulty argument nread')
+      return
       end subroutine read_b2mod_first_flight
 
       subroutine write_b2mod_first_flight(nwrite)

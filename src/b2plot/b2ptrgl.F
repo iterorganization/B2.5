@@ -33,6 +33,7 @@ c======================================================================
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
+      integer, save :: use_eirene = 0
 #ifdef B25_EIRENE
       integer eb2atm(nspecies)
 #else
@@ -195,8 +196,13 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-      filename=fort_lc//'44'
-      call find_file(filename,ft44)
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (use_eirene.ne.0) then
+        filename=fort_lc//'44'
+        call find_file(filename,ft44)
+      else
+        ft44 = .false.
+      end if
 
 c----------------------------------------------------------------------
 c*** Power loading:
@@ -349,12 +355,14 @@ c*** Power loading:
 
       ixstart(1,1)=jxi
       ixend(1,1)=0
-      ixstart(ntrgts,1)=jxa
-      ixend(ntrgts,1)=nx-1
       ixstart(1,2)=leftcut(1)-1
       ixend(1,2)=0
-      ixstart(ntrgts,2)=rightcut(1)
-      ixend(ntrgts,2)=nx-1
+      if (ntrgts.gt.0) then
+        ixstart(ntrgts,1)=jxa
+        ixend(ntrgts,1)=nx-1
+        ixstart(ntrgts,2)=rightcut(1)
+        ixend(ntrgts,2)=nx-1
+      end if
       if (ntrgts.gt.2) then
         ixstart(2,1)=jxi
         ixend(2,1)=nxtl-1
@@ -981,10 +989,10 @@ c!###}
         end if !}
 !###}
       end do !}
-      hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(ntrgsx)
       if(.not.LSN) then
         hlp_trg(1)=trg_short(ntrgsx)
-        hlp_trg(ntrgts)=trg_short(1)
+        if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(1)
       end if
       fn_hlp=fsumm(4)
       tl=' '
@@ -1536,7 +1544,7 @@ c
           write(lun,fmt_peak) trim(species_list(is))//' total on',
      ,                          (sjt_w(i,is),i=1,ntrgts),sjt_w(0,is)
         end do
-#ifdef B25_EIRENE
+        if (use_eirene.ne.0.and.nmoli.gt.0) then
         write(lun,*)
         write(lun,*) 'Molecule fluxes [1/s]'
         do imol=1,nmoli
@@ -1545,7 +1553,7 @@ c
           write(lun,fmt_peak) trim(ssmol)//' mols on',
      ,                        (sjm_w(i,imol),i=1,ntrgts),sjm_w(0,imol)
         end do
-#endif
+        end if
         if (ntargsp.gt.0.and.ft44) then
           do j=1,ntrgts
             sjs_w(0)=sjs_w(0)+sjs_w(j)

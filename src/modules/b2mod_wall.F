@@ -239,6 +239,11 @@ cxpb  Geometric information
       external subini, subend, xertst
 
       call subini('b2mod_wall')
+*   ..test arguments
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.natm, 'faulty argument natm')
+      call xertst (0.le.nmol, 'faulty argument nmol')
+      call xertst (0.le.nion, 'faulty argument nion')
 #ifdef ALLOCATE_AND_NAMELIST
 cxpb  Namelist data
       allocate(inertial_cooling(nwall))
@@ -470,6 +475,7 @@ cxpb Data file material properties
      *  matbulk_Cp_B3,
      *  matbulk_Cp_B4)
 
+      return
       end subroutine dealloc_b2mod_wall
 
       subroutine read_b2mod_wall_namelist(nread,edition,found)

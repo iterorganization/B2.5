@@ -53,6 +53,12 @@
       logical brestarted
       integer fd
  
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+      call xertst (0.le.ismain.and.ismain.lt.nsd,
+     * 'faulty argument ismain')
+
       filename='use_impgyro'
       call find_file(filename,use_impgyro)
       if ( .not. use_impgyro ) return

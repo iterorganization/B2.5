@@ -85,7 +85,7 @@ ifdef USE_EIRENE
 endif
 ifdef SOLPSTOP
 NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
-NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
+NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
 ifdef LD_NETCDF
   NC2TXT = $(shell echo `which nc2text`)
 endif
@@ -908,9 +908,14 @@ else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
+	@touch ${OBJDIR}/$*.${MOD}
 endif
 
+ifdef USE_EIRENE
 ${OBJDIR}/libsolps4.a: ${SOLPS4OBJS} ${EIR4MODS}
+else
+${OBJDIR}/libsolps4.a: ${SOLPS4OBJS}
+endif
 	${BLD} $@ ${SOLPS4OBJS}
 
 ${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}

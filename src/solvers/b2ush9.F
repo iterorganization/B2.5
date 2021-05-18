@@ -102,7 +102,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
@@ -360,6 +361,8 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
+         aa9(ix,iy,-4) = 0.0e0_R8
+         aa9(ix,iy, 2) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
          t0 =  0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
          t1 = -0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
@@ -475,6 +478,8 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
+         aa9(ix,iy,-4) = 0.0e0_R8
+         aa9(ix,iy, 2) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
          t0 =  0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07
          t1 = -0.5_R8*flo0(ix,iy,0)-con0(ix,iy,0,0)                   !srv 02.01.07

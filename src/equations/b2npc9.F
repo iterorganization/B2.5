@@ -225,7 +225,11 @@ cdjm Jan2017 update particle source components for balance
       endif                                                             !srv 22.05.18
 
       if (iout.ne.0) then                                               !srv 12.07.02 {
-        write (chns,'(i3.3)') isb
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPC9 will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
@@ -240,7 +244,11 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc9_dnadt'//chns)                 !srv 09.03.21
        endif
       elseif (iout_b2wdat.eq.4) then                                    !iys 17.04.17
-        write (chns,'(i3.3)') isb
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPC9 will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)

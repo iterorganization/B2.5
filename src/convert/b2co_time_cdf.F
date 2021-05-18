@@ -36,7 +36,7 @@
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
-      character*256 filename, plasmastate
+      character*256 filename, plasmastate, message
       logical :: exists
       integer :: lnblnk
       external lnblnk
@@ -225,6 +225,10 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
 #endif
 #endif
       filename=trim(filename)//'.'//extension
+      message = 'File '//trim(filename)//' already present! '//
+     .          'Please remove first.'
+      call find_file(filename,exists)
+      call xertst(.not.exists,message)
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,

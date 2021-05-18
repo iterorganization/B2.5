@@ -377,6 +377,27 @@
        end do
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  boundary_namelist.lt.1
+       do ispecies = 0, nspecies-1
+         if (na_feedback_ib(ispecies).ge.0) cycle
+         consistent = consistent .and.
+     &     .not.(na_feedback_actuator(ispecies).eq.1 .or.
+     &           na_feedback_actuator(ispecies).eq.3) .and.
+     &     .not.(na_feedback_option(ispecies).eq.4)
+       end do
+       do ispecies = 0, nspecies-1
+         if (na_feedback_actuator(ispecies).ne.2) cycle
+         do is = is_start, is_end
+           do ib = 1, nbc
+             consistent = consistent .and.
+     &        (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
+     &         bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
+     &         bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
+     &         bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
+     &        (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
+     &        (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8))
+           end do
+         end do
+       end do
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
 *  ..now read data for other feedback schemes given directly in b2mn.dat
@@ -1281,7 +1302,9 @@
 
          enddo
 
-         feedback_namelist_used = .true.
+         feedback_namelist_used = feedback_namelist_used .or.
+     &    na_feedback_actuator(ispecies).eq.1 .or.
+     &    na_feedback_actuator(ispecies).eq.3
          dt_prev = dtim
 
       endif

@@ -70,6 +70,12 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usc7_iout', iout)                              !srv 17.06.02
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2usc7 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif                                                           !srv 06.07.08 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)

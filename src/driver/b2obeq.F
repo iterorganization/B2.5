@@ -73,13 +73,15 @@
 #ifdef WINDOWS
       integer(2) :: iresult
       logical(4) :: lresult
+#else
+#ifdef NAGFOR
+      integer status, ierror
+#endif
 #endif
       logical(4) :: b2fstate_exist
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, func, fcain, fab, shift
       character*12 hlp_frm
-*   ..procedures
-!      external xerset, xertst
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -135,11 +137,20 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
       endif
 #else
+#ifdef NAGFOR
+      call system('./B2mnOpt.exe', status, ierror)
+#else
       call system('./B2mnOpt.exe')
+#endif
       inquire(file='b2fstate',exist=b2fstate_exist)
       if(b2fstate_exist) then
+#ifdef NAGFOR
+       call system('rm b2fstati', status, ierror)
+       call system('cp b2fstate b2fstati', status, ierror)
+#else
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
+#endif
       endif
 #endif
       call cpu_time(cpu_f)

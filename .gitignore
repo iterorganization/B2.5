@@ -1,7 +1,6 @@
 *~
 *.[oa]
 *.mod
-*__genmod.f90
 \#*\#
 TAGS
 LISTOBJ
@@ -28,3 +27,5 @@ lib/
 # ignore local files created by scripts
 grep.lis
 
+# genmod
+*__genmod*

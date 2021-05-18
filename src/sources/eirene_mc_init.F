@@ -14,6 +14,8 @@
 #     include <COUPLE/KOPPLDIM.F>
 #endif
 
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 cwdk  copy-paste from eirene_extrab25 allocations (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
       if(.not.allocated(dab2)) then

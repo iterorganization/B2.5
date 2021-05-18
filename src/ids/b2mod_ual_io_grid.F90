@@ -1032,7 +1032,9 @@ contains
         ! ids_dim_2D.object.resize(nCv)
 
         ! Already done
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
+        if (.not.associated( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
+            &   objects_per_dimension(3)%object ) )                  &
+            & allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%       &
             &   objects_per_dimension(3)%object( gmap%nCv ) )
 
         !! Get 2D objects geometry (nodes) data from CPO, sort them into more
@@ -1045,7 +1047,9 @@ contains
         do iCv = 1, gmap%nCv
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
+            if (.not.associated( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
+                &   objects_per_dimension(3)%object(iCv)%nodes ) )       &
+                & allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%       &
                 &   objects_per_dimension(3)%object(iCv)%nodes(num_nodes_2D) )
 
             edge_idx = gmap%mapFcI( ix, iy, LEFT )
@@ -1182,14 +1186,16 @@ contains
 
         call createGridSubsetForClass( grid_ggd,                    &
             &   grid_ggd%grid_subset( GRID_SUBSET_NODES ),          &
-            &   IDS_CLASS_NODE, 1, GRID_SUBSET_NODES, "Nodes",      &
-            &   "All nodes (0D objects) in the domain."  )
+            &   IDS_CLASS_NODE, SPACE_POLOIDALPLANE,                &
+            &   GRID_SUBSET_NODES,                                  &
+            &   "Nodes", "All nodes (0D objects) in the domain." )
 
         !! GRID_SUBSET_FACES: all faces, one implicit object list
-        call createGridSubsetForClass( grid_ggd,                        &
-            &   grid_ggd%grid_subset( GRID_SUBSET_FACES ),              &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1, GRID_SUBSET_FACES,    &
-            &   "Faces", "All faces (1D objects) in the domain."  )
+        call createGridSubsetForClass( grid_ggd,                    &
+            &   grid_ggd%grid_subset( GRID_SUBSET_FACES ),          &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, SPACE_POLOIDALPLANE, &
+            &   GRID_SUBSET_FACES,                                  &
+            &   "Faces", "All faces (1D objects) in the domain." )
 
         !! GRID_SUBSET_X_ALIGNED_FACES: x-aligned faces. One implicit object
         !! list, range over x faces
@@ -1260,11 +1266,10 @@ contains
             &   GRID_SUBSET_X_POINTS, 'x-points',                    &
             &   "All X-points (0D objects) in the domain." )
         !! Initialize explicit object list for faces (class (/1/) )
-        !! TODO: xpoints(:, 1 ) -> taking values for first space only. Set for
-        !! all spaces.
-        call createExplicitObjectListSingleSpace( grid_ggd,         &
-                &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),   &
-                &   IDS_CLASS_NODE , xpoints(:, 1), IDS_CLASS_NODE, 1)
+        call createExplicitObjectListSingleSpace( grid_ggd,          &
+                &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),    &
+                &   IDS_CLASS_NODE, xpoints(:, SPACE_POLOIDALPLANE), &
+                &   IDS_CLASS_NODE, SPACE_POLOIDALPLANE )
 
         !! Set up specific grid subset by collecting faces for regions
 
@@ -1323,7 +1328,9 @@ contains
                 !! Initialize explicit object list for grid subset
                 call createExplicitObjectListSingleSpace( grid_ggd,     &
                     &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                    &   indexList2d(:,1), sum(cls), 1)
+                    &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                    &   SPACE_POLOIDALPLANE )
+
             end do
         end do
         deallocate(indexList2d)
@@ -1732,8 +1739,9 @@ contains
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
-               &   grid_ggd%grid_subset( GSubsetCount ), sum(cls) , &
-               &   indexList2d(:,1), sum(cls), 1)
+               &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
+               &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+               &   SPACE_POLOIDALPLANE )
             deallocate(indexList2d,indexPart2d,indextmp2d)
 
         end do
@@ -1772,7 +1780,8 @@ contains
         !! Initialize explicit object list for grid subset
         call createExplicitObjectListSingleSpace( grid_ggd,             &
             &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
-            &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,     &
+            &   SPACE_POLOIDALPLANE )
 
         GSubsetCount = GSubsetCount + 1
 
@@ -1792,7 +1801,8 @@ contains
         !! Initialize explicit object list for grid subset
         call createExplicitObjectListSingleSpace( grid_ggd,             &
             &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
-            &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,     &
+            &   SPACE_POLOIDALPLANE )
 
         !! Adding other special cases
         deallocate(indexList2d)
@@ -1829,7 +1839,8 @@ contains
                     !! Initialize explicit object list for grid subset
                     call createExplicitObjectListSingleSpace( grid_ggd,     &
                         &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                        &   indexList2d(:,1), sum(cls), 1)
+                        &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                        &   SPACE_POLOIDALPLANE )
                     deallocate(IndexList2d)
 
                 end if
@@ -1863,7 +1874,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         case ( GEOMETRY_CDN )
@@ -1899,7 +1911,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         case ( GEOMETRY_DDN_BOTTOM )
@@ -1945,7 +1958,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
             iType = REGIONTYPE_CELL
@@ -1983,7 +1997,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         case ( GEOMETRY_DDN_TOP )
@@ -2029,7 +2044,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
             iType = REGIONTYPE_CELL
@@ -2067,7 +2083,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
                 &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,1), sum(cls), 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end select
@@ -2097,7 +2114,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         !! Inner midplane separatrix
@@ -2123,7 +2141,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end if
@@ -2171,7 +2190,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end if
@@ -2219,7 +2239,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end if
@@ -2258,7 +2279,8 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end if
@@ -2297,10 +2319,13 @@ contains
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
                 &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE, &
-                &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+                &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
+                &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
 
         end if
+
+        deallocate(indexList1d)
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of "    &
             &   //idsInt2str(GSubsetCount)//" grid subsets (expected was "  &
@@ -2350,8 +2375,8 @@ contains
         do iObj = 1, getGridSubsetSize(GridSubset)
             obj = getGridSubsetObject(GridSubset, iObj)
             !! Expect a face
-            call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE ), &
+            call xertst( obj%cls( SPACE_POLOIDALPLANE ) == &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, &
                 & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
             call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &

@@ -68,6 +68,8 @@ C
       do is = 0, ns-1
         if (.not.is_neutral(is)) nplsi = nplsi + 1
       end do
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 
 #ifdef B25_EIRENE
 C
@@ -376,6 +378,12 @@ cank-960727
         if (jvft44 .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
+          do j = 1, natmi
+            eirspta(j) = sum(wldspta(:,j,0))
+          enddo
+          do j = 1, nmoli
+            eirsptm(j) = sum(wldsptm(:,j,0))
+          enddo
         end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
@@ -455,6 +463,10 @@ cank
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
      ,                          i=1,nstsi)
+
+          do j=1,k+nplsi
+            eirpump(j) = sum(wlpump(j,:))
+          end do
         end if
 
         if(jvft44 .ge. 20071209) then

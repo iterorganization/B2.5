@@ -72,6 +72,11 @@ c----------------------------------------------------------------------
       implicit none
       integer nx, ns, nlim, nmol, ntns
 
+      call xertst(0.le.nx, 'faulty argument nx')
+      call xertst(1.le.ns, 'faulty argument ns')
+      call xertst(0.le.nlim, 'faulty argument nlim')
+      call xertst(0.le.nmol, 'faulty argument nmol')
+      call xertst(0.le.ntns, 'faulty argument ntns')
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -284,6 +289,9 @@ c*** Set default values according to current species list
 
       call subend ()
       return
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
+#endif
 
       entry write_b2mod_user_namelist(nx,ns)
 
@@ -291,8 +299,6 @@ c*** Set default values according to current species list
       if (user_namelist_used.and.write_nml_user) write(*,user)
       written = .true.
       return
-
-  999 call xerrab ('Error while reading FEEDBACK namelist!')
       end subroutine read_b2mod_user_namelist
 
       end module b2mod_user_namelist

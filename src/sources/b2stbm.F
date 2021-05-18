@@ -105,9 +105,11 @@
       endif !}
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -305,7 +307,7 @@ cxpb And then derive: ua_ext
          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
      .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
 cxpb Computing ua from fa is what we really want to do
-         if (.false.) then
+         if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then

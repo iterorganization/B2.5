@@ -1125,6 +1125,9 @@ c
               read(lun,*,err=10,iostat=iostat) ixd,iyd,
      1         (crxs(ix,iy,i),crys(ix,iy,i),i=0,4),
      2         bp(ix,iy),bt(ix,iy)
+              if (isymm.eq.2.or.isymm.eq.4) then
+                if (abs(bt(ix,iy)).lt.1.0e-5_R8) bt(ix,iy)=0.0_R8
+              end if
             enddo
           enddo
           fpsi=0.0_R8

@@ -96,6 +96,7 @@
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
+      integer, save :: b2sigp_style = 2
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
       real (kind=R8) ::
@@ -1006,6 +1007,10 @@
        call ipgetr ('b2mndr_density_rescale', density_rescale)
        call ipgeti ('b2mndr_zn_rescale', zn_rescale)
 csw dec2013 allow for negative values; this is tweak to scale a specific species density
+       call xertst (zn_rescale.ge.0,
+     &   'faulty internal parameter zn_rescale')
+       call xertst (zn_rescale.gt.0.or.density_rescale.gt.0.0_R8,
+     &   'faulty internal parameter zn_rescale')
        call xertst (0.0_R8.lt.density_rescale.or.
      &             (0.0_R8.gt.density_rescale.and.zn_rescale.gt.0),
      &   'faulty internal parameter density_rescale')
@@ -1180,6 +1185,13 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
+       call ipgeti ('b2sigp_style', b2sigp_style)
+       if (.not.(k.eq.1.or.b2sigp_style.ne.2)) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+       endif
 *
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)

@@ -2,6 +2,7 @@
 MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
 NCARG_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
 MSCL_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
+GLI_HOME ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR ?= ${NAG_HOME}
 NCDIR ?= /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
 MPDIR ?= ${INTELMPI_HOME}
@@ -66,6 +67,7 @@ DEFINES += -DITM
 endif
 
 ifdef IMAS_VERSION
+GGD_VERSION ?= `pkg-config ggd --modversion`
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )

@@ -158,6 +158,8 @@
        external subini, subend, xerrab
 
        call subini ('read_astra_to_b2')
+       call xertst (0.le.nyd, 'faulty argument nyd')
+       call xertst (1.le.nread, 'faulty argument nread')
 #ifndef ASTRA
        call xerrab ('Compile with -DASTRA option to couple to ASTRA!')
 #else

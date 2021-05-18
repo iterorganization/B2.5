@@ -51,8 +51,9 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test edge values of cdpa
+*    ..test sign and edge values of cdpa
        do is = 0, ns-1
+        call b2xvsg (n2*2*ns, cdpa, 1, 'cdpa', '.ge.')
         call b2xvff (nx, ny, cdpa(-1,-1,0,is), 'cdpa')
        enddo
 *    ..test edge values of floe, cone, floi, coni
@@ -64,8 +65,7 @@
        call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                !srv 02.01.07 }
-*    ..test sign of cdpa, cone, coni
-       call b2xvsg (n2*2*ns, cdpa, 1, 'cdpa', '.ge.')
+*    ..test sign of cone, coni
        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')
        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')
       endif

@@ -177,12 +177,12 @@ c*** Check the topology of the grid and the list of target edges
       if(ntrgsa.gt.0) then !{
         ntrgs=ntrgsa
         if (ntrgs.eq.1) then
-          ltrgedge(1,1)=mtrgedge(2,1)
-          ltrgedge(2,1)=mtrgedge(1,1)
+          if (mtrgedge(2,1).gt.0) ltrgedge(1,1)=mtrgedge(2,1)
+          if (mtrgedge(1,1).gt.0) ltrgedge(2,1)=mtrgedge(1,1)
         else
           do i=1,ntrgs !{
-            ltrgedge(1,i)=mtrgedge(1,i)
-            ltrgedge(2,i)=mtrgedge(2,i)
+            if (mtrgedge(1,i).gt.0) ltrgedge(1,i)=mtrgedge(1,i)
+            if (mtrgedge(2,i).gt.0) ltrgedge(2,i)=mtrgedge(2,i)
           end do !}
         end if
       end if !}
@@ -222,8 +222,8 @@ c*** use the obsolete jedg[io][12] parameters
       end if !}
 c*** Check the target edge specifications and make them clear
       do i=1,ntrgts !{
-        if(ltrgedge(1,i).le.0) ltrgedge(2,i)=0
-        if(ltrgedge(2,i).le.0) ltrgedge(1,i)=0
+        if(ltrgedge(1,i).lt.0) ltrgedge(1,i)=0
+        if(ltrgedge(2,i).lt.0) ltrgedge(2,i)=0
       end do !}
 c*** No PFR for limiter configuration
       if(lim_cnf) then !{
@@ -264,9 +264,9 @@ c*** Prepare the list of grid indices for the target flux faces
 #ifdef DBG
       print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
       print '(a,8i6)','mtrgedge: ',((mtrgedge(i,j),i=1,2),j=1,ntrgts) !###
-      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
-      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,k)              !###
-      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
+      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,ntrgts)         !###
 #endif
 
 c*** Sort the segments in the lists of the "wall zones"
@@ -296,6 +296,11 @@ c#endif
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
+      if (n.eq.0) then
+        write(*,*) 'The shadowing structure was not defined!'
+        call subend ()
+        return
+      end if
       l=iabs(lwldlis(1,1))
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then

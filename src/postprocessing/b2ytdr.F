@@ -8595,6 +8595,7 @@ cxpb Read first, transform and rewrite
             GOTO 1021
           ELSE
             READ (ZEILEN(ILINE+1),6666) idum(0:3) ! IADVE(J),IADVS(J),IADVT(J),IADRC(J)
+            ISPEZ = idum(1)
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
@@ -8603,7 +8604,9 @@ cxpb Read first, transform and rewrite
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLA(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+          IF (ISPEZ.NE.0.AND.idum(1).EQ.0) THEN ! tally species no longer present
+            CONTINUE
+          ELSEIF (INDEX(TXTSPC,'ATOMS').GT.0) THEN ! backward compatibility code
             READ (TXTSPC,'(A2)') ELNAME
             IF (element_present(natm,natmi,iatm1,elname)) THEN
               WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
@@ -8643,6 +8646,7 @@ cxpb Read first, transform and rewrite
             GOTO 1031
           ELSE
             READ (ZEILEN(ILINE+1),6666) idum(0:3) ! ICLVE(J),ICLVS(J),ICLVT(J),ICLRC(J)
+            ISPEZ = idum(1)
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
@@ -8651,7 +8655,9 @@ cxpb Read first, transform and rewrite
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLC(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+          IF(ISPEZ.NE.0.AND.idum(1).EQ.0) THEN ! tally species no longer present
+            CONTINUE
+          ELSEIF (INDEX(TXTSPC,'ATOMS').GT.0) THEN ! backward compatibility code
             READ (TXTSPC,'(A2)') ELNAME
             IF (element_present(natm,natmi,iatm1,elname)) THEN
               WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
@@ -8765,6 +8771,7 @@ cxpb Read first, transform and rewrite
             GOTO 1051
           ELSE
             READ (ZEILEN(ILINE+1),6666) idum(0:3) ! IADSE(J),IADSS(J),IADST(J),IADSC(J)
+            ISPEZ = idum(1)
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
@@ -8773,7 +8780,9 @@ cxpb Read first, transform and rewrite
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLW(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+          IF(ISPEZ.NE.0.AND.idum(1).EQ.0) THEN ! tally species no longer present
+            CONTINUE
+          ELSEIF (INDEX(TXTSPC,'ATOMS').GT.0) THEN ! backward compatibility code
             READ (TXTSPC,'(A2)') ELNAME
             IF (element_present(natm,natmi,iatm1,elname)) THEN
               WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT

@@ -1176,6 +1176,7 @@ c     read in data
 
 *   ..subprogram start-up calls
       call subini ('ratamns')
+      call xertst (0.lt.nput, 'faulty argument nput')
 cxpb Zero masses are required for older AMNS versions
       call xertst (0.0_R8.le.am0,'faulty neutral CX species mass!')
       call xertst (0.0_R8.le.am1,'faulty reactant species mass!')

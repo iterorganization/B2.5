@@ -2,16 +2,16 @@
 ifndef NCDIR
   $(error NCDIR not defined)
 endif
-ifndef MSCL_ROOT
-  $(error MSCL_ROOT not defined)
-endif
 ifndef NAGDIR
   $(error NAGDIR not defined)
 endif
 LD_NETCDF ?= -L${NCDIR} -lnetcdf
-LD_MSCL   ?= -L{MSCL_ROOT} -lmscl
 ifdef NCARG_ROOT
 LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
+ifndef MSCL_ROOT
+  $(error MSCL_ROOT not defined)
+endif
+LD_MSCL   ?= -L{MSCL_ROOT} -lmscl
 endif
 LD_NAG    ?= -L${NAGDIR} -lnag
 

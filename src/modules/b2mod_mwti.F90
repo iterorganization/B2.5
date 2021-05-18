@@ -1293,26 +1293,26 @@ contains
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      nesepm_std = ((nesepm_std - nesepm_av**2)*fac)**0.5
-      tesepm_std = ((tesepm_std - tesepm_av**2)*fac)**0.5
-      tisepm_std = ((tisepm_std - tisepm_av**2)*fac)**0.5
-      posepm_std = ((posepm_std - posepm_av**2)*fac)**0.5
-      nesepi_std = ((nesepi_std - nesepi_av**2)*fac)**0.5
-      tesepi_std = ((tesepi_std - tesepi_av**2)*fac)**0.5
-      tisepi_std = ((tisepi_std - tisepi_av**2)*fac)**0.5
-      posepi_std = ((posepi_std - posepi_av**2)*fac)**0.5
-      nesepa_std = ((nesepa_std - nesepa_av**2)*fac)**0.5
-      tesepa_std = ((tesepa_std - tesepa_av**2)*fac)**0.5
-      tisepa_std = ((tisepa_std - tisepa_av**2)*fac)**0.5
-      posepa_std = ((posepa_std - posepa_av**2)*fac)**0.5
-      nemxip_std = ((nemxip_std - nemxip_av**2)*fac)**0.5
-      temxip_std = ((temxip_std - temxip_av**2)*fac)**0.5
-      timxip_std = ((timxip_std - timxip_av**2)*fac)**0.5
-      pomxip_std = ((pomxip_std - pomxip_av**2)*fac)**0.5
-      nemxap_std = ((nemxap_std - nemxap_av**2)*fac)**0.5
-      temxap_std = ((temxap_std - temxap_av**2)*fac)**0.5
-      timxap_std = ((timxap_std - timxap_av**2)*fac)**0.5
-      pomxap_std = ((pomxap_std - pomxap_av**2)*fac)**0.5
+      nesepm_std(1:nc) = ((nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
+      tesepm_std(1:nc) = ((tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
+      tisepm_std(1:nc) = ((tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
+      posepm_std(1:nc) = ((posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
+      nesepi_std(1:nc) = ((nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
+      tesepi_std(1:nc) = ((tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
+      tisepi_std(1:nc) = ((tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
+      posepi_std(1:nc) = ((posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
+      nesepa_std(1:nc) = ((nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
+      tesepa_std(1:nc) = ((tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
+      tisepa_std(1:nc) = ((tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
+      posepa_std(1:nc) = ((posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
+      nemxip_std(1:nc) = ((nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
+      temxip_std(1:nc) = ((temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
+      timxip_std(1:nc) = ((timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
+      pomxip_std(1:nc) = ((pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
+      nemxap_std(1:nc) = ((nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
+      temxap_std(1:nc) = ((temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
+      timxap_std(1:nc) = ((timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
+      pomxap_std(1:nc) = ((pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
 
 !wdk write into b2time.nc
       imap(1)=1

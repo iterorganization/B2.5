@@ -206,16 +206,12 @@
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
+      cddi = 0.0_R8
       do is = 0, ns-1
-       if(is_neutral(is)) then
-        cddi(:,:,0,is) = 0.0_R8
-        cddi(:,:,1,is) = 0.0_R8
-       else
+       if(.not.is_neutral(is)) then
         do iy = -1, ny
          do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-           cddi(ix,iy,0,is) = 0.0_R8
-          else
+          if(leftix(ix,iy).ne.-2) then
            cddi(ix,iy,0,is) =
      &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
@@ -229,9 +225,7 @@
 
         do iy = -1, ny
          do ix = -1, nx
-          if(bottomiy(ix,iy).eq.-2) then
-           cddi(ix,iy,1,is) = 0.0e0_R8
-          else
+          if(bottomiy(ix,iy).ne.-2) then
            cddi(ix,iy,1,is) =
      &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
