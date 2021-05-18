@@ -125,7 +125,7 @@
       allocate(iama(1:niama))
 
 * ..make plot
-      fun4=fun
+      fun4=real(fun,R4)
       call cpsetr_d ('SFS', scal)
       call cprect (fun4, n0d, n0, n1, rwrk, nrwrk, iwrk, niwrk)
 *   ..primary divisions

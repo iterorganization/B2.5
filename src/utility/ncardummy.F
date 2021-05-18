@@ -5,8 +5,8 @@
       real (kind=R8) ::
      *   X(N),Y(N)
       real (kind=R4) X4(N),Y4(N)
-      X4=X
-      Y4=Y
+      X4=real(X,R4)
+      Y4=real(Y,R4)
 #ifndef PLPLOT
       call curved(X4,Y4,N)
 #endif
@@ -20,8 +20,8 @@ c
       real (kind=R8) ::
      *   X(N),Y(N)
       real (kind=R4) X4(N),Y4(N)
-      X4=X
-      Y4=Y
+      X4=real(X,R4)
+      Y4=real(Y,R4)
 #ifndef PLPLOT
       call gpl(N,X4,Y4)
 #endif
@@ -35,8 +35,8 @@ c
       real (kind=R8) ::
      *   X(N),Y(N)
       real (kind=R4) X4(N),Y4(N)
-      X4=X
-      Y4=Y
+      X4=real(X,R4)
+      Y4=real(Y,R4)
 #ifndef PLPLOT
       call gpm(N,X4,Y4)
 #endif
@@ -50,14 +50,14 @@ c
      *   VL,VR,VB,VT,WL,WR,WB,WT
       integer LF
       real (kind=R4) VL4,VR4,VB4,VT4,WL4,WR4,WB4,WT4
-      VL4=VL
-      VR4=VR
-      VB4=VB
-      VT4=VT
-      WL4=WL
-      WR4=WR
-      WB4=WB
-      WT4=WT
+      VL4=real(VL,R4)
+      VR4=real(VR,R4)
+      VB4=real(VB,R4)
+      VT4=real(VT,R4)
+      WL4=real(WL,R4)
+      WR4=real(WR,R4)
+      WB4=real(WB,R4)
+      WT4=real(WT,R4)
 #ifndef PLPLOT
       call set(VL4,VR4,VB4,VT4,WL4,WR4,WB4,WT4,LF)
 #endif
@@ -70,8 +70,8 @@ c
      *   X,Y
       real (kind=R4) X4,Y4
       character*(*) STRING
-      X4=X
-      Y4=Y
+      X4=real(X,R4)
+      Y4=real(Y,R4)
 #ifndef PLPLOT
       call gtx(X4,Y4,STRING)
 #endif
@@ -84,7 +84,7 @@ c
       real (kind=R8) ::
      *   X
       real (kind=R4) X4
-      X4=X
+      X4=real(X,R4)
 #ifndef PLPLOT
       call gsmksc(X4)
 #endif
@@ -97,7 +97,7 @@ c
       real (kind=R8) ::
      *   X
       real (kind=R4) X4
-      X4=X
+      X4=real(X,R4)
 #ifndef PLPLOT
       call gschxp(X4)
 #endif
@@ -110,7 +110,7 @@ c
       real (kind=R8) ::
      *   X
       real (kind=R4) X4
-      X4=X
+      X4=real(X,R4)
 #ifndef PLPLOT
       call gschsp(X4)
 #endif
@@ -123,7 +123,7 @@ c
       real (kind=R8) ::
      *   X
       real (kind=R4) X4
-      X4=X
+      X4=real(X,R4)
 #ifndef PLPLOT
       call gschh(X4)
 #endif
@@ -136,8 +136,8 @@ c
       real (kind=R8) ::
      *   X,Y
       real (kind=R4) X4,Y4
-      X4=X
-      Y4=Y
+      X4=real(X,R4)
+      Y4=real(Y,R4)
 #ifndef PLPLOT
       call gschup(X4,Y4)
 #endif
@@ -151,9 +151,9 @@ c
      *   CR,CG,CB
       integer WKID,CI
       real (kind=R4) CR4,CG4,CB4
-      CR4=CR
-      CG4=CG
-      CB4=CB
+      CR4=real(CR,R4)
+      CG4=real(CG,R4)
+      CB4=real(CB,R4)
 #ifndef PLPLOT
       call gscr(WKID,CI,CR4,CG4,CB4)
 #endif
@@ -167,7 +167,7 @@ c
      *   X
       character*(*) STRING
       real (kind=R4) X4
-      X4=X
+      X4=real(X,R4)
 #ifndef PLPLOT
       call cpsetr(STRING,X4)
 #endif

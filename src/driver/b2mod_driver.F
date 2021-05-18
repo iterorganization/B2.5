@@ -1853,8 +1853,10 @@ c new CDF movie option (1st frame at t=0)
 
       call subend()
       return
+#ifdef USE_MPI
   999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
+#endif
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, nx, ny, ns, add_ntim)
@@ -2311,7 +2313,7 @@ c new CDF movie option
      &      fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &      na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor,
      &      uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi,
-     &      float(rightix), float(topiy))
+     &      rightix, topiy)
         endif
 #endif
         goto 1

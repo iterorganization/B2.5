@@ -179,7 +179,7 @@
       integer ix,iy,ia,ptr,ik,ision,k,ixend,iyend
       real (kind=R8) ::
      *     dtim,dist_start,dist_end,dist_deposit,vcx,vion,vnn,vexc,
-     *     rcx,rion,rexc,rnn,src,sri,eion,sxb,
+     *     rcx,rion,rnn,src,sri,eion,sxb,
      *     flight_time,flown_time,thru_time,
      *     work(-1:nx,-1:ny,0:1),wrk2(-1:nx,-1:ny),wrk3(-1:nx,-1:ny),
      *     pfrpuff,mainpuff,corepuff
@@ -240,9 +240,6 @@ cxpb  neutrals to be eion=shi/sna.
             rion=expu(rlsa(ix,iy,0,isneut)+
      *         rlsa(ix,iy,1,isneut)*log(te(ix,iy)/ev))
             vion=rion*ne(ix,iy)
-            rexc=expu(rlqa(ix,iy,0,isneut)+
-     *         rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev))-
-     *         rion*rpt(ix,iy,isneut+1)
             sxb=(expu(rlqa(ix,iy,0,isneut)+
      *         rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev)))/
      *         (rion*rpt(ix,iy,isneut+1))

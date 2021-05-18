@@ -122,7 +122,7 @@
 
       IF (nfit.gt.2) then
         CALL G02CAF(nfit,tau,logrho,fit,ifail)
-        ncutoffnew = (log(0.001_R8)-fit(7))/fit(6)
+        ncutoffnew = int((log(0.001_R8)-fit(7))/fit(6))
         allocate (rhonew(ncutoffnew))
         allocate (taunew(ncutoffnew))
         taunew = (/ ( i, i=1, ncutoffnew ) /)

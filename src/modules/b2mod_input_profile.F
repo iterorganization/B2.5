@@ -137,7 +137,7 @@
    
       if(nc.eq.0) then
         if(sources_time_mod.gt.0.0_R8) then
-          elm_count=tim/sources_time_mod
+          elm_count=int(tim/sources_time_mod)
         else
           elm_count=0
         endif
@@ -158,7 +158,7 @@
      1     sources_time_switch,int(tim/sources_time_mod),elm_count
           if(mod(tim,sources_time_mod).gt.sources_time_switch.or.
      1     int(tim/sources_time_mod).gt.elm_count) then
-            elm_count=tim/sources_time_mod 
+            elm_count=int(tim/sources_time_mod)
             call read_source_profile
             new_files = .true.
           endif
@@ -408,8 +408,9 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 !     write(*,profile)
       return
-
+#ifdef USE_MPI
   999 call xerrab ('Error while reading PROFILE namelist!')
+#endif
       end subroutine read_source_profile
 
       end subroutine source_input
@@ -481,7 +482,7 @@ cdjm Jan2017 Keep linearised sources for balance
         call read_transport_input         
 !  read the profile data
         if(transport_time_mod.gt.0.0_R8) then
-          elm_count=tim/transport_time_mod
+          elm_count=int(tim/transport_time_mod)
         else
           elm_count=0
         endif
@@ -504,7 +505,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
+            elm_count=int(tim/transport_time_mod)
             filename=transport_filename
             new_files = .true.
             call read_transport_input
@@ -817,7 +818,9 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading TRANSPORT inputfile!')
+#endif
       end subroutine read_transport_input
 
       end subroutine transport_input

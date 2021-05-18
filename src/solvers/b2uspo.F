@@ -36,6 +36,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      !$OMP THREADPRIVATE(ncall)
       save ncall
 *   ..procedures
       intrinsic min

@@ -83,14 +83,14 @@ C ========== GLOBAL OPTIONS ==========================================
       LBLBR=.true.
 C ====================================================================
       
-      ZLO=ZLOD
-      ZHI=ZHID
-      rlo=field(-1,-1)
-      rhi=field(-1,-1)
+      ZLO=real(ZLOD,R4)
+      ZHI=real(ZHID,R4)
+      rlo=real(field(-1,-1),R4)
+      rhi=real(field(-1,-1),R4)
       DO IY=-1,NY
         DO IX=-1,NX
-          RLO=MIN(RLO,REAL(FIELD(IX,IY)))
-          RHI=MAX(RHI,REAL(FIELD(IX,IY)))
+          RLO=MIN(RLO,REAL(FIELD(IX,IY),R4))
+          RHI=MAX(RHI,REAL(FIELD(IX,IY),R4))
         ENDDO
       ENDDO
       IF(zlo.eq.zhi) then
@@ -99,11 +99,11 @@ C ====================================================================
       ENDIF
       
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         endif
       endif
       
@@ -148,7 +148,7 @@ c             ENDIF
           if(ncont+3.gt.no_available_colors(0)) then
 C do something to avoid this
           endif
-          NOZM=0.2*NCONT
+          NOZM=NCONT/5
           if(b2plot_debug.ge.3)
      1     write (*,*) 'ncont =',ncont
           do i=1,ncont+1
@@ -177,15 +177,15 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
       ELSE  ! ==> do log plot <=======================================
         IF(NOFCLS.EQ.0) THEN ! standard contouring
           write (*,*) 'STANDARD CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
           ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -193,7 +193,7 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
             call cpseti('NCL - NUMBER OF CONTOUR LEVELS',ncont+1)
             do i=1,ncont+1
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               call cpsetr('CLV - CONTOUR LEVEL VALUE',zval)
@@ -207,7 +207,7 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
             call cpseti('NCL - NUMBER OF CONTOUR LEVELS',ncont+1)
             do i=1,ncont+1
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               call cpsetr('CLV - CONTOUR LEVEL VALUE',zval)
               CALL CPSETR('CLL - CONTOUR LINE LINE WIDTH',LWIDTH)
               CALL CPSETI('AIA - AREA ABOVE IDENTIFIER',I+1)
@@ -217,8 +217,8 @@ c     1          CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
           endif
         ELSE ! customised contouring
           write (*,*) 'CUSTOMISED CONTOURING'
-          ZLO=10.0**FLOOR(LOG10(ZLO))
-          ZHI=10.0**CEIL(LOG10(ZHI))
+          ZLO=10.0_R4**FLOOR(LOG10(ZLO))
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
           NCONT=NOFCLS-1
           FMTZ='(1PG9.3)'
           CALL CPSETI('CLS - CONTOUR LEVEL SELECTION FLAG',0)
@@ -278,13 +278,13 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
         IC=1
         IX=-1
         IY=-1
-        X(IC)=CR(IX,IY)
-        Y(IC)=CZ(IX,IY)
+        X(IC)=real(CR(IX,IY),R4)
+        Y(IC)=real(CZ(IX,IY),R4)
         do while(iy.lt.ny .and. topiy(ix,iy).eq.iy+1)
           IC=IC+1
           iy=iy+1
-          X(IC)=CR(IX,IY)
-          Y(IC)=CZ(IX,IY)
+          X(IC)=real(CR(IX,IY),R4)
+          Y(IC)=real(CZ(IX,IY),R4)
         end do
         iyt=iy
         if(iy.eq.ny) then
@@ -302,8 +302,8 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
      &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
             if(.not.iniso) then
               ic=ic+1
-              x(ic)=cr(ix,iy)
-              y(ic)=cz(ix,iy)
+              x(ic)=real(cr(ix,iy),R4)
+              y(ic)=real(cz(ix,iy),R4)
             else
               ix=ix-1
             end if
@@ -311,13 +311,13 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
         else
           ix=leftix(0,iyt+1)
           ic=ic+1
-          x(ic)=cr(ix,iy)
-          y(ic)=cz(ix,iy)
+          x(ic)=real(cr(ix,iy),R4)
+          y(ic)=real(cz(ix,iy),R4)
         end if
         do iy = iyt-1, -1, -1
           ic=ic+1
-          x(ic)=cr(ix,iy)
-          y(ic)=cz(ix,iy)
+          x(ic)=real(cr(ix,iy),R4)
+          y(ic)=real(cz(ix,iy),R4)
         end do
         iniso = .false.
         iy=0
@@ -347,20 +347,20 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
             else
               ix=ix-1
               ic=ic+1
-              x(ic)=cr(ix,iy)
-              y(ic)=cz(ix,iy)
+              x(ic)=real(cr(ix,iy),R4)
+              y(ic)=real(cz(ix,iy),R4)
               do while(leftix(ix,iy).ne.ix-1)
                 ic=ic+1
-                x(ic)=cr(ix,iy)
-                y(ic)=cz(ix,iy)
+                x(ic)=real(cr(ix,iy),R4)
+                y(ic)=real(cz(ix,iy),R4)
                 iy=iy+1
               end do
               iy=iy-1
               ix=ix-1
               do while(iy.ge.-1)
                 ic=ic+1
-                x(ic)=cr(ix,iy)
-                y(ic)=cz(ix,iy)
+                x(ic)=real(cr(ix,iy),R4)
+                y(ic)=real(cz(ix,iy),R4)
                 iy=iy-1
               end do
             end if
@@ -368,8 +368,8 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
           end if
           if(.not.iniso) then
             ic=ic+1
-            x(ic)=cr(ix,iy)
-            y(ic)=cz(ix,iy)
+            x(ic)=real(cr(ix,iy),R4)
+            y(ic)=real(cz(ix,iy),R4)
           else
             ix=ix+1
           end if
@@ -377,8 +377,8 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
         do while (iniso)
           DO IY=-1,NY
             IC=IC+1
-            X(IC)=CR(IX,IY)
-            Y(IC)=CZ(IX,IY)
+            X(IC)=REAL(CR(IX,IY),R4)
+            Y(IC)=REAL(CZ(IX,IY),R4)
           ENDDO
           iniso=.false.
           iy=ny
@@ -395,16 +395,16 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
      &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
             if(.not.iniso) then
               ic=ic+1
-              x(ic)=cr(ix,iy)
-              y(ic)=cz(ix,iy)
+              x(ic)=real(cr(ix,iy),R4)
+              y(ic)=real(cz(ix,iy),R4)
             else
               ix=ix-1
             end if
           end do
           do iy = ny-1, -1, -1
             ic=ic+1
-            x(ic)=cr(ix,iy)
-            y(ic)=cz(ix,iy)
+            x(ic)=real(cr(ix,iy),R4)
+            y(ic)=real(cz(ix,iy),R4)
           end do
           iniso = .false.
           iy=-1
@@ -434,20 +434,20 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
               else
                 ix=ix-1
                 ic=ic+1
-                x(ic)=cr(ix,iy)
-                y(ic)=cz(ix,iy)
+                x(ic)=real(cr(ix,iy),R4)
+                y(ic)=real(cz(ix,iy),R4)
                 do while(leftix(ix,iy).ne.ix-1)
                   ic=ic+1
-                  x(ic)=cr(ix,iy)
-                  y(ic)=cz(ix,iy)
+                  x(ic)=real(cr(ix,iy),R4)
+                  y(ic)=real(cz(ix,iy),R4)
                   iy=iy+1
                 end do
                 iy=iy-1
                 ix=ix-1
                 do while(iy.ge.-1)
                   ic=ic+1
-                  x(ic)=cr(ix,iy)
-                  y(ic)=cz(ix,iy)
+                  x(ic)=real(cr(ix,iy),R4)
+                  y(ic)=real(cz(ix,iy),R4)
                   iy=iy-1
                 end do
               end if
@@ -463,8 +463,8 @@ cxpb Obtaining the outer contour outline of the plasma region to be plotted
      &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
             if(.not.iniso) then
               ic=ic+1
-              x(ic)=cr(ix,iy)
-              y(ic)=cz(ix,iy)
+              x(ic)=real(cr(ix,iy),R4)
+              y(ic)=real(cz(ix,iy),R4)
             else
               ix=ix+1
             end if
@@ -486,17 +486,17 @@ cxpb Obtaining the inner contour outline of the plasma region to be plotted
         if(iy.eq.-1) ix=ix+1
         ixl=ix
         ic=1
-        x(ic)=cr(ixl,iy)
-        y(ic)=cz(ixl,iy)
+        x(ic)=real(cr(ixl,iy),R4)
+        y(ic)=real(cz(ixl,iy),R4)
         do while(ix.ne.leftix(ixl,iy))
           ix=rightix(ix,iy)
           ic=ic+1
-          x(ic)=cr(ix,iy)
-          y(ic)=cz(ix,iy)
+          x(ic)=real(cr(ix,iy),R4)
+          y(ic)=real(cz(ix,iy),R4)
         end do
         ic=ic+1
-        x(ic)=cr(ixl,iy)
-        y(ic)=cz(ixl,iy)
+        x(ic)=real(cr(ixl,iy),R4)
+        y(ic)=real(cz(ixl,iy),R4)
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
         
@@ -754,15 +754,15 @@ C =============================== Set up individual zones
             do iy=nystrt(k),nyend(k)
               if (nperd(k).ne.-1) then
                 ic=ic+1
-                x(ic)=  cr(nperd(k),iy)
-                y(ic)=  cz(nperd(k),iy)
-                z(ic)= field(nperd(k),iy)
+                x(ic)= real(   cr(nperd(k),iy),R4)
+                y(ic)= real(   cz(nperd(k),iy),R4)
+                z(ic)= real(field(nperd(k),iy),R4)
               endif
               do ix=nxstrt(k),nxend(k)
                 ic=ic+1
-                x(ic)= cr(ix,iy)
-                y(ic)= cz(ix,iy)
-                z(ic)=field(ix,iy)
+                x(ic)= real(   cr(ix,iy),R4)
+                y(ic)= real(   cz(ix,iy),R4)
+                z(ic)= real(field(ix,iy),R4)
               enddo
             enddo
             nnx=nxend(k)-nxstrt(k)+1
@@ -840,20 +840,20 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
         IC=1
-        X(IC)=max(CR(-1,-1),values(1))
-        Y(IC)=max(CZ(-1,-1),values(3))
+        X(IC)=real(max(CR(-1,-1),values(1)),R4)
+        Y(IC)=real(max(CZ(-1,-1),values(3)),R4)
         IC=IC+1
-        X(IC)=max(CR(-1,-1),values(1))
-        Y(IC)=min(CZ(NZ,0)+0.5_R4,values(4))
+        X(IC)=real(max(CR(-1,-1),values(1)),R4)
+        Y(IC)=real(min(CZ(NZ,0)+0.5_R8,values(4)),R4)
         IC=IC+1
-        X(IC)=min(CR(NR,0)+0.5_R4,values(2))
-        Y(IC)=min(CZ(NZ,0)+0.5_R4,values(4))
+        X(IC)=real(min(CR(NR,0)+0.5_R8,values(2)),R4)
+        Y(IC)=real(min(CZ(NZ,0)+0.5_R8,values(4)),R4)
         IC=IC+1
-        X(IC)=min(CR(NR,0)+0.5_R4,values(2))
-        Y(IC)=min(CZ(-1,-1),values(3))
+        X(IC)=real(min(CR(NR,0)+0.5_R8,values(2)),R4)
+        Y(IC)=real(min(CZ(-1,-1),values(3)),R4)
         IC=IC+1
-        X(IC)=min(CR(-1,-1),values(1))
-        Y(IC)=min(CZ(-1,-1),values(3))
+        X(IC)=real(min(CR(-1,-1),values(1)),R4)
+        Y(IC)=real(min(CZ(-1,-1),values(3)),R4)
         if (b2plot_debug.ge.8) then
           write(*,*) 'Computational domain data bounds : '
           write(*,*) 'X : ', X(1:5)
@@ -877,9 +877,9 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         DO IY=iystrt,iyend
           DO IX=ixstrt,ixend
             IC=IC+1
-            X(IC)=ix    ! was CR(IX,0)
-            Y(IC)=iy    ! was CZ(IY,0)
-            Z(IC)=FIELD(IX,IY)
+            X(IC)=ix    ! was real(CR(IX,0),R4)
+            Y(IC)=iy    ! was real(CZ(IY,0),R4)
+            Z(IC)=real(FIELD(IX,IY),R4)
           ENDDO
         ENDDO
         NNX=ixend-ixstrt+1

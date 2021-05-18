@@ -553,7 +553,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
       r0r=1.5_R8
       if(r .lt. r0r) then
         write(*,*) 'r <'
-        i1=(z-z1(1))/(z1(n1)-z1(1))*n1+1
+        i1=int((z-z1(1))/(z1(n1)-z1(1))*n1)+1
         i1=min(n1-1,max(1,i1))
         do while(z1(i1) .lt. z .and. i1 .gt. 1)
           i1=i1-1
@@ -567,7 +567,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
      1   (s1(i1+1)-s1(i1))+s1(i1)
       else
         write(*,*) 'r >'
-        i2=(z-z2(1))/(z2(n2)-z2(1))*n2+1
+        i2=int((z-z2(1))/(z2(n2)-z2(1))*n2)+1
         i2=min(n2-1,max(1,i2))
         do while(z2(i2) .gt. z .and. i2 .gt. 1)
           i2=i2-1

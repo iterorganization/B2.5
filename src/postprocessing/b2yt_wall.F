@@ -508,7 +508,7 @@ cxpb Copy data arrays into new geometry
         do iw1 = 1, nbnd1
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .     zn1(sput_dst)
+     .     nint(zn1(sput_dst))
         end do
         track_source = 0.0_R8
         do iw = 1, nbnd
@@ -539,10 +539,10 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack2.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack2.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           end if
         end do
         track_source = 0.0_R8
@@ -574,13 +574,13 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack3.eq.3) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst3)
+     .       nint(zn1(sput_dst3))
           else if (itrack3.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack3.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           endif
         end do
         track_source = 0.0_R8

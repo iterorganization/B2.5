@@ -25,6 +25,7 @@
       use b2mod_external
       use b2mod_openmp
 #ifdef _OPENMP
+#ifndef NO_OPENMP_B2NPMO
       use b2mod_balance
      1 ,only : b2stbr_phys_smo_bal, b2stbr_phys_smo0to3,
      2         b2stbr_bas_smo_bal, b2stbr_bas_smo0to3,
@@ -62,15 +63,14 @@
      2         b2sicf_smo_bal, b2sicf_smo0to3,
      3         b2sian_smo_bal, b2sian_smo0to3,
      4         b2nxdv_smo_bal, b2nxdv_smo0to3
-#ifndef NO_OPENMP_B2NPMO
       use b2mod_b2cmpt
       use b2mod_b2cmgs
       use b2mod_transport
      & , only : f_luc_sg, alfx_c, sigx_c
-#endif
-#endif
 #ifdef WITH_FTIMINGS
       use timings
+#endif
+#endif
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)

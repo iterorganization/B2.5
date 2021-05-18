@@ -16,7 +16,7 @@ c
       if(mod(ii,10) .gt. 0) call b2prdl
       ii=ii/10
       if(mod(ii,10) .gt. 0) call b2pnwl(iret)
-   50 ii=ii/10
+      ii=ii/10
       irdparm=1
       if(mod(ii,10) .gt. 0) call b2ptrgl(BoRiS)
       ii=ii/10

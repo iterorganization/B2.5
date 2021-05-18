@@ -268,9 +268,6 @@ contains
         real(IDS_real) :: gsum, gmid, gbot, gtop
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_face
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_bnd_core
 
         integer, parameter :: nsources = 12
         integer, save :: style = 1
@@ -5945,7 +5942,7 @@ contains
 
     real(ITM_R8) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
-
+    character(len=13) :: spclabel
 
     !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
@@ -5962,7 +5959,8 @@ contains
     allocate(edgecpo%species(ns))
     do is = 0, ns-1
        allocate(edgecpo%species(is+1)%label(1))
-       call species(is, edgecpo%species(is+1)%label, .false.)
+       call species(is, spclabel, .false.)
+       edgecpo%species(is+1)%label = spclabel
        edgecpo%species(is+1)%amn = am(is)
        edgecpo%species(is+1)%zn = zn(is)
        edgecpo%species(is+1)%zmin = zamin(is)

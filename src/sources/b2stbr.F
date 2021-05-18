@@ -359,7 +359,7 @@
      2     neutrals_count
           if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
      1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=tim/neutrals_time_mod
+            neutrals_count=int(tim/neutrals_time_mod)
             call read_neutrals_namelist(nx, ny, ns, .true.)
             new_sputter_namelist=.true.
             call xertst (nstrat.le.nstraid,
@@ -1418,7 +1418,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
-        neutrals_count=tim/neutrals_time_mod
+        neutrals_count=int(tim/neutrals_time_mod)
       else
         neutrals_count=0
       endif

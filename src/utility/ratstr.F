@@ -330,9 +330,9 @@
 *        (lower limit: ...)
          klo = nint(qz(k-1))
 *        (upper limit: collision limit, stop at klo+20)
-         khi = min (klo+20.0_R8,
+         khi = int( min (klo+20.0_R8,
      &     126.0_R8*real(k)**zexp3*(rtt(i)/rydbrg)**zexp1/
-     &     (rtn(j)*cm3)**zexp2)
+     &     (rtn(j)*cm3)**zexp2) )
          do kk = klo, khi
           zy1 = (real(k)/(kk+1))**2*rydbrg/rtt(i)
           rtra(i,j,k) = rtra(i,j,k)+

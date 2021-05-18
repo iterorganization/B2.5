@@ -59,7 +59,7 @@
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp
 *   ..namelist
-      character :: exp*128, comment*128
+      character :: exp*32, comment*128
       integer :: shot, overwrite_shotnumber
       real (kind=R8) :: time
       logical :: timedep, snapshot, tallies, movies

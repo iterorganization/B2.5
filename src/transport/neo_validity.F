@@ -31,15 +31,15 @@
      &   deltab(-1:nx,-1:ny,0:ns), deltapar(-1:nx,-1:ny,0:ns),
      &   vtha(-1:nx,-1:ny,0:ns)
 
-      real min_value
+      real (kind=R8) :: min_value
 c     minimum value for real arrays to avoid division by zero
-      parameter (min_value=1.e-8)
+      parameter (min_value=1.e-8_R8)
 c     conversion of constants to CGS units
-      real erg, cm, gauss, gramm
-      parameter (erg=1.e7, cm=1.e2, gauss=1.e4, gramm=1.e3)
-      real eV_cgs, e_cgs, c_cgs
+      real (kind=R8) :: erg, cm, gauss, gramm
+      parameter (erg=1.e7_R8, cm=1.e2_R8, gauss=1.e4_R8, gramm=1.e3_R8)
+      real (kind=R8) :: eV_cgs, e_cgs, c_cgs
       parameter (eV_cgs=ev*erg,
-     &           e_cgs=qe*c*10., c_cgs=c*cm)
+     &           e_cgs=qe*c*10._R8, c_cgs=c*cm)
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
      &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),

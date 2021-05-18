@@ -2718,7 +2718,7 @@ cdjm Update ion heat sources
       integer nstrad
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
+     .        eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
       integer vdims(4)
       integer jxi,jxa,jsep
       integer is
@@ -2830,7 +2830,7 @@ cdjm Update ion heat sources
 *   ..za:
       vdims(1)=nsid
       allocate(za(0:nsd-1))
-      za(0:nsd-1)=(zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8
+      za(0:nsd-1)=nint((zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8)
       call write_cdf_int(ncid,'za',za(0:nsd-1),vdims,1)
 *   ..Arrays for particle balance:
 *     Fluxes
@@ -3097,7 +3097,7 @@ cdjm Update ion heat sources
         call write_cdf_double(ncid,'eirene_mc_pppl_sna_bal',
      &                     eirene_mc_pppl_sna_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_core_sna_bal',
-     &                     eirene_mc_core_sna_bal_av,vdims,3)
+     &                     eirene_mc_core_sna_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_mapl_smo_bal',
      &                     eirene_mc_mapl_smo_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_mmpl_smo_bal',

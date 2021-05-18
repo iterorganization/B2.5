@@ -166,7 +166,7 @@
      &     adjustr(is_codes(icase)),nint(zamin(icase))
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = na(ix,iy,icase)
+            M(iy,ix) = real(na(ix,iy,icase),R4)
           enddo
         enddo
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
@@ -176,7 +176,7 @@
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = ua(ix,iy,icase-ns)
+            M(iy,ix) = real(ua(ix,iy,icase-ns),R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns )then
@@ -184,7 +184,7 @@
         write(axis3,"('Temperature of electrons',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = te(ix,iy)/ev
+            M(iy,ix) = real(te(ix,iy)/ev,R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+1 )then
@@ -192,14 +192,14 @@
         write(axis3,"('Temperature of ions',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = ti(ix,iy)/ev
+            M(iy,ix) = real(ti(ix,iy)/ev,R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+2 )then
         write(title,"('Electric potential')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = po(ix,iy)
+            M(iy,ix) = real(po(ix,iy),R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+3 )then
@@ -207,9 +207,10 @@
         M=0.0d0
         do iy=0,ny
           do ix=-1,nx
-            M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                *2.0e0_R8
+            M(iy,ix)=real(
+     *      -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      *2.0e0_R8,R4)
           enddo
         enddo
       else

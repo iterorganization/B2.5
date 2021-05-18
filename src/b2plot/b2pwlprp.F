@@ -37,7 +37,7 @@ c======================================================================
       real (kind=R8) ::
      *   d,x
       integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,kkb,kke,
-     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),
+     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),itmp,
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
       logical lim_cnf
 c
@@ -837,12 +837,12 @@ ccc*** Order elements of original plot zone in CCW direction
         !Sort
         do i1=1,nwldlis_old-1
           cont=minloc(lis_ind(i1:nwldlis_old),1)
-          temp=lis_ind(cont+i1-1)
+          itmp=lis_ind(cont+i1-1)
           lis_ind(cont+i1-1)=lis_ind(i1)
-          lis_ind(i1)=temp
-          temp=lwldlis_old(cont+i1-1)
+          lis_ind(i1)=itmp
+          itmp=lwldlis_old(cont+i1-1)
           lwldlis_old(cont+i1-1)=lwldlis_old(i1)
-          lwldlis_old(i1)=temp
+          lwldlis_old(i1)=itmp
         end do
         deallocate(lis_ind)
 

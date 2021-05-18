@@ -18,9 +18,9 @@
 #endif
       integer :: status
       integer :: timedim
-      integer :: idim, ivar, iatt, iret, ib, it, ih,
+      integer :: idim, ivar, iatt, ib, it, ih,
      1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
-     2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
+     2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:)

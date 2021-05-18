@@ -143,9 +143,9 @@ c
       entry initialise_plotting_flags(time)
       extralabel=' '
       globalheader=' '
-      runtime=time
-      glsz=1.0
-      lbsz=1.0
+      runtime=real(time,R4)
+      glsz=1.0_R4
+      lbsz=1.0_R4
       ndec=10
       initialised_plotting=.false.
       want_aspect=.true.
@@ -182,11 +182,11 @@ c
       return
 
       entry set_glsz(rval)
-      glsz=rval
+      glsz=real(rval,R4)
       return
 
       entry set_lbsz(rval)
-      lbsz=rval
+      lbsz=real(rval,R4)
       return
 
       entry set_ndec(iopt)

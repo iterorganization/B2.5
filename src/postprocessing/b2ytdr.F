@@ -482,7 +482,7 @@ c 2002-09-11: logic revised
       character*500 line
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
-      character*96, allocatable :: REAC_LINE(:)
+      character*98, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
       character*80 MESSAGE
       character*24 TXTSPC, TXTUNT, TEXTLA
@@ -4186,7 +4186,7 @@ C  OLD INPUT VERSION BEGIN
      .       (IRPTA1+IRPTE1)/2,ILEQUI,nx,ny,nx1,ny1,4)
           ENDIF
           WRITE(IUNOT,6666) idum(0:9)
-  312     READ (IUNIN,'(A80)') ZEILE
+          READ (IUNIN,'(A80)') ZEILE
           IREAD=1
           IF (ZEILE(1:1).EQ.'*') THEN
             GOTO 314
@@ -4341,7 +4341,7 @@ C  READ BOUNDARY DATA
                                         !  XLIMS2(I,1),YLIMS2(I,1),ZLIMS2(I,1)
             WRITE(IUNOT,'(A72)') ZEILE
           ELSEIF (RLB(I).LE.0.0_R8) THEN
-            IH=-RLB(I)
+            IH=-NINT(RLB(I))
             idum(1)=B2IDEZ(IH,1,2)
             idum(2)=B2IDEZ(IH,2,2)
             DO 363 J=1,idum(1)
@@ -4357,7 +4357,7 @@ C  READ BOUNDARY DATA
   364       CONTINUE
           ENDIF
 C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
-  367     READ (IUNIN,'(A80)') ZEILE
+          READ (IUNIN,'(A80)') ZEILE
           IREAD=1
           IF (ZEILE(1:1).EQ.'*') THEN
             WRITE(IUNOT,'(A80)') ZEILE
@@ -4812,7 +4812,6 @@ c     now read the relevant line
 Cxpb We must read up to section 5 first, to identify ion species
 Cxpb and bundles, compute new bulk ion species indices and only
 Cxpb then rewrite the entire block
-  420   CONTINUE
 cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. backgrounds)
         LMULPL = .FALSE.
         READ (IUNIN,*) NATMI
@@ -4923,7 +4922,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
  4212   CONTINUE
 *4B.   NEUTRAL MOLECULE SPECIES CARDS, NMOLI SPECIES
         READ (IUNIN,'(A72)') TXTMOL
-  430   READ (IUNIN,*) NMOLI
+        READ (IUNIN,*) NMOLI
         allocate(TEXTM(NMOLI))
         TEXTM = ' '
         allocate(NMASSM(NMOLI),NCHARM(NMOLI),NPRTM(NMOLI),
@@ -5070,7 +5069,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
  4312  CONTINUE
 *4C.   TEST IONS SPECIES CARDS, NIONI SPECIES
         READ (IUNIN,'(A72)') TXTION
-  440   READ (IUNIN,*) NIONI
+        READ (IUNIN,*) NIONI
         allocate(TEXTI(NIONI))
         TEXTI = ' '
         allocate(NMASSI(NIONI),NCHARI(NIONI),
@@ -5227,7 +5226,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
           READ (ZEILE,'(A72)') TXTPHOT
         END IF
         IREAD=0
-  450   READ (IUNIN,*) NPHOTI
+        READ (IUNIN,*) NPHOTI
         allocate(TEXTPH(NPHOTI))
         allocate(ISRFPH(NPHOTI),ISRTPH(NPHOTI),ID1PH(NPHOTI),
      .           NRCPH(NPHOTI))
@@ -7983,7 +7982,6 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
 *** 7. DATA FOR PRIMARY SOURCES, NSTRAI STRATA
 cxpb  Here must read the whole block before rewrite
 cxpb  to see if some strata need to be removed
-  700   CONTINUE
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -9480,7 +9478,6 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         call fix_logical_input(zeile,2)
         READ (ZEILE,6665) ldum(0:4) ! PLCHOR,PLSPEC,PRSPEC,PLARGL,PRARGL
         WRITE(IUNOT,6665) ldum(0:4)
- 1225   CONTINUE
         if (streql(eirene_format,'juelich') .or.
      .      streql(eirene_format,'facelift') .or.
      .      streql(eirene_format,'old')) THEN
@@ -10929,7 +10926,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -10943,7 +10941,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -10957,7 +10956,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -10971,7 +10971,8 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,bundle_frac,
      .     natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
-     .     iatm1,imol1,nwall,nwall1,nwallm,sputter_tmp,contr_area)
+     .     iatm1,imol1,iion1,
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) =
      .       sputter_tmp(ib,0:ns1-1)
@@ -11913,6 +11914,7 @@ cxpb as they no longer necessarily point to the same species
   101 format (/'  The new grid contains nx1*ny1 interior cells, ',
      &  'where nx1 =',i4,' and ny1 =',i4,'.')
  1028 format ()
+#ifdef B25_EIRENE
  6662 FORMAT (L1,1X,A24,1X,I1,1X,4(2I3,1X))
  6664 FORMAT (1P,6E12.4)
  6665 FORMAT (12(5L1,1X))
@@ -11923,6 +11925,7 @@ cxpb as they no longer necessarily point to the same species
 66665 FORMAT (1P,2I6,4E12.4)
 66666 FORMAT (I2,1X,A8,12(I3),1X,A10,1X,I2)
 66667 FORMAT (I2.2,1X,A8,12(I3),1X,A10,1X,I2)
+#endif
 
 *-----------------------------------------------------------------------
 *.end b2ytdr

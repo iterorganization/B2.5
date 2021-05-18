@@ -26,7 +26,7 @@ c     max. number of ionization stages
       subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,mmxd)
       integer nxd,nyd,nsd,nzd,mmxd
 
-      nzdecl=maxval(zn(0:nsd-1))+1
+      nzdecl=nint(maxval(zn(0:nsd-1)))+1
       nzd=nzdecl
       allocate(ncl(0:nsd))
       allocate(isort(0:nsd,0:nzd-1))

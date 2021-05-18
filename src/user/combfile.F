@@ -540,14 +540,14 @@ c=======================================================================
 
 c*** Dummy data transformation routine
 
-      subroutine xtrn_dum(data,chdr,nhdr,mrks,nmrk,first)
-      use b2mod_types
-      use b2mod_diag
-      implicit none
-      integer :: nmrk, nhdr 
-      real (kind=R8) :: data(nhdr)
-      integer :: mrks(nmrk)
-      character*(mhdr) chdr(nhdr)
-      logical first
-      return
-      end
+c$$$      subroutine xtrn_dum(data,chdr,nhdr,mrks,nmrk,first)
+c$$$      use b2mod_types
+c$$$      use b2mod_diag
+c$$$      implicit none
+c$$$      integer :: nmrk, nhdr
+c$$$      real (kind=R8) :: data(nhdr)
+c$$$      integer :: mrks(nmrk)
+c$$$      character*(mhdr) chdr(nhdr)
+c$$$      logical first
+c$$$      return
+c$$$      end subroutine xtrn_dum

@@ -8,13 +8,13 @@
 #ifdef USE_MPI
       include 'mpif.h'
 
-      integer :: mpi_err,mpi_stat,mpi_dum
+      integer :: mpi_err,mpi_stat
       integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
 
-      integer :: mpi_err,mpi_stat,mpi_dum
+      integer :: mpi_err,mpi_stat
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif

@@ -12,8 +12,8 @@ c======================================================================
 c======================================================================
 c	 print *,'%% targeton: onflag,trgmind,trgmaxd,trglog=',
 c     , 	               onflag,trgmind,trgmaxd,trglog
-      trgmin=trgmind
-      trgmax=trgmaxd
+      trgmin=real(trgmind,R4)
+      trgmax=real(trgmaxd,R4)
       trglinlog=trglog
       target=onflag
       return

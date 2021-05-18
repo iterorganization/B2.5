@@ -9,7 +9,7 @@ c
 
       call subini ('clvd')
       call xertst(delta.ne.0.0_R8, 'division by 0 in clvd')
-      nofcls=(clvmax-clvmin)/delta
+      nofcls=int((clvmax-clvmin)/delta)
       if(nofcls.eq.0) then
         call xerrab ('Contour Level Max == Contour Level Min')
       else
@@ -17,7 +17,7 @@ c
         write (*,*) 'User specified',nofcls,'contour levels for range'
         write (*,*) 'Using customised contour level range:'
         do iclv=1,nofcls
-          clval(iclv)=clvmin+(iclv-1)*delta
+          clval(iclv)=real(clvmin+(iclv-1)*delta,R4)
           write (*,*) 'contour level',iclv,'at',clval(iclv)
         enddo
       endif
@@ -35,7 +35,7 @@ c
 
       call subini ('eclvd')
       call xertst (delta.ne.0.0_R8, 'division by 0 in eclvd')
-      nofecls=(clvmax-clvmin)/delta
+      nofecls=int((clvmax-clvmin)/delta)
       if(nofecls.eq.0) then
         call xerrab
      .   ('Eirene Contour Level Max == Eirene Contour Level Min')
@@ -45,7 +45,7 @@ c
      .   'Eirene contour levels for range'
         write (*,*) 'Using customised Eirene contour level range:'
         do iclv=1,nofecls
-          eclval(iclv)=clvmin+(iclv-1)*delta
+          eclval(iclv)=real(clvmin+(iclv-1)*delta,R4)
           write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
         enddo
       endif
@@ -63,7 +63,7 @@ c
 
       call subini ('wclvd')
       call xertst (delta.ne.0.0_R8, 'division by 0 in wclvd')
-      nofwcls=(clvmax-clvmin)/delta
+      nofwcls=int((clvmax-clvmin)/delta)
       if(nofwcls.eq.0) then
         call xerrab ('Wall Contour Level Max == Wall Contour Level Min')
       else
@@ -72,7 +72,7 @@ c
      .   'wall contour levels for range'
         write (*,*) 'Using customised wall contour level range:'
         do iclv=1,nofwcls
-          wclval(iclv)=clvmin+(iclv-1)*delta
+          wclval(iclv)=real(clvmin+(iclv-1)*delta,R4)
           write (*,*) 'wall contour level',iclv,'at',wclval(iclv)
         enddo
       endif
@@ -90,7 +90,7 @@ c
 
       call subini ('tcvld')
       call xertst(delta.ne.0.0_R8, 'division by 0 in tclvd')
-      noftcls=(clvmax-clvmin)/delta
+      noftcls=int((clvmax-clvmin)/delta)
       if(noftcls.eq.0) then
         call xerrab 
      .   ('Target Contour Level Max == Target Contour Level Min')
@@ -100,7 +100,7 @@ c
      .   'target contour levels for range'
         write (*,*) 'Using customised target contour level range:'
         do iclv=1,noftcls
-          tclval(iclv)=clvmin+(iclv-1)*delta
+          tclval(iclv)=real(clvmin+(iclv-1)*delta,R4)
           write (*,*) 'target contour level',iclv,'at',tclval(iclv)
         enddo
       endif

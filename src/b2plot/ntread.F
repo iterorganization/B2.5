@@ -287,10 +287,10 @@ C
         call read_title(46)
         read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
       end if
+   99 CONTINUE
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
 C
       call subend ()
       RETURN
@@ -298,6 +298,7 @@ C
 *=======================================================================
 *//END NTREAD//
 
+#ifdef B25_EIRENE
  1983 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN "//FORT//"33 ",
      .     "(NODES OF TRIANGULAR GRID)"
@@ -309,7 +310,8 @@ C
  1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN "//FORT//"35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open '//fort_lc//'35 file!')
-      END
+#endif
+      END SUBROUTINE NTREAD
 
 
 

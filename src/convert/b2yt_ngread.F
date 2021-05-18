@@ -1783,13 +1783,13 @@ cank
       end if
       if(jvft44.ge.960513) nlimi = nlim1
 
+   99 CONTINUE
+ 1028 format()
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
       close(44)
       close(45)
- 1028 format()
 C
       call subend ()
       RETURN

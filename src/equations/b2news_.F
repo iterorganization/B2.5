@@ -1233,7 +1233,6 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
 
 * ..return
       ierr = 0
-99999 continue
 
       ncall = ncall+1
       call subend ()

@@ -166,7 +166,7 @@
           call read_b2mod_transport_namelist
           call write_b2mod_transport_namelist
           if(transport_time_mod.gt.0.0_R8) then
-            elm_count=tim/transport_time_mod
+            elm_count=int(tim/transport_time_mod)
           else
             elm_count=0
           endif
@@ -206,7 +206,7 @@
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
+            elm_count=int(tim/transport_time_mod)
             call read_b2mod_transport_namelist
             call write_b2mod_transport_namelist
           endif

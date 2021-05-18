@@ -115,7 +115,7 @@
       ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
                              ! second the total  heat flux, third the plasma heat flux and fourth the number of point
       MM=0.0d0
-      MM(1,4)=dble(NLINE)
+      MM(1,4)=real(NLINE)
       open(unit=inunit,file=infile,status='old',action='read')
       do ii=1,nskip
          READ(INUNIT,*) ss

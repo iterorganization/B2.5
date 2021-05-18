@@ -115,42 +115,42 @@ c
       use b2mod_types
       integer ityp
 #include <graphics_vars.h>
-      if(partition_colors.ne.0) then
-      if(ityp.eq.0) then
-        no_available_colors=NCOL*partition_colors
+      if(partition_colors.ne.0.0_R4) then
+       if(ityp.eq.0) then
+        no_available_colors=int(NCOL*partition_colors)
+       else
+        no_available_colors=int(NCOL*(1.-partition_colors))
+       endif
       else
-        no_available_colors=NCOL*(1-partition_colors)
+       no_available_colors=NCOL
       endif
-      else
-      no_available_colors=NCOL
-      endif
-      end
+      end function no_available_colors
 c
       function choose_color(icol,ityp)
       use b2mod_types
       integer icol, ityp
 #include <graphics_vars.h>
       integer choose_color
-      if(partition_colors.ne.0) then
-      if(ityp.eq.0) then
+      if(partition_colors.ne.0.0_R4) then
+       if(ityp.eq.0) then
         if(fill_option.eq.0) then
-          choose_color=(icol)*NCOL*partition_colors/(ncont+3)+2
+          choose_color=int(icol*NCOL*partition_colors/(ncont+3))+2
         else
           choose_color=MOD(icol,int(NCOL*partition_colors))+2
         endif
        else
         if(fill_option.eq.0) then
-          choose_color=(icol)*NCOL*(1-partition_colors)/(ncont+3)+2+
-     1     (NCOL*partition_colors)
+          choose_color=int(icol*NCOL*(1-partition_colors)/(ncont+3))+2+
+     1     int(NCOL*partition_colors)
         else
           choose_color=MOD(icol,int(NCOL*(1-partition_colors)))+2+
-     1     (NCOL*partition_colors)
+     1     int(NCOL*partition_colors)
         endif
-      endif
+       endif
       else
-      if(fill_option.eq.0) then
-        choose_color=(icol)*NCOL/(ncont+3)+2
-      else
+       if(fill_option.eq.0) then
+        choose_color=int(icol*NCOL/(ncont+3))+2
+       else
         choose_color=MOD(icol,NCOL)+2
        endif
       endif
@@ -162,10 +162,10 @@ c
 #include <graphics_vars.h>
       real (kind=R8) :: val
       if(val.lt.0.0.or.val.gt.1.0) then
-      write(*,*) 'set_partition_colors: parameter out of range'
-      partition_colors=1.0
+       write(*,*) 'set_partition_colors: parameter out of range'
+       partition_colors=1.0_R4
       else
-      partition_colors=val
+       partition_colors=real(val,R4)
       endif
       return
       end subroutine set_partition_colors

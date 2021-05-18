@@ -674,12 +674,12 @@ cxpb
 cxpb 20180323
 cxpb
       deallocate(ft44data)
-#endif
+ 1028 format()
       NFEND = 1
+   99 CONTINUE
+#endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
- 1028 format()
 C
       call subend ()
       RETURN

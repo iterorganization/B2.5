@@ -30,19 +30,12 @@
       real (kind=R8), allocatable, save ::
      *      nemxip_av(:,:),  temxip_av(:,:),  timxip_av(:,:),
      *      nemxap_av(:,:),  temxap_av(:,:),  timxap_av(:,:),
-     *      pomxip_av(:,:),  pomxap_av(:,:),
-     *      nemxip_std(:,:), temxip_std(:,:), timxip_std(:,:),
-     *      nemxap_std(:,:), temxap_std(:,:), timxap_std(:,:),
-     *      pomxip_std(:,:), pomxap_std(:,:)
+     *      pomxip_av(:,:),  pomxap_av(:,:)
       real (kind=R8), allocatable, save ::
      *      nesepi_av(:,:),  tesepi_av(:,:),  tisepi_av(:,:),
      *      nesepm_av(:,:),  tesepm_av(:,:),  tisepm_av(:,:),
      *      nesepa_av(:,:),  tesepa_av(:,:),  tisepa_av(:,:),
-     *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:),
-     *      nesepi_std(:,:), tesepi_std(:,:), tisepi_std(:,:),
-     *      nesepm_std(:,:), tesepm_std(:,:), tisepm_std(:,:),
-     *      nesepa_std(:,:), tesepa_std(:,:), tisepa_std(:,:),
-     *      posepi_std(:,:), posepm_std(:,:), posepa_std(:,:)
+     *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:)
       real (kind=R8), allocatable :: dum(:)
       real (kind=R8) :: tstepn(1), eps_s, tmax, meansample, t1, t2
       logical b2ye_tprf, ex
@@ -77,8 +70,10 @@
         call cfruch (iun, 120, lbli, 'label')
         call b2ruzd (iun, b2faveri_version, ns,
      &    zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-        call cfruin (iun, 1, naver, 'naver')
-        call cfruin (iun, 1, ntotdt, 'ntotdt')
+        call cfruin (iun, 1, idum, 'naver')
+        naver = idum(1)
+        call cfruin (iun, 1, idum, 'ntotdt')
+        ntotdt = idum(1)
       else
         write (*,*) ' file b2favere not found '
         write (*,*) ' results are questionable! '

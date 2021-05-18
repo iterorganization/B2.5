@@ -49,6 +49,7 @@
       save ncall
       real (kind=R8) ::
      *   t0, t1
+      !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs, sqrt, dim
       real (kind=R8) ::
