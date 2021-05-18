@@ -8384,11 +8384,13 @@ cxpb Careful here because of BC number clash
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     &                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  NIVS = NIVS +
-     &               NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .              VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  NIVS=NIVS +
+     &                     ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t2=t2 +
      &                ne(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
@@ -8710,12 +8712,14 @@ cxpb Careful here because of BC number clash
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
-                  TIS = TIS + TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
-     .                        NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                       VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  NIVS = NIVS +
-     .                   NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                  VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  NIVS=NIVS +
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t0=t0 +
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
@@ -8883,6 +8887,15 @@ cxpb Careful here because of BC number clash
      .          TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      .      -PBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)+1) =
+     &          qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
+     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -8898,6 +8911,15 @@ cxpb Careful here because of BC number clash
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-PBIG*
      .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)) =
+     &          qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
+     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)

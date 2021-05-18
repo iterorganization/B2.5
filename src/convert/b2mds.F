@@ -607,8 +607,9 @@ c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
+c 29: Same indexing error was also present in emolrad and eionrad
 
-      dbversion=28
+      dbversion=29
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1227,7 +1228,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
@@ -1243,7 +1244,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
-     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif

@@ -4466,6 +4466,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         IREAC1 = -1
         NREAC1 = 0
         ILINE = 0
+        bundled = .false.
   411   READ (IUNIN,'(A96)') REACZEILE
         IF (REACZEILE(1:1).NE.'*') THEN
           skip_reac = .false.
@@ -4677,6 +4678,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
           ENDIF
           IF (INDEX(REACZEILE,'ADAS') .NE. 0) THEN
             READ (IUNIN,'(4X,A2,1X,I3,2X,A60)') ELNAME,idum(0),BUNDLING
+            bundled = bundled .or. .not.streql(BUNDLING,' ')
             if (.not.skip_reac) then
               ILINE = ILINE+1
               if (same_bundling) then

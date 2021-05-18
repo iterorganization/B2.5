@@ -482,10 +482,10 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,0)=fna(:,:,:,0)
-        fna_32(:,:,:,1)=0.0_R8
-        fna_52(:,:,:,0)=0.0_R8
-        fna_52(:,:,:,1)=fna(:,:,:,1)
+        fna_32(:,:,0,:)=fna(:,:,0,:)
+        fna_32(:,:,1,:)=0.0_R8
+        fna_52(:,:,0,:)=0.0_R8
+        fna_52(:,:,1,:)=fna(:,:,1,:)
         call b2xpfi (nx, ny, ns, fna_32, fni_32)
         call b2xpfi (nx, ny, ns, fna_52, fni_52)
         call b2xpfe (nx, ny, ns, 0, qe,

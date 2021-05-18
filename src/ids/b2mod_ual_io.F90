@@ -418,8 +418,9 @@ contains
         end if
 
         !! Set default time step values
+        !! This routine only fills in one time slice at a time
         time_sind = 1
-        time_slice_value = 0.0_IDS_real
+        time_slice_value = time
         time_step = IDS_REAL_INVALID
         num_time_slices = 1
         !! If present, set time step values
@@ -447,9 +448,7 @@ contains
         edge_profiles%ids_properties%comment(1) = label
         !! 2. Allocate edge_profiles.time and set it to desired values
         allocate( edge_profiles%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_profiles%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_profiles%time(time_sind) = time
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -461,9 +460,7 @@ contains
         edge_transport%ids_properties%comment(1) = label
         !! 2. Allocate edge_transport.time and set it to desired values
         allocate( edge_transport%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_transport%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_transport%time(time_sind) = time
 
         !! Preparing edge_sources IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -475,9 +472,7 @@ contains
         edge_sources%ids_properties%comment(1) = label
         !! 2. Allocate edge_sources.time and set it to desired values
         allocate( edge_sources%time(num_time_slices) )
-        do i = 1, num_time_slices
-          edge_sources%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        edge_sources%time(time_sind) = time
 
         !! Preparing dataset_description IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -489,10 +484,7 @@ contains
         description%ids_properties%comment(1) = label
         !! 2. Allocate description.time and set it to desired values
         allocate( description%time(num_time_slices) )
-        do i = 1, num_time_slices
-          description%time(i) = time - (num_time_slices-i) * time_step
-        end do
-
+        description%time(time_sind) = time
 #if IMAS_MINOR_VERSION > 21
         !! Preparing summary IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -504,11 +496,8 @@ contains
         summary%ids_properties%comment(1) = label
         !! 2. Allocate summary.time and set it to desired values
         allocate( summary%time(num_time_slices) )
-        do i = 1, num_time_slices
-          summary%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        summary%time(time_sind) = time
 #endif
-
 #if IMAS_MINOR_VERSION > 25
         !! Preparing numerics IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -520,15 +509,13 @@ contains
         numerics%ids_properties%comment(1) = label
         !! 2. Allocate numerics.time and set it to desired values
         allocate( numerics%time(num_time_slices) )
-        do i = 1, num_time_slices
-          numerics%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        numerics%time(time_sind) = time
         allocate( numerics%time_start(num_time_slices) )
-        numerics%time_start(num_time_slices) = run_start_time_IN
+        numerics%time_start(time_sind) = run_start_time_IN
         allocate( numerics%time_step(num_time_slices) )
-        numerics%time_step(num_time_slices) = time_step
+        numerics%time_step(time_sind) = time_step
         allocate( numerics%time_end(num_time_slices) )
-        numerics%time_end(num_time_slices) = run_end_time_IN
+        numerics%time_end(time_sind) = run_end_time_IN
 #endif
 
         !! Preparing radiation IDS for writing
@@ -541,9 +528,8 @@ contains
         radiation%ids_properties%comment(1) = label
         !! 2. Allocate radiation.time and set it to desired values
         allocate( radiation%time(num_time_slices) )
-        do i = 1, num_time_slices
-          radiation%time(i) = time - (num_time_slices-i) * time_step
-        end do
+        radiation%time(time_sind) = time
+
         !! 3. Allocate radiation.process
         !! Process 1: line and recombination radiation due to B2.5 species
         !! Process 2: bremsstrahlung recombination due to B2.5 species
@@ -595,14 +581,13 @@ contains
         end if
         if( ntimes .ne. num_time_slices ) then
             !! Allocate ggd for number of different time steps
-            time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
 #if IMAS_MINOR_VERSION > 14
-            allocate( edge_profiles%grid_ggd( time_sind ) )
-            allocate( edge_transport%grid_ggd( time_sind ) )
-            allocate( edge_sources%grid_ggd( time_sind ) )
+            allocate( edge_profiles%grid_ggd( num_time_slices ) )
+            allocate( edge_transport%grid_ggd( num_time_slices ) )
+            allocate( edge_sources%grid_ggd( num_time_slices ) )
 #if IMAS_MINOR_VERSION > 21
-            allocate( radiation%grid_ggd( time_sind ) )
+            allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
 #endif
             allocate( edge_transport%model(1) )
@@ -935,10 +920,10 @@ contains
         if ( b0.ne.0.0_IDS_real ) then
           if (streql(database,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
-            allocate( summary%global_quantities%ip%value( time_sind ) )
-            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-            allocate( summary%global_quantities%b0%value( time_sind ) )
-            allocate( summary%global_quantities%q_95%value( time_sind ) )
+            allocate( summary%global_quantities%ip%value( num_time_slices ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
+            allocate( summary%global_quantities%b0%value( num_time_slices ) )
+            allocate( summary%global_quantities%q_95%value( num_time_slices ) )
             i = nint(b0r0_ref/b0r0)
             select case (i)
             case (1)
@@ -968,7 +953,7 @@ contains
           else
             edge_profiles%vacuum_toroidal_field%r0 = r0
             summary%global_quantities%r0%value = r0
-            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
             allocate( summary%global_quantities%b0%value( time_sind ) )
             if (isymm.ne.0) then
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
@@ -4089,7 +4074,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
 ! Summary separatrix data
         if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
-           allocate( summary%local%separatrix%position%psi( time_sind ) )
+           allocate( summary%local%separatrix%position%psi( num_time_slices ) )
            summary%local%separatrix%position%psi( time_sind ) = fpsi(jxa,jsep,2)
         end if
         allocate( summary%local%separatrix%t_e%value( time_sind ) )
@@ -4983,15 +4968,15 @@ contains
           qemax = 0.0_IDS_real
           qimax = 0.0_IDS_real
           do iy = jsep+1, ny-1
-            qemax = qemax + u*fhe(ix,iy,0)
-            qimax = qimax + u*fhi(ix,iy,0)
+            qemax = qemax + (-icnt)*fhe(ix,iy,0)
+            qimax = qimax + (-icnt)*fhi(ix,iy,0)
           end do
           do i = ix+icnt, jxa, icnt
             qetot = 0.0_IDS_real
             qitot = 0.0_IDS_real
             do iy = jsep+1, ny-1
-              qetot = qetot + u*fhe(i,iy,0)
-              qitot = qitot + u*fhi(i,iy,0)
+              qetot = qetot + (-icnt)*fhe(i,iy,0)
+              qitot = qitot + (-icnt)*fhi(i,iy,0)
             end do
             if (qetot*qemax.ge.0.0_IDS_real) then
               if (abs(qetot).gt.abs(qemax)) then

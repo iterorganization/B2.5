@@ -448,7 +448,7 @@ c        print *,'i_sptmtr'                                    !###
 c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
 
         do_spt_wll(:)=0
-        sptflx(j)=0.0_R8
+        sptflx(:)=0.0_R8
         i=0
 #ifdef B25_EIRENE
 c carlis evaluate number of sputtered atoms and molecules

@@ -766,6 +766,8 @@ csw 16oct2012 init ier0
       call timer%stop("parallel")
 #endif
 #endif
+*      ..compute electron drift velocities
+      call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 
       if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
      &             .or. iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0          !srv 02.04.18

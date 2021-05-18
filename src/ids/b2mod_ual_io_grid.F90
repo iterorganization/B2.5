@@ -1210,17 +1210,7 @@ contains
         call createExplicitObjectListSingleSpace( grid_ggd,            &
             &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),   &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
-
-        if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-            deallocate(indexList1d)
-            allocate(indexList1d(1))
-            indexList1d = (/ 1 /)
-            call createExplicitObjectListSingleSpace( grid_ggd,          &
-                &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ), &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,          &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
-        end if
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, SPACE_POLOIDALPLANE )
 
         !! GRID_SUBSET_Y_ALIGNED_FACES: y-aligned faces. One implicit object
         !! list, range over y faces
@@ -1235,18 +1225,8 @@ contains
         indexList1d = (/ (i, i = gmap%nFcx + 1, gmap%nFcx + gmap%nFcy) /)
         call createExplicitObjectListSingleSpace( grid_ggd,             &
             &   grid_ggd%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),    &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE,                          &
-            &   indexList1d, IDS_CLASS_POLOIDALRADIAL_FACE, 1)
-
-        if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-            deallocate(indexList1d)
-            allocate(indexList1d(1))
-            indexList1d = (/ 1 /)
-            call createExplicitObjectListSingleSpace( grid_ggd,           &
-                &   grid_ggd%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),  &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,           &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
-        end if
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,             &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, SPACE_POLOIDALPLANE )
 
         !! GRID_SUBSET_CELLS: all 2d cells, one implicit object list
         call createGridSubsetForClass( grid_ggd,                &

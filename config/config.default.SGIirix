@@ -40,7 +40,7 @@ OBJDEST = -o ${OBJDIR}/$*.o
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = -${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
