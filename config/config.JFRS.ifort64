@@ -4,7 +4,7 @@ ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
 ifdef USE_MPI
-LD_NETCDF   ?= `pkg-config netcdf-parallel-fortran --libs`
+LD_NETCDF   ?= `pkg-config pnetcdf --libs`
 else
 LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
 endif
