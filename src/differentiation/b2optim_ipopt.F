@@ -6,6 +6,8 @@
      , , only : nsigma, sigma
       use b2mod_transport_namelist_diff
       use b2mod_input_profile_diff
+      use b2mod_boundary_namelist_diff
+      use b2mod_switches_diff
       implicit none
 
 !     include the Ipopt return codes
@@ -48,6 +50,8 @@
       double precision F
       integer ipar, icon, isigma, idir, i
 
+      type(switches_diffv), save :: switchd
+
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
 !     down in this file.
@@ -68,8 +72,18 @@
       tdatad = 0.0_R8
       parm_dnad = 0.0_R8
       parm_dpad = 0.0_R8
-      parm_hced = 0.0_R8
       parm_hcid = 0.0_R8
+      parm_hced = 0.0_R8
+      parm_vlad = 0.0_R8
+      parm_vsad = 0.0_R8
+      parm_sigd = 0.0_R8
+      parm_alfd = 0.0_R8
+      enkpard = 0.0_R8
+      switchd%b2sikt_fac_sheath = 0.0_R8
+      switchd%b2sikt_fac_sheath_core = 0.0_R8
+      switchd%keps_cd = 0.0_R8
+      switchd%keps_heat = 0.0_R8
+      switchd%keps_heat_i = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
       do ipar = 1, nnvar - nsigma_opt
         if (spatial_dep(ipar)) then
@@ -89,6 +103,26 @@
             parm_hcid(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
           case (4) ! hce
             parm_hced(idir) = 1.0_R8 ! FIXME to improve for multispecies
+          case (5) ! vla
+            parm_vlad(idir) = 1.0_R8
+          case (7) ! vsa
+            parm_vsad(idir) = 1.0_R8
+          case (8) ! sig
+            parm_sigd(idir) = 1.0_R8
+          case (9) ! alf
+            parm_alfd(idir) = 1.0_R8
+          case (10) ! enkpar(1,1)
+            enkpard(idir,1,1) = 1.0_R8
+          case (11) ! b2sikt_fac_sheath
+            switchd%b2sikt_fac_sheath(idir) = 1.0_R8
+          case (12) ! b2sikt_fac_sheath_core
+            switchd%b2sikt_fac_sheath_core(idir) = 1.0_R8
+          case (13) ! keps_cd
+            switchd%keps_cd(idir) = 1.0_R8
+          case (14) ! keps_heat
+            switchd%keps_heat(idir) = 1.0_R8
+          case (15) ! keps_heat_i
+            switchd%keps_heat_i(idir) = 1.0_R8
           case default
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')

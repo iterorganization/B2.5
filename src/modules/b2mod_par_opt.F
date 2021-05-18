@@ -81,14 +81,25 @@
       call xertst(nncon.ge.0,'b2mod_par_opt: nncon<0')
       call xertst(nnjac.ge.0,'b2mod_par_opt: nnjac<0')
 !     partype refers to the type of design variable:
-!     0 - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
-!     1 - Dna, density driven particle diffusion coefficient
-!     2 - Dpa, pressure driven particle diffusion coefficient
-!     3 - X_i, ion heat diffusion coefficient
-!     4 - X_e, electron heat diffusion coefficient
+!     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
+!     1  - Dna, density driven particle diffusion coefficient
+!     2  - Dpa, pressure driven particle diffusion coefficient
+!     3  - X_i, ion heat diffusion coefficient
+!     4  - X_e, electron heat diffusion coefficient
+!     5  - vlax, x component of the anomalous velocity
+!     6  - vlay, y component of the anomalous velocity
+!     7  - vsa, anomalous viscosity
+!     8  - sig, field-driven current radial conductivity
+!     9  - alf, temperature-driven current radial conductivity
+!     10 - enkpar(1,1), core k boundary condition 
+!     11 - b2sikt_fac_sheath, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in SOL & PFR)
+!     12 - b2sikt_fac_sheath_core, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in core)
+!     13 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
+!     14 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
+!     15 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
       call xertst(any(partype(1:nnvar).ge.0).and.
-     &  any(partype(1:nnvar).le.4),
-     &  'b2mod_par_opt: partype<0 or partype>4')
+     &  any(partype(1:nnvar).le.15),
+     &  'b2mod_par_opt: partype<0 or partype>15')
       call xertst(any(spatial_points(1:nnvar).ge.0),
      &  'b2mod_par_opt: spatial_points<0')
       call xertst(sum(spatial_points(1:nnvar)).le.nvmx,

@@ -579,32 +579,34 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-      if (flag_optim) then
-!       loop over all specified variables except sigmas
-!       the meaning here is that par_opt_phys is longer than partype because
-!       it contains all points of the spatially dependent coefficients, while
-!       partype specifies the type of coefficient only once for the spatially dependent
-!       example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
-!       --> par_opt_phys = [1 2 3 4 5] [6] [7 8 9 10 11]
+! $AD DO-NOT-DIFF
+            if (flag_optim) then
+!             loop over all specified variables except sigmas
+!             the meaning here is that par_opt_phys is longer than partype because
+!             it contains all points of the spatially dependent coefficients, while
+!             partype specifies the type of coefficient only once for the spatially dependent
+!             example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
+!             --> par_opt_phys = [1 2 3 4 5] [6] [7 8 9 10 11]
 ! FIXME perhpas not the best, most efficient solution now, but should work
-        ic = 0 !this indicates the different directions of multidirectional derivative mode
-        do ivar = 1, nnvar - nsigma_opt
-          if (spatial_dep(ivar)) then
-!           spatially dependent coefficient
-            if (partype(ivar).eq.kind_coeff) then
-            if (spatial_points(ivar).ne.ndat) 
-     &        call xerrab('spatial_points =/ ndat')
-              do i = 1, ndat
-                f(i) = par_opt_phys(ic + i)
+              ic = 0 !this indicates the different directions of multidirectional derivative mode
+              do ivar = 1, nnvar - nsigma_opt
+                if (spatial_dep(ivar)) then
+!                 spatially dependent coefficient
+                  if (partype(ivar).eq.kind_coeff) then
+                    if (spatial_points(ivar).ne.ndat) 
+     &               call xerrab('spatial_points =/ ndat')
+                    do i = 1, ndat
+                      f(i) = par_opt_phys(ic + i)
+                    end do
+                  endif
+                  ic = ic + spatial_points(ivar)
+                else
+!                 non spatially dependent --> specified in b2tqna
+                  ic = ic + 1
+                endif
               end do
             endif
-            ic = ic + spatial_points(ivar)
-          else
-!           non spatially dependent --> specified in b2tqna
-            ic = ic + 1
-          endif
-        end do
-      endif
+! $AD END-DO-NOT-DIFF
 #ifdef WG_TODO
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
