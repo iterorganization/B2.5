@@ -39,7 +39,7 @@ fi
 # (and this average is the average of abs(var)).
 # To allow for statistical variance, we have a large tolerance for most of the variables (0.125).
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 0.15 --maxerr 'te ti na ni ne po' -i 'time|na|ni0|ua0|fne*|fch_p|del*|res*|rrahi|rsahi|b2stbr_*|b2stbc_*|b2npmo_*|rcx*|smfr|csigin|dpa*|cdpa|fllim*|floe_noc|floi_noc|ne2' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 0.15 --maxerr 'te ti na ni ne po' -i 'time|na|ni0|ua|ua0|fne*|fch_p|del*|res*|rrahi|rsahi|b2stbr_*|b2stbc_*|b2sihs_divua|b2npmo_*|rcx*|smfr|smq|csigin|dpa*|cdpa|fllim*|floe_noc|floi_noc|ne2' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successfull

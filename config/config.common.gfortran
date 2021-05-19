@@ -9,6 +9,8 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
+INCMOD = -I
+
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv

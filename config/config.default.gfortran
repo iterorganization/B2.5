@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -17,8 +17,6 @@ DEFINES += -DDOFLUSH
 CPP = /lib/cpp -traditional
 
 DDBLOPTION = -Ad # ???
-
-INCMOD = -B
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -91,7 +91,7 @@
       fnbPSch = 0.0_R8                                                   !srv 13.10.06
 
 *   ..compute P.Sch x-flux                                               !srv 13.10.06 {
-      if(PSch_style.eq.0) then                                          !srv 12.11.08
+      if(PSch_style.eq.0) then                                           !srv 12.11.08
         nbti=nb*ti
         call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
         do iy = 0, ny-1

@@ -172,27 +172,47 @@
           else
             elm_count=0
           endif
-          catch_up=transport_time_mod.gt.0.0_R8
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=
+     .       mod(tim,transport_time_mod).gt.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.gt.transport_time_switch
+          else
+            catch_up=.false.
+          end if
           do while(catch_up)
-            if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1       then
-              write(*,*) 'b2tqna: catching up ...'
-              call read_b2mod_transport_namelist
-              call write_b2mod_transport_namelist
-              catch_up=transport_time_mod.gt.0.0_R8
+            write(*,*) 'b2tqna: catching up ...'
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+            if(transport_time_mod.gt.0.0_R8) then
+              catch_up=
+     1         mod(tim,transport_time_mod).gt.transport_time_switch
+            else if (transport_time_switch.gt.0.0_R8) then
+              catch_up=tim.gt.transport_time_switch
             else
               catch_up=.false.
             endif
           enddo
         endif
       else
-        if(transport_namelist.eq.1.and.
-     1   transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=int(tim/transport_time_mod)
+        if(transport_namelist.eq.1) then
+          if(transport_time_mod.gt.0.0_R8) then
+            write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+     1       transport_time_switch,int(tim/transport_time_mod),elm_count
+            catch_up=
+     1       mod(tim,transport_time_mod).gt.transport_time_switch.or.
+     1       int(tim/transport_time_mod).gt.elm_count
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.gt.transport_time_switch
+            if(catch_up) write(*,'(a,a)')
+     .       'Switching to next transport namelist file ',
+     .        trim(transport_filename)
+          else
+            catch_up=.false.
+          end if
+          if(catch_up) then
+            if(transport_time_mod.gt.0.0_R8)
+     >       elm_count=int(tim/transport_time_mod)
             call read_b2mod_transport_namelist
             call write_b2mod_transport_namelist
           endif

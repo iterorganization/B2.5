@@ -37,8 +37,6 @@ endif
 
 DBLOPTION =
 
-INCMOD = -I
-
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:

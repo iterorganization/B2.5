@@ -34,8 +34,6 @@ GGD_VERSION ?= `pkg-config ggd --modversion`
 
 DBLOPTION =
 
-INCMOD = -I
-
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:

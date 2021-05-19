@@ -151,7 +151,7 @@
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -361,15 +361,25 @@
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
-          if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
-     1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=int(tim/neutrals_time_mod)
-            call read_neutrals_namelist(nx, ny, ns, .true.)
-            new_sputter_namelist=.true.
-            call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
-            call write_b2mod_neutrals_namelist
-          endif
+          catch_up=
+     1     mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
+     1     int(tim/neutrals_time_mod).gt.neutrals_count
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.gt.neutrals_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next neutrals namelist file ',
+     .      trim(neutrals_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(neutrals_time_mod.gt.0.0_R8)
+     >     neutrals_count=int(tim/neutrals_time_mod)
+          call read_neutrals_namelist(nx, ny, ns, .true.)
+          new_sputter_namelist=.true.
+          call xertst (nstrat.le.nstraid,
+     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+          call write_b2mod_neutrals_namelist
         endif
       endif
 *   ..set n2
@@ -1436,16 +1446,24 @@ c        write(*,*) 'Called neutr_scl'
       else
         neutrals_count=0
       endif
-      catch_up=neutrals_time_mod.gt.0.0_R8
+      if(neutrals_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,neutrals_time_mod).gt.neutrals_time_switch
+      else if (neutrals_time_switch.gt.0.0_R8) then
+        catch_up=tim.gt.neutrals_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
-        if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch) then
-          write(*,*) 'b2stbr_init: catching up ...'
-          call read_neutrals_namelist(nx, ny, ns, .true.)
-          new_sputter_namelist=.true.
-          call xertst (nstrat.le.nstraid,
+        write(*,*) 'b2stbr_init: catching up ...'
+        call read_neutrals_namelist(nx, ny, ns, .true.)
+        new_sputter_namelist=.true.
+        call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
-          call write_b2mod_neutrals_namelist
-          catch_up=neutrals_time_mod.gt.0.0_R8
+        call write_b2mod_neutrals_namelist
+        if(neutrals_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,neutrals_time_mod).gt.neutrals_time_switch
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.gt.neutrals_time_switch
         else
           catch_up=.false.
         endif

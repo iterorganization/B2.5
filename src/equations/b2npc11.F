@@ -239,8 +239,8 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc11_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc11_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc11_fnay'//chns)
-        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
-        call my_out(70,nx,ny,wrk0,'b2npc9_dnadt'//chns)                 !srv 09.03.21
+        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)               !srv 09.03.21
+        call my_out(70,nx,ny,wrk0,'b2npc9_dnadt'//chns)               !srv 09.03.21
        endif
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
        if (in_parallel()) then
@@ -255,8 +255,8 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc11_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc11_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc11_fnay'//chns)
-        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
-        call my_out(70,nx,ny,wrk0,'b2npc9_dnadt'//chns)                 !srv 09.03.21
+        wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)               !srv 09.03.21
+        call my_out(70,nx,ny,wrk0,'b2npc9_dnadt'//chns)               !srv 09.03.21
        endif
       endif
 

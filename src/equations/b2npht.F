@@ -84,7 +84,7 @@
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
-      integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
@@ -92,8 +92,8 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
      2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                           !srv 18.09.09
-     4  te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)                        !srv 26.02.21
+     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                          !srv 18.09.09
+     4  te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)                       !srv 26.02.21
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -248,10 +248,10 @@ cdjm Jan2017 update particle source components for balance
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
         te_inp=te
-        call my_out(70,nx,ny,te,'b2nph_te_inp')
+        call my_out(70,nx,ny,te,'b2npht_te_inp')
         ti_inp=ti
-        call my_out(70,nx,ny,ti,'b2nph_ti_inp')
-      endif                                                              !srv 31.01.21
+        call my_out(70,nx,ny,ti,'b2npht_ti_inp')
+      endif                                                             !srv 31.01.21
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -333,18 +333,18 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')
-        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
-        call my_out(70,nx,ny,wrk0,'b2nph_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed through te_inp
-        call my_out(70,nx,ny,wrk0,'b2nph_tednedt')
+        wrk0 = -corte*shedt(:,:,3)*ne                                 !srv 31.01.21 {
+        call my_out(70,nx,ny,wrk0,'b2npht_nedtedt')
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
+        call my_out(70,nx,ny,wrk0,'b2npht_tednedt')
         wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph_dnetedt')
+        call my_out(70,nx,ny,wrk0,'b2npht_dnetedt')
         wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) !it is supposed that the shidt(:,:,0) was computed through ti_inp
-        call my_out(70,nx,ny,wrk0,'b2nph_tidnidt')
+        call my_out(70,nx,ny,wrk0,'b2npht_nidtidt')
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
+        call my_out(70,nx,ny,wrk0,'b2npht_tidnidt')
         wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph_dnitidt')                     !srv 31.01.21 }
+        call my_out(70,nx,ny,wrk0,'b2npht_dnitidt')                   !srv 31.01.21 }
       endif                                                           !srv 17.07.05 }
       if (solving(4)) then
 *   ..compute correction
