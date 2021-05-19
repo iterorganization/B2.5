@@ -11844,10 +11844,10 @@ cxpb as they no longer necessarily point to the same species
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
             cbmsb1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
+            cbshe1(i,ireg1) = cbshe(i,ireg)
+            cbsch1(i,ireg1) = cbsch(i,ireg)
+            cbmsa1(i,ireg1) = cbmsa(i,ireg)
           enddo
-          cbshe1(i,ireg1) = cbshe(i,ireg)
-          cbsch1(i,ireg1) = cbsch(i,ireg)
-          cbmsa1(i,ireg1) = cbmsa(i,ireg)
         enddo
         cbsna(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
      .   cbsna1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
