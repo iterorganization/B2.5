@@ -2637,8 +2637,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        divertors,
 #endif
      &        treename, shot, run, idx, username, database, version )
-#endif
           end if
+#endif
           if (.not.continued) continued = .true.
           if (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
      .     save_ids_time=save_ids_time+delta_ids_time
