@@ -222,10 +222,10 @@ program b2_ual_rewrite
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
       call ids_get( idx, "dataset_description", old_description, status)
+      old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old dataset_description IDS !'
-        old_imas_version = 'x.xx.x'
-      else
+      else if (associated(old_description%dd_version)) then
         old_imas_version = old_description%dd_version(1)
       end if
       call ids_deallocate( old_description )

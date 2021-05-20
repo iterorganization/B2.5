@@ -109,7 +109,7 @@
      , ,only: ids_divertors
 #endif
       use b2mod_ual
-     , ,only: put_ids_edge, close_ual
+     , ,only: put_ids_edge, new_ids_edge, delete_ids_edge, close_ual
       use b2mod_ual_io
      , ,only: b25_process_ids, num_time_slices
 #endif
@@ -155,7 +155,7 @@
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
-      logical lwti, lwav, lrav, lrer, continued
+      logical lwti, lwav, lrav, lrer, continued, ids_replace
       character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
@@ -2446,6 +2446,7 @@ c new CDF movie option
             write (*,*) aver_name,' saved '
           end if
         endif
+        ids_replace = .false.
         write_ids = ids_save.gt.0 .and. ntim.gt.0
         if (write_ids) write_ids = mod(itim,ids_save).eq.0
         write_ids = write_ids .or.
@@ -2478,14 +2479,14 @@ c new CDF movie option
                 call ids_deallocate( old_edge_profiles )
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
+                old_imas_version = 'x.xx.x'
                 call ids_get( idx, "dataset_description",
      .                                  old_description, status)
                 if ( status.ne.0 ) then
-                  old_imas_version = 'x.xx.x'
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
+                else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-                else
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
@@ -2551,8 +2552,21 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   write_ids = .false.
                 else
                   write(*,*)
-     .             'Not a time continuation, IDS will be overwritten !'
-                  idx = 0
+     .             'Not a time continuation, edge IDS components '//
+     .             'will be replaced !'
+                  call delete_ids_edge( edge_profiles, edge_sources,
+     &              edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &              summary,
+#endif
+#if IMAS_MINOR_VERSION > 25
+     &              numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &              divertors,
+#endif
+     &              idx )
+                  ids_replace = .true.
                 end if
               end if
             else
@@ -2597,19 +2611,34 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        time_slice_index, num_time_slices )
             write_ids = .false.
           end if
-          call put_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+          if (ids_replace) then
+            call new_ids_edge( edge_profiles, edge_sources,
+     &        edge_transport, radiation, description,
 #if IMAS_MINOR_VERSION > 21
-     &      summary,
+     &        summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
-     &      numerics,
+     &        numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30
-     &      divertors,
+     &        divertors,
 #endif
-     &      treename, shot, run, idx, username, database, version )
+     &        idx )
+          else
+            call put_ids_edge( edge_profiles, edge_sources,
+     &        edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &        summary,
 #endif
+#if IMAS_MINOR_VERSION > 25
+     &        numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
+     &        treename, shot, run, idx, username, database, version )
+#endif
+          end if
           if (.not.continued) continued = .true.
           if (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
      .     save_ids_time=save_ids_time+delta_ids_time
@@ -2776,6 +2805,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
+      ids_replace = .false.
       if (ids_save.gt.0) then
         ids_done = mod(itim,ids_save).eq.0
         write_ids = mod(itim,ids_save).ne.0
@@ -2833,13 +2863,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               call ids_deallocate( old_edge_profiles )
               old_start_time = 0.0_IDS_real
               old_end_time = IDS_REAL_INVALID
+              old_imas_version = 'x.xx.x'
               call ids_get( idx, "dataset_description",
      .                                old_description, status)
               if ( status.ne.0 ) then
-                old_imas_version = 'x.xx.x'
                 write(*,*) 'Error opening old dataset_description IDS !'
+              else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-              else
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
@@ -2903,9 +2933,22 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &            tim, dtim, shot, run, database, version,
      &            time_slice_index, num_time_slices )
               else
-                write(*,*)
-     .           'Not a time continuation, IDS will be overwritten !'
-                idx = 0
+                write(*,'(a)')
+     .           'Not a time continuation, edge IDS components '//
+     .           'will be replaced !'
+                call delete_ids_edge( edge_profiles, edge_sources,
+     &           edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &           summary,
+#endif
+#if IMAS_MINOR_VERSION > 25
+     &           numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &           divertors,
+#endif
+     &           idx )
+                ids_replace = .true.
               end if
             end if
           else
@@ -2929,18 +2972,33 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      tim, dtim, shot, run, database, version )
         end if
-        call put_ids_edge( edge_profiles, edge_sources,
-     &    edge_transport, radiation, description,
+        if (ids_replace) then
+          call new_ids_edge( edge_profiles, edge_sources,
+     &      edge_transport, radiation, description,
 #if IMAS_MINOR_VERSION > 21
-     &    summary,
+     &      summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
-     &    numerics,
+     &      numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30
-     &    divertors,
+     &      divertors,
 #endif
-     &    treename, shot, run, idx, username, database, version )
+     &      idx )
+        else
+          call put_ids_edge( edge_profiles, edge_sources,
+     &      edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &      summary,
+#endif
+#if IMAS_MINOR_VERSION > 25
+     &      numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
+     &      treename, shot, run, idx, username, database, version )
+        end if
         call close_ual(idx)
         idx = 0
 #endif
