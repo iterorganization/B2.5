@@ -259,7 +259,7 @@ program b2_ual_write_b2mod
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description
     use b2mod_ual &
-     & , only : new_ids_edge, delete_ids_edge
+     & , only : new_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21

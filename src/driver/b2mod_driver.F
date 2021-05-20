@@ -109,7 +109,7 @@
      , ,only: ids_divertors
 #endif
       use b2mod_ual
-     , ,only: put_ids_edge, new_ids_edge, delete_ids_edge, close_ual
+     , ,only: put_ids_edge, new_ids_edge, close_ual
       use b2mod_ual_io
      , ,only: b25_process_ids, num_time_slices
 #endif
@@ -2554,18 +2554,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   write(*,*)
      .             'Not a time continuation, edge IDS components '//
      .             'will be replaced !'
-                  call delete_ids_edge( edge_profiles, edge_sources,
-     &              edge_transport, radiation, description,
-#if IMAS_MINOR_VERSION > 21
-     &              summary,
-#endif
-#if IMAS_MINOR_VERSION > 25
-     &              numerics,
-#endif
-#if IMAS_MINOR_VERSION > 30
-     &              divertors,
-#endif
-     &              idx )
                   ids_replace = .true.
                 end if
               end if
@@ -2936,18 +2924,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 write(*,'(a)')
      .           'Not a time continuation, edge IDS components '//
      .           'will be replaced !'
-                call delete_ids_edge( edge_profiles, edge_sources,
-     &           edge_transport, radiation, description,
-#if IMAS_MINOR_VERSION > 21
-     &           summary,
-#endif
-#if IMAS_MINOR_VERSION > 25
-     &           numerics,
-#endif
-#if IMAS_MINOR_VERSION > 30
-     &           divertors,
-#endif
-     &           idx )
                 ids_replace = .true.
               end if
             end if
@@ -2957,7 +2933,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             idx = 0
           end if
         end if
-        if (status.ne.0 .or. idx.eq.0) then
+        if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids( edge_profiles, edge_sources,
      &      edge_transport, radiation, description,

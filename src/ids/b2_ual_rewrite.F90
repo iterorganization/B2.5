@@ -70,7 +70,7 @@ program b2_ual_rewrite
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description
     use b2mod_ual &
-     & , only : new_ids_edge, delete_ids_edge
+     & , only : new_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
@@ -282,21 +282,6 @@ program b2_ual_rewrite
       idx = 0
     end if
     !! Create/Write the set data to IDSs
-    if (same_run_number.and.idx.ne.0) then
-      write(*,*) "START delete_ids_edge"
-      call delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-#if IMAS_MINOR_VERSION > 25
-        &   numerics, &
-#endif
-#if IMAS_MINOR_VERSION > 30
-        &   divertors, &
-#endif
-        &   idx )
-    end if
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, &
 #if IMAS_MINOR_VERSION > 21
