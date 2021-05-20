@@ -315,7 +315,7 @@ ctmp.dpc
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
-!          if(style.ne.0) then                                           !srv 18.06.08 {
+!          if(style.gt.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, bb, ua,                            !srv 20.09.06 {
      &                    cvsa_cl, fac_vis, fchvispar)
@@ -391,9 +391,11 @@ ctmp.dpc
             call b2news (nx, ny, ns,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
-           else                                                          !srv 01.07.08 {
+           else if (style.ge.1) then                                     !srv 01.07.08 {
             call b2news_(nx, ny, ns,
      &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
+           else if (style.eq.-1) then ! SOLPS4.x conversion run option
+             ier0 = 0
            endif                                                         !srv 01.07.08 )
            flush(6)
            if(ier0.eq.10) then

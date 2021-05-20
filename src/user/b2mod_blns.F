@@ -404,7 +404,7 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
                   flxnc(ls) = flxnc(ls) +
      .             bsign*fna(ixf,iyf,idir,is)
                 else if (.not.is_neutral(is)) then ! not neutral
-                  if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+                  if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
                     flxic(ls) = flxic(ls) +
      .               bsign*fna(ixf,iyf,idir,is)
                   else

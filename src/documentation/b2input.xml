@@ -3772,7 +3772,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0, b2news is called (SOLPS5.0/1) If 1, b2news_ is called (SOLPS5.2)
+				  If 0, the SOLPS5.0 physics model is used, by calling the b2news routine.
+				  If 1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
+				  If negative, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
 				</description>
 			</switch>
 			<switch>
