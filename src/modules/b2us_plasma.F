@@ -137,7 +137,7 @@
      .                           fllim_ki, fllim_ke, fllim_al, 
      .                           fllim_al_c, f_luc_ke, f_luc_ki,
      .                           f_luc_et, f_luc_sg, f_luc_al,
-     .                           alfx_c, sigx_c
+     .                           alfx_c, sigx_c, sigx_kt
 
 
 cwdk move to dv
@@ -451,6 +451,7 @@ cwdk move to dv
       allocate( coeff%f_luc_al( nFc ), SOURCE=0._R8 )
       allocate( coeff%alfx_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%sigx_c( nCv ), SOURCE=0._R8 )
+      allocate( coeff%sigx_kt( nCv ), SOURCE=0._R8 )
 
       return
       end subroutine createB2Coeff
@@ -538,6 +539,7 @@ cwdk move to dv
       deallocate( coeff%f_luc_al )
       deallocate( coeff%alfx_c )
       deallocate( coeff%sigx_c )
+      deallocate( coeff%sigx_kt )
       
       return
       end subroutine destroyB2Coeff
