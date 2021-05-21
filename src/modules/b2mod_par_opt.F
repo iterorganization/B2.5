@@ -56,6 +56,8 @@
       sigma_opt = .true.
       spatial_dep = .false.
       spatial_points = 0
+      hessian_approximation = 'limited-memory'
+      limited_memory_update_type = 'b2fgs'
 ! FIXME set if (read_file)
       call find_file(filename,file_ok)
       if(file_ok) then

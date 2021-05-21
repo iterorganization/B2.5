@@ -3,6 +3,7 @@
       use petsctao ! IGNORE
 
       Vec X,X_L,X_U
+      Mat Hess
       end module taomodule
 
       program b2optim_petsc
@@ -23,13 +24,14 @@
       KSP                  ksp
       PC                   pc
       PetscReal            tol
-      PetscViewer viewer
+      PetscViewer          viewer
 
       integer :: ncon, nele_jac, ipar, isigma, idir, i
-
+      logical :: streql, hessian
+      external streql
       type(switches_diffv), save :: switchd
 
-      external FormFunctionGradient
+      external FormFunctionGradient, FormHessian
 
       call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
       if (ierr .ne. 0) then
@@ -121,13 +123,26 @@
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
+!     For the moment only steepest descent is available when specifiyng the Hessian
+      hessian = .false.
+      if (streql('exact',hessian_approximation)) then
+        hessian = .true.
+        write (*,*) 'PETSC-TAO, WARNING: setting Hessian as identity matrix for Steepest Descent method'
+      endif
+
       call InitializeProblem(npar_opt,ierr);CHKERRA(ierr)
 
-      call TaoCreate(PETSC_COMM_SELF,tao,ierr);CHKERRA(ierr) 
-      call TaoSetType(tao,TAOBQNLS,ierr);CHKERRA(ierr) 
+      call TaoCreate(PETSC_COMM_SELF,tao,ierr);CHKERRA(ierr)
+!     Here better coding can be done to have different methods?
+      if (hessian) then
+        call TaoSetType(tao,TAOTRON,ierr);CHKERRA(ierr) 
+      else
+        call TaoSetType(tao,TAOBQNLS,ierr);CHKERRA(ierr) 
+      endif
       call TaoSetInitialVector(tao,X,ierr);CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr);CHKERRA(ierr) 
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr);CHKERRA(ierr) 
+      call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr);CHKERRA(ierr)
 
       call TaoSetFromOptions(tao,ierr);CHKERRA(ierr) 
 
@@ -202,6 +217,11 @@
       write(*,*) 'TAO SET X_U'
       call VecView(X_U,PETSC_VIEWER_STDOUT_WORLD,ierr);CHKERRQ(ierr)
       ierr = 0
+
+!  Allocate storage space for Hessian;
+      call MatCreateSeqBAIJ(PETSC_COMM_SELF,npar,npar,npar,1,PETSC_NULL_INTEGER,Hess,ierr);CHKERRQ(ierr)
+      call MatSetOption(Hess,MAT_SYMMETRIC,PETSC_TRUE,ierr);CHKERRQ(ierr)
+
       end subroutine InitializeProblem
 
 
@@ -214,6 +234,7 @@
       call VecDestroy(X,ierr);CHKERRQ(ierr)
       call VecDestroy(X_L,ierr);CHKERRQ(ierr)
       call VecDestroy(X_U,ierr);CHKERRQ(ierr)
+      call MatDestroy(Hess,ierr);CHKERRQ(ierr)
       ierr = 0
       end subroutine DestroyProblem
 
@@ -274,3 +295,37 @@
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0
       end subroutine FormFunctionGradient
+
+
+      subroutine FormHessian(tao,XX,HH,PrecH,dummy,ierr)
+      use taomodule ! IGNORE
+      use b2mod_par_opt_diff
+      implicit none
+      Tao              tao
+      Vec              XX
+      Mat              HH
+      Mat              PrecH
+      PetscErrorCode   ierr
+      PetscInt         dummy
+      PetscBool assembled
+      PetscInt         i
+      PetscReal        v
+
+ !  Zero existing matrix entries
+      call MatAssembled(HH,assembled,ierr);CHKERRQ(ierr)
+      if (assembled .eqv. PETSC_TRUE) call MatZeroEntries(HH,ierr);CHKERRQ(ierr)
+
+ !  Compute Hessian entries
+      do i=0,npar_opt-1
+        v = 1.0
+        call MatSetValues(HH,1,i,1,i,v,INSERT_VALUES,ierr);CHKERRQ(ierr)
+      enddo
+
+ !  Assemble matrix
+      call MatAssemblyBegin(HH,MAT_FINAL_ASSEMBLY,ierr);CHKERRQ(ierr)
+      call MatAssemblyEnd(HH,MAT_FINAL_ASSEMBLY,ierr);CHKERRQ(ierr)
+      write(*,*) 'TAO SET H'
+      call MatView(Hess,PETSC_VIEWER_STDOUT_WORLD,ierr);CHKERRQ(ierr)
+
+      return
+      end subroutine FormHessian
