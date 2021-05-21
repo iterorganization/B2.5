@@ -32,9 +32,9 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2Coeff), intent (in) :: co
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
+      type (B2Coeff), intent (inout) :: co
 cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::
      &  cvsa(nFc,0:1,0:ns-1),
@@ -103,7 +103,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
-     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv)                   !srv 01.07.99 09.01.01
+     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv)                    !srv 01.07.99 09.01.01
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
@@ -635,6 +635,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
       cdkt(:,1) = 0.0_R8
+      co%sigx_kt = wrkc
 *   ..save the classical transport coefficients
       csig_cl = csig
       calf_cl = calf

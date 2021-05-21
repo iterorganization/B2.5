@@ -58,7 +58,7 @@ c      use b2mod_keps
 
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
      &  pz(nCv), cs(nCv), t0, t1, t2, wrk0(nCv), wrk1(nCv), wrk2(nCv),
-     &  wrkg0(nCv,0:1), wrkg1(nCv,0:1),
+     &  wrk3(nCv), wrkg0(nCv,0:1), wrkg1(nCv,0:1),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv)
       integer, save :: min_source = 0
@@ -150,6 +150,7 @@ cwdk     parallel transport due to parallel current fluctuations
      &       switch%b2sikt_fac_aniso*2.0_R8/3.0_R8*co%hce_ExB*
      &      (dtec(:,0)*dlbc(:,0) + dtec(:,1)*dlbc(:,1)))
          wrk2 = dv%ni(:,1)*pl%kt*geo%cvVol*csfs/connfs
+         wrk3 = co%sigx_kt/connfs**2*pl%kt*geo%cvVol
         else
          call xerrab('wrong value of b2sikt_style')
         endif
@@ -158,12 +159,14 @@ cwdk     parallel transport due to parallel current fluctuations
         do ic = 1, mpg%nCi
          if (mod(mpg%cvReg(ic),4) .eq. 1) then
           fac_sheath = switch%b2sikt_fac_sheath_core
+          fac_diss = switch%b2sikt_fac_diss_core
          else
           fac_sheath = switch%b2sikt_fac_sheath
+          fac_diss = switch%b2sikt_fac_diss
          endif
          t0 = wrk0(ic)
          t1 = wrk1(ic)
-         t2 = fac_sheath*wrk2(ic)
+         t2 = fac_sheath*wrk2(ic) + fac_diss*wrk3(ic)
          if (min_source.eq.1 .and. (t0+t1-t2).lt.0.0_R8) then
            t0 = 0.0_R8
            t1 = 0.0_R8

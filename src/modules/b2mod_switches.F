@@ -343,6 +343,8 @@ c k-enstrophy model
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
+      real(kind=R8) :: b2sikt_fac_diss
+      real(kind=R8) :: b2sikt_fac_diss_core
       real (kind=R8) :: b2tfhi_fflokt
       real (kind=R8) :: b2tfhi_fconkt
       real (kind=R8) :: b2tfhi_fsigkt
@@ -758,6 +760,8 @@ c k-enstrophy model
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
+      s % b2sikt_fac_diss = 0.0_R8
+      s % b2sikt_fac_diss_core = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fsigkt = 0.0_R8
@@ -1196,6 +1200,8 @@ c k-enstrophy model
       call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
+      call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
+      call ipgetr ('b2sikt_fac_diss_core', s % b2sikt_fac_diss_core)
       call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
@@ -1592,6 +1598,10 @@ c k-enstrophy model
      &  'b2sikt_fac_sheath must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2sikt_fac_sheath_core,
      &  'b2sikt_fac_sheath_core must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2sikt_fac_diss,
+     &  'b2sikt_fac_diss must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2sikt_fac_diss_core,
+     &  'b2sikt_fac_diss_core must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fflokt,
      &  'b2tfhi_fflokt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fconkt,
