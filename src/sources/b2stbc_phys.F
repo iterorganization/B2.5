@@ -2820,6 +2820,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
            ! core is a 'structured grid' ring with quad cells
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
            if (mpg%cvOnClosedSurface(iCv1)) then
+            if (bccon(is,ib0).ne.29) 
+     .        call xerrab ('BCCON=29: incompatible core BCs')
             do ibc0 = 1, mpg%bcCvP(ib0,2)                               ! loop over number of cells in the boundary
              iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                 ! number of the guard cell
              iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                 ! number of the domain cell
@@ -2830,12 +2832,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
              totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
      &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
             enddo
-            totpar = totpar + conpar(is,ib,1)
+            totpar = totpar + conpar(is,ib0,1)
            endif
           enddo
           t1 = t1/t0
           t2 = t2/t0
-          if (conpar(is,ib,2).ge.0.0_R8) t3 = conpar(is,ib,2)
+          if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
           if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
           t4 = (1.0_R8-t3*(totflux-totpar)/
      &         max(abs(totflux),totpar,1.0e10_R8))*t1
@@ -5713,6 +5715,8 @@ cwdk     * need to correct this BC for hybrid scheme
          ! core is a 'structured grid' ring with quad cells
          iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
          if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bcene(ib0).ne.24) 
+     .      call xerrab ('BCENE=24: incompatible core BCs')
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
            iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
@@ -5723,12 +5727,12 @@ cwdk     * need to correct this BC for hybrid scheme
            totflux = totflux - (dv%fhe(iFc,0) + dv%fhe(iFc,1))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
-          totpar = totpar + enepar(ib,1)
+          totpar = totpar + enepar(ib0,1)
          endif
         enddo
         t1 = t1/t0
         t2 = t2/t0
-        if (enepar(ib,2).ge.0.0_R8) t3 = enepar(ib,2)
+        if (enepar(ib,2).gt.0.0_R8) t3 = enepar(ib,2)
         if (enepar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
      &         max(abs(totflux),totpar))*t1
@@ -8235,6 +8239,8 @@ cwdk     * need to correct this BC for hybrid scheme
          ! core is a 'structured grid' ring with quad cells
          iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
          if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bceni(ib0).ne.29) 
+     .      call xerrab ('BCENI=29: incompatible core BCs')
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
            iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
@@ -8245,12 +8251,12 @@ cwdk     * need to correct this BC for hybrid scheme
            totflux = totflux - (dv%fhi(iFc,0) + dv%fhi(iFc,1))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
-          totpar = totpar + enipar(ib,1)
+          totpar = totpar + enipar(ib0,1)
          endif
         enddo
         t1 = t1/t0
         t2 = t2/t0
-        if (enipar(ib,2).ge.0.0_R8) t3 = enipar(ib,2)
+        if (enipar(ib,2).gt.0.0_R8) t3 = enipar(ib,2)
         if (enipar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
      &         max(abs(totflux),totpar))*t1
@@ -9146,6 +9152,8 @@ c end of implementation
          ! core is a 'structured grid' ring with quad cells
          iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
          if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bcpot(ib0).ne.23) 
+     .      call xerrab ('BCPOT=23: incompatible core BCs')
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
            iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
@@ -9156,12 +9164,12 @@ c end of implementation
            totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
-          totpar = totpar + potpar(ib,1)
+          totpar = totpar + potpar(ib0,1)
          endif
         enddo
         t1 = t1/t0
         t2 = t2/t0
-        if (potpar(ib,2).ge.0.0_R8) t3 = potpar(ib,2)
+        if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
         if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
      &         max(abs(totflux),totpar,1.0e-10_R8))*t1
@@ -9511,6 +9519,8 @@ c end of implementation
          ! core is a 'structured grid' ring with quad cells
          iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
          if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bcenk(ib0).ne.6) 
+     .      call xerrab ('BCENK=6: incompatible core BCs')
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
@@ -9519,7 +9529,7 @@ c end of implementation
      &       dv%fhi(iFc,0) + dv%fhi(iFc,1))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
-          totpar = totpar + enkpar(ib,1)
+          totpar = totpar + enkpar(ib0,1)
          endif
         enddo
 *     ..impose the flux
@@ -9560,6 +9570,8 @@ c end of implementation
          ! core is a 'structured grid' ring with quad cells
          iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
          if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bcenk(ib0).ne.7) 
+     .      call xerrab ('BCENK=7: incompatible core BCs')
           do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
            iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
@@ -9567,7 +9579,7 @@ c end of implementation
      &      (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
-          totpar = totpar + enkpar(ib,1)
+          totpar = totpar + enkpar(ib0,1)
          endif
         enddo
 *     ..impose the flux
@@ -9748,6 +9760,67 @@ cwdk    Todo: corrections for BCCON.ne.14
           srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
+
+* -- BCENK=17 -- Feedback on turb. kin. energy flux, by imposing a flux surface
+*                averaged kt, with poloidal perturbation taken from flux
+*                tube just inside domain
+
+        case (17)
+        if(ncall_b2stbc_phys.eq.0) then
+          do ibc = 1, mpg%bcCvP(ib,2)
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+           call xertst(mpg%cvOnClosedSurface(iCv1),
+     .      'BCENK=17 intended for core boundaries only!')
+          enddo
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified turb. kin. energy flux ',ENKPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENKPAR(IB,1).gt.0.0_R8,
+     1     'BCENK = 17, ENKPAR(,1) !> 0')
+        endif
+*     ..compute average kt on core boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        t2 = 0.0e0_R8
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
+        do ib0 = 1, nbc
+         ! identify core boundaries; assume all core boundaries
+         ! form single flux surface
+         ! implicit assumption at the moment: first ring in the
+         ! core is a 'structured grid' ring with quad cells
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+         if (mpg%cvOnClosedSurface(iCv1)) then
+          if (bcenk(ib0).ne.17) 
+     .      call xerrab ('BCENK=17: incompatible core BCs')
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%cvVol(iCv2)
+           t1 = t1 + geo%cvVol(iCv2)*pl%kt(iCv1)
+           t2 = t2 + geo%cvVol(iCv2)*pl%kt(iCv2)
+           totflux = totflux - (dv%fkt(iFc,0) + dv%fkt(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          totpar = totpar + enkpar(ib0,1)
+         endif
+        enddo
+        t1 = t1/t0
+        t2 = t2/t0
+        if (enkpar(ib,2).gt.0.0_R8) t3 = enkpar(ib,2)
+        if (enkpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+        t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar))*t1
+*     ..impose kt with perturbation
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
+     .      (pl%kt(iCv2) + t4 - t2)
+          srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
 
         case default
           write(*,*) BCENK(IB)
