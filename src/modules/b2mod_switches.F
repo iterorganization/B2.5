@@ -1605,8 +1605,8 @@ c k-enstrophy model
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
       call xertst (0.le.s%b2sikt_min_source .and. 
-     &  s%b2sikt_min_source.le.1,
-     &  'b2sikt_min_source must be either 0 or 1')
+     &  s%b2sikt_min_source.le.2,
+     &  'b2sikt_min_source must be either 0, 1 or 2')
 
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
