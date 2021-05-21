@@ -14,8 +14,8 @@
       include 'IpReturnCodes.inc'
 
 !     Size of the problem (number of variables and equality constraints)
-      integer :: ncon, nele_jac, NELE_HESS, IDX_STY
-      parameter  (NELE_HESS = 0, IDX_STY = 1 )
+      integer :: ncon, nele_jac, nele_hess, IDX_STY
+      parameter  (IDX_STY = 1 )
 !sc N = number design variables
 !   M number of constraints (it's 2 because the third one is the variable bound!
 !   NELE_JAC # of nonzeros in Jacobian of Lagrangian
@@ -55,7 +55,9 @@
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
 !     down in this file.
-      external EV_F, EV_G, EV_GRAD_F, EV_JAC_G, ITER_CB
+      external EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS, ITER_CB
+      external streql
+      logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
 
@@ -146,8 +148,18 @@
 
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
-      ncon = 1 ! FIXME to be updated whenever nonlinear constraints are needed
+      ncon = 1 ! FIXME to be updated whenever nonlinear or state constraints are needed
       nele_jac = 1
+
+!     For the moment only steepest descent is available when specifiyng the Hessian
+      hessian = .false.
+      nele_hess = 0
+      if (streql('exact',hessian_approximation)) then
+        hessian = .true.
+        write (*,*) 'IPOPT, WARNING: setting Hessian as '//
+     &   'identity matrix for Steepest Descent method'
+        nele_hess = npar_opt
+      endif
 
       allocate(X(npar_opt),X_L(npar_opt),X_U(npar_opt))
       allocate(Z_L(npar_opt),Z_U(npar_opt))
@@ -174,8 +186,16 @@
 
 
 !     First create a handle for the Ipopt problem (and read the options file)
-      IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
-     &     NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F, EV_JAC_G)
+!     If Hessian is provided or steepest descent is asked the additional argument needed
+      if (hessian) then
+        IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U,
+     &     NELE_JAC, NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F,
+     &     EV_JAC_G, EV_HESS)
+      else
+        IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U,
+     &      NELE_JAC, NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F,
+     &     EV_JAC_G)
+      endif
       if (IPROBLEM.eq.0) then
          write(*,*) 'Error creating an Ipopt Problem handle.'
          stop
@@ -204,9 +224,11 @@
       IERR = IPADDSTROPTION(IPROBLEM, 'hessian_approximation',
      & hessian_approximation)
       if (IERR.ne.0 ) goto 9990
-      IERR = IPADDSTROPTION(IPROBLEM, 'limited_memory_update_type',
-     & limited_memory_update_type)
-      if (IERR.ne.0 ) goto 9990
+      if (.not.hessian) then
+        IERR = IPADDSTROPTION(IPROBLEM, 'limited_memory_update_type',
+     &   limited_memory_update_type)
+        if (IERR.ne.0 ) goto 9990
+      endif
 
 !     Set max number of iterations
       call xertst (maxiter.gt.0, 'faulty internal parameter maxiter')
@@ -448,7 +470,7 @@
       data  AVAR1 /1/ !ROWS
       data  ACON1 /1/ !COLUMNS
       save  AVAR1, ACON1
-!csc WARNING to be updated whenever nonlinear constraints are needed
+!csc WARNING to be updated whenever nonlinear or state constraints are needed
       if( TASK.eq.0 ) then
         do I = 1, NZ
           AVAR(I) = 1!jrow(i)
@@ -462,6 +484,43 @@
       IERR = 0
       return
       end subroutine EV_JAC_G
+
+      subroutine EV_HESS(TASK, npar, X, NEW_X, OBJFACT, ncon, LAM,
+     &     NEW_LAM, NNZH, IRNH, ICNH, HESS, IDAT, DAT, IERR)
+      implicit none
+      integer TASK, npar, NEW_X, ncon, NEW_LAM, NNZH, i
+      double precision X(npar), OBJFACT, LAM(ncon), HESS(NNZH)
+      integer IRNH(NNZH), ICNH(NNZH)
+      double precision DAT(*)
+      integer IDAT(*)
+      integer IERR
+C
+C     structure of Hessian:
+C
+C     L = F + lambda*h
+
+c      integer IRNH1(10), ICNH1(10)
+c      data  IRNH1 /1, 2, 2, 3, 3, 3, 4, 4, 4, 4/
+c      data  ICNH1 /1, 1, 2, 1, 2, 3, 1, 2, 3, 4/
+c      save  IRNH1, ICNH1
+C     1  2  3  4
+C   1 *
+C   2    *
+C   3       *
+C   4          * 
+      if( TASK.eq.0 ) then
+         do i = 1, NNZH
+            IRNH(i) = i
+            ICNH(i) = i
+         enddo
+      else
+         do i = 1, NNZH
+            HESS(i) = 1.0d0
+         enddo
+      endif
+      IERR = 0
+      return
+      end subroutine EV_HESS
 
       subroutine ITER_CB(ALG_MODE, ITER_COUNT, OBJVAL, INF_PR, INF_DU, 
      &    MU, DNORM, REGU_SIZE, ALPHA_DU, ALPHA_PR, LS_TRIAL, IDAT, 
