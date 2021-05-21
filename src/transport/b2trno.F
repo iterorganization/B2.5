@@ -16,7 +16,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
-     & , only : parm_hce, parm_hci, parm_dna, parm_dpa
+     & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
+     &          parm_vsa, parm_alf, parm_sig
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
