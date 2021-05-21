@@ -186,6 +186,10 @@ cwdk     parallel transport due to parallel current fluctuations
            t0 = 0.0_R8
            t1 = 0.0_R8
            t2 = 0.0_R8
+         elseif (switch%b2sikt_min_source.eq.2 .and.
+     &       (t0+t1).lt.0.0_R8) then
+           t0 = 0.0_R8
+           t1 = 0.0_R8
          endif
          she0(ic,0)   = -t1 + t2
          shi0(ic,0)   = -t0
