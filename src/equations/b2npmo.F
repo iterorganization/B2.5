@@ -756,7 +756,7 @@ csw 21feb2014, execute simultaneous corrections always
         call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
 !        wrks = resmo(:,:,is)-wrks
 !        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
-        
+
         wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
      &             smodt(:,:,0,is)
         call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }
@@ -776,7 +776,7 @@ csw 21feb2014, execute simultaneous corrections always
         call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
 !        wrks = resmo(:,:,is)-wrks
 !        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
-        
+
         wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
      &             smodt(:,:,0,is)
         call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }

@@ -1,6 +1,6 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/MDSPLUS
-#NCDIR       ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NETCDF
+#NCDIR      ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NETCDF
 NCDIR       ?= ${ITM_NETCDF_DIR}/${ITM_NETCDF_VERSION}/amd64_intel_18
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 MSCL_ROOT   ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/mscl
