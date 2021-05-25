@@ -41,12 +41,12 @@ c======================================================================
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
       logical lim_cnf
 c
-      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
+      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,
      ,                  distmin1
       integer, allocatable :: lwldlis_old(:)
       logical, allocatable :: istarget(:)
       integer :: nwldlis_old
-      real, allocatable :: lis_ind(:)
+      integer, allocatable :: lis_ind(:)
       data width /1.0_R8/
       save width
 c*** wsrttol : a tolerance parameter for defining coinciding segments

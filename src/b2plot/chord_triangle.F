@@ -305,8 +305,8 @@ c
 
       data first/.true./
 
-      irpos(r)=(r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
-      izpos(z)=(z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
+      irpos(r)=int((r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1)
+      izpos(z)=int((z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1)
       rpos(ir)=rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
       zpos(iz)=zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
 

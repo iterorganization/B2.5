@@ -476,6 +476,7 @@ c.. Make a list of core boundaries
         end if
         allocate(done(nbc))
         done=.false.
+        assigned=.false.
         do ib=1,nbc
           if(bcchar(ib).eq.'S') then
             if(old_style(ib)) then
@@ -523,7 +524,7 @@ c.. Make a list of core boundaries
                   do while (ic.le.ncbs)
                     if (lcbs(ic).eq.ib) then
                       call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
+     .                 'Core boundary already assigned!')
                       assigned = .true.
                       done(ic) = .true.
                     end if
@@ -549,7 +550,7 @@ c.. Make a list of core boundaries
         do ib = 1, ncbs
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
-          call xertst (done(lcbs(ib)),
+          call xertst (done(ib),
      .     'Did not find all declared core boundaries!')
         enddo
         deallocate(done)

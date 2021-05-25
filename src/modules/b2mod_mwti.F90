@@ -125,8 +125,8 @@ contains
     integer, save :: write_2d = 0
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), dims(1), iret
-    integer nvars, natts, ndims, unlimid, nastepid
+    integer imap(maxvdims), iret
+    integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
@@ -3183,7 +3183,7 @@ contains
 
 
   subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , only : ti, te, fna, fhe, fhi, fch, fht, fhj
+    use b2mod_plasma   , only : fna, fhe, fhi, fch, fht, fhj
     use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
     use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , only : ev, mp

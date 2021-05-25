@@ -181,7 +181,6 @@ contains
         !! Internal variables
         character(len=120) :: AM_label  !< Description of A&M data source
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
-        character(len=132) :: mol_label !< Molecule species label (e.g. D2)
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         character(len=24) :: source     !< Code source
         character(len=2)  :: plate_name(4) !< Divertor plate name
@@ -189,24 +188,17 @@ contains
         integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns    !< Total number of B2.5 species
         integer :: nsion !< Total number of IDS ion species
-        integer :: nneut !< Total number of IDS neutral species
         integer :: nx    !< Specifies the number of interior cells
                          !< along the first coordinate
         integer :: ny    !< Specifies the number of interior cells
                          !< along the second coordinate
         integer :: n_process !< Number of radiation processes handled
-        integer :: nelems    !< Number of elements present in a molecule or molecular ion
-        integer :: is, js, ks !< Species indices (iterators)
-        integer :: iss    !< State index
+        integer :: is, js !< Species indices (iterators)
         integer :: ii, jj !< Iterators
         integer :: i      !< Iterator
         integer :: j      !< Iterator
-        integer :: k      !< Iterator
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
-        integer :: iatm   !< Atom iterator
-        integer :: iatm1  !< Hydrogenic atom index in molecule composition
-        integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
         integer :: istrai !< Stratum iterator
         integer :: ntimes !< Number of previous timesteps in IDS
         integer :: is1    !< First ion of an isonuclear sequence
@@ -216,6 +208,15 @@ contains
         integer :: ntrgts !< Number of divertor targets
         integer :: o      !< Dummy integer
         integer :: p      !< Dummy integer
+#ifdef B25_EIRENE
+        integer :: k, ks  !< Species indices (iterators)
+        integer :: nneut  !< Total number of IDS neutral species
+        integer :: nelems !< Number of elements present in a molecule or molecular ion
+        integer :: iss    !< State index
+        integer :: iatm   !< Atom iterator
+        integer :: iatm1  !< Hydrogenic atom index in molecule composition
+        integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
+#endif
         integer, allocatable :: isstat(:) !< Mapping array
                                           !< from Eirene atoms and molecules to IDS neutral states
         integer, allocatable :: imneut(:) !< Mapping array
@@ -246,26 +247,28 @@ contains
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pz( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: roxa( -1:ubound( na, 1), -1:ubound( na, 2), 0:ubound( na, 3) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
-                       &        -1:ubound( na, 3) )
-        real(IDS_real) :: smo0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3, &
-                       &        -1:ubound( na, 3) )
-        real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
-        real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u,            &
             &             qetot, qitot, qemax, qimax, lambda,                &
             &             vtor, nisep, nasum
-        real(IDS_real) :: gsum, gmid, gbot, gtop
+#ifdef B25_EIRENE
+        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: she0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
+        real(IDS_real) :: shi0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3 )
+        real(IDS_real) :: sna0( -1:ubound( na, 1), -1:ubound( na, 2), 0:1, &
+                       &        -1:ubound( na, 3) )
+        real(IDS_real) :: smo0( -1:ubound( na, 1), -1:ubound( na, 2), 0:3, &
+                       &        -1:ubound( na, 3) )
+        real(IDS_real) :: gsum, gbot, gmid, gtop
+#endif
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
 
@@ -301,7 +304,6 @@ contains
         logical match_found, streql, exists
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
-        logical isadigit
 #endif
 #ifdef USE_PXFGETENV
         integer lenval, ierror

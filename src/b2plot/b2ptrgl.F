@@ -128,7 +128,7 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
      ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
       character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
-      character*10 ssmol,ssion
+      character*16 ssmol,ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)

@@ -238,7 +238,6 @@ program b2_ual_write_b2mod
     character(len=24) :: version    !< Major version of the IMAS IDS database
     integer :: idx  !< The returned identifier to be used in the subsequent
         !< data access operation
-    integer :: i    !< Iterator
     integer :: shot !< The shot number of the database being created
     integer :: run  !< The run number of the database being created
     integer :: num_step     !< Number of steps

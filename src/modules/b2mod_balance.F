@@ -2702,8 +2702,6 @@ cdjm Update ion heat sources
      &          topix,topiy,bottomix,bottomiy
       use b2mod_b2cmpa
      & , only : zamin,zamax
-      use b2mod_residuals
-     & , only : resco, resmo, reshe, reshi
       use b2mod_b2cmpa
      & , only : am
       use b2mod_constants

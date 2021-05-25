@@ -91,7 +91,7 @@
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
-      intrinsic max, abs, sqrt                                   	!xpb
+      intrinsic max, abs, sqrt                                          !xpb
       real (kind=R8) ::
      *   hybr
       external subini, subend, xertst, ipgetr, ipgeti

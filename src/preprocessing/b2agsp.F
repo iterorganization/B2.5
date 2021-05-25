@@ -172,8 +172,8 @@
 *     Asdex-Upgrade.  The fit is only approximate.)
       parameter (ii=(0.0_R8,1.0_R8), xmid=1.65_R8, btmid=2.00_R8,
      1  cpsi=0.41_R8, xslo=1.53_R8, yslo=-0.83_R8,
-     2	xshi=1.65_R8, yshi=1.32_R8,
-     3	shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8),
+     2  xshi=1.65_R8, yshi=1.32_R8,
+     3  shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8),
      &  snl=0.94_R8, sqz=0.0_R8, ycore=4.0e-1_R8)
       save init, istyle, wm0, wm1, xm, ym, dxa0, dxa1, dxb, dxm,
      &  dxc, dxd0, dxd1, dya, dym, dyb, wid,

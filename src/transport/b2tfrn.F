@@ -17,7 +17,7 @@
       use b2mod_b2cmfs
       use b2mod_transport_fun                                            !srv 13.01.17
       use b2mod_geo
-     &   , only : hyl, hxb, hzl, hzb
+     &   , only : hyl, hxb
       use b2mod_geo_corner
       implicit none
 *   ..input arguments (unchanged on exit)
