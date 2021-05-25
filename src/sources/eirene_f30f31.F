@@ -237,7 +237,7 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
             fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
      .                            nafsqalf(1:nFc,1,is)
             call intcell(nFc,nCv,mpg,mpg%intcellR,
-     .              fna_tmp(1:nFc,1,is),vvc(1:nFc,is))
+     .              fna_tmp(1:nFc,1,is),vvc(1:nCv,is))
           endif
         enddo
       endif
