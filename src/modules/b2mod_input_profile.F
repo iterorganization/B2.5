@@ -143,9 +143,10 @@
           elm_count=0
         endif
         if(sources_time_mod.gt.0.0_R8) then
-          catch_up=mod(tim,sources_time_mod).gt.sources_time_switch
+          catch_up=mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     &             sources_time_switch.gt.0.0_R8
         else if (sources_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.sources_time_switch
+          catch_up=tim.ge.sources_time_switch
         else
           catch_up=.false.
         end if
@@ -153,9 +154,10 @@
           write(*,*) 'sources: catching up...'
           call read_source_profile
           if(sources_time_mod.gt.0.0_R8) then
-            catch_up=mod(tim,sources_time_mod).gt.sources_time_switch
+            catch_up=mod(tim,sources_time_mod).ge.sources_time_switch
+     &        .and.sources_time_switch.gt.0.0_R8
           else if (sources_time_switch.gt.0.0_R8) then
-            catch_up=tim.gt.sources_time_switch
+            catch_up=tim.ge.sources_time_switch
           else
             catch_up=.false.
           endif
@@ -166,10 +168,11 @@
      .     tim,mod(tim,sources_time_mod),
      1     sources_time_switch,int(tim/sources_time_mod),elm_count
           catch_up=
-     1     mod(tim,sources_time_mod).gt.sources_time_switch.or.
+     1    (mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     1     sources_time_switch.gt.0.0_R8).or.
      2     int(tim/sources_time_mod).gt.elm_count
         else if (sources_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.sources_time_switch
+          catch_up=tim.ge.sources_time_switch
           if (catch_up) write(*,'(a,a)')
      .     'Switching to next sources profile datafile ',
      .      trim(sources_filename)
@@ -518,9 +521,10 @@ cdjm Jan2017 Keep linearised sources for balance
           elm_count=0
         endif
         if(transport_time_mod.gt.0.0_R8) then
-          catch_up=mod(tim,transport_time_mod).gt.transport_time_switch
+          catch_up=mod(tim,transport_time_mod).ge.transport_time_switch
+     &      .and.transport_time_switch.gt.0.0_R8
         else if (transport_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.transport_time_switch
+          catch_up=tim.ge.transport_time_switch
         else
           catch_up=.false.
         end if
@@ -529,10 +533,10 @@ cdjm Jan2017 Keep linearised sources for balance
           filename=transport_filename
           call read_transport_input
           if(transport_time_mod.gt.0.0_R8) then
-            catch_up=
-     .       mod(tim,transport_time_mod).gt.transport_time_switch
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
           else if (transport_time_switch.gt.0.0_R8) then
-            catch_up=tim.gt.transport_time_switch
+            catch_up=tim.ge.transport_time_switch
           else
             catch_up=.false.
           endif
@@ -543,10 +547,11 @@ cdjm Jan2017 Keep linearised sources for balance
      .     'ELM: ',tim,mod(tim,transport_time_mod),
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
           catch_up=
-     1     mod(tim,transport_time_mod).gt.transport_time_switch.or.
+     1    (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1     transport_time_switch.gt.0.0_R8).or.
      2     int(tim/transport_time_mod).gt.elm_count
         else if (transport_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.transport_time_switch
+          catch_up=tim.ge.transport_time_switch
           if (catch_up) write(*,'(a,a)')
      .     'Switching to next transport namelist file ',
      .      trim(transport_filename)

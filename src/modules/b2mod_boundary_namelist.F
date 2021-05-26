@@ -136,9 +136,10 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
          bc_elm_count=0
       endif
       if(boundary_time_mod.gt.0.0_R8) then
-        catch_up=mod(tim,boundary_time_mod).gt.boundary_time_switch
+        catch_up=mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1           boundary_time_switch.gt.0.0_R8
       else if (boundary_time_switch.gt.0.0_R8) then
-        catch_up=tim.gt.boundary_time_switch
+        catch_up=tim.ge.boundary_time_switch
       else
         catch_up=.false.
       end if
@@ -151,10 +152,10 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
      1           'increase DEF_NISO in DIMENSIONS.F')
         call write_b2mod_boundary_namelist
         if(boundary_time_mod.gt.0.0_R8) then
-          catch_up=
-     1     mod(tim,boundary_time_mod).gt.boundary_time_switch
+          catch_up=boundary_time_switch.gt.0.0_R8.and.
+     1     mod(tim,boundary_time_mod).ge.boundary_time_switch
         else if (boundary_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.boundary_time_switch
+          catch_up=tim.ge.boundary_time_switch
         else
           catch_up=.false.
         endif
@@ -256,10 +257,11 @@ cxpb overwrite the defaults with the namelist data
      2        int(tim/boundary_time_mod),
      3        bc_elm_count
         catch_up=
-     1    mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
+     1   (mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1    boundary_time_switch.gt.0.0_R8).or.
      2    int(tim/boundary_time_mod).gt.bc_elm_count
       else if (boundary_time_switch.gt.0.0_R8) then
-        catch_up=tim.gt.boundary_time_switch
+        catch_up=tim.ge.boundary_time_switch
         if(catch_up) write(*,'(a,a)')
      .   'Switching to next boundary namelist file ',
      .    trim(boundary_filename)

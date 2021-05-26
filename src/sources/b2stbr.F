@@ -362,10 +362,11 @@
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
           catch_up=
-     1     mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
-     1     int(tim/neutrals_time_mod).gt.neutrals_count
+     1    (mod(tim,neutrals_time_mod).ge.neutrals_time_switch.and.
+     1     neutrals_time_switch.gt.0.0_R8).or.
+     2     int(tim/neutrals_time_mod).gt.neutrals_count
         else if (neutrals_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.neutrals_time_switch
+          catch_up=tim.ge.neutrals_time_switch
           if(catch_up) write(*,'(a,a)')
      .     'Switching to next neutrals namelist file ',
      .      trim(neutrals_filename)
@@ -1447,9 +1448,10 @@ c        write(*,*) 'Called neutr_scl'
         neutrals_count=0
       endif
       if(neutrals_time_mod.gt.0.0_R8) then
-        catch_up=mod(tim,neutrals_time_mod).gt.neutrals_time_switch
+        catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &    .and.neutrals_time_switch.gt.0.0_R8
       else if (neutrals_time_switch.gt.0.0_R8) then
-        catch_up=tim.gt.neutrals_time_switch
+        catch_up=tim.ge.neutrals_time_switch
       else
         catch_up=.false.
       end if
@@ -1461,9 +1463,10 @@ c        write(*,*) 'Called neutr_scl'
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
         call write_b2mod_neutrals_namelist
         if(neutrals_time_mod.gt.0.0_R8) then
-          catch_up=mod(tim,neutrals_time_mod).gt.neutrals_time_switch
+          catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &      .and.neutrals_time_switch.gt.0.0_R8
         else if (neutrals_time_switch.gt.0.0_R8) then
-          catch_up=tim.gt.neutrals_time_switch
+          catch_up=tim.ge.neutrals_time_switch
         else
           catch_up=.false.
         endif
