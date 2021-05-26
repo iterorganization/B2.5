@@ -21,8 +21,7 @@
       logical, save :: sigma_opt(nsigmx)
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
-      integer :: partypeold(nvmx),x0old(nvmx),xlold(nvmx),xuold(nvmx),
-     &           glold(nvmx),guold(nvmx), idd, ipp
+      integer :: idd, ipp
       logical :: file_ok
       real (kind=R8) :: typeold(nvmx), rangeold(nvmx,2), parold(nvmx,2)
       private optimization

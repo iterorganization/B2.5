@@ -10,7 +10,7 @@
       integer CVREGMAX
       parameter (CVREGMAX=8)
       integer nncf
-      parameter (nncf=5)
+      parameter (nncf=8)
 
       character(7), save :: my_out_folder
 #ifdef WG_DEBUG
@@ -32,7 +32,8 @@
       logical, save :: b2news_solving(4) = .true.    !srv 06.07.00
 
       real (kind=R8), save :: cfnorm(nncf), vold(nncf)
-      real (kind=R8), allocatable, save :: ffdata(:,:)
+      real (kind=R8), allocatable, save :: TMP1(:), TMP2(:)
+      real (kind=R8), allocatable, save :: rrdata(:,:), vvdata(:,:)
 
       logical, save :: test_residual = .false. 
       integer, save :: b2mndt_itcnt = 0
