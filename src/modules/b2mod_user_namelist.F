@@ -4,7 +4,7 @@
       use b2us_geo
       use b2us_map
       use b2mod_ad
-     & , only : nncf, ffdata
+     & , only : nncf, rrdata, vvdata, TMP1, TMP2
       implicit none
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
@@ -35,7 +35,7 @@
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
       logical, save :: cfread(nncf), cfomp(nncf)
-      integer, save :: ncfdata(nncf), ncf, ntimescf(nncf)
+      integer, save :: ncfdata(nncf), ncf
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
       parameter (nvmx = 20, nsigmx=10)
@@ -158,7 +158,10 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
-      if (allocated(ffdata)) deallocate(ffdata)
+      if (allocated(rrdata)) deallocate(rrdata)
+      if (allocated(vvdata)) deallocate(vvdata)
+      if (allocated(TMP1)) deallocate(TMP1)
+      if (allocated(TMP2)) deallocate(TMP2)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -279,20 +282,6 @@ c***  Standard setup:
 
       call cf_to_struct(m)
 
-! now allocate vector that will be used to interpolate data onto solps grid
-      if (any(cfread)) then
-        ntimescf = 0
-! check that for now we have data for a multiple of the number of CV in CF
-        do icf = 1, ncf
-          if (cfread(icf)) then
-           call xertst(mod(ncfdata(icf),m%cfCvP(icf,2)).eq.0,
-     &      'b2mod_user: number of data read for CF should be'//
-     &      ' a multiple of the CVs in that CF (to be improved)')
-           ntimescf(icf) = ncfdata(icf)/m%cfCvP(icf,2)
-          endif
-        enddo
-      endif
-
 ! now allocate vector that will be used to interpolate solps onto data grid in loglikelihood for Bayesian MAP
       if (any(cftype.eq.6)) then
         call xertst(nsigma.gt.0.and.nsigma.le.nsigmx,
@@ -313,12 +302,18 @@ c***  Standard setup:
           call xertst(prior_range(icf,1).lt.prior_range(icf,2),
      &     'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
         end do
-        do icf  = 1, ncf
-          if (cftype(icf).eq.6) is = icf
-        enddo
+      endif
+      if (any(cfread)) then
         ndata = maxval(ncfdata(1:ncf),1)
-        allocate(ffdata(cfend(is)-cfstart(is)+1,ndata))
-        ffdata = 0.0_R8
+        allocate(vvdata(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
+        allocate(TMP2(ndata)) !variable to store SOLPS data interpolated onto CF radial points
+        ndata = maxval(m%cfCvP(1:ncf,2)) !max number of CVs in a cost function
+        allocate(rrdata(ncf,ndata)) !store here values of cvX from SOLPS for interpolation
+        allocate(TMP1(ndata)) !temporary variable to store SOLPS data for interpolation
+        rrdata = 0.0_R8
+        vvdata = 0.0_R8
+        TMP1 = 0.0
+        TMP2 = 0.0
       endif
 
 #ifdef WG_TODO
