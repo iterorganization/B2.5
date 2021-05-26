@@ -2811,10 +2811,10 @@ contains
 
       !! B2_SUBGRID_EDGES_Y: y-aligned edges.
       !! One implicit object list, range over y edges. Same procedure.
-      call createSubGrid( itmgrid % subgrids( B2_SUBGRID_EDGES_Y ), &
+      call createSubGrid( itmgrid % subgrids( B2_SUBGRID_EDGES_Y ),  &
           &   1, 'y-aligned edges' )
-      call createImplicitObjectList( itmgrid,                    &
-          &   itmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1), &
+      call createImplicitObjectList( itmgrid,                        &
+          &   itmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1),    &
           &   CLASS_POLOIDALRADIAL_EDGE(1:SPACE_COUNT) )
       itmgrid % subgrids( B2_SUBGRID_EDGES_Y ) % list(1) % indset(1) &
           & = createIndexListForRange( gmap%nFcx + 1, gmap%nFcx + gmap%nFcy )

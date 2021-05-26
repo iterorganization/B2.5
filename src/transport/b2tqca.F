@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2,       !srv 01.07.09
+      subroutine b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2,           !srv 01.07.09
      1 vsa, hci)
       use b2mod_types
       use b2mod_geo

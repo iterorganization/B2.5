@@ -204,12 +204,12 @@ program b2_ual_write
         call ids_deallocate( old_edge_profiles )
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
+        old_imas_version = 'x.xx.x'
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
-          old_imas_version = 'x.xx.x'
           write (0,*) 'Error opening old dataset_description IDS !'
+        else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-        else
           old_start_time = old_description%simulation%time_begin
           old_end_time = old_description%simulation%time_end
 #endif

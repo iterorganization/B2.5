@@ -169,6 +169,8 @@
       character*260 filename
 
       filename=numerics_filename
+      numerics_time_mod = 0.0_R8
+      numerics_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)

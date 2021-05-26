@@ -18,12 +18,14 @@
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
+      use b2mod_sources
+     , , only : shedt, shidt                                            !srv 31.01.21
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
-     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
+     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
@@ -36,7 +38,7 @@
      *  na(-1:nx,-1:ny,0:ns-1), fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)                                  !srv 07.07.09
       logical solving(4),
@@ -87,7 +89,8 @@
      * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                    !srv 02.01.07
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                   !srv 02.01.07
      2 she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                             !srv 18.09.09
+     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                            !srv 18.09.09
+     4 te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)                         !srv 26.02.21
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
@@ -209,6 +212,20 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        te_inp=te
+        call my_out(70,nx,ny,te,'b2nph9_te_inp')
+        ti_inp=ti
+        call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
+      endif                                                             !srv 31.01.21
+
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        te_inp=te
+        call my_out(70,nx,ny,te,'b2nph9_te_inp')
+        ti_inp=ti
+        call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
+      endif                                                             !srv 31.01.21
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -251,7 +268,7 @@ cdjm Jan2017 update particle source components for balance
      &    .or.get_residuals.eq.1) reshe = reshe - shei
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) reshi = reshi + shei
-      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0            
+      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
      &   resht = reshe + reshi                                          !srv 22.05.18 }
 
@@ -318,9 +335,33 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
         call my_out(70,nx,ny,po,'b2nph9_po')
+        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
+        call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
+        call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
+        wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
+        wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
+        call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
+        wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
       elseif (iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
+        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
+        call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
+        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
+        call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
+        wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
+        wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
+        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
+        call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
+        wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
       end if
 
 * ..return

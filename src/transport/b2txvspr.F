@@ -18,8 +18,8 @@
      1   vol(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1)
+     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
+     &   cvisper(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.declarations
 

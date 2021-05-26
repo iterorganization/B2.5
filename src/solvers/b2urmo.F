@@ -61,7 +61,7 @@
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
       !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo,                !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo,               !srv 11.09.09
      *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 *   ..procedures
       external xertst

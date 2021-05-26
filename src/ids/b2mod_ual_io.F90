@@ -642,6 +642,9 @@ contains
           else if (style.eq.1) then
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
+          else if (style.eq.-1) then
+            edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
+            edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           end if
           edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
         else
@@ -6278,6 +6281,7 @@ contains
                 !< Type of IDS data structure, designed for sourced string data handling
             character(len=ids_string_length), intent(in) :: string
 
+            allocate( val%value(1) )
             val%value = string
             allocate( val%source(1) )
             val%source = source
