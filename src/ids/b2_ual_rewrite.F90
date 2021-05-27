@@ -137,9 +137,18 @@ program b2_ual_rewrite
     call read_b2mod_transport(56)
 
     call ipgeti('b2mndr_shot_number', shot )
+    if (shot.gt.0) then
+      write(shot_string,'(i8)') shot
+      call strip_spaces(shot_string)
+    end if
     call ipgeti('b2mndr_run_number', run )
-    if (run.gt.0) new_run = run
-    write(new_run_string,'(i5)') new_run
+    if (run.gt.0) then
+      write(run_string,'(i5)') run
+      call strip_spaces(run_string)
+      new_run = run
+      write(new_run_string,'(i5)') new_run
+      call strip_spaces(new_run_string)
+    end if
     username = usrnam()
     call ipgetc('b2mndr_user', username )
     database = 'solps-iter'
@@ -236,36 +245,6 @@ program b2_ual_rewrite
         write(*,*) &
           & 'Recreating using IMAS version '// &
           &  trim(imas_version)//'.'
-        call close_ual(idx)
-        idx = 0
-!xpb Copy the IDS to a temporary location with the new DD and then bring it back
-        if (same_run_number) then
-          tmp_run = run+1000
-        else
-          tmp_run = new_run
-        end if
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-          & 'idscp --setDatasetVersion -si ',shot,' -ri ',run,      &
-          &                          ' -so ',shot,' -ro ',tmp_run,  &
-          &                          ' -d ',database,' -u ',username
-#ifdef NAGFOR
-        call system(systemarg, status, ierror)
-#else
-        call system(systemarg)
-#endif
-        if (same_run_number) then
-          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-            & 'idscp --setDatasetVersion -si ',shot,' -ri ',tmp_run,  &
-            &                          ' -so ',shot,' -ro ',run,      &
-            &                          ' -d ',database,' -u ',username
-#ifdef NAGFOR
-          call system(systemarg, status, ierror)
-#else
-          call system(systemarg)
-#endif
-        end if
-        call imas_open_env(treename, shot, new_run, idx, &
-          &                username, database, version, status)
       else if (.not.same_run_number) then
         call close_ual(idx)
         idx = 0
