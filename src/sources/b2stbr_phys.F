@@ -30,6 +30,7 @@
       use b2mod_diag
       use b2mod_geo
      , , only: hy1
+      use b2mod_math
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -659,6 +660,9 @@ c lcore           is this a core element?
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
       real (kind=R8) mass_density, local_reflection
+#ifdef DBG
+      real (kind=R8) product
+#endif
       character*13 hlp_frm
       external mass_density
 
@@ -919,11 +923,26 @@ c chemical sputtering
                if(zbulk.eq.6.or.sput_frac_flag.ne.0) then      ! chemical sputtering only for C
                   if(sput_chem_model.eq.1) then
                      if (Ei.gt.0.0_R8) then
+#ifdef DBG
+                        product =-((sput_chem_cutoff_alpha/Ei)
+     &                            **sput_chem_cutoff_beta)
+                        if(product.gt.cutll) then
+                           ytmp = chem_sput(is,istra) *
+     &                       exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                           t1=t0 * ytmp
+                           chemical_sputtering(iwall,is) = ytmp
+                        else
+                           t1=0.0_R8
+                           chemical_sputtering(iwall,is) = 0.0_R8
+                        end if
+#else
                         ytmp = chem_sput(is,istra) *
      &                       exp(-(sput_chem_cutoff_alpha/Ei)**
      &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                         t1=t0 * ytmp
                         chemical_sputtering(iwall,is) = ytmp
+#endif
                      else
                         t1=0.0_R8
                         chemical_sputtering(iwall,is) = 0.0_R8

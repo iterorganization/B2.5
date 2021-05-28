@@ -165,7 +165,7 @@
       call subini ('b2rurc')
 *   ..test nget
       call xertst (1.le.nget, 'faulty argument nget')
-*   ..set cutlo
+*   ..set cutll
       if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..read rate coefficients
@@ -241,7 +241,7 @@
         if (lt0) then
 *       (ionisation rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlsa(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlsa table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlsa table')
         endif
       enddo
 *   ..test recombination rate coefficients
@@ -255,7 +255,7 @@
         if (lt0) then
 *       (recombination rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlra table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlra table')
         endif
       enddo
 *   ..test charge exchange rate coefficients
@@ -269,7 +269,7 @@
         if (lt0) then
 *       (charge exchange rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlcx table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlcx table')
         endif
       enddo
 
