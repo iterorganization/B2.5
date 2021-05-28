@@ -1587,7 +1587,18 @@ c if pivot is zero, rest of column is and so multiplier is zero.
      &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
      &                 a(ijpos).le.-tiny(1.0_R8))) then
                   product = log(abs(a(jj))) - log(abs(a(ijpos)))
-                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                  if (product.ge.cutlo) then
+                    au = -a(jj)/a(ijpos)
+                  else
+                    if ((a(jj).ge.tiny(1.0_R8).and.
+     &                   a(ijpos).ge.tiny(1.0_R8)).or.
+     &                  (a(jj).le.-tiny(1.0_R8).and.
+     &                   a(ijpos).le.-tiny(1.0_R8))) then
+                      au = -cutlo
+                    else
+                      au = cutlo
+                    end if
+                  end if
                 end if 
 #else
                 au = -a(jj)/a(ijpos)
@@ -1787,8 +1798,14 @@ c innermost fill-in loop which also resets icn.
                   anew = au*a(jj)
                   aanew = abs(anew)
                 else
-                  anew = 0.0_R8
-                  aanew = 0.0_R8
+                  if ((a(jj).ge. tiny(1.0_R8).and.au.ge. tiny(1.0_R8))
+     &            .or.(a(jj).le.-tiny(1.0_R8).and.au.le.-tiny(1.0_R8)))
+     &             then
+                    anew = cutlo
+                  else
+                    anew = -cutlo
+                  end if
+                  aanew = cutlo
                 end if
               else
                 anew = 0.0_R8
@@ -2145,7 +2162,13 @@ c form multiplier au.
             if (product.ge.cutlo) then
               au = -w(j)/a(ipivj)
             else
-              au = 0.0_R8
+              if ((w(j).ge. tiny(1.0_R8).and.a(ipivj).ge. tiny(1.0_R8))
+     &        .or.(w(j).le.-tiny(1.0_R8).and.a(ipivj).le.-tiny(1.0_R8)))
+     &         then
+                au = -cutlo
+              else
+                au = cutlo
+              end if
             end if
           else
             au = 0.0_R8
