@@ -31,6 +31,7 @@
       use b2mod_external
       use b2mod_geo
      , , only : hy1
+      use b2mod_math
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -413,6 +414,9 @@ c lcore           is this a core element
       real (kind=R8) hh, hhn, Phi_app, area, pof,
      *  redep_self_sputter, redep_self_energy,
      *  wrk(ndepth_nml)
+#ifdef DBG
+      real (kind=R8) product
+#endif
       logical lcore, found
 
       integer is0, is1, is2, is, k, iwall, itrack
@@ -527,6 +531,22 @@ c chemical sputtering
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
                if(sput_chem_model.eq.1) then
                   if (Ei.gt.0.0_R8) then
+#ifdef DBG
+                     product =-((sput_chem_cutoff_alpha/Ei)
+     &                         **sput_chem_cutoff_beta)
+                     if(product.gt.cutll) then
+                        t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                        chemical_sputtering(iwall,is) =
+     .                    (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                     else
+                        t1=0.0_R8
+                        chemical_sputtering(iwall,is) = 0.0_R8
+                     end if
+#else
                      t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
@@ -534,6 +554,7 @@ c chemical sputtering
      .                    (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+#endif
                   else
                      t1=0.0_R8
                      chemical_sputtering(iwall,is) = 0.0_R8

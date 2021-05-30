@@ -1460,6 +1460,13 @@ contains
               &  divertors%divertor(1)%target(1)%power_currents, u )
             call write_timed_value( &
               &  divertors%divertor(1)%power_currents, u )
+#if IMAS_MINOR_VERSION > 32
+            u = idir(1)*sum(fch(ifpos(1),:,0))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%current_incident, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%current_incident, u )
+#endif
             call write_timed_value( &
               &  divertors%divertor(1)%particle_flux_recycled_total, &
               &  recycled_flux(1) )
@@ -1525,6 +1532,13 @@ contains
                 & divertors%divertor(2)%target(1)%power_currents, u )
               call write_timed_value( &
                 & divertors%divertor(2)%power_currents, u )
+#if IMAS_MINOR_VERSION > 32
+              u = idir(2)*sum(fch(ifpos(2),:,0))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%current_incident, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%current_incident, u )
+#endif
               call write_timed_value( &
                 & divertors%divertor(2)%particle_flux_recycled_total, &
                 & recycled_flux(2) )
@@ -1659,6 +1673,16 @@ contains
             &  divertors%divertor(1)%target(2)%power_currents, v )
           call write_timed_value( &
             &  divertors%divertor(1)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(1)*sum(fch(ifpos(1),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%current_incident, u )
+          v = idir(2)*sum(fch(ifpos(2),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, u+v )
+#endif
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1) )
@@ -1792,6 +1816,16 @@ contains
             &  divertors%divertor(1)%target(2)%power_currents, v )
           call write_timed_value( &
             &  divertors%divertor(1)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(1)*sum(fch(ifpos(1),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%current_incident, u )
+          v = idir(4)*sum(fch(ifpos(4),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, u+v )
+#endif
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1)+recycled_flux(4) )
@@ -1896,6 +1930,16 @@ contains
             &  divertors%divertor(2)%target(2)%power_currents, v )
           call write_timed_value( &
             &  divertors%divertor(2)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(2)*sum(fch(ifpos(2),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%current_incident, u )
+          v = idir(3)*sum(fch(ifpos(3),:,0))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, u+v )
+#endif
           call write_timed_value( &
             &  divertors%divertor(2)%particle_flux_recycled_total, &
             &  recycled_flux(2)+recycled_flux(3) )
@@ -4042,6 +4086,32 @@ contains
                 &   val = edge_profiles%ggd( time_sind )%pressure_thermal,   &
                 &   value = pz,                                              &
                 &   time_sind = time_sind )
+
+#if IMAS_MINOR_VERSION > 32
+            !! fch: Total current
+            call divide_by_areas(nx,ny,fch,tmpFace)
+            totFace(:,:,0) = tmpFace(:,:,0)
+            totFace(:,:,1) = IDS_REAL_INVALID
+            call write_face_vector_component(                                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_total,                               &
+                &   b2FaceData = totFace,                                    &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
+            totFace(:,:,0) = IDS_REAL_INVALID
+            totFace(:,:,1) = tmpFace(:,:,1)
+            call write_face_vector_component(                                &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%        &
+                &                     j_total,                               &
+                &   b2FaceData = totFace,                                    &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            !! fch_p: Parallel current
+            call divide_by_areas(nx,ny,fch_p,tmpFace)
+            call write_face_scalar(                                          &
+                &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
+                &   value = tmpFace,                                         &
+                &   time_sind = time_sind )
+#endif
 
             !! fchanml: Anomalous current
             call b2tanml (nx, ny, csig_an, po, fchanml)
