@@ -340,11 +340,13 @@ c k-enstrophy model
       integer :: b2sikt_model
       integer :: b2sikt_local
       integer :: b2sikt_sheath_local
+      integer :: b2sikt_fac_diss_core_mode
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
       real(kind=R8) :: b2sikt_fac_diss
       real(kind=R8) :: b2sikt_fac_diss_core
+      real(kind=R8) :: b2sikt_fac_vis_RS
       real (kind=R8) :: b2tfhi_fflokt
       real (kind=R8) :: b2tfhi_fconkt
       real (kind=R8) :: b2tfhi_fsigkt
@@ -759,12 +761,14 @@ c k-enstrophy model
       s % b2sikt_style = 0
       s % b2sikt_model = 1
       s % b2sikt_local = 1
+      s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
       s % b2sikt_fac_diss = 0.0_R8
       s % b2sikt_fac_diss_core = 0.0_R8
+      s % b2sikt_fac_vis_RS = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fsigkt = 0.0_R8
@@ -1208,6 +1212,9 @@ c k-enstrophy model
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
       call ipgetr ('b2sikt_fac_diss_core', s % b2sikt_fac_diss_core)
+      call ipgeti ('b2sikt_fac_diss_core_mode', 
+     .          s % b2sikt_fac_diss_core_mode)
+      call ipgetr ('b2sikt_fac_vis_RS', s % b2sikt_fac_vis_RS)
       call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)

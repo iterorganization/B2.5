@@ -629,7 +629,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       enddo
 *   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-      wrkc = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
+      wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
       wrkc = sigx_c*wrkc**2/(am(ismain)*mp)*switch%b2tfhi_fsigkt
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
