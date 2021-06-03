@@ -129,7 +129,7 @@
       real (kind=R8) ::
      *  rz(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
-      integer isfeedback, fix_fch_in_fhe_sheath
+      integer isfeedback, fix_fch_in_fhe_sheath, is_kinetic
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac
@@ -138,7 +138,8 @@
       save coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  bc_type21_ref, ndes_sol,
-     *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
+     *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath,
+     *  is_kinetic
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
@@ -158,7 +159,8 @@
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & bc_type21_ref/1/, drift_style/1/, ndes_sol/0.0_R8/
+     & bc_type21_ref/1/, drift_style/1/, ndes_sol/0.0_R8/,
+     & is_kinetic/0/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
@@ -1054,8 +1056,6 @@ cwdk      compatibility for E/W boundaries
 * -- BCCON=11 -- particle flux feedback boundary condition
 
           case (11)
-          call xerrab ('b2stbc_phys -- BCCON = 11 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,a,a,a,i3)')
      .      'particle flux feedback boundary condition on ',
@@ -1063,11 +1063,12 @@ cwdk      compatibility for E/W boundaries
            call ipgeti ('b2stbc_isfeedback', isfeedback)
            call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
      1      'faulty internal parameter isfeedback')
+           if (switch%use_eirene.ne.0) is_kinetic = 1
            fedback_species = is.eq.isfeedback
            do isa = 0, nspecies-1
              if (na_feedback_ib(isa).eq.ib) then
                fedback_species = fedback_species .or.
-     .                          (is.ge.eb2spcr(isa+1)+1 .and.
+     .                          (is.ge.eb2spcr(isa+1)+is_kinetic .and.
      .                           is.le.eb2spcr(isa+1)+nfluids(isa+1))
              end if
            end do
@@ -1079,12 +1080,29 @@ cwdk      compatibility for E/W boundaries
           do isa = 0, nspecies-1
             if (na_feedback_target(isa).gt.0.0_R8 .and.
      &          na_feedback_ib(isa).eq.ib .and.
-     &          is.ge.eb2spcr(isa+1)+1 .and.
+     &          is.ge.eb2spcr(isa+1)+is_kinetic .and.
      .          is.le.eb2spcr(isa+1)+nfluids(isa+1)) then
               t0 = conpar(is,ib,1)
               fedback_species = .true.
             end if
           end do
+! csc Warning! Here nothing prevents feedback being applied on E-W boundaries
+!     Needs redefinition also in view of extended grids or hybrid
+          if (.not.fedback_species) then
+*   ..initialise ireg, not sure is asbolutely correct for WG code
+            ireg = mpg%cvReg(mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1))
+            t0 = cbsna(0,IS,ireg)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            srw%sna0(iCv1,0,is) = t0*geo%fcS(iFc)
+            srw%sna0(iCv1,1,is) = 0.0_R8
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+#ifdef WG_TODO
           IF (BCCHAR(IB).EQ.'S') THEN
             if (.not.fedback_species) then
 *   ..initialise ireg

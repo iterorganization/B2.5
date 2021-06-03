@@ -431,6 +431,9 @@ c b2mndt
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
 
+c Feedback
+      integer :: b2stbc_feedback
+
       end type switches
 
       contains
@@ -849,6 +852,9 @@ c b2mndt
       s % facvis_start = 0.0_R8
       s % facdrift_start = 0.0_R8
       s % facExB_start = 0.0_R8
+
+c Feedback
+      s % b2stbc_feedback = 0
 
       return
       end subroutine set_defaults_switches
@@ -1309,6 +1315,9 @@ c b2mndt
       call ipgetr ('b2news_facExB_start',   s%facExB_start)
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
+
+c Feedback
+      call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
       return
       end subroutine read_switches

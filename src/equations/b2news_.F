@@ -3,7 +3,7 @@
 
       subroutine b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, rxf, switch, geo, mpg, pl, dv, 
-     &  co, rt, rtw, sr, srw, st_ext, psnc, ierr)
+     &  co, rt, rtw, sr, srw, st_ext, psnc, psnl, ierr)
       use b2mod_types
 !      use b2mod_geo
 !      use b2mod_plasma
@@ -69,7 +69,7 @@
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
       type (B2StateExt), intent (inout) :: st_ext
-      type (B2PlasmaSnapshot), intent (inout) :: psnc
+      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
 *   ..output arguments                                                    !xpb
       integer ierr
       logical wrong_flow
@@ -351,7 +351,7 @@ c   extra call at this place within internal iteration)
         call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
      &    nscx, nscxmax, switch%nsmin, switch%nsmax, iscx, ismain,
      &    ismain0, dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw,
-     &    st_ext, sr, srw, wrong_flow, .false.)
+     &    st_ext, sr, srw, psnc, psnl, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
