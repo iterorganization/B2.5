@@ -441,7 +441,7 @@ c we derive the guard cell value from its neighbouring interior cell
             trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)*
      &                                kin_frac_hyb(iFc)
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
-              write(*,*) 'negative flux !!'
+              write(*,*) 'negative flux !! istra, i, ifl = ',istra,i,ifl
               trgt(istra)%flux(i,ifl) = 0.0_R8
             endif 
             trgt(istra)%fi(i,ifl) = rcfi(istra)
