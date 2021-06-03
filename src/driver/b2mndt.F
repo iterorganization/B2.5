@@ -337,7 +337,8 @@ ctmp.dpc
           call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr, nscx, 
      &      nscxmax, switch%nsmin, switch%nsmax, iscx, ismain, ismain0,
      &      dtim, switch%BoRiS, switch, geo, mpg, st%pl, st%dv, st%co,
-     &      st%rt, st%rtw, st_ext, st%sr, st%srw, wrong_flow, main_call)
+     &      st%rt, st%rtw, st_ext, st%sr, st%srw, st%psnc, st%psnl, 
+     &      wrong_flow, main_call)
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -390,7 +391,7 @@ ctmp.dpc
            call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
      &       nscxmax, ismain, ismain0, dtim, switch%b2mndt_rxf, switch, 
      &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, 
-     &       st%srw, st_ext, st%psnc, ier0)
+     &       st%srw, st_ext, st%psnc, st%psnl, ier0)
            flush(6)
            if(ier0.eq.10) then
              ierr=ier0

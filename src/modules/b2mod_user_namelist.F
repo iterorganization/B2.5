@@ -19,7 +19,7 @@
       integer l_h_mol(DEF_NMOL,3)
 #endif
       integer, parameter :: nromp=DEF_NYD*4
-      integer, save :: omp(nromp), icsep, nomp
+      integer, save :: omp(nromp), icsep, nomp, ifssep
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -156,7 +156,8 @@ c***  Standard setup:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        dx, ic1, ic2
+     >        dx, ic1, ic2, ifc, ifcc, ifc1, ifc2,
+     >        ii, ifc11, ifc22, jj
 
       logical :: file_ok
       character*260 filename, cffile
@@ -432,6 +433,8 @@ c*** Set default values according to current species list
       end do
 
 *   ..Definition of separatrix position in OMP list (to be improved for DN)
+      if (m%IsClassicalGrid) call xertst(m%nncut.le.2,
+     & 'Separatrix position to be revised for DN')
       icsep = 0
       ic = 1
       found = .false.
@@ -442,6 +445,34 @@ c*** Set default values according to current species list
         endif
       ic = ic + 1 
       end do
+      ifssep = 0 !flux surface of separatrix
+      ic1 = omp(icsep-1) !cv of flux tube just inside sep
+      ic2 = omp(icsep) !cv of flux tube just outside sep
+      ifc1 = m%cvFcP(ic1,1)
+      ifc2 = ifc1 + m%cvFcP(ic1,2) - 1
+      ifc11 = m%cvFcP(ic2,1)
+      ifc22 = ifc11 + m%cvFcP(ic2,2) - 1
+      ! find face belonging to both ic1 and ic2
+      do ii = ifc1, ifc2
+        ifc = m%cvFc(ii)
+        do jj = ifc11, ifc22
+          ifcc = m%cvFc(jj)
+          if (ifc.eq.ifcc) exit
+        enddo
+      end do
+      ! find this face in fsFc --> ii
+      do ii = 1, size(m%fsFc,1)
+        if (ifc.eq.m%fsFc(ii)) exit
+      end do
+      ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
+      do ifssep = 1, size(m%fsFcP,1)
+      ifc1 = m%fsFcP(ifssep,1)
+      ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
+        if (ii.ge.ifc1 .and. ii.le.ifc2) exit
+      enddo
+      if (m%IsClassicalGrid) call xertst(m%fsFcP(ifssep,2).gt.0,
+     & 'No separatrix faces!')
+      write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
 
       call subend ()
       return

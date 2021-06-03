@@ -1762,6 +1762,7 @@ c   --> better way doing this is necessary)
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+      call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
@@ -2176,9 +2177,6 @@ c new CDF movie option
         endif
 #endif
         if (first_time_step) then
-          if(.not.allocated(iz))
-     >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
-     .                           switch)
           call b2trci(70,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,state)
           if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
         endif
