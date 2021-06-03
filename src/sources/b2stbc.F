@@ -3,7 +3,7 @@
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
      &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &  wrong_flow, main_call)
+     &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
 !      use b2mod_geo_corner
       use b2mod_constants
@@ -23,7 +23,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd
+     & , only : conpar, enepar, enipar, nbcd, lfeedback
       use b2mod_ad
      & , only : my_out_folder, my_out_sf, ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
@@ -41,6 +41,7 @@
       type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
+      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
@@ -69,8 +70,6 @@
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol
 !WG_TODO      integer element_done(-1:nx)
-      integer b2stbc_feedback
-      save b2stbc_feedback
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
@@ -80,7 +79,6 @@
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation
-      data b2stbc_feedback/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -94,11 +92,7 @@
      .                         switch%b2stbc_fchy_dia.gt.0.0_R8)
      .   .or.switch%b2stbc_neoclassical.gt.0.0_R8)),
      .  'inconsistent boundary settings for current equation')
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
-!WG_TODO       lfeedback=b2stbc_feedback.ne.0                          ! dpc-2003-10-23
-
-
+        lfeedback=switch%b2stbc_feedback.ne.0                          ! dpc-2003-10-23
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -327,14 +321,11 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
       if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
+        if(lfeedback.or.switch%b2stbc_feedback.ne.0)
+     &    call b2stbc_fb_pre(nCv, nFc, nVx, ns, ismain, BoRiS,
+     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
+     &     main_call, switch%b2stbc_diagno)
 
-#ifdef WG_TODO
-         if(lfeedback.or.b2stbc_feedback.ne.0)
-     1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
-     &        sna0, smo0, she0, shi0, sch0, sne0, 
-     &        main_call, diagno)
-#endif
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
      &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
@@ -375,13 +366,10 @@ c       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
 #endif
       endif
-#ifdef WG_TODO
-      if(lfeedback.or.b2stbc_feedback.ne.0)
-     1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
-     &	sna0, smo0, she0, shi0, sch0, sne0, 
-     &  main_call, diagno)
-#endif
+      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
+     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
+     &    switch, geo, mpg, pl, dv, srw, main_call, 
+     &    switch%b2stbc_diagno)
 * ..compute conditions on the cuts
 *     (no flow)
 !WG_TODO*   ..compute suitable large coefficient

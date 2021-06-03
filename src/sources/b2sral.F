@@ -3,8 +3,8 @@
 
       subroutine b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0, dtim, BoRiS,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
-     &  wrong_flow, main_call)
+     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw, psnc,
+     &  psnl, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_tallies
@@ -58,6 +58,7 @@
       type (B2StateExt), intent (inout) :: st_ext
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
+      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
 *   ..common blocks
@@ -223,8 +224,8 @@
          write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS, switch,
-     &    geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, wrong_flow, 
-     &    main_call)
+     &    geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, psnc, psnl,
+     &    wrong_flow, main_call)
 *   .. store contributions from BCs
        sr%sna = srw%sna0
        sr%smo = srw%smo0
