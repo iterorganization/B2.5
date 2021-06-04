@@ -152,21 +152,21 @@ cwdk     parallel transport due to parallel current fluctuations
          call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
          call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dtec)
          call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dtic)
-*      ..computations for source due to Reynolds stress
+*      ..computations for sink due to Reynolds stress
          if (switch%b2sikt_fac_vis_RS.ne.0.0_R8) then
           call intcell(nFc,nCv,mpg,mpg%intcellP,dv%vaecrb(:,0,ismain),
      &      wrk0)
           call intcell(nFc,nCv,mpg,mpg%intcellR,dv%vaecrb(:,1,ismain),
      &      wrk1)
           wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
-          wrks = -geo%cvVol*pl%na(:,ismain)*pl%kt*wrk2
+          wrks = geo%cvVol*pl%na(:,ismain)*pl%kt*wrk2
           call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
      &      dv%vaecrb(:,0,ismain), wrkg0)
           call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
      &      dv%vaecrb(:,1,ismain), wrkg1)
           wrkg0(:,0) = wrkg0(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
           wrkg1(:,0) = wrkg1(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
-          wrks = wrks - switch%b2sikt_fac_vis_RS*
+          wrks = wrks + switch%b2sikt_fac_vis_RS*
      &     geo%cvVol*co%dna_ExB*am(ismain)*mp*pl%na(:,ismain)*
      &     (wrkg0(:,0)**2 + wrkg1(:,1)**2 +
      &      0.5_R8*(wrkg1(:,0)**2 + wrkg0(:,1)**2) +
@@ -183,8 +183,8 @@ cwdk     parallel transport due to parallel current fluctuations
      &      (dnac(:,0)*dlbc(:,0) + dnac(:,1)*dlbc(:,1)) +
      &       switch%b2sikt_fac_aniso*2.0_R8/3.0_R8*co%hce_ExB*
      &      (dtec(:,0)*dlbc(:,0) + dtec(:,1)*dlbc(:,1)))
-         wrk2 = dv%ni(:,1)*pl%kt*geo%cvVol*csfs/connfs
-         wrk3 = co%sigx_kt*pl%kt*geo%cvVol/lpar**2
+         wrk2 = dv%ni(:,1)*geo%cvVol*csfs/connfs
+         wrk3 = co%sigx_kt*geo%cvVol/lpar**2
         else
          call xerrab('wrong value of b2sikt_style')
         endif
@@ -202,16 +202,17 @@ cwdk     parallel transport due to parallel current fluctuations
          t1 = wrk1(ic)
          t2 = fac_sheath*wrk2(ic) + fac_diss*wrk3(ic)
          t3 = wrks(ic)
-         if (min_source.eq.1 .and. (t0+t1-t2).lt.0.0_R8) then
+         if (min_source.eq.1 .and. (t0+t1-pl%kt(ic)*t2).lt.0.0_R8) then
            t0 = 0.0_R8
            t1 = 0.0_R8
            t2 = 0.0_R8
          endif
-         she0(ic,0)   = -t1 + t2
+         she0(ic,0)   = -t1 + t2*pl%kt(ic)
          shi0(ic,0)   = -t0
-         skt0(ic,0)   =  t0 + t1 - t2 + t3
+         skt0(ic,0)   =  t0 + t1 - t3
+         skt0(ic,1)   = -t2
          skt_prod(ic) =  t0 + t1
-         skt_diss(ic) =  t2 - t3
+         skt_diss(ic) =  t2*pl%kt(ic) + t3
         enddo
       else
         call xerrab('wrong value of b2sikt_model')
