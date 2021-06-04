@@ -554,78 +554,25 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=2 -- PRESCRIBE THE GRADIENT OF THE DENSITY
 
           case (2)
-          call xerrab ('b2stbc_phys -- BCCON = 2 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .          VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .         (-CONPAR(IS,IB,1)*0.5_R8*
-     .         (HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     .          HY1(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))) +
-     .         na(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .         -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)= VBIG*
-     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*
-     .         (CONPAR(IS,IB,1)*0.5_R8*
-     .         (HY1(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))+
-     .          HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))) +
-     .         na(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=-VBIG*
-     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     .         (-CONPAR(IS,IB,1)*0.5_R8*
-     .         (HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))+
-     .          HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .             RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))) +
-     .         na(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .         -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)= UBIG*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
-     .         (CONPAR(IS,IB,1)*0.5_R8*
-     .         (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
-     .          HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) +
-     .         na(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-UBIG*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=2, INVALID OPTION.')
-          END IF
-          DO IX = 1, BC_LIST_SIZE(IB)
-            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
-     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
-          ENDDO                                                     !srv 23.09.08 }
-#endif
+cwdk      Note: specifies the gradient in the outward normal direction
+cwdk      Tmp: in "connector" direction - ok for orthogonal grids
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%sna0(iCv1,0,is)=  VBIG*geo%fcS(iFc)*
+     .         (conpar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
+     .          pl%na(iCv2,is))
+            srw%sna0(iCv1,1,is)= -VBIG*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+
 * -- BCCON=3 -- SHEATH CONDITIONS
 
           case (3)
@@ -3763,74 +3710,23 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 * -- BCENE=2 -- PRESCRIBE THE GRADIENT OF THE ELECTRON TEMPERATURE
 
         case (2)
-          call xerrab ('b2stbc_phys -- BCENE = 2 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature gradient ',ENEPAR(IB,1),
      1     ' on',BCCHAR(IB),boundary_location(ib)
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .       VBIG*NE00*EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .       (-ENEPAR(IB,1)*0.5_R8*
-     .       (HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     .        HY1(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))) +
-     .       TE(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
-     .       - VBIG*NE00*EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*
-     .       (ENEPAR(IB,1)*0.5_R8*
-     .       (HY1(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))+
-     .        HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))) +
-     .       TE(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
-     .        VBIG*NE00*EV*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     .       (-ENEPAR(IB,1)*0.5_R8*
-     .       (HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))+
-     .        HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .           RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))) +
-     .       TE(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
-     .       -VBIG*NE00*EV*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= VBIG*NE00*EV*
-     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
-     .       (ENEPAR(IB,1)*0.5_R8*
-     .       (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .           LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
-     .        HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) +
-     .       TE(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-VBIG*NE00*EV*
-     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-          end do
-        ELSE
-          CALL XERRAB
-     1     ('B2STBC -- BCENE=2, INVALID OPTION.')
-        END IF
-#endif
+cwdk    Note: specifies the gradient in the outward normal direction
+cwdk    Tmp: in "connector" direction - ok for orthogonal grids
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          srw%she0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
+     .       (EV*enepar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
+     .        pl%te(iCv2))
+          srw%she0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
 * -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
         case (3)
@@ -5799,74 +5695,23 @@ cwdk     * need to correct this BC for hybrid scheme
 * -- BCENI=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
 
         case (2)
-        call xerrab ('b2stbc_phys -- BCENI = 2 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature gradient ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .        VBIG*NE00*EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .       (-ENIPAR(IB,1)*0.5_R8*
-     .         (HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     .          HY1(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))) +
-     .       TI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
-     .       -VBIG*NE00*EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*
-     .       (ENIPAR(IB,1)*0.5_R8*
-     .         (HY1(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))+
-     .          HY1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))) +
-     .       TI(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
-     .        UBIG*NE00*EV*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     .       (-ENIPAR(IB,1)*0.5_R8*
-     .         (HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))+
-     .          HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .             RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))) +
-     .       TI(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
-     .       -UBIG*NE00*EV*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= UBIG*NE00*EV*
-     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
-     .       (ENIPAR(IB,1)*0.5_R8*
-     .         (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
-     .          HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) +
-     .       TI(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*NE00*EV*
-     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-          end do
-        ELSE
-          CALL XERRAB
-     1     ('B2STBC -- BCENI=2, INVALID OPTION.')
-        END IF
-#endif
+cwdk    Note: specifies the gradient in the outward normal direction
+cwdk    Tmp: in "connector" direction - ok for orthogonal grids
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          srw%shi0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
+     .       (EV*enipar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
+     .        pl%ti(iCv2))
+          srw%shi0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
 * -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
         case (3)
@@ -9497,9 +9342,24 @@ c end of implementation
           srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
-* -- BCENK=2 -- not implemented
+* -- BCENK=2 -- PRESCRIBE THE GRADIENT OF THE TURB. KIN. ENERGY
         case (2)
-        CALL XERRAB ('B2STBC -- BCENK=2, NOT AVAILABLE')
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'turb. kin. en. gradient ',ENKPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+cwdk    Note: specifies the gradient in the outward normal direction
+cwdk    Tmp: in "connector" direction - ok for orthogonal grids
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          srw%skt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
+     .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
+     .        pl%kt(iCv2))
+          srw%skt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
+        enddo
 
 * -- BCENK=3 -- not implemented
         case (3)
