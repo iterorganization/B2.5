@@ -1876,7 +1876,7 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! $AD FP-LOOP "state%pl%na state%pl%ua state%pl%te state%pl%ti state%pl%tn state%pl%po state%pl%kt"
+! $AD FP-LOOP "state"
       do while (res_max.ge.res_quit)
 #else
     1 continue
@@ -1959,7 +1959,9 @@ csw 09oct2012 set default potential already at this point (BCs)
 
 *    ..perform one time step
         ok=.false.
+#ifndef FIXED_POINT
         do while(.not.ok)
+#endif
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
@@ -1967,7 +1969,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
      .      state%rt%iscx, itim, dtim, ntim, 
      .      switch, geo, mpg, state, state_ext, ierr)
-
+#ifndef FIXED_POINT
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
             call xertst(stack_ptr.le.20, 'Too deep in b2mndr')
@@ -1987,6 +1989,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
+#endif
 ! csc UNCOMMENT WITH AD
 !      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
 !      DO ICF=1, NCF
@@ -2035,6 +2038,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+#ifndef FIXED_POINT
         write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
         write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
@@ -2215,6 +2219,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
+#endif
         res_max = 0.0_R8
         do is = 0, ns-1
           if (any(solveco(is,:)))
@@ -2232,7 +2237,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &    res_max = max(res_max,state%diag%areshn)
         if (any(solvekt).and.switch%solve_keps.eq.1)
      &    res_max = max(res_max,state%diag%areskt)
-        
+#ifndef FIXED_POINT
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
      &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
@@ -2356,8 +2361,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   float(topiy))
         endif
 #endif
+#endif
 #ifdef FIXED_POINT
 *   ..end loop
+      end do
+*   ..call cost function
+      call b2usr_cost_function(nCv, nFc, nVx, ns, mpg, state, geo, J)
+      do icf = 1, ncf
+        write (ss,'(I1)') icf
+        write(*,*) 'Cost function value '//ss//': ',J(icf)
       end do
 #else
         goto 1
