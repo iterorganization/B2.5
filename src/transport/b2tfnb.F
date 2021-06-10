@@ -446,11 +446,13 @@ c csc To be added contribution of ubdia
       if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
         scur(:,0) = 
      &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
-     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%xcur/(qe*nbf)
+     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%xcur/(qe*nbf) +
+     &      dv%fchviskt(:,0)/(qe*nbf)
         scur(:,1) = 
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
      &      switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
-     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur/(qe*nbf)
+     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur/(qe*nbf) +
+     &      dv%fchviskt(:,1)/(qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz

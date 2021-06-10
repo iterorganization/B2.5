@@ -26,7 +26,7 @@
      .                           fchdia(:,:), fchin(:,:),
      .                           fchvispar(:,:), fchvisper(:,:),
      .                           fchvisq(:,:), fchinert(:,:),
-     .                           fchanml(:,:),
+     .                           fchanml(:,:), fchviskt(:,:),
      .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:), 
      .                           fni(:,:), fni_he(:,:)
@@ -562,6 +562,7 @@ cwdk move to dv
       allocate( dv % fchvispar( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchvisper( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchvisq( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchviskt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchinert( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchanml( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_c( nCv, 0:1 ), SOURCE=0._R8 )
@@ -738,6 +739,7 @@ cwdk move to dv
       deallocate( dv % fchvispar )
       deallocate( dv % fchvisper )
       deallocate( dv % fchvisq )
+      deallocate( dv % fchviskt )
       deallocate( dv % fchinert )
       deallocate( dv % fchanml )
       deallocate( dv % fch_pi_c )
@@ -1426,6 +1428,7 @@ cwdk move to dv
       call cfrure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
       call cfrure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
       call cfrure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfrure (nput, nFc*2,    st % dv % fchviskt, 'fchviskt')
       call cfrure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
       call cfrure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
       call cfrure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
@@ -1521,6 +1524,7 @@ cwdk move to dv
       call cfwure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
       call cfwure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
       call cfwure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nput, nFc*2,    st % dv % fchviskt, 'fchviskt')
       call cfwure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
       call cfwure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
       call cfwure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
@@ -1627,6 +1631,7 @@ cwdk move to dv
       call cfwure (nout, nFc*2,    st % dv % fchvispar, 'fchvispar')
       call cfwure (nout, nFc*2,    st % dv % fchvisper, 'fchvisper')
       call cfwure (nout, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nout, nFc*2,    st % dv % fchviskt, 'fchviskt')
       call cfwure (nout, nFc*2,    st % dv % fchinert, 'fchinert')
       call cfwure (nout, nFc*2,    st % dv % fht, 'fht')
       call cfwure (nout, nFc*2,    st % dv % fhj, 'fhj')

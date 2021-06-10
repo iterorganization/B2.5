@@ -223,10 +223,12 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
      &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*
-     &                                                   switch%xcur
+     &                                                   switch%xcur +
+     &  1.5e0_R8/qe*dv%fchviskt(:,0)
       scur(:,1) = 1.5e0_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
      &  dv%fchanml(:,1) + switch%fnb_vis_per*dv%fchvisper(:,1) + 
-     &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur
+     &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur +
+     &  1.5e0_R8/qe*dv%fchviskt(:,1)
 
       if (switch%b2tfhi_iout.eq.2) then
         call my_out_us(70,nFc,1,co%chcn(:,0),'chcn0')

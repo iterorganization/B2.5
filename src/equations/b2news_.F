@@ -569,7 +569,7 @@ csw 16oct2012 init ier0
      &     geo, mpg, pl, dv, co, rt)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
-          if (switch%fhe_vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
+          if (switch%fhe_vis_per.eq.0.0e0_R8.or..true.) then                                 !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
              new_matrix = new_matrix.or.
