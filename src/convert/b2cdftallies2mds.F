@@ -245,7 +245,7 @@ c first deal with the time vector
      *       trim(mds_signal_name)//char(0),
      *       '$'//char(0),
      *       descr2(idtype_cstring,dimsize(2),
-     *        iflag=0,ilen=len(str1(1))),
+     *       iflag=0,ilen=len(str1(1))),
      *       string=str1,iflg=0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)

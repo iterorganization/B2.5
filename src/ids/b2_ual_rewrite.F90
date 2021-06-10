@@ -109,7 +109,7 @@ program b2_ual_rewrite
     character(len=24) :: run_string
     character(len=24) :: new_run_string
     character(len=24) :: argName
-    integer narg, cptArg, new_run, tmp_run
+    integer narg, cptArg, new_run
     character*16 usrnam
     logical same_run_number
     data new_run / 0 /

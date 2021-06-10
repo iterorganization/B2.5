@@ -59,7 +59,6 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
-      real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
       real (kind=R8) :: !djm Jan2017
      &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
