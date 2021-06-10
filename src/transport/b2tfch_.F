@@ -94,6 +94,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       dv%fchvisq   = 0.0_R8
       dv%fchinert  = 0.0_R8
       dv%fch_P     = 0.0_R8
+      dv%fchviskt  = 0.0_R8
 !WG_TODO      avisper = 0.0_R8
 !WG_TODO      bvisper = 0.0_R8
 !WG_TODO      cvisper = 0.0_R8
@@ -133,9 +134,13 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       call b2tcpa (nCv, nFc, nVx, switch, geo, mpg, pl%te, pl%po,
      *     dv%ne, co%csig, co%calf, ehx, dv%fch_p)                               !srv 13.01.17
 
+*   ..compute current due to RS of kt-model
+      call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
+
 *   ..compute currents
       dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
-     &  dv%fchvisq + dv%fchinert +dv%fchanml 
+     &  dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt
       dv%fch(:,1) = dv%fch(:,1) + dv%fchvisper(:,1) + fchstoch
 
 *   ..compute conc

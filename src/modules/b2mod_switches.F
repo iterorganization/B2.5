@@ -162,6 +162,7 @@ c iout switches
       integer :: b2tlc0_iout   
       integer :: b2tqna_iout
       integer :: b2tvspr_iout
+      integer :: b2tvskt_iout
       integer :: b2stbc_iout
       integer :: b2trno_iout
       integer :: b2stbr_phys_iout
@@ -352,6 +353,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fconkt
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
+      real (kind=R8) :: b2tfhe_vis_kt
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -603,6 +605,7 @@ c Feedback
       s % b2tlc0_iout = 0
       s % b2tqna_iout = 0
       s % b2tvspr_iout = 0
+      s % b2tvskt_iout = 0
       s % b2stbc_iout = 0
       s % b2trno_iout = 0
       s % b2stbr_phys_iout = 0
@@ -775,6 +778,7 @@ c k-enstrophy model
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
+      s % b2tfhe_vis_kt = 0.0e0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -931,7 +935,7 @@ c Feedback
       call ipgeti ('eirene_neutr_strata', s % ineustra)  
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
 
-      call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)    
+      call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
       call ipgetr ('b2tvspa_vis_par', s % vspa_vis_par)     
       call ipgetr ('b2tfnb_vis_per', s % fnb_vis_per)    
@@ -942,7 +946,6 @@ c Feedback
       call ipgetr ('b2tfnb_xcur', s % xcur)                         
       call ipgetr ('b2tfnb_ycur', s % ycur)   
       call ipgetr ('b2tfhe_neutral', s % fch_ion_neutral)
-      call ipgeti ('b2tvspr_iout', s % b2tvspr_iout)
       call ipgetr ('b2sqel_artificial_radiation', s % art_rad)
       call ipgetr ('b2stbc_sna0ep', s % sna0ep)
       call ipgetr ('b2stbc_shi0ep', s % shi0ep)
@@ -1034,6 +1037,7 @@ c iout switches
       call ipgeti ('b2tlc0_iout', s % b2tlc0_iout)      
       call ipgeti ('b2tqna_iout', s % b2tqna_iout)                            !srv 10.11.09
       call ipgeti ('b2tvspr_iout', s % b2tvspr_iout)
+      call ipgeti ('b2tvskt_iout', s % b2tvskt_iout)
       call ipgeti ('b2stbc_iout', s % b2stbc_iout)                            !srv 11.07.05
       call ipgeti ('b2trno_iout', s % b2trno_iout)                            !srv 17.06.08
       call ipgeti ('b2stbr_phys_iout', s % b2stbr_phys_iout)                  !srv 11.07.05
@@ -1223,6 +1227,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
+      call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)        
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)

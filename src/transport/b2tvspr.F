@@ -89,8 +89,8 @@
       endif                                                             !srv 22.11.99
 
       if(switch%b2tvspr_iout.eq.1) then
-       call my_out(70,nFc,1,fchvisper(1,0),'b2tvspr_fchvisperx')
-       call my_out(70,nFc,1,fchvisper(1,1),'b2tvspr_fchvispery')
+       call my_out_us(70,nFc,1,fchvisper(1,0),'b2tvspr_fchvisperx')
+       call my_out_us(70,nFc,1,fchvisper(1,1),'b2tvspr_fchvispery')
       endif
 * ..return
       ncall = ncall+1
