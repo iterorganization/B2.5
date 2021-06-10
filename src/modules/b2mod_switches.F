@@ -160,7 +160,8 @@ c iout switches
       integer :: b2tlv0_iout    
       integer :: b2tlh0_iout           
       integer :: b2tlc0_iout   
-      integer :: b2tqna_iout     
+      integer :: b2tqna_iout
+      integer :: b2tvspr_iout
       integer :: b2stbc_iout
       integer :: b2trno_iout
       integer :: b2stbr_phys_iout
@@ -601,6 +602,7 @@ c Feedback
       s % b2tlh0_iout = 0
       s % b2tlc0_iout = 0
       s % b2tqna_iout = 0
+      s % b2tvspr_iout = 0
       s % b2stbc_iout = 0
       s % b2trno_iout = 0
       s % b2stbr_phys_iout = 0
@@ -939,7 +941,8 @@ c Feedback
       call ipgetr ('b2tfhi_PSch', s % fhiPSch)                                                     
       call ipgetr ('b2tfnb_xcur', s % xcur)                         
       call ipgetr ('b2tfnb_ycur', s % ycur)   
-      call ipgetr ('b2tfhe_neutral', s % fch_ion_neutral)   
+      call ipgetr ('b2tfhe_neutral', s % fch_ion_neutral)
+      call ipgeti ('b2tvspr_iout', s % b2tvspr_iout)
       call ipgetr ('b2sqel_artificial_radiation', s % art_rad)
       call ipgetr ('b2stbc_sna0ep', s % sna0ep)
       call ipgetr ('b2stbc_shi0ep', s % shi0ep)
@@ -1030,6 +1033,7 @@ c iout switches
       call ipgeti ('b2tlh0_iout', s % b2tlh0_iout)                                          
       call ipgeti ('b2tlc0_iout', s % b2tlc0_iout)      
       call ipgeti ('b2tqna_iout', s % b2tqna_iout)                            !srv 10.11.09
+      call ipgeti ('b2tvspr_iout', s % b2tvspr_iout)
       call ipgeti ('b2stbc_iout', s % b2stbc_iout)                            !srv 11.07.05
       call ipgeti ('b2trno_iout', s % b2trno_iout)                            !srv 17.06.08
       call ipgeti ('b2stbr_phys_iout', s % b2stbr_phys_iout)                  !srv 11.07.05
