@@ -58,8 +58,8 @@ c      use b2mod_keps
 
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
      &  pz(nCv), cs(nCv), t0, t1, t2, t3,
-     &  wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv), 
-     &  wrkg0(nCv,0:1), wrkg1(nCv,0:1),
+     &  wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv), wrkf(nFc),
+     &  wrkg0(nCv,0:1), wrkg1(nCv,0:1), wrkg2(nCv,0:1),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv), rhol(nCv),
      &  lpar(nCv)
@@ -159,17 +159,21 @@ cwdk     parallel transport due to parallel current fluctuations
           call intcell(nFc,nCv,mpg,mpg%intcellR,dv%vaecrb(:,1,ismain),
      &      wrk1)
           wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
-          wrks = geo%cvVol*pl%na(:,ismain)*pl%kt*wrk2
+          wrks = -2.0_R8/3.0_R8*geo%cvVol*pl%na(:,ismain)*wrk2*
+     &     (switch%b2sikt_fac_vis_RS*co%dna_ExB*am(ismain)*mp*wrk2 +
+     &      pl%kt)
           call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
      &      dv%vaecrb(:,0,ismain), wrkg0)
           call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
      &      dv%vaecrb(:,1,ismain), wrkg1)
-          wrkg0(:,0) = wrkg0(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
-          wrkg1(:,0) = wrkg1(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
-          wrks = wrks + switch%b2sikt_fac_vis_RS*
+          wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
+          wrk2 = wrk0*geo%cvBb(:,3)/geo%cvBb(:,2)
+          call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk2, wrkf, wrkg2)
+          wrks = wrks + switch%b2sikt_fac_vis_RS*2.0_R8*
      &     geo%cvVol*co%dna_ExB*am(ismain)*mp*pl%na(:,ismain)*
      &     (wrkg0(:,0)**2 + wrkg1(:,1)**2 +
-     &      0.5_R8*(wrkg1(:,0)**2 + wrkg0(:,1)**2) +
+     &      0.5_R8*(wrkg0(:,1)**2 + wrkg1(:,0)**2 +
+     &              wrkg2(:,0)**2 + wrkg2(:,1)**2) +
      &      wrkg1(:,0)*wrkg0(:,1))
          else
            wrks = 0.0_R8
@@ -271,18 +275,22 @@ cwdk     parallel transport due to parallel current fluctuations
         call intcell(nFc,nCv,mpg,mpg%intcellR,dv%vaecrb(:,1,ismain),
      &    wrk1)
         wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
-        wrks = -geo%cvVol*pl%na(:,ismain)*pl%kt*wrk2
+        wrks = 2.0_R8/3.0_R8*geo%cvVol*pl%na(:,ismain)*wrk2*
+     &     (switch%b2sikt_fac_vis_RS*co%dna_ExB*am(ismain)*mp*wrk2 +
+     &      pl%kt)
         call my_out_us(70,nCv,0,wrks,'b2sikt_RS_symmetric')
-
         call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
      &    dv%vaecrb(:,0,ismain), wrkg0)
         call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
      &    dv%vaecrb(:,1,ismain), wrkg1)
-        wrkg0(:,0) = wrkg0(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
-        wrkg1(:,0) = wrkg1(:,0)*geo%cvBb(:,2)/geo%cvBb(:,3)
-        wrks = geo%cvVol*co%dna_ExB*am(ismain)*mp*pl%na(:,ismain)*
+        wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
+        wrk2 = wrk0*geo%cvBb(:,3)/geo%cvBb(:,2)
+        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk2, wrkf, wrkg2)
+        wrks = switch%b2sikt_fac_vis_RS*2.0_R8*
+     &   geo%cvVol*co%dna_ExB*am(ismain)*mp*pl%na(:,ismain)*
      &   (wrkg0(:,0)**2 + wrkg1(:,1)**2 +
-     &    0.5_R8*(wrkg1(:,0)**2 + wrkg0(:,1)**2) +
+     &    0.5_R8*(wrkg0(:,1)**2 + wrkg1(:,0)**2 +
+     &            wrkg2(:,0)**2 + wrkg2(:,1)**2) +
      &    wrkg1(:,0)*wrkg0(:,1))
         call my_out_us(70,nCv,0,wrks,'b2sikt_RS_deviatoric')
       endif
