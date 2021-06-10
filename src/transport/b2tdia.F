@@ -50,7 +50,7 @@
       call subini ('b2tdia')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*   ..test nx, ny, ns
+*   ..test nCv, nFc, ns
        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
        call xertst (1.le.ns, 'faulty argument ns')
       endif
