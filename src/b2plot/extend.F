@@ -10,7 +10,7 @@
       integer ic,ifc,icin
       do is=0,ns-1
         do ic=mpg%nCi+1,nCv 
-          ifc = mpg%cvFc(ic)
+          ifc = mpg%cvFc(mpg%cvFcP(ic,1))
           icin = min(mpg%fcCv(ifc,1), mpg%fcCv(ifc,2))
           field(ic,is)=field(icin,is)
         enddo
