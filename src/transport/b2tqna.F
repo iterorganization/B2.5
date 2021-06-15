@@ -3719,18 +3719,19 @@ cwdk same dna_ExB for all ion species
           endif
           if (switch%keps_visc.gt.0.0_R8) then
             vsa0(:,is) = switch%keps_visc*am(is)*mp*pl%na(:,is)*
-     &        dna0(:,is)*switch%keps_fac + (1.0_R8-switch%keps_fac)*
-     &        vsa0(:,is)
+     &        (dna_ExB + switch%dna_min)*switch%keps_fac + 
+     &        (1.0_R8-switch%keps_fac)*vsa0(:,is)
           endif
           if (switch%keps_heat.gt.0.0_R8) then
             hce_ExB = switch%keps_heat*dna_ExB*dv%ne
-            hce0 = switch%keps_heat*dna0(:,ismain)*dv%ne*switch%keps_fac
-     &          + (1.0_R8-switch%keps_fac)*hce0
+            hce0 = switch%keps_heat*(dna_ExB + switch%dna_min)*dv%ne*
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*hce0
           endif
           if (switch%keps_heat_i.gt.0.0_R8) then
             hci_ExB = hci_ExB + switch%keps_heat_i*dna_ExB*pl%na(:,is)
-            hcib(:,is) = switch%keps_heat_i*dna0(:,ismain)*pl%na(:,is)*
-     &        switch%keps_fac + (1.0_R8-switch%keps_fac)*hcib(:,is)
+            hcib(:,is) = switch%keps_heat_i*switch%keps_fac*
+     &        (dna_ExB + switch%dna_min)*
+     &        pl%na(:,is) + (1.0_R8-switch%keps_fac)*hcib(:,is)
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
         endif
