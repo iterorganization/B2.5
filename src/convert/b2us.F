@@ -29,6 +29,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_prep
+      use b2us_io
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -313,8 +314,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
 
 *   ..write state and geometry
-      call write_map_geo(nout(1), mpg, gm)
-      call write_plasma_state (nout(2), ns, mpg%nCv, mpg%nFc, state)
+      call write_b2fgmtry (nout(1), mpg, gm)
+      call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
 
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)

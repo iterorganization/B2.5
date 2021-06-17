@@ -1,8 +1,8 @@
-      subroutine read_plasma_state_diff (nput, ns, nCv, nFc, st)
+      subroutine read_b2fstate_diff (nput, nCv, nFc, ns, st)
       use b2mod_time
       use b2us_plasma_diff
       implicit none
-      integer, intent(in) :: nput, ns, nCv, nFc
+      integer, intent(in) :: nput, nCv, nFc, ns
       type(B2STATE_DIFF), intent(inout) :: st
       integer :: ix, iy, ic, ifc, nfx, idum(3)
       real (kind=R8) :: time(1)
@@ -12,7 +12,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('read_plasma_state_diff')
+      call subini ('read_b2fstate_diff')
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test ns
@@ -89,5 +89,5 @@
       call subend ()
       return
 
-      end subroutine read_plasma_state_diff
+      end subroutine read_b2fstate_diff
 

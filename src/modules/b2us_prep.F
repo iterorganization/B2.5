@@ -31,50 +31,14 @@
       public :: calc_mapping,
      .          prep_geometry,
      .          prep_plasma, prep_plasma_ext,
-     .          to_struct_plasma, read_map_geo, write_map_geo
+     .          to_struct_plasma
 
       contains
 
 ***********************************************************************
-
-      subroutine read_map_geo (ninp, mpg, gm)
-      use b2mod_types
-      use b2mod_version
-      use b2mod_b2cmfs
-
-      implicit none
-      integer, intent(in) :: ninp
-      type (mapping), intent (inout) :: mpg
-      type (geometry), intent (inout) :: gm
-
-* ..read the mapping and geometry
-
-      call read_mapping (ninp, mpg)
-      call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nFt, mpg%nVmxCv, gm)
-      
-      end subroutine read_map_geo
-
-***********************************************************************
-
-      subroutine write_map_geo (nout, mpg, gm)
-      use b2mod_types
-      use b2mod_version
-      use b2mod_b2cmfs
-
-      implicit none
-      integer :: nout
-      type (mapping), intent (in) :: mpg
-      type (geometry), intent (in) :: gm
-
-* ..write the geometry
-
-      call write_mapping (nout, mpg)
-      call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
-     .  mpg%nFt, mpg%nVmxCv, gm)
-      
-      end subroutine write_map_geo
-
+*     Module containing basic routines to convert geomtry and state
+*     information from structured to unstructured format, and vice
+*     versa.
 ***********************************************************************
 
       subroutine calc_mapping(nx, ny, m)
