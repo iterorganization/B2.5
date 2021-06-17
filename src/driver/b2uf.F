@@ -168,6 +168,8 @@
 * ..end of computation
       call destroyB2State (state)
 !      call destroyB2StateExt (state_ext)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
