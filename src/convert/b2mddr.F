@@ -179,12 +179,12 @@
         call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
      &   rlcx(-1,-1,0,0,k))
       enddo
-#endif
 *   ..compute charge exchange rate coefficients
       do k = 0, nscx-1
         call b2sqcx (nx, ns, ev, am(iscx(k)), ti, tn,
      &   rlcx(-1,-1,0,0,k), rcx)
       enddo
+#endif
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
       if (external_species.ne.0) then

@@ -186,6 +186,7 @@
       endif
       return
       end subroutine b2stbc_fb_final
+
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nCv, nFc, nVx, ns, ismain, BoRiS,
@@ -504,7 +505,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
           icped = icsep/2
        endif
        if(nepedm_sol.gt.0.0_R8) then
-         call xertst(mpg%isClassicalGrid,
+         call xertst(mpg%isClassicalGrid.eq.1,
      &    'b2stbc_nepedm_sol not available yet for extended grids')
          call ipgeti ('b2stbc_iyped', iyped)
          icped = iyped+2
@@ -713,7 +714,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (1) ! local density
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=1 not available for extended grids')
                 write(*,*)
      &           'b2stbc_fb_pre_choice: using ',
@@ -751,7 +752,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (2) ! local electron density
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=1 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -805,7 +806,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (4) ! total particle content for that sequence
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=4 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -838,7 +839,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (5) ! total ion content for that sequence (not including neutrals)
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=5 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -872,7 +873,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (6) ! neutral particle flux through the core boundary
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=6 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -926,7 +927,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (7) ! relative average concentration of this species at the separatrix
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=7 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
@@ -969,7 +970,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (8) ! relative average concentration of this species on desired domain
 
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=8 not available for extended grids')
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using average ',
@@ -1084,7 +1085,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (4) ! rescale done according to SOLPS4 formula:
                         ! N = A + B*(time-T)
               if(ncall.eq.0) then
-                call xertst(mpg%isClassicalGrid,
+                call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_option=4 not available for extended grids')
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
