@@ -26,12 +26,23 @@
       use timings
 #endif
       use b2mod_xerset
+#if MPI_VERSION > 2
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
+#if MPI_VERSION < 3
 #ifdef USE_MPI
       include 'mpif.h'
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
 #endif
 #endif
 

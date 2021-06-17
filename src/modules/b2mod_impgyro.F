@@ -2,23 +2,36 @@
 
       use b2mod_external
 
+#if MPI_VERSION > 2
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
+#if MPI_VERSION < 3
+#ifdef USE_MPI
+      include 'mpif.h'
+#else
+#ifdef USE_IMPGYRO
+      include 'mpif.h'
+#endif
+#endif
+#endif
       private
 
 #ifdef USE_MPI
-      include 'mpif.h'
-
       integer :: mpi_err,mpi_stat
       integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
-      include 'mpif.h'
-
       integer :: mpi_err,mpi_stat
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
-
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
@@ -73,13 +86,13 @@
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
      &  1, mpi_local, mpi_err)
-      call mpi_bcast ([ismain], 1, mpi_integer4, 0, mpi_comm_world,
+      call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
 
       if(mpi_rank.eq.0) then
-      call mpi_recv ([ikmn], 1, mpi_integer4, 1, 0,
+      call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
-      call mpi_recv ([ikmx], 1, mpi_integer4, 1, 0,
+      call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       end if
 
@@ -92,13 +105,13 @@
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
      &  1, mpi_local, mpi_err)
-      call mpi_bcast ([ismain], 1, mpi_integer4, 0, mpi_comm_world,
+      call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
 
       if(mpi_rank.eq.0) then
-      call mpi_recv ([ikmn], 1, mpi_integer4, 1, 0,
+      call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
-      call mpi_recv ([ikmx], 1, mpi_integer4, 1, 0,
+      call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       end if
 
@@ -338,7 +351,7 @@ cxpb
 
 #ifdef USE_MPI
       write (*,*) 'b2ig: impgyro_main...flag=MPI'
-      call mpi_bcast ([last], 1, mpi_logical , 0,
+      call mpi_bcast (last, 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
@@ -357,7 +370,7 @@ cxpb
 #else
 #ifdef USE_IMPGYRO
       write (*,*) 'b2ig: impgyro_main...flag=IG'
-      call mpi_bcast ([last], 1, mpi_logical , 0,
+      call mpi_bcast (last, 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
@@ -484,11 +497,11 @@ cxpb
       last = .true.
 
 #ifdef USE_MPI
-      call mpi_bcast ([last], 1 , mpi_logical , 0 ,
+      call mpi_bcast (last, 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #else
 #ifdef USE_IMPGYRO
-      call mpi_bcast ([last], 1 , mpi_logical , 0 ,
+      call mpi_bcast (last, 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif
 #endif

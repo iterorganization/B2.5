@@ -22,9 +22,16 @@
       use b2mod_exp_file_names
       use b2mod_driver
       use b2mod_xerset
+#ifdef USE_MPI
+#if MPI_VERSION > 2
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_VERSION < 3
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------

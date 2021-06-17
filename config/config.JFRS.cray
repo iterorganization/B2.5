@@ -26,6 +26,10 @@ ifndef SOLPS_CPP
 DEFINES += -DCRAY -DF2003
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION}
+endif
+
 CPP = /lib/cpp -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 

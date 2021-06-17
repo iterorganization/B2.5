@@ -12,6 +12,10 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION}
+endif
+
  opsys = sunos
  ifeq ($(shell domainname),cims)
   locale = cims.nyu.edu

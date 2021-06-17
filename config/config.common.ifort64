@@ -10,6 +10,10 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION}
+endif
+
 MOD      = mod
 
 BLD      = ar rucv

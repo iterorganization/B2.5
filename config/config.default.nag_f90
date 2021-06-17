@@ -18,6 +18,10 @@ ifndef SOLPS_CPP
 DEFINES += -DNAGFOR
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION}
+endif
+
 CPP = /lib/cpp -C
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g

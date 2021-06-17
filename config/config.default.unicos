@@ -15,6 +15,10 @@ endif
 EQUIVS =
 DEFINES += -DNO_CDF
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION}
+endif
+
 CPP = /usr/lib/gpp -F
 CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)
 

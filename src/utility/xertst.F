@@ -17,9 +17,16 @@
       end
 
       subroutine b25_mpi_stop
+#ifdef USE_MPI
+#if MPI_VERSION > 2
+      use mpi     ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_VERSION < 3
       include 'mpif.h'
+#endif
       integer ierr_mpi
 #ifdef B25_EIRENE
       logical ltrigger
