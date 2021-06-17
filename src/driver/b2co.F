@@ -5,25 +5,19 @@
       use b2mod_types
       use b2mod_version
       use b2mod_time
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_sputter
-      use b2mod_transport
-      use b2mod_anomalous_transport
-      use b2mod_work
-      use b2mod_diag
-      use b2mod_b2plot
-      use b2mod_indirect
-      use b2mod_external
-      use b2mod_elements
+!      use b2mod_diag
+!      use b2mod_b2plot
+!      use b2mod_external
+!      use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2us_io
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -66,11 +60,18 @@
 
 *   ..common blocks
 
+*   ..main data structures
+      type(mapping), save    :: mpg
+      type(geometry), save   :: geo
+      type(B2State), save    :: state
+!      type(B2StateExt), save :: state_ext
+!      type(switches), save   :: switch
+
 *   ..local variables
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #endif
-      integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
       integer iflag
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -140,34 +141,48 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfverr (ninp(1), b2fgmtry_version)                          !xpb
       call cfverr (ninp(2), b2fparam_version)                          !xpb
       call cfverr (ninp(3), b2fstati_version)                          !xpb
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(1), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
+*   ..obtain mapping/geometry dimensions from b2fgmtry file
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0) 
+      mpg%nCg = idum(1) 
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+      call xertst (0.le.mpg%nCv.and.0.le.mpg%nFc,
+     &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)
       call xertst (1.le.ns, 'faulty input ns from parameters file')
-*   ..obtain nx, ny, ns0 from plasma state file
-      call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
+*   ..obtain nCv, nFc, ns from b2fstate file
+      call cfruin (ninp(3), 3, idum, 'nCv,nFc,ns')
+      nCv = idum(0)
+      nFc = idum(1)
       ns0 = idum(2)
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from plasma state file')
+      call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
+     &  'faulty input nCv, nFc, ns from b2fstate file')
       call xertst (1.le.ns0.and.ns0.le.ns,
      &  'faulty input ns from plasma state file')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_residuals(nx,ny,ns)
-      call alloc_b2mod_sources(nx,ny,ns)
-      call alloc_b2mod_sputter(nx,ny,ns)
-      call alloc_b2mod_transport(nx,ny,ns)
-      call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                         !xpb
+      call alloc_mapping (mpg)
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+     .  mpg%nFt, mpg%nVmxCv)
+      call createB2State (nCv, nFc, ns, state)
+!      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
@@ -194,68 +209,46 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
-*   ..read geometry and metric
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
-#endif
-      call get_nxt(nx, nxtl, nxtr)
+*     (isymm is now stored in the b2cmfs common)
+*   ..read geometry and mapping
+      call read_b2fgmtry (ninp(1), mpg, geo)
+!WG_TODO      call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
-      call cfverr (ninp(4), plasmastate_version)                        !xpb
-      call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
-     &  po, kt, zt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  plasmastate_version)
+      call cfverr (ninp(4), plasmastate_version)
+      call read_b2fstate (ninp(4), nCv, nFc, ns, state)
 *   ..obtain external species data if any
-      call ipgeti ('b2mndr_external_species', external_species)
-      if (external_species.ne.0) then
-        call read_b2mod_external(nx,ny,ns,ismain)
-      else
-        call alloc_b2mod_external_dummy(nx,ny)
-      endif
+!WG_TODO      call ipgeti ('b2mndr_external_species', external_species)
+!WG_TODO      if (external_species.ne.0) then
+!WG_TODO        call read_b2mod_external(nx,ny,ns,ismain)
+!WG_TODO      else
+!WG_TODO        call alloc_b2mod_external_dummy(nx,ny)
+!WG_TODO      endif
 *   ..test plasma state and fluxes
-#ifdef WG_TODO
-      call b2xvps (nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-#endif
+      call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..save final state
       newversion = plasmastate_version
       write(lblmn,*) 'Recovered from ',trim(savefile)
-      idum(0) = nx
-      idum(1) = ny
+      idum(0) = nCv
+      idum(1) = nFc
       idum(2) = ns
       call cfverw (nout(2), plasmastate_version)                        !xpb
-      call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
+      call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
-      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
-     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
-     &  kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+      call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
 *   ..close graphics files
 *     (none)
 *   ..write plasma state
 c      call cfverw(nout(7), plasmastate_version)
-c      call write_b2mod_geo(nout(7))
-c      call write_b2mod_plasma(nout(7))
-c      call write_b2mod_residuals(nout(7))
-c      call write_b2mod_sources(nout(7))
-c      call write_b2mod_transport(nout(7))
-c      call write_b2mod_anomalous_transport(nout(7))
-c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
+c      idum(0) = nCv
+c      idum(1) = nFc
+c      idum(2) = ns
+c      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
+c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..truncate tracing files
+#ifdef WG_TODO
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
       call ipgetr ('b2mndr_dtim', dtim)
@@ -428,6 +421,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
      .               'no b2movies.nc file found'
         end if
       end if
+#endif
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
@@ -438,17 +432,10 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
          if (file_open) close(nout(io))
       enddo
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_work
-      call dealloc_b2mod_rates
-      call dealloc_b2mod_plasma
-      call dealloc_b2mod_sources
-      call dealloc_b2mod_sputter
-      call dealloc_b2mod_indirect
-      call dealloc_b2mod_residuals
-      call dealloc_b2mod_transport
-      call dealloc_b2mod_wall_init
-      call dealloc_anomalous_transport
+      call destroyB2State (state)
+!      call destroyB2StateExt (state_ext)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

@@ -1701,27 +1701,19 @@ c   --> better way doing this is necessary)
       endif
 *   ..rewrite input file with inverted velocity
       if(inverse_ua.ne.0) then                                           !srv 04.02.15 {
-        call xerrab ('inverse ua option not yet available for WG')
-#ifdef WG_TODO
         call cfopen (70,'b2fstati_with-ua','new','un*formatted')
-        idum(0) = nx
-        idum(1) = ny
+        idum(0) = nCv
+        idum(1) = nFc
         idum(2) = ns
         call cfverw (70, newversion)
-        call cfwuin (70, 3, idum, 'nx,ny,ns')
+        call cfwuin (70, 3, idum, 'nCv,nFc,ns')
         label = trim(label)//' Inverted velocities'
         call cfwuch (70, 120, label, 'label')
         call b2wuzd (70, newversion, ns, zamin, zamax, zn, am)
-        ua=-ua
-        call b2wups (70, nx, ny, ns, ne, na, ua, uadia, te,
-     &   ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &   fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &   fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &   fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &   fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &   vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+        state % pl % ua = -state % pl % ua
+*     ..write plasma state
+        call write_b2fstate (70, nCv, nFc, ns, state)
         close(70)
-#endif
       endif                                                              !srv 04.02.15 }
 *   ..compute initial ni
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
@@ -2252,7 +2244,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
-#ifdef WG_TODO
         if(write_save) then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
@@ -2270,20 +2261,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call cfopen (nout(6), savefile, savefilestatus, 'unformatted')
           call cfverw (nout(6), newversion)                          !xpb/dpc
 *       ..test plasma state
-          call b2xvps (nx, ny, ns,
-     .     ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-          call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
+          call b2xvps (nCv, nFc, ns, state % pl, state % dv)
+          call b2xvsg (nCv*ns, state % dv % kinrgy, 1, 'kinrgy', '.ge.')
 *       ..write plasma state
-          call b2wups (nout(6), nx, ny, ns, ne, na, ua, uadia, te,   !xpb
-     &     ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &     fnaPSch, fhePSch, fhiPSch,
-     &     fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &     fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+          call write_b2fstate (nout(6), nCv, nFc, ns, state)
+          close(nout(6))
 *       ..write additional save namelist data
-#ifdef WG_TODO
           filename='b2.feedback_save.parameters'
           call find_file(filename,found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
@@ -2291,6 +2274,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call find_file(filename,found)
           if (found)
      >     call write_b2mod_neutrals_save(99,savefile(13:16))
+#ifdef WG_TODO
           filename='b2.sputter_save.parameters'
           call find_file(filename,found)
           if (found) call write_b2mod_sputter_namelist(99,nx,ny,ns,
@@ -2333,16 +2317,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
           endif
 #endif
-          close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
           if (iav_run > 0) then
             write (aver_name,'(a17,a4)')
      .              'plasmastate_aver.',savefile(13:16)
-            call run_av_save (aver_name,nx,ny,ns,.true.,.true.)
+            call run_av_save (aver_name,nCv,ns,.true.,.true.)
             write (*,*) aver_name,' saved '
           end if
         endif
-#endif        
+
         first_time_step=.false.
 
 #ifdef CATALYST
