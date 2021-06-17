@@ -10,6 +10,8 @@
 *     The routine performs an operation akin to
 *       open (ioun,file=chname,status=chstat,form=chform) ,
 *     but using edited arguments; see the code for details.
+*     If ioun=0, will call open(newunit=ioun,...) and return the
+*     (negative) unit number.
 *     ------------------------------------------------------------------
       logical ltst
       integer ios
@@ -68,8 +70,13 @@
      &   'exists: file='//trim(fname))
       endif
 *   ..open file
-      open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
-      call xertst (ios.eq.0, 'cfopen--open failure: file='//
+      if (ioun.ne.0) then
+       open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
+      else
+       open (newunit=ioun,iostat=ios,file=fname,status=fstat,form=fform)
+      endif
+      call xertst (ios.eq.0.and.ioun.ne.0,
+     &  'cfopen--open failure: file='//
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------

@@ -2,21 +2,9 @@
      .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
-      use b2mod_geo
-      use b2mod_geo_corner
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_anomalous_transport
-      use b2mod_transport
-      use b2mod_work
-      use b2mod_indirect
-      use b2mod_external
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_elements
-!      use b2mod_sign_of_magnetic_field
       use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -30,7 +18,6 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2us_prep
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain, ismain0
@@ -115,11 +102,10 @@
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
       real (kind=R8) ::                                            !srv
-     *   hy1, machsfr                                       !srv
+     *   machsfr                                       !srv
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -1277,10 +1263,10 @@
        call my_outi(70,nx,ny,rightiy,'rightiy')
 #endif
 
-       call my_out_us(70,nCv,0,po,'po')                                !srv
+       call my_out_us(70,nCv,0,state%pl%po,'po')                                !srv
 
-       wrk0=0.0e0_R8
 #ifdef WG_TODO
+       wrk0=0.0e0_R8
        do iy=0,ny
          do ix=-1,nx
            wrk0(ix,iy)=
@@ -1289,10 +1275,8 @@
      *          *2.0e0_R8
          enddo
        enddo
-#endif
        call my_out_us(70,nCv,0,wrk0,'Eyf')                              !srv 15.06.04 }
        wrk0=0.0e0_R8                                                 !iyv 15.10.09 {
-#ifdef WG_TODO
        do iy=0,ny
          do ix=-1,nx
            if(topiy(ix,iy).ne.ny+1) then
@@ -1492,7 +1476,7 @@
 
        sum_sdiv = 0.0_R8
        sum_ssna= 0.0_R8
-
+#ifdef WG_TODO
        do is=0, ns-1
         write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
@@ -1566,7 +1550,7 @@
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
        enddo
-
+#endif
        write(70,"(a/33x,4(a,es15.7))") 'Balance over all equations:',
      &      ' sum_Sdiv =', sum_sdiv, ' sum_Ssna =', sum_ssna,
      &      ' sum_Ssna-sum_Sdiv =', sum_ssna - sum_sdiv
@@ -1577,6 +1561,7 @@
        sum_sdiv = 0.0_R8
        sum_ssna = 0.0_R8
 
+#ifdef WG_TODO
        do is=0, ns-1
          write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
@@ -1643,7 +1628,7 @@
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
        enddo
-
+#endif
        write(70,"(a/33x,4(a,es15.7))") 'Balance over all equations:',
      &      ' sum_Sdiv =', sum_sdiv, ' sum_Ssna =', sum_ssna,
      &      ' sum_Ssna-sum_Sdiv =', sum_ssna - sum_sdiv

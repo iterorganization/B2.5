@@ -6,8 +6,6 @@
       use b2mod_types
       use b2mod_driver
       use b2mod_version
-!WG_TODO      use b2mod_work
-!WG_TODO      use b2mod_ma28
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
@@ -16,7 +14,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2us_prep
+      use b2us_io
       use b2mod_switches
       implicit none
 #     include <git_version_B25.h>
@@ -315,8 +313,6 @@ csw
       integer io
 
       call b2mndr_2 (nout, ns, switch, geo, mpg, state, state_ext)
-
-      close(nout(7))
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(10),'tran','new','unformatted')

@@ -54,7 +54,7 @@
       use b2us_map
       use b2us_geo
       use b2us_plasma
-      use b2us_prep
+      use b2us_io
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
@@ -1313,7 +1313,7 @@ csw 09oct2012
 #endif
 
 *   ..read geometry and metric
-      call read_map_geo (ninp(1), mpg, geo)
+      call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry(mpg, geo, switch)
 
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
@@ -1438,13 +1438,13 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       enddo                                                          !srv 02.05.09 }
 #endif
 *   ..read initial state
-      call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
+      call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
       if (switch%solve_keps.gt.0 .and. 
      &   .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
      .  state%pl%kt = state%pl%ti*0.1_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
-!    call read_plasma_state_diff (ninp(6), ns, mpg%nCv, mpg%nFc, stated)
+!    call read_b2fstate_diff (ninp(6), mpg%nCv, mpg%nFc, ns, stated)
 !    call createB2Diagnostic ( nCv, ns, mpg%nnreg, stated % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
@@ -1830,9 +1830,9 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_ad
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ny, ns
+      integer nout(0:11), nx, ny, ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ny, ns
+      integer nout(0:10), nx, ny, ns, idum(0:9)
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -2001,6 +2001,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
         endif
+#endif
 *    ..extra writes of b2fplasmf.xxxx       
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
@@ -2010,21 +2011,20 @@ csw 09oct2012 set default potential already at this point (BCs)
           do i=11,14
             if(savefile_p(i:i).eq.' ') savefile_p(i:i)='0'
           enddo
-          call cfopen (nout(7),savefile_p,'new','formatted')
+          call cfopen (nout(7),savefile_p,'new','un*formatted')
           write(*,*) 'Writing extra b2plasmf:',itim,itim_plas,
      &                plasinc,mod(itim_plas,plasinc),tim
           write(*,*) savefile_p
           call cfverw(nout(7), newversion)
-          call write_b2mod_geo(nout(7))
-          call write_b2mod_plasma(nout(7))
-          call write_b2mod_residuals(nout(7))
-          call write_b2mod_sources(nout(7))
-          call write_b2mod_transport(nout(7))
-          call write_b2mod_anomalous_transport(nout(7))
-          call write_b2mod_neutr_src_scaling(nout(7),nstrat)
+          idum(0) = nCv
+          idum(1) = nFc
+          idum(2) = ns
+          call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
+          call write_b2fplasma (nout(7), nCv, nFc, ns, state)
           close(nout(7))
         endif
 !djm Jun2017
+#ifdef WG_TODO
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(itim,ntim)
         endif
@@ -2379,9 +2379,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      & , only : old_erosion, old_deposition
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ny, ns
+      integer nout(0:11), nx, ny, ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ny, ns
+      integer nout(0:10), nx, ny, ns, idum(0:9)
 #endif
       type (switches), intent (in) :: switch
       type(mapping), intent (inout)    :: mpg
@@ -2425,7 +2425,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call impgyro_last !yamoto
 #endif
 * finalise feedback in b2stbc
+#ifdef WG_TODO
       call b2stbc_fb_final
+#endif
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
 * finalise sputtering
@@ -2449,16 +2451,20 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 #endif
 *   ..save final state
-      call write_plasma_state (nout(2), ns, nCv, nFc, state)
-*   ..save b2fplasmf file
-      call write_b2fplasmf (ns, nCv, nFc, state)
+      call write_b2fstate (nout(2), nCv, nFc, ns, state)
+*   ..write plasma state
+      call cfopen(nout(7),'b2fplasma','new','unformatted')
+      call cfverw(nout(7), newversion)
+      idum(0) = nCv
+      idum(1) = nFc
+      idum(2) = ns
+      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
+      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
+      close(nout(7))
+
 
 ! csc UNCOMMENT WITH AD
-!    call write_plasma_state_diff (nout(9), ns, nCv, nFc, stated)
-*   ..conversion to structured format and output
-      if (mpg%isClassicalGrid.eq.1) then
-        call to_struct_plasma (ns,mpg,state)
-      endif
+!    call write_b2fstate_diff (nout(9), nCv, nFc, ns, stated)
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(nCv, ns, state % pl, state % dv)

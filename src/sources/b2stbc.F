@@ -321,11 +321,12 @@
       if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
+#ifdef WG_TODO
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &    call b2stbc_fb_pre(nCv, nFc, nVx, ns, ismain, BoRiS,
      &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
      &     main_call, switch%b2stbc_diagno)
-
+#endif
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
      &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
@@ -366,10 +367,12 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
 #endif
       endif
+#ifdef WG_TODO
       if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
      &    switch, geo, mpg, pl, dv, srw, main_call, 
      &    switch%b2stbc_diagno)
+#endif
 * ..compute conditions on the cuts
 *     (no flow)
 !WG_TODO*   ..compute suitable large coefficient
