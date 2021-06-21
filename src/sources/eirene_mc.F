@@ -74,7 +74,7 @@ csw 19oct2012, added save attribute!!!
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
+     * recyc_hlp,vthe,t0,t0n,t1,t1n,rf0,dua,t2,t3,t4,f,
      * ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
      * kin_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
@@ -618,10 +618,15 @@ c first save the original NPTS provided by the Eirene input files.
 !! Do not adapt the number of particles if ALLOC =/= 0. If ALLOC =/= 0, NPTS is recomputed every timestep and 
 !! this procedure would not work.
           if (istrai.le.nstrai.and.ncall.gt.0.and.
-     &     switch%use_auto_spatial_hyb.and.HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
+     &     switch%use_auto_spatial_hyb.ne.0.and.
+     &     HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
             if (ALLOC.eq.0.0_R8) then
             NPTS(istrai) = 
-     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai))
+     &           max(min(10,NPTS_input(istrai)),   !! minimum 10 trajectories, unless the value in input.dat was even lower (e.g. 0)
+     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai)))
+             write(*,*) 'NPTS for stratum',istrai
+             write(*,*) 'adapted from',NPTS_input(istrai),
+     &                  ' to ',NPTS(istrai)
             else
               write(*,*) "WARNING: combination of generalized spatially"
               write(*,*) "hybrid and ALLOC =/=0 not yet implemented"
@@ -2845,10 +2850,25 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
-              t0=sum(sei_av(ic,1:ns,istrai))*tflux(istrai)*
-     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1         dble(ih_end)
+              t0 = 0.0_R8       !! will go to shi0
+              t0n = 0.0_R8      !! will go to shn0 
+              do is=0,ns-1
+                if (is_neutral(is).and.lneustra) then
+                  t0n = t0n + sei_av(ic,fluids_list(is),istrai)*
+     1                  tflux(istrai)*recyc_hlp*
+     1                  flux_scale(istrai)*sclstra(0,istrai)/
+     1                  dble(ih_end)
+                 elseif (.not.is_neutral(is)) then
+                  t0 = t0 + sei_av(ic,fluids_list(is),istrai)*
+     1                  tflux(istrai)*recyc_hlp*
+     1                  flux_scale(istrai)*sclstra(0,istrai)/
+     1                  dble(ih_end)
+                 endif
+              enddo
               if (balance_netcdf.ne.0) then
+                if (switch%tn_style.ne.0) then
+                  call xerrab('netcdf not yet for tn_style.ne.0')
+                endif
                 t0_a=sum(sei_av_eapl(ic,1:ns,istrai))*tflux(istrai)* !djm Jan2017
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
@@ -3076,7 +3096,11 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 end do !} !is
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
-              t0=t0+t1
+              if (is_neutral(is).and.lneustra) then
+                t0n=t0n+t1                !! only necessary for kinetic -> fluid condensation
+              else
+                t0=t0+t1                  !! only t0 is used by default
+              endif
               if (balance_netcdf.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
@@ -3087,6 +3111,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 shi0(ic,0)=shi0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ic,1)=shi0(ic,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/pl%ti(ic)
+                if (lneustra) then
+                  shn0(ic,0)=shn0(ic,0)+max(0.0_R8,t0n)+abs(t0n)*rf0
+                  shn0(ic,1)=shn0(ic,1)+
+     1             (min(0.0_R8,t0n)-abs(t0n)*rf0)/pl%tn(ic)
+                else
+                  shn0(ic,0) = 0.0_R8
+                  shn0(ic,1) = 0.0_R8
+                endif
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -3157,6 +3189,11 @@ c$$$                    endif
                 endif
               elseif (linearisation.eq.0) then !}{
                 shi0(ic,0)=shi0(ic,0)+t0
+                if (lneustra) then
+                  shn0(ic,0)=shn0(ic,0)+t0n
+                else
+                  shn0(ic,0)=0.0_R8
+                endif
                 if (balance_netcdf.ne.0) then !djm Jan2017
                   eirene_mc_eapl_shi0to3(ic,0,istrai)=
      &             eirene_mc_eapl_shi0to3(ic,0,istrai)+t0_a
