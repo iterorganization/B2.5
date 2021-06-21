@@ -267,6 +267,7 @@
         enddo
        endif
       enddo
+
 *   ..compute sources due to recombination
       rranareg=0.0_R8
       rrahireg=0.0_R8
@@ -276,6 +277,8 @@
 !WG_TODO      rrahi=0.0_R8
 !WG_TODO      rramo=0.0_R8
 !WG_TODO      rqahe=0.0_R8
+
+      IF (switch%do_volrec.eq.1) THEN !! temporary switch to turn off volume recombination
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source and heat source
@@ -379,6 +382,9 @@ c accounted for)
         enddo
        endif
       enddo
+
+      ENDIF 
+
 *   ..compute source terms for electron heat loss and radiation
 !WG_TODO      b2rad=0.0_R8
       b2radreg=0.0_R8
