@@ -58,6 +58,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: ineustra
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
+      integer :: do_volrec
 
 
   
@@ -80,8 +81,8 @@ c consistency checks for combinations of different switches (check_consistency_s
       real (kind=R8) :: integral_current
       real (kind=R8) :: b2stbc_fchy_dia
       real (kind=R8) :: b2mndr_na_min
-      real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: M_neut_max !! max Mach number for fluid neutrals
       real (kind=R8) :: cfc0
       real (kind=R8) :: prl_cur
       real (kind=R8) :: dia_cur
@@ -482,6 +483,7 @@ c b2mndt
       s % ineustra = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
+      s % do_volrec = 1
 
 
       s % fhe_vis_per = 0.0e0_R8
@@ -503,8 +505,8 @@ c b2mndt
       s % integral_current = 0.0e0_R8
       s % b2stbc_fchy_dia = 0.0e0_R8
       s % b2mndr_na_min = 1.0e4_R8
-      s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
+      s % M_neut_max = 2.0e0_R8
       s % cfc0 = 1.0e0_R8
       s % prl_cur = 1.0e0_R8
       s % dia_cur = 1.0e0_R8
@@ -892,7 +894,7 @@ c b2mndt
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
       call ipgeti ('eirene_neutr_strata', s % ineustra)  
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
-      call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard) 
+      call ipgeti ('b2mn_do_volrec', s % do_volrec) 
 
 
 
@@ -915,8 +917,8 @@ c b2mndt
       call ipgetr ('b2stbc_integral_current', s % integral_current)         !dpc
       call ipgetr ('b2stbc_fchy_dia', s % b2stbc_fchy_dia)                  !xpb
       call ipgetr ('b2mndr_na_min', s%b2mndr_na_min)
-      call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('M_neut_max', s%M_neut_max)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
       call ipgetr ('b2tfhe_dia_cur', s % dia_cur)                           !srv 17.05.99
