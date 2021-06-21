@@ -202,7 +202,7 @@
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
       character old_imas_version*132, imas_version*132
-      character systemarg*256, command*256
+      character systemarg*512
 #endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -2522,54 +2522,24 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                    ' -so ',shot,' -ro ',run+1000,
      &                    ' -d ',trim(database),' -u ',trim(username)
 #endif
+                    systemarg = trim(systemarg)//' edge_profiles'
+                    systemarg = trim(systemarg)//' edge_sources'
+                    systemarg = trim(systemarg)//' edge_transport'
+                    systemarg = trim(systemarg)//' radiation'
+                    systemarg = trim(systemarg)//' dataset_description'
+#if IMAS_MINOR_VERSION > 21
+                    systemarg = trim(systemarg)//' summary'
+#endif
+#if IMAS_MINOR_VERSION > 25
+                    systemarg = trim(systemarg)//' numerics'
+#endif
+#if IMAS_MINOR_VERSION > 30
+                    systemarg = trim(systemarg)//' divertors'
+#endif
 #ifdef NAGFOR
-                    command = trim(systemarg)//' -ids edge_profiles'
-                    call system(command, status, ierror)
-                    command = trim(systemarg)//' -ids edge_sources'
-                    call system(command, status, ierror)
-                    command = trim(systemarg)//' -ids edge_transport'
-                    call system(command, status, ierror)
-                    command = trim(systemarg)//' -ids radiation'
-                    call system(command, status, ierror)
-                    command = trim(systemarg)//
-     .                         ' -ids dataset_description'
-                    call system(command, status, ierror)
-#if IMAS_MINOR_VERSION > 21
-                    command = trim(systemarg)//' -ids summary'
-                    call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                    command = trim(systemarg)//' -ids numerics'
-                    call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                    command = trim(systemarg)//' -ids divertors'
-                    call system(command, status, ierror)
-#endif
+                    call system(systemarg, status, ierror)
 #else
-                    command = trim(systemarg)//' -ids edge_profiles'
-                    call system(command)
-                    command = trim(systemarg)//' -ids edge_sources'
-                    call system(command)
-                    command = trim(systemarg)//' -ids edge_transport'
-                    call system(command)
-                    command = trim(systemarg)//' -ids radiation'
-                    call system(command)
-                    command = trim(systemarg)//
-     .                         ' -ids dataset_description'
-                    call system(command)
-#if IMAS_MINOR_VERSION > 21
-                    command = trim(systemarg)//' -ids summary'
-                    call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                    command = trim(systemarg)//' -ids numerics'
-                    call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                    command = trim(systemarg)//' -ids divertors'
-                    call system(command)
-#endif
+                    call system(systemarg)
 #endif
 #if IMAS_MINOR_VERSION > 31
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -2951,52 +2921,24 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   ' -so ',shot,' -ro ',run+1000,
      &                   ' -d ',trim(database),' -u ',trim(username)
 #endif
+                  systemarg = trim(systemarg)//' edge_profiles'
+                  systemarg = trim(systemarg)//' edge_sources'
+                  systemarg = trim(systemarg)//' edge_transport'
+                  systemarg = trim(systemarg)//' radiation'
+                  systemarg = trim(systemarg)//' dataset_description'
+#if IMAS_MINOR_VERSION > 21
+                  systemarg = trim(systemarg)//' summary'
+#endif
+#if IMAS_MINOR_VERSION > 25
+                  systemarg = trim(systemarg)//' numerics'
+#endif
+#if IMAS_MINOR_VERSION > 30
+                  systemarg = trim(systemarg)//' divertors'
+#endif
 #ifdef NAGFOR
-                  command = trim(systemarg)//' -ids edge_profiles'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids edge_sources'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids edge_transport'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids radiation'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids dataset_description'
-                  call system(command, status, ierror)
-#if IMAS_MINOR_VERSION > 21
-                  command = trim(systemarg)//' -ids summary'
-                  call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                  command = trim(systemarg)//' -ids numerics'
-                  call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                  command = trim(systemarg)//' -ids divertors'
-                  call system(command, status, ierror)
-#endif
+                  call system(systemarg, status, ierror)
 #else
-                  command = trim(systemarg)//' -ids edge_profiles'
-                  call system(command)
-                  command = trim(systemarg)//' -ids edge_sources'
-                  call system(command)
-                  command = trim(systemarg)//' -ids edge_transport'
-                  call system(command)
-                  command = trim(systemarg)//' -ids radiation'
-                  call system(command)
-                  command = trim(systemarg)//' -ids dataset_description'
-                  call system(command)
-#if IMAS_MINOR_VERSION > 21
-                  command = trim(systemarg)//' -ids summary'
-                  call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                  command = trim(systemarg)//' -ids numerics'
-                  call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                  command = trim(systemarg)//' -ids divertors'
-                  call system(command)
-#endif
+                  call system(systemarg)
 #endif
 #if IMAS_MINOR_VERSION > 31
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3011,51 +2953,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   ' -d ',trim(database),' -u ',trim(username)
 #endif
 #ifdef NAGFOR
-                  command = trim(systemarg)//' -ids edge_profiles'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids edge_sources'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids edge_transport'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids radiation'
-                  call system(command, status, ierror)
-                  command = trim(systemarg)//' -ids dataset_description'
-                  call system(command, status, ierror)
-#if IMAS_MINOR_VERSION > 21
-                  command = trim(systemarg)//' -ids summary'
-                  call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                  command = trim(systemarg)//' -ids numerics'
-                  call system(command, status, ierror)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                  command = trim(systemarg)//' -ids divertors'
-                  call system(command, status, ierror)
-#endif
+                  call system(systemarg, status, ierror)
 #else
-                  command = trim(systemarg)//' -ids edge_profiles'
-                  call system(command)
-                  command = trim(systemarg)//' -ids edge_sources'
-                  call system(command)
-                  command = trim(systemarg)//' -ids edge_transport'
-                  call system(command)
-                  command = trim(systemarg)//' -ids radiation'
-                  call system(command)
-                  command = trim(systemarg)//' -ids dataset_description'
-                  call system(command)
-#if IMAS_MINOR_VERSION > 21
-                  command = trim(systemarg)//' -ids summary'
-                  call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 25
-                  command = trim(systemarg)//' -ids numerics'
-                  call system(command)
-#endif
-#if IMAS_MINOR_VERSION > 30
-                  command = trim(systemarg)//' -ids divertors'
-                  call system(command)
-#endif
+                  call system(systemarg)
 #endif
                   call imas_open_env(treename, shot, run, idx,
      .              username, database, version, status)
