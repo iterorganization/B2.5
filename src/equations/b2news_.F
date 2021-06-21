@@ -111,8 +111,9 @@
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
       real (kind=R8) :: 
-     *  rxf0, rxf1, rxf2, rxf3,
-     1  t0                                                   !srv 09.07.99 06.07.00
+     &  rxf0, rxf1, rxf2, rxf3,
+     &  t0,                                                   !srv 09.07.99 06.07.00
+     &  un_max !! maximum parallel velocity for neutrals (mainly useful for kinetic regions in hybrid fluid-kinetic neutral methods) 
       real (kind=R8) ::                                                  !xpb
      &  ue(nCv), lnlam(nCv), zeff(nCv), ehx(nFc),                        !srv 05.07.17 29.01.20
      &  rz(nCv), cssb(nFc,0:1),                                          !iyv 06.02.14
@@ -470,8 +471,9 @@ c b2npmo with rxf = 0 and recompute fluxes.
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
         if (switch%spatial_hybrid.ne.0.and.is_neutral(is)) then 
           do iCv = 1, nCv
+            un_max=switch%M_neut_max*sqrt(2.0_R8*pl%tn(iCv)/(am(is)*mp))
             pl%ua(iCv,is)=sign(
-     &                  min(abs(pl%ua(iCv,is)),switch%b2mndr_ua_max),
+     &                  min(abs(pl%ua(iCv,is)),un_max),
      &                  pl%ua(iCv,is))
           enddo   
         endif
