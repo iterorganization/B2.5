@@ -223,6 +223,9 @@ c***  Standard setup:
      &     'only cftype(1) should be =0')
           if (cftype(icf).eq.6.and. icf.ne.1) call xerrab (
      &     'only cftype(1) should be =6')
+          if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
+     &     ncf.lt.(cfend(icf)-cfstart(icf))+2) call xerrab (
+     &     'cost functions specified for sum with cftype 0/6 > nCf')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
      &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
      &         ' read experimental profile')
