@@ -21,7 +21,7 @@
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi
+     & , only: crcstra, rcfe, rcfi, mol
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -29,8 +29,10 @@
 #else
       use b2mod_braeir
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi
+     & , only : crcstra, rcfe, rcfi
 #endif
+      use b2mod_recycle
+     & , only : fna_mol
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
@@ -68,13 +70,17 @@
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8), allocatable, save :: wght(:,:)
       real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
-
+      real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
       if(ncall.eq.0) then
         allocate (wght(nFc,2))
         wght = 1._r8
       endif 
+    
+c Initialization
+      fnn_inc_b = 0.0_R8
+      fnn_mol_b = 0.0_R8
 
       evi = 1.0_R8 / ev
       if(switch%eirene_print_minmax.ne.0) then
@@ -350,8 +356,11 @@ c     internal cell -> full diamagnetic drift
           enddo
 * cell faces
           do ifc = 1, nFc
-            fnib(ifc,nflai) = (dv%fna(ifc,0,is) + dv%fna(ifc,1,is))*
-     &                         kin_frac_hyb(iFc)
+            fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
+            if (is_neutral(is)) then
+              fnn_inc_b(ifc,nflai) = fnn_inc(ifc,is)
+              fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
+            endif
           end do
           if (is_neutral(is).and.switch%use_auto_spatial_hyb.eq.1) then
             do istra = 1, mpg%nRc
@@ -452,13 +461,15 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-c            if (zab(ifl).ne.0) then !! ion species
+            if (zab(ifl).ne.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
-     &                mpg%rcFcOr(ian+i-1)
-c            else                      !! neutral species
-c              trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
-c     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-c            endif
+     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
+            elseif (mol(istra).eq.0) then !! neutral atom species
+              trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
+     &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
+            else                          !! neutral molecule species
+              trgt(istra)%flux(i,ifl) = fnn_mol_b(iFc,ifl)
+            endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !!'
               trgt(istra)%flux(i,ifl) = 0.0_R8
@@ -623,3 +634,4 @@ c
       end do   ! istra
       return
       end subroutine write_f31
+      
