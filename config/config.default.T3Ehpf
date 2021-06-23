@@ -16,7 +16,7 @@ EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07ad
 DEFINES += -DUSE_PXFGETENV -DNO_CDF
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION}
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /opt/ctl/cf90/cf90/lib/ftpp -F

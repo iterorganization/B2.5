@@ -217,14 +217,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,te,'b2nph9_te_inp')
         ti_inp=ti
         call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
-      endif                                                             !srv 31.01.21
-
-      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
-        te_inp=te
-        call my_out(70,nx,ny,te,'b2nph9_te_inp')
-        ti_inp=ti
-        call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
-      endif                                                             !srv 31.01.21
+      endif                                                              !srv 31.01.21
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)

@@ -26,7 +26,7 @@
       use timings
 #endif
       use b2mod_xerset
-#if MPI_VERSION > 2
+#if MPI_MOD > 0
 #ifdef USE_MPI
       use mpi  ! IGNORE
 #else
@@ -36,7 +36,7 @@
 #endif
 #endif
       implicit none
-#if MPI_VERSION < 3
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
 #else

@@ -19,7 +19,7 @@ EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Ds
 DEFINES += -DDOFLUSH # -DNO_CDF
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION}
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional

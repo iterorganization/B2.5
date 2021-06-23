@@ -1199,5 +1199,7 @@ endif
 endif
 
 ${OBJDIR}/mpiversion.mk: ${MAKES}
-	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nEND" > ${OBJDIR}/mpi_version.f90
-	(${FC} ${FCOPTS} ${INCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n1 ) || echo MPI_VERSION=0 ) > ${OBJDIR}/mpiversion.mk
+	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=1'\nEND" > ${OBJDIR}/mpi_version.f90
+	(${FC} ${FCOPTS} ${INCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || \
+	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND" > ${OBJDIR}/mpi_version.f90 ; \
+	${FC} ${FCOPTS} ${INCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk

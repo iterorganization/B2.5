@@ -2,7 +2,7 @@
 
       use b2mod_external
 
-#if MPI_VERSION > 2
+#if MPI_MOD > 0
 #ifdef USE_MPI
       use mpi  ! IGNORE
 #else
@@ -12,7 +12,7 @@
 #endif
 #endif
       implicit none
-#if MPI_VERSION < 3
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
 #else
@@ -497,11 +497,11 @@ cxpb
       last = .true.
 
 #ifdef USE_MPI
-      call mpi_bcast (last, 1 , mpi_logical , 0 ,
+      call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #else
 #ifdef USE_IMPGYRO
-      call mpi_bcast (last, 1 , mpi_logical , 0 ,
+      call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif
 #endif

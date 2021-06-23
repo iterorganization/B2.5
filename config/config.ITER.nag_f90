@@ -16,7 +16,7 @@ DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION}
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding

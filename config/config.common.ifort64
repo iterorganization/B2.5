@@ -11,7 +11,7 @@ DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION}
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 MOD      = mod

@@ -17,7 +17,7 @@ ifndef SOLPS_CPP
 DEFINES += -DCRAY -DF2003
 endif
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION}
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -traditional
