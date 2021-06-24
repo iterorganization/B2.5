@@ -87,7 +87,7 @@ c
       real (kind=R8), allocatable :: wldspta1(:,:,:), wldsptm1(:,:,:)
       real (kind=R8), allocatable :: ewldmr1res(:,:), sarea1res(:)
       real (kind=R8), allocatable :: wlpump1res(:,:), ewldrp1res(:)
-      real (kind=R8), allocatable :: wldspt1res(:)
+      real (kind=R8), allocatable :: wldspt1res(:), ewldt1res(:)
       real (kind=R8), allocatable :: data1res(:)
       real (kind=R8), allocatable :: area_res_contr(:,:)
       real (kind=R8), allocatable ::
@@ -1277,6 +1277,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                ewldt_res(NCL),
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                wldspt_res(NCL), sarea_res(NCL),
@@ -1333,6 +1334,10 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              READ (44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
             allocate(sarea1res(NCL1))
             allocate(wldna1res(natm1,NCL1), ewlda1res(natm1,NCL1),
      .               ewldea1res(natm1,NCL1))
@@ -1340,6 +1345,7 @@ cank
      .               ewldem1res(nmol1,NCL1), ewldmr1res(nmol1,NCL1))
             allocate(ewldrp1res(NCL1))
             allocate(wldspt1res(NCL1))
+            allocate(ewldt1res(NCL1))
             allocate(data1res(NCLM))
             if (jvftnew .ge. 20170328)
      >       allocate(wldspta1res(natm1,NCL1),wldsptm1res(nmol1,NCL1))
@@ -1362,6 +1368,14 @@ cank
               call b2yt_res_map ( NCL, NCL1, NCLM,
      .         area_res_contr, data1res)
               wldspt1res(1:NCL1) = data1res(1:NCL1)
+            end if
+            if (jvft44.lt.20201006) then
+              ewldt1res(:) = 0.0_R8
+            else
+              data1res(1:NCL) = ewldt_res(1:NCL)
+              call b2yt_res_map ( NCL, NCL1, NCLM,
+     .         area_res_contr, data1res)
+              ewldt1res(1:NCL1) = data1res(1:NCL1)
             end if
             do is = 1, natmi
               if (iatm1(is).ne.0) then
@@ -1512,12 +1526,17 @@ cank
      ,                                                       i=1,ncl1)
               deallocate (wlpump1res)
             end if
+            if (jvftnew.ge.20201006) then
+              call write_title(45,'ewldt_res',ncl1)
+              WRITE(45,'(6e15.7)') (ewldt1res(i),i=1,NCL1)
+            end if
             deallocate(sarea1res)
             deallocate(wldna1res, ewlda1res, ewldea1res)
             deallocate(wldnm1res, ewldm1res, ewldem1res)
             deallocate(ewldmr1res)
             deallocate(ewldrp1res)
             deallocate(wldspt1res)
+            deallocate(ewldt1res)
             deallocate(data1res)
             deallocate(area_res_contr)
             if (jvftnew .ge. 20170328)
@@ -1554,6 +1573,11 @@ cank
               call read_title(44)
               read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
               write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+              READ (44,1028)
+              WRITE(45,1028)
+            END IF
+            IF (jvft44.ge.20201006) THEN
+              call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
             END IF

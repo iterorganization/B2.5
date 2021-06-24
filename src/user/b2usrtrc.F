@@ -235,7 +235,7 @@ c-----------------------------------------------------------------------
       integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
      ,  j_he_i, l_pad_str, n_pad_str
 #ifdef B25_EIRENE
-      integer ia, im, iyp, ls
+      integer ia, im, iyp, ls, ind, ias
       real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
 #endif
@@ -954,7 +954,6 @@ c*** Helium fraction and related data - flux estimation
 #endif
 
 c*** Calculate the peak powers to the targets
-c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
 
       if(l_neutflux.lt.0 .or. use_eirene.eq.0) then !{ VK
 c West target
@@ -975,14 +974,22 @@ c West target
      .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           hlp=hlp/s
+#ifdef B25_EIRENE
+          if (use_eirene.ne.0) then !{
+            do js=1,nsts !{
+              if (eirdiag_nds_typ(js).ne.2) cycle
+              if (eirdiag_nds_srf(js).ne.0) cycle
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind=eirdiag_nds_ind(js)
+              ias=ind+1-(eirdiag_nds_start(js)-1)
+              hlp=hlp+ewldt_res(iy+ias)
+            end do !}
+          end if !}
+#endif
           hlp_ppwi=max(hlp_ppwi,hlp)
           hlp_s=hlp_s+s
         end do !}
-        if (use_eirene.ne.0) then !{
-          js=ltns(1)+nnlimi
-          hlp_ppwi=hlp_ppwi+
-     .     (wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-        end if !}
 c East target
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
@@ -1000,17 +1007,22 @@ c East target
      .       (hx(nx-1,iy)+hx(nx,iy))))
           end do !}
           hlp=hlp/s
+#ifdef B25_EIRENE
+          if (use_eirene.ne.0) then !{
+            do js=1,nsts !{
+              if (eirdiag_nds_typ(js).ne.2) cycle
+              if (eirdiag_nds_srf(js).ne.nx) cycle
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind=eirdiag_nds_ind(js)
+              ias=ind+1-(eirdiag_nds_start(js)-1)
+              hlp=hlp+ewldt_res(iy+ias)
+            end do !}
+          end if !}
+#endif
           hlp_ppwo=max(hlp_ppwo,hlp)
           hlp_s=hlp_s+s
         end do !}
-        if (use_eirene.ne.0) then !{
-          js=ltns(nncut*2)+nnlimi  ! iyv 15.05.2015
-          if (ltns(nncut*2).ne.0) then !{
-            hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-            hlp_ppwo=hlp_ppwo+(wldnek(js,0)+
-     .                         wldnep(js,0))*hlp_neu_peak/hlp_s
-          end if !}
-        end if !}
 
         if(double_null) then !{
           hlp_pwou=0.0_R8
@@ -1030,14 +1042,22 @@ c East target
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             hlp=hlp/s
+#ifdef B25_EIRENE
+            if (use_eirene.ne.0) then !{
+              do js=1,nsts !{
+                if (eirdiag_nds_typ(js).ne.2) cycle
+                if (eirdiag_nds_srf(js).ne.ix) cycle
+                if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+                if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+                ind=eirdiag_nds_ind(js)
+                ias=ind+1-(eirdiag_nds_start(js)-1)
+                hlp=hlp+ewldt_res(iy+ias)
+              end do !}
+            end if !}
+#endif
             hlp_pwou=max(hlp_pwou,hlp)
             hlp_s=hlp_s+s
           end do !}
-          if (use_eirene.ne.0) then !{
-            js=ltns(3)+nnlimi
-            hlp_pwou=hlp_pwou+(wldnek(js,0)+
-     +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
-          end if !}
 
           hlp_pwiu=0.0_R8
           ix=nxtl
@@ -1056,15 +1076,22 @@ c East target
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             hlp=hlp/s
+#ifdef B25_EIRENE
+            if (use_eirene.ne.0) then !{
+              do js=1,nsts !{
+                if (eirdiag_nds_typ(js).ne.2) cycle
+                if (eirdiag_nds_srf(js).ne.ix) cycle
+                if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+                if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+                ind=eirdiag_nds_ind(js)
+                ias=ind+1-(eirdiag_nds_start(js)-1)
+                hlp=hlp+ewldt_res(iy+ias)
+              end do !}
+            end if !}
+#endif
             hlp_pwiu=max(hlp_pwiu,hlp)
             hlp_s=hlp_s+s
           end do !}
-          if (use_eirene.ne.0) then !{
-            js=ltns(2)+nnlimi
-            hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-            hlp_pwiu=hlp_pwiu+(wldnek(js,0)+
-     +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
-          end if !}
         end if !}
       else !}{VK
         call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
