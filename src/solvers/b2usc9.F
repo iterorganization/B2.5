@@ -169,14 +169,14 @@
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft)) then
            aa9(leftix(ix,iy),leftiy(ix,iy),1) =
-     &       t0*rscal(pb(ix,iy))
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0*rscal(pb(ix,iy))
            aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0) -
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
            aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-1) =
+           aa9(ix,iy,-1) = aa9(ix,iy,-1) +
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
         endif                                                           !srv 26.11.02
@@ -199,14 +199,14 @@
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
            aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
-     &      t0*rscal(pb(ix,iy))
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*rscal(pb(ix,iy))
            aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
            aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-3) =
+           aa9(ix,iy,-3) = aa9(ix,iy,-3) +
      &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
          endif

@@ -186,14 +186,15 @@
      &        - conb(ix,iy,0,2)                                        !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
+           aa11(leftix(ix,iy),leftiy(ix,iy),1) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy),1) + t0*rscal(pb(ix,iy))
            aa11(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy),0) -
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
            aa11(ix,iy,0)  = aa11(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa11(ix,iy,-1) =
+           aa11(ix,iy,-1) = aa11(ix,iy,-1) +
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif                                                        !srv 26.11.02
         endif
@@ -216,14 +217,14 @@
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
            aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
-     &       t0*rscal(pb(ix,iy))
+     &      aa11(bottomix(ix,iy),bottomiy(ix,iy),3)+t0*rscal(pb(ix,iy))
            aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa11(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
            aa11(ix,iy,0)  = aa11(ix,iy,0)-t0*rscal(pb(ix,iy))
-           aa11(ix,iy,-3) =
+           aa11(ix,iy,-3) = aa11(ix,iy,-3) +
      &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
          endif

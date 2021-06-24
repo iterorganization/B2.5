@@ -252,10 +252,11 @@
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveee(ireg) .or. solveei(ireg)) then
           aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
-          aa9(ix,iy,-1) = t1
+          aa9(ix,iy,-1) = aa9(ix,iy,-1) + t1
          endif
          if (solveee(ileft) .or. solveei(ileft)) then
-          aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
+          aa9(leftix(ix,iy),leftiy(ix,iy),1) =
+     &      aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0
           aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &      aa9(leftix(ix,iy),leftiy(ix,iy),0) - t1
          endif
@@ -272,10 +273,11 @@
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
         if (solveee(ireg) .or. solveei(ireg)) then
          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
-         aa9(ix,iy,-3) = t1
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
         endif
         if (solveee(ibot) .or. solveei(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
         endif
@@ -392,10 +394,11 @@
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
         if (solveee(ireg)) then
          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
-         aa9(ix,iy,-3) = t1
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
         endif
         if (solveee(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
         endif
@@ -510,12 +513,12 @@
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
         if (solveei(ireg)) then
          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0*scalr(ti(ix,iy))
-         aa9(ix,iy,-3) = t1*
+         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1*
      &     scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
         endif
         if (solveei(ibot)) then
          aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
-     &      t0*scalr(ti(ix,iy))
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*scalr(ti(ix,iy))
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1*
      &      scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
