@@ -287,36 +287,8 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_shi0to3 = shidt-shitmp
       endif
 
-      if ((iout_b2npmo.eq.1 .or. iout_b2wdat .eq. 4) .and. lout) then    !srv 11.09.09 {
-       do is = 0, ns-1 
-         write (chns,'(i3.3)') is
-         wrk0=smodt(:,:,0,is)+
-     &        smodt(:,:,1,is)*ua(:,:,is)+
-     &        smodt(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-         call my_out(70,nx,ny,wrk0,'b2srdt_smodt'//chns)
-       enddo
-      endif
-      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
-     &     iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 .or.         !srv 02.04.18
-     &     iout_b2wdat.eq.4) .and. lout) then
-        do is = 0, ns-1
-          write (chns,'(i3.3)') is
-          wrk0=snadt(:,:,0,is)+snadt(:,:,1,is)*na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2srdt_snadt'//chns)
-        enddo
-      endif
-      if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
-     &             .and. lout) then
-        wrk0=shedt(:,:,0)+shedt(:,:,1)*te+
-     &       shedt(:,:,2)*ne + shedt(:,:,3)*te*ne
-        call my_out(70,nx,ny,wrk0,'b2srdt_shedt')
-        wrk0=shidt(:,:,0)+shidt(:,:,1)*ti+
-     &       shidt(:,:,2)*ni(:,:,0)+
-     &       shidt(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2srdt_shidt')
-      endif
-
+*    The diagnostic output of the time derivative will be done
+*    in the subroutines where the solution is calculated.
       if (iout.eq.1 .and. lout) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is

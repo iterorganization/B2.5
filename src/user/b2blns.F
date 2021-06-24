@@ -951,21 +951,19 @@ c*** It was a major change of the file format - impossible to continue
 
         nc = np_tmp
 
-        write(lun,700) lv, nspecies, np_tmp, label
-        write(hlp_frm,
-     &      '(18h(1h#,7x,4htime,4x,i3,17h(1h'//tab//',a16,1h_,a2)))')
-     &                                                  np_tmp*nspecies
-
+        write(lun,700) lv, nspecies, np_tmp, trim(label)
+        write(hlp_frm,'(a,i3,a)')
+     &   '(a1,6x,a4,4x,',np_tmp*nspecies,'(2x,a19))'
 c       print *,'b2blns: nspecies= ',nspecies                       !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
 
-        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     &                                                    j=1,nspecies)
+        write(lun,hlp_frm) '#','time',
+     &   ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
 
       end if
 
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e16.7)))')
-     &                                                  np_tmp*nspecies
+      write(hlp_frm,'(a,i3,a)')
+     &  '(1p,e16.7,',np_tmp*nspecies,'(3x,e16.7,2x))'
       return
 c======================================================================
    90 write(*,*) 'b2blns: cannot open file ',trim(f)
@@ -1045,6 +1043,5 @@ c*** from 20190627 on
 
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blns

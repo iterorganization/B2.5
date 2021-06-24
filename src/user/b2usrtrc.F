@@ -398,7 +398,7 @@ c*** Calculate the basic quantities for each surface/species
                 else !}{
                   if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
                     ndta_tmp(k,j)=nmnt_tmp
-                    print *,
+                    print '(4a,i3)',
      ,                 'b2usrtrc: different absorption coefficients',
      ,                 ' for diagnostic surface group ',gntrgrp(k),
      ,                 ', species ',j
@@ -1448,7 +1448,7 @@ c*** f     :  the associated file name
         xdum(1)=0.0_R8
         call combfile(lun,f,lenfnm,hlp_hdr,ntrc_tmp,label,.false.,
      ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
-     ,                n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
+     ,                n_pad_str,7,4,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
 
 c        print *,'b2usrtrc: after combfile. irt,m,f=',          !###
 c     ,                                     irt,m,'  ',trim(f)  !###
@@ -1598,20 +1598,20 @@ c*** New file
         end do !}
         write(lun,700) lv,ng_tmp,np_tmp,ns_tmp,na_tmp
         write(lun,'(2a)') '#  ',label
-c       hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a),,'//
-c     /                                      'i3,8h(1h'//tab//',a)))'
-        hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a)))'
-        write(hlp_frm,hlp_frf) ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
+        write(hlp_frm,'(a,i3,a)')
+     ,   '(''# time'',',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,a))'
+#ifdef DBG
+        print *,'b2usrtrc frm:',trim(hlp_frm)  !###
+#endif
         if(npfrgrp.gt.0) then !{
           write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp),
      ,        (((hlp_ha(i,j,k),i=i0,npfrgrp),j=1,nspecies),k=1,npff_tmp)
         else !}{
           write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp)
         end if !}
-c        print *,'b2usrtrc frm:',hlp_frm  !###
       end if !}
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
+      write(hlp_frm,'(a,i3,a)')
+     - '(1p,e16.7,',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,e12.4))'
       return
 c=======================================================================
    90 write(*,*) 'b2usrtrc: cannot open file ',trim(f)
@@ -1831,7 +1831,7 @@ c*** Limiter case
       mrks_hlp(7)=ngl2_tmp
       call combfile(lun,f,lenfnm,hlp_hdr,ntrc_tmp,label,.false.,
      ,              fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
-     ,              n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
+     ,              n_pad_str,7,4,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
       print *,'b2usrtrcc: after combfile. irt,m,f=',          !###
      ,                                    irt,m,'  ',trim(f)  !###
       if(irt.lt.0) then !{

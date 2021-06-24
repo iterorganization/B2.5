@@ -263,7 +263,7 @@ c
 c*** ... or just print out the data - if not a limiter configuration
 c
         write(*,*) 'Parallel momentum balance in divertors:'
-        write(*,hlp_frf) (hlp_hdv(i),i=1,nqudiv)
+        write(*,hlp_frf) 'div',(hlp_hdv(i),i=1,nqudiv)
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}
       return
@@ -295,7 +295,6 @@ c
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
   700   format('#   ',3i8/'#  ',a)
-  701   format(a1,3x,3i8)
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
@@ -344,13 +343,13 @@ c*** New file
         nd_tmp=nqudiv
         ndv_tmp=ndiv
         write(lun,700) lv,nd_tmp,ndv_tmp,label
-        hlp_frf='(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))'
-        write(hlp_frm,hlp_frf) nd_tmp*ndv_tmp
-        write(lun,hlp_frm)
-     -                 ((hlp_hdv(i),hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
+        write(hlp_frf,'(a,i3,a)')
+     ,   '(a6,12x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
+        write(lun,hlp_frf) '# time',
+     -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                                   nd_tmp*ndv_tmp
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnm: cannot open file ',trim(f)
@@ -365,7 +364,7 @@ c*** Prepare the formats for the printout
    98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
-  710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
+  710 format('(1x,a3,',i3,'(2x,a8,1x))')
   720 format('(1p,1x,a2,1x,',i3,'e11.3)')
 c======================================================================
 c

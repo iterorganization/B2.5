@@ -400,8 +400,8 @@ c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lnrw) !###
             write(lun,frmhdr) mrks
             write(lun,'(2a)') '#  ',trim(titel)
           end if !}
-          write(frmhdr,'(a5,i4,a2)') '(1h#,',2*lnrw,'a)'
-          write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
+          write(frmhdr,'(a,i4,a2)') '(''# '',',2*lnrw,'a)'
+          write(lun,frmhdr) (trim(chdw(i)),csep,i=1,lnrw)
 
 c*** re-write the existing file
 
@@ -411,8 +411,9 @@ c*** re-write the existing file
           l=nhdr*48
           nrec=0
           first=.true.
-          write(frmdat,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
-     .                     lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
+          write(frmdat,700)
+     .         '(1p,1x,e',lwfs+8,'.',lwfs,',a,',
+     .        lnrw-1,'(e',lwfr+8,'.',lwfr,',a))'
 c          print *,trim(frmdat)  !###
           do while (.true.) !{
             read(lrd,frmhdr,end=45) (cline(j),j=1,ncln)
@@ -477,7 +478,7 @@ c*** non-space on both sides of the section borders - the field is split
               end do !}
               call xtrn(roww,chdw,lvrw,mrkr,nmr,first)
               first=.false.
-              write(lun,frmdat) (roww(i),i=1,lnrw)
+              write(lun,frmdat) (roww(i),csep,i=1,lnrw)
               nrec=nrec+1
             else !}{ Probably, the line is too short - add a section
               ncln=ncln+1
@@ -521,8 +522,8 @@ c*** Write the header
           write(lun,frmhdr) mrks
           write(lun,'(2a)') '#  ',trim(titel)
         end if !}
-        write(frmhdr,'(a5,i4,a2)') '(1h#,',2*nhdr,'a)'
-        write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)
+        write(frmhdr,'(a,i4,a2)') '(''# '',',2*nhdr,'a)'
+        write(lun,frmhdr) (trim(chdr(i)),csep,i=1,nhdr)
         ntrl=0
         iret=0
       end if !}
@@ -531,10 +532,11 @@ c*** Write the header
       if(allocated(chdw)) deallocate(chdw,roww,rowr)
       if(allocated(cline)) deallocate(cline)
 
-      write(frmd,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
-     .               lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
-  700 format(a8,i2,a1,i2,a3,a1,a1,i4,a2,i2,a1,i2,a3,a1,a2)
+      write(frmd,700) '(1p,1x,e',lwfs+8,'.',lwfs,','//csep//',',
+     .               lnrw-1,'(e',lwfr+8,'.',lwfr,','//csep//'))'
 c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
+      return
+  700 format(a8,i2,a1,i1,a,i4,a2,i2,a1,i1,a)
 c=======================================================================
       end subroutine combfile
 

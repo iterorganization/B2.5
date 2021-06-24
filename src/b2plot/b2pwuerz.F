@@ -30,7 +30,7 @@ c
       integer ix,iy,is,i,j,k
       integer, allocatable :: mz_hlp(:)
       real (kind=R8) :: pit
-      character hlp_frmr*600
+      character hlp_frmr*600, hlp_frm*256
       character*2, allocatable :: hlp_al(:)
 c-----------------------------------------------------------------------
       pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
@@ -61,19 +61,20 @@ c
      ,  '# vp...    : parallel velocities of the ion species [m/s]' 
       write (lun,*)
       write(hlp_frmr,710) ns
-  710 format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,3hpit,9x,',
-     ,  '2hne,11x,2hTe,10x,2hTi,4x,',
-     ,  i3,'(4x,1hn,a2,i2.2,6x,2hvp,a2,i2.2,3x)/)')
-      write (lun,hlp_frmr) ((hlp_al(i),mz_hlp(i),j=1,2),i=0,ns-1)
+  710 format('(a9,7x,a1,11x,a1,10x,a3,9x,a2,11x,a2,10x,a2,4x,',
+     ,  i3,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)')
+      write (lun,hlp_frmr)
+     , '#  ix  iy','R','Z','pit','ne','Te','Ti',
+     , ('n'//hlp_al(i),mz_hlp(i),'vp'//hlp_al(i),mz_hlp(i),i=0,ns-1)
 
+      write (hlp_frm,'(a,i3,a)') '(1x,1p,2i4,',6+2*ns,'e12.4)'
       do iy=0,ny-1
         i=0
         write (lun,*)
         do ix=nx-1,rightcut(1),-1
-          write (lun,700) i,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
-     ,                    ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,                    (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
-  700     format(1x,1p,2i4,48e12.4)
+          write (lun,hlp_frm) i,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
+     ,                        ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
+     ,                       (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
           i=i+1
         end do
       end do

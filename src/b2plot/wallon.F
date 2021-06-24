@@ -10,8 +10,8 @@ c======================================================================
       integer, intent(in) :: inum, ilog
       real (kind=R8), intent(in) :: wmind, wmaxd
 c======================================================================
-c	 print *,'%% wallon: onflag,inum,wmind,wmaxd,wlinlog=',
-c     , 	             onflag,inum,wmind,wmaxd,wlinlog
+c     print *,'%% wallon: onflag,inum,wmind,wmaxd,wlinlog=',
+c     ,                   onflag,inum,wmind,wmaxd,wlinlog
       wmin=real(wmind,R4)
       wmax=real(wmaxd,R4)
       wlinlog=ilog

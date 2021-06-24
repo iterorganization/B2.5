@@ -521,8 +521,9 @@ c>>>
               m=msns(2,ic)
               hlp=0.0_R8
 c<<<
-              if(hlp_tt) print *,'%%# ls,ic,crcstra,l,m,kks : ',
-     ,                                ls,ic,' ',crcstra(ic),' ',l,m,kks
+              if(hlp_tt) write(*,'(1x,a,2i5,1x,a1,1x,3i5)')
+     ,                           '%%# ls,ic,crcstra,l,m,kks : ',
+     ,                                ls,ic,crcstra(ic),l,m,kks
 c>>>
               do i=l,l+m-1
                 k=lsns(i)
@@ -543,7 +544,8 @@ c>>>
                     if (latmscl(j).eq.ls) then
                       hlp=hlp+wldpa(k,j,ic)*sclstra(j,ic)
 c<<<
-                      if(hlp_tt) print *,
+                      if(hlp_tt)
+     ,                 print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                 '%%% wldpa(',k,',',j,',',ic,') =',
      ,                      wldpa(k,j,ic)*sclstra(j,ic)
 c>>>
@@ -557,7 +559,8 @@ c<<<
                         if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
      ,                       '%%# j,mlcmp,wldpm,sclstra= ',
      ,                       j,mlcmp(ii,j),wldpm(k,j,ic),sclstra(ii,ic)
-                        if(hlp_tt .and. mlcmp(ii,j).gt.0) print *,
+                        if(hlp_tt .and. mlcmp(ii,j).gt.0)
+     ,                   print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                       '%%% wldpm(',k,',',j,',',ic,') =',
      ,                            wldpm(k,j,ic)*sclstra(ii,ic)
 c>>>
@@ -647,7 +650,7 @@ c
         write(*,*) 'particle_fluxes ',nspecies
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
-          write(*,'(1p,30e12.3)') 
+          write(*,'(1p,30e12.3)')
      ,     flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
      ,     flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
      ,     flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
@@ -747,16 +750,16 @@ c*** It was a major change of the file format - impossible to continue
    55   backspace lun
       else
         nc=np_tmp
-        write(lun,700) lv,nspecies,np_tmp,label
-        write(hlp_frm,'(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))')
-     ,                                                  np_tmp*nspecies
+        write(lun,700) lv,nspecies,np_tmp,trim(label)
+        write(hlp_frm,'(a,i3,a)')
+     ,   '(a6,12x,',np_tmp*nspecies,'(2x,a11,1x))'
 c       print *,'b2blnc: nspecies= ',nspecies                   !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
-        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     ,                                                    j=1,nspecies)
+        write(lun,hlp_frm) '# time',
+     ,    ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     ,                                                  np_tmp*nspecies
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnc: cannot open file ',trim(f)
@@ -816,6 +819,5 @@ c
       return
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blnc

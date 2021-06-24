@@ -87,8 +87,8 @@ c      open(lun_w,file='layout-a.dat')
 c      write(lun_w,'(2a)') '# Wall layout (dg): ',trim(label)
 c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp !{
-c       write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c       write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c       write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c       write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)

@@ -180,10 +180,12 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_int)
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
-      integer i, j, k, ir,is,ix,iy, nv
+      integer i, j, k, ir,is,ix,iy, nv, nfields
       real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
+      integer len_of_digits
+      external len_of_digits
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
 #ifdef B25_EIRENE
       integer iatm ! IYS 29.09.2017
@@ -560,38 +562,31 @@ c*** New file
      ,                 trim(label)
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
-     /          'i3, 9h(1h'//tab//',a8),,'             //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,12h(1h'//tab//',a8,a2),,'          //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2)'          //
-c#ifdef SCL_IMP_RCI
-c     /         ',,i3,12h(1h'//tab//',a8,a2)'          //
-c#endif
-     /          '))'
-
+        hlp_frf='(a,7(i3,a))'
         if (nfl_tmp.gt.0) then
-         write(hlp_frm,hlp_frf) ng_tmp, nr_tmp*nrg_tmp, ns_tmp*nsp_tmp,
-     ,                          na_tmp*nrg_tmp*nsp_tmp, nf_tmp*nfl_tmp,
-     ,                          nb_tmp*nsp_tmp*nfl_tmp, nb_tmp*nfl_tmp
+         write(hlp_frm,hlp_frf)
+     ,    '(a1,7x,a4,7x,',ng_tmp,'(2x,a8,4x),',
+     ,            nr_tmp*nrg_tmp,'(1x,a8,i2.2,3x),',
+     ,            ns_tmp*nsp_tmp,'(1x,a8,a2,3x),',
+     ,    na_tmp*nrg_tmp*nsp_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nf_tmp*nfl_tmp,'(1x,a8,i2.2,3x),',
+     ,    nb_tmp*nsp_tmp*nfl_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nb_tmp*nfl_tmp,'(1x,a8,i2.2,3x))'
         else
           write(*,*)
      &     'Unexpected inconsistency: number of strata NSTRAI = ',
      &      nfl_tmp
-          write(*,*) 'Impossible to write into ', f
+          write(*,*) 'Impossible to write into ', trim(f)
         endif
 c<<<
-c        print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
-c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
-c        print *,'hlp_frm:'
-c        print *,hlp_frm
+c       print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
+c     ,                      nb_tmp,nsp_tmp,nfl_tmp
+c       print *,'hlp_frm:'
+c       print *,trim(hlp_frm)
 c>>>
-
         if (nfl_tmp.gt.0) then
-          write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+          write(lun,hlp_frm) '#','time',
+     ,           (hlp_hg(i),i=1,ng_tmp),
      ,          ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
      ,          ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,         (((hlp_ha(k),j,species_list(i),j=1,nrg_tmp),
@@ -605,16 +600,15 @@ c>>>
       end if
 
       if (nfl_tmp.gt.0) then
-        write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
+        nfields =
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
-     +          (nsp_tmp+1)*nfl_tmp*nb_tmp
+     +       na_tmp*nrg_tmp*nsp_tmp + nf_tmp*nfl_tmp +
+     +                    (nsp_tmp+1)*nb_tmp*nfl_tmp
+        write(hlp_frf,'(a,i1,a)') '(a,i',len_of_digits(nfields),',a)'
+        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4))'
       end if
-c#ifdef SCL_IMP_RCI
-c     +          + ns1_tmp*nsp_tmp
-c#endif
-c      print *,'hlp_frm:' !###
-c      print *,hlp_frm    !###
+c      print *,'hlp_frm:'       !###
+c      print *,trim(hlp_frm)    !###
 
       return
 c=======================================================================
@@ -676,12 +670,6 @@ c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-c#ifndef SCL_IMP_RCI
   700 format('#   ',10i8/'#  ',a)
-  701 format(a1,3x,10i8)
-c#else
-c  700 format('#   ',11i8/'#  ',a)
-c  701 format(a1,3x,11i8)
-c#endif
 c=======================================================================
       end subroutine b2wrint

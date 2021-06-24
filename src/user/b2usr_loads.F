@@ -99,8 +99,8 @@ csw 02jan2017 corrected flip of l variable (i.e. put it AFTER iy loop)
       end do !}
 
       if(debug_flags(81).gt.0) then
-        write(frm,700) ntrgs,char(9) !format string
-  700   format('((',i3,'(1h',a1,',e15.7)))')
+        write(frm,700) ntrgs
+  700   format('(',i3,'(2x,e15.7))')
 C total power
         open(3,file='targb2.datv')
         do iy=0,ny-1

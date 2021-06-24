@@ -583,7 +583,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         if(j.eq.ntrgts) jj=ntrgsx
         if(.not.LSN) jj=ntrgsx+1-jj
         open(lun,file=ftrg(jj,1))
-        write(fmt_peak,710) nclm_ld,tab
+        write(fmt_peak,710) nclm_ld
         write(lun,740) 'Target loading - ',trg_label(jj),trim(label)
         write(lun,740) 'x',tab,'coordinate along target [m]. <0 in PFR'
         write(lun,740) 'ne',tab,'electron density [1/m^3]'
@@ -621,7 +621,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         if(lrdlsp) then !{
           write(lun,740) 'rad_XX',tab,
      .     'radiation power flux from species XX [W/m^2]'
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
      ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
      ,            'WWpar','WWtrg','Lcnnt','Lcnnx',
@@ -629,17 +629,17 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         else if(lrdlcr) then !}{
           write(lun,740) 'rd_cr',tab,
      ,     'radiation power flux from core [W/m^2]'
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
      ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
      ,            'WWpar','WWtrg','Lcnnt','Lcnnx','rd_cr'      
         else !}{
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
      ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
      ,            'WWpar','WWtrg','Lcnnt','Lcnnx'
         end if !}
-        write(fmt_peak,720) nclm_ld,tab
+        write(fmt_peak,720) nclm_ld
         if(ntrgts.eq.4) then !{
           k=j
         else !}{
@@ -735,8 +735,8 @@ c
         l=1-l
       end do !}
 
-      write(fmt_peak,700) 24,tab
-  700 format('(1p,e12.5,',i3,'(1h',a1,',e12.5))')
+      write(fmt_peak,700) 24
+  700 format('(1p,e12.5,',i3,'(a1,e12.5))')
       i1=1
       i2=ntrgts
       fn_hlp=fsumm(1)
@@ -781,16 +781,16 @@ c
      ,      tab,'peak_tei',tl,tab,'peak_nei',tl
           end if
           write(lun,fmt_peak) tim,
-     ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0),
-     ,     (wlc_tt(i),i=i1,i2,i3),
-     ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0),
-     ,     (wlc_rd(i),i=i1,i2,i3),
-     ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0),
-     ,     (wlc_pl(i),i=i1,i2,i3),
-     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0),
-     ,     (wlc_nu(i),i=i1,i2,i3),
-     ,     (wpk_te(i),i=i1,i2,i3),
-     ,     (wpk_ne(i),i=i1,i2,i3)
+     ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
+     ,     (tab, wlc_tt(i),i=i1,i2,i3),
+     ,     (tab, wpk_rd(i),i=i1,i2,i3), tab, wpk_rd(0),
+     ,     (tab, wlc_rd(i),i=i1,i2,i3),
+     ,     (tab, wpk_pl(i),i=i1,i2,i3), tab, wpk_pl(0),
+     ,     (tab, wlc_pl(i),i=i1,i2,i3),
+     ,     (tab, wpk_nu(i),i=i1,i2,i3), tab, wpk_nu(0),
+     ,     (tab, wlc_nu(i),i=i1,i2,i3),
+     ,     (tab, wpk_te(i),i=i1,i2,i3),
+     ,     (tab, wpk_ne(i),i=i1,i2,i3)
           close (lun)
         end if !}
         i1=2
@@ -1046,32 +1046,33 @@ c!###}
      ,   tab,hdr_3(0),
      ,   ((tab,hdr_3(i)//'_'//hlp_trg(j),i=1,n_lrdlcr),j=1,ntrgs),
      ,   ((tab,hdr_4(i)//'_'//hlp_trg(j),i=1,n_trgprj),j=1,ntrgs)
-        write(fmt_peak,705) n,tab
+        write(fmt_peak,705) n
         write(lun,fmt_peak) tim,
-     ,    (pwr_rd(j),pwr_tt(j),
-     ,    fwht_tt(j),fwxt_tt(j),
-     ,    hwht_tt(j),hwhm_tt(j),
-     ,    hwxt_tt(j),hwxm_tt(j),j=1,ntrgs),
-     ,    1.e6*add_rad,(pwr_cr(j),frc_cr(j),j=1,ntrgs),
-     ,    (hwxm_idp(j),hwxm_idt(j),
-     ,     hwhm_idp(j),hwhm_idt(j),
-     ,     xwhm_idp(j),xwhm_idt(j),
-     ,     xwhm_tt(j),j=1,ntrgs)
+     ,    (tab, pwr_rd(j),tab, pwr_tt(j),
+     ,     tab,fwht_tt(j),tab,fwxt_tt(j),
+     ,     tab,hwht_tt(j),tab,hwhm_tt(j),
+     ,     tab,hwxt_tt(j),tab,hwxm_tt(j),j=1,ntrgs),
+     ,     tab,1.e6*add_rad,
+     ,    (tab,  pwr_cr(j),tab,  frc_cr(j),j=1,ntrgs),
+     ,    (tab,hwxm_idp(j),tab,hwxm_idt(j),
+     ,     tab,hwhm_idp(j),tab,hwhm_idt(j),
+     ,     tab,xwhm_idp(j),tab,xwhm_idt(j),
+     ,     tab,xwhm_tt(j),j=1,ntrgs)
       else !}{
         write(lun,fmt_peak) '# time',tab,
      -   ((tab,hdr_2(i)//'_'//hlp_trg(j),i=1,n_intgrs),j=1,ntrgs),
      ,   ((tab,hdr_4(i)//'_'//hlp_trg(j),i=1,n_trgprj),j=1,ntrgs)
-        write(fmt_peak,705) n,tab
-  705   format('(1p,e12.5,',i3,'(1h',a1,',e12.5))')
+        write(fmt_peak,705) n
+  705   format('(1p,e12.5,',i3,'(a1,e12.5))')
         write(lun,fmt_peak) tim,
-     ,    (pwr_rd(j),pwr_tt(j),
-     ,     fwht_tt(j),fwxt_tt(j),
-     ,     hwht_tt(j),hwhm_tt(j),
-     ,     hwxt_tt(j),hwxm_tt(j),j=1,ntrgs),
-     ,    (hwxm_idp(j),hwxm_idt(j),
-     ,     hwhm_idp(j),hwhm_idt(j),
-     ,     xwhm_idp(j),xwhm_idt(j),
-     ,     xwhm_tt(j),j=1,ntrgs)
+     ,    (tab, pwr_rd(j),tab, pwr_tt(j),
+     ,     tab,fwht_tt(j),tab,fwxt_tt(j),
+     ,     tab,hwht_tt(j),tab,hwhm_tt(j),
+     ,     tab,hwxt_tt(j),tab,hwxm_tt(j),j=1,ntrgs),
+     ,    (tab,hwxm_idp(j),tab,hwxm_idt(j),
+     ,     tab,hwhm_idp(j),tab,hwhm_idt(j),
+     ,     tab,xwhm_idp(j),tab,xwhm_idt(j),
+     ,     tab,xwhm_tt(j),j=1,ntrgs)
       end if !}
       close (lun)
 c----------------------------------------------------------------------
@@ -1416,7 +1417,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           else
             nclm_er=2+3*nclm_na+nspecies+2*nclm_nm
           endif
-          write(fmt_peak,710) nclm_er,tab
+          write(fmt_peak,710) nclm_er
           write(lun,740) 'Target erosion - ',trg_label(jj),trim(label)
           write(lun,740) 'x',tab,
      .     'coordinate along target [m]. <0 in PFR'
@@ -1441,15 +1442,15 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
      .     '(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
-            write(lun,fmt_peak) 'x',
+            write(lun,fmt_peak) '#','x',
      ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
      ,           (mol_str(:,ia),ia=1,nclm_nm),spt_str(:,j),'xMP'
-            write(fmt_peak,720) nclm_er,tab
+            write(fmt_peak,720) nclm_er
           else
-            write(lun,fmt_peak) 'x',
+            write(lun,fmt_peak) '#','x',
      ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
      ,           (mol_str(:,ia),ia=1,nclm_nm),'xMP'
-            write(fmt_peak,720) nclm_er,tab
+            write(fmt_peak,720) nclm_er
           end if
           if(ntrgts.eq.4) then !{
             k=j
@@ -1520,7 +1521,7 @@ c
         if(ntrgts.eq.1) k=ntrgsx
         if(ntrgts.eq.2) k=ntrgsx-1
         open(lun,file=fsumm(2))
-        write(lun,*) 'Target erosion summary: ',label
+        write(lun,'(2a)') 'Target erosion summary: ',trim(label)
         write(lun,*)
         if (LSN) then
           write(lun,'(12x,3(a1,a12))')
@@ -1529,20 +1530,23 @@ c
           write(lun,'(12x,3(a1,a12))')
      -                   (tab,trg_label(i),i=ntrgsx,1,-k),tab,'total   '
         endif
-        write(fmt_peak,730) ntrgts+1,tab
-  730   format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
+        write(fmt_peak,730) ntrgts+1
+  730   format('(1p,1x,a12,',i3,'(a1,e12.4))')
         write(lun,*) 'Particle fluxes [1/s]'
         do is=1,nspecies
           write(lun,fmt_peak) trim(species_list(is))//' ions on',
-     ,                        (sjp_w(i,is),i=1,ntrgts),sjp_w(0,is)
+     ,                        (tab,sjp_w(i,is),i=1,ntrgts),
+     ,                         tab,sjp_w(0,is)
         end do
         do ia=1,nclm_na
           write(lun,fmt_peak) trim(TEXTA(ia))//' atoms on',
-     ,                        (sja_w(i,ia),i=1,ntrgts),sja_w(0,ia)
+     ,                        (tab,sja_w(i,ia),i=1,ntrgts),
+     ,                         tab,sja_w(0,ia)
         end do
         do is=1,nspecies
           write(lun,fmt_peak) trim(species_list(is))//' total on',
-     ,                          (sjt_w(i,is),i=1,ntrgts),sjt_w(0,is)
+     ,                         (tab,sjt_w(i,is),i=1,ntrgts),
+     ,                          tab,sjt_w(0,is)
         end do
         if (use_eirene.ne.0.and.nmoli.gt.0) then
         write(lun,*)
@@ -1551,7 +1555,8 @@ c
           ssmol=textmn(imol-1)
           ssmol=adjustl(ssmol)
           write(lun,fmt_peak) trim(ssmol)//' mols on',
-     ,                        (sjm_w(i,imol),i=1,ntrgts),sjm_w(0,imol)
+     ,                        (tab,sjm_w(i,imol),i=1,ntrgts),
+     ,                         tab,sjm_w(0,imol)
         end do
         end if
         if (ntargsp.gt.0.and.ft44) then
@@ -1562,8 +1567,8 @@ c
             write(lun,*)
             write(lun,*) 'Total sputtering [g/y]'
             write(lun,fmt_peak) trim(mtrtrgsg(j)),
-     ,                         (sjs_w(i),i=1,ntrgts),
-     ,                          sjs_w(0)
+     ,                         (tab,sjs_w(i),i=1,ntrgts),
+     ,                          tab,sjs_w(0)
           end do
           write(lun,*)
           write(lun,*) 'Erosion [mm/y]'
@@ -1595,9 +1600,11 @@ c
             end if
           end do !}
           ersn_am=ersn_am/ss_m
-          write(lun,fmt_peak) 'average',(ersn_a(i),i=1,ntrgts),ersn_am
-          write(lun,fmt_peak) 'peak',(ersn_p(i),i=1,ntrgts),ersn_pm
-          write(lun,fmt_peak) 'peak pos.',(ersn_l(i),i=1,ntrgts)
+          write(lun,fmt_peak) 'average',(tab,ersn_a(i),i=1,ntrgts),
+     ,                                   tab,ersn_am
+          write(lun,fmt_peak) 'peak',(tab,ersn_p(i),i=1,ntrgts),
+     ,                                tab,ersn_pm
+          write(lun,fmt_peak) 'peak pos.',(tab,ersn_l(i),i=1,ntrgts)
           close (lun)
         end if
       else
@@ -1610,8 +1617,8 @@ c
       return
 
 c======================================================================
-  710 format('(1h#,',i3,'(1x,a11,1h',a1,'))')
-  720 format('(1p,',i3,'(e12.5,1h',a1,'))')
+  710 format('(a1,',i3,'(1x,a11,2x))')
+  720 format('(1x,1p,',i3,'(e12.5,2x))')
   740 format('# ',2a,' : ',2a)
   750 format('# ',4a)
 c=======================================================================

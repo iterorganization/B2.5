@@ -117,7 +117,7 @@ c*** Local variables of general use
       integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
-      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
+      character hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       character*2, allocatable :: hlp_a(:)
 
       integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
@@ -385,7 +385,6 @@ c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
-      tab=char(9)
       call ipgetr ('b2mndr_stim', stim)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
@@ -497,25 +496,18 @@ c*** New file
         ni_tmp=nion_tmp
         nii_tmp=nis_tmp
         write(lun,700) lv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
-        write(lun,'(2a)') '#  ',label
+        write(lun,'(2a)') '#  ',trim(label)
 
-        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
-     /          'i3,12h(1h'//tab//',a7,a2),,'              //
-     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
-
-        hlp_frf='(16h(1h#,11x,4htime,,i3,9h(1h'//tab//',a8),,'     //
-     /          'i3,12h(1h'//tab//',a7,a2),,'              //
-     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
-
-        write(hlp_frm,hlp_frf) ng_tmp, ns_tmp*nsp_tmp, ni_tmp*nii_tmp
-
+        write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
+     ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
+     ,                   ns_tmp*nsp_tmp,'(5x,a7,a2),',
+     ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
-c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
+c     ,                       nb_tmp,nsp_tmp,nfl_tmp
 c        print *,'hlp_frm:'
-c        print *, hlp_frm
+c        print *,trim(hlp_frm)
 c>>>
-
         k=0
         do i=1,nspecies !{
           do j=1,nfluids(i) !{
@@ -525,13 +517,14 @@ c>>>
             if(hlp_a(k)(2:2).eq.' ') hlp_a(k)(2:2)='_'
           end do !}
         end do !}
-        write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+        write(lun,hlp_frm) '#','time',
+     ,    (hlp_hg(i),i=1,ng_tmp),
      ,   ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,   ((hlp_hi(k),hlp_a(i),ii(i),i=1,nii_tmp),k=1,ni_tmp)
 
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
-     -                       ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp
+      write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
+     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4))'
 
       allocate(equs_tmp(nspecies,nspc_tmp))
       allocate(nisp_tmp(nspecies))
@@ -549,7 +542,7 @@ c>>>
       allocate(gisi_tmp(ns))
 c<<<
 c      print *,'hlp_frm:'
-c      print *,hlp_frm
+c      print *,trim(hlp_frm)
 c>>>
       return
 c======================================================================
@@ -624,6 +617,5 @@ c     Finalization step
       return
 c======================================================================
   700 format('#   ',6i8)
-  701 format(a1,3x,6i8)
 c======================================================================
       end subroutine b2wrsep

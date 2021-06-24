@@ -310,11 +310,13 @@ c*** Write the header
      ,  '# flx... : fluxes of the ion species [1/m**2/s];'
       write (lun,*)
 
-      write(hlp_frmr,710) ns
+      write(hlp_frmr,'(a,i3,a)')
+     , '(a15,7x,a1,13x,a1,13x,a1,11x,a4,11x,a2,10x,a2,5x,',
+     ,   ns,'(a6,i2.2,a2,2x))'
 c      print *,hlp_frmr               !###
-  710 format('(15h#  il   ix   iy,7x,1hR,13x,1hZ,13x,1hx,11x,4harea,',
-     ,        '11x,2hTi,10x,2hTe,5x,',i3,'(6h  flx_,i2.2,a2,2x))')
-      write (lun,hlp_frmr) (mz_hlp(i),hlp_al(i),i=0,ns-1)
+      write (lun,hlp_frmr) '#  il   ix   iy',
+     ,                     'R','Z','x','area','Ti','Te',
+     ,                    ('  flx_',mz_hlp(i),hlp_al(i),i=0,ns-1)
 
       write(hlp_frmr,720) ns+2
 c      print *,hlp_frmr               !###
