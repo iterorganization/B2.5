@@ -46,14 +46,14 @@
       else
        kx = max(0,min(nxmap-1,nint(xinp-0.5_R8)))
        ky = max(0,min(nymap-1,nint(yinp-0.5_R8)))
-       xotp = (kx+1-xinp)*(ky+1-yinp)*xmap1(ind1d(kx,ky))+
-     &   (xinp-kx)*(ky+1-yinp)*xmap1(ind1d(kx+1,ky))+
-     &   (kx+1-xinp)*(yinp-ky)*xmap1(ind1d(kx,ky+1))+
-     &   (xinp-kx)*(yinp-ky)*xmap1(ind1d(kx+1,ky+1))
-       yotp = (kx+1-xinp)*(ky+1-yinp)*ymap1(ind1d(kx,ky))+
-     &   (xinp-kx)*(ky+1-yinp)*ymap1(ind1d(kx+1,ky))+
-     &   (kx+1-xinp)*(yinp-ky)*ymap1(ind1d(kx,ky+1))+
-     &   (xinp-kx)*(yinp-ky)*ymap1(ind1d(kx+1,ky+1))
+       xotp = (kx+1-xinp)*(ky+1-yinp)*real(xmap1(ind1d(kx,ky)),R4)+
+     &   (xinp-kx)*(ky+1-yinp)*real(xmap1(ind1d(kx+1,ky)),R4)+
+     &   (kx+1-xinp)*(yinp-ky)*real(xmap1(ind1d(kx,ky+1)),R4)+
+     &   (xinp-kx)*(yinp-ky)*real(xmap1(ind1d(kx+1,ky+1)),R4)
+       yotp = (kx+1-xinp)*(ky+1-yinp)*real(ymap1(ind1d(kx,ky)),R4)+
+     &   (xinp-kx)*(ky+1-yinp)*real(ymap1(ind1d(kx+1,ky)),R4)+
+     &   (kx+1-xinp)*(yinp-ky)*real(ymap1(ind1d(kx,ky+1)),R4)+
+     &   (xinp-kx)*(yinp-ky)*real(ymap1(ind1d(kx+1,ky+1)),R4)
       endif
       return
 *     ------------------------------------------------------------------

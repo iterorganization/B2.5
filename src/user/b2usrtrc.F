@@ -1144,8 +1144,9 @@ c*** Calculate the neutral flows in PFR
           hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)*hlp
         end do !}
       end do !}
+   30 continue
 #endif
-   30 do k=1,npfrgrp !{
+      do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp_pfrf(0,j,1)=hlp_pfrf(0,j,1)+hlp_pfrf(k,j,1)
         end do !}

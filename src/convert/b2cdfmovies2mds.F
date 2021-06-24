@@ -2,7 +2,20 @@
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
-#     include "mdslib.inc"
+
+      interface
+        integer function descr2(idtype,il1,il2,il3,il4,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: il1
+        integer, intent(in), optional :: il2
+        integer, intent(in), optional :: il3
+        integer, intent(in), optional :: il4
+        integer, intent(in) :: iflag
+        end function descr2
+      end interface
+
+#     include "mdslib_b2.inc"
+      integer mdsput2
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -131,7 +144,7 @@ c first deal with the time vector
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
-     *     descr2(idtype_double,dimsize(1),0),data1,
+     *     descr2(idtype_double,dimsize(1),iflag=0),data1,
      *     0)
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
@@ -161,7 +174,7 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(1),dimsize(2),0),
+     *       descr2(idtype_double,dimsize(1),dimsize(2),iflag=0),
      *       data2,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
@@ -177,7 +190,7 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(2),dimsize(1),0),
+     *       descr2(idtype_double,dimsize(2),dimsize(1),iflag=0),
      *       data2T,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
@@ -210,7 +223,7 @@ c first deal with the time vector
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),
-     1       dimsize(3),0),data3,0)
+     1       dimsize(3),iflag=0),data3,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -228,7 +241,7 @@ c first deal with the time vector
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(3),dimsize(1),
-     1       dimsize(2),0),data3T,0)
+     1       dimsize(2),iflag=0),data3T,0)
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data3T)

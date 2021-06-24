@@ -2,14 +2,30 @@
       implicit none
       character*(*) node_name,string
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,iflag,ilen)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: iflag
+        integer, intent(in), optional :: ilen
+        end function descr2
+
+        integer function mdsput2(name,units,description,string,iflg)
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        character*(*), intent(in) :: string
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
 
       if(len_trim(string).gt.0) then
         write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
         status=mdsput2(trim(node_name)//char(0),'$'//char(0),
-     1   descr2(idtype_cstring,0,len_trim(string)),
+     1   descr2(idtype_cstring,iflag=0,ilen=len_trim(string)),
      1   trim(string),0)
         call mds_err_msg(status)
       else
@@ -29,7 +45,17 @@
       integer ns
       character*(*) node_name,string(ns)
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,il1,iflag,ilen)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: il1
+        integer, intent(in) :: iflag
+        integer, intent(in), optional :: ilen
+        end function descr2
+      end interface
+
+#     include "mdslib_b2.inc"
+      integer mdsput2
       integer is
       integer :: status
       character*18 hlp_frm
@@ -41,7 +67,7 @@
         string(is)=trim(string(is)) // char(0)
       enddo
       status=mdsput2(trim(node_name)//char(0),'$'//char(0),
-     1 descr2(idtype_cstring,ns,0,len(string(1))),string,0)
+     1 descr2(idtype_cstring,ns,iflag=0,ilen=len(string(1))),string,0)
       call mds_err_msg(status)
 
 #else
@@ -56,7 +82,18 @@
       character*(*) node_name
       integer int
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function mdsput2(name,units,description,int,iflg)
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        integer, intent(in) :: int
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
+      integer descr2
       integer :: status
 
       write(*,'(a,a,a,i8)') 'mds_put_int to ',trim(node_name),
@@ -79,18 +116,39 @@
       integer :: nx, ny, data(nx,ny)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,i2,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: i2
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,i2d,iflg)
+        integer nx, ny
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        integer, intent(in), allocatable :: i2d(:,:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      integer, allocatable :: i2d(:,:)
 
+      allocate(i2d(nx,ny))
+      i2d=data
       tdi='$'
 
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_long,nx,ny,0),data,0)
+     * descr2(idtype_long,nx,ny,0),i2d,0)
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
+      deallocate(i2d)
 
 #else
       call xerrab('mds_put_int_rz: ' //
@@ -106,18 +164,37 @@
       integer :: ns, data(ns)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,i1d,iflg)
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        integer, intent(in), allocatable :: i1d(:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      integer, allocatable :: i1d(:)
 
+      allocate(i1d(ns))
+      i1d=data
       tdi='$'
 
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_long,ns,0),data,0)
+     * descr2(idtype_long,ns,0),i1d,0)
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
+      deallocate(i1d)
 
 #else
       call xerrab('mds_put_int_ns: ' //
@@ -132,7 +209,23 @@
       character*(*) node_name, units
       real (kind=R8) :: value
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: iflag
+        end function descr2
+
+      integer function mdsput2(name,units,description,value,iflg)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        real(kind=R8), intent(in) :: value
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
 
@@ -159,17 +252,38 @@
       real (kind=R8) :: data(ns)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,d1d,iflg)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        real(kind=R8), intent(in), allocatable :: d1d(:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      real(kind=R8), allocatable :: d1d(:)
 
+      allocate(d1d(ns))
+      d1d=data
       tdi='build_with_units($,"'//trim(units)//'")'
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,ns,0),data,0)
+     * descr2(idtype_double,ns,0),d1d,0)
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
+      deallocate(d1d)
 
 #else
       call xerrab('mds_put_double_ns: ' //
@@ -186,10 +300,31 @@
       real (kind=R8) :: data(nx,ny)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,i2,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: i2
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,d2d,iflg)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        real(kind=R8), intent(in), allocatable :: d2d(:,:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      real(kind=R8), allocatable :: d2d(:,:)
 
+      allocate(d2d(nx,ny))
+      d2d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -198,10 +333,11 @@
 
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,0),data,0)
+     * descr2(idtype_double,nx,ny,0),d2d,0)
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
+      deallocate(d2d)
 
 #else
       call xerrab('mds_put_double_rz: ' //
@@ -219,10 +355,32 @@
       real (kind=R8) :: data(nx,ny,ns)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,i2,i3,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: i2
+        integer, intent(in) :: i3
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,d3d,iflg)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        real(kind=R8), intent(in), allocatable :: d3d(:,:,:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      real (kind=R8), allocatable :: d3d(:,:,:)
 
+      allocate(d3d(nx,ny,ns))
+      d3d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -234,8 +392,9 @@
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,ns,0),data,0)
+     * descr2(idtype_double,nx,ny,ns,0),d3d,0)
       call mds_err_msg(status)
+      deallocate(d3d)
 
 #else
       call xerrab('mds_put_double_rzns: ' //
@@ -253,10 +412,33 @@
       real (kind=R8) :: data(nx,ny,nd,ns)
 
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,i2,i3,i4,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: i1
+        integer, intent(in) :: i2
+        integer, intent(in) :: i3
+        integer, intent(in) :: i4
+        integer, intent(in) :: iflag
+        end function descr2
+
+        integer function mdsput2(name,units,description,d4d,iflg)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        character*(*), intent(in) :: units
+        integer, intent(in) :: description
+        real(kind=R8), intent(in), allocatable :: d4d(:,:,:,:)
+        integer, intent(in) :: iflg
+        end function mdsput2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer :: status
       character :: tdi*(172)
+      real (kind=R8), allocatable :: d4d(:,:,:,:)
 
+      allocate(d4d(nx,ny,nd,ns))
+      d4d=data
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
      2 '"),,\TOP.SNAPSHOT.GRID:CR' // trim(dirsuffix) //
@@ -270,8 +452,9 @@
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx,ny,nd,ns,0),data,0)
+     * descr2(idtype_double,nx,ny,nd,ns,0),d4d,0)
       call mds_err_msg(status)
+      deallocate(d4d)
 
 #else
       call xerrab('mds_put_double_rzdns: ' //
@@ -284,14 +467,24 @@
       implicit none
       integer status
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,il1,iflag,ilen)
+        integer, intent(in) :: idtype
+        integer, intent(in), optional :: il1
+        integer, intent(in) :: iflag
+        integer, intent(in), optional :: ilen
+        end function descr2
+      end interface
+
+#     include "mdslib_b2.inc"
+      integer mdsvalue2
       integer :: size
       character :: message*80
 
       if(mod(status,2).eq.0) then
         status=mdsvalue2('getmsg($)'//char(0),
-     1   descr2(idtype_long,0),status,
-     2   descr2(idtype_cstring,0,80),message,0,size)
+     1   descr2(idtype_long,iflag=0),status,
+     2   descr2(idtype_cstring,iflag=0,ilen=80),message,0,size)
         write(*,*) trim(message)
       endif
 #else

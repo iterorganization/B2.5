@@ -39,18 +39,20 @@
       if (nxmap.eq.-1) then
        xotp = xinp
       else if (nxmap.eq.0) then
-       xotp = xmap(0)
+       xotp = real(xmap(0),R4)
       else
        kx = max(0,min(nxmap-1,nint(xinp-0.5_R8)))
-       xotp = (kx+1-xinp)*xmap(kx)+(xinp-kx)*xmap(kx+1)
+       xotp = (kx+1-xinp)*real(xmap(kx),R4)+
+     &        (xinp-kx)*real(xmap(kx+1),R4)
       endif
       if (nymap.eq.-1) then
        yotp = yinp
       else if (nymap.eq.0) then
-       yotp = ymap(0)
+       yotp = real(ymap(0),R4)
       else
        ky = max(0,min(nymap-1,nint(yinp-0.5_R8)))
-       yotp = (ky+1-yinp)*ymap(ky)+(yinp-ky)*ymap(ky+1)
+       yotp = (ky+1-yinp)*real(ymap(ky),R4)+
+     &        (yinp-ky)*real(ymap(ky+1),R4)
       endif
       return
 *     ------------------------------------------------------------------

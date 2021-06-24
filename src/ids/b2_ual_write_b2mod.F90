@@ -278,10 +278,12 @@ program b2_ual_write_b2mod
 #endif
 
     !! Dummy variables
+    integer :: status
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: num_step_string
     character(len=24) :: argName
+    character(len=132) :: imas_version
 
     !! Procedures
     character*16 usrnam

@@ -2,7 +2,18 @@
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
-#     include "mdslib.inc"
+
+      interface
+        integer function descr2(idtype,il1,il2,iflag)
+        integer, intent(in) :: idtype
+        integer, intent(in) :: il1
+        integer, intent(in), optional :: il2
+        integer, intent(in) :: iflag
+        end function descr2
+      end interface
+
+#     include "mdslib_b2.inc"
+      integer mdsput2
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -69,7 +80,7 @@ c first handle x-coordinate of profiles (and areas)
           status=mdsput2(
      *     trim(ds_mds(i))//char(0),
      *     'build_with_units($,"m")'//char(0),
-     *     descr2(idtype_double,il,0),ds,
+     *     descr2(idtype_double,il,iflag=0),ds,
      *     0)
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
@@ -192,7 +203,7 @@ c first deal with the time vector
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
-     *     descr2(idtype_double,dimsize(1),0),data1,
+     *     descr2(idtype_double,dimsize(1),iflag=0),data1,
      *     0)
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
@@ -352,7 +363,7 @@ c and now for f(t)
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
-     *           descr2(idtype_double,dimsize(2),0),data2T(:,1),
+     *           descr2(idtype_double,dimsize(2),iflag=0),data2T(:,1),
      *           0)
                 write(*,*) 'mdsput2'
                 call mds_err_msg(status)
@@ -374,7 +385,7 @@ c and now for f(t)
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
-     *           descr2(idtype_double,dimsize(1),0),data1,
+     *           descr2(idtype_double,dimsize(1),iflag=0),data1,
      *           0)
                 write(*,*) 'mdsput2'
                 call mds_err_msg(status)

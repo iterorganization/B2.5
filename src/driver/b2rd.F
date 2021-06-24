@@ -68,12 +68,46 @@
       integer ninp(0:0), nout(0:2)
       real (kind=R8), allocatable :: zero(:,:)
 #ifdef MDSPLUS
-#     include "mdslib.inc"
+      interface
+        integer function descr2(idtype,i1,i2,i3,i4,iflag,ilen)
+        integer, intent(in) :: idtype
+        integer, intent(in), optional :: i1
+        integer, intent(in), optional :: i2
+        integer, intent(in), optional :: i3
+        integer, intent(in), optional :: i4
+        integer, intent(in) :: iflag
+        integer, intent(in), optional :: ilen
+        end function descr2
+
+        integer function mdsvalue2(name,description,
+     &   int,idum2d,rdum1d,rdum2d,rdum3d,rdum4d,string,iflg,retlen)
+        use b2mod_types
+        character*(*), intent(in) :: name
+        integer, intent(in) :: description
+        integer, intent(out), optional :: int
+        integer, intent(out), allocatable, optional :: idum2d(:,:)
+        real(kind=R8), intent(out), allocatable, optional :: rdum1d(:)
+        real(kind=R8), intent(out), allocatable, optional :: rdum2d(:,:)
+        real(kind=R8), intent(out), allocatable, optional ::
+     &                                                     rdum3d(:,:,:)
+        real(kind=R8), intent(out), allocatable, optional ::
+     &                                                   rdum4d(:,:,:,:)
+        character*(*), intent(out), optional :: string
+        integer, intent(in) :: iflg
+        integer, intent(out) :: retlen
+        end function mdsvalue2
+      end interface
+
+#     include "mdslib_b2.inc"
       integer idum(0:9), io, ishot, n2, nx, ny, ns
       integer status, retlen, dbversion
       integer ix, iy, i, j, is
       character*120 lblmn, lblgm
       integer, allocatable :: idummy(:,:)
+      real(kind=R8), allocatable :: rdum(:), rdummy(:,:),
+     *     rfx(:,:), rfy(:,:),
+     *     rfn(:,:,:), rfnx(:,:,:), rfny(:,:,:),
+     *     rfn2(:,:,:,:)
       real (kind=R8), allocatable :: za(:)
       logical file_open
       real (kind=R8) ::
@@ -154,31 +188,31 @@
       call mds_err_msg(status)
 
       status=mdsvalue2('_s=\TOP.IDENT:NX'//char(0),
-     1 descr2(idtype_long,0),nx,0,retlen)
+     1 descr2(idtype_long,iflag=0),int=nx,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       nx=nx-2
       write(*,*) 'Found NX = ',nx
       call xertst (0.le.nx, 'faulty parameter nx')
       status=mdsvalue2('_s=\TOP.IDENT:NY'//char(0),
-     1 descr2(idtype_long,0),ny,0,retlen)
+     1 descr2(idtype_long,iflag=0),int=ny,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       ny=ny-2
       write(*,*) 'Found NY = ',ny
       call xertst (0.le.ny, 'faulty parameter ny')
       status=mdsvalue2('_s=\TOP.IDENT:NS'//char(0),
-     1 descr2(idtype_long,0),ns,0,retlen)
+     1 descr2(idtype_long,iflag=0),int=ns,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       write(*,*) 'Found NS = ',ns
       call xertst (1.le.ns, 'faulty parameter ns')
       status=mdsvalue2('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
-     1 descr2(idtype_cstring,0,10),
-     2 plasmastate_version,0,retlen)
+     1 descr2(idtype_cstring,iflag=0,ilen=10),
+     2 string=plasmastate_version,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       write(*,*) 'Reading plasma state version number = ',
      1 plasmastate_version
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
-     1 descr2(idtype_long,0),
-     2 dbversion,0,retlen)
+     1 descr2(idtype_long,iflag=0),
+     2 int=dbversion,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       write(*,*) 'MDSplus database version = ',dbversion
 
@@ -189,28 +223,39 @@
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       allocate(idummy(-1:nx,-1:ny))
+      allocate(rdummy(-1:nx,-1:ny))
+      allocate(rdum(0:ns-1))
+      allocate(rfx( 0:nx,-1:ny))
+      allocate(rfy(-1:nx, 0:ny))
+      allocate(rfn (-1:nx,-1:ny,0:ns-1))
+      allocate(rfnx( 0:nx,-1:ny,0:ns-1))
+      allocate(rfny(-1:nx, 0:ny,0:ns-1))
+      allocate(rfn2(-1:nx,-1:ny,0:1,0:ns-1))
       allocate(zero(-1:nx,-1:ny))
       zero = 0.0_R8
 
 *   ..read species data
       if (dbversion.ge.9) then
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMIN'//char(0),
-     1   descr2(idtype_double,NS,0),
-     2   zamin(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,iflag=0),
+     2   rdum1d=rdum,iflg=0,retlen=retlen)
+        zamin=rdum
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
-     1   descr2(idtype_double,NS,0),
-     2   zamax(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,iflag=0),
+     2   rdum1d=rdum,iflg=0,retlen=retlen)
+        zamax=rdum
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:RZA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,0),
-     2   rza,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
+     2   rdum3d=rfn,iflg=0,retlen=retlen)
+        rza=rfn
         call mds_err_msg(status)
       else
         allocate(za(0:ns-1))
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
-     1   descr2(idtype_double,NS,0),
-     2   za(0:ns-1),0,retlen)
+     1   descr2(idtype_double,NS,iflag=0),
+     2   rdum1d=za,iflg=0,retlen=retlen)
         call mds_err_msg(status)
         zamin(0:ns-1)=za(0:ns-1)
         zamax(0:ns-1)=za(0:ns-1)
@@ -220,99 +265,117 @@
         deallocate(za)
       endif
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
-     1 descr2(idtype_double,NS,0),
-     2 zn(0:ns-1),0,retlen)
+     1 descr2(idtype_double,NS,iflag=0),
+     2 rdum1d=rdum,iflg=0,retlen=retlen)
+      zn=rdum
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
-     1 descr2(idtype_double,NS,0),
-     2 am(0:ns-1),0,retlen)
+     1 descr2(idtype_double,NS,iflag=0),
+     2 rdum1d=rdum,iflg=0,retlen=retlen)
+      am=rdum
       call mds_err_msg(status)
 
 *   ..read plasma data
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 ne,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      ne=rdummy
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,0),
-     2 na,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      na=rfn
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:UA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,0),
-     2 ua,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      ua=rfn
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 te,0,retlen)
-      te=te*qe
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      te=rdummy*qe
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TI'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 ti,0,retlen)
-      ti=ti*qe
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      ti=rdummy*qe
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:PO'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 po,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      po=rdummy
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,0),
-     2 fna(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+      fna(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,0),
-     2 fna(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2 rdum3d=rfny,iflg=0,retlen=retlen)
+      fna(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_32'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,0),
-     2 fna_32(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+      fna_32(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna_32(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_32'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,0),
-     2 fna_32(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2 rdum3d=rfny,iflg=0,retlen=retlen)
+      fna_32(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna_32(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_52'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,0),
-     2 fna_52(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+      fna_52(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna_52(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_52'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,0),
-     2 fna_52(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2 rdum3d=rfny,iflg=0,retlen=retlen)
+      fna_52(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna_52(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,0),
-     2 fhe(0:nx,-1:ny,0),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2 rdum2d=rfx,iflg=0,retlen=retlen)
+      fhe(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fhe(-1,:,0)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,0),
-     2 fhe(-1:nx,0:ny,1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2 rdum2d=rfy,iflg=0,retlen=retlen)
+      fhe(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
       fhe(:,-1,1)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,0),
-     2 fhi(0:nx,-1:ny,0),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2 rdum2d=rfx,iflg=0,retlen=retlen)
+      fhi(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fhi(-1,:,0)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,0),
-     2 fhi(-1:nx,0:ny,1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2 rdum2d=rfy,iflg=0,retlen=retlen)
+      fhi(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
       fhi(:,-1,1)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,0),
-     2 fch(0:nx,-1:ny,0),0,retlen)
+     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2 rdum2d=rfx,iflg=0,retlen=retlen)
+      fch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fch(-1,:,0)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,0),
-     2 fch(-1:nx,0:ny,1),0,retlen)
+     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2 rdum2d=rfy,iflg=0,retlen=retlen)
+      fch(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
       fch(:,-1,1)=0.0_R8
       call mds_err_msg(status)
       if (dbversion.le.9) then
@@ -328,308 +391,372 @@
         enddo
       else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
-     2   uadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
+     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+        uadia=rfn2
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fch_32(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fch_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fch_32(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fch_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fch_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fch_52(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fch_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fch_52(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fch_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fch_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCH_P'//char(0),  !srv 10.06.09 {
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fch_p(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fch_p(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_p(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,0),
-     2   kinrgy,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
+     2   rdum3d=rfn,iflg=0,retlen=retlen)
+        kinrgy=rfn
         call mds_err_msg(status)
       endif
       if (dbversion.ge.22) then
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fna_mdf(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fna_mdf(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_mdf(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fna_mdf(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fna_mdf(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_mdf(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhe_mdf(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhe_mdf(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhe_mdf(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhe_mdf(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhe_mdf(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhe_mdf(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhi_mdf(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhi_mdf(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhi_mdf(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhi_mdf(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhi_mdf(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhi_mdf(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_FCOR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fna_fcor(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fna_fcor(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_fcor(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_FCOR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fna_fcor(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fna_fcor(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_fcor(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_NODRIFT'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fna_nodrift(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fna_nodrift(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_nodrift(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_NODRIFT'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fna_nodrift(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fna_nodrift(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_nodrift(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_HE'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fna_he(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fna_he(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_he(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_HE'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fna_he(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fna_he(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_he(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fnaPSch(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fnaPSch(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fnaPSch(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fnaPSch(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fnaPSch(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fnaPSch(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhePSch(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhePSch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhePSch(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhePSch(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhePSch(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhePSch(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhiPSch(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhiPSch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhiPSch(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhiPSch(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhiPSch(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhiPSch(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,0),
-     2   fna_eir(0:nx,-1:ny,0,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
+     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+        fna_eir(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_eir(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,0),
-     2   fna_eir(-1:nx,0:ny,1,0:ns-1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
+     2   rdum3d=rfny,iflg=0,retlen=retlen)
+        fna_eir(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_eir(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fne_eir(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fne_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fne_eir(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fne_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhe_eir(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhe_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhe_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhe_eir(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhe_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhe_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fhi_eir(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fhi_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhi_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fhi_eir(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fhi_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhi_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fni_32(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fni_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fni_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fni_32(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fni_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fni_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fni_52(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fni_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fni_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fni_52(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fni_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fni_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fne_32(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fne_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fne_32(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fne_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fne_52(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fne_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fne_52(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fne_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchdia(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchdia(0:nx,-1:ny,0)=rfx(-1:nx,0:ny)
         fchdia(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchdia(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchdia(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchdia(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchin(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchin(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchin(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchin(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchin(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchin(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchvispar(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchvispar(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvispar(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchvispar(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchvispar(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvispar(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchvisper(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchvisper(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvisper(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchvisper(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchvisper(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvisper(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchvisq(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchvisq(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvisq(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchvisq(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchvisq(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvisq(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   fchinert(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        fchinert(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchinert(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   fchinert(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        fchinert(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchinert(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
-     2   vadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
+     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+        vadia=rfn2
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:WADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
-     2   wadia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
+     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+        wadia=rfn2
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),
-     2   vaecrb,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
+     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+        vaecrb=rfn2
         call mds_err_msg(status)
+        deallocate(rfn)
+        allocate(rfn(-1:nx,-1:ny,0:1))
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,0),
-     2   vedia,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,iflag=0),
+     2   rdum3d=rfn,iflg=0,retlen=retlen)
+        vedia=rfn
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,0),
-     2   veecrb,0,retlen)
+     1   descr2(idtype_double,NX+2,NY+2,2,iflag=0),
+     2   rdum3d=rfn,iflg=0,retlen=retlen)
+        veecrb=rfn
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   floe_noc(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        floe_noc(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         floe_noc(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEY_NOC'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   floe_noc(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        floe_noc(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         floe_noc(:,-1,1)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIX_NOC'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,0),
-     2   floi_noc(0:nx,-1:ny,0),0,retlen)
+     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
+     2   rdum2d=rfx,iflg=0,retlen=retlen)
+        floi_noc(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         floi_noc(-1,:,0)=0.0_R8
         call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIY_NOC'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,0),
-     2   floi_noc(-1:nx,0:ny,1),0,retlen)
+     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
+     2   rdum2d=rfy,iflg=0,retlen=retlen)
+        floi_noc(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         floi_noc(:,-1,1)=0.0_R8
         call mds_err_msg(status)
       else
@@ -669,86 +796,100 @@
       endif
 
 *   ..read geometry data
+      deallocate(rfn)
+      allocate(rfn(-1:nx,-1:ny,0:3))
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),
-     2 crx,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      crx=rfn
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),
-     2 cry,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      cry=rfn
       call mds_err_msg(status)
       fpsi = 0.0_R8
       ffbz = 0.0_R8
       status=mdsvalue2('_s=\TOP.SNAPSHOT:B'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,0),
-     2 bb,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      bb=rfn
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:VOL'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 vol,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      vol=rdummy
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HX'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 hx,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      hx=rdummy
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,0),
-     2 hy,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
+     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+      hy=rdummy
       call mds_err_msg(status)
+      deallocate(rfn)
+      allocate(rfn(-1:nx,-1:ny,0:1))
       status=mdsvalue2('_s=\TOP.SNAPSHOT:QZ'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,2,0),
-     2 qz,0,retlen)
+     1 descr2(idtype_double,NX+2,NY+2,2,iflag=0),
+     2 rdum3d=rfn,iflg=0,retlen=retlen)
+      qz=rfn
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 region(:,:,0),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
+      region(:,:,0)=idummy(:,:)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 region(:,:,1),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
+      region(:,:,1)=idummy(:,:)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 region(:,:,2),0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
+      region(:,:,2)=idummy(:,:)
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       leftix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       leftiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       rightix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       rightiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       bottomix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       bottomiy = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       topix = idummy - 1
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,0),
-     2 idummy,0,retlen)
+     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
+     2 idum2d=idummy,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       topiy = idummy - 1
       nncut = maxval(region(:,:,0)/4)
@@ -913,7 +1054,7 @@
       write(nout(0),*) 'Recovered geometry from run number ',ishot
       write(*,*) 'Recovered plasma state from run number ',ishot
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
-     1 descr2(idtype_long,0),dbversion,0,retlen)
+     1 descr2(idtype_long,iflag=0),int=dbversion,iflg=0,retlen=retlen)
       call mds_err_msg(status)
       write(*,*) 'MDSplus database version = ',dbversion
 
@@ -935,6 +1076,7 @@
 
 * ..end of computation
       deallocate(idummy)
+      deallocate(rdum,rdummy,rfx,rfy,rfn,rfnx,rfny,rfn2)
       deallocate(zero)
       call dealloc_b2mod_geo
       call dealloc_b2mod_work

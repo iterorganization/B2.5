@@ -84,7 +84,7 @@ contains
     !.declarations
 
     !   ..local variables
-    integer ncall, ntstep, nastep
+    integer ncall
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -123,6 +123,7 @@ contains
     external subini, subend, xertst, ipgeti, batch_average
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
+    integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
     integer imap(maxvdims), iret
@@ -148,10 +149,10 @@ contains
     external rratio
 #endif
     !   ..initialisation
-    save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
+    save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nc, nya, nyi, nybl, nybr, nytl, nytr, nastep
+         nc, nya, nyi, nybl, nybr, nytl, nytr
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
