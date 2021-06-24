@@ -302,6 +302,13 @@ ctmp.dpc
       call timer%stop("parallel")
 #endif
 #endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, shi0)
+
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then

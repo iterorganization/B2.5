@@ -469,6 +469,16 @@ cxpb
         end do
       end do
 
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
+
       b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
       b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)
       b2stbm_sne(:,:)=sne0(:,:,0)+sne0(:,:,1)*ne(:,:)

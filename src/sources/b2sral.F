@@ -381,15 +381,6 @@ csw 30sep2013, added cdpa in call, uadia
      &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,            !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
-*   ..zero out contributions in dead cells
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 1, sne0)
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0)
-      call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
       call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -414,15 +405,6 @@ csw 30sep2013, added cdpa in call, uadia
      &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
-*   ..zero out contributions in dead cells and core boundary
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 1, sne0)
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0)
-      call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
       call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -434,15 +416,6 @@ csw 30sep2013, added cdpa in call, uadia
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
      &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall)
-*   ..zero out contributions in dead cells and core boundary
-        do is = 0, ns-1
-          call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-          call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-        enddo
-        call b2xzdd (nx, ny, 1, sne0)
-        call b2xzdd (nx, ny, 3, she0)
-        call b2xzdd (nx, ny, 3, shi0)
-        call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -458,16 +431,6 @@ csw 30sep2013, added cdpa in call, uadia
      & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,  !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09 {
-*   ..zero out contributions in dead cells and core boundary
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0_ion(-1,-1,0,is))
-        call b2xzdd (nx, ny, 1, sna0_rec(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smq0_ion(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smq0_rec(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0_ion)
-      call b2xzdd (nx, ny, 3, shi0_rec)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0_ion, 1, sna, 1)
       call b2saxpy (n2*2*ns, 1.0_R8, sna0_rec, 1, sna, 1)
@@ -505,12 +468,6 @@ csw 30sep2013, added cdpa in call, uadia
 *      (parallel momentum source must be pure friction)
         call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,    !srv 09.01.01
      &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)       !srv 07.07.09
-*   ..zero out contributions in dead cells and core boundary
-        do is = 0, ns-1
-         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-         call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
-        enddo
-        call b2xzdd (nx, ny, 3, shi0)
 *    ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smq, 1)

@@ -462,6 +462,16 @@ c accounted for)
       call timer%stop("parallel")
 #endif
 #endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0_ion(-1,-1,0,is))
+        call b2xzdd (nx, ny, 1, sna0_rec(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0_ion(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0_rec(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0_ion)
+      call b2xzdd (nx, ny, 3, shi0_rec)
 #ifndef NO_OPENMP_B2STEL
 !$OMP SINGLE
 #endif
