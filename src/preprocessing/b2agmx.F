@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & vol1, hxx, hyy, qz1, qc1, qcb1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -24,7 +24,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
-     *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
+     *  vol1(-1:nx1,-1:ny1), hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1),
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1),
      &  qcb1(-1:nx1,-1:ny1),
      &  gs1(-1:nx1,-1:ny1,0:2),
@@ -65,7 +65,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine takes as input the metric coefficients on a fine
-*     mesh: vol1, hx1, hy1, qz1, qc1 and gs1.  It computes the metric
+*     mesh: vol1, hxx, hyy, qz1, qc1 and gs1.  It computes the metric
 *     coefficients on a corresponding coarsened mesh.
 *
 *
@@ -76,7 +76,7 @@
 *     dimensions of the coarse mesh.
 *     See the calling routine for description.
 *
-*     vol1, hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 array, input.
+*     vol1, hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 array, input.
 *     These arrays hold the metric coefficients on the fine mesh.
 *     See below for detailed description.
 *
@@ -178,7 +178,7 @@
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 *   ..test input metric
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qcb1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qcb1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
@@ -657,7 +657,7 @@ cdpc-end
           do jy1 = 0, ky1-1
             t1 = 0.0_R8
             do jx1 = 0, kx1-1
-              t1 = t1+hx1(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
+              t1 = t1+hxx(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1/t1
           enddo
@@ -668,7 +668,7 @@ cdpc-end
           do jx1 = 0, kx1-1
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
-              t1 = t1+(hy1(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
+              t1 = t1+(hyy(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
      &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1

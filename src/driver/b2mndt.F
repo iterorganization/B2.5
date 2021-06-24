@@ -514,7 +514,7 @@ ctmp.dpc
            call b2xpfe (nx, ny, ns, ns_ext, qe,
      &      rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                  !ajs 06.04.20
            call b2xpen (nx, ny, ns,
-     1      fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     1      fna, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
      2      rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8

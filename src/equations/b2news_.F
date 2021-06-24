@@ -969,7 +969,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
       call b2xpen (nx, ny, ns,
-     1 fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     1 fna, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
      2 rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
       if (iout_b2wdat.eq.4) then
        call my_out(70,nx,ny,fht(-1,-1,0),'b2news__fhtx')

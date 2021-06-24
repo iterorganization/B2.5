@@ -13,8 +13,8 @@
      *  ffbz1(:,:,:),
      *  fpsi1(:,:,:),
      *  gs1(:,:,:),
-     *  hx1(:,:),
-     *  hy1(:,:),
+     *  hxx(:,:),
+     *  hyy(:,:),
      *  hz1(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:),
@@ -61,8 +61,8 @@
       allocate(ffbz1(-1:nxd,-1:nyd,0:3))
       allocate(fpsi1(-1:nxd,-1:nyd,0:3))
       allocate(gs1(-1:nxd,-1:nyd,0:2))
-      allocate(hx1(-1:nxd,-1:nyd))
-      allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hxx(-1:nxd,-1:nyd))
+      allocate(hyy(-1:nxd,-1:nyd))
       allocate(hz1(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd))
@@ -105,8 +105,8 @@
          deallocate(fpsi1)
          deallocate(wbbc1)
          deallocate(gs1)
-         deallocate(hx1)
-         deallocate(hy1)
+         deallocate(hxx)
+         deallocate(hyy)
          deallocate(hz1)
          deallocate(qz1)
          deallocate(qc1)

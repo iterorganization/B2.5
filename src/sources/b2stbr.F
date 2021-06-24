@@ -108,8 +108,8 @@
       integer ia, im, ip
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi),
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol),                                 !IYS 27.01.17
      &  sna_puff(nspecies),  !sna_eir_tot(nspecies), 
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
@@ -665,7 +665,6 @@ c   --> better solution wanted here..
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        datm_eir = 0.0_R8                                                !srv 29.04.10
         call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
@@ -893,16 +892,6 @@ cwdk these are now put back into the constant part of the sources (0-component)
         endif
 #endif
         do ia = 1, nnatmi
-!         is = eb2spcr(ia)  ! IYS 27.01.2017
-         do iy = -1,ny
-          do ix = -1,nx
-! IYS 27.01.2017
-!           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
-!           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
-! IYS 27.01.2017
-           datm_eir(ix,iy,ia)   = dab2(ix+1,iy+1,ia,1)
-          enddo
-         enddo
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,ia,1)
@@ -915,11 +904,6 @@ cwdk these are now put back into the constant part of the sources (0-component)
         enddo
 ! IYS 27.01.2017
         do im = 1, nmol
-         do iy = -1,ny
-          do ix = -1,nx
-           dmol_eir(ix,iy,im)   = dmb2(ix+1,iy+1,im,1)
-          enddo
-         enddo
 ! interpolate molecule fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,

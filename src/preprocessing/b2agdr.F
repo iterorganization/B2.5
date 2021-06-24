@@ -240,7 +240,7 @@
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     crx1, cry1, fpsi1, ffbz1, vol1, 
-*     hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 arrays.
+*     hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 arrays.
 *     These arrays characterise the geometry on the auxiliary mesh.
 *
 *     lblgm - character*120.
@@ -414,7 +414,7 @@
       endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
-     & hx1, hy1, qz1, qc1, qcb1, gs1,
+     & hxx, hyy, qz1, qc1, qcb1, gs1,
      & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
 *   ..improved computation of qc based on interpolation of qz values
 cwdk  avoids artificial reduction of poloidal contact area between faces for
@@ -475,7 +475,7 @@ cwdk  faces is not representative for orthogonality of left face to field!
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & vol1, hxx, hyy, qz1, qc1, qcb1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -571,9 +571,9 @@ cdpc-debug
         write(*,*) 'b2agdr sanity check: vol ',
      1   maxval(abs(vol1-vol))
         write(*,*) 'b2agdr sanity check: hx  ',
-     1   maxval(abs(hx1-hx))
+     1   maxval(abs(hxx-hx))
         write(*,*) 'b2agdr sanity check: hy  ',
-     1   maxval(abs(hy1-hy))
+     1   maxval(abs(hyy-hy))
         write(*,*) 'b2agdr sanity check: qz  ',
      1   maxval(abs(qz1-qz))
         write(*,*) 'b2agdr sanity check: qc  ',

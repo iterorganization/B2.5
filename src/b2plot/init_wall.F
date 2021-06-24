@@ -27,7 +27,7 @@
       real (kind=R8) :: qpl, qex, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  dist, distp, dint, sum,
+     *  distance, distp, dint, sum,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
       character*16 hlp_frm
       logical wall_namelist_used, default_cooling, correct_quadrant
@@ -533,8 +533,8 @@ c no mixed materials
           xb = r2(ibnd)
           ya = z1(ibnd)
           yb = z2(ibnd)
-          dist = sqrt((xb-xa)**2+(yb-ya)**2)
-          target_width(ibnd,1) = dist
+          distance = sqrt((xb-xa)**2+(yb-ya)**2)
+          target_width(ibnd,1) = distance
           targetcr(ibnd,1,1) = xa
           targetcz(ibnd,1,1) = ya
           targetcr(ibnd,1,2) = xb
@@ -622,7 +622,7 @@ cxpb and far enough away from the OAp line
      .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
               distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
      .         sqrt((yap-yo)**2+(xo-xap)**2)
-              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8))
+              if(.not.(correct_quadrant.and.distp/distance.ge.0.1_R8))
      .         then
                 ik = min(ik,i)
                 xbp = xo + (xbm-xo) + (xap-xo)

@@ -135,18 +135,6 @@ c*** Values by species
       equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
       character hlp_hs(nspc_tmp)*8
 
-c*** added 20010716
-c#ifdef SCL_IMP_RCI
-c      integer nspc1_tmp, ns1_tmp
-c      parameter (nspc1_tmp=1)
-c      real (kind=R8) ::
-c    *     equs1_tmp(nsd,nspc1_tmp)
-c      real(kind=R8) ::
-c    *      rrci_tmp(nsd)
-c      equivalence (equs1_tmp(1,1), rrci_tmp)
-c      character*2 hlp_hs1(nspc_tmp)*8
-c#endif
-c
 c*** Values by species and regions
       integer nsar_tmp, na_tmp
 !      parameter (nsar_tmp=2)
@@ -201,9 +189,6 @@ c*** Local variables of general use
       integer iatm ! IYS 29.09.2017
       integer imol
 #endif
-c#ifdef SCL_IMP_RCI
-c     integer iy
-c#endif
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg / ! These are headers for 12 global parameters
@@ -215,9 +200,6 @@ c*** Column headers:
      2          'SSEIreg_','th_enre_','th_enri_',
      3          'K_en_ri_','N_e_reg_','vol_reg_'/
       data hlp_hs / 'SSNItot_', 'N_a_tot_' /
-c#ifdef SCL_IMP_RCI
-c      data hlp_hs1 / 'res_rci_' /
-c#endif
       data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
       data hlp_hf / 'Stratum_' /
       data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
@@ -235,9 +217,6 @@ c
      +  equr_tmp,
      +  hlp_hr,
      +  nsp_tmp, ns_tmp, 
-c#ifdef SCL_IMP_RCI
-c     + ns1_tmp, equs1_tmp, rrci_tmp, hlp_hs1,
-c#endif
      +  equs_tmp,
      +  ssni_tmp,
      +  Natm_tmp,
@@ -255,9 +234,6 @@ c#endif
      +  lun,
      +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
-c#ifdef SCL_IMP_RCI
-c    +  iy,
-c#endif
      +  ex, warn_tmp,
      +  tab, hlp_c, f, hlp_frm, hlp_frf
 c=======================================================================
@@ -267,9 +243,6 @@ c
       equg_tmp=0.0_R8
       equr_tmp=0.0_R8
       equs_tmp=0.0_R8
-c#ifdef SCL_IMP_RCI
-c     equs1_tmp=0.0_R8
-c#endif
       equa_tmp=0.0_R8
       equf_tmp=0.0_R8
       equb_tmp=0.0_R8
@@ -411,19 +384,6 @@ csw 20sep2013 added
 #endif
         end do
       end do
-c#ifdef SCL_IMP_RCI
-c      do i=1,nspecies !{
-c        do ix=0,nx-1 !{
-c          do iy=0,ny-1 !{
-c            rrci_tmp(i)=rrci_tmp(i)+sclirci(ix,iy,i)*snicrcis(ix,iy,i)
-c            do is=nsph(i),nsph(i)-1+nfluids(i) !{
-c              rrci_tmp(i)=rrci_tmp(i)+snivrci(ix,iy,is)*na(ix,iy,is)
-c            end do !}
-c          end do !}
-c        end do !}
-c      end do !}
-c#endif
-c
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then
 c
@@ -439,9 +399,6 @@ c
      ,        (((equb_tmp(i,j,k),j=1,nfl_tmp),i=1,nsp_tmp),k=1,nb_tmp),
      ,         ((equb_tmp(0,j,k),j=1,nfl_tmp),k=1,nb_tmp)
         end if
-c#ifdef SCL_IMP_RCI
-c     ,        ,((equs1_tmp(i,j),i=1,nsp_tmp),j=1,ns1_tmp)
-c#endif
       end if
       return
 c=======================================================================
@@ -472,9 +429,6 @@ c
         read(lun,*,err=92) hlp_c, nv,
      &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
-c#ifdef SCL_IMP_RCI
-c     ,                         ,ns1_tmp
-c#endif
         lv_trc(ltrc)=nv
         warn_tmp=.false.
 
@@ -530,16 +484,6 @@ c Check the number of quantities computed for each species
      ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
-c#ifdef SCL_IMP_RCI
-c       if(ns1_tmp.ne.nspc1_tmp) then
-c         warn_tmp=.true.
-c         write(*,'(a,i4,3a,i4)')
-c     ,    '!!! b2wrint: current number of values by species (ext1) ',
-c     ,    nspc1_tmp,
-c     ,    ' differs from that in the file ',trim(f),' : ',ns1_tmp
-c         if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
-c       end if
-c#endif
 
 c Check the number of species
         if(nsp_tmp .ne. nspecies) then
@@ -606,20 +550,14 @@ c*** New file
         nr_tmp  = nrgn_tmp
         nrg_tmp = nregionv
         ns_tmp  = nspc_tmp
-c#ifdef SCL_IMP_RCI
-c       ns1_tmp=nspc1_tmp
-c#endif
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
         nf_tmp  = nstr_tmp
         nfl_tmp = nstrat
         nb_tmp  = nssb_tmp
         write(lun,700) lv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                      nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
-c#ifdef SCL_IMP_RCI
-c     ,                     ns1_tmp,
-c#endif
-     ,                      label
+     ,                 nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
+     ,                 trim(label)
 
 c Create a format string for the column headers
         hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
@@ -645,10 +583,6 @@ c#endif
      &      nfl_tmp
           write(*,*) 'Impossible to write into ', f
         endif
-c#ifdef SCL_IMP_RCI
-c     ,                        ,ns1_tmp*nsp_tmp
-c#endif
-
 c<<<
 c        print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
 c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
@@ -667,9 +601,6 @@ c>>>
      ,                                        i=1,nsp_tmp),k=1,nb_tmp),
      ,          ((hlp_hb(k),j,j=1,nfl_tmp),k=1,nb_tmp)
         end if
-c#ifdef SCL_IMP_RCI
-c     ,        ,((hlp_hs1(j),species_list(i),i=1,nsp_tmp),j=1,ns1_tmp)
-c#endif
 
       end if
 

@@ -462,7 +462,6 @@ c     conversion of constants to CGS units
       use b2mod_b2plot_debug
       use b2mod_external
       implicit none
-c#     include "b2cmpa.h"
       integer nx,ny,ns,jsep,jxa
       real (kind=R8) :: lambda,
      1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),

@@ -6,7 +6,7 @@
      &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
-     &  hx, hy, qc, hx1, hy1, qc1,
+     &  hx, hy, qc, hxx, hyy, qc1,
      &  bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -35,7 +35,7 @@
       integer topcut(nncutmax), topcut1(nncutmax)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
+     *  hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
       integer bottomiy1(-1:nx1,-1:ny1)
       real (kind=R8) ::
      *  bundle_frac(0:ns1-1,0:ns-1)
@@ -399,397 +399,397 @@
           if (bundle_frac(is1,is).ge.1.0_R8) then  ! simple case
             call b2xtfx (nx, ny, nx1, ny1, fna(-1,-1,0,is),
      &        fna1(-1,-1,0,is1), nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is),
      &        fna1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_mdf(-1,-1,0,is),
      &        fna_mdf1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_mdf(-1,-1,1,is),
      &        fna_mdf1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_fcor(-1,-1,0,is),
      &        fna_fcor1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_fcor(-1,-1,1,is),
      &        fna_fcor1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_nodrift(-1,-1,0,is),
      &        fna_nodrift1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_nodrift(-1,-1,1,is),
      &        fna_nodrift1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_he(-1,-1,0,is),
      &        fna_he1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_he(-1,-1,1,is),
      &        fna_he1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fnaPSch(-1,-1,0,is),
      &        fnaPSch1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fnaPSch(-1,-1,1,is),
      &        fnaPSch1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_eir(-1,-1,0,is),
      &        fna_eir1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_eir(-1,-1,1,is),
      &        fna_eir1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_32(-1,-1,0,is),
      &        fna_321(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_32(-1,-1,1,is),
      &        fna_321(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_52(-1,-1,0,is),
      &        fna_521(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna_52(-1,-1,1,is),
      &        fna_521(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             if (drift_style.gt.0) then
              call b2xtfx (nx, ny, nx1, ny1, uadia(-1,-1,0,is),
      &        uadia1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2xtfy (nx, ny, nx1, ny1, uadia(-1,-1,1,is),
      &        uadia1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
              call b2xtfx (nx, ny, nx1, ny1, vadia(-1,-1,0,is),
      &        vadia1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2xtfy (nx, ny, nx1, ny1, vadia(-1,-1,1,is),
      &        vadia1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
              call b2xtfx (nx, ny, nx1, ny1, wadia(-1,-1,0,is),
      &        wadia1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2xtfy (nx, ny, nx1, ny1, wadia(-1,-1,1,is),
      &        wadia1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
              call b2xtfx (nx, ny, nx1, ny1, vaecrb(-1,-1,0,is),
      &        vaecrb1(-1,-1,0,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2xtfy (nx, ny, nx1, ny1, vaecrb(-1,-1,1,is),
      &        vaecrb1(-1,-1,1,is1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
             end if
           else if (bundle_frac(is1,is).gt.0.0_R8) then
             call b2xtfx (nx, ny, nx1, ny1, fna(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_mdf(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_mdf1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_mdf(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_mdf1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_fcor(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_fcor1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_fcor(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_fcor1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1,
      &        fna_nodrift(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_nodrift1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1,
      &        fna_nodrift(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_nodrift1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_he(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_he1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_he(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_he1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fnaPSch(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fnaPSch1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fnaPSch(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fnaPSch1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_eir(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_eir1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_eir(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_eir1(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_32(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_321(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_32(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_321(-1,-1,1,is1), 1)
             call b2xtfx (nx, ny, nx1, ny1, fna_52(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_521(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna_52(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_521(-1,-1,1,is1), 1)
             if (drift_style.gt.0) then
              call b2xtfx (nx, ny, nx1, ny1, uadia(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        uadia1(-1,-1,0,is1), 1)
              call b2xtfy (nx, ny, nx1, ny1, uadia(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        uadia1(-1,-1,1,is1), 1)
              call b2xtfx (nx, ny, nx1, ny1, vadia(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        vadia1(-1,-1,0,is1), 1)
              call b2xtfy (nx, ny, nx1, ny1, vadia(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        vadia1(-1,-1,1,is1), 1)
              call b2xtfx (nx, ny, nx1, ny1, wadia(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        wadia1(-1,-1,0,is1), 1)
              call b2xtfy (nx, ny, nx1, ny1, wadia(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        wadia1(-1,-1,1,is1), 1)
              call b2xtfx (nx, ny, nx1, ny1, vaecrb(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        vaecrb1(-1,-1,0,is1), 1)
              call b2xtfy (nx, ny, nx1, ny1, vaecrb(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        vaecrb1(-1,-1,1,is1), 1)
             end if
@@ -798,364 +798,364 @@
       enddo
       call b2xtfx (nx, ny, nx1, ny1, fhe(-1,-1,0), fhe1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1, fhe(-1,-1,1), fhe1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhe_mdf(-1,-1,0), fhe_mdf1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhe_mdf(-1,-1,1), fhe_mdf1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhePSch(-1,-1,0), fhePSch1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhePSch(-1,-1,1), fhePSch1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhe_eir(-1,-1,0), fhe_eir1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhe_eir(-1,-1,1), fhe_eir1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1, fhi(-1,-1,0), fhi1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1, fhi(-1,-1,1), fhi1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhi_mdf(-1,-1,0), fhi_mdf1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhi_mdf(-1,-1,1), fhi_mdf1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhiPSch(-1,-1,0), fhiPSch1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhiPSch(-1,-1,1), fhiPSch1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fhi_eir(-1,-1,0), fhi_eir1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fhi_eir(-1,-1,1), fhi_eir1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fne_eir(-1,-1,0), fne_eir1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fne_eir(-1,-1,1), fne_eir1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fne_32(-1,-1,0), fne_321(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fne_32(-1,-1,1), fne_321(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fne_52(-1,-1,0), fne_521(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fne_52(-1,-1,1), fne_521(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fni_32(-1,-1,0), fni_321(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fni_32(-1,-1,1), fni_321(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fni_52(-1,-1,0), fni_521(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fni_52(-1,-1,1), fni_521(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1, fch(-1,-1,0), fch1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1, fch(-1,-1,1), fch1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fch_32(-1,-1,0), fch1_32(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fch_32(-1,-1,1), fch1_32(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fch_52(-1,-1,0), fch1_52(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fch_52(-1,-1,1), fch1_52(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fch_p(-1,-1,0), fch1_p(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fch_p(-1,-1,1), fch1_p(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchdia(-1,-1,0), fchdia1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchdia(-1,-1,1), fchdia1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchin(-1,-1,0), fchin1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchin(-1,-1,1), fchin1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchvispar(-1,-1,0), fchvispar1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchvispar(-1,-1,1), fchvispar1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchvisper(-1,-1,0), fchvisper1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchvisper(-1,-1,1), fchvisper1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchvisq(-1,-1,0), fchvisq1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchvisq(-1,-1,1), fchvisq1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fchinert(-1,-1,0), fchinert1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fchinert(-1,-1,1), fchinert1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       if (drift_style.gt.0) then
         call b2xtfx (nx, ny, nx1, ny1,
      &        veecrb(-1,-1,0), veecrb1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         call b2xtfx (nx, ny, nx1, ny1,
      &        vedia(-1,-1,0), vedia1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       end if
       call b2xtfx (nx, ny, nx1, ny1,
      &        floe_noc(-1,-1,0), floe_noc1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        floe_noc(-1,-1,1), floe_noc1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        floi_noc(-1,-1,0), floi_noc1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        floi_noc(-1,-1,1), floi_noc1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hx1, bottomiy1)
+     .        hx, hxx, bottomiy1)
 
 * ..return
       call subend ()

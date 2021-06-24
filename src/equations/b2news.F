@@ -848,7 +848,7 @@ cxpb
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,          !srv 13.10.06
      &         .false.)                                                  !djm Jan2017
               call b2xpen (nx, ny, ns,
-     1         fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa,      !ajs 07.04.20
+     1         fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa,           !ajs 07.04.20
      2         rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
               if(recalculate_contributions.ne.0) then
 *     ..update sources                                                   !xpb
@@ -1091,7 +1091,7 @@ c     with diamagnetic drift part                                        !xpb
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
      &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,
-     1   fna, fne, fna, fne, fch, fhe, fhi, kinrgy,
+     1   fna, fna, fne, fch, fhe, fhi, kinrgy,
      1   ua, cvsa, rpt, te, ti,                                          !ajs 07.04.20
      2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni

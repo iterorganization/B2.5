@@ -36,8 +36,8 @@ c
         inpts=inpts+1
         yvalue(inpts)=chord_tria_integral(ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
-     3   npoints,x1,y1,z1,x2,y2,z2,vector)
+     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+     3   x1,y1,z1,x2,y2,z2,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab
      .   ('increase array size in process_eirene_chords_boxcar')
