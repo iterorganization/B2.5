@@ -90,6 +90,9 @@ ifdef LD_NETCDF
   NC2TXT = $(shell echo `which nc2text`)
 endif
 endif
+ifdef USE_MPI
+include ${OBJDIR}/mpiversion.mk # defines MPI_VERSION, which is the MPI version number
+endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
@@ -1151,3 +1154,8 @@ ifeq ($(shell [ -d ../solps4-5/src/B2.5_include.local ] && echo yes || echo no )
 endif
 endif
 
+${OBJDIR}/mpiversion.mk: ${MAKES}
+	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=1'\nEND" > ${OBJDIR}/mpi_version.f90
+	(${FC} ${FCOPTS} ${INCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || \
+	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND" > ${OBJDIR}/mpi_version.f90 ; \
+	${FC} ${FCOPTS} ${INCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk

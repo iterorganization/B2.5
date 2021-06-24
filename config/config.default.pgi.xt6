@@ -18,6 +18,10 @@ ifdef SOLPS_OPENMP
 DEFINES += -D_OPENMP
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 CPP = cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g

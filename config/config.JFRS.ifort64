@@ -49,6 +49,10 @@ FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 

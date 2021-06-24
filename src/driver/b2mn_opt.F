@@ -21,9 +21,16 @@
       use b2mod_par_opt
       use b2mod_exp_file_names
       use b2mod_driver
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------

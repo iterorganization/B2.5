@@ -33,6 +33,10 @@ FC = gfortran
 endif
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 FCOPTS = -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv

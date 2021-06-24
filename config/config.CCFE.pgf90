@@ -53,6 +53,10 @@ INCMODS += ${MPI_CPP}
 LDOPTS  += ${LD_MPI}
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 DBLFC = ${FC}
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g

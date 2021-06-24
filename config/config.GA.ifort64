@@ -30,6 +30,10 @@ FC       = ifort
 endif
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 ifeq (${FC},mpif90)
 OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
 INCMOD   = -B

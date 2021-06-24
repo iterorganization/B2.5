@@ -26,6 +26,10 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 
 DEFINES += -D_OPENMP
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifdef SOLPS_DEBUG

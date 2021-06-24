@@ -37,6 +37,10 @@ FCOPTS += -fopenmp
 LDOPTS += -fopenmp
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )

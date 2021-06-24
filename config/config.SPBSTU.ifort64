@@ -68,6 +68,10 @@ LDOPTS  += -openmp
 endif
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic

@@ -16,6 +16,9 @@ EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Ds
 ifndef SOLPS_CPP
 DEFINES += -DCRAY -DF2003
 endif
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 CPP = /lib/cpp -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
@@ -30,6 +33,7 @@ FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
 else
 FCOPTS += -O2 -hfp2
 endif
+
 OBJDEST = -ef -em -J${OBJDIR}
 INCMOD = -p
 MOD = mod

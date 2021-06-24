@@ -46,6 +46,10 @@ FCOPTS += -fopenmp
 LDOPTS += -fopenmp
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g
