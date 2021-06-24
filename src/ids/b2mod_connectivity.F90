@@ -44,8 +44,8 @@ module b2mod_connectivity
 
     !! The types (indexing as in B2 region array, i.e. zero-based)
     integer, parameter :: REGIONTYPE_CELL = 0   !< First region type
-    integer, parameter :: REGIONTYPE_XFACE = 1  !< Second region type
-    integer, parameter :: REGIONTYPE_YFACE = 2  !< Third region type
+    integer, parameter :: REGIONTYPE_XEDGE = 1  !< Second region type
+    integer, parameter :: REGIONTYPE_YEDGE = 2  !< Third region type
 
     !! Region counts and names
 

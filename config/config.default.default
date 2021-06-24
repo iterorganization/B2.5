@@ -26,6 +26,7 @@ MOD =         # module suffix
 BLD =         # program and options for building a library
 
 GRLIBES =     # graphics libraries
+PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
 LD =          # loader

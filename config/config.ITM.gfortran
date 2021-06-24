@@ -59,7 +59,8 @@ OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
@@ -90,6 +91,7 @@ LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS  = `pkg-config imas-lowlevel imas-gfortran --cflags`
 endif
 endif
+LD_UAL += -lstdc++
 ifndef SOLPS_CPP
 DEFINES += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif

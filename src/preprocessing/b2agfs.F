@@ -1132,7 +1132,7 @@ c
           enddo
           fpsi=0.0_R8
           ffbz=0.0_R8
-          read(lun,'(a)',end=110) uline
+          read(lun,'(a)',end=110,err=110) uline
           backspace (lun)
           do iy=0,ny+1
             do ix=0,nx+1
@@ -1312,7 +1312,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
 ! IYS 21.02.2020
 ! I could not find a solution without 'GOTO' here
 ! Sorry for that ...
-          read(lun,'(a)',end=210) uline
+          read(lun,'(a)',end=210,err=210) uline
           no_flux_data = .FALSE.
           GOTO 211    ! Wenn es meine Wille gaebe...
   210     no_flux_data = .TRUE.

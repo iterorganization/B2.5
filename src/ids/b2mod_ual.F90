@@ -12,7 +12,26 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use b2mod_ual_io
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open_env, imas_create_env, imas_close, &
+     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &        ids_radiation, ids_dataset_description
+    use b2mod_ual_io &
+     & ,only: b25_process_ids
+#if IMAS_MINOR_VERSION > 21
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_divertors
+#endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas   ! IGNORE
@@ -26,7 +45,7 @@ module b2mod_ual
 
   public open_ual, close_ual
 #ifdef IMAS
-  public put_ids_edge
+  public put_ids_edge, new_ids_edge, delete_ids_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description
@@ -35,6 +54,9 @@ module b2mod_ual
 #endif
 #if IMAS_MINOR_VERSION > 25
   public ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+  public ids_divertors
 #endif
 #endif
 
@@ -51,6 +73,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
 #endif
             &   treename, shot, run, idx, username, database, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
@@ -78,11 +103,15 @@ contains
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store run data related to the divertor plates
+#endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
-        integer, intent(in) :: shot !< The shot number of the database being created
-        integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(out) :: idx !< The returned identifier to be used in the
+        integer, intent(in) :: shot   !< The shot number of the database being created
+        integer, intent(in) :: run    !< The run number of the database being created
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
@@ -100,26 +129,221 @@ contains
 #if IMAS_MINOR_VERSION > 25
           &  "numerics, "// &
 #endif
+#if IMAS_MINOR_VERSION > 30
+          &  "divertors, "// &
+#endif
           &  "dataset_description, and radiation IDS"
 
         !! Create and modify new shot/run
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-            database, version, status )
-        call xertst( status.eq.0, 'Error opening IMAS database !')
+        if ( idx.eq.0 ) then
+          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+             & database, version, status )
+          call xertst( status.eq.0, 'Error opening IMAS database !')
 
+        !! Put data to IDS
+          call ids_put( idx, "edge_profiles", edge_profiles, status )
+          call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
+          call ids_put( idx, "edge_sources", edge_sources, status )
+          call xertst( status.eq.0, 'Error putting edge_sources IDS !')
+          call ids_put( idx, "edge_transport", edge_transport, status )
+          call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+          call ids_put( idx, "radiation", radiation, status )
+          call xertst( status.eq.0, 'Error putting radiation IDS !')
+          call ids_put( idx, "dataset_description", description, status )
+          call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+          call ids_put( idx, "summary", summary, status )
+          call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 25
+          call ids_put( idx, "numerics", numerics, status )
+          call xertst( status.eq.0, 'Error putting numerics IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_put( idx, "divertors", divertors, status )
+          call xertst( status.eq.0, 'Error putting divertors IDS !')
+#endif
+        else
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
 
         !! Put data to IDS
-        ! call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
-        ! call ids_put_slice( idx, "edge_sources", edge_sources, status )
-        ! call ids_put_slice( idx, "edge_transport", edge_transport, status )
-        ! call ids_put_slice( idx, "radiation", radiation, status )
-        ! call ids_put_slice( idx, "dataset_description", description, status )
-        ! call ids_put_slice( idx, "summary", summary, status )
-        ! call ids_put_slice( idx, "numerics", numerics, status )
+          call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_profiles IDS !')
+          call ids_put_slice( idx, "edge_sources", edge_sources, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_sources IDS !')
+          call ids_put_slice( idx, "edge_transport", edge_transport, status )
+          call xertst( status.eq.0, 'Error putting slice in edge_transport IDS !')
+          call ids_put_slice( idx, "radiation", radiation, status )
+          call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+          call ids_put_slice( idx, "dataset_description", description, status )
+          call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+          call ids_put_slice( idx, "summary", summary, status )
+          call xertst( status.eq.0, 'Error putting slice in summary IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 25
+          call ids_put_slice( idx, "numerics", numerics, status )
+          call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_put_slice( idx, "divertors", divertors, status )
+          call xertst( status.eq.0, 'Error putting slice in divertors IDS !')
+#endif
+        end if
+
+        !! Close IDS
+        call ids_deallocate( edge_profiles )
+        call ids_deallocate( edge_sources )
+        call ids_deallocate( edge_transport )
+        call ids_deallocate( radiation )
+        call ids_deallocate( description )
+#if IMAS_MINOR_VERSION > 21
+        call ids_deallocate( summary )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_deallocate( numerics )
+#endif
+#if IMAS_MINOR_VERSION > 30
+        call ids_deallocate( divertors )
+#endif
+        write(*,*) "IDS write finished"
+        return
+
+    end subroutine put_ids_edge
+
+    !> Subroutine used to delete data from edge_profiles, edge_sources and
+    !! edge_transport IDSs.
+    subroutine delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
+#endif
+            &   idx )
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store data related to divertor plates
+#endif
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
+
+        if ( idx.ne.0 ) then
+
+        !! Delete data from IDS
+          call ids_delete( idx, "edge_profiles", edge_profiles)
+          call ids_delete( idx, "edge_sources", edge_sources)
+          call ids_delete( idx, "edge_transport", edge_transport)
+          call ids_delete( idx, "radiation", radiation)
+          call ids_delete( idx, "dataset_description", description)
+#if IMAS_MINOR_VERSION > 21
+          call ids_delete( idx, "summary", summary)
+#endif
+#if IMAS_MINOR_VERSION > 25
+          call ids_delete( idx, "numerics", numerics)
+#endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_delete( idx, "divertors", divertors)
+#endif
+          write(*,*) "IDS delete finished"
+        end if
+        return
+
+    end subroutine delete_ids_edge
+
+    !> Subroutine used to rewrite data to edge_profiles, edge_sources and
+    !! edge_transport IDSs.
+    subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
+#endif
+            &   idx )
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store data related to the divertor plates
+#endif
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
+        integer :: status
+
+        !! Set data to edge_profiles IDS
+        write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+#if IMAS_MINOR_VERSION > 21
+          &  "summary, "// &
+#endif
+#if IMAS_MINOR_VERSION > 25
+          &  "numerics, "// &
+#endif
+#if IMAS_MINOR_VERSION > 30
+          &  "divertors, "// &
+#endif
+          &  "dataset_description, and radiation IDS"
+
+        !! Put data to IDS
         call ids_put( idx, "edge_profiles", edge_profiles, status )
         call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
         call ids_put( idx, "edge_sources", edge_sources, status )
@@ -138,6 +362,10 @@ contains
         call ids_put( idx, "numerics", numerics, status )
         call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
+#if IMAS_MINOR_VERSION > 30
+        call ids_put( idx, "divertors", divertors, status )
+        call xertst( status.eq.0, 'Error putting divertors IDS !')
+#endif
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
@@ -151,13 +379,14 @@ contains
 #if IMAS_MINOR_VERSION > 25
         call ids_deallocate( numerics )
 #endif
-        call imas_close( idx, status )
-        call xertst( status.eq.0, 'Error closing IMAS database !')
-
-        write(*,*) "IDS write finished"
+#if IMAS_MINOR_VERSION > 30
+        call ids_deallocate( divertors )
+#endif
+        write(*,*) "IDS rewrite finished"
         return
 
-    end subroutine put_ids_edge
+    end subroutine new_ids_edge
+
 #endif
 
     !> Routine to open UAL database.

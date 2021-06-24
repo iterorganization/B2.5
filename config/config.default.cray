@@ -41,6 +41,7 @@ MOD = mod
 BLD = ar rucv
 
 GRLIBES =     # graphics libraries
+PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
 LD = ftn
