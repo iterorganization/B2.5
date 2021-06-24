@@ -95,7 +95,7 @@
          allocate (e_ti(-1:nx,-1:ny))
          allocate (e_po(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only 
+ctb: the sources are now stored in linearized form I propose to store the total part only
 ctb..as the mean of the product does not equal the product of the means etc.
          allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny,0:1))

@@ -59,9 +59,9 @@
 *     ------------------------------------------------------------------
       entry gndfm3 (nxmpd, nympd, nxmp, nymp, xmp, ymp)
       call xertst (1.le.nxmp.and.1.le.nymp,
-     &  'xndfm3--faulty argument nxmp, nymp')
+     &  'gndfm3--faulty argument nxmp, nymp')
       call xertst ((nxmp+1)*(nymp+1).le.nmax2d,
-     &  'xndfm3--insufficient internal memory')
+     &  'gndfm3--insufficient internal memory')
       nxmap = nxmp
       nymap = nymp
       do ky = nympd-nymp, nympd

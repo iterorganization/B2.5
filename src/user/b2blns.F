@@ -311,7 +311,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       flxit        = 0.0_R8                 ! Ion flux through targets (sum over all targets and over all ionization states of given isonuclear sequence)
 
-      flxiw        = 0.0_R8                 ! Ion flux through wall boundaries based on fna array 
+      flxiw        = 0.0_R8                 ! Ion flux through wall boundaries based on fna array
 
       flxid        = 0.0_R8                 ! Time derivative of the ion content in the whole domain (sum over all cells and over all ionization states of given isonuclear sequence)
 
@@ -320,8 +320,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       flxnc        = 0.0_R8                 ! Neutral flux through core boundary (sum over all core boundary segments for neutrals corresponding to given isonuclear sequence)
       flxnt        = 0.0_R8                 ! Neutral flux through targets (sum over all targets and over all kind of molecules containing given atom)
       flxnt_rec    = 0.0_R8                 ! Neutral flux emitted from the target due to plasma ion recycling (part of the source from b2stbr for fluid neutrals),  IYS 12.01.2018, 04.06.2018
-      flxnt_pump   = 0.0_R8                 ! Pumped/absorbed neutral flux at targets (source from b2stbc for fluid neutrals),  IYS 12.01.2018, 04.06.2018   
-      flxnt_sput   = 0.0_R8                 ! Sputtered neutral flux at targets (part of the source from b2stbr for fluid neutrals),  IYS 22.06.2018 
+      flxnt_pump   = 0.0_R8                 ! Pumped/absorbed neutral flux at targets (source from b2stbc for fluid neutrals),  IYS 12.01.2018, 04.06.2018
+      flxnt_sput   = 0.0_R8                 ! Sputtered neutral flux at targets (part of the source from b2stbr for fluid neutrals),  IYS 22.06.2018
       flxnw        = 0.0_R8                 ! Neutral flux through wall boundary (sum over all side wall segments for neutrals corresponding to given isonuclear sequence)
       flxnw_rec    = 0.0_R8                 ! Neutral flux emitted from the side wall due to plasma ion recycling (part of the source from b2stbr for fluid neutrals),  IYS 12.01.2018, 04.06.2018
       flxnw_pump   = 0.0_R8                 ! Pumped/absorbed neutral flux at wall (source from b2stbc for fluid neutrals),  IYS 12.01.2018, 04.06.2018
@@ -350,7 +350,7 @@ c>>>
 
 !       Loop over species within given isonuclear sequence
 c***        EB2SPCR(ls) points to the first B2 fluid (i.e. the neutral fluid) corresponding to the isonuclear sequence labeled by ls
-c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) corresponding to the isonuclear sequence labeled by ls 
+c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) corresponding to the isonuclear sequence labeled by ls
         do is = EB2SPCR(ls), EB2SPCR(ls) + NFLUIDS(ls)
 
 !         Loop over B2 boundaries
@@ -947,7 +947,7 @@ c*** It was a major change of the file format - impossible to continue
         go to 50
    55   backspace lun
 
-      else ! file 'blnc.trc' does not exist
+      else ! file 'blnn_SPb.trc' does not exist
 
         nc = np_tmp
 

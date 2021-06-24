@@ -6,6 +6,7 @@ c  version : 07.11.97 13:19
 c
 c======================================================================
 c*** Computation of the shadowing of the base segment by the structure.
+c*** This is a 2-D calculation that uses a cylindrical approximation.
 c*** The structure is supposed to be a closed polygon without self-
 c*** intersections. The base belongs to the same polygon.
 c*** Orientation of the polygon is important: the radiation sources are
@@ -209,7 +210,7 @@ c***----------------------------------------------------------/
 c
         if(jsc .eq. 1) then
 c
-c*** The segment starts in the sector 1. Where it finishes?
+c*** The segment starts in the sector 1. Where does it finish?
 c
 c<<<
 c      print *
@@ -283,7 +284,7 @@ c***        no shading
           end if
         else if(jsc .eq. 2) then
 c
-c*** The segment starts in the sector 2. Where it finishes?
+c*** The segment starts in the sector 2. Where does it finish?
 c
           if(jj .eq. 1) then
 c*** ... the sector 1. Check the shading
@@ -309,7 +310,7 @@ c***        the structure crosses sight completely: total shading
           end if
         else if(jsc .eq. 3) then
 c
-c*** The segment starts in the sector 3. Where it finishes?
+c*** The segment starts in the sector 3. Where does it finish?
 c
           if(jj .eq. 1) then
 c*** ... the sector 1. Check the shading
@@ -329,7 +330,7 @@ c>>>
           end if
         else if(jsc .eq. 4) then
 c
-c*** The segment starts in the sector 4. Where it finishes?
+c*** The segment starts in the sector 4. Where does it finish?
 c
 c<<<
 c      print *

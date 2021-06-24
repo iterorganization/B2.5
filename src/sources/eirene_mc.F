@@ -2104,7 +2104,7 @@ c              it is NOT IYSs style)
        ih_end=ihist
       else if (nhist.gt.1) then
 csw 25feb2014  fix IYS version of source term averaging (running average)
-c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
+c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
         ihist=ihist+1
         if (ihist.eq.nhist) full_history = .true.

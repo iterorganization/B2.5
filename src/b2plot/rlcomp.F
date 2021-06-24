@@ -10,6 +10,7 @@ c======================================================================
 c*** Computation of the radiation loads.
 c*** Returns the total radiation power coming to each of the specified
 c*** wall segments with possible shadowing taken into account.
+c*** The radiation loads are calculated using a cylindrical approximation.
 c***
 c*** Input:
 c***  xysrc   R and Z coordinates of the point sources
