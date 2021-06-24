@@ -4434,7 +4434,7 @@ c     assumes that bb is OK for 1d cases
           call copy(deltapar,1.0_R8,nz,textplel)
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
-          call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,lambda,
+          call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,
      1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)

@@ -452,7 +452,7 @@ c     conversion of constants to CGS units
       return
       end subroutine neo_validity
 
-      subroutine chang_hinton(nx,ny,ns,jsep,jxa,lambda,safetyfactor,
+      subroutine chang_hinton(nx,ny,ns,jsep,jxa,safetyfactor,
      1 cr,cz,crx,bb,ne,te,ti,na,transport)
       use b2mod_types
       use b2mod_indirect
@@ -463,7 +463,7 @@ c     conversion of constants to CGS units
       use b2mod_external
       implicit none
       integer nx,ny,ns,jsep,jxa
-      real (kind=R8) :: lambda,
+      real (kind=R8) ::
      1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
      2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -473,13 +473,15 @@ c     conversion of constants to CGS units
       integer ix,iy,is,irmin,irmax, is_fuel
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
-     2 bave,epsilon,lnlam,vthi,omegaci,
+     2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
+      real (kind=R8) :: lnlam(-1:nx,-1:ny)
       external subini, subend, xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8
+      call b2tlnl(nx,ny,1,te,ti,ne,lnlam)
       do iy=-1,jsep
         if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
         ix=jxa
@@ -509,14 +511,7 @@ c     conversion of constants to CGS units
      1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
         epsilon=(crmax-crmin)/(crmax+crmin)
         if (b2plot_debug.ge.8) write(*,*) 'epsilon: ',epsilon
-        if (lambda.lt.0.0_R8) then
-          lnlam=max(-lambda,17.3_R8-
-     1     log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-        else
-          lnlam = lambda
-        endif
-        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam
+        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam(ix,iy)
         cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
         cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
         cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
@@ -568,7 +563,7 @@ c     conversion of constants to CGS units
             if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
             taui=12.0_R8*pi**1.5_R8*eps0**2*
      1       (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
             if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
             nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
