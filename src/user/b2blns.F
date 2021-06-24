@@ -396,7 +396,8 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
      &            .and.BCCHAR(ic).eq.'S') then
 ! Count fluid neutrals if not coupled to Eirene
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnc(ls) = flxnc(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnc(ls) = flxnc(ls) +
+     .             bsign*fna(ixf,iyf,idir,is)
                 else if (.not.is_neutral(is)) then ! not neutral
                   if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
                     flxic(ls) = flxic(ls) + bsign*fna(ixf,iyf,idir,is)
@@ -412,34 +413,38 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
               else if (idir.eq.1) then      ! radial wall boundary
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnw(ls) = flxnw(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnw(ls) = flxnw(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
-                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
-     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)              
+                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
+     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
 
                 else if (.not.is_neutral(is)) then
 
-                  flxiw(ls) = flxiw(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxiw(ls) = flxiw(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 c<<<
                   if(debug_flags(90).gt.0) then
                     hlp_pls(ic,ls)=hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,1,is)
+     .               bsign*fna(ixf,iyf,idir,is)
                   endif
                 endif
-              
+
               else if (idir.eq.0) then      ! target boundaries
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnt(ls) = flxnt(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxnt(ls) = flxnt(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
-                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
-     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)               
+                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
+     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
 
                 else if (.not.is_neutral(is)) then
-                  flxit(ls) = flxit(ls) + bsign*fna(ixf,iyf,idir,is)
+                  flxit(ls) = flxit(ls) +
+     &             bsign*fna(ixf,iyf,idir,is)
 
                   if(debug_flags(90).gt.0) then
-                  
+
                     hlpit_lp(ls) = hlpit_lp(ls) +
      .               bsign*fna(ixf,iyf,idir,is)
 
@@ -453,7 +458,7 @@ c<<<
 !           End of the loop over poloidal coordinate along the boundary
             enddo
 
-            if (is_neutral(is).and.use_eirene.eq.0) then 
+            if (is_neutral(is).and.use_eirene.eq.0) then
 
 ! Compute the puffing rate
               if ((BCCON(is,ic).eq.8  .or.
@@ -469,10 +474,10 @@ c<<<
 !FIXME
                   flxnt_rec(ls) = flxnt_rec(ls) + sna_stbr_neut(ls,ic)
 
-                  flxnt_pump(ls) = flxnt_pump(ls) + 
+                  flxnt_pump(ls) = flxnt_pump(ls) +
      &                                    sna_stbc_neut(ls,ic)
 
-                  flxnt_sput(ls) = flxnt_sput(ls) + 
+                  flxnt_sput(ls) = flxnt_sput(ls) +
      &                                    sna_stbr_sput(ls,ic)
 
               elseif ( BCCHAR(ic).EQ.'N' .or. (BCCHAR(ic).EQ.'S' .and.
@@ -481,7 +486,7 @@ c<<<
 !FIXME
                     flxnw_rec(ls) = flxnw_rec(ls) + sna_stbr_neut(ls,ic)
 
-                    flxnw_sput(ls) = flxnw_sput(ls) + 
+                    flxnw_sput(ls) = flxnw_sput(ls) +
      &                                    sna_stbr_sput(ls,ic)
 
 !             Exclude surfaces with puffing/seeding (for fluid neutrals)
@@ -489,7 +494,7 @@ c<<<
      &  .or. BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
      &   CONPAR(is,ic,1) .gt. 0.0_R8)) then
 
-                      flxnw_pump(ls) = flxnw_pump(ls) + 
+                      flxnw_pump(ls) = flxnw_pump(ls) +
      &                                    sna_stbc_neut(ls,ic)
                     endif
 
@@ -507,7 +512,7 @@ c<<<
 
               j=region(ix,iy,0)
 
-              if (j.ne.0 .and. leftix(ix,iy).ne.-2 
+              if (j.ne.0 .and. leftix(ix,iy).ne.-2
      &                   .and. rightix(ix,iy).ne.nx+1) then
 
                 if (solveco(is,j)) then
@@ -516,7 +521,7 @@ c<<<
                   hlpdt = 0.0_R8
                 endif
                 if (hlpdt .gt. 0.0_R8 .and. .not. is_neutral(is)) then
-                  flxid(ls) = flxid(ls) + 
+                  flxid(ls) = flxid(ls) +
      &        (na(ix,iy,is) - na0(ix,iy,is)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
                 endif
 
@@ -527,7 +532,7 @@ c<<<
                   else
 !     For standalone run take the source of neutrals with the opposite sign
                     flxis(ls) = flxis(ls) - sna(ix,iy,0,is-1) -
-     1               sna(ix,iy,1,is-1) * na(ix,iy,is-1) 
+     1               sna(ix,iy,1,is-1) * na(ix,iy,is-1)
 !     But be careful: the source due to time derivative should be counted
                     if (hlpdt .gt. 0.0_R8) then
                       flxis(ls) = flxis(ls) -
@@ -570,10 +575,10 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
 
             do j = 1,nnatmi
               if (latmscl(j) .eq. ls) then
-                flxnc(ls) = flxnc(ls) 
+                flxnc(ls) = flxnc(ls)
      &               - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
                 do ic=1,nnmoli
-                  if (mlcmp(j,ic) .gt. 0) flxnc(ls) = flxnc(ls) - 
+                  if (mlcmp(j,ic) .gt. 0) flxnc(ls) = flxnc(ls) -
      &             mlcmp(j,ic) * (wldnm(js,ic,0) - wldrm(js,ic,0)
      &                                           - wldpm(js,ic,0))
                 end do
@@ -596,7 +601,7 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
 
               if (latmscl(j) .eq. ls) then
 
-                flxnt(ls) = flxnt(ls) - 
+                flxnt(ls) = flxnt(ls) -
      &             wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
                 flxnt_rec(ls) = flxnt_rec(ls) + wldpa(js,j,0)                        ! IYS 12.01.2018
                 flxnt_pump(ls) = flxnt_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
@@ -605,14 +610,14 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
                 do ic = 1,nnmoli
 
                   if (mlcmp(j,ic) .gt. 0) then
- 
+
                     flxnt(ls) = flxnt(ls) - mlcmp(j,ic) *
      &               (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))
-                    flxnt_rec(ls) = flxnt_rec(ls) + 
+                    flxnt_rec(ls) = flxnt_rec(ls) +
      &                              mlcmp(j,ic) * wldpm(js,ic,0)
-                    flxnt_pump(ls) = flxnt_pump(ls) + 
+                    flxnt_pump(ls) = flxnt_pump(ls) +
      &                              mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
-                    flxnt_sput(ls) = flxnt_sput(ls) + 
+                    flxnt_sput(ls) = flxnt_sput(ls) +
      &                              mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
 
                   endif
@@ -624,10 +629,10 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
             end do ! end of the loop over atoms
 
             do j = 1, nnplsi
-              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) = 
+              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) =
      &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
             enddo
-          
+
           end do ! end of the loop over target segments
 
 c*** Flux across the side walls
@@ -637,14 +642,14 @@ c*** Flux across the side walls
 
             do j = 1,nnatmi
 
-              if (latmscl(j) .eq. ls 
+              if (latmscl(j) .eq. ls
 #ifdef B25_EIRENE
      &                .and. iliin(js) .gt. 0               ! IYS 03.12.2019 Consider non-transparent surfaces only,
                                                            ! transparent ones should not contribute into balance
 #endif
      &               ) then
-                                                                    
-                flxnw(ls) = flxnw(ls) - 
+
+                flxnw(ls) = flxnw(ls) -
      &                 wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
                 flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches the side wall
                 flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
@@ -656,7 +661,7 @@ c*** Flux across the side walls
 
                     flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
      .                (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches the side wall
-                    flxnw_rec(ls) = flxnw_rec(ls) + 
+                    flxnw_rec(ls) = flxnw_rec(ls) +
      &                         mlcmp(j,ic) * wldpm(js,ic,0)
                     flxnw_pump(ls) = flxnw_pump(ls) +
      &                 mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
@@ -672,7 +677,7 @@ c*** Flux across the side walls
             end do ! end of the loop over atoms
 
             do j = 1, nnplsi
-              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) = 
+              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) =
      &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
             enddo
 
@@ -707,17 +712,17 @@ c*** Puffing/seeding rate and recycling source
               hlp_nw = 0.0_R8
 
               do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
- 
+
                 k = lsns(i)
 
                 if (k .lt. 0) k=nnlimi-k
 
                 if (k .gt. 0) then
 
-                  do j=1,nnatmi                   
+                  do j=1,nnatmi
                     if (latmscl(j).eq.ls) then
                       hlp_rec = hlp_rec + wldpa(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
-                      hlp_sput = hlp_sput + 
+                      hlp_sput = hlp_sput +
      &                         wldspta(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
                       if (.not. hlp_pump_counted(j,k)) then  ! to count each atom on each surface only once, do not sum over srtata
@@ -733,13 +738,13 @@ c*** Puffing/seeding rate and recycling source
                   do j=1,nnmoli
                     do ii=1,nnatmi
                       if (latmscl(ii).eq.ls) then
-                        hlp_rec = hlp_rec + 
+                        hlp_rec = hlp_rec +
      &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
-                        hlp_sput = hlp_sput + 
+                        hlp_sput = hlp_sput +
      &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
                         if (.not. hlp_pump_counted(j+nnatmi,k)) then
-                          hlp_pump = hlp_pump + 
+                          hlp_pump = hlp_pump +
      &                                 mlcmp(ii,j) * wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
                           hlp_pump_counted(j+nnatmi,k) = .TRUE.
                         endif
@@ -752,11 +757,11 @@ c*** Puffing/seeding rate and recycling source
 
                   do j=1,nnplsi
                     if (latmscl(lkindp(j)).eq.ls) then
-                      if (.not. 
+                      if (.not.
      &                 hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k)) then
-                        hlp_pump = 
+                        hlp_pump =
      &                   hlp_pump + wlpump(j+nnatmi+nnmoli+nnioni,k)  ! BE CAREFUL: hlp_pump is a temporary variable
-                        hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) = 
+                        hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) =
      &                                                      .TRUE.
                       endif
                     endif
@@ -765,7 +770,7 @@ c*** Puffing/seeding rate and recycling source
                 endif
 
               enddo
-          
+
               flxnw_rec(ls) = flxnw_rec(ls) + hlp_rec * recyctmp
               flxnw_sput(ls) = flxnw_sput(ls) + hlp_sput !* recyctmp
 !              flxnw(ls) = flxnw(ls) + hlp_nw !* recyctmp
@@ -799,7 +804,7 @@ c     boundaries should be added to a global balance as a wall recycling source
 ! FIXME
 
         flxps(ls) =  flxic(ls) + flxnc(ls) + flxit(ls) + flxnt(ls) +
-     &          flxiw(ls) + flxnw(ls) 
+     &          flxiw(ls) + flxnw(ls)
         if (use_eirene.ne.0) flxps(ls) = flxps(ls) +
      &                      flxnw_rec(ls) +flxnp(ls) + flxex(ls)
 
@@ -841,7 +846,7 @@ c
         write(*,*) 'particle_fluxes ',nspecies
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
-          write(*,'(1p,30e12.3)') 
+          write(*,'(1p,30e12.3)')
      ,       flxic(i), flxnc(i), flxit(i),                                 ! IYS 12.01.2018
      ,       flxnt(i), flxnt_rec(i), flxnt_sput(i), flxnt_pump(i),         ! IYS 12.01.2018
      ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
@@ -863,16 +868,16 @@ c
       if (.not. allocated(hlpit_lp))
      &   allocate(hlpit_lp(nspecies), hlpit_pl(nspecies))
 
-      if (.not. allocated(flxic)) 
+      if (.not. allocated(flxic))
      &      allocate(
      &   flxic(nspecies), flxnc(nspecies), flxit(nspecies),
      &   flxnt(nspecies), flxiw(nspecies), flxnw(nspecies),
-     &   flxnp(nspecies), flxps(nspecies), 
+     &   flxnp(nspecies), flxps(nspecies),
      &   flxnw_rec(nspecies), flxnw_pump(nspecies),
      &   flxnw_sput(nspecies),                                       ! IYS 12.01.2018
      &   flxnt_rec(nspecies), flxnt_pump(nspecies),
      &   flxnt_sput(nspecies),                                       ! IYS 12.01.2018
-c*** from 960727 on 
+c*** from 960727 on
      &   flxid(nspecies), !flxbl(nspecies), flxbr(nspecies),
 c*** from 960808 on
 !     &   flxrl(nspecies),
@@ -1020,14 +1025,14 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
-      if (allocated(flxic)) 
+      if (allocated(flxic))
      &  deallocate(
      &    flxic, flxnc, flxit,
      &    flxnt, flxiw, flxnw,
      &    flxnp, flxps, !blnna_tmp,
-     &    flxnw_rec, flxnw_pump, flxnw_sput,                                       ! IYS 12.01.2018
-     &    flxnt_rec, flxnt_pump, flxnt_sput,                                       ! IYS 12.01.2018
-c*** from 960727 on 
+     &    flxnw_rec, flxnw_pump, flxnw_sput,                             ! IYS 12.01.2018
+     &    flxnt_rec, flxnt_pump, flxnt_sput,                             ! IYS 12.01.2018
+c*** from 960727 on
      &    flxid, !flxbl, flxbr,
 c*** from 960808 on
 !     &    flxrl,
@@ -1036,8 +1041,8 @@ c*** from 20180604 on
 c*** from 20190627 on
      &    flxex)
 
-      if (allocated(hlpit_pl)) 
-     &  deallocate(hlpit_pl, hlpit_lp)
+      if (allocated(hlpit_pl))
+     &   deallocate(hlpit_pl, hlpit_lp)
 
       return
 

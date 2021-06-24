@@ -373,7 +373,7 @@ c not sure this is the right place
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
         if (lfeedback) then
-           if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+          if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
      1       .or.nesepm_pfr.gt.0.0_R8) then !{
             call xertst (cbirso.le.pfrregno1.and.
      1       pfrregno1.le.cbirso+cbnrso-1,
@@ -418,12 +418,12 @@ csw 22jul2011
         call eirene_extrab25_braeir_init(chemical_sputter_yield)
 #endif
 csw 26mar2013
-        call ipgeti ('eirene_iscltst',iscltst)
+        call ipgeti ('eirene_iscltst', iscltst)
 
 csw 26feb2013
-        call ipgeti ('eirene_neutr_avg',neutr_avg)
-        call ipgeti ('b2stbr_eir_src_nhist',nhist)
-        call ipgeti ('eirene_underrelax',nrelax)
+        call ipgeti ('eirene_neutr_avg', neutr_avg)
+        call ipgeti ('b2stbr_eir_src_nhist', nhist)
+        call ipgeti ('eirene_underrelax', nrelax)
         call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
@@ -434,8 +434,8 @@ csw 26feb2013
         call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
-        call ipgeti ('eirene_no_sseicorr',no_sseicorr)
-        call ipgeti ('eirene_stab_corr',stab_corr)
+        call ipgeti ('eirene_no_sseicorr', no_sseicorr)
+        call ipgeti ('eirene_stab_corr', stab_corr)
       end if !}
 
       if(ncall.eq.0) then
@@ -3807,12 +3807,12 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
 
 ! { IYS 12.01.2018
       sna_eir = 0.0_R8
-      if (ank_tracing .gt. 0) then    
+      if (ank_tracing .gt. 0) then
         do is = 1, nspecies
           do iy = -1, ny
             do ix = -1, nx
               sna_eir(is) = sna_eir(is) +
-     &           sna0(ix,iy,0,eb2spcr(is)+1) + 
+     &           sna0(ix,iy,0,eb2spcr(is)+1) +
      &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
             enddo
           enddo
@@ -3989,8 +3989,8 @@ c*** recombination is already evaluated above.
               if(crcstra(istrai).eq.'W') then !{
                 do iy=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st-
-     .    fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     .       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
                 end do !}
               else if(crcstra(istrai).eq.'E') then !}{
                 do iy=1,rc_list_size(istrai) !{

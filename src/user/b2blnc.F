@@ -398,7 +398,7 @@ c*** total number of particles and time derivative
           do iy=0,ny-1
             do ix=0,nx-1
               j=region(ix,iy,0)
-              if(j.ne.0 .and. 
+              if(j.ne.0 .and.
      &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
                 hlpis=hlpis+

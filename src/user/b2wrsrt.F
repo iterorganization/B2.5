@@ -50,8 +50,8 @@ c***     totenre_  tesum      total plasma energy \int 3/2 n_e T_e dV plus
 c***                          \int 3/2 n_i T_i dV plus \int 1/2 m_a n_a u_{a||}^2 dV
 c***
 c***..........................................................(regions)
-c***     totamom_  ang_mom_sum   total angular momentum 
-c***                            \int m_a n_a u_a h_z dV 
+c***     totamom_  ang_mom_sum   total angular momentum
+c***                            \int m_a n_a u_a h_z dV
 c***
 c***..........................................................(species)
 c***     SSNItot_  ssni_tmp   neutral-related source of ions
@@ -232,7 +232,7 @@ c*** f     :  the associated file name
 
 !      write(*,*) 'Inside b2wrsrt: lun = ',lun
 !      write(*,*) 'Inside b2wrsrt: f = ', trim(f)
-   
+
 c
       call find_file(f,ex)
       open(lun,file=f,err=90)

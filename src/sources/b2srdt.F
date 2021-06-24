@@ -5,11 +5,11 @@
      &  vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
      &  snadt, smodt, shedt, shidt, schdt, snedt, lout)              !srv 11.09.09
-      use b2mod_types 
-      use b2mod_indirect 
-      use b2mod_numerics_namelist 
-      use b2mod_constants 
-      use b2mod_b2cmpa 
+      use b2mod_types
+      use b2mod_indirect
+      use b2mod_numerics_namelist
+      use b2mod_constants
+      use b2mod_b2cmpa
       use b2mod_boundary_namelist
      , , only : iftimbound
       use b2mod_balance !djm Jan2017
@@ -61,7 +61,7 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
       real (kind=R8) :: !djm Jan2017
-     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
+     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
       external subini, subend, xertst, ipgetr
@@ -150,7 +150,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
            if((guard_flows.eq.2 .or.
-     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
+     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
      &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
@@ -201,10 +201,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
           shedt(ix,iy,0) = shedt(ix,iy,0)+
-     &     1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)
+     .                     1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)               !srv 06.01.21 {
 *         shedt(ix,iy,1) = (unchanged)
 *         shedt(ix,iy,2) = (unchanged)
-          shedt(ix,iy,3) = shedt(ix,iy,3)-1.5_R8*t0
+          shedt(ix,iy,3) = shedt(ix,iy,3)-1.5_R8*t0                      !srv 06.01.21 }
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -220,7 +220,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
           shidt(ix,iy,0) = shidt(ix,iy,0)+
-     &     1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)
+     &                     1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)             !srv 06.01.21 {
+*         shidt(ix,iy,1) = (unchanged)
+*         shidt(ix,iy,2) = (otherwise unchanged)
+          shidt(ix,iy,3) = shidt(ix,iy,3)-1.5_R8*t0                      !srv 06.01.21 }
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
@@ -230,9 +233,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &         ni0(ix,iy,0)
             enddo
           endif
-*         shidt(ix,iy,1) = (unchanged)
-*         shidt(ix,iy,2) = (otherwise unchanged)
-          shidt(ix,iy,3) = shidt(ix,iy,3)-1.5_R8*t0
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -249,10 +249,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)              !xpb
-          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))   !xpb
+          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))   !xpb !srv 06.01.21 {
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
-          schdt(ix,iy,3) = schdt(ix,iy,3)-t0                             !xpb
+          schdt(ix,iy,3) = schdt(ix,iy,3)-t0                             !xpb !srv 06.01.21 }
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -264,8 +264,8 @@ cxpb  This treatment added as a fix to get the ExB runs going
         do ix = -1, nx
           if(iftimbound(ix,iy) .ne. 0) cycle
           t0 = (phm5/dtim)*vol(ix,iy)*time_factor(ix,iy)                 !xpb
-          snedt(ix,iy,0) = snedt(ix,iy,0)+t0*ne0(ix,iy)
-          snedt(ix,iy,1) = snedt(ix,iy,1)-t0
+          snedt(ix,iy,0) = snedt(ix,iy,0)+t0*ne0(ix,iy)                  !srv 06.01.21
+          snedt(ix,iy,1) = snedt(ix,iy,1)-t0                             !srv 06.01.21
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT

@@ -18,7 +18,6 @@ C
       INTEGER N, I, J, K
       real (kind=R8) :: cpu_start,cpu_end
       integer iflag
-
 c
 
 *  -- PROCEDURES --
@@ -204,8 +203,8 @@ C
      *       ESP, Iflag, NSP
 C
       endif
-         
-        
+
+
       DO 50,K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1

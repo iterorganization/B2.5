@@ -3722,11 +3722,15 @@ contains
                         &            neutral( is )%state(1)%particles,        &
                         &   b2CellData = tmpCv )
                 !! smo: Ion parallel momentum sources
-                    tmpCv(:,:) = ( smo(:,:,0,js) +                            &
-                        &          smo(:,:,1,js) * ua(:,:,js) +               &
-                        &          smo(:,:,2,js) * roxa(:,:,js) +             &
-                        &          smo(:,:,3,js) * roxa(:,:,js)               &
-                        &                        * ua(:,:,js) ) / vol(:,:)
+                    do iy = -1, ny
+                      do ix = -1, nx
+                        tmpCv(ix,iy) = ( smo(ix,iy,0,js) +                  &
+                        &                smo(ix,iy,1,js) * ua(ix,iy,js) +   &
+                        &                smo(ix,iy,2,js) * roxa(ix,iy,js) + &
+                        &                smo(ix,iy,3,js) * roxa(ix,iy,js)   &
+                        &                                * ua(ix,iy,js) ) / vol(ix,iy)
+                      end do
+                    end do
                     call write_cell_vector_component(                         &
                         &   vectorComponent = edge_sources%source(1)%         &
                         &                     ggd( time_sind )%               &

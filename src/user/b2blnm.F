@@ -201,7 +201,7 @@ c
           end if
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
@@ -225,7 +225,7 @@ c
         do ix=rightcut(1),nx-1
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+

@@ -21,7 +21,7 @@ c     ,                   onflag,inum,wmind,wmaxd,wlinlog
         wall=.false.
       endif
       if(wall) call ank_interface(inum)
-c	 if(onflag) call ank_interface(inum)
+c     if(onflag) call ank_interface(inum)
       return
 c======================================================================
       entry set_wall_on(wmind,wmaxd,ilog)

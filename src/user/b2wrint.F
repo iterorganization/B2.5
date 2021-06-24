@@ -146,7 +146,7 @@ c*** Values by species and regions
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
      *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
-      equivalence 
+      equivalence
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
       character hlp_ha(nsar_tmp)*8
@@ -165,7 +165,7 @@ c      parameter (nssb_tmp=2)
       real (kind=R8) ::
      *     equb_tmp(0:DEF_NATM,DEF_NSTRA,nssb_tmp)
       real (kind=R8) ::
-     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA), 
+     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA),
      *     rtio_tmp(0:DEF_NATM,DEF_NSTRA),
      *     Na_stra_tmp(0:DEF_NATM,DEF_NSTRA),
      *     ssna_stra_tmp(0:DEF_NATM,DEF_NSTRA)
@@ -533,7 +533,6 @@ c Check the number quantities computed for each species and for each stratum
      ,     ' differs from that in the file ',trim(f),' : ',nb_tmp
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
-c
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
