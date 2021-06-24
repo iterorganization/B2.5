@@ -365,15 +365,10 @@ c     (ONLY FOR TESTING w/ SOLPS4 discretization)
           if(b2vis .ne. 0) then
            do is=0,ns-1
              fhi(ix,iy,0) = fhi(ix,iy,0) -
-     .          (cvsa(ix,iy,0,is)
-     .          +cvsa(leftix(ix,iy),leftiy(ix,iy),0,is))/2.0_R8
-     .
-     .        *2.0_R8*
-     .        (ua(ix,iy,is)
-     .        +ua(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 *
-     .
-     .        (ua(ix,iy,is)
-     .        -ua(leftix(ix,iy),leftiy(ix,iy),is))
+     .          0.5_R8*(cvsa(ix,iy,0,is)
+     .          +cvsa(leftix(ix,iy),leftiy(ix,iy),0,is))/2.0_R8*
+     .         (ua(ix,iy,is) + ua(leftix(ix,iy),leftiy(ix,iy),is))*
+     .         (ua(ix,iy,is) - ua(leftix(ix,iy),leftiy(ix,iy),is))
            enddo
           endif
 
@@ -972,11 +967,9 @@ csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
           if(b2vis .ne. 0) then
            do is=0,ns-1
              fhi(ix,iy,1) = fhi(ix,iy,1) -
-     .          cvsa(ix,iy,1,is)
-     .          *ua(ix,iy,is)
-     .        *2.0_R8
-     .        *(ua(ix,iy,is)
-     .        -ua(bottomix(ix,iy),bottomiy(ix,iy),is))
+     .          0.5_R8*cvsa(ix,iy,1,is)*
+     .         (ua(ix,iy,is) - ua(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     .         (ua(ix,iy,is) + ua(bottomix(ix,iy),bottomiy(ix,iy),is))
            enddo
           endif
 
