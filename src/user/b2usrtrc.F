@@ -1463,7 +1463,9 @@ c     ,                                     irt,m,'  ',trim(f)  !###
           end if !}
           fn_ntrc(ltrc)=f
         end if !}
-c        print *,'hlp_frm=',trim(hlp_frm)  !###
+#ifdef DBG
+        print *,'hlp_frm=',trim(hlp_frm)  !###
+#endif
         first_out=.false.
       end if !}
 c=======================================================================

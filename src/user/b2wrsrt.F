@@ -381,9 +381,10 @@ c>>>
      +        nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
      +        na_tmp*nrg_tmp*nsp_tmp
       end if
+#ifdef DBG
       print *,'hlp_frm:'       !###
       print *,trim(hlp_frm)    !###
-
+#endif
       return
 c=======================================================================
    90 write(*,*) 'b2wrsrt: cannot open file ',trim(f)

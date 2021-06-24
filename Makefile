@@ -850,12 +850,14 @@ ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
-${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/nc2text_simple.o ${MAKES}
+${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
+ifndef SOLPS_DEBUG
+	@-ln -sf $@ ${NCODIR}/$*
 ifeq (,$(findstring nc2text,${NC2TXT}))
 	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+endif
 endif
 else
 	$(warning NETCDF library not present!)
@@ -875,7 +877,6 @@ nc2text_simple: ${NCEXE}
 
 ${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
 ifdef LD_NETCDF
-	@- /bin/rm -f ${NCODIR}/$*.o
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90

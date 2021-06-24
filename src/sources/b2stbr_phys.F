@@ -658,12 +658,20 @@ c lcore           is this a core element?
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
       real (kind=R8) mass_density, local_reflection
+#ifdef DBG
+      real (kind=R8) product, cutll
+      real (kind=R8) machsfr
+      external machsfr
+#endif
       character*13 hlp_frm
       external mass_density
       logical lnext
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 
+#ifdef DBG
+      cutll = log(machsfr())
+#endif
       iwall=xymap(ix,iy)
 cdpc-exp
       if(sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
@@ -921,11 +929,26 @@ c chemical sputtering
                if(zbulk.eq.6.or.sput_frac_flag.ne.0) then      ! chemical sputtering only for C
                   if(sput_chem_model.eq.1) then
                      if (Ei.gt.0.0_R8) then
+#ifdef DBG
+                        product =-((sput_chem_cutoff_alpha/Ei)
+     &                            **sput_chem_cutoff_beta)
+                        if(product.gt.cutll) then
+                           ytmp = chem_sput(is,istra) *
+     &                       exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                           t1=t0 * ytmp
+                           chemical_sputtering(iwall,is) = ytmp
+                        else
+                           t1=0.0_R8
+                           chemical_sputtering(iwall,is) = 0.0_R8
+                        end if
+#else
                         ytmp = chem_sput(is,istra) *
      &                       exp(-(sput_chem_cutoff_alpha/Ei)**
      &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                         t1=t0 * ytmp
                         chemical_sputtering(iwall,is) = ytmp
+#endif
                      else
                         t1=0.0_R8
                         chemical_sputtering(iwall,is) = 0.0_R8

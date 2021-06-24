@@ -3035,7 +3035,11 @@ contains
     character*(maxncnam) timsav,batchsav
     integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
+#ifdef DBG
+    logical, parameter :: debug = .true.
+#else
     logical, parameter :: debug = .false.
+#endif
     save timsav,ntsav,batchsav,nasav
     data timsav /'!!!! INVALID NAME !!!!'/
     external subini, subend, xerrab

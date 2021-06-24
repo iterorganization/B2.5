@@ -172,7 +172,7 @@
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
-      save ncall, rxg, diagno, nsmin, nsmax
+      save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::

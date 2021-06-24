@@ -905,9 +905,9 @@ C       REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
         real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI               !srv 11.01.07
 #ifdef DBG
         real (kind=R8) :: product
-        real (kind=R8), save :: cutlo
+        real (kind=R8), save :: cutll
 
-        cutlo = log(tiny(1.0_R8))
+        cutll = log(tiny(1.0_R8))
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
@@ -947,7 +947,7 @@ C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
      &         (ABS(U(ILI)).ge. tiny(1.0_R8).or.
      &          ABS(U(ILI)).le.-tiny(1.0_R8))) then
               product = log(abs(ukidi)) + log(abs(u(ili)))
-              if (product.ge.cutlo) DK = DK + UKIDI * U(ILI)
+              if (product.ge.cutll) DK = DK + UKIDI * U(ILI)
             END IF
 #else
             DK = DK + UKIDI * U(ILI)
@@ -966,7 +966,7 @@ C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
      &             (ABS(U(J)) .ge. tiny(1.0_R8).or.
      &              ABS(U(J)) .le.-tiny(1.0_R8))) then
                   product = log(abs(ukidi)) + log(abs(u(j)))
-                  if (product.ge.cutlo)
+                  if (product.ge.cutll)
      >             D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
                 END IF
 #else

@@ -1063,14 +1063,15 @@ c
       integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8), save :: cutll, cutlo
+      !$OMP THREADPRIVATE(cutll, cutlo)
 #endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
 #ifdef DBG
-      cutlo = log(tiny(1.0_R8))
+      cutll = log(tiny(1.0_R8))
+      cutlo = tiny(1.0_R8)
 #endif
       msrch = nsrch
       ndrop = 0
@@ -1306,7 +1307,20 @@ c first calculate multiplier threshold level.
                 do 250 jj=j1,j2
                   amax = max(amax,abs(a(jj)))
   250           continue
+#ifdef DBG
+                if(amax.ge.tiny(1.0_R8).and.u.ge.tiny(1.0_R8)) then
+                  product = log(amax) + log(u)
+                  if (product.ge.cutll) then
+                    au = amax*u
+                  else
+                    au = cutlo
+                  endif
+                else
+                  au = cutlo
+                end if
+#else
                 au = amax*u
+#endif
                 isrch = isrch + 1
 c scan row for possible pivots
                 do 260 jj=j1,j2
@@ -1588,7 +1602,18 @@ c if pivot is zero, rest of column is and so multiplier is zero.
      &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
      &                 a(ijpos).le.-tiny(1.0_R8))) then
                   product = log(abs(a(jj))) - log(abs(a(ijpos)))
-                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                  if (product.ge.cutll) then
+                    au = -a(jj)/a(ijpos)
+                  else
+                    if ((a(jj).ge.tiny(1.0_R8).and.
+     &                   a(ijpos).ge.tiny(1.0_R8)).or.
+     &                  (a(jj).le.-tiny(1.0_R8).and.
+     &                   a(ijpos).le.-tiny(1.0_R8))) then
+                      au = -cutlo
+                    else
+                      au = cutlo
+                    end if
+                  end if
                 end if
 #else
                 au = -a(jj)/a(ijpos)
@@ -1635,7 +1660,7 @@ c innermost loop.
      &           (a(pivrow).ge.tiny(1.0_R8).or.
      &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
-                if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
+                if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)
               end if
 #else
               a(jj) = a(jj) + au*a(pivrow)
@@ -1784,12 +1809,18 @@ c innermost fill-in loop which also resets icn.
               if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
      &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(jj)))
-                if (product.ge.cutlo) then
+                if (product.ge.cutll) then
                   anew = au*a(jj)
                   aanew = abs(anew)
                 else
-                  anew = 0.0_R8
-                  aanew = 0.0_R8
+                  if ((a(jj).ge. tiny(1.0_R8).and.au.ge. tiny(1.0_R8))
+     &            .or.(a(jj).le.-tiny(1.0_R8).and.au.le.-tiny(1.0_R8)))
+     &             then
+                    anew = cutlo
+                  else
+                    anew = -cutlo
+                  end if
+                  aanew = cutlo
                 end if
               else
                 anew = 0.0_R8
@@ -2094,13 +2125,14 @@ c
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8), save :: cutll, cutlo
+      !$OMP THREADPRIVATE(cutll, cutlo)
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
 #ifdef DBG
-      cutlo = log(tiny(1.0_R8))
+      cutll = log(tiny(1.0_R8))
+      cutlo = tiny(1.0_R8)
 #endif
       stab = eps.le.one
       rmin = eps
@@ -2145,10 +2177,16 @@ c form multiplier au.
      &        (a(ipivj).ge. tiny(1.0_R8).or.
      &         a(ipivj).le.-tiny(1.0_R8))) then
             product = log(abs(w(j))) - log(abs(a(ipivj)))
-            if (product.ge.cutlo) then
+            if (product.ge.cutll) then
               au = -w(j)/a(ipivj)
             else
-              au = 0.0_R8
+              if ((w(j).ge. tiny(1.0_R8).and.a(ipivj).ge. tiny(1.0_R8))
+     &        .or.(w(j).le.-tiny(1.0_R8).and.a(ipivj).le.-tiny(1.0_R8)))
+     &         then
+                au = -cutlo
+              else
+                au = cutlo
+              end if
             end if
           else
             au = 0.0_R8
@@ -2171,7 +2209,7 @@ c innermost loop.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
-              if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
+              if (product.ge.cutll) w(jay) = w(jay) + au*a(jayjay)
             end if
 #else
             w(jay) = w(jay) + au*a(jayjay)
@@ -2310,14 +2348,14 @@ c
      * jpiv, jpivp1, lt, ltend, numblk
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
-      !$OMP THREADPRIVATE(cutlo)
+      real (kind=R8), save :: cutll
+      !$OMP THREADPRIVATE(cutll)
 #endif
 c
       data zero /0.0e0_R8/
 c
 #ifdef DBG
-      cutlo = log(tiny(1.0_R8))
+      cutll = log(tiny(1.0_R8))
 #endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
@@ -2369,7 +2407,7 @@ c ltend is the end of row i in the off-diagonal blocks.
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
             product = log(abs(a(jj))) + log(abs(w(j)))
-            if (product.ge.cutlo) wi = wi - a(jj)*w(j)
+            if (product.ge.cutll) wi = wi - a(jj)*w(j)
           end if
 #else
           wi = wi - a(jj)*w(j)
@@ -2389,7 +2427,7 @@ c iend is the end of the l part of row i in the lu decomposition.
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
             product = log(abs(a(jj))) + log(abs(w(j)))
-            if (product.ge.cutlo) wi = wi + a(jj)*w(j)
+            if (product.ge.cutll) wi = wi + a(jj)*w(j)
           end if
 #else
           wi = wi + a(jj)*w(j)
@@ -2437,7 +2475,7 @@ c jump if row ii of u has no nonzeros.
             if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &         (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
               product = log(abs(a(jj))) + log(abs(w(j)))
-              if (product.ge.cutlo) wii = wii - a(jj)*w(j)
+              if (product.ge.cutll) wii = wii - a(jj)*w(j)
             end if
 #else
             wii = wii - a(jj)*w(j)

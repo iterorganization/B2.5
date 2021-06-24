@@ -4,6 +4,7 @@ c  version : 23.08.97 11:56
 c
 c======================================================================
       use b2mod_types
+      implicit none
 #include "graphics_vars.h"
       logical, intent(in) :: onflag
       integer, intent(in) :: inum, ilog
