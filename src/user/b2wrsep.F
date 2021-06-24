@@ -215,7 +215,7 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+              if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
                 gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
                 gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
               else
@@ -239,8 +239,6 @@ c          v=vol(ix,iy)
           end do !}
         end if !}
       end do !}
-
-   10 continue
 
       do i=2,nnreg(0) !{
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
