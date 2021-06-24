@@ -188,7 +188,7 @@
      *     in_size_of_table/200000/,
      1     use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, output/0/,
-     1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
+     1     coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
      7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
@@ -329,6 +329,11 @@
      *       neutral_sources_rescale)
         if(use_eirene.eq.0) neutral_rescale=1.0_R8
         if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+        if(nnreg(0).le.2) then
+          coreregno = 0
+        else
+          coreregno = 1
+        endif
         call ipgeti ('b2stbc_coreregno', coreregno)
         call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,

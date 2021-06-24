@@ -201,7 +201,7 @@
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
-      data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
+      data ncall/0/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,
      2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
@@ -232,6 +232,11 @@
        call ipgetr ('b2stbc_phm0', phm0)                             !srv 17.01.07
        call ipgetr ('b2stbc_phm1', phm1)                             !srv 17.01.07
        call ipgetr ('b2stbc_phm2', phm2)                             !srv 17.01.07
+       if (nnreg(0).le.2) then
+         coreregno = 0
+       else
+         coreregno = 1
+       endif
        call ipgeti ('b2stbc_coreregno', coreregno)
        call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
@@ -4290,7 +4295,7 @@ cxpb  and max(,,) statement for stability
                 t1=t1 + UA(IX,0,IS)*vol(ix,0)
               endif
             enddo
-            t1=t1/t0
+            if (t0.gt.0.0_R8) t1=t1/t0
             do ix = 1, BC_LIST_SIZE(IB)
               if(on_closed_surface(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
      >         then

@@ -228,6 +228,16 @@ program b2_ual_write_b2mod
 #endif
 
     implicit none
+#ifdef USE_PXFGETENV
+    integer lenval, ierror
+#else
+#ifdef NAGFOR
+    integer lenval, ierror
+#endif
+#endif
+#ifndef NO_GETENV
+    character(len=24) :: device_env
+#endif
 
     !! Local variables
     character(len=24) :: treename   !< The name of the IMAS IDS database
@@ -274,8 +284,9 @@ program b2_ual_write_b2mod
     character(len=24) :: argName
 
     !! Procedures
+    character*16 usrnam
     logical streql
-    external streql
+    external usrnam, streql
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -287,8 +298,29 @@ program b2_ual_write_b2mod
 
     !! Set default value for IMAS major version and number of steps
     num_step = -1
+    status = 0
     version = "3"
     treename = 'ids'
+    username = usrnam()
+    database = 'solps-iter'
+#ifndef NO_GETENV
+    device_env = ' '
+#ifdef NAGFOR
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
+#else
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+#else
+    call getenv ('DEVICE', device_env)
+    call getenv ('IMAS_VERSION', imas_version)
+#endif
+#endif
+    if (.not.streql(device_env,' ')) database = device_env
+#endif
 
     !! Check if arguments are found
     narg = command_argument_count()
@@ -320,7 +352,7 @@ program b2_ual_write_b2mod
         end do
     !! If not at least shot, run, username, and database were defined, display
     !! the error message and and a full command example
-    else if( narg .lt. 8 ) then
+    else if( narg .lt. 4 ) then
         write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
@@ -380,6 +412,8 @@ program b2_ual_write_b2mod
         &   numerics, &
 #endif
         &   treename, shot, run, idx, username, database, version )
+    call close_ual(idx)
+    idx = 0
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin

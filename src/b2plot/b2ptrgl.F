@@ -742,7 +742,7 @@ c
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-        if(j.eq.1 .or. ntrgts.eq.4) then !{
+        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           if(.not.LSN) then

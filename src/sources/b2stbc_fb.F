@@ -325,7 +325,7 @@
      9  save_gas_puff_while_overshot/0.0_R8/,
      9  save_pfr1_puff_while_overshot/0.0_R8/,
      9  save_pfr2_puff_while_overshot/0.0_R8/,
-     i  coreregno/1/, coreregn2/4/, solregno/3/,
+     i  coreregn2/4/, solregno/3/,
      i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/,
      l  zeroslope/.false./
 #ifdef COMPLICATED
@@ -463,6 +463,11 @@
        call xertst (1.0_R8.le.volrec_overshoot.or.
      1  0.0_R8.eq.volrec_overshoot,
      1  'faulty internal parameter volrec_overshoot')
+       if (nnreg(0).le.2) then
+         coreregno = 0
+       else
+         coreregno = 1
+       end if
        call ipgeti ('b2stbc_coreregno', coreregno)
        call ipgeti ('b2stbc_coreregn2', coreregn2)
        call ipgeti ('b2stbc_solregno', solregno)

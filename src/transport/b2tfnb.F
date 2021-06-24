@@ -868,6 +868,9 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          end if
 
          if(drift_style.eq.0)then                                       !srv 21.06.08
+          t0 = (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+     !srv 20.06.08
      1     (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
@@ -896,13 +899,13 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
      6     +hz(leftix(ix,iy),leftiy(ix,iy))*
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
-     8     hx(leftix(ix,iy),leftiy(ix,iy))) + scur*
-     &     (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     8     hx(leftix(ix,iy),leftiy(ix,iy))) + scur*t0
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
      &                  term(ix,iy)                                     !srv 20.06.08
          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then       !srv 21.06.08 {
+          t0 = (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
      4      ubdia(ix,iy,0)*
@@ -931,6 +934,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then      !IYS 04.03.2019 - 11.02.2020
+          t0 = hzl(ix,iy)
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
      &      ubdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy) + scur                 !IYS 04.03.2019
@@ -951,20 +955,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          endif                                                          !srv 21.06.08 }
 !         flo = flo + scur
 !         flo_mdf = flo_mdf + scur
-!         flo2dia = flo2dia + scur*
-!     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-!     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-!     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+!         flo2dia = flo2dia + scur*t0
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
              con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0))
              con(ix,iy)      = con_mdf(ix,iy)
              con_he(ix,iy)   = con_mdf(ix,iy)
              con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,0))          !did not change
-             con_2dia(ix,iy) = con_mdf(ix,iy)*
-     &        (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+             con_2dia(ix,iy) = con_mdf(ix,iy)*t0
            else
              con_mdf(ix,iy)  = cdnb(ix,iy,0)
              con_he(ix,iy)   = cdnb(ix,iy,0)                            !iyv 30.05.08 !srv 03.10.08
@@ -1366,6 +1364,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
            vsprcur = 0.0_R8
          endif
          if(drift_style.eq.0)then                                       !srv 21.06.08
+          t0 = (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &          hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
           flo = cvlb(ix,iy,1)+
      &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
@@ -1397,6 +1398,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then           !srv 21.06.08 {
+           t0 = (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &           hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
            flo = cvlb(ix,iy,1)+ubdia(ix,iy,1)*
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !srv 01.03.00
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))           !srv 01.03.00
@@ -1420,6 +1424,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then          !IYS 04.03.2019 - 11.02.2020
+           t0 = hzb(ix,iy)
            flo = cvlb(ix,iy,1)+ubdia(ix,iy,1)*gs(ix,iy,1)               !IYS 04.03.2019
      &      +scur
            flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*gs(ix,iy,1)          !IYS 04.03.2019, srv 01.06.06 {
@@ -1440,10 +1445,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
             con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,1))
             con(ix,iy)      = con_mdf(ix,iy)
             con_he(ix,iy)   = con_mdf(ix,iy)
-            con_2dia(ix,iy) = con_mdf(ix,iy)*
-     &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     &        hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
-     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            con_2dia(ix,iy) = con_mdf(ix,iy)*t0
             con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,1))           ! did not change
           else
            con_he(ix,iy)   = cdnb(ix,iy,1)                !iyv 30.05.08 !srv 03.10.08
@@ -1472,9 +1474,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1)*(pb(ix,iy)                                 !srv 09.01.01
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))+       !srv 01.10.99
-     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
-     &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*vsprcur   !srv 02.04.18
+     &      t0*vsprcur                                                  !srv 02.04.18
           fnb_nodrift(ix,iy,1) = flo_nodrift*
      1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_nodrift*
@@ -1635,8 +1635,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -cdpb(ix,iy,1)*(pb(ix,iy)
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-           fnb_53(ix,iy,1) = flo_53*(nb(bottomix(ix,iy),bottomiy(ix,iy))!ajs 06.04.20
-     &          +nb(ix,iy))/2.0_R8
+           fnb_53(ix,iy,1) = flo_53*t0                                  !ajs 06.04.20
            conb(ix,iy,1,0) =                                            !srv 13.10.06
      &      con(ix,iy)*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))+
      &      kmpr(ix,iy))/2.0_R8+cdpb(ix,iy,1)

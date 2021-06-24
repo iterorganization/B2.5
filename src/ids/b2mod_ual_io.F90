@@ -1877,24 +1877,11 @@ contains
                 &   value = ne,                                             &
                 &   time_sind = time_sind )
             !! fne: Electron particle flux
-            do ix = -1, nx
-              do iy = -1, ny
-                if (fne(ix,iy,0).ne.0.0_R8) then
-                  tmpFace(ix,iy,0) = fne(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-                else
-                  tmpFace(ix,iy,0) = 0.0_R8
-                end if
-                if (fne(ix,iy,1).ne.0.0_R8) then
-                  tmpFace(ix,iy,1) = fne(ix,iy,1)/gs(ix,iy,1)
-                else
-                  tmpFace(ix,iy,1) = 0.0_R8
-                end if
-              end do
-            end do
+            call divide_by_areas(nx,ny,fne,totFace)
             call write_face_scalar(                                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
-                &   value = tmpFace,                                        &
+                &   value = totFace,                                        &
                 &   time_sind = time_sind )
             !! sne: Electron particle sources
             tmpCv(:,:) = ( sne(:,:,0) + sne(:,:,1) * ne(:,:) ) / vol(:,:)
@@ -2458,24 +2445,11 @@ contains
                 &         electrons%energy%v,                           &
                 &   value = chve,                                       &
                 &   time_sind = time_sind )
-            do ix = -1, nx
-              do iy = -1, ny
-                if (fhe(ix,iy,0).ne.0.0_R8) then
-                  tmpFace(ix,iy,0) = fhe(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-                else
-                  tmpFace(ix,iy,0) = 0.0_R8
-                end if
-                if (fhe(ix,iy,1).ne.0.0_R8) then
-                  tmpFace(ix,iy,1) = fhe(ix,iy,1)/gs(ix,iy,1)
-                else
-                  tmpFace(ix,iy,1) = 0.0_R8
-                end if
-              end do
-            end do
+            call divide_by_areas(nx,ny,fhe,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
-                &   value = tmpFace,                                    &
+                &   value = totFace,                                    &
                 &   time_sind = time_sind )
             call write_cell_scalar(                                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
@@ -2600,24 +2574,11 @@ contains
                  &   value = chvi,                                    &
                  &   time_sind = time_sind )
             !! fhi : Ion heat flux
-            do ix = -1, nx
-              do iy = -1, ny
-                if (fhi(ix,iy,0).ne.0.0_R8) then
-                  tmpFace(ix,iy,0) = fhi(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-                else
-                  tmpFace(ix,iy,0) = 0.0_R8
-                end if
-                if (fhi(ix,iy,1).ne.0.0_R8) then
-                  tmpFace(ix,iy,1) = fhi(ix,iy,1)/gs(ix,iy,1)
-                else
-                  tmpFace(ix,iy,1) = 0.0_R8
-                end if
-              end do
-            end do
+            call divide_by_areas(nx,ny,fhi,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
-                &   value = tmpFace,                                    &
+                &   value = totFace,                                    &
                 &   time_sind = time_sind )
             call write_cell_scalar(                                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
@@ -4994,8 +4955,8 @@ contains
             end if
           end do
           lambda = 0.0_IDS_real
-          tmpFace(:,:,0) = abs(fhe(:,:,0))/gs(:,:,0)/qc(:,:)
-          tmpFace(:,:,1) = abs(fhe(:,:,1))/gs(:,:,1)
+          totFace=abs(fhe)
+          call divide_by_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(ii,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(ii,jsep+1:ny,0),dim=1)
           i = jsep+j
@@ -5012,8 +4973,8 @@ contains
           lambda = lambda/log(2.0_IDS_real)
           summary%scrape_off_layer%heat_flux_e_decay_length%value( time_sind ) = lambda
           lambda = 0.0_IDS_real
-          tmpFace(:,:,0) = abs(fhi(:,:,0))/gs(:,:,0)/qc(:,:)
-          tmpFace(:,:,1) = abs(fhi(:,:,1))/gs(:,:,1)
+          totFace=abs(fhi)
+          call divide_by_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(jj,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(jj,jsep+1:ny,0),dim=1)
           i = jsep+j
@@ -5997,13 +5958,16 @@ contains
                 &                sna(:,:,1,is-1)*na(:,:,is-1) )
         end do
 
-!!$    ! ue TODO: must be computed, refactor code from b2news into function
-!!$    allocate(edgecpo%fluid%ve%comps(1))
-!!$    allocate(edgecpo%fluid%ve%align(1))
-!!$    allocate(edgecpo%fluid%ve%alignid(1))
-!!$    edgecpo%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
-!!$    edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
-!!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, b2CellData = ue(:,:) )
+        !! ue
+        allocate(edgecpo%fluid%ve)
+        allocate(edgecpo%fluid%ve%comps(1))
+        allocate(edgecpo%fluid%ve%align(1))
+        allocate(edgecpo%fluid%ve%alignid(1))
+        edgecpo%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
+        edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
+
+        call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, &
+            &   b2CellData = ue(:,:) )
 
         !! ua
         allocate(edgecpo%fluid%vi(ns))

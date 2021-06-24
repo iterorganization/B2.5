@@ -14,6 +14,8 @@
       use b2mod_impgyro
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
+      use b2mod_geo
+     , , only : divide_by_areas
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
@@ -221,8 +223,7 @@ cxpb Must convert fluxes to flux densities
         else
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
-          fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
+          call divide_by_areas(nx,ny,fna(-1,-1,0,is),fna0(-1,-1,0,is))
         end if
       end do
       do is = 1, nnmoli
@@ -248,16 +249,11 @@ cxpb Must convert fluxes to flux densities
           ti0(ix,iy) = (ti0(ix,iy) + 
      .                  ti(ix,iy)*ni(ix,iy,0)) /
      .                 (na_tot(ix,iy) + ni(ix,iy,0))
-          fhi0(ix,iy,0) = fhi0(ix,iy,0) + 
-     .     fhi(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhi0(ix,iy,1) = fhi0(ix,iy,1) + 
-     .     fhi(ix,iy,1)/gs(ix,iy,1)
-          fhe0(ix,iy,0) = fhe(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhe0(ix,iy,1) = fhe(ix,iy,1)/gs(ix,iy,1)
-          fch0(ix,iy,0) = fch(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fch0(ix,iy,1) = fch(ix,iy,1)/gs(ix,iy,1)
         end do
       end do
+      call divide_by_areas(nx,ny,fhi,fhi0)
+      call divide_by_areas(nx,ny,fhe,fhe0)
+      call divide_by_areas(nx,ny,fch,fch0)
 
       if (ncall.eq.0 .or.
      & (main_call .and. mod(ncall,impgyro_mod).eq.0)) then
