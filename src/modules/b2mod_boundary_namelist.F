@@ -132,18 +132,27 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       else
          bc_elm_count=0
       endif
-      catch_up=boundary_time_mod.gt.0.0_R8
+      if(boundary_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1           boundary_time_switch.gt.0.0_R8
+      else if (boundary_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.boundary_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
-        if(mod(tim,boundary_time_mod).gt.boundary_time_switch)
-     1        then
-          write(*,*) 'b2stbc: catching up ...'
-          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-          call xertst (nbc.le.nbcd,
+        write(*,*) 'b2stbc: catching up ...'
+        call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+        call xertst (nbc.le.nbcd,
      1           'increase DEF_NBC in DIMENSIONS.F')
-          call xertst (nniso.le.nnisod,
+        call xertst (nniso.le.nnisod,
      1           'increase DEF_NISO in DIMENSIONS.F')
-          call write_b2mod_boundary_namelist
-          catch_up=boundary_time_mod.gt.0.0_R8
+        call write_b2mod_boundary_namelist
+        if(boundary_time_mod.gt.0.0_R8) then
+          catch_up=boundary_time_switch.gt.0.0_R8.and.
+     1     mod(tim,boundary_time_mod).ge.boundary_time_switch
+        else if (boundary_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.boundary_time_switch
         else
           catch_up=.false.
         endif
@@ -236,6 +245,7 @@ cxpb overwrite the defaults with the namelist data
       implicit none
       integer nx, ny, ns
       real (kind=R8) :: tim
+      logical catch_up
 
       if(boundary_time_mod.gt.0.0_R8) then
         write(*,'(a,1p,3(1x,e14.7),2i4)')
@@ -243,16 +253,26 @@ cxpb overwrite the defaults with the namelist data
      1        boundary_time_switch,
      2        int(tim/boundary_time_mod),
      3        bc_elm_count
-        if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
-     1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-          bc_elm_count=int(tim/boundary_time_mod)
-          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-          call xertst (nbc.le.nbcd,
-     1         'increase DEF_NBC in DIMENSIONS.F')
-          call xertst (nniso.le.nnisod,
+        catch_up=
+     1   (mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1    boundary_time_switch.gt.0.0_R8).or.
+     2    int(tim/boundary_time_mod).gt.bc_elm_count
+      else if (boundary_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.boundary_time_switch
+        if(catch_up) write(*,'(a,a)')
+     .   'Switching to next boundary namelist file ',
+     .    trim(boundary_filename)
+      else
+        catch_up=.false.
+      end if
+      if(catch_up) then
+        if(boundary_time_mod.gt.0.0_R8)
+     >   bc_elm_count=int(tim/boundary_time_mod)
+        call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+        call xertst (nniso.le.nnisod,
      .                           'increase DEF_NISO in DIMENSIONS.F')
-          call write_b2mod_boundary_namelist
-        endif
+        call write_b2mod_boundary_namelist
       endif
       return
 
@@ -426,6 +446,8 @@ cxpb Have to do this here already in case the namelist is not used
       character*260 filename
 
       filename=boundary_filename
+      boundary_time_mod = 0.0_R8
+      boundary_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)

@@ -4790,7 +4790,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(NEUTRALS_TIME_MOD), exceeds NEUTRALS_TIME_SWITCH, reads the new namelist from NEUTRALS_FILENAME. Also switches to the new namelist if the ELM count (here time/NEUTRALS_TIME_MOD) changes. Only active if NEUTRALS_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(NEUTRALS_TIME_MOD), reaches or exceeds NEUTRALS_TIME_SWITCH, reads the new namelist from NEUTRALS_FILENAME. Also switches to the new namelist if the ELM count (here time/NEUTRALS_TIME_MOD) changes. Only active if NEUTRALS_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -4798,7 +4798,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new NEUTRALS namelist is read.
+					If NEUTRALS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NEUTRALS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NEUTRALS namelist file from NEUTRALS_FILENAME.
+					Only active if NEUTRALS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5926,7 +5928,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes. Only active if BOUNDARY_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), reaches or exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes. Only active if BOUNDARY_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5934,7 +5936,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /BOUNDARY/ namelist is read.
+					If BOUNDARY_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new BOUNDARY namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next BOUNDARY namelist file from BOUNDARY_FILENAME.
+					Only active if BOUNDARY_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6340,7 +6344,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(SOURCES_TIME_MOD), exceeds SOURCES_TIME_SWITCH, reads the new namelist from SOURCES_FILENAME. Also switches to the new namelist if the ELM count (here time/SOURCES_TIME_MOD) changes. Only active if SOURCES_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(SOURCES_TIME_MOD), reaches or exceeds SOURCES_TIME_SWITCH, reads the new namelist from SOURCES_FILENAME. Also switches to the new namelist if the ELM count (here time/SOURCES_TIME_MOD) changes. Only active if SOURCES_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6348,7 +6352,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /PROFILE/ namelist is read.
+					If SOURCES_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new PROFILE namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next PROFILE namelist file from SOURCES_FILENAME.
+					Only active if SOURCES_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 		</category>
@@ -6413,7 +6419,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6421,7 +6427,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6709,7 +6717,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(NUMERICS_TIME_MOD), exceeds NUMERICS_TIME_SWITCH, reads the new namelist from NUMERICS_FILENAME. Also switches to the new namelist as the ELM count (here time/NUMERICS_TIME_MOD) changes. Only active if NUMERICS_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(NUMERICS_TIME_MOD), reaches or exceeds NUMERICS_TIME_SWITCH, reads the new namelist from NUMERICS_FILENAME. Also switches to the new namelist as the ELM count (here time/NUMERICS_TIME_MOD) changes. Only active if NUMERICS_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6717,7 +6725,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /NUMERICS/ namelist is read.
+					If NUMERICS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NUMERICS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NUMERICS namelist file from NUMERICS_FILENAME.
+					Only active if NUMERICS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6899,7 +6909,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6907,7 +6917,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switchgroup>

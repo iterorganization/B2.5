@@ -245,14 +245,23 @@
         else
           elm_count=0
         endif
-        catch_up=numerics_time_mod.gt.0.0_R8
+        if(numerics_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &      .and.numerics_time_switch.gt.0.0_R8
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up)
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
-     1     then
-            write(*,*) 'b2sral: catching up ...'
-            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-            call write_b2mod_numerics_namelist
-            catch_up=numerics_time_mod.gt.0.0_R8
+          write(*,*) 'b2sral: catching up ...'
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call write_b2mod_numerics_namelist
+          if(numerics_time_mod.gt.0.0_R8) then
+            catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &        .and.numerics_time_switch.gt.0.0_R8
+          else if (numerics_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.numerics_time_switch
           else
             catch_up=.false.
           endif
@@ -262,12 +271,23 @@
           write(*,'(a,1p,3e12.4,2i6)')
      .     'ELM: ',tim,mod(tim,numerics_time_mod),
      1     numerics_time_switch,int(tim/numerics_time_mod),elm_count
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
-     1     int(tim/numerics_time_mod).gt.elm_count) then
-            elm_count=int(tim/numerics_time_mod)
-            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-            call write_b2mod_numerics_namelist
-          endif
+          catch_up=
+     1    (mod(tim,numerics_time_mod).ge.numerics_time_switch.and.
+     1     numerics_time_switch.gt.0.0_R8).or.
+     2     int(tim/numerics_time_mod).gt.elm_count
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next numerics namelist file ',
+     .      trim(numerics_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(numerics_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/numerics_time_mod)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.

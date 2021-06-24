@@ -12,7 +12,9 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_input_profile
+      use b2mod_transport_namelist
       use b2mod_anomalous_transport
+      use b2mod_time
       use b2mod_rates
      , , only : rza
       use b2mod_b2cmpa
@@ -91,7 +93,8 @@
 
 *   ..local variables
       integer ix, iy, is, is0, n2
-      integer ncall, pot_eq, no_current, no_solve, style
+      integer ncall, pot_eq, no_current, no_solve, style, elm_count
+      integer, save :: transport_namelist = 0
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -107,9 +110,9 @@
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
-      logical solving(4)
+      logical solving(4), catch_up
       save ncall, pol_anom_scale, pot_eq, no_solve, solving,
-     .  fch_anomalous, no_current, style
+     .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
@@ -158,6 +161,62 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(nx,ny,ns)
+        call ipgeti ('b2tqna_transport_namelist', transport_namelist)
+        if(transport_namelist.eq.1) then
+          call alloc_transport_namelist(ns)
+          call read_b2mod_transport_namelist
+          call write_b2mod_transport_namelist
+          if(transport_time_mod.gt.0.0_R8) then
+            elm_count=int(tim/transport_time_mod)
+          else
+            elm_count=0
+          endif
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+          else
+            catch_up=.false.
+          end if
+          do while(catch_up)
+            write(*,*) 'b2tqna: catching up ...'
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+            if(transport_time_mod.gt.0.0_R8) then
+              catch_up=transport_time_switch.gt.0.0_R8.and.
+     1         mod(tim,transport_time_mod).ge.transport_time_switch
+            else if (transport_time_switch.gt.0.0_R8) then
+              catch_up=tim.ge.transport_time_switch
+            else
+              catch_up=.false.
+            endif
+          enddo
+        endif
+      else
+        if(transport_namelist.eq.1) then
+          if(transport_time_mod.gt.0.0_R8) then
+            write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+     1       transport_time_switch,int(tim/transport_time_mod),elm_count
+            catch_up=
+     1      (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1       transport_time_switch.gt.0.0_R8).or.
+     2       int(tim/transport_time_mod).gt.elm_count
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+            if(catch_up) write(*,'(a,a)')
+     .       'Switching to next transport namelist file ',
+     .        trim(transport_filename)
+          else
+            catch_up=.false.
+          end if
+          if(catch_up) then
+            if(transport_time_mod.gt.0.0_R8)
+     >       elm_count=int(tim/transport_time_mod)
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+          endif
+        endif
       end if
 
 * ..compute transport coefficients

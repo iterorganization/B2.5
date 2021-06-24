@@ -141,12 +141,22 @@
         else
           elm_count=0
         endif
-        catch_up=sources_time_mod.gt.0.0_R8
+        if(sources_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     &             sources_time_switch.gt.0.0_R8
+        else if (sources_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.sources_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up)
-          if(mod(tim,sources_time_mod).gt.sources_time_switch) then
-            write(*,*) 'sources: catching up...'
-            call read_source_profile
-            catch_up=sources_time_mod.gt.0.0_R8
+          write(*,*) 'sources: catching up...'
+          call read_source_profile
+          if(sources_time_mod.gt.0.0_R8) then
+            catch_up=mod(tim,sources_time_mod).ge.sources_time_switch
+     &        .and.sources_time_switch.gt.0.0_R8
+          else if (sources_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.sources_time_switch
           else
             catch_up=.false.
           endif
@@ -156,12 +166,23 @@
           write(*,'(a,1p,3e12.4,2i6)') 'SOURCES: ',
      .     tim,mod(tim,sources_time_mod),
      1     sources_time_switch,int(tim/sources_time_mod),elm_count
-          if(mod(tim,sources_time_mod).gt.sources_time_switch.or.
-     1     int(tim/sources_time_mod).gt.elm_count) then
-            elm_count=int(tim/sources_time_mod)
-            call read_source_profile
-            new_files = .true.
-          endif
+          catch_up=
+     1    (mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     1     sources_time_switch.gt.0.0_R8).or.
+     2     int(tim/sources_time_mod).gt.elm_count
+        else if (sources_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.sources_time_switch
+          if (catch_up) write(*,'(a,a)')
+     .     'Switching to next sources profile datafile ',
+     .      trim(sources_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(sources_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/sources_time_mod)
+          call read_source_profile
+          new_files = .true.
         endif
       endif
  
@@ -390,6 +411,8 @@ cdjm Jan2017 Keep linearised sources for balance
 
 !  read the profile data
       filename=sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
@@ -486,14 +509,23 @@ cdjm Jan2017 Keep linearised sources for balance
         else
           elm_count=0
         endif
-        catch_up=transport_time_mod.gt.0.0_R8
+        if(transport_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,transport_time_mod).ge.transport_time_switch
+     &      .and.transport_time_switch.gt.0.0_R8
+        else if (transport_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.transport_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up) 
-          if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1     then
-            write(*,*) 'transport_input: catching up ...'
-            filename=transport_filename
-            call read_transport_input
-            catch_up=transport_time_mod.gt.0.0_R8
+          write(*,*) 'transport_input: catching up ...'
+          filename=transport_filename
+          call read_transport_input
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
           else
             catch_up=.false.
           endif
@@ -503,13 +535,24 @@ cdjm Jan2017 Keep linearised sources for balance
           write(*,'(a,1p,3(1x,e14.7),2i4)')
      .     'ELM: ',tim,mod(tim,transport_time_mod),
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=int(tim/transport_time_mod)
-            filename=transport_filename
-            new_files = .true.
-            call read_transport_input
-          endif
+          catch_up=
+     1    (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1     transport_time_switch.gt.0.0_R8).or.
+     2     int(tim/transport_time_mod).gt.elm_count
+        else if (transport_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.transport_time_switch
+          if (catch_up) write(*,'(a,a)')
+     .     'Switching to next transport namelist file ',
+     .      trim(transport_filename)
+        else
+          catch_up=.false.
+        endif
+        if(catch_up) then
+          if(transport_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/transport_time_mod)
+          filename=transport_filename
+          new_files = .true.
+          call read_transport_input
         endif
       endif
 
@@ -802,6 +845,8 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
+      transport_time_mod=0.0_R8
+      transport_time_switch=0.0_R8
       call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
