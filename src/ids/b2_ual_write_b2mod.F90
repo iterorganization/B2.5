@@ -298,7 +298,6 @@ program b2_ual_write_b2mod
 
     !! Set default value for IMAS major version and number of steps
     num_step = -1
-    status = 0
     version = "3"
     treename = 'ids'
     username = usrnam()
@@ -308,15 +307,11 @@ program b2_ual_write_b2mod
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
-    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
-    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
     call getenv ('DEVICE', device_env)
-    call getenv ('IMAS_VERSION', imas_version)
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
@@ -412,8 +407,6 @@ program b2_ual_write_b2mod
         &   numerics, &
 #endif
         &   treename, shot, run, idx, username, database, version )
-    call close_ual(idx)
-    idx = 0
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin

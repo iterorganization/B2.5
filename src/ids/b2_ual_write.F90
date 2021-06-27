@@ -94,7 +94,6 @@ program b2_ual_write
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
-    status = 0
     version = '3'
     treename = 'ids'
     write (*,*) 'Starting b2mn init'
@@ -188,8 +187,6 @@ program b2_ual_write
         &   numerics, &
 #endif
         &   treename, shot, run, idx, username, database, version )
-    call close_ual(idx)
-    idx = 0
 
 end program b2_ual_write
 
