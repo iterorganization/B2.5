@@ -1,7 +1,10 @@
       program b2optim_ipopt
+      use b2mod_types
       use b2mod_par_opt_diff
       use b2mod_main_diff
-     , , only : b2mn_init_d, b2mn_fin_d
+     , , only : b2mn_init_d, b2mn_step_d, b2mn_step, b2mn_fin_d
+      use b2mod_ad_diff
+     , , only : nncf
       use b2mod_user_namelist_diff
      , , only : nsigma, sigma
       use b2mod_transport_namelist_diff
@@ -50,12 +53,11 @@
       double precision F
       integer ipar, icon, isigma, idir, i
 
-      type(switches_diffv), save :: switchd
+      type(switches_diffv), save :: switchdiff
 
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
 !     down in this file.
-      external EV_F, EV_G, EV_GRAD_F, EV_JAC_G, EV_HESS, ITER_CB
       external streql
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
@@ -70,7 +72,8 @@
       allocate(par_opt_phys(npar_opt))
 !     Initialize derivatives for diffusion coefficients
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
-!     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be commented-out
+!     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
+!     FIXME remove from here for adjoint
       tdatad = 0.0_R8
       parm_dnad = 0.0_R8
       parm_dpad = 0.0_R8
@@ -81,11 +84,11 @@
       parm_sigd = 0.0_R8
       parm_alfd = 0.0_R8
       enkpard = 0.0_R8
-      switchd%b2sikt_fac_sheath = 0.0_R8
-      switchd%b2sikt_fac_sheath_core = 0.0_R8
-      switchd%keps_cd = 0.0_R8
-      switchd%keps_heat = 0.0_R8
-      switchd%keps_heat_i = 0.0_R8
+      switchdiff%b2sikt_fac_sheath = 0.0_R8
+      switchdiff%b2sikt_fac_sheath_core = 0.0_R8
+      switchdiff%keps_cd = 0.0_R8
+      switchdiff%keps_heat = 0.0_R8
+      switchdiff%keps_heat_i = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
       do ipar = 1, nnvar - nsigma_opt
         if (spatial_dep(ipar)) then
@@ -104,11 +107,11 @@
           case (3) ! hci
             parm_hcid(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
           case (4) ! hce
-            parm_hced(idir) = 1.0_R8 ! FIXME to improve for multispecies
+            parm_hced(idir) = 1.0_R8
           case (5) ! vla
-            parm_vlad(idir) = 1.0_R8
+            parm_vlad(idir,1) = 1.0_R8
           case (7) ! vsa
-            parm_vsad(idir) = 1.0_R8
+            parm_vsad(idir,1) = 1.0_R8
           case (8) ! sig
             parm_sigd(idir) = 1.0_R8
           case (9) ! alf
@@ -116,15 +119,15 @@
           case (10) ! enkpar(1,1)
             enkpard(idir,1,1) = 1.0_R8
           case (11) ! b2sikt_fac_sheath
-            switchd%b2sikt_fac_sheath(idir) = 1.0_R8
+            switchdiff%b2sikt_fac_sheath(idir) = 1.0_R8
           case (12) ! b2sikt_fac_sheath_core
-            switchd%b2sikt_fac_sheath_core(idir) = 1.0_R8
+            switchdiff%b2sikt_fac_sheath_core(idir) = 1.0_R8
           case (13) ! keps_cd
-            switchd%keps_cd(idir) = 1.0_R8
+            switchdiff%keps_cd(idir) = 1.0_R8
           case (14) ! keps_heat
-            switchd%keps_heat(idir) = 1.0_R8
+            switchdiff%keps_heat(idir) = 1.0_R8
           case (15) ! keps_heat_i
-            switchd%keps_heat_i(idir) = 1.0_R8
+            switchdiff%keps_heat_i(idir) = 1.0_R8
           case default
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
@@ -143,6 +146,7 @@
           endif
         end do
       endif
+!     FIXME remove until here for adjoint
       par_opt_phys = 0.0_R8
       flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
 
@@ -329,17 +333,10 @@
  9990 continue
       write(*,*) 'Error setting an option'
       goto 9000
-      end program b2optim_ipopt
+
+      contains
 
       subroutine EV_F(npar, XX, NEW_X, F, IDAT, DAT, IER)
-      use b2mod_types
-      use b2mod_main_diff
-     , , only : b2mn_step
-      use b2mod_ad_diff
-     , , only : nncf
-      use b2mod_user_namelist_diff
-     , , only : nsigma, sigma
-      use b2mod_par_opt_diff
       implicit none
       integer npar, NEW_X
       double precision F, XX(npar)
@@ -377,21 +374,13 @@
       end subroutine EV_F
 
       subroutine EV_GRAD_F(npar, XX, NEW_X, GRAD, IDAT, DAT, IER)
-      use b2mod_types
-      use b2mod_main_diff
-     , , only : b2mn_step_d
-      use b2mod_ad_diff
-     , , only : nncf
-      use b2mod_user_namelist_diff
-     , , only : nsigma, sigma
-      use b2mod_par_opt_diff
       implicit none
       integer npar, NEW_X
       double precision GRAD(npar), XX(npar)
-      real(kind=r8) j(nncf), jd(nncf), jb(nncf)
+      real(kind=r8) j(nncf), jd(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma
+      integer IER, ipar, isigma, idir, i
       character*3 str
       save jd
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
@@ -415,26 +404,76 @@
             isigma = isigma + 1
           endif
         enddo
-        call b2mn_step_d(j,jd)
+        call b2mn_step_d(j,jd,switchdiff)
       endif
+!     FIXME remove from here for adjoint
       do ipar = 1, npar
         grad(ipar) = DBLE(jd(1))
       end do
-!      if (new_x.eq.0) then
-!        call b2mn_init_b
-!        ss = real(XX(1),kind=r8)
-!        call b2mn_step_b(j, jb)
-!        call b2mn_fin_b
-!        grad(1) = DBLE(ssb)
-!      endif
-!      grad(1) = DBLE(ssb)
+!     FIXME remove until here for adjoint
+!     FIXME remove from here for tangent
+      idir = 1 !this indicates the different directions of adjoint mode
+      do ipar = 1, nnvar - nsigma_opt
+        if (spatial_dep(ipar)) then
+!         spatially dependent coefficient
+          do i = 1, spatial_points(ipar)
+            grad(idir) = DBLE(tdatab(2,i,partype(ipar),1))
+            idir = idir + 1
+          end do
+        else
+!         non spatially dependent --> specified in b2tqna
+          select case (partype(ipar))
+          case (1) ! dna
+            grad(idir) = DBLE(parm_dnab(1)) ! FIXME to improve for multispecies
+          case (2) ! dpa
+            grad(idir) = DBLE(parm_dpab(1)) ! FIXME to improve for multispecies
+          case (3) ! hci
+            grad(idir) = DBLE(parm_hcib(1)) ! FIXME to improve for multispecies
+          case (4) ! hce
+            grad(idir) = DBLE(parm_hceb)
+          case (5) ! vla
+            grad(idir) = DBLE(parm_vlab(1))
+          case (7) ! vsa
+            grad(idir) = DBLE(parm_vsab(1))
+          case (8) ! sig
+            grad(idir) = DBLE(parm_sigb)
+          case (9) ! alf
+            grad(idir) = DBLE(parm_alfb)
+          case (10) ! enkpar(1,1)
+            grad(idir) = DBLE(enkparb(1,1))
+          case (11) ! b2sikt_fac_sheath
+            grad(idir) = DBLE(switchdiff%b2sikt_fac_sheath)
+          case (12) ! b2sikt_fac_sheath_core
+            grad(idir) = DBLE(switchdiff%b2sikt_fac_sheath_core)
+          case (13) ! keps_cd
+            grad(idir) = DBLE(switchdiff%keps_cd)
+          case (14) ! keps_heat
+            grad(idir) = DBLE(switchdiff%keps_heat)
+          case (15) ! keps_heat_i
+            grad(idir) = DBLE(switchdiff%keps_heat_i)
+          case default
+            write(*,*) partype(ipar)
+            call xerrab ('partype out of bounds')
+          end select
+          idir = idir + 1
+        endif
+      end do
+      if (nsigma_opt.gt.0) then
+        do ipar = 1, nsigma
+!         only if sigma is being optimized!
+          if (sigma_opt(ipar)) then
+            grad(idir) = DBLE(sigmab(ipar))
+            idir = idir + 1
+          endif
+        end do
+      endif
+!     FIXME remove until here for tangent
 
       IER = 0
       return
       end subroutine EV_GRAD_F
 
       subroutine EV_G(npar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
-      use b2mod_types
       implicit none
       integer npar, NEW_X, ncon
       double precision G(ncon), X(npar)
@@ -452,8 +491,6 @@
 
       subroutine EV_JAC_G(TASK, npar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
      &    IDAT, DAT, IERR)
-      use b2mod_types
-      use b2mod_par_opt_diff
       integer TASK, npar, NEW_X, ncon, NZ
       double precision X(npar), A(NZ)
       integer ACON(NZ), AVAR(NZ), I
@@ -547,3 +584,5 @@ C   4          *
 
       return
       end subroutine ITER_CB
+
+      end program b2optim_ipopt
