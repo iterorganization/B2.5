@@ -33,6 +33,10 @@ FC = pgf90
 endif
 endif
 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
 ifeq (${FC},mpif90)
 ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
