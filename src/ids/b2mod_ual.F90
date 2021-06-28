@@ -17,7 +17,7 @@ module b2mod_ual
      &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice
     use ids_schemas &   ! IGNORE
      & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &        ids_radiation, ids_dataset_description
+     &        ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io &
      & ,only: b25_process_ids
 #if IMAS_MINOR_VERSION > 21
@@ -48,7 +48,7 @@ module b2mod_ual
   public put_ids_edge, new_ids_edge, delete_ids_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-    &    ids_radiation, ids_dataset_description
+    &    ids_radiation, ids_dataset_description, ids_equilibrium
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif

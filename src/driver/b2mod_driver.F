@@ -91,7 +91,7 @@
      , ,only: imas_open_env, ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,        ids_radiation, ids_dataset_description
+     ,        ids_radiation, ids_dataset_description, ids_equilibrium
 #if IMAS_MINOR_VERSION > 8
       use ids_schemas   ! IGNORE
      , ,only: ids_real, ids_real_invalid
@@ -183,6 +183,7 @@
       character*6 tran_file_name
 #endif
 #ifdef IMAS
+      type(ids_equilibrium) :: equilibrium
       type(ids_edge_profiles) :: edge_profiles
       type(ids_edge_profiles) :: old_edge_profiles
       type(ids_edge_sources) :: edge_sources
@@ -2471,6 +2472,7 @@ c new CDF movie option
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
               write(*,*) "Reading old IDS ", trim(database), shot, run
+              call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
      .          status)
               if (status.ne.0) then
@@ -2574,7 +2576,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   num_time_slices = num_time_slices + 1
                   time_slice_index = num_time_slices
                   call B25_process_ids( edge_profiles, edge_sources,
-     &              edge_transport, radiation, description,
+     &              edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &              summary,
 #endif
@@ -2603,7 +2605,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           if (write_ids .and. (status.ne.0 .or. idx.eq.0)) then
             if (status.ne.0) idx = 0
             call B25_process_ids( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
@@ -2622,7 +2624,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             num_time_slices = num_time_slices + 1
             time_slice_index = num_time_slices
             call B25_process_ids( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
@@ -2855,7 +2857,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
@@ -2875,6 +2877,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
             write(*,*) "Reading old IDS ", trim(database), shot, run
+            call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
      .        status)
             if (status.ne.0) then
@@ -2977,7 +2980,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 num_time_slices = num_time_slices + 1
                 time_slice_index = num_time_slices
                 call B25_process_ids( edge_profiles, edge_sources,
-     &            edge_transport, radiation, description,
+     &            edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &            summary,
 #endif
@@ -3005,7 +3008,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif

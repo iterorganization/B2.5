@@ -257,7 +257,7 @@ program b2_ual_write_b2mod
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual &
      & , only : new_ids_edge
     use b2mod_ual_io &
@@ -513,7 +513,7 @@ program b2_ual_write_b2mod
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, &
+             &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
              &  summary, &
 #endif
@@ -536,7 +536,7 @@ program b2_ual_write_b2mod
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, &
+         &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
          &  summary, &
 #endif

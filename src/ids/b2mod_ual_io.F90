@@ -115,7 +115,8 @@ module b2mod_ual_io
 #endif
     use ids_schemas &     ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,    &
-     &          ids_radiation, ids_dataset_description, ids_ids_properties, &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium,    &
+     &          ids_ids_properties, &
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,             &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components
 #if IMAS_MINOR_VERSION > 21
@@ -178,7 +179,7 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, description, &
+            &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -194,6 +195,8 @@ contains
 !DIR$ NOOPTIMIZE
 #endif
 #include <DIMENSIONS.F>
+        type (ids_equilibrium) :: equilibrium !< IDS designed to
+            !< store equilibrium data
         type (ids_edge_profiles) :: edge_profiles !< IDS designed to
             !< store data on edge plasma profiles (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -307,6 +310,11 @@ contains
         integer :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
         integer :: homogeneous_time !< Homogeneous time (0 or 1)
+        integer :: midplane_id      !< Location of midplane:
+                                    !< 1: Z equal to equilibrium O-point
+                                    !< 2: Z at location of maximum major radius
+                                    !< 3: Z at dR/dZ = 0 maximum R location
+                                    !< 4: GGD grid subset defined by jxa value
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
@@ -328,7 +336,7 @@ contains
             &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
-        real(IDS_real) :: r_min, r_max, z_min, z_max
+        real(IDS_real) :: r_min, r_max, z_min, z_max, z_eq
         real(IDS_real) :: flux_expansion(4), extension_r(4), extension_z(4), &
             &             wetted_area(4), power_convected(4),                &
             &             power_conducted(4), power_neutrals(4),             &
@@ -947,6 +955,34 @@ contains
             end if
           end if
         end if
+
+        if (GeometryType .eq. GEOMETRY_LINEAR) then
+          midplane_id = 4
+        else
+          if ( size( equilibrium%time_slice ).ge.time_sind ) then
+            z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
+             &   magnetic_axis%z
+          else
+            z_eq = IDS_REAL_INVALID
+          end if
+          if ( z_eq.ne.IDS_REAL_INVALID .and. &
+             & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).lt.0.0_R8 ) then
+            midplane_id = 1
+          else if ( jxa .eq. nmdpl ) then
+            midplane_id = 2
+          else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).lt.0.0_R8 ) then
+            midplane_id = 3
+          else
+            midplane_id = 4
+          end if
+        end if
+#if IMAS_MINOR_VERSION > 32
+        divertors%midplane = midplane_id
+        edge_profiles%midplane = midplane_id
+        edge_sources%midplane = midplane_id
+        edge_transport%midplane = midplane_id
+        summary%midplane = midplane_id
+#endif
 
         select case (GeometryType)
         case ( GEOMETRY_CYLINDER, GEOMETRY_LIMITER, GEOMETRY_ANNULUS )

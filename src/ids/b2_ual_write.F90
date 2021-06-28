@@ -69,7 +69,7 @@ program b2_ual_write
     use b2mod_ual    &
      & , only : put_ids_edge, b25_process_ids, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io
 #if IMAS_MINOR_VERSION > 21
     use b2mod_ual    &
@@ -189,6 +189,7 @@ program b2_ual_write
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
+      call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
@@ -287,7 +288,7 @@ program b2_ual_write
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, &
+             &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
              &  summary, &
 #endif
@@ -310,7 +311,7 @@ program b2_ual_write
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, &
+         &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
          &  summary, &
 #endif
