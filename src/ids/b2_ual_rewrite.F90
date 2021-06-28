@@ -89,7 +89,6 @@ program b2_ual_rewrite
     use eirmod_comusr
     use eirmod_extrab25
 #endif
-    use b2mod_ipmain
     implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror

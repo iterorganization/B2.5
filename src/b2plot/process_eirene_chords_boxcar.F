@@ -34,7 +34,7 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalue(inpts)=chord_tria_integral(ntrii,nrknot,
+        yvalue(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,
      1   eirene_stack(1,is,iewrk),
      2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
      3   x1,y1,z1,x2,y2,z2,vector)

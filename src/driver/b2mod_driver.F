@@ -106,7 +106,6 @@
       use b2mod_ual_io
      , ,only: b25_process_ids, num_time_slices
 #endif
-      use b2mod_subsys
       implicit none
 *   ..common blocks
 #     include "DIMENSIONS.F"

@@ -523,10 +523,10 @@ contains
            call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))
         enddo
 !   ..compute sources
-        call b2sral (nx, ny, ns,                                               &
+        call b2sral (nx, ny, ns, nxtl, nxtr,                                   &
             &        nscx, nscxmax, 0, ns, iscx, ismain, ismain0,              &
             &        dtim, BoRiS, facdrift, fac_ExB, fac_vis,                  &
-            &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,              &
+            &        vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,  &
             &        na, ua,                                                   &
             &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,    &
             &        te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,           &
