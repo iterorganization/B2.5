@@ -160,7 +160,7 @@
               n1 = mpg%cfCvP(iicf,2)
               n2 = ncfdata(iicf)
               ic1 = mpg%cfCvP(iicf,1)
-              ic2 = ic1 + n2 - 1
+              ic2 = ic1 + n1 - 1
               select case (cftype(iicf))
               case (1) !electron density
                 TMP1(1:n1) = st%dv%ne(mpg%cfCv(ic1:ic2))
