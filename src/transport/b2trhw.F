@@ -43,7 +43,7 @@
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2trfr')
+      call subini ('b2trhw')
 *   ..main
 *   ..components of the velocity dependent parts  
       do j = 0, nnucl-1

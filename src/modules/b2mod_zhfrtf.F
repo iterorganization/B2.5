@@ -204,6 +204,10 @@
             enddo
           enddo
         enddo
+        do inucl = 0, nspecies-1
+          gtalc(-1,iy,inucl)=gtalc(0,iy,inucl)
+          gtalc(nx,iy,inucl)=gtalc(nx-1,iy,inucl)
+        enddo
       enddo
       call subend ()
       end subroutine b2mod_zhfrtf_tgta

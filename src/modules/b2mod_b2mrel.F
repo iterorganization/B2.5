@@ -1,5 +1,6 @@
       module b2mod_b2mrel
       use b2mod_types
+      implicit none
       integer, allocatable :: 
      & nucl2s(:,:), znnucl_int(:), s2nucl(:) 
       real (kind=R8), allocatable ::
@@ -10,12 +11,35 @@
      & N10(:,:), N11(:,:),
      & N12(:,:),
      & mu(:,:), mum(:,:),
-     & rmu(:,:),
+     & rmu(:,:),rmd2(:),
      & mdm(:,:)
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     b2mod_b2mrel store the N-coefficients and the mass-related variables 
+*
+*  3. description 
+*
+*     This routine computes:
+*     - N*: the N-coefficients, which are used in the G-objects
+*     - amnucl: mass of the nucleus of the isonuclear species
+*     - znnucl: charge of the nucleus of the isonuclear species
+*     - znnucl_int: the same in integer values 
+*     - nucl2s: the matrix that connect the isonuclear sequence to the species sequence 
+*     - s2nucl: the array that connect the species sequence to the isonuclear sequence 
+*     - mu: mu_{ab} the reduced mass (in atom mass numbers)
+*     - rmu: sqrt{mu_{ab}} the square root of the reduced mass (in atom mass numbers)
+*     - mdm: m_a/m_b the mass to mass ratio
+*     - mum: mu_{ab}/m_a the reduced mass to mass ratio
+*
+*-----------------------------------------------------------------------
       contains
 
       subroutine init_mrel(nnucl,znmax,ns)
-      integer :: nnucl, znmax
+      implicit none
+      integer :: nnucl, znmax, ns
       
       allocate(amnucl(0:nnucl-1))
       allocate(znnucl(0:nnucl-1))
@@ -30,6 +54,7 @@
       allocate(mu(0:nnucl-1,0:nnucl-1)) 
       allocate(mum(0:nnucl-1,0:nnucl-1))
       allocate(rmu(0:nnucl-1,0:nnucl-1))
+      allocate(rmd2(0:nnucl-1))
       allocate(mdm(0:nnucl-1,0:nnucl-1))
       allocate(nucl2s(0:nnucl-1,0:znmax))
       allocate(znnucl_int(0:nnucl-1))

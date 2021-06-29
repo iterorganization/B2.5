@@ -1,0 +1,60 @@
+*-----------------------------------------------------------------------
+*.specification
+
+      subroutine b2trht(nnucl,ix,iy,pit,zetap,
+     & zeffne,ti, Ainv, 
+     & hci0)
+      use b2mod_types
+      use b2mod_subsys
+      use b2mod_constants     
+      use b2mod_zhfrtf, only: nal
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nnucl,ix,iy
+      real (kind=R8) ::
+     & pit,zetap,zeffne,ti
+      real (kind=R8) :: Ainv(0:2*nnucl-1,0:2*nnucl-1)
+*   ..output arguments 
+      real (kind=R8) :: 
+     & hci0
+*   ..common blocks
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     b2trtr computes the ion heat conductivity coefficient 
+*
+*  3. description 
+*
+*     This routine computes:
+*     -hci0: the ion heat conductivity coefficient 
+*
+*-----------------------------------------------------------------------
+*.declarations
+*   ..local variables
+      integer :: j
+      real (kind=R8) :: temp
+
+*-----------------------------------------------------------------------
+*.computation
+
+*   ..subprogram start-up calls
+      call subini ('b2trht')
+*   ..main
+      temp=0.0_R8
+*   ..sums using inverted matrix 
+      do j = 0, nnucl-1
+        temp=temp+nal(ix,iy,j)*sum(Ainv(j,0:nnucl-1)*
+     & nal(ix,iy,0:nnucl-1))
+      enddo
+
+      hci0=-2.5_R8*pit**2*(zetap/zeffne**2)*ti/mp*temp
+
+      call subend ()
+      return
+
+
+      end subroutine b2trht
+
+

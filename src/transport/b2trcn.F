@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcn (nnucl, amnucl, N2, N5, N6, N8, N9, N10, 
-     & N11, N12, mu, rmu, mum, mdm)                               !som 05.02.2021
+     & N11, N12, mu, rmu, rmd2, mum, mdm)                               !som 05.02.2021
       use b2mod_types
 !     use b2mod_b2cmpa
       use b2mod_subsys
@@ -16,7 +16,8 @@
      & N10(0:nnucl-1,0:nnucl-1), N11(0:nnucl-1,0:nnucl-1),
      & N12(0:nnucl-1,0:nnucl-1),
      & mu(0:nnucl-1,0:nnucl-1), mum(0:nnucl-1,0:nnucl-1),
-     & mdm(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1)
+     & mdm(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1),
+     & rmd2(0:nnucl-1)
 
 
 
@@ -33,6 +34,7 @@
 *     This routine computes:
 *     - mu: the reduced mass (in atom mass numbers)
 *     - rmu: the square root of the reduced mass (in atom mass numbers)
+*     - rmd2: the square root of the mass devided by 2 (in atom mass numbers)
 *     - kappa: the energy transfer factor
 *     - mdm: the mass to mass ratio
 *     - mum: the reduced mass to mass ratio
@@ -58,6 +60,7 @@
       enddo
       
       do i = 0, nnucl-1
+        rmd2(i)=rmu(i,i)
         do j = 0, nnucl-1
           mum(i,j)=mu(i,j)/amnucl(i)
           N2(i,j)=3.0_R8/5.0_R8*sqrt(mu(i,j))

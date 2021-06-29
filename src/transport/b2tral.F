@@ -19,7 +19,8 @@
      , , only : rza
       use b2mod_b2cmpa
       use b2mod_b2zhco ,
-     & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf              !som 21.03.26
+     & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf,             !som 21.03.21
+     & zhflcorrh 
       use b2mod_neoclassical
       use b2mod_subsys
       implicit none
@@ -95,19 +96,25 @@
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
       integer, save :: Zhdanov_closure = 0                              !som 25.01.21
+      integer, save :: Zhdanov_test = 0                                 !som 16.06.21
+      integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
       integer, save :: icase = 0                                        !som 05.03.21
+      integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
+     &                 iout_b2npp7 = 0, iout_b2nppo = 0, 
+     &                 iout_b2npmo = 0, iout_b2wdat = 0
       character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(-1:nx,-1:ny,0:1), csig0(-1:nx,-1:ny,0:1),
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
      3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
+     2  chci0_nofl(-1:nx,-1:ny,0:1), chci0_luc(-1:nx,-1:ny,0:1),        !som 16.06.21
+     2  chci0_fl(-1:nx,-1:ny,0:1),                                      !som 16.06.21
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -152,6 +159,7 @@
      &    (no_solve.lt.0.and.mod(abs(no_solve),2**is).ge.2**(is-1))
         enddo
         call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !som 16.06.21
         call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
@@ -164,7 +172,10 @@
         call alloc_input_profile(nx,ny,ns)
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)   !som 25.01.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)         !som 16.06.21
+        call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)         !som 22.06.21
         call ipgetr ('b2tral_zhflcorr', zhflcorr)
+        call ipgetr ('b2tral_zhflcorrh', zhflcorrh)               !som 08.06.21
         call ipgeti ('b2tral_zhcscorr', zhcscorr)
         call ipgeti ('b2tlnl_ii', icase)                          !som 05.03.21
         call xertst (0.eq.icase .or. 1.eq.icase, 
@@ -172,7 +183,8 @@
         call ipgetr ('b2tlc0_gamma', gamma)                       !som 20.03.21
         call xertst (0.lt.gamma, 'invalid input parameter gamma')      
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
-        call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.26
+        call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
+        call ipgeti ('b2tral_mode', mode)                         !som 10.06.21
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
@@ -236,8 +248,33 @@
           end if
         endif
         call b2tlnl (nx, ny, icase, te, ti, ne, lnlam) 
-        call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb,
-     & gamma)
+        if(Zhdanov_test.eq.0.and.Zhdanov_cond.eq.1) then              !som 25.06.21
+          call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb,
+     & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0)
+
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
+            call my_out(70,nx,ny,chci0_nofl(-1,-1,0),
+     & 'b2trzh_chcix')
+            call my_out(70,nx,ny,chci0_fl(-1,-1,0),
+     & 'b2trzh_fllim_chcix')
+            call my_out(70,nx,ny,chci0(-1,-1,0),
+     & 'b2trzh_luciani_fllim_chcix')
+          endif
+        else
+          call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb,
+     & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0_luc)
+
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
+            call my_out(70,nx,ny,chci0_nofl(-1,-1,0),
+     & 'b2trzh_chcix')
+            call my_out(70,nx,ny,chci0_fl(-1,-1,0),
+     & 'b2trzh_fllim_chcix')
+            call my_out(70,nx,ny,chci0_luc(-1,-1,0),
+     & 'b2trzh_luciani_fllim_chcix')
+          endif
+        endif
       endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
