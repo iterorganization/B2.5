@@ -3709,7 +3709,7 @@ c recompute hci0 and hcn0
           call gradc_div_r(nCv, nFc, nVx, 1, geo, mpg, wrkc, wrkf,
      &      shear)
           if(switch%transport_keps.eq.1) then
-*   ..compute D according to KUL, using kt
+*   ..compute D according to KUL, using kt only
 cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
@@ -3717,6 +3717,15 @@ cwdk same dna_ExB for all ion species
      &       abs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
+          elseif(switch%transport_keps.eq.2) then
+*   ..compute D according to KUL, using kt and zt
+            dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
+     &      (sqrt(pl%zt/(am(ismain)*mp)) + switch%keps_shear*
+     &       abs(shear) + b2tqna_keps_eps)
+            dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
+     &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
+          else
+            call xerrab ('wrong value transport_keps')
           endif
           if (switch%keps_visc.gt.0.0_R8) then
             vsa0(:,is) = switch%keps_visc*am(is)*mp*pl%na(:,is)*
