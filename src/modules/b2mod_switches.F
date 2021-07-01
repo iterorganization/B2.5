@@ -334,6 +334,7 @@ c k-enstrophy model
       real(kind=R8) :: keps_heat_i
       real(kind=R8) :: keps_visc
       real(kind=R8) :: keps_dkt
+      real(kind=R8) :: keps_dzt
       real(kind=R8) :: keps_inc
       real(kind=R8) :: keps_fac
       real(kind=R8) :: keps_shear
@@ -351,6 +352,8 @@ c k-enstrophy model
       real(kind=R8) :: b2sikt_fac_vis_RS
       real (kind=R8) :: b2tfhi_fflokt
       real (kind=R8) :: b2tfhi_fconkt
+      real (kind=R8) :: b2tfhi_fflozt
+      real (kind=R8) :: b2tfhi_fconzt
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
@@ -759,6 +762,7 @@ c k-enstrophy model
       s % dna_min = 1.0e-2_R8
       s % keps_visc = 0.2_R8
       s % keps_dkt = 0.01_R8
+      s % keps_dzt = 0.01_R8
       s % keps_inc = 1.0_R8
       s % keps_fac = 1.0_R8
       s % keps_shear = 1.0e1_R8
@@ -776,6 +780,8 @@ c k-enstrophy model
       s % b2sikt_fac_vis_RS = 0.0_R8
       s % b2tfhi_fflokt = 0.0_R8
       s % b2tfhi_fconkt = 0.0_R8
+      s % b2tfhi_fflozt = 0.0_R8
+      s % b2tfhi_fconzt = 0.0_R8
       s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0e0_R8
@@ -1202,6 +1208,7 @@ c k-enstrophy model
       call ipgetr ('b2tqna_keps_cd', s % keps_cd)
       call ipgetr ('b2tqna_keps_visc', s % keps_visc)
       call ipgetr ('b2tqna_keps_dkt', s % keps_dkt)
+      call ipgetr ('b2tqna_keps_dzt', s % keps_dzt)
       call ipgetr ('b2tqna_keps_heat', s % keps_heat)
       call ipgetr ('b2tqna_keps_heat_i', s % keps_heat_i)
       call ipgeti ('b2tqna_keps_local', s % keps_local)
@@ -1225,6 +1232,8 @@ c k-enstrophy model
       call ipgetr ('b2sikt_fac_vis_RS', s % b2sikt_fac_vis_RS)
       call ipgetr ('b2tfhi_fflokt', s % b2tfhi_fflokt)
       call ipgetr ('b2tfhi_fconkt', s % b2tfhi_fconkt)
+      call ipgetr ('b2tfhi_fflozt', s % b2tfhi_fflozt)
+      call ipgetr ('b2tfhi_fconzt', s % b2tfhi_fconzt)
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)        
@@ -1605,6 +1614,8 @@ c k-enstrophy model
      &  'b2tqna_transport_keps value not coded')
       call xertst (0.0_R8.lt.s%keps_dkt,
      &  'keps_dkt must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%keps_dzt,
+     &  'keps_dzt must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%keps_cd,
      &  'keps_cd must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%keps_heat,
@@ -1631,6 +1642,10 @@ c k-enstrophy model
      &  'b2tfhi_fflokt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fconkt,
      &  'b2tfhi_fconkt must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fflozt,
+     &  'b2tfhi_fflozt must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%b2tfhi_fconzt,
+     &  'b2tfhi_fconzt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fsigkt,
      &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,

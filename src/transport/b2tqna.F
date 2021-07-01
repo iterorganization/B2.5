@@ -3,8 +3,8 @@
 
       subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &   switch, geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0,
-     &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,  
-     &   dna_ExB, hce_ExB, hci_ExB)
+     &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,
+     &   dzt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_transport_namelist
       use b2mod_input_profile
@@ -46,8 +46,8 @@
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv),
-     &  hvi0(nCv,0:1), hve0(nCv,0:1), dkt0(nCv), dna_ExB(nCv),
-     &  hce_ExB(nCv), hci_ExB(nCv)
+     &  hvi0(nCv,0:1), hve0(nCv,0:1), dkt0(nCv), dzt0(nCv),
+     &  dna_ExB(nCv), hce_ExB(nCv), hci_ExB(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv)
@@ -255,6 +255,7 @@
       call sfill (nCv*2, 0.0_R8, hvi0, 1)
       call sfill (nCv*2, 0.0_R8, hve0, 1)
       call sfill (nCv, 0.0_R8, dkt0, 1)
+      call sfill (nCv, 0.0_R8, dzt0, 1)
       call sfill (nCv, 0.0_R8, dna_ExB, 1)
       call sfill (nCv, 0.0_R8, hce_ExB, 1)
       call sfill (nCv, 0.0_R8, hci_ExB, 1)
@@ -521,7 +522,7 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(switch%transport_keps.ne.0) then
         call set_transport_keps( 
      &    nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB,
+     &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dzt0, dna_ExB,
      &    hce_ExB, hci_ExB)
       endif
 
@@ -3645,7 +3646,7 @@ c recompute hci0 and hcn0
       subroutine set_transport_keps(
      &     nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &     pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
-     &     dkt0, dna_ExB, hce_ExB, hci_ExB)
+     &     dkt0, dzt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -3672,7 +3673,7 @@ c recompute hci0 and hcn0
       real (kind=R8) :: dna0(nCv,0:ns-1),
      &   vsa0(nCv,0:ns-1),
      &   hci0(nCv), hcib(nCv,0:ns-1),
-     &   hce0(nCv), dkt0(nCv),
+     &   hce0(nCv), dkt0(nCv), dzt0(nCv),
      &   dna_ExB(nCv), hce_ExB(nCv),
      &   hci_ExB(nCv), rhol(nCv)
 *   ..local variables
@@ -3734,6 +3735,7 @@ cwdk same dna_ExB for all ion species
      &        pl%na(:,is) + (1.0_R8-switch%keps_fac)*hcib(:,is)
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
+          dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)
         endif
       enddo
       hci0 = 0.0_R8
