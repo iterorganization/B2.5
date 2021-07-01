@@ -144,7 +144,7 @@
       call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain, 
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
-     &  co%alf0, hvi0, hve0, co%dkt0, co%dna_ExB, co%hce_ExB, 
+     &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB, 
      &  co%hci_ExB)
 *   ..incorporate geometry
       do is = 0, ns-1
@@ -253,6 +253,11 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  wrkc, co%cdkt(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%dkt0, co%cdkt(1,1))
+      wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  wrkc, co%cdzt(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+     &  co%dzt0, co%cdzt(1,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%hce_ExB, co%chce_ExB(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
