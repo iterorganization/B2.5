@@ -60,9 +60,6 @@
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
-      real (kind=R8) :: !djm Jan2017
-     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
-     &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg
@@ -117,12 +114,6 @@
        call b2xvsg (n2*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
       endif
 
-cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-      snatmp = snadt
-      smotmp = smodt
-      shetmp = shedt
-      shitmp = shidt
-
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -155,8 +146,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
            t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
-           snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+t0*na0(ix,iy,is)        !srv 06.01.21
-           snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-t0                      !srv 06.01.21
+           snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21
+           snadt(ix,iy,1,is) =-t0                                        !srv 06.01.21
           enddo
         enddo
       enddo
@@ -177,11 +168,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
             ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
             t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                        !srv 09.01.01
-            smodt(ix,iy,0,is) = smodt(ix,iy,0,is)+
-     .                          t0*am(is)*mp*ua0(ix,iy,is)*na0(ix,iy,is) !srv 06.01.21 {
-*           smodt(ix,iy,1,is) = (unchanged)
-*           smodt(ix,iy,2,is) = (unchanged)
-            smodt(ix,iy,3,is) = smodt(ix,iy,3,is)-t0                     !srv 06.01.21 }
+            smodt(ix,iy,0,is) = t0*am(is)*mp*ua0(ix,iy,is)*na0(ix,iy,is) !srv 06.01.21 {
+            smodt(ix,iy,1,is) = 0.0_R8
+            smodt(ix,iy,2,is) = 0.0_R8
+            smodt(ix,iy,3,is) = -t0                                      !srv 06.01.21 }
         enddo
        enddo
       enddo
@@ -200,11 +190,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
-          shedt(ix,iy,0) = shedt(ix,iy,0)+
-     .                     1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)               !srv 06.01.21 {
-*         shedt(ix,iy,1) = (unchanged)
-*         shedt(ix,iy,2) = (unchanged)
-          shedt(ix,iy,3) = shedt(ix,iy,3)-1.5_R8*t0                      !srv 06.01.21 }
+          shedt(ix,iy,0) = 1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)               !srv 06.01.21 {
+          shedt(ix,iy,1) = 0.0_R8
+          shedt(ix,iy,2) = 0.0_R8
+          shedt(ix,iy,3) = -1.5_R8*t0                                    !srv 06.01.21 }
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -219,11 +208,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
-          shidt(ix,iy,0) = shidt(ix,iy,0)+
-     &                     1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)             !srv 06.01.21 {
-*         shidt(ix,iy,1) = (unchanged)
-*         shidt(ix,iy,2) = (otherwise unchanged)
-          shidt(ix,iy,3) = shidt(ix,iy,3)-1.5_R8*t0                      !srv 06.01.21 }
+          shidt(ix,iy,0) = 1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)             !srv 06.01.21 {
+          shidt(ix,iy,1) = 0.0_R8
+          shidt(ix,iy,2) = 0.0_R8
+          shidt(ix,iy,3) = -1.5_R8*t0                                    !srv 06.01.21 }
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
@@ -249,10 +237,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)              !xpb
-          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))   !xpb !srv 06.01.21 {
-*         schdt(ix,iy,1) = (unchanged)
-*         schdt(ix,iy,2) = (unchanged)
-          schdt(ix,iy,3) = schdt(ix,iy,3)-t0                             !xpb !srv 06.01.21 }
+          schdt(ix,iy,0) = t0*(ni0(ix,iy,0)-ne0(ix,iy))                  !xpb !srv 06.01.21 {
+          schdt(ix,iy,1) = 0.0_R8
+          schdt(ix,iy,2) = 0.0_R8
+          schdt(ix,iy,3) = -t0                                           !xpb !srv 06.01.21 }
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -264,8 +252,8 @@ cxpb  This treatment added as a fix to get the ExB runs going
         do ix = -1, nx
           if(iftimbound(ix,iy) .ne. 0) cycle
           t0 = (phm5/dtim)*vol(ix,iy)*time_factor(ix,iy)                 !xpb
-          snedt(ix,iy,0) = snedt(ix,iy,0)+t0*ne0(ix,iy)                  !srv 06.01.21
-          snedt(ix,iy,1) = snedt(ix,iy,1)-t0                             !srv 06.01.21
+          snedt(ix,iy,0) = t0*ne0(ix,iy)                                 !srv 06.01.21
+          snedt(ix,iy,1) =-t0                                            !srv 06.01.21
        enddo
       enddo
 #ifndef NO_OPENMP_B2SRDT
@@ -279,10 +267,10 @@ cxpb  This treatment added as a fix to get the ExB runs going
 
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
-        b2srdt_sna0to1 = snadt-snatmp
-        b2srdt_smo0to3 = smodt-smotmp
-        b2srdt_she0to3 = shedt-shetmp
-        b2srdt_shi0to3 = shidt-shitmp
+        b2srdt_sna0to1 = snadt
+        b2srdt_smo0to3 = smodt
+        b2srdt_she0to3 = shedt
+        b2srdt_shi0to3 = shidt
       endif
 
 *    The diagnostic output of the time derivative will be done

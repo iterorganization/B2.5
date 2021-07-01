@@ -367,10 +367,17 @@
      &     vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
-          call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !xpb !srv 09.01.01 01.07.08
+          call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 25.06.21 }
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     sna, smo, she, shi, sch, sne, .false.)                        !xpb
+     &     na, ua, te, ti, ne, ni, kinrgy,
+     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*   ..add to previous contributions
+          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)
+          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)                  !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
@@ -465,10 +472,17 @@
      &    vol, na, ua, te, ti, ne, ni,
      &    sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
-        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !xpb !srv 09.01.01 01.07.08
+        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !srv 25.06.21 {
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
-     &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
+     &    na, ua, te, ti, ne, ni, kinrgy,
+     &    snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*     ..add to previous contributions
+        call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+        call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+        call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+        call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+        call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)
+        call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)                    !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -876,10 +890,17 @@ cxpb
      &           vol, na, ua, te, ti, ne, ni,
      &           sna0, smo0, she0, shi0, sne0, .false.)
 *     ..include contributions due to timestep                            !xpb
-                call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !xpb !srv 09.01.01 01.07.08
+                call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !srv 25.06.21 {
      &           vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &           na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &           sna0, smo0, she0, shi0, sch0, sne0, .false.)            !xpb
+     &           na, ua, te, ti, ne, ni, kinrgy,
+     &           snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*   ..add to previous contributions
+                call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna0, 1)
+                call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo0, 1)
+                call b2saxpy (n2*4, 1.0_R8, shedt, 1, she0, 1)
+                call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi0, 1)
+                call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch0, 1)
+                call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne0, 1)           !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
                 call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti,    !xpb !srv 01.07.08
      &           po, ne, ni, sna0, smo0, she0, shi0, sch0, sne0)         !xpb
