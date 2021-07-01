@@ -57,13 +57,14 @@
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1),
      *   flokt0(nFc,0:1), conkt0(nFc,0:1),
+     *   flozt0(nFc,0:1), conzt0(nFc,0:1),
      *   flo0_ExB(nFc,0:1)
 cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
-     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1)
+     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1), cdzt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -116,6 +117,8 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
        call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')
        call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1),1,'cdkt1','.ge.')
+       call b2xvsg (nFc, co%cdzt(:,0)*geo%fcQalf(:,0),1,'cdzt0','.ge.')
+       call b2xvsg (nFc, co%cdzt(:,1)*geo%fcQalf(:,1),1,'cdzt1','.ge.')
       endif
 
       meth = switch%b2tfhi_discr_meth
@@ -341,9 +344,11 @@ cwdk    in principle: models same effect as skt_diss (thus: needs b2sikt_fac_she
         flokt0(:,1) = dv%fna(:,1,ismain) 
         cdkt0(:,0) = co%cdkt(:,0)
         cdkt0(:,1) = co%cdkt(:,1)
+
 *     ..apply discretization scheme
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%kt,flokt0,
      &    cdkt0,dv%fkt,dumm0,dumm1)
+
 *     ..contribution from ExB heat fluxes
 cwdk    at the moment: experimental; it is expected that this contriution
 cwdk    is at least partially compensated by the (divergence of the) term
@@ -351,9 +356,29 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dv%fkt = dv%fkt + 
      &           switch%b2tfhi_fkt_hie*2.0_R8/3.0_R8*
      &           (dv%fhi_ExB + dv%fhe_ExB)
+
 *     ..compute flokt, conkt
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &    dv%flokt,dv%conkt)
+
+       if (switch%solve_keps.gt.1) then
+
+*     ..fluxes for z-equation
+        flozt0(:,0) = (1.0_R8 + switch%b2tfhi_fflozt)*dv%fna(:,0,ismain)
+        flozt0(:,1) = dv%fna(:,1,ismain) 
+        cdzt0(:,0) = co%cdzt(:,0)
+        cdzt0(:,1) = co%cdzt(:,1)
+
+*     ..apply discretization scheme
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%zt,flozt0,
+     &    cdzt0,dv%fzt,dumm0,dumm1)
+
+*     ..compute flozt, conzt
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flozt0,cdzt0,
+     &    dv%flozt,dv%conzt)
+
+       endif
+
       endif
 
 #ifdef WG_TODO
