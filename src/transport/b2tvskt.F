@@ -23,9 +23,8 @@
 
 *   ..local variables
       integer, save :: ncall = 0
-      real (kind=R8) :: va(nCv), dva(nCv), gpo(nFc), dlbc(nCv,0:1),
-     &  wrk0(nCv), wrk1(nCv), wrk2(nCv), wrkf(nFc), wrkv(nVx),
-     &  wrkg(nFc,0:1)
+      real (kind=R8) :: va(nCv), dva(nCv),
+     &  wrk0(nCv), wrkf(nFc), wrkv(nVx), wrkg(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
       intrinsic max, abs
@@ -47,21 +46,9 @@
 
         weight = 1.0_R8
 
-*     ..logarithm of magnetic field in cell center and gradients
-        wrk0 = 2.0_R8*log(geo%cvBb(:,3))
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, dlbc)
-
-*     ..gradients of ExB velocity in cell center
-        call intcell(nFc,nCv,mpg,mpg%intcellP,vaecrb(:,0,ismain),wrk0)
-        call intcell(nFc,nCv,mpg,mpg%intcellR,vaecrb(:,1,ismain),wrk1)
-        wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
-
-*     ..interpolate to faces
-        wrk0 = 2.0_R8/3.0_R8*na(:,ismain)*
-     &    (switch%b2sikt_fac_vis_RS*dna_ExB*am(ismain)*mp*wrk2 + kt)
-
 *     ..compute gradients of 'RS pressure' on cell faces
-        call grad(nCv, nFc, nVx, 1, geo, mpg, wrk0, wrkv, wrkg)
+        wrk0 = 2.0_R8/3.0_R8*na(:,ismain)*kt
+        call grad(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrkg)
 
 *     ..contribution from trace RS tensor
         fchviskt(:,0) = -switch%b2tfhe_vis_kt*geo%fcS*geo%fcQalf(:,0)*
@@ -70,8 +57,8 @@
      &    wrkg(:,0)*geo%fcBb(:,2)/geo%fcBb(:,3)**2
 
 *     ..compute V_{perp,a} on cell faces
-        call grad_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, gpo)
-        wrkf = -gpo/geo%fcBb(:,3)
+        call grad(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrkg)
+        wrkf = -wrkg(:,1)/geo%fcBb(:,3)
 
 *     ..interpolate V_{perp,a} to cell centers
         call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf, va)
