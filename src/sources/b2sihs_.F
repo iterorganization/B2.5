@@ -69,7 +69,8 @@
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
       integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
-      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0          !som 21.03.21
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
+     & Zhdanov_tf_fr = 1                                              !som 01.07.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) ::
@@ -172,6 +173,7 @@
         call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
+        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -496,7 +498,8 @@
       if(b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
-      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1)) then        !som 21.03.21
+      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
         if ((impr_form_tf.eq.0) .and. (impr_form_fr.eq.0)) then
           call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
         elseif ((impr_form_tf.eq.1) .and.
@@ -531,7 +534,8 @@
         enddo
       enddo
       
-      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1)) then      !som 21.03.21
+      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
         if (impr_form_fr.eq.0) then
           do iy = -1, ny
             do ix = -1, nx
@@ -575,7 +579,8 @@
        zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
        zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte
-       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1)) then      !som 21.03.21
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
@@ -629,7 +634,8 @@
          endif
        enddo
 *   ..add contribution due to Zhdanov multispecies approach
-       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then        !som 21.03.21
+       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
+     & Zhdanov_tf_fr.eq.1) then                                       !som 01.07.21
          shifr(:,:,0) = shifr(:,:,0)-zhd_corr*avm_u*shefr(:,:,0)
          shefr(:,:,0) = shefr(:,:,0)-zhd_corr*(avm_u/ue)*shefr(:,:,0)
        endif

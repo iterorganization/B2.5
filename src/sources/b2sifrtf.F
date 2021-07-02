@@ -77,7 +77,8 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
-      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0            !som 23.02.21
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
+     & Zhdanov_tf_fr = 1                                                !som 01.07.21
       integer, save :: icase = 0                                        !som 05.03.21
 #ifdef NO_OPENMP_B2NPMO
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
@@ -155,6 +156,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 23.02.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 12.03.21
+       call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)              !som 01.07.21
        call ipgeti ('b2tral_zhd_corr', zhd_corr)                        !som 05.03.21
        call ipgeti ('b2tlnl_ii', icase)                                 !som 05.03.21
        call xertst (0.eq.icase .or. 1.eq.icase, 
@@ -206,7 +208,8 @@
 !$OMP& REDUCTION(+: smbfrial)
 #endif
 *     ..contribution from friction between ions
-      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then
+      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
+     & Zhdanov_tf_fr.eq.1) then                                         !som 01.07.2021
 *     ..actual use of the Zhdanov closure
         do iy = -1, ny
           do ix = -1, nx
@@ -218,7 +221,8 @@
            endif
           enddo
         enddo
-      elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1) then
+      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
+     & Zhdanov_tf_fr.eq.0)) then                                        !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbfrial_test=0
         do iy = -1, ny
@@ -366,7 +370,8 @@
 #endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
-      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0) then
+      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
+     & Zhdanov_tf_fr.eq.1) then                                         !som 01.07.2021
 *     ..actual use of the Zhdanov closure
           do iy = 0, ny-1
            do ix = 0, nx-1
@@ -376,7 +381,8 @@
             endif
            enddo
           enddo
-      elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1) then
+      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
+     & Zhdanov_tf_fr.eq.0)) then                                        !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbtfial_test=0
         smbtfial_test_nofl=0
