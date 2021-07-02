@@ -18,11 +18,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-#else
-      integer descr2, mdsput2
-#endif
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
 
       if(len_trim(string).gt.0) then
