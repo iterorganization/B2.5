@@ -90,6 +90,10 @@
 *     areskt specifies the scaled norm of the residual of the turbulent
 *     kinetic energy equation.
 *
+*     areszt - real, input.
+*     areszt specifies the scaled norm of the residual of the turbulent
+*     enstrophy equation.
+*
 *     acorpa - (0:ns-1) real*8 array, input.
 *     For (is) in (0:ns-1), acorpa(is) specifies the norm of the last
 *     computed correction for the continuity equation for species (is).
@@ -122,6 +126,10 @@
 *     acorkt - real, input.
 *     acorkt specifies the norm of the last computed correction for the
 *     turbulent kinetic energy equation.
+*
+*     acorzt - real, input.
+*     acorzt specifies the norm of the last computed correction for the
+*     turbulent enstrophy equation.
 *
 *     (parameters in common:)
 *
@@ -170,17 +178,18 @@
 *   ..test residuals
       call xertst (0.0_R8.le.smin(ns,diag%aresco,1).and.
      &  0.0_R8.le.diag%areshe.and.0.0_R8.le.diag%areshi.and.
-     &  0.0_R8.le.diag%arespo.and.0.0_R8.le.diag%areskt,
-     &  'faulty argument aresco/ee/ei/po/kt')
+     &  0.0_R8.le.diag%arespo.and.0.0_R8.le.diag%areskt.and.
+     &  0.0_R8.le.diag%areszt,'faulty argument aresco/ee/ei/po/kt/zt')
 *   ..test corrections
       call xertst (0.0_R8.le.smin(ns,diag%acorpa,1).and.
      &  0.0_R8.le.diag%acorte.and.0.0_R8.le.diag%acorti.and.
      &  0.0_R8.le.diag%acorpo.and.0.0_R8.le.diag%acorkt.and.
-     &  0.0_R8.le.diag%acortn,'faulty argument acorpa/te/ti/po/kt')
+     &  0.0_R8.le.diag%acorzt.and.0.0_R8.le.diag%acortn,
+     &  'faulty argument acorpa/te/ti/po/kt/zt/tn')
 *   ..set and test nfld
       nfld = 0
       if (1.le.switch%b2mwqt_style) then
-       nfld = nfld+2+2*(2*ns+6)
+       nfld = nfld+2+2*(2*ns+7)
       endif
       if (2.le.switch%b2mwqt_style) then
        nfld = nfld+36*(ns+3)
@@ -234,6 +243,8 @@
        k = k+1
        z(k) = diag%areskt
        k = k+1
+       z(k) = diag%areszt
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         z(k) = diag%acorpa(is)
@@ -254,6 +265,8 @@
        z(k) = diag%acorpo
        k = k+1
        z(k) = diag%acorkt/ev
+       k = k+1
+       z(k) = diag%acorzt/ev
        k = k+1
       endif
       if (2.le.switch%b2mwqt_style) then

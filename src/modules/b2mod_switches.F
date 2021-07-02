@@ -1606,7 +1606,7 @@ c b2mwqt
 
 
 c k-enstrophy model
-      call xertst (0.le.s%solve_keps .and. s%solve_keps.le.1,
+      call xertst (0.le.s%solve_keps .and. s%solve_keps.le.2,
      &  'b2mndr_solve_keps value not coded')
       call xertst (0.le.s%keps_local .and. s%keps_local.le.1,
      &  'b2tqna_keps_local value not coded')

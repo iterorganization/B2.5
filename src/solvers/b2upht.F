@@ -3,8 +3,9 @@
 
       subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, rxf, pcm0, cortt, corte, corti, 
-     &  cortn, corkt, pccm0, na, ua, te, ti, tn, kt, po, ne, ni)
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, pcm0, cortt, corte,
+     &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
+     &  po, ne, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -23,17 +24,17 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf, pcm0, cortt(nCv), corte(nCv),
-     &  corti(nCv), cortn(nCv), corkt(nCv), pccm0(nCv)
+     &  corti(nCv), cortn(nCv), corkt(nCv), corzt(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
      &  solvnreg(0:nregionv), solvtreg(0:nregionv),                             !srv 22.05.18
      &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     &  solvkreg(0:nregionv)
+     &  solvkreg(0:nregionv), solvzreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), tn(nCv), po(nCv),
-     &  ne(nCv), ni(nCv,0:1), kt(nCv)
+     &  ne(nCv), ni(nCv,0:1), kt(nCv), zt(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -49,7 +50,7 @@
 *   ..local variables
       integer iCv, is, ireg
       real (kind=R8) ::
-     *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), t0,
+     *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), dzt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
 *   ..procedures
       intrinsic min, max
@@ -81,6 +82,7 @@
         call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
+        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
       endif 
 
 * ..apply the correction
@@ -127,6 +129,7 @@
          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         endif
         dkt(iCv) = rxf*max(-kt(iCv),corkt(iCv))
+        dzt(iCv) = rxf*max(-zt(iCv),corzt(iCv))
         if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi) then
@@ -138,6 +141,8 @@
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg)) 
      &    kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))
+        if (switch%solve_keps.gt.1.and.solvzreg(ireg)) 
+     &    zt(iCv) = max(0.0_R8*ev,zt(iCv)+dzt(iCv))
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti

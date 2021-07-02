@@ -21,6 +21,7 @@
      *   solveen(:),
      *   solveet(:),
      *   solvekt(:),
+     *   solvezt(:),
      *   last_solve_5(:),
      *   last_solve_9(:)
 #else
@@ -39,6 +40,7 @@
       logical, save :: solveen(0:CVREGMAX)
       logical, save :: solveet(0:CVREGMAX)
       logical, save :: solvekt(0:CVREGMAX)
+      logical, save :: solvezt(0:CVREGMAX)
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
 #endif
@@ -56,7 +58,7 @@
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
-     $ numerics_time_switch
+     $ solvezt,numerics_time_switch
 
 
       contains
@@ -87,6 +89,7 @@
       allocate(solveen(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
       allocate(solvekt(0:nnreg(0)))
+      allocate(solvezt(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
 #else
@@ -115,6 +118,7 @@
       solveen=.true.
       solveet=.true.
       solvekt=.true.
+      solvezt=.true.
       last_solve_5=.true.
       last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
@@ -146,6 +150,7 @@
       deallocate(solveen)
       deallocate(solveet)
       deallocate(solvekt)
+      deallocate(solvezt)
       deallocate(last_solve_5)
       deallocate(last_solve_9)
 #endif
