@@ -64,7 +64,7 @@
 *   ..set nfld
       nfld = 0
       if (1.le.switch%b2mwqt_style) then
-       nfld = nfld+2+2*(2*ns+6)
+       nfld = nfld+2+2*(2*ns+7)
       endif
       if (2.le.switch%b2mwqt_style) then
        nfld = nfld+36*(ns+3)
@@ -157,6 +157,12 @@
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')
        k = k+1
+       chtit = 'norm of residual of turbulent enstrophy equation'
+       chlab = 'areszt'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         write (id,'(i3)') is
@@ -210,6 +216,12 @@
        k = k+1
        chtit = 'norm of correction of turbulent kinetic energy'
        chlab = 'acorkt'
+       call cfwuin (nput, 1, ll(1), 'linlog')
+       call cfwuch (nput, 60, chtit, 'title')
+       call cfwuch (nput, 12, chlab, 'label')
+       k = k+1
+       chtit = 'norm of correction of turbulent enstrophy'
+       chlab = 'acorzt'
        call cfwuin (nput, 1, ll(1), 'linlog')
        call cfwuch (nput, 60, chtit, 'title')
        call cfwuch (nput, 12, chlab, 'label')

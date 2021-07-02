@@ -132,7 +132,7 @@
       character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
-     1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, 
+     1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, zt_eps,
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
@@ -175,7 +175,7 @@
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, neutral_rescale, tally,
      4  BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps,
+     .  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, zt_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max,
      7  te_hot, ne_hot_frac, external_species,
@@ -204,6 +204,7 @@
      4     tn_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
      5     kt_eps/1.0e-2_R8/,
+     5     zt_eps/1.0e-2_R8/,
      6     ua_eps/1.0e+4_R8/,
      7     delta_min/0.0_R8/,
      8     dt_change_inc/1.0_R8/,
@@ -1068,6 +1069,8 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.lt.ua_eps,'faulty internal parameter ua_eps')
        call ipgetr ('b2mndr_kt_eps',kt_eps)
        call xertst (0.0_R8.lt.kt_eps,'faulty internal parameter kt_eps')
+       call ipgetr ('b2mndr_zt_eps',zt_eps)
+       call xertst (0.0_R8.lt.zt_eps,'faulty internal parameter zt_eps')
        call ipgetr ('b2mndr_delta_min',delta_min)
        call xertst (0.0_R8.le.delta_min,
      1  'faulty internal parameter delta_min')
@@ -1440,8 +1443,11 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..read initial state
       call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
       if (switch%solve_keps.gt.0 .and. 
-     &   .not.smax(nCv,state%pl%kt,1).gt.0.0_R8) 
+     &   .not.smax(nCv,state%pl%kt,1).gt.0.0_R8)
      .  state%pl%kt = state%pl%ti*0.1_R8
+!      if (switch%solve_keps.gt.1 .and. 
+!     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
+!     .  state%pl%zt = state%pl%ti*1e5_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
 ! csc UNCOMMENT WITH AD
 !    call read_b2fstate_diff (ninp(6), mpg%nCv, mpg%nFc, ns, stated)
@@ -1462,7 +1468,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (ird_aver > 0)
      &  call run_av_get_plasma (state%pl%na, state%pl%te, 
      &             state%pl%ti, state%pl%ua, state%pl%po, 
-     &             state%pl%kt, nCv, ns)
+     &             state%pl%kt, state%pl%zt, nCv, ns)
 
       write (*,*) 'Starting conversion to unstructured format...'
 
@@ -1934,6 +1940,8 @@ cwdk  set some integers
         state%psnc%po = state%pl%po
         state%psnl%kt = state%psnc%kt
         state%psnc%kt = state%pl%kt
+        state%psnl%zt = state%psnc%zt
+        state%psnc%zt = state%pl%zt
         state%psnl%fna = state%psnc%fna
         state%psnc%fna = state%dv%fna
         state%psnl%fhe = state%psnc%fhe
@@ -1944,6 +1952,8 @@ cwdk  set some integers
         state%psnc%fch = state%dv%fch
         state%psnl%fkt = state%psnc%fkt
         state%psnc%fkt = state%dv%fkt
+        state%psnl%fzt = state%psnc%fzt
+        state%psnc%fzt = state%dv%fzt
 !WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
@@ -2042,6 +2052,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (abs(state%pl%po)+po_eps)))
         write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
      &    (abs(state%pl%kt)+kt_eps*ev)))
+        write(*,*) 'delta zt ',maxval(abs((state%pl%zt-state%psnc%zt)/
+     &    (abs(state%pl%zt)+zt_eps*ev)))
         write(*,*) 'delta ua ',
      *   maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
@@ -2060,6 +2072,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    (abs(state%pl%po)+po_eps))),
      &     maxval(abs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
+     &     maxval(abs((state%pl%zt-state%psnc%zt)/
+     &    (state%pl%zt+zt_eps*ev))),
      &     maxval(abs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
@@ -2222,8 +2236,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &    res_max = max(res_max,state%diag%areshi)
         if (any(solveen).and.switch%tn_style.eq.2)
      &    res_max = max(res_max,state%diag%areshn)
-        if (any(solvekt).and.switch%solve_keps.eq.1)
+        if (any(solvekt).and.switch%solve_keps.ge.1)
      &    res_max = max(res_max,state%diag%areskt)
+        if (any(solvezt).and.switch%solve_keps.eq.2)
+     &    res_max = max(res_max,state%diag%areszt)
         
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk

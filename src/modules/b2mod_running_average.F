@@ -12,11 +12,12 @@
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:), te_mean(:),
      .                             ti_mean(:), ua_mean(:,:),
-     .                             po_mean(:), kt_mean(:)
+     .                             po_mean(:), kt_mean(:),
+     .                             zt_mean(:)
       real (kind=R8), allocatable, save ::
      .                             e_na(:,:), e_te(:),
      .                             e_ti(:), e_ua(:,:),
-     .                             e_po(:), e_kt(:)
+     .                             e_po(:), e_kt(:), e_zt(:)
       real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:),
      .                             smo_mean(:,:),
@@ -89,6 +90,7 @@ cnh   Calculation of the total sources
       call batch_average (nCv,    pl%po, po_mean, itp, naver)
       call batch_average (nCv*ns, pl%ua, ua_mean, itp, naver)
       call batch_average (nCv,    pl%kt, kt_mean, itp, naver)
+      call batch_average (nCv,    pl%zt, zt_mean, itp, naver)
 
       call batch_average (nCv*ns, sna_tot, sna_mean, itp, naver)
       call batch_average (nCv,    she_tot, she_mean, itp, naver)
@@ -102,6 +104,7 @@ cnh   Calculation of the total sources
       call batch_average_sq (nCv,    pl%po, e_po, itp, naver)
       call batch_average_sq (nCv*ns, pl%ua, e_ua, itp, naver)
       call batch_average_sq (nCv,    pl%kt, e_kt, itp, naver)
+      call batch_average_sq (nCv,    pl%zt, e_zt, itp, naver)
       
       call batch_average_sq (nCv*ns, sna_tot, e_sna, itp, naver)
       call batch_average_sq (nCv,    she_tot, e_she, itp, naver)
@@ -135,12 +138,14 @@ c local variables
          allocate (ti_mean(nCv))
          allocate (po_mean(nCv))
          allocate (kt_mean(nCv))
+         allocate (zt_mean(nCv))
          allocate (e_na(nCv,0:ns-1))
          allocate (e_ua(nCv,0:ns-1))
          allocate (e_te(nCv))
          allocate (e_ti(nCv))
          allocate (e_po(nCv))
          allocate (e_kt(nCv))
+         allocate (e_zt(nCv))
 
          allocate (sna_mean(nCv,0:ns-1))
          allocate (smo_mean(nCv,0:ns-1))
@@ -162,12 +167,14 @@ c local variables
       ua_mean = 0.0_R8
       po_mean = 0.0_R8
       kt_mean = 0.0_R8
+      zt_mean = 0.0_R8
       e_na = 0.0_R8
       e_te = 0.0_R8
       e_ti = 0.0_R8
       e_ua = 0.0_R8
       e_po = 0.0_R8
       e_kt = 0.0_R8
+      e_zt = 0.0_R8
 
       sna_mean = 0.0_R8
       she_mean = 0.0_R8
@@ -212,8 +219,8 @@ c local variables
               call cfrure (iun, nCv,    ti_mean, 'ti_mean')
               call cfrure (iun, nCv,    po_mean, 'po_mean')
               call cfrure (iun, nCv*ns, ua_mean, 'ua_mean')
-              if (b2faveri_version.ge.'03.000.009')
-     &          call cfrure (iun, nCv,    kt_mean, 'kt_mean')
+              call cfrure (iun, nCv,    kt_mean, 'kt_mean')
+              call cfrure (iun, nCv,    zt_mean, 'zt_mean')
 
               call cfrure (iun, nCv*ns, sna_mean, 'sna_mean')
               call cfrure (iun, nCv,    she_mean, 'she_mean')
@@ -229,8 +236,8 @@ c local variables
               call cfrure (iun, nCv,    e_ti, 'e_ti')
               call cfrure (iun, nCv,    e_po, 'e_po')
               call cfrure (iun, nCv*ns, e_ua, 'e_ua')
-              if (b2faveri_version.ge.'03.000.009')
-     &          call cfrure (iun, nCv,    e_kt, 'e_kt')
+              call cfrure (iun, nCv,    e_kt, 'e_kt')
+              call cfrure (iun, nCv,    e_zt, 'e_zt')
 
               call cfrure (iun, nCv*ns, e_sna, 'e_sna')
               call cfrure (iun, nCv,    e_she, 'e_she')
@@ -265,12 +272,14 @@ c local variables
       deallocate (ti_mean)
       deallocate (po_mean)
       deallocate (kt_mean)
+      deallocate (zt_mean)
       deallocate (e_na)
       deallocate (e_ua)
       deallocate (e_te)
       deallocate (e_ti)
       deallocate (e_po)
       deallocate (e_kt)
+      deallocate (e_zt)
       deallocate (sna_mean)
       deallocate (smo_mean)
       deallocate (she_mean)
@@ -333,6 +342,7 @@ c local variables
          call cfwure (iun, nCv, po_mean, 'po_mean')
          call cfwure (iun, nCv*ns, ua_mean, 'ua_mean')
          call cfwure (iun, nCv, kt_mean, 'kt_mean')
+         call cfwure (iun, nCv, zt_mean, 'zt_mean')
 
          call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
          call cfwure (iun, nCv, she_mean, 'she_mean')
@@ -351,6 +361,7 @@ c local variables
          call cfwure (iun, nCv,    e_po, 'e_po')
          call cfwure (iun, nCv*ns, e_ua, 'e_ua')
          call cfwure (iun, nCv,    e_kt, 'e_kt')
+         call cfwure (iun, nCv,    e_zt, 'e_zt')
 
          call cfwure (iun, nCv*ns, e_sna, 'e_sna')
          call cfwure (iun, nCv,    e_she, 'e_she')
@@ -368,12 +379,12 @@ c local variables
 
 
       subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg, 
-     &                          po_arg, kt_arg, nCv, ns)
+     &                          po_arg, kt_arg, zt_arg, nCv, ns)
       implicit none
       integer, intent(in) :: nCv, ns
       real (kind=R8), intent(inout) ::
      *  na_arg(nCv,0:ns-1), ua_arg(nCv,0:ns-1),
-     &  te_arg(nCv), ti_arg(nCv), po_arg(nCv), kt_arg(nCv)
+     &  te_arg(nCv), ti_arg(nCv), po_arg(nCv), kt_arg(nCv), zt_arg(nCv)
 
       call subini ('run_av_get_plasma')
 
@@ -383,6 +394,7 @@ c local variables
       ti_arg = ti_mean
       po_arg = po_mean
       kt_arg = kt_mean
+      zt_arg = zt_mean
 
       call subend ()
       return

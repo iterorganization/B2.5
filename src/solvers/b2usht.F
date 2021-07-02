@@ -2,11 +2,11 @@
 *.specification
 
       subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
-     &  itcnt, rxg, ne, ni, te, ti, tn, kt,
-     &  floe, cone, floi, coni, flon, conn, flokt, conkt,
-     &  she, shi, shn, skt, ceqp,
-     &  resht, reshe, reshi, reshn, reskt,
-     &  cortt, corte, corti, cortn, corkt, flo0, con0, aa)
+     &  itcnt, rxg, ne, ni, te, ti, tn, kt, zt,
+     &  floe, cone, floi, coni, flon, conn, flokt, conkt, flozt, conzt,
+     &  she, shi, shn, skt, szt, ceqp,
+     &  resht, reshe, reshi, reshn, reskt, reszt,
+     &  cortt, corte, corti, cortn, corkt, corzt, flo0, con0, aa)
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_switches
@@ -26,16 +26,19 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv), tn(nCv), 
-     &  kt(nCv), floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
-     &  flokt(nFc,0:1), cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),
-     &  conn(nFc,0:1,0:2), conkt(nFc,0:1,0:2)
+     &  kt(nCv), zt(nCv), floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
+     &  flokt(nFc,0:1), flozt(nFc,0:1),
+     &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),
+     &  conn(nFc,0:1,0:2), conkt(nFc,0:1,0:2), conzt(nFc,0:1,0:2)
       real (kind=R8) ::
-     *  she(nCv,0:3), shi(nCv,0:3), shn(nCv,0:3), skt(nCv,0:3), 
+     *  she(nCv,0:3), shi(nCv,0:3), shn(nCv,0:3), skt(nCv,0:3),
+     &  szt(nCv,0:3),  
      &  ceqp(nCv), resht(nCv), reshe(nCv), reshi(nCv), reshn(nCv),
-     &  reskt(nCv)
+     &  reskt(nCv), reszt(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   cortt(nCv), corte(nCv), corti(nCv), cortn(nCv), corkt(nCv)
+     *   cortt(nCv), corte(nCv), corti(nCv), cortn(nCv), corkt(nCv),
+     &   corzt(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)
@@ -107,6 +110,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
+       call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
 *    ..test sign of she, shi, ceqp
        call b2xvsg (nCv, she(1,0), 1, 'she0', '.ge.')
        call b2xvsg (nCv, she(1,1), 1, 'she1', '.le.')
@@ -911,8 +915,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        do iCv = 1, nCv
         corkt(iCv) = corkt(iCv)
        enddo
-      endif !solve_keps
-
+      endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
@@ -932,6 +935,155 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 #endif
        call my_out_us(70,nCv,0,reskt,'b2usht_reskt')
        call my_out_us(70,nCv,0,corkt,'b2usht_corkt')
+      endif
+
+* ..turbulent enstrophy correction equation
+      corzt = 0.0_R8
+      if (switch%solve_keps.gt.1.and.any(solvezt(0:mpg%nnreg(0)))) then
+       call restart_ma28_for_us
+*   ..compute flo0, con0
+       flo0        = flozt
+       con0(:,:,0) = conzt(:,:,0)
+*   ..initialize matrix to zero
+       aa = 0.0e0_R8
+*   ..compute the nine-point matrix
+       do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
+        if (solvezt(ireg))
+     &   aa(mpg%cvNvP(iCv,1)) =
+     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1)
+       enddo
+       do iFc = 1, nFc
+        iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
+        iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
+*     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
+        t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        if (solvezt(mpg%cvReg(iCv1))) then
+          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)= 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
+     &      t2
+          end where
+        endif
+        if (solvezt(mpg%cvReg(iCv2))) then
+          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)= 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
+     &      t1 
+          end where
+        endif
+*     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
+        iVx1 = mpg%fcVx(iFc,1) ! number of v1
+        iVx2 = mpg%fcVx(iFc,2) ! number of v2
+        t1 = - 0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
+        t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
+        t11 = 0.0_R8
+        do inCv = 1, mpg%vxCvP(iVx1,2)
+          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+        enddo
+        t22 = 0.0_R8
+        do inCv = 1, mpg%vxCvP(iVx2,2)
+          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+        enddo
+        ! contribution to equation of iCv1
+        if (solvezt(mpg%cvReg(iCv1))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+     &      t3*t2
+          end where
+         enddo
+        endif
+        ! contribution to equation of iCv2
+        if (solvezt(mpg%cvReg(iCv2))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+     &      t3*t2
+          end where
+         enddo
+        endif
+       enddo
+*   ..add matrix from contribution nine point stencil
+#ifdef WG_TODO
+       if(iadd_9 .eq. 1) then
+        call b2uxm9 (nx, ny, nregionv, itcnt, solvezt, conzt(-1,-1,0,0,1),
+     &   aa, 'b2usht_zt')                                             !srv 02.01.07
+       endif
+#endif
+       do iCv = 1, nCv
+        lnonzero=.false.
+        do inCv = 1,mpg%cvNvP(iCv,2)
+          lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
+        enddo
+        if (.not.lnonzero) then
+          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
+          reszt(iCv) = 0.0_R8
+        endif
+       enddo
+
+*   ..solve the correction equation
+       call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
+       do iCv = 1, nCv
+        corzt(iCv) = corzt(iCv)
+       enddo
+      endif !solve_keps - enstrophy
+
+      if (switch%b2usht_iout.ne.0) then
+#ifdef WG_TODO
+       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_zt_aam6')
+       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_zt_aam5')
+       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_zt_aam4')
+       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_zt_aam3')
+       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_zt_aam2')
+       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_zt_aam1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_zt_aam0')
+       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_zt_aap1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_zt_aap2')
+       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_zt_aap3')
+       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_zt_aap4')
+       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_zt_aap5')
+       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_zt_aap6')
+#endif
+       call my_out_us(70,nCv,0,reszt,'b2usht_reszt')
+       call my_out_us(70,nCv,0,corzt,'b2usht_corzt')
       endif
 
 

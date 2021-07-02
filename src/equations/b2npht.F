@@ -3,8 +3,8 @@
 
       subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, !srv 05.07.17
      &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, rxf, BoRiS, pl, dv, co, rt, sr, 
-     &  st_ext, ierr)
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, BoRiS, pl, dv, co,
+     &  rt, sr, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -35,7 +35,7 @@
      *  solvereg(0:nregionv), solvireg(0:nregionv), 
      *  solvnreg(0:nregionv), solvtreg(0:nregionv),                                          !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     *  solvkreg(0:nregionv)
+     *  solvkreg(0:nregionv), solvzreg(0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -79,7 +79,7 @@
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
-     5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3),
+     5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv),
      7 deni(nCv), denn(nCv)                              
       character chns*3                                                  !srv 17.07.05
@@ -221,6 +221,12 @@ cdjm Jan2017 update particle source components for balance
         call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0, 
      &   dv%fkt, dv%reskt)
       endif
+      if ((switch%solve_keps.gt.1.and.any(solvzreg(0:nregionv))).or.
+     &     switch%get_residuals.eq.1) then
+        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%zt, szt0, 
+     &   dv%fzt, dv%reszt)
+      endif
+
 
 c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
@@ -316,18 +322,19 @@ c residuals for separate neutral energy equation
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv,
      &  itcnt, switch%b2npht_rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn,
-     &  pl%kt, dv%floe, dv%cone, dv%floi, dv%coni, dv%flon, dv%conn,
-     &  dv%flokt, dv%conkt,
-     &  she0, shi0, shn0, skt0,
+     &  pl%kt, pl%zt, dv%floe, dv%cone, dv%floi, dv%coni, dv%flon,
+     &  dv%conn, dv%flokt, dv%conkt, dv%flozt, dv%conzt,
+     &  she0, shi0, shn0, skt0, szt0, 
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn, dv%reskt,
-     &  dv%cortt, dv%corte, 
-     &  dv%corti, dv%cortn, dv%corkt, wrkf, wrkc, aa)
+     &  dv% reszt, dv%cortt, dv%corte, 
+     &  dv%corti, dv%cortn, dv%corkt, dv%corzt, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, rxf, switch%b2npht_pcm0, dv%cortt,
-     &  dv%corte, dv%corti, dv%cortn, dv%corkt, dv%pccm(1,0), pl%na, 
-     &  pl%ua, pl%te, pl%ti, pl%tn, pl%kt, pl%po, dv%ne, dv%ni)
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, switch%b2npht_pcm0,
+     &  dv%cortt, dv%corte, dv%corti, dv%cortn, dv%corkt, dv%corzt,
+     &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%kt, pl%zt,
+     &  pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
