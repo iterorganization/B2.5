@@ -9008,6 +9008,8 @@ c end of implementation
         t0 = 0.0e0_R8
         t1 = 0.0e0_R8
         t2 = 0.0e0_R8
+        totflux = 0.0e0_R8
+        totpar  = 0.0e0_R8
         do ib0 = 1, nbc
          ! identify core boundaries; assume all core boundaries
          ! form single flux surface
