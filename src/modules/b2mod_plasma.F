@@ -36,6 +36,7 @@
 
       real (kind=R8), allocatable, save ::
      *  fchvispar(:,:,:,:), fchvisper(:,:,:,:), fchvisq(:,:,:,:),        !srv 11.07.99
+     *  fchviskt(:,:,:,:),
      *  fchinert(:,:,:,:), fchin(:,:,:,:), fchanml(:,:,:,:),             !srv 07.07.99 24.03.07 10.06.08 }
      *  vadia(:,:,:,:,:), vedia(:,:,:,:), wadia(:,:,:,:,:),              !xpb
      *  vaecrb(:,:,:,:,:), veecrb(:,:,:,:),
@@ -149,6 +150,8 @@
       fchvisper=0.0_R8
       allocate(fchvisq(-1:nxd,-1:nyd,0:1,0:1))                       !srv 11.07.99
       fchvisq=0.0_R8
+      allocate(fchviskt(-1:nxd,-1:nyd,0:1,0:1))
+      fchviskt=0.0_R8
       allocate(fchinert(-1:nxd,-1:nyd,0:1,0:1))                      !srv 07.07.99
       fchinert=0.0_R8
       allocate(fchin(-1:nxd,-1:nyd,0:1,0:1))                         !srv 30.09.02
@@ -249,6 +252,7 @@
       deallocate(fchvispar)
       deallocate(fchvisper)
       deallocate(fchvisq)                           !srv 11.07.99
+      deallocate(fchviskt)
       deallocate(fchinert)                          !srv 07.07.99
       deallocate(fchin)                             !srv 30.09.02
       deallocate(fchanml)                           !srv 24.03.07
@@ -578,6 +582,12 @@
         fchinert(:,:,0,0) = floc(:,:,0)
         fchinert(:,:,1,1) = floc(:,:,1)
       endif
+      if(b2fplasma_version.ge.'03.002.000') then
+        call cfrure (nread, size(fchviskt), fchviskt, 'fchviskt')
+      else
+        fchviskt = 0.0_R8
+      endif
+
 
       return
       end subroutine read_b2mod_plasma
@@ -657,6 +667,7 @@
       call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
       call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
       call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
+      call cfwure (nwrite, size(fchviskt), fchviskt, 'fchviskt')
 
       return
       end subroutine write_b2mod_plasma

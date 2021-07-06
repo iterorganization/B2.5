@@ -2735,6 +2735,7 @@
             st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
             st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
             st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
+            st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,0,0:1)
             st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
             st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
 
@@ -2879,6 +2880,7 @@
           st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,1,0:1)
           st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,1,0:1)
           st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,1,0:1)
+          st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,1,0:1)
           st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,1,0:1)
           st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,1,0:1)
           
@@ -3720,6 +3722,7 @@
           fchvispar(ix,iy,0,0:1) = st % dv % fchvispar(ifc,0:1)
           fchvisper(ix,iy,0,0:1) = st % dv % fchvisper(ifc,0:1)
           fchvisq(ix,iy,0,0:1)   = st % dv % fchvisq(ifc,0:1)
+          fchviskt(ix,iy,0,0:1)  = st % dv % fchviskt(ifc,0:1)
           fchinert(ix,iy,0,0:1)  = st % dv % fchinert(ifc,0:1)
           fchanml(ix,iy,0,0:1)   = st % dv % fchanml(ifc,0:1)
 
@@ -3856,6 +3859,7 @@
           fchvispar(ix,iy,1,0:1) = st % dv % fchvispar(ifc,0:1)
           fchvisper(ix,iy,1,0:1) = st % dv % fchvisper(ifc,0:1)
           fchvisq(ix,iy,1,0:1)   = st % dv % fchvisq(ifc,0:1)
+          fchviskt(ix,iy,1,0:1)  = st % dv % fchviskt(ifc,0:1)
           fchinert(ix,iy,1,0:1)  = st % dv % fchinert(ifc,0:1)
           fchanml(ix,iy,1,0:1)   = st % dv % fchanml(ifc,0:1)
           
