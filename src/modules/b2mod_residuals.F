@@ -82,6 +82,7 @@
       call cfrure (nread, size(resmt), resmt, 'resmt')
       call cfrure (nread, size(respo), respo, 'respo')
       call cfrure (nread, size(reskt), reskt, 'reskt')
+      call cfrure (nread, size(reszt), reszt, 'reszt')
 
       return
       end subroutine read_b2mod_residuals
