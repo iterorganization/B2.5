@@ -69,9 +69,7 @@
         ! To check: this factor had been divided by bx**2? Why?
         ! Note: now we use inverse volume interpolation
         !       (original code: simple averaging)
-!??        wrk = geo%cvBb(:,2)*sqrt(geo%cvBb(:,3))/(3.0_R8*geo%cvBb(:,0))
-        wrk = geo%cvBb(:,2)*geo%cvBb(:,0)/
-     &    (3.0_R8*geo%cvBb(:,3)*sqrt(geo%cvBb(:,3)))
+        wrk = geo%cvBb(:,2)*sqrt(geo%cvBb(:,3))/(3.0_R8*geo%cvBb(:,0))
         call intface(nCv, nFc, mpg%fcCv, geo%fcVol, wrk, wrk0)
         do is = 0, ns-1                                                  !srv 24.06.99
           if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
