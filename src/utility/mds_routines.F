@@ -2,6 +2,7 @@
       implicit none
       character*(*) node_name,string
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,iflag,ilen)
         integer, intent(in) :: idtype
@@ -17,16 +18,24 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
 
       if(len_trim(string).gt.0) then
         write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
+#ifndef G95
         status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1   descr2(idtype_cstring,iflag=0,ilen=len_trim(string)),
      1   trim(string),0)
+#else
+        status=mdsput2(trim(node_name)//char(0),'$'//char(0),
+     1   descr2(idtype_cstring,0,len_trim(string)),
+     1   trim(string),0)
+#endif
         call mds_err_msg(status)
       else
         write(*,*) 'Skipped writing zero length string to ',
@@ -45,6 +54,7 @@
       integer ns
       character*(*) node_name,string(ns)
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,il1,iflag,ilen)
         integer, intent(in) :: idtype
@@ -53,9 +63,11 @@
         integer, intent(in), optional :: ilen
         end function descr2
       end interface
-
 #     include "mdslib_b2.inc"
       integer mdsput2
+#else
+#     include "mdslib.inc"
+#endif
       integer is
       integer :: status
       character*18 hlp_frm
@@ -66,8 +78,13 @@
       do is=1,ns
         string(is)=trim(string(is)) // char(0)
       enddo
+#ifndef G95
       status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1 descr2(idtype_cstring,ns,iflag=0,ilen=len(string(1))),string,0)
+#else
+      status=mdsput2(trim(node_name)//char(0),'$'//char(0),
+     1 descr2(idtype_cstring,ns,0,len(string(1))),string,0)
+#endif
       call mds_err_msg(status)
 
 #else
@@ -82,6 +99,7 @@
       character*(*) node_name
       integer int
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function mdsput2(name,units,description,int,iflg)
         character*(*), intent(in) :: name
@@ -91,9 +109,11 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
-#     include "mdslib_b2.inc"
       integer descr2
+#     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
 
       write(*,'(a,a,a,i8)') 'mds_put_int to ',trim(node_name),
@@ -116,6 +136,7 @@
       integer :: nx, ny, data(nx,ny)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,i2,iflag)
         integer, intent(in) :: idtype
@@ -134,6 +155,9 @@
         end function mdsput2
       end interface
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       integer, allocatable :: i2d(:,:)
@@ -164,6 +188,7 @@
       integer :: ns, data(ns)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,iflag)
         integer, intent(in) :: idtype
@@ -180,6 +205,9 @@
         end function mdsput2
       end interface
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       integer, allocatable :: i1d(:)
@@ -209,13 +237,14 @@
       character*(*) node_name, units
       real (kind=R8) :: value
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,iflag)
         integer, intent(in) :: idtype
         integer, intent(in) :: iflag
         end function descr2
 
-      integer function mdsput2(name,units,description,value,iflg)
+        integer function mdsput2(name,units,description,value,iflg)
         use b2mod_types
         character*(*), intent(in) :: name
         character*(*), intent(in) :: units
@@ -224,8 +253,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
 
@@ -252,6 +283,7 @@
       real (kind=R8) :: data(ns)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,iflag)
         integer, intent(in) :: idtype
@@ -268,8 +300,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       real(kind=R8), allocatable :: d1d(:)
@@ -300,6 +334,7 @@
       real (kind=R8) :: data(nx,ny)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,i2,iflag)
         integer, intent(in) :: idtype
@@ -317,8 +352,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       real(kind=R8), allocatable :: d2d(:,:)
@@ -355,6 +392,7 @@
       real (kind=R8) :: data(nx,ny,ns)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,i2,i3,iflag)
         integer, intent(in) :: idtype
@@ -373,8 +411,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       real (kind=R8), allocatable :: d3d(:,:,:)
@@ -412,6 +452,7 @@
       real (kind=R8) :: data(nx,ny,nd,ns)
 
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,i1,i2,i3,i4,iflag)
         integer, intent(in) :: idtype
@@ -431,8 +472,10 @@
         integer, intent(in) :: iflg
         end function mdsput2
       end interface
-
 #     include "mdslib_b2.inc"
+#else
+#     include "mdslib.inc"
+#endif
       integer :: status
       character :: tdi*(172)
       real (kind=R8), allocatable :: d4d(:,:,:,:)
@@ -467,6 +510,7 @@
       implicit none
       integer status
 #ifdef MDSPLUS
+#ifndef G95
       interface
         integer function descr2(idtype,il1,iflag,ilen)
         integer, intent(in) :: idtype
@@ -475,16 +519,24 @@
         integer, intent(in), optional :: ilen
         end function descr2
       end interface
-
 #     include "mdslib_b2.inc"
       integer mdsvalue2
+#else
+#     include "mdslib.inc"
+#endif
       integer :: size
       character :: message*80
 
       if(mod(status,2).eq.0) then
+#ifndef G95
         status=mdsvalue2('getmsg($)'//char(0),
      1   descr2(idtype_long,iflag=0),status,
      2   descr2(idtype_cstring,iflag=0,ilen=80),message,0,size)
+#else
+        status=mdsvalue2('getmsg($)'//char(0),
+     1   descr2(idtype_long,0),status,
+     2   descr2(idtype_cstring,0,80),message,0,size)
+#endif
         write(*,*) trim(message)
       endif
 #else
