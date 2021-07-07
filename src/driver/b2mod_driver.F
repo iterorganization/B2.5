@@ -132,6 +132,7 @@
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
+      integer, save :: iappend = 0
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -1082,6 +1083,7 @@
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
+       call ipgeti ('b2wdat_append', iappend)
        call ipgeti ('b2mndr_b2time', b2time)
        call xertst (0.le.b2time,
      &   'faulty internal parameter b2time')
@@ -2284,6 +2286,9 @@ c new CDF movie option
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(nx,ny,ns,nxtl,nxtr,nnreg(0),ismain,dtim,BoRiS)
         endif
+        if (iappend.gt.0) then
+          call b2wdat (nx, ny, ns, ismain, ismain0)
+        endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
@@ -2750,7 +2755,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
-      call b2wdat (nx, ny, ns, ismain, ismain0)                          !srv 05.10.01
+      if (iappend.eq.0) then
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
+      end if
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
