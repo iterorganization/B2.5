@@ -13,7 +13,7 @@
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     &   qe, rza(nCv,0:ns-1), rz2(nCv,0:ns-1), alfx_c(nFc), sigx_c(nFc),  
+     &   qe, rza(nCv,0:ns-1), rz2(nCv,0:ns-1), alfx_c(nCv), sigx_c(nCv),  
      &   te(nCv), po(nCv), ne(nCv), na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &   fch_pi_c(nCv,0:1)
       real (kind=R8) ::
