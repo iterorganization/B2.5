@@ -125,12 +125,12 @@ cwdk     parallel transport due to parallel current fluctuations
         cs   = sqrt(pz/rz)
         if (switch%b2sikt_sheath_local .eq. 1) then
           csfs = cs
-          connfs = geo%ftConn
+          connfs = geo%cvConn
           rhol = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       abs(rza(:,ismain)*qe*geo%cvBb(:,3))
         else
           csfs = cs(omp(icsep))
-          connfs = geo%ftConn(omp(icsep))
+          connfs = geo%cvConn(omp(icsep))
           rhol = sqrt(2.0_R8*pl%ti(omp(icsep))*(am(ismain)*mp))/
      &       abs(rza(omp(icsep),ismain)*qe*geo%cvBb(omp(icsep),3))
         endif
