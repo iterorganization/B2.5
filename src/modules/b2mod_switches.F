@@ -39,6 +39,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: fke_Zhdanov
       integer :: conductive_limit
       integer :: core_cond_limit
+      integer :: lluciani
       integer :: kul_recycle
       integer :: no_solve
       integer :: no_b2sral_call
@@ -487,6 +488,7 @@ c Feedback
       s % fke_Zhdanov = 1
       s % conductive_limit = 1
       s % core_cond_limit = 0
+      s % lluciani = 3
       s % kul_recycle = 0
       s % no_solve = 0
       s % no_b2sral_call = 1
@@ -920,7 +922,8 @@ c Feedback
       call ipgeti('b2xzdd_zero_dead_and_core', s % zero_dead_and_core)   
       call ipgeti ('b2tqce_fke_Zhdanov', s % fke_Zhdanov)                  !srv 02.12.10      
       call ipgeti ('b2trcl_conductive_limit', s % conductive_limit)        !srv 16.06.08   
-      call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012  
+      call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012
+      call ipgeti ('b2trcl_lluciani', s % lluciani)   
       call ipgeti ('b2stbr_kul_recycle', s % kul_recycle)  
       call ipgeti ('b2news_no_solve', s % no_solve)                        !srv 02.07.08
       call ipgeti ('b2news_no_b2sral_call', s%no_b2sral_call)

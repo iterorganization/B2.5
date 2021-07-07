@@ -49,10 +49,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
      &  fllimvisc(nFc,0:ns-1), 
      &  cvsahz(nFc,0:1,0:ns-1),   !srv 09.01.01
-     &  csig_cl(nFc,0:1), calf_cl(nFc,0:1),
-     &  fllim_ke(nFc), fllim_ki(nFc), fllim_al(nFc), fllim_al_c(nCv),
-     &  f_luc_ke(nFc), f_luc_ki(nFc), f_luc_et(nFc), f_luc_sg(nFc), 
-     &  f_luc_al(nFc), alfx_c(nCv), sigx_c(nCv)
+     &  csig_cl(nFc,0:1), calf_cl(nFc,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -86,7 +83,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer k, is, is0, iCv, iFc, mode
+      integer i, k, is, is0, iCv, iFc, iFt, mode
       character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
       real (kind=R8) ::
@@ -94,7 +91,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv), tt0(mpg%nFs), tt1(mpg%nFs), eps1(mpg%nFs)          !lk 19.09.07
+     &    k2(nCv), tt0(mpg%nFt), tt1(mpg%nFt)                         !lk 19.09.07
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
 
@@ -103,9 +100,9 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
-     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv)                    !srv 01.07.99 09.01.01
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
+     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),                  !srv 01.07.99 09.01.01
+     4  tef(nFc), tif(nFc), ne2f(nFc), k1f(nFc), k2f(nFc), gtec(nCv)
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
@@ -136,7 +133,6 @@ c     &   'Recompile without NO_21 option for 21-moment approach!')
 c#endif
 c        call xertst (.not.(lvis21.ne.0.and.vis_par.ne.0.0_R8),
 c     &   '21-moment viscosity already includes parallel viscosity!')
-c        call ipgeti ('b2trcl_lluciani',lluciani)
 *   ..extensive tests on first few calls
       if (ncall_b2trcl.lt.3) then
 *    ..test bb
@@ -171,12 +167,12 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
       call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
       call sfill (nFc*ns, switch%cthev, cthe,1)
       call sfill (nFc*ns, switch%cthiv, cthi,1)
-      call sfill (nFc, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
-      call sfill (nFc, 1.0_R8, fllim_ke, 1)
-      call sfill (nFc, 1.0_R8, fllim_al, 1)
-      call sfill (nCv, 1.0_R8, fllim_al_c, 1)
-      alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
-      sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
+      call sfill (nFc, 1.0_R8, co%fllim_ki, 1)                            !srv 13.01.17 {
+      call sfill (nFc, 1.0_R8, co%fllim_ke, 1)
+      call sfill (nFc, 1.0_R8, co%fllim_al, 1)
+      call sfill (nCv, 1.0_R8, co%fllim_al_c, 1)
+      co%alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
+      co%sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..interpolate vsa to faces
       !wdk need to write general routine for volume interpolation like this...
       !wdk intface_v? intface with mode switch?
@@ -254,7 +250,7 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_calfx')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_calfy')
-        call my_out_us(70,nFc,1,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_chciy')
       endif
@@ -262,7 +258,7 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
      &                   .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_csigx')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_csigy')
-        call my_out_us(70,nFc,1,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
@@ -275,169 +271,167 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
 #endif
 #endif
 *   ..luciani
-      f_luc_ke = 1.0_R8                                                 !srv 13.01.17 {
-      f_luc_ki = 1.0_R8
-      f_luc_et = 1.0_R8
-      f_luc_sg = 1.0_R8
-      f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
-#ifdef WG_TODO
-      if(lluciani.eq.1) then   ! connection length formulation
-        do iy=-1,ny
-          if(conn(iy).gt.0.0_R8) then
-            do ix=0,nx
-              if(on_closed_surface(ix,iy)) then
-                f_luc_ke(ix,iy)=1.0_R8/
-     1           (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
-     2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-                f_luc_ki(ix,iy)=1.0_R8/
-     1           (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
-     2           ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-                f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
-                f_luc_al(ix,iy)=f_luc_ke(ix,iy)
-                f_luc_et(ix,iy)=f_luc_ki(ix,iy)
-                do is=0,ns-1
-                  if(.not.is_neutral(is)) then
-                    cvsa(ix,iy,0,0,is)=
-     .               cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
-                    cvsahz(ix,iy,0,0,is)=
-     .               cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
-                    !WG_TODO flux limit vsaf_cl here!
-                  endif
-                enddo
-                chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
-                csig(ix,iy,0,0)=csig(ix,iy,0,0)*f_luc_sg(ix,iy)
-                calf(ix,iy,0,0)=calf(ix,iy,0,0)*f_luc_al(ix,iy)
-                chci(ix,iy,0,0)=chci(ix,iy,0,0)*f_luc_ki(ix,iy)
-                sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
-                alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
-              endif
-            enddo
-          endif
-        enddo
-      else if (lluciani.eq.2) then  ! SOLPS4.0 formulation
-        do iy=-1,ny
-          do ix=0,nx
-            if (on_closed_surface(ix,iy)) then
-              f_luc_ke(ix,iy)=1.0_R8/
-     1             (1.0_R8+0.3e16_R8/2.0_R8*
-     2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-              f_luc_ki(ix,iy)=1.0_R8/
-     1             (1.0_R8+0.3e16_R8/2.0_R8*
-     2           ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-              f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
-              f_luc_al(ix,iy)=f_luc_ke(ix,iy)
-              f_luc_et(ix,iy)=f_luc_ki(ix,iy)
-              do is=0,ns-1
-                if(.not.is_neutral(is)) then
-                  cvsa(ix,iy,0,0,is)=cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
-                  cvsahz(ix,iy,0,0,is)=
-     .             cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)
-                  !WG_TODO flux limit vsaf_cl here!
-                endif
-              enddo
-              chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
-              csig(ix,iy,0,0)=csig(ix,iy,0,0)*f_luc_sg(ix,iy)
-              calf(ix,iy,0,0)=calf(ix,iy,0,0)*f_luc_al(ix,iy)
-              chci(ix,iy,0,0)=chci(ix,iy,0,0)*f_luc_ki(ix,iy)
+      co%f_luc_ke = 1.0_R8                                              !srv 13.01.17 {
+      co%f_luc_ki = 1.0_R8
+      co%f_luc_et = 1.0_R8
+      co%f_luc_sg = 1.0_R8
+      co%f_luc_al = 1.0_R8                                              !srv 13.01.17 }
+      if(switch%lluciani.eq.1) then   ! connection length formulation
+       !wdk There is implicit assumption here that flux tubes exist in the grid.
+       !wdk Need to generalize to truly unstructured grids; using fcConn at each
+       !wdk face?
+*    ..interpolate te, ti and ne2 to cell faces
+       wrk1 = 1.0_R8
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
+       do iFt = 1, mpg%nFt
+        if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then !core flux tube; eventually: check based on ftReg(iFt)?
+         do i = 1, mpg%ftFcP(iFt,2)
+          iFc = mpg%ftFc(mpg%ftFcP(iFt,1) + i - 1)
+          co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
+     1      7.5e16_R8*(tef(iFc)/ev)**2/(geo%ftConn(iFt)*ne2f(iFc)))
+          co%f_luc_ki(iFc) = 1.0_R8/(1.0_R8 +
+     1      7.5e16_R8*(tif(iFc)/ev)**2/(geo%ftConn(iFt)*ne2f(iFc)))
+          co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
+          co%f_luc_al(iFc) = co%f_luc_ke(iFc)
+          co%f_luc_et(iFc) = co%f_luc_ki(iFc)
+          do is=0,ns-1
+            if(.not.is_neutral(is)) then
+              cvsa(iFc,0,is)    = cvsa(iFc,0,is)*co%f_luc_et(iFc)
+              cvsahz(iFc,0,is)  = cvsahz(iFc,0,is)*co%f_luc_et(iFc)
+              vsaf_cl(iFc,0,is) = vsaf_cl(iFc,0,is)*co%f_luc_et(iFc)
             endif
           enddo
-        enddo
-      else if (lluciani.eq.3) then  ! new formulation
-*   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
-        call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)                   !srv 01.07.09
-*   .. calculate inverse aspect ratio and collisionality parameter nu_star   
-        tt0 = 0.0e0_R8
-        tt1 = 0.0e0_R8
-        eps1 = 1.0e0_R8
-
-!wdk init mintopcut to -2 to skip loops in case nncut = 0
-!pbwdk        mintopcut = ny
-        mintopcut = -2
-        if (nncut > 0) mintopcut = minval(topcut(1:nncut))
-
-        do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16
-         do ix = -1,nx
-          if(on_closed_surface(ix,iy)) then
-           tt0(iy) = tt0(iy) + hx(ix,iy)
-           tt1(iy) = tt1(iy) + vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
-          endif
+          chce(iFc,0) = chce(iFc,0)*co%f_luc_ke(iFc)
+          csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
+          calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
+          chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
          enddo
-        enddo
-
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
-          eps1(iy) = tt0(iy)**2/tt1(iy)
-        enddo
-
+         do i = 1, mpg%ftCvP(iFt,2)
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + i - 1)
+          t0 = 1.0_R8/(1.0_R8 +
+     1      7.5e16_R8*(pl%te(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
+          co%sigx_c(iCv) = co%sigx_c(iCv)*t0
+          co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+         enddo
+        endif
+       enddo
+      else if (switch%lluciani.eq.2) then  ! SOLPS4.0 formulation
+*    ..interpolate te, ti and ne2 to cell faces
+       wrk1 = 1.0_R8
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
+       do iFt = 1, mpg%nFt
+        if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then !core flux tube; eventually: check based on ftReg(iFt)?
+         do i = 1, mpg%ftFcP(iFt,2)
+          iFc = mpg%ftFc(mpg%ftFcP(iFt,1) + i - 1)
+          co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
+     1      0.3e16_R8*(tef(iFc)/ev)**2/ne2f(iFc))
+          co%f_luc_ki(iFc) = 1.0_R8/(1.0_R8 +
+     1      0.3e16_R8*(tif(iFc)/ev)**2/ne2f(iFc))
+          co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
+          co%f_luc_al(iFc) = co%f_luc_ke(iFc)
+          co%f_luc_et(iFc) = co%f_luc_ki(iFc)
+          do is=0,ns-1
+            if(.not.is_neutral(is)) then
+              cvsa(iFc,0,is)    = cvsa(iFc,0,is)*co%f_luc_et(iFc)
+              cvsahz(iFc,0,is)  = cvsahz(iFc,0,is)*co%f_luc_et(iFc)
+              vsaf_cl(iFc,0,is) = vsaf_cl(iFc,0,is)*co%f_luc_et(iFc)
+            endif
+          enddo
+          chce(iFc,0) = chce(iFc,0)*co%f_luc_ke(iFc)
+          csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
+          calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
+          chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
+         enddo
+         do i = 1, mpg%ftCvP(iFt,2)
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + i - 1)
+          t0 = 1.0_R8/(1.0_R8 +
+     1      0.3e16_R8*(pl%te(iCv)/ev)**2/dv%ne2(iCv))
+          co%sigx_c(iCv) = co%sigx_c(iCv)*t0
+          co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+         enddo
+        endif
+       enddo
+      else if (switch%lluciani.eq.3) then  ! new formulation
+*   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+        call b2ttia (nCv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
+*   .. calculate collisionality parameter nu_star   
         nu1 = 0.0e0_R8                                                    !lk 12.05.11{
         k1 = 0.58e0_R8
         nu2 = 0.0e0_R8
         k2 = 1.6e0_R8
         t1 = (4.0_R8*pi*eps0/qe)/qe
         t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
-     
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
-         do ix = -1,nx
-          if(on_closed_surface(ix,iy)) then
-           tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
-     &      *sqrt(te(ix,iy)/ev)/ne2(ix,iy)
-           nu1(ix,iy) = conn(iy)/(tau(ix,iy)
-     &      *sqrt(te(ix,iy)/me)
-     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-
-           k1(ix,iy) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(ix,iy))
-     &      +1.53e0_R8*nu1(ix,iy))
-     &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
-     &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
-          
-           nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
-     &      *sqrt(ti(ix,iy)/(mp*am(ismain)))
-     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-  
-           k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
-     &      -1.54e0_R8*eps1(iy))
-     &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
-     &      +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
-     &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
-          endif
-         enddo
+        do iFt = 1, mpg%nFt
+         if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then !core flux tube; eventually: check based on ftReg(iFt)?
+          do i = 1, mpg%ftCvP(iFt,2)
+           iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + i - 1)
+           tau(iCv) = t2/dv%lnlam(iCv)*pl%te(iCv)/ev*
+     &      sqrt(pl%te(iCv)/ev)/dv%ne2(iCv)
+           nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
+     &      sqrt(pl%te(iCv)/me)*2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
+           k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
+     &      +1.53e0_R8*nu1(iCv))
+     &      +0.52e0_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
+     &      /(1.0e0_R8+0.89e0_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
+           nu2(iCv) = geo%ftConn(iFt)/(tauia(iCv,ismain)
+     &      *sqrt(pl%ti(iCv)/(mp*am(ismain)))
+     &      *2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
+           k2(iCv) = (0.66e0_R8+1.88e0_R8*sqrt(geo%ftEps(iFt))
+     &      -1.54e0_R8*geo%ftEps(iFt))
+     &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(iCv))+0.31e0_R8*nu2(iCv))
+     &      +1.17e0_R8*(geo%ftEps(iFt)**3)*nu2(iCv)
+     &      /(1.0e0_R8+0.74e0_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
+          enddo
+         endif
         enddo                                                             !lk 19.09.07 }
-        do iy = -1,mintopcut-1                                            !srv 22.04.16
-         do ix = 0,nx
-          if(on_closed_surface(ix,iy)) then                               !srv 26.11.02
-           f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
-           f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
-           f_luc_et(ix,iy)=cvsa_mltpl/
-     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
-     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5        /conn(iy)/2.0e0_R8*
-     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-           f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
-           f_luc_al(ix,iy)=f_luc_ke(ix,iy)
-           do is=0,ns-1
-            if(.not.is_neutral(is)) then                                  !srv 10.07.02
-             cvsa(ix,iy,0,0,is)=cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
-             cvsahz(ix,iy,0,0,is)=cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)
-             !WG_TODO flux limit vsaf_cl here!
-            endif                                                         !srv 10.07.02
-           enddo
-! May need to use flux limiting factors calculated on cell faces
-           chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
-           csig(ix,iy,0,0)=csig(ix,iy,0,0)*f_luc_sg(ix,iy)
-           calf(ix,iy,0,0)=calf(ix,iy,0,0)*f_luc_al(ix,iy)
-           chci(ix,iy,0,0)=chci(ix,iy,0,0)*f_luc_ki(ix,iy)                    !lk 20.11.07
-           sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
-           alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
-          endif                                                           !lk 12.05.11}
+*    ..interpolate k1, k2, te, ti and ne2 to cell faces
+       wrk1 = 1.0_R8
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,k1,k1f)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,k2,k2f)
+       do iFt = 1, mpg%nFt
+        if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then !core flux tube; eventually: check based on ftReg(iFt)?
+         do i = 1, mpg%ftFcP(iFt,2)
+          iFc = mpg%ftFc(mpg%ftFcP(iFt,1) + i - 1)
+          co%f_luc_ke(iFc) = 1.0_R8/k1f(iFc)*0.58e0_R8*
+     .      sqrt(geo%ftEps(iFt)**3)
+          co%f_luc_ki(iFc) = 1.0_R8/k2f(iFc)*1.60e0_R8*
+     .      sqrt(geo%ftEps(iFt)**3)
+          co%f_luc_et(iFc)=cvsa_mltpl/
+     1      (1.0e0_R8+15.12e16_R8/geo%ftConn(iFt)*
+     2      (tif(iFc)/ev)**2/ne2f(iFc))/
+     4      (1.0e0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5e0_R8/
+     6        geo%ftConn(iFt)*(tif(iFc)/ev)**2/ne2f(iFc))
+          co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
+          co%f_luc_al(iFc) = co%f_luc_ke(iFc)
+          do is=0,ns-1
+            if(.not.is_neutral(is)) then
+              cvsa(iFc,0,is)    = cvsa(iFc,0,is)*co%f_luc_et(iFc)
+              cvsahz(iFc,0,is)  = cvsahz(iFc,0,is)*co%f_luc_et(iFc)
+              vsaf_cl(iFc,0,is) = vsaf_cl(iFc,0,is)*co%f_luc_et(iFc)
+            endif
+          enddo
+          chce(iFc,0) = chce(iFc,0)*co%f_luc_ke(iFc)
+          csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
+          calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
+          chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
          enddo
-        enddo
+         do i = 1, mpg%ftCvP(iFt,2)
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + i - 1)
+          t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
+          co%sigx_c(iCv) = co%sigx_c(iCv)*t0
+          co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+         enddo
+        endif
+       enddo
       endif
+#ifdef WG_TODO
 #ifdef ASTRA
       bbaverage2 = 0.0e0_R8                                               !srv 28.07.11 {
       chci_koeff = 0.0e0_R8
@@ -503,7 +497,7 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chcex')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calfx')
-        call my_out_us(70,nFc,1,alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_calfy')
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_chciy')
@@ -512,7 +506,7 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
      &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csigx')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_luciani_csigy')
-        call my_out_us(70,nFc,1,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
       endif
 
 *   .. save chce(:,0) after applying Luciani
@@ -534,8 +528,8 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
      &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
      &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
-          fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
-          chce(iFc,0)=chce(iFc,0)*fllim_ke(iFc)
+          co%fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
+          chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
          endif
         enddo
        endif
@@ -551,8 +545,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
-          fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
-          chci(iFc,0)=chci(iFc,0)*fllim_ki(iFc)
+          co%fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
+          chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
         enddo
        endif
@@ -567,10 +561,17 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
      & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
-            fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)            !srv 13.01.17
-!WG_TODO            alfx_c(iCv)=alfx_c(iCv)*fllim_al(iCv)                !iyv 19.11.13 !srv 08.10.14
+            co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)            !srv 13.01.17
          endif
+        enddo
+        !wdk pragmatic approximation for cell center flux limits: based on interpolation 
+        !wdk of face flux limit
+        call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_al,co%fllim_al_c)
+        do iCv = 1, nCv
+          if(.not.mpg%cvOnClosedSurface(iCv)) then
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)
+          endif
         enddo
        endif
       else
@@ -584,39 +585,22 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
      &        abs(geo%fcPbs(iFc))
             t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + cutlo)
-            fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)                !srv 13.01.17
+            co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                !srv 13.01.17
          endif
         enddo
 *   ..apply flux limit to alfx_c at cell centers
-#ifdef WG_TODO
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gtec)
         do iCv = 1, nCv
-!WG_TODO           if(.not.on_closed_surface(ix,iy)) then
-!             if(leftix(ix,iy).eq.-2) then
-!               dte =
-!     &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-!     &          (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8
-!             elseif(rightix(ix,iy).eq.nx+1) then
-!               dte =
-!     &          (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-!     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-!             else
-!               dte =
-!     &          ((te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-!     &           (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8+
-!     &           (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-!     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
-!     &          2.0_R8
-!             endif
-             jemax = sqrt(pl%te(iCv)/me)*
-     &               qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-             t0 = abs(alfx_c(iCv))*abs(gtec(iCv))/(cflim(3)*jemax + cutlo)
-             fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
-             alfx_c(iCv)=alfx_c(iCv)*fllim_al_c(iCv)                !iyv 19.11.13 !srv 08.10.14
-!WG_TODO           endif
+          if(.not.mpg%cvOnClosedSurface(iCv)) then
+            jemax = sqrt(pl%te(iCv)/me)*
+     &         qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+            t0 = abs(co%alfx_c(iCv))*abs(gtec(iCv))/
+     &         (cflim(3)*jemax + cutlo)
+            co%fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)          !iyv 19.11.13 !srv 08.10.14
+          endif
         enddo
-#endif
        endif
       endif
 *   ..apply flux limit to cvsa
@@ -624,14 +608,14 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg, 
      &   pl%na(:,is),
-     &   pl%ti, pl%ua(:,is), co%vsaf_cl(:,0,is), cvsa(:,0,is),
+     &   pl%ti, pl%ua(:,is), vsaf_cl(:,0,is), cvsa(:,0,is),
      &   cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
-      wrkc = sigx_c*wrkc**2/(am(ismain)*mp)*switch%b2tfhi_fsigkt
+      wrkc = co%sigx_c*wrkc**2/(am(ismain)*mp)*switch%b2tfhi_fsigkt
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
       cdkt(:,1) = 0.0_R8
@@ -659,7 +643,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         call my_out_us(70,nFc,1,calf(1,0),
      &             'b2trcl_luciani_fllim_calfx')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_fllim_calfy')
-        call my_out_us(70,nFc,1,alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
+        call my_out_us(70,nCv,1,co%alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),
      &             'b2trcl_luciani_fllim_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
@@ -700,8 +684,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        call my_out_us(70,nFc,1,csig(1,1),'cl_csigy')
        call my_out_us(70,nFc,1,calf(1,0),'cl_calfx')
        call my_out_us(70,nFc,1,calf(1,1),'cl_calfy')
-       call my_out_us(70,nFc,1,sigx_c,'cl_sigx_c')                      !srv 05.07.17
-       call my_out_us(70,nFc,1,alfx_c,'cl_alfx_c')                      !srv 05.07.17
+       call my_out_us(70,nCv,0,co%sigx_c,'cl_sigx_c')                      !srv 05.07.17
+       call my_out_us(70,nCv,0,co%alfx_c,'cl_alfx_c')                      !srv 05.07.17
       endif                                                          !srv 17.06.08 }
 
 * ..return

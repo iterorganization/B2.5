@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nCv, nFc, nVx, ns, isb, geo, mpg, mb,
+      subroutine b2siav (nCv, nFc, nVx, ns, isb, switch, geo, mpg, mb,
      & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
      & chci, cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
@@ -9,6 +9,7 @@
       use b2mod_constants
 !WG_TODO      use b2mod_geo_corner
       use b2mod_b2cmpa
+      use b2mod_switches
       use b2us_geo
       use b2us_map
 !WG_TODO      use b2mod_balance                                               !djm Jan2017
@@ -22,6 +23,7 @@
       integer nCv, nFc, nVx, ns, isb
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      & mb, lnlam(nCv),                       !srv 01.07.09
      2 ub(nCv), wbdia(nFc,0:1), 
@@ -62,12 +64,11 @@
      &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
-     &     wrks(nCv)
+     &     wrks(nCv),
 !WG_TODO     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
 !WG_TODO     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
-!WG_TODO     &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-!WG_TODO     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny),
-!WG_TODO     &   dtir(-1:nx,-1:ny)
+     &   tt0(mpg%nFt), tt1(mpg%nFt), bbaverage2(mpg%nFt),                 !lk 23.05.06 05.07.07 {
+     &   dti(nCv)
 !WG_TODO      real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
 !WG_TODO     &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
 !WG_TODO     &                , nu1(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
@@ -89,7 +90,6 @@
        call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
-       call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
@@ -101,39 +101,28 @@
         if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
           call xerrab ('addvis not yet available for WG')
 #ifdef WG_TODO
-          call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
+          call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)           !srv 01.07.09
 *   ..compute radial gradients of ti
           call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
+          call grad(nCv, nFc, nVx, 0, geo, mpg, ti, wrkVx, dti)
 
 * ..calculate the parallel heat flux of ions in the center of the cell
 
-          tt0 = 0.0e0_R8                                            !lk 23.05.06 05.07.07
+          tt0 = 0.0e0_R8
           tt1 = 0.0e0_R8
-          tt2 = 0.0e0_R8
-          tt3 = 0.0e0_R8
-          conn = 0.0e0_R8
           bbaverage2 = 0.0e0_R8
-          eps1 = 0.0e0_R8
-!pbwdk          mintopcut = ny
-          mintopcut = -2
-          if (nncut > 0) mintopcut = minval(topcut(1:nncut))
-          do iy = 0,mintopcut-1    ! for inner surfaces
-            do ix=0,nx
-              if(on_closed_surface(ix,iy)) then
-                tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
-                tt1(iy) = tt1(iy) +vol(ix,iy)
-                conn(iy) = conn(iy) +
-     .                     hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
-                tt2(iy) = tt2(iy) +hx(ix,iy)
-                tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
-              endif
+          do iFt = 1, mpg%nFt 
+           if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+            do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+             iCv = mpg%ftCv(ic)
+             tt0(iFt) = tt0(iFt) + geo%cvBb(iCv,3)*geo%cvBb(iCv,3)*
+     .         geo%cvVol(iCv)
+             tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)
             enddo
+            bbaverage2(iFt) = tt0(iFt)/tt1(iFt)
+           endif
           enddo
 
-          do iy = 0,mintopcut-1
-            bbaverage2(iy) = tt0(iy)/tt1(iy)
-            eps1(iy) = tt2(iy)**2/tt3(iy)
-          enddo
 
           qip0 = 0.0e0_R8
 

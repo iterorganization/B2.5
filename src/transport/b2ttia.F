@@ -1,19 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 16.06.08 { 01.07.09
+      subroutine b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)
       use b2mod_types
       use b2mod_constants
-      use b2mod_rates
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     &   ti(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)        !srv 01.07.09
+     &   ti(nCv), ne2(nCv), lnlam(nCv), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   tauia(-1:nx,-1:ny,0:ns-1)
+     *   tauia(nCv,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -40,7 +39,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, n2, ix, iy, is
+      integer ncall, iCv, is
       real (kind=R8) ::
      *   fki, eta, ctaup, t0, t1
       parameter (fki=2.253e0_R8, eta=1.357e0_R8)
@@ -71,16 +70,14 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2ttia')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test state
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, ne2, 1, 'ne2', '.gt.')
       endif
 *   ..compute ctaup
 *     Following Braginskii                                           !srv 11.07.99
@@ -97,15 +94,13 @@
 * ..compute tauia
       do is = 0, ns-1
        if (.not.is_neutral(is)) then                            
-        do iy = -1, ny
-         do ix = -1, nx
-          t0 = ti(ix,iy)/ev
-          tauia(ix,iy,is) = ctaup/lnlam(ix,iy)*sqrt(am(is))*t0*sqrt(t0)/  !srv 01.07.09
-     &      (rz2(ix,iy,is)*ne2(ix,iy))
-         enddo
+        do iCv = 1, nCv
+         t0 = ti(iCv)/ev
+         tauia(iCv,is) = ctaup/lnlam(iCv)*sqrt(am(is))*t0*sqrt(t0)/  !srv 01.07.09
+     &     (rz2(iCv,is)*ne2(iCv))
         enddo
        else
-        tauia(:,:,is) = 0.0e0_R8
+        tauia(:,is) = 0.0e0_R8
        endif
       enddo
 

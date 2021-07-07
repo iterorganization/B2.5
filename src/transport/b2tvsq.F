@@ -92,7 +92,7 @@
            qip0b = 0.0e0_R8
            wrk0 = 0.0e0_R8
 
-           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)              !srv 11.07.99
+!WG_TODO           call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)
            
            tt0 = 0.0e0_R8                                                 
            tt1 = 0.0e0_R8

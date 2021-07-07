@@ -47,8 +47,10 @@
         real (kind=R8), allocatable  :: vxFpsi(:)      ! 
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
 
-!  flux surface quantities
-        real (kind=R8), allocatable  :: ftConn(:)      ! (nCv) Connection length for each CV
+!  flux tube/surface quantities
+        real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
+        real (kind=R8), allocatable  :: ftConn(:)      ! (nFt) Connection length for each flux tube
+        real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio 
         real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
 
       end type geometry
@@ -103,7 +105,9 @@
       allocate (g%vxOnedBsq(nVx))
 
 !  flux surface quantites
-      allocate (g%ftConn(nCv))
+      allocate (g%cvConn(nCv))
+      allocate (g%ftConn(nFt))
+      allocate (g%ftEps(nFt))
       allocate (g%fsPsi(nFs))
 
       call initialize_geometry(g)
@@ -156,7 +160,9 @@
       g%vxOnedBsq = 0._R8
 
 !  flux surface quantites
+      g%cvConn = 0._R8
       g%ftConn = 0._R8
+      g%ftEps = 0._R8
       g%fsPsi = 0._R8
       
       return
@@ -209,7 +215,9 @@
       deallocate (g%vxOnedBsq)
 
 !  flux surface quantites
+      deallocate (g%cvConn)
       deallocate (g%ftConn)
+      deallocate (g%ftEps)
       deallocate (g%fsPsi)
       
       return
@@ -257,7 +265,7 @@
       call cfrure (iun, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfrure (iun, nCv,   gm%ftConn, 'ftConn')
+      call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
 ! check consistency of input
@@ -305,7 +313,7 @@
       call cfwure (nout, nVx,   gm%vxFpsi, 'vxFpsi')
 
 ! flux surface quantities
-      call cfwure (nout, nCv,   gm%ftConn, 'ftConn')
+      call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
 
       return
@@ -538,58 +546,77 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, iCv, iFt, i, j, ic, iFc
+      integer :: nCv, iCv, iCv1, iCv2, iFt, i, j, ic, iFc
       integer, save :: conn_style = 0
-      real (kind=r8) :: wrk(mpg%nCv), Lr, Ll
+      real (kind=r8) :: wrk(mpg%nCv), Lr, Ll, tt0(mpg%nFt), tt1(mpg%nFt)
 
       call ipgeti ('b2mndr_conn_style',conn_style)
 
-      if (conn_style.eq.0) return ! don't modify what we read
-
       if (mpg%isClassicalGrid.eq.1) then
        wrk = 0.0_R8
-       gm%ftConn = 0.0_R8
-       do i = 1, mpg%nFt 
-         do j = mpg%ftFcP(i,1), mpg%ftFcP(i,1)+mpg%ftFcP(i,2)-1
-           ifc = mpg%ftFc(j)
-           wrk(mpg%fcCv(ifc,1)) = wrk(mpg%fcCv(ifc,1)) + 
-     .       gm%fcHc(ifc,1)*gm%cvBb(mpg%fcCv(ifc,1),3)/
-     .                      gm%cvBb(mpg%fcCv(ifc,1),0)
-           wrk(mpg%fcCv(ifc,2)) = wrk(mpg%fcCv(ifc,2)) + 
-     .       gm%fcHc(ifc,2)*gm%cvBb(mpg%fcCv(ifc,2),3)/
-     .                      gm%cvBb(mpg%fcCv(ifc,2),0)
-         end do
-       end do      
+       tt0 = 0.0_R8
+       tt1 = 0.0_R8
        do iFt = 1, mpg%nFt 
-        ic = mpg%ftCv(mpg%ftCvP(iFt,1))
-        if (mpg%cvOnClosedSurface(ic)) then !core  
-         do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-          gm%ftConn(ic) = gm%ftConn(ic) + wrk(mpg%ftCv(j))
+         do j = mpg%ftFcP(iFt,1), mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
+           ifc = mpg%ftFc(j)
+           icv1 = mpg%fcCv(ifc,1)
+           icv2 = mpg%fcCv(ifc,2)
+           wrk(icv1) = wrk(icv1) + 
+     .       gm%fcHc(ifc,1)*gm%cvBb(icv1,3)/gm%cvBb(icv1,0)
+           wrk(icv2) = wrk(icv2) + 
+     .       gm%fcHc(ifc,2)*gm%cvBb(icv2,3)/gm%cvBb(icv2,0)
+           tt0(iFt) = tt0(iFt) + gm%fcHc(ifc,1) + gm%fcHc(ifc,2)
+           tt1(iFt) = tt1(iFt) + 
+     .       gm%fcHc(ifc,1)*gm%cvVol(icv1)/gm%cvSz(icv1) + 
+     .       gm%fcHc(ifc,2)*gm%cvVol(icv2)/gm%cvSz(icv2)
          enddo
-         gm%ftConn(mpg%ftCv(mpg%ftCvP(iFt,1):mpg%ftCvP(iFt,1)+
-     &                        mpg%ftCvP(iFt,2)-1)) = gm%ftConn(ic)
-        else
-         do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-          iCv = mpg%ftCv(ic)
-          Lr = 0.5_R8*wrk(iCv)
-          do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
-           Lr = Lr + wrk(mpg%ftCv(j))
+       enddo
+       ! full connection length of each flux tube
+       gm%ftConn = 0.0_R8
+       gm%ftEps = 0.0_R8
+       do iFt = 1, mpg%nFt 
+         Ll = 0.0_R8
+         do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          Ll = Ll + wrk(mpg%ftCv(j))
+         enddo
+         gm%ftConn(iFt) = Ll
+         if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+           gm%ftEps(iFt) = tt0(iFt)**2/tt1(iFt)
+         endif
+       enddo
+       ! 'effective' connection length for use in k-eps model
+       if (conn_style.ne.0) then ! if 0, assumed to be read from b2fgmtry
+        gm%cvConn = 0.0_R8
+        do iFt = 1, mpg%nFt 
+         iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
+         if (mpg%cvOnClosedSurface(iCv)) then
+          !core region: actual connection length (same as ftConn)
+          gm%cvConn(mpg%ftCv(mpg%ftCvP(iFt,1):mpg%ftCvP(iFt,1)+
+     &                         mpg%ftCvP(iFt,2)-1)) = gm%ftConn(iFt)
+         else
+          ! SOL/PF: effective distance to targets/boundaries
+          do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+           iCv = mpg%ftCv(ic)
+           Lr = 0.5_R8*wrk(iCv)
+           do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
+            Lr = Lr + wrk(mpg%ftCv(j))
+           end do
+           Ll = 0.5_R8*wrk(iCv)
+           do j = mpg%ftCvP(iFt,1), ic-1
+            Ll = Ll + wrk(mpg%ftCv(j))
+           end do
+           if (conn_style.eq.1) then
+            gm%cvConn(iCv) = min(Lr,Ll)
+           elseif (conn_style.eq.2) then
+            gm%cvConn(iCv) = Lr*Ll/(Lr+Ll)
+           else
+            write (*,*) 'b2mndr_conn_style=',conn_style
+            call xerrab ('parameter b2mndr_conn_style not coded')
+           endif
           end do
-          Ll = 0.5_R8*wrk(iCv)
-          do j = mpg%ftCvP(iFt,1), ic-1
-           Ll = Ll + wrk(mpg%ftCv(j))
-          end do
-          if (conn_style.eq.1) then
-           gm%ftConn(iCv) = min(Lr,Ll)
-          elseif (conn_style.eq.2) then
-           gm%ftConn(iCv) = Lr*Ll/(Lr+Ll)
-          else
-           write (*,*) 'b2mndr_conn_style=',conn_style
-           call xerrab ('parameter b2mndr_conn_style not coded')
-          endif
-         end do
-        endif
-       end do
+         endif
+        end do
+       endif
       else
        write(*,*) 
      &   'WARNING: connection length not yet available for US grids'
