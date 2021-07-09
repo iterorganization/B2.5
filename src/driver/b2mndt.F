@@ -316,7 +316,7 @@ ctmp.dpc
           newneo=.true.
 !          if(style.ne.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl,                   !srv 20.09.06 {
+            call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl,           !srv 20.09.06 { 19.02.21
      &                    fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                    facdrift, fchinert)
