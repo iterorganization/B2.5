@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
+      subroutine b2tfrn (nx, ny, ns, ismain, guard_flows,                !srv 14.07.10 { 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
@@ -21,7 +21,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows
+      integer nx, ny, ns, ismain, guard_flows                            !srv 19.02.21
       real (kind=R8) ::
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny), fch_p(-1:nx,-1:ny,0:1),
@@ -200,7 +200,8 @@
          else
 
 csw 30sep2013, added check for no_hybr
-          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
+!          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
+          if(is.eq.ismain) then                                          !srv 19.02.21
            scur =
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+
      &       vis_per*fchvisper(ix,iy,0)                                  !srv 02.10.17
@@ -316,8 +317,9 @@ csw 30sep2013, added check for no_hybr
             flo_eir = flo_eir +
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
      $       gs(ix,iy,1)
-            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+           end if
+!           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+           if(is.eq.ismain) then                                         !srv 19.02.21
             scur =
      &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
      &         vis_q*fchvisq(ix,iy,1)+fchanml(ix,iy,1))/                 !srv 02.10.17
@@ -364,7 +366,8 @@ csw 30sep2013, added check for no_hybr
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
      &       gs(ix,iy,1)
            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+!           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+           if(is.eq.ismain) then                                        !srv 19.02.21
              scur =
      &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
      &          fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/          !srv 02.10.17
@@ -547,7 +550,8 @@ c Drift terms
 
 * ..compute fluxes
       do is = 0,ns-1
-        if(nint(zamax(is)).eq.1) then
+!        if(nint(zamax(is)).eq.1) then
+        if(is.eq.ismain) then                                            !srv 19.02.21
 *   ..compute fne_eirx, fhe_eirx, fhi_eirx
           do iy = -1, ny
             do ix = -1, nx

@@ -271,7 +271,8 @@
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
+       call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar)
        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &               facdrift, fchinert)
        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
@@ -279,7 +280,7 @@
        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
-       call b2tfrn (nx, ny, ns, guard_flows,
+       call b2tfrn (nx, ny, ns, ismain, guard_flows,                    !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,

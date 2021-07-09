@@ -376,7 +376,8 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
+        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
+     &                fchvispar)
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
@@ -521,7 +522,8 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
+        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
+     &                fchvispar)
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
