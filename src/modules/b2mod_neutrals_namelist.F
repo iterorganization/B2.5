@@ -1255,7 +1255,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         if (switch%spatial_hybrid.eq.0) then !! default, no spatial hybrid
           m%mxnRc = count(m%fcLbl /= 0)
         else 				     !! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
-          m%mxnRc = 2*count(m%fcLbl /= 0)
+          m%mxnRc = 3*count(m%fcLbl /= 0)
         endif
 
         m%nRc = nstrat
