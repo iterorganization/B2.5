@@ -801,7 +801,7 @@ c     Convert energy flux densities in energy fluxes
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,safeguard,
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,safeguard,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
@@ -817,7 +817,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, safeguard
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1, 
+     &    safeguard
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz,
@@ -876,13 +877,21 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
+c     Assume poloidal and radial drifts are zero for momentum and energy
+c     equations to reduce the dimensionality of the pre-evaluates integrals
+c     of TRIM tables. Only toroidal drift remains!
+      if (use_uy_uz_0.eq.0) then
+        uy = 0.0_R8
+        uz = 0.0_R8
+      endif
+
 c     Calculate incident particle flux density
       fnni = vcx/vtot*(-i1l*nnf+(dnndz*i2l+dnndy*uy*i1l)/vtot)
 
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      if (use_uy_uz_0.eq.0) then
+      if (use_uy_uz_1.eq.0) then
         uy = 0.0_R8
         uz = 0.0_R8
       endif
@@ -977,15 +986,11 @@ c     once all thermal particles are pumped.
 cnh 22.02.2020
 c     Calculate the part of the reflected flux emitted as molecules. At the moment,
 c     the molecules are treated kinetically.
-      if (fnni<0.0_R8) then
-        fna_mol_refl = recycm*pt*fnni_nodrifts*area*0.5_R8
-        fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
-        
-        fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
+      fna_mol_refl = recycm*pt*fnni_nodrifts*area*0.5_R8
+      fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
+      fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
      1    fluid_frac_hyb)
-      else
-        fnnrefl = 0.0_R8
-      endif
+
 
 
 c     reflected momentum flux densities
@@ -1049,7 +1054,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,L,
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,L,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
@@ -1065,7 +1070,7 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,L,
      &    sina,cosa, dnndy, dnndz, Kn_b1 , Kn_b2, fluid_frac_hyb
@@ -1108,7 +1113,7 @@ c     Calculate rate coefficients at boundary
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
       elseif (Kn.gt.Kn_b2) then
@@ -1127,7 +1132,7 @@ c     Calculate rate coefficients at boundary
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,pl,tif,tnf,
      &            tef,pof,nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnnreflD,fmomreflD,nnreflD,nnwwnreflD,fenereflD,
      &            fene_elD)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fnnreflD,fnnreflM,fnnrefl)
@@ -1150,7 +1155,7 @@ c     Calculate rate coefficients at boundary
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
@@ -1170,7 +1175,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0,use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz, fluid_frac_hyb
@@ -1189,7 +1194,7 @@ c     Output variables:
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
       else
@@ -1336,7 +1341,6 @@ c     Calculate fast and thermal reflected parts
       pf = min(nnf*rc1i*cs/fnni,recyc0)+1.0E-30_R8
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
-
 
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
@@ -1723,7 +1727,7 @@ c         do nothing to prevent oscillations if minimum Kn is just around Kn_b1
       if (switch%AFN_out.ne.0) then
 c calculate mfp for all cells
         do i=1,nCv
-          call CalcMinKn(i,isn,istra,
+          call CalcMinKn(i,isn,1,                        !! istra is now irrelevant
      &        pl,dv,rt,switch%L_macro_AFN,min_Kn,Kn,mfp)
           mfp_out(i) = mfp
         enddo
