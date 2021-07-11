@@ -362,7 +362,7 @@ c     internal cell -> full diamagnetic drift
               fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
             endif
           end do
-          if (is_neutral(is).and.switch%use_auto_spatial_hyb.eq.1) then
+          if (is_neutral(is).and.switch%use_auto_spatial_hyb.eq.1) then 
             do istra = 1, mpg%nRc
               do i = 1, mpg%rcCvP(istra,2)
                 iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
@@ -461,14 +461,18 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            if (zab(ifl).ne.0) then !! ion species
+            if (zab(ifl).ne.0.and.mol(istra).eq.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            elseif (mol(istra).eq.0) then !! neutral atom species
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.0) then !! neutral atom species
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            else                          !! neutral molecule species
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
               trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
+            else
+              if (fnn_mol_b(iFc,ifl).gt.0) then
+                call xerrab ('no molecular contribution expected here')
+              endif
             endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !!'
