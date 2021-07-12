@@ -2287,7 +2287,8 @@ c new CDF movie option
      >     call b2trace(nx,ny,ns,nxtl,nxtr,nnreg(0),ismain,dtim,BoRiS)
         endif
         if (iappend.gt.0) then
-          call b2wdat (nx, ny, ns, ismain, ismain0)
+          if (mod(itim,iappend).eq.0)
+     >     call b2wdat (nx, ny, ns, ismain, ismain0)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2756,6 +2757,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
       if (iappend.eq.0) then
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
+      else if (mod(itim,iappend).ne.0) then
         call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
       end if
       if (use_astra.ne.0) then
