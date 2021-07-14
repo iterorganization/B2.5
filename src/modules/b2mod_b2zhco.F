@@ -30,7 +30,7 @@
 *     - c_R_wA: the friction force transport coefficient for isonuclear ions
 *     - c_R_wB: the friction force transport coefficient correction for each charge state
 *     - c_R_w: the total friction force transport coefficient 
-*     - c_hwA: the ion heat conductivity transport coefficientfor isonuclear ions
+*     - c_hwA: the velocity dependent ion heat flux tansport coefficient for isonuclear ions
 *
 *-----------------------------------------------------------------------
       contains

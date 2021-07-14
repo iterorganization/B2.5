@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, ti,
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, bb, ti,        !som 13.07.21
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
@@ -27,6 +27,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       real (kind=R8) ::
      *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
+     * bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      & cddi(-1:nx,-1:ny,0:1,0:ns-1),
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny),
@@ -65,6 +66,9 @@ csw 30apr2014 added fna_he, ia
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib
+      integer, save :: Zhdanov_closure = 0                              !som 13.07.21
+      integer, save :: Zhdanov_test = 0                                 !som 13.07.21
+      integer, save :: Zhdanov_vel_heat = 1                             !som 13.07.21
       integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
       integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
@@ -78,7 +82,8 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8) ::
      *   floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,              !srv 17.05.99
-     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf                           !srv 13.10.06 17.06.09
+     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf,                          !srv 13.10.06 17.06.09
+     *   floi_vhx(-1:nx,-1:ny)                                          !som 13.07.21
 cpax
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
@@ -120,6 +125,9 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 13.07.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 13.07.21
+       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 13.07.21
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -198,6 +206,13 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
 
       fhi_mdf = 0.0_R8                                                  !srv 17.06.09
 * ..compute fluxes and linearization
+* ..velocity dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                 !som 13.07.21
+      if(Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0
+     & .and. Zhdanov_vel_heat.eq.1) then                                !som 13.07.21
+        call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
+      endif
+
 *   ..compute fhix, floix, conix
       do iy = -1, ny
        do ix = -1, nx                                                   !srv 26.11.02
@@ -229,9 +244,11 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
      &       (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &           +flidia(ix,iy,0) ! *signmf                             !srv 25.01.02 18.01.07 11.01.13
      &           +scur
+         floi0 = floi0 + floi_vhx(ix,iy)                                !som 13.07.21
          floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+chvi(ix,iy,0)*
      &    (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &    +scur
+         floi0_mdf = floi0_mdf + floi_vhx(ix,iy)                        !som 13.07.21
 
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
 
@@ -543,6 +560,8 @@ csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
             w2(ix,iy)= -coni0_mdf*dti0
             w6(ix,iy)=  coni0_mdf
            endif
+           w4(ix,iy) = floi_vhx(ix,iy)*
+     &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8  !som 14.07.2021
            w5(ix,iy) = flidia(ix,iy,0)*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           endif
@@ -706,6 +725,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
 !       call my_out(70,nx,ny,w3,'qix3')
+       call my_out(70,nx,ny,w4,'b2tfhi__hi_velx')                       !som 14.07.2021
        call my_out(70,nx,ny,w5,'b2tfhi__qidiax')
        call my_out(70,nx,ny,w6,'b2tfhi__chcix_Pat')
        call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi__fhiPSchx')

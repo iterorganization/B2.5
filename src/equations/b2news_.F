@@ -944,7 +944,7 @@ c      with diamagnetic drift part                                       !srv 13
      & chvemx, cddi, fch_p, fchstoch,
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, ti,
+      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, bb, ti,
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia,  !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                               !srv 13.10.06

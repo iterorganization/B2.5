@@ -68,6 +68,9 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: no_hybr = 0
       integer, save :: drift_style
+      integer, save :: Zhdanov_closure = 0                              !som 09.07.21
+      integer, save :: Zhdanov_test = 0                                 !som 09.07.21
+      integer, save :: Zhdanov_vel_heat = 1                             !som 09.07.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
@@ -88,7 +91,8 @@
      &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                            !srv 13.01.17
+     *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny),                           !srv 13.01.17
+     *   floi_vhx(-1:nx,-1:ny)                                          !som 09.07.21
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures
@@ -133,6 +137,9 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 09.07.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 09.07.21
+        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 09.07.21
         if (redef_gmtry.eq.0) then
           drift_style = 1
         else
@@ -549,6 +556,13 @@ c Drift terms
       endif
 
 * ..compute fluxes
+* ..velocity dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                 !som 09.07.21
+      if(Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0
+     & .and. Zhdanov_vel_heat.eq.1) then                                !som 09.07.21
+        call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
+      endif
+
       do is = 0,ns-1
 !        if(nint(zamax(is)).eq.1) then
         if(is.eq.ismain) then                                            !srv 19.02.21
@@ -611,6 +625,7 @@ c Drift terms
                 else
                   chci_eir = chci(ix,iy,0)
                 endif
+                floi_eir = floi_eir + floi_vhx(ix,iy)                   !som 13.07.21
                 fhi_eir(ix,iy,0) = floi_eir*                             !srv 14.07.10
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
      &           /2.0_R8-
