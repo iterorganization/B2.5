@@ -628,7 +628,7 @@ c first save the original NPTS provided by the Eirene input files.
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) + 
      &            2.0_R8*fna_mol(ifc,is)
               end do !}
-              flux_scale = 0.5_R8 ! Molecules consist of two atoms 
+              flux_scale(istrai) = 0.5_R8 ! Molecules consist of two atoms 
             endif
           end do   
 
