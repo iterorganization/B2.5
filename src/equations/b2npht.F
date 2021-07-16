@@ -300,6 +300,10 @@ c residuals for separate neutral energy equation
 	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhiy')
 	call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhnx')
 	call my_out_us(70,nFc,1,dv%fhn(1,1),'b2npht_fhny')
+	call my_out_us(70,nFc,1,dv%fkt(1,0),'b2npht_fktx')
+	call my_out_us(70,nFc,1,dv%fkt(1,1),'b2npht_fkty')
+	call my_out_us(70,nFc,1,dv%fzt(1,0),'b2npht_fztx')
+	call my_out_us(70,nFc,1,dv%fzt(1,1),'b2npht_fzty')
         call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
         call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
         call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')
@@ -314,6 +318,9 @@ c residuals for separate neutral energy equation
         wrk0=skt0(:,0)+skt0(:,1)*pl%kt+
      &       skt0(:,2)*dv%ni(:,1)+skt0(:,3)*pl%kt*dv%ni(:,1)
         call my_out_us(70,nCv,0,wrk0,'b2npht_skt')
+        wrk0=szt0(:,0)+szt0(:,1)*pl%zt+
+     &       szt0(:,2)*dv%ni(:,1)+szt0(:,3)*pl%zt*dv%ni(:,1)
+        call my_out_us(70,nCv,0,wrk0,'b2npht_szt')
       endif            
 
 

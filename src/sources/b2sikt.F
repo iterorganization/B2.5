@@ -57,10 +57,11 @@ c      use b2mod_keps
       integer ic
 
       real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
-     &  pz(nCv), cs(nCv), t0, t1, t2, t3,
+     &  pz(nCv), cs(nCv), t0, t1, t2, t3, t4,
      &  wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv), wrkf(nFc),
      &  wrkg0(nCv,0:1), wrkg1(nCv,0:1), wrkg2(nCv,0:1),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
+     &  dktc(nCv),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv), rhol(nCv),
      &  lpar(nCv)
       integer, save :: min_source = 0
@@ -114,6 +115,7 @@ c      use b2mod_keps
       call sfill (nCv*2, 0.0e0_R8, dlbc, 1)
       call sfill (nCv*2, 0.0e0_R8, dtec, 1)
       call sfill (nCv*2, 0.0e0_R8, dtic, 1)
+      call sfill (nCv*2, 0.0e0_R8, dktc, 1)
       if (switch%b2sikt_model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB energy flux
@@ -136,12 +138,7 @@ cwdk     parallel transport due to parallel current fluctuations
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
-        lpar = connfs
-        if (switch%b2sikt_fac_diss_core_mode.eq.1) then
-          where (mod(mpg%cvReg,4) .eq. 1)
-            lpar = rhol*geo%cvBb(:,2)/geo%cvBb(:,0)
-          end where
-        endif
+        lpar = geo%cvConn
 *   ..compute wrk arrays
         if (switch%b2sikt_style .eq. 0) then
 *      ..logarithm of magnetic field in cell center
@@ -188,7 +185,13 @@ cwdk     parallel transport due to parallel current fluctuations
      &       switch%b2sikt_fac_aniso*2.0_R8/3.0_R8*co%hce_ExB*
      &      (dtec(:,0)*dlbc(:,0) + dtec(:,1)*dlbc(:,1)))
          wrk2 = dv%ni(:,1)*geo%cvVol*csfs/connfs
-         wrk3 = co%sigx_kt*geo%cvVol/lpar**2
+         if (switch % b2sikt_fac_diss_core_mode .eq.0 ) then
+           wrk3 = co%sigx_kt*geo%cvVol*pl%kt*
+     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*lpar))**2
+         else
+           call gradc_p(nCv,nFc,nVx,0,geo,mpg,sqrt(pl%kt),wrkv,dktc)
+           wrk3 = co%sigx_kt*geo%cvVol*dktc**2
+         endif
         else
          call xerrab('wrong value of b2sikt_style')
         endif
@@ -204,19 +207,22 @@ cwdk     parallel transport due to parallel current fluctuations
          endif
          t0 = wrk0(ic)
          t1 = wrk1(ic)
-         t2 = fac_sheath*wrk2(ic) + fac_diss*wrk3(ic)
-         t3 = wrks(ic)
-         if (min_source.eq.1 .and. (t0+t1-pl%kt(ic)*t2).lt.0.0_R8) then
+         t2 = fac_sheath*wrk2(ic)
+         t3 = fac_diss*wrk3(ic)
+         t4 = wrks(ic)
+         if (min_source.eq.1.and.(t0+t1-pl%kt(ic)*t2-t3).lt.0.0_R8) then
+           !experimental
            t0 = 0.0_R8
            t1 = 0.0_R8
            t2 = 0.0_R8
+           t3 = 0.0_R8
          endif
-         she0(ic,0)   = -t1 + t2*pl%kt(ic)
+         she0(ic,0)   = -t1 + t2*pl%kt(ic) + t3
          shi0(ic,0)   = -t0
-         skt0(ic,0)   =  t0 + t1 - t3
+         skt0(ic,0)   =  t0 + t1 - t3 - t4
          skt0(ic,1)   = -t2
          skt_prod(ic) =  t0 + t1
-         skt_diss(ic) =  t2*pl%kt(ic) + t3
+         skt_diss(ic) =  t2*pl%kt(ic) + t3 + t4
         enddo
       else
         call xerrab('wrong value of b2sikt_model')
@@ -275,7 +281,7 @@ cwdk     parallel transport due to parallel current fluctuations
         call intcell(nFc,nCv,mpg,mpg%intcellR,dv%vaecrb(:,1,ismain),
      &    wrk1)
         wrk2 = wrk0*dlbc(:,0) + wrk1*dlbc(:,1)
-        wrks = 2.0_R8/3.0_R8*geo%cvVol*pl%na(:,ismain)*wrk2*
+        wrks = -2.0_R8/3.0_R8*geo%cvVol*pl%na(:,ismain)*wrk2*
      &     (switch%b2sikt_fac_vis_RS*co%dna_ExB*am(ismain)*mp*wrk2 +
      &      pl%kt)
         call my_out_us(70,nCv,0,wrks,'b2sikt_RS_symmetric')

@@ -584,8 +584,7 @@
       endif
       if(b2fplasma_version.ge.'03.002.000') then
         call cfrure (nread, size(fchviskt), fchviskt, 'fchviskt')
-      else
-        fchviskt = 0.0_R8
+        call cfrure (nread, size(fchanml), fchanml, 'fchanml')
       endif
 
 
@@ -668,6 +667,7 @@
       call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
       call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
       call cfwure (nwrite, size(fchviskt), fchviskt, 'fchviskt')
+      call cfwure (nwrite, size(fchviskt), fchanml, 'fchanml')
 
       return
       end subroutine write_b2mod_plasma

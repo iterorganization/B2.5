@@ -333,6 +333,8 @@ c k-enstrophy model
       real(kind=R8) :: keps_heat
       real(kind=R8) :: dna_min
       real(kind=R8) :: keps_heat_i
+      real(kind=R8) :: keps_sig
+      real(kind=R8) :: keps_alf
       real(kind=R8) :: keps_visc
       real(kind=R8) :: keps_dkt
       real(kind=R8) :: keps_dzt
@@ -761,6 +763,8 @@ c k-enstrophy model
       s % keps_cd = 1.0_R8
       s % keps_heat = 2.0_R8
       s % keps_heat_i = 2.0_R8
+      s % keps_sig = 1.0e-4_R8
+      s % keps_alf = 1.0e-4_R8
       s % dna_min = 1.0e-2_R8
       s % keps_visc = 0.2_R8
       s % keps_dkt = 0.01_R8
@@ -1214,6 +1218,8 @@ c k-enstrophy model
       call ipgetr ('b2tqna_keps_dzt', s % keps_dzt)
       call ipgetr ('b2tqna_keps_heat', s % keps_heat)
       call ipgetr ('b2tqna_keps_heat_i', s % keps_heat_i)
+      call ipgetr ('b2tqna_keps_sig', s % keps_sig)
+      call ipgetr ('b2tqna_keps_alf', s % keps_alf)
       call ipgeti ('b2tqna_keps_local', s % keps_local)
       call ipgeti ('b2tqna_keps_iout', s % keps_iout)
       call ipgetr ('b2tqna_keps_dna_min', s % dna_min)
@@ -1625,6 +1631,10 @@ c k-enstrophy model
      &  'keps_heat must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%keps_heat_i,
      &  'keps_heat_i must be .gt. 0.0')
+      call xertst (0.0_R8.le.s%keps_sig,
+     &  'keps_sig must be .ge. 0.0')
+      call xertst (0.0_R8.le.s%keps_alf,
+     &  'keps_alf must be .ge. 0.0')
       call xertst (0.0_R8.lt.s%dna_min,
      &  'dna_min must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%keps_visc,
