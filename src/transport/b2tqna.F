@@ -523,7 +523,8 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       if(switch%transport_keps.ne.0) then
         call set_transport_keps( 
      &    nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dzt0, dna_ExB,
+     &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, sig0, alf0,
+     &    dkt0, dzt0, dna_ExB,
      &    hce_ExB, hci_ExB)
       endif
 
@@ -3646,7 +3647,7 @@ c recompute hci0 and hcn0
 
       subroutine set_transport_keps(
      &     nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &     pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, 
+     &     pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, sig0, alf0,
      &     dkt0, dzt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
       use b2mod_constants
@@ -3674,6 +3675,7 @@ c recompute hci0 and hcn0
       real (kind=R8) :: dna0(nCv,0:ns-1),
      &   vsa0(nCv,0:ns-1),
      &   hci0(nCv), hcib(nCv,0:ns-1),
+     &   sig0(nCv), alf0(nCv),
      &   hce0(nCv), dkt0(nCv), dzt0(nCv),
      &   dna_ExB(nCv), hce_ExB(nCv),
      &   hci_ExB(nCv), rhol(nCv)
@@ -3743,6 +3745,16 @@ cwdk same dna_ExB for all ion species
             hcib(:,is) = switch%keps_heat_i*switch%keps_fac*
      &        (dna_ExB + switch%dna_min)*
      &        pl%na(:,is) + (1.0_R8-switch%keps_fac)*hcib(:,is)
+          endif
+          if (switch%keps_sig.gt.0.0_R8) then
+            sig0 = switch%keps_sig*(dna_ExB + switch%dna_min)*qe*
+     &         dv%ne(omp(icsep))*
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+          endif
+          if (switch%keps_alf.gt.0.0_R8) then
+            alf0 = switch%keps_alf*(dna_ExB + switch%dna_min)*
+     &         dv%ne(omp(icsep))*sqrt(qe/pl%te)*
+     &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)

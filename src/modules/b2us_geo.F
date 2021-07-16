@@ -16,7 +16,7 @@
         real (kind=R8), allocatable  :: cvY(:)         ! Y-co of cell center
         real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
-        real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; remove?
+        real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
         real (kind=R8), allocatable  :: cvQgam(:,:)    ! Temp: complementary angle between poloidal and radial directions; remove?
         real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
@@ -546,29 +546,39 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, iCv, iCv1, iCv2, iFt, i, j, ic, iFc
-      integer, save :: conn_style = 0
-      real (kind=r8) :: wrk(mpg%nCv), Lr, Ll, tt0(mpg%nFt), tt1(mpg%nFt)
+      integer :: nfx, iCv, iCv1, iCv2, iFt, i, j, ic, iFc
+      integer, save :: conn_style = 0, iout = 0
+      real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
+     .  tt0(mpg%nFt), tt1(mpg%nFt)
 
       call ipgeti ('b2mndr_conn_style',conn_style)
+      call ipgeti ('b2mndr_conn_iout',iout)
 
       if (mpg%isClassicalGrid.eq.1) then
-       wrk = 0.0_R8
+       ! reconstruct cvHx into wrk1
+       nfx = maxval(mpg%imapFcx)
+       wrk1 = 0.0_R8
+       do ifc = 1, nfx
+         icv1 = mpg%fcCv(ifc,1)
+         icv2 = mpg%fcCv(ifc,2)
+         wrk1(icv1) = wrk1(icv1) + gm%fcHc(ifc,1)
+         wrk1(icv2) = wrk1(icv2) + gm%fcHc(ifc,2)
+       enddo
+       ! 'N/S guard cells': take length of face
+       do ifc = nfx+1, mpg%nFc
+         icv = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))
+         if (icv.gt.mpg%nCi) wrk1(icv) = gm%fcHt(ifc)
+       enddo
+       ! construct wrk arrays
+       wrk0 = 0.0_R8
        tt0 = 0.0_R8
        tt1 = 0.0_R8
        do iFt = 1, mpg%nFt 
-         do j = mpg%ftFcP(iFt,1), mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
-           ifc = mpg%ftFc(j)
-           icv1 = mpg%fcCv(ifc,1)
-           icv2 = mpg%fcCv(ifc,2)
-           wrk(icv1) = wrk(icv1) + 
-     .       gm%fcHc(ifc,1)*gm%cvBb(icv1,3)/gm%cvBb(icv1,0)
-           wrk(icv2) = wrk(icv2) + 
-     .       gm%fcHc(ifc,2)*gm%cvBb(icv2,3)/gm%cvBb(icv2,0)
-           tt0(iFt) = tt0(iFt) + gm%fcHc(ifc,1) + gm%fcHc(ifc,2)
-           tt1(iFt) = tt1(iFt) + 
-     .       gm%fcHc(ifc,1)*gm%cvVol(icv1)/gm%cvSz(icv1) + 
-     .       gm%fcHc(ifc,2)*gm%cvVol(icv2)/gm%cvSz(icv2)
+         do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+           icv = mpg%ftCv(j)
+           wrk0(icv) = wrk1(icv)*gm%cvBb(icv,3)/gm%cvBb(icv,0)
+           tt0(iFt) = tt0(iFt) + wrk1(icv)
+           tt1(iFt) = tt1(iFt) + wrk1(icv)*gm%cvVol(icv)/gm%cvSz(icv)
          enddo
        enddo
        ! full connection length of each flux tube
@@ -577,7 +587,7 @@
        do iFt = 1, mpg%nFt 
          Ll = 0.0_R8
          do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-          Ll = Ll + wrk(mpg%ftCv(j))
+          Ll = Ll + wrk0(mpg%ftCv(j))
          enddo
          gm%ftConn(iFt) = Ll
          if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
@@ -597,13 +607,13 @@
           ! SOL/PF: effective distance to targets/boundaries
           do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
            iCv = mpg%ftCv(ic)
-           Lr = 0.5_R8*wrk(iCv)
+           Lr = 0.5_R8*wrk0(iCv)
            do j = ic+1, mpg%ftCvP(iFt,1) + mpg%ftCvP(iFt,2)-1
-            Lr = Lr + wrk(mpg%ftCv(j))
+            Lr = Lr + wrk0(mpg%ftCv(j))
            end do
-           Ll = 0.5_R8*wrk(iCv)
+           Ll = 0.5_R8*wrk0(iCv)
            do j = mpg%ftCvP(iFt,1), ic-1
-            Ll = Ll + wrk(mpg%ftCv(j))
+            Ll = Ll + wrk0(mpg%ftCv(j))
            end do
            if (conn_style.eq.1) then
             gm%cvConn(iCv) = min(Lr,Ll)
@@ -621,6 +631,10 @@
        write(*,*) 
      &   'WARNING: connection length not yet available for US grids'
       endif  
+
+      if (iout.ne.0) then
+       call my_out_us(70,mpg%nCv,0,gm%cvConn,'calc_conn_cvConn')
+      endif
 
       return
       end subroutine calc_conn

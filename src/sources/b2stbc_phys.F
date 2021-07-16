@@ -296,23 +296,20 @@ c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04
        if (mpg%cvOnClosedSurface(iCv1)) then
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-         iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-         !wdk weighting following computation of fchdia
 *      ..accumulate the average pressure for inner flux surface
-         pzsum    = pzsum  + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
+         pzsum    = pzsum  + geo%fcS(iFc)*pz(iCv1)
          volsum   = volsum + geo%fcS(iFc)
 *      ..accumulate the average na*ua**2, na for inner flux surface
          do is = 0, ns-1
            naua2sum(is)  = naua2sum(is) + geo%fcS(iFc)*
-     .       (pl%na(iCv1,is)*pl%ua(iCv1,is)**2 +
-     .        pl%na(iCv2,is)*pl%ua(iCv2,is)**2)
+     .       pl%na(iCv1,is)*pl%ua(iCv1,is)**2
          enddo
         enddo
        endif
       enddo
-      pzaverage    = 0.5_R8*pzsum/volsum
-      naua2average = 0.5_R8*naua2sum/volsum
+      pzaverage    = pzsum/volsum
+      naua2average = naua2sum/volsum
 
 #ifdef WG_TODO
 cwdk code to be removed after full adaption to unstructured solver...
