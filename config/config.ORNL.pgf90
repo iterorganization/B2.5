@@ -24,15 +24,18 @@ FC = pgf90
 ifndef SOLPS_CPP
 DEFINES += -DPGF90
 endif
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V | grep "pgf90" | awk 'match($$0,/[0-9]+\.[0-9]+\-[0-9]+/){print substr($$0, RSTART, RLENGTH)}' | cut -d '.' -f 1 )
 DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 INCMOD   = -I
 FCOPTS   = -Mbackslash
 LDOPTS   = -Kieee
 ifdef SOLPS_DEBUG
-FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+FCOPTS  += -C -g -Mchkptr -Mchkstk
 LDOPTS  += -g -C
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 19; echo $$?),0)
+FCOPTS  += -Mchkfpstk -Mpgicoff
+endif
 else
 FCOPTS  += -fast -Kieee
 endif
