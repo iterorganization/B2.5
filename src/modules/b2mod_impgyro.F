@@ -24,11 +24,11 @@
       private
 
 #ifdef USE_MPI
-      integer :: mpi_err,mpi_stat
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
-      integer :: mpi_err,mpi_stat
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
