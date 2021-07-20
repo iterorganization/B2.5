@@ -222,7 +222,7 @@ c first deal with the time vector
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           if(xtypev.eq.nf_char) then
-! this is 1 1d array of text strings and not time dependent
+! this is a 1d array of text strings and not time-dependent
             allocate(data2c(dimsize(1),dimsize(2)))
             status=nf_get_var_text(ncid,ivar,data2c)
             call check_cdf_status(status)

@@ -35,7 +35,7 @@
      *  fne(-1:nx,-1:ny,0:1),                                            !srv 09.07.08
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)                                   !srv 07.07.09
       logical solving(4),
@@ -92,8 +92,7 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
      2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                          !srv 18.09.09
-     4  te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)                       !srv 26.02.21
+     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                           !srv 18.09.09
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -144,7 +143,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test rxf
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -246,12 +245,10 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
-      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
-        te_inp=te
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 07.07.21
         call my_out(70,nx,ny,te,'b2npht_te_inp')
-        ti_inp=ti
         call my_out(70,nx,ny,ti,'b2npht_ti_inp')
-      endif                                                             !srv 31.01.21
+      endif                                                             !srv 07.07.21
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -305,7 +302,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &    .or.get_residuals.eq.1) reshe = reshe - shei
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) reshi = reshi + shei
-      if (solving(4).and.any(solvereg(0:nregionv)).and.               ! if total equation is not solved then resht = 0            
+      if (solving(4).and.any(solvereg(0:nregionv)).and.               ! if total equation is not solved then resht = 0
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
      &   resht = reshe + reshi                                        !srv 22.05.18 }
 
@@ -316,20 +313,20 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,reshe,'b2npht_reshe')
        call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
        call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
-       call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
-       call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
-       call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
-       call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
+!       call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
+!       call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
+!       call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
+!       call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
        wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                  she0(:,:,3)*te*ne
        call my_out(70,nx,ny,wrk0,'b2npht_she')
        call my_out(70,nx,ny,reshi,'b2npht_reshi')
        call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
        call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
-       call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
-       call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
-       call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
-       call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
+!       call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
+!       call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
+!       call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
+!       call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')
@@ -365,6 +362,8 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npht_ua'//chns)
        enddo
+       call my_out(70,nx,ny,te,'b2npht_te')
+       call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,po,'b2npht_po')
       endif                                                           !srv 17.07.05 }
 *   ..set error parameter and return

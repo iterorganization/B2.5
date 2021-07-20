@@ -15,7 +15,7 @@
      *  fne(:,:,:),    fni(:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
-     *  ni(:,:,:),  ni0(:,:,:),
+     *  ni(:,:,:),  ni0(:,:,:), nip(:,:,:),                              !srv 07.07.21
      *  pb(:,:),
      *  po(:,:),  po0(:,:),  pop(:,:),
      *  te(:,:),  te0(:,:),  tep(:,:),
@@ -132,6 +132,7 @@
       allocate(nep(-1:nxd,-1:nyd))
       allocate(ni(-1:nxd,-1:nyd,0:1))
       allocate(ni0(-1:nxd,-1:nyd,0:1))
+      allocate(nip(-1:nxd,-1:nyd,0:1))                               !srv 07.07.21
       allocate(pb(-1:nxd,-1:nyd))
       allocate(po(-1:nxd,-1:nyd))
       allocate(po0(-1:nxd,-1:nyd))
@@ -236,6 +237,7 @@
       deallocate(nep)
       deallocate(ni)
       deallocate(ni0)
+      deallocate(nip)                                              !srv 07.07.21
       deallocate(pb)
       deallocate(po)
       deallocate(po0)
@@ -335,6 +337,7 @@
       call cfrure (nread, size(nep), nep, 'nep')
       call cfrure (nread, size(ni), ni, 'ni')
       call cfrure (nread, size(ni0), ni0, 'ni0')
+      call b2xpni (nxd, nyd, nsd, nap, nip)
       call cfrure (nread, size(pb), pb, 'pb')
       call cfrure (nread, size(po), po, 'po')
       call cfrure (nread, size(po0), po0, 'po0')

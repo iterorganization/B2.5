@@ -692,7 +692,7 @@ csw 21feb2014, execute simultaneous corrections always
               if(solvemt(ireg)) then                                   !srv 22.05.18
                 ua(ix,iy,is) = ua(ix,iy,is)+
      &          rxf*med(corua(ix,iy,is),corut(ix,iy),
-     &          corua(ix,iy,is)+corut(ix,iy))
+     &                  corua(ix,iy,is)+corut(ix,iy))
               else                                                     !srv 22.05.18 {
                 ua(ix,iy,is) = ua(ix,iy,is)+rxf*corua(ix,iy,is)
               endif                                                    !srv 22.05.18 }

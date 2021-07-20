@@ -1874,6 +1874,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 *   ..initialise previous state and fluxes
       call b2scopy (n2*ns, na, 1, na0, 1)
       call b2scopy (n2, ne, 1, ne0, 1)
+      call b2scopy (n2*2, ni, 1, ni0, 1)                                 !srv 07.07.21
       call b2scopy (n2*ns, ua, 1, ua0, 1)
       call b2scopy (n2, te, 1, te0, 1)
       call b2scopy (n2, ti, 1, ti0, 1)
@@ -1885,6 +1886,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2scopy (n2*ns, kinrgy, 1, kinrgy0, 1)
       call b2scopy (n2*ns, na, 1, nap, 1)
       call b2scopy (n2, ne, 1, nep, 1)
+      call b2scopy (n2*2, ni, 1, nip, 1)                                 !srv 07.07.21
       call b2scopy (n2*ns, ua, 1, uap, 1)
       call b2scopy (n2, te, 1, tep, 1)
       call b2scopy (n2, ti, 1, tip, 1)
@@ -2204,7 +2206,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
         end do
-*    ..produce time dependent file
+*    ..produce time-dependent file
         if (save_f31.lt.0) then
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
@@ -2778,7 +2780,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
         call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
       endif
-*   ..produce last time dependent file if not yet done
+*   ..produce last time-dependent file if not yet done
 #ifdef JET
       if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
      &   delta_tran_time.gt.0.0_R8) then

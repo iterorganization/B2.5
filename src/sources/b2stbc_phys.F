@@ -2415,7 +2415,7 @@ cxpb Careful here because of BC number clash
 
 *  From 5.2, after version number 01.001.078:
 *            -- BCCON=21 -- PRESCRIBE THE VALUE OF THE DENSITY !lk and IYS 01.03.2013
-*                           AND ADD A DENSITY PERTURBATION TO GET A SOLUTION
+*                           AND ADD A POLOIDAL DENSITY VARIATION TO GET A SOLUTION
 *                           WHICH IS AS CLOSE AS POSSIBLE TO NEOCLASSICAL THEORY
 *                           DERIVED FOR PURE H/D/T PLASMA ONLY.
 *
@@ -2952,7 +2952,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ENDIF
 
 * -- BCCON=25  Feedback boundary condition: PRESCRIBE THE AVERAGE VALUE OF THE DENSITY  !lk and IYS 01.03.2013
-*              AND ADD A DENSITY PERTURBATION FROM NEIGHBOURING RADIAL CELL.
+*              AND ADD A POLOIDAL DENSITY VARIATION FROM NEIGHBOURING RADIAL CELL.
 *              THIS BOUNDARY CONDITION IS SUITABLE FOR ANY SPECIES OF
 *              MULTI-SPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
 *              IN BCCON=21 FAILS)
@@ -3056,7 +3056,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
 * -- BCCON=26  Feedback boundary condition: PRESCRIBE THE TOTAL ION FLUX AND
 *              FIND THE AVERAGE DENSITY.  !lk and IYS 01.03.2013
-*              A DENSITY PERTURBATION IS TAKEN FROM NEIGHBOURING RADIAL CELL.
+*              THE POLOIDAL DENSITY VARIATION FROM THE NEIGHBOURING RADIAL
+*              RING IS APPLIED ON TOP OF THE AVERAGE DENSITY.
 *              THIS BOUNDARY CONDITION IS SUITABLE FOR ANY SPECIES OF
 *              MULTI-SPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
 *              IN BCCON=22 FAILS)
@@ -3185,7 +3186,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCCON=27  Feedback boundary condition: prescribe the particle flux sum
 *              for all neutrals and ions belonging to a given isonuclear sequence
 *              and find the average density of the highest ionization stage.
-*              A DENSITY PERTURBATION IS TAKEN FROM THE NEIGHBOURING RADIAL CELL.
+*              THE POLOIDAL DENSITY VARIATION FROM THE NEIGHBOURING RADIAL
+*              CELL IS ADDED TO THE AVERAGE DENSITY.
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
 *              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 

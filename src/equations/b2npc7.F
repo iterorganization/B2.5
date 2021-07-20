@@ -151,7 +151,7 @@
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
-        fna_tot(:,:,:,isb)=fnb     !djm Mar2019         
+        fna_tot(:,:,:,isb)=fnb     !djm Mar2019
         call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 

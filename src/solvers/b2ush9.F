@@ -86,10 +86,10 @@
 *   ..subprogram start-up calls
       call subini ('b2ush9')
       if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
+       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06 {
+       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)
+       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)
+       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06 }
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
       endif
 *   ..set n2

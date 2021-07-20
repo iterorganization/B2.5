@@ -353,6 +353,8 @@ csw 01oct2012 initialize potential if necessary
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+*   .. save na
+      nap = na                                                           !srv 07.07.21
 !*   ..compute ceqp                                                      !srv 03.07.03 {
 !      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
 !      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)      !srv 03.07.03 }
@@ -559,6 +561,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
 *   ..set nep
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
+      nip = ni                                                           !srv 07.07.21
 *   ..recompute currents
       call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06 }
       call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)

@@ -93,7 +93,7 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
-      if(corr_core_dn(isb).ne.1.0_R8 .and. 
+      if(corr_core_dn(isb).ne.1.0_R8 .and.
      &               (.not. is_neutral(isb))) then               !srv 25.07.17 {  IYS 19.12.2017
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
         tt0 = 0.0e0_R8
@@ -145,7 +145,7 @@
             enddo
           endif
         enddo                                             !lk 30.06.2017}
-      else         ! do not smooth the correction 
+      else         ! do not smooth the correction
         nb = nb_
         pb = pb_
       endif                                                !srv 25.07.17 }

@@ -268,7 +268,7 @@
 *     file.
 *
 *     B2SIAN computes contribution to the parallel momentum source due
-*     to the anomalous current
+*     to the anomalous current.
 *
 *     B2SIAV computes a linearised representation of the additional
 *     viscosity.
