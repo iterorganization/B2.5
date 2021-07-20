@@ -130,7 +130,7 @@
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhi,
+     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       integer, save :: no_neutr_scl = 0

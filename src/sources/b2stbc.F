@@ -25,7 +25,11 @@
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar, nbcd, lfeedback
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, ncall_b2stbc,
+     & , only : my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -77,7 +81,11 @@
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
+     1   b2stbc_phys,
+#ifdef WG_TODO
+     &          b2stbc_bas,                                              !srv 27.06.21
+#endif
+     &          b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation

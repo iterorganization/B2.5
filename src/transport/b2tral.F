@@ -23,7 +23,11 @@
      &          tr_ip_elm_count, no_div, addspec, alloc_input_profile,
      &          nss, nrr, nkind_coeff, nkind_data
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, b2news_solving, ncall_b2tral,
+     & , only : my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          b2news_solving, ncall_b2tral,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
      &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl

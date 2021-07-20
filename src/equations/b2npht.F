@@ -20,12 +20,16 @@
       use b2mod_numerics_namelist
      & , only : last_solve_9
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, ncall_b2npht, ncall_b2sikt,
+     & , only : my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2npht, ncall_b2sikt,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain               !srv 05.07.17
+      integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain                !srv 05.07.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -33,7 +37,7 @@
      *  rxf, BoRiS
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv), 
-     *  solvnreg(0:nregionv), solvtreg(0:nregionv),                                          !srv 22.05.18
+     *  solvnreg(0:nregionv), solvtreg(0:nregionv),                     !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
      *  solvkreg(0:nregionv), solvzreg(0:nregionv)
 *   ..input/output arguments
@@ -87,7 +91,7 @@
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, ipgetr, lwget, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2ush9, b2upht   !srv 02.01.07
+      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht   !srv 02.01.07
 *   ..initialization
 
 *-----------------------------------------------------------------------

@@ -751,7 +751,8 @@ contains
     !
     !    other quantities related to the target plates
     !
-    
+#ifndef NO_CDF
+    ! added #ifndef NO_CDF by srv 27.06.21
     nesepi = 0.0_R8; tesepi = 0.0_R8; tisepi = 0.0_R8; tpsepi = 0.0_R8; posepi = 0.0_R8
     nesepm = 0.0_R8; tesepm = 0.0_R8; tisepm = 0.0_R8; posepm = 0.0_R8; dnsepm = 0.0_R8
     dpsepm = 0.0_R8; kesepm = 0.0_R8; kisepm = 0.0_R8; vxsepm = 0.0_R8; vysepm = 0.0_R8
@@ -779,6 +780,8 @@ contains
     tisepa(1) = pl%ti(cvtrg)/ev
     posepa(1) = pl%po(cvtrg)
     ktsepa(1) = pl%kt(cvtrg)
+#endif
+
 #ifdef WG_TODO            
 #ifndef NO_CDF
     if(nnreg(0).ne.2) then

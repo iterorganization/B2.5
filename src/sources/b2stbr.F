@@ -54,7 +54,11 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
-     &          my_out_folder, my_out_sf, ncall_b2stbr,
+     &          my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2stbr,
      &          ncall_b2stbr_phys
       implicit none
 *   ..input arguments (unchanged on exit)

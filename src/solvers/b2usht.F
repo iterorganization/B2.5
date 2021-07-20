@@ -85,7 +85,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..procedures
       intrinsic abs, sqrt, dim
       external subini, subend, xertst, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2uxus, b2uxm9                 !srv 02.01.07
+      external b2xvsg, b2xvff, b2xvfx, b2uxus                           !srv 02.01.07
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -266,22 +266,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
       enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,0,1),
-     &  aa, 'b2usht_totale')                                         !srv 02.01.07
-      endif
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
-     &  aa, 'b2usht_totali')                                         !srv 02.01.07
-      endif
-      if(iadd_9 .eq. 1 .and. switch%tn_style.eq.2) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveen, conn(-1,-1,0,0,1),
-     &  aa, 'b2usht_totaln')
-!srv 02.01.07
-      endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -429,13 +414,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
       enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,0,1),
-     &  aa, 'b2usht_Te')                                             !srv 02.01.07
-      endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -582,13 +561,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
       enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
-     &  aa, 'b2usht_Ti')                                             !srv 02.01.07
-      endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -740,13 +713,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
       enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solveen, conn(-1,-1,0,0,1),
-     &  aa, 'b2usht_Tn')                                             !srv 02.01.07
-      endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -892,13 +859,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
        enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-       if(iadd_9 .eq. 1) then
-        call b2uxm9 (nx, ny, nregionv, itcnt, solvekt, conkt(-1,-1,0,0,1),
-     &   aa, 'b2usht_kt')                                             !srv 02.01.07
-       endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
        do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -1041,13 +1002,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          enddo
         endif
        enddo
-*   ..add matrix from contribution nine point stencil
-#ifdef WG_TODO
-       if(iadd_9 .eq. 1) then
-        call b2uxm9 (nx, ny, nregionv, itcnt, solvezt, conzt(-1,-1,0,0,1),
-     &   aa, 'b2usht_zt')                                             !srv 02.01.07
-       endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
        do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
