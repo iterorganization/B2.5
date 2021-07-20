@@ -92,7 +92,8 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
      2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                           !srv 18.09.09
+     3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                          !srv 18.09.09
+     4  te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -246,7 +247,9 @@ cdjm Jan2017 update particle source components for balance
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 07.07.21
+        te_inp = te
         call my_out(70,nx,ny,te,'b2npht_te_inp')
+        ti_inp = ti
         call my_out(70,nx,ny,ti,'b2npht_ti_inp')
       endif                                                             !srv 07.07.21
 

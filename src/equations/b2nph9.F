@@ -89,7 +89,8 @@
      * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                    !srv 02.01.07
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                   !srv 02.01.07
      2 she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                             !srv 18.09.09
+     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                            !srv 18.09.09
+     4 te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
@@ -212,7 +213,9 @@ cdjm Jan2017 update particle source components for balance
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        te_inp=te
         call my_out(70,nx,ny,te,'b2nph9_te_inp')
+        ti_inp=ti
         call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
       endif                                                              !srv 31.01.21
 
