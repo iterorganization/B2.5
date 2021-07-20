@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,           !srv 22.05.18 
+      subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,    !srv 22.05.18 
      &  itcnt, rxf, switch, geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
       use b2mod_constants
@@ -14,7 +14,11 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo,
-     &          my_out_folder, my_out_sf, ncall_b2ursd
+     &          my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2ursd
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
@@ -23,7 +27,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf
-      logical solving, solvereg(0:nregionv)                                     !srv 22.05.18
+      logical solving, solvereg(0:nregionv)                             !srv 22.05.18
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv

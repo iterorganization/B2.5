@@ -72,7 +72,7 @@ c      integer, save :: iadd_9 = 1                                     !srv 13.1
       real (kind=R8) ::
      *   rscal
       external subini, subend, xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                  !srv 02.01.07
+      external b2xvsg, b2xvff, b2xvfx                                  !srv 02.01.07
 !      rscal(tr) = tr
       rscal(tr) = 1.0e0_R8                                             !srv 13.10.06
 *   ..initialization
@@ -207,14 +207,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
         enddo
        endif
       enddo
-
-#ifdef WG_TODO
-*   ..add matrix from contribution nine point stencil
-      if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg,
-     &   conb(-1,-1,0,0,3), aa, name)                             !srv 02.01.07
-      endif
-#endif
+*   ..check for empty matrix lines and replace with dummy equation
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -227,7 +220,6 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
         ireg = mpg%cvReg(iCv)
         if (.not.solvereg(ireg)) rescb(iCv) = 0.0_R8
       enddo
-
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)                 !srv 18.05.02

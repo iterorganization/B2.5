@@ -138,7 +138,7 @@
       external subini, subend, xertst, ipgeti, ipgetr, smin,
      &  smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
-     &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
+     &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
       data ramp_slow/0/

@@ -22,7 +22,11 @@
      &          tr_ip_elm_count, no_div, addspec, nrr, nss, nkind_data,
      &          nkind_coeff
       use b2mod_ad
-     & , only : my_out_folder, my_out_sf, ncall_b2trno, ncall_b2tqna,
+     & , only : my_out_folder,
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2trno, ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
       implicit none
 *   ..input arguments (unchanged on exit)
