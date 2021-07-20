@@ -16,7 +16,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2npco, ncall_b2upco, ncall_b2usco, my_out_folder,
-     &          my_out_sf, ncall_b2ursc
+#ifdef WG_DEBUG
+     &          my_out_sf,                                                   !srv 27.06.21
+#endif
+     &          ncall_b2ursc
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
@@ -64,7 +67,7 @@
      *   aa(mpg%nCmxNv), wrk0(nCv)
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
-      external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
+      external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
 *   ..initialization
 
 *-----------------------------------------------------------------------
