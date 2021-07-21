@@ -254,7 +254,7 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           smptb(ix,iy) = smptb(ix,iy) - t0*hz(ix,iy)*
      &         (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
      &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
-     1         (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)
+     1          vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
           if (balance_netcdf.ne.0) then
             smbtf_cthe(ix,iy) = smbtf_cthe(ix,iy)-t0* !djm Jul2018
      &                  phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)*
