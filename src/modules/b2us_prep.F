@@ -2237,6 +2237,8 @@
             st % co % dna_ExB(ic) = dna_ExB(ix,iy)
             st % co % hce_ExB(ic) = hce_ExB(ix,iy)
             st % co % hci_ExB(ic) = hci_ExB(ix,iy)
+            st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
+            st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
       
 ! kinetic energy
             st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2334,6 +2336,9 @@
           st % co % dna_ExB(ic) = dna_ExB(ix,iy)
           st % co % hce_ExB(ic) = hce_ExB(ix,iy)
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
+          st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
+          st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
+
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2427,6 +2432,9 @@
           st % co % dna_ExB(ic) = dna_ExB(ix,iy)
           st % co % hce_ExB(ic) = hce_ExB(ix,iy)
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
+          st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
+          st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
+
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2524,6 +2532,8 @@
           st % co % dna_ExB(ic) = dna_ExB(ix,iy)
           st % co % hce_ExB(ic) = hce_ExB(ix,iy)
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
+          st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
+          st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2618,6 +2628,8 @@
           st % co % dna_ExB(ic) = dna_ExB(ix,iy)
           st % co % hce_ExB(ic) = hce_ExB(ix,iy)
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
+          st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
+          st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
         
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2712,8 +2724,6 @@
             st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
 
             st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
-            st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-            st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
             st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
      .                                 cvsa_cl(ix,iy,0,0:1,0:ns-1)
 
@@ -2859,8 +2869,6 @@
           st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,1,0:1,0:ns-1)
           
           st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,1,0:1,0:ns-1)
-          st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-          st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
           st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
      .              cvsa_cl(ix,iy,1,0:1,0:ns-1)
           
@@ -3061,6 +3069,9 @@
           dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
           hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
           hci_ExB(ix,iy)         = st % co % hci_ExB(ic) 
+          cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+          cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1) 
+
       
 ! kinetic energy
           kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3167,6 +3178,8 @@
         dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
         hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
         hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3269,6 +3282,8 @@
         dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
         hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
         hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3374,6 +3389,8 @@
         dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
         hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
         hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3476,6 +3493,8 @@
         dna_ExB(ix,iy)         = st % co % dna_ExB(ic) 
         hce_ExB(ix,iy)         = st % co % hce_ExB(ic) 
         hci_ExB(ix,iy)         = st % co % hci_ExB(ic)
+        cthe(ix,iy,0:ns-1)     = st % co % cthe(ic,0:ns-1)
+        cthi(ix,iy,0:ns-1)     = st % co % cthi(ic,0:ns-1)
         
 ! kinetic energy
         kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
@@ -3699,8 +3718,6 @@
           cdpa(ix,iy,0,0:1,0:ns-1) = st % co % cdpa(ifc,0:1,0:ns-1)
 
           cvsa(ix,iy,0,0:1,0:ns-1) = st % co % cvsa(ifc,0:1,0:ns-1)
-          cthe(ix,iy,0:ns-1) = st % co % cthe(ifc,0:ns-1)
-          cthi(ix,iy,0:ns-1) = st % co % cthi(ifc,0:ns-1)
           cvsa_cl(ix,iy,0,0:1,0:ns-1) =
      .            st % co % cvsa_cl(ifc,0:1,0:ns-1)
 
@@ -3838,8 +3855,6 @@
           cdpa(ix,iy,1,0:1,0:ns-1) = st % co % cdpa(ifc,0:1,0:ns-1)
           
           cvsa(ix,iy,1,0:1,0:ns-1)    = st % co % cvsa(ifc,0:1,0:ns-1)
-          cthe(ix,iy,0:ns-1)          = st % co % cthe(ifc,0:ns-1)
-          cthi(ix,iy,0:ns-1)          = st % co % cthi(ifc,0:ns-1)
           cvsa_cl(ix,iy,1,0:1,0:ns-1) =
      .            st % co % cvsa_cl(ifc,0:1,0:ns-1)
           

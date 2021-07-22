@@ -93,24 +93,20 @@
       endif
 
 * get drift velocities in cell centers
-      if (switch%fnb_drift_style.eq.1) then
-        do is=0,ns-1
-          call intcell(nFc,nCv,mpg,mpg%intcellP,
-     &                 dv%vaecrb(:,0,is),vaecrbc(:,0,is))
-          call intcell(nFc,nCv,mpg,mpg%intcellP,
-     &                 dv%wadia(:,0,is),wadiac(:,0,is))
-          call intcell(nFc,nCv,mpg,mpg%intcellP,
-     &                 dv%vadia(:,0,is),vadiac(:,0,is))
-          call intcell(nFc,nCv,mpg,mpg%intcellR,
-     &                 dv%vaecrb(:,1,is),vaecrbc(:,1,is))
-          call intcell(nFc,nCv,mpg,mpg%intcellR,
-     &                 dv%wadia(:,1,is),wadiac(:,1,is))
-          call intcell(nFc,nCv,mpg,mpg%intcellR,
-     &                 dv%vadia(:,1,is),vadiac(:,1,is))
-        enddo
-      else
-        call xerrab ('copy_background -- drift_style .ne. 1')
-      endif
+      do is=0,ns-1
+        call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &               dv%vaecrb(:,0,is),vaecrbc(:,0,is))
+        call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &               dv%wadia(:,0,is),wadiac(:,0,is))
+        call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &               dv%vadia(:,0,is),vadiac(:,0,is))
+        call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &               dv%vaecrb(:,1,is),vaecrbc(:,1,is))
+        call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &               dv%wadia(:,1,is),wadiac(:,1,is))
+        call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &               dv%vadia(:,1,is),vadiac(:,1,is))
+      enddo
 
       if(switch%copy_background_iout.ne.0) then                                        !srv 18.06.08 {
         do is = 0,ns-1

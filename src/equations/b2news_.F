@@ -5,19 +5,9 @@
      &  nscxmax, ismain, ismain0, dtim, rxf, switch, geo, mpg, pl, dv, 
      &  co, rt, rtw, sr, srw, st_ext, psnc, psnl, ierr)
       use b2mod_types
-!      use b2mod_geo
-!      use b2mod_plasma
-!      use b2mod_rates
-!      use b2mod_residuals
-!      use b2mod_sources
-!      use b2mod_transport
-!      use b2mod_anomalous_transport            
-!      use b2mod_work
-!      use b2mod_indirect
       use b2mod_constants
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
-!      use b2mod_external
       use b2mod_time
       use b2mod_switches
       use b2us_geo
@@ -413,17 +403,17 @@ c   extra call at this place within internal iteration)
         wrk0 = wrk0 + st_ext%ue*st_ext%ne
         wrk0 = wrk0/dv%ne                                                !srv 05.03.11
       endif
-#ifdef WG_TODO
-      if(iout.ne.0) then                                                 !srv 05.07.17
-       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-       call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
-       call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
-       call my_out(70,nx,ny,fch_pi_c,'b2news__fch_pi_c')
-       call my_out(70,nx,ny,fch_pi_f,'b2news__fch_pi_f')
-       call my_out(70,nx,ny,ue,'b2news__ve')
-       call my_out(70,nx,ny,wrk0,'b2news__ue')
+      if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
+       call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
+       call b2xpic (nCv, ns, mpg, qe, rt%rza, geo%cvBb, pl%na, pl%ua,
+     &   zeff, st_ext, dv%fch_pi_c)
+       call b2xpif (nCv, nFc, switch, geo, mpg, dv%fch_pi_c, 
+     &   dv%fch_pi_f)
+       call my_out_us(70,nCv,0,dv%fch_pi_c,'b2news__fch_pi_c')
+       call my_out_us(70,nFc,1,dv%fch_pi_f,'b2news__fch_pi_f')
+       call my_out_us(70,nCv,0,dv%ue,'b2news__ve')
+       call my_out_us(70,nCv,0,wrk0,'b2news__ue')
       endif                                                              !srv 05.07.17
-#endif
       if (switch%b2sigp_style.ne.2) dv%ue=wrk0
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
