@@ -10,6 +10,9 @@
       real (kind=R8), allocatable ::
      & z2n_xy(:,:,:),nal(:,:,:),Ia(:,:,:),av_ualpha(:,:,:),
      & gt_Ac(:,:,:),gtalc(:,:,:),avm_u(:,:)
+      real (kind=R8), allocatable ::
+     & w_out(:,:,:),hTdp_out(:,:,:),hwdp_out(:,:,:),
+     & rTdpgamma_out(:,:,:),rwdpgamma_out(:,:,:)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -55,6 +58,19 @@
       allocate(gt_Ac(-1:nx,-1:ny,0:ns-1))
 
       end subroutine b2mod_zhfrtf_init
+
+!...................................................................................
+      subroutine b2mod_zhfrtf_init_df(nx, ny, ns)
+      implicit none
+      integer :: nx, ny, ns
+      
+      allocate(w_out(-1:nx,-1:ny,0:ns-1))
+      allocate(hTdp_out(-1:nx,-1:ny,0:ns-1))
+      allocate(hwdp_out(-1:nx,-1:ny,0:ns-1))
+      allocate(rTdpgamma_out(-1:nx,-1:ny,0:ns-1))
+      allocate(rwdpgamma_out(-1:nx,-1:ny,0:ns-1))
+
+      end subroutine b2mod_zhfrtf_init_df
 
 !...................................................................................
       subroutine b2mod_zhfrtf_prep(nx,ny,ns,na,ua)

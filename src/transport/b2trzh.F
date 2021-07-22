@@ -65,13 +65,17 @@
      & Ainv_mdf_fl(0:nspecies-1,0:2*nspecies-1),
      & c_rwA(0:nspecies-1,0:nspecies-1),
      & c_R_TA_an_nofl(0:nspecies-1,0:nspecies-1),
-     & c_R_TA_an(0:nspecies-1,0:nspecies-1),
+     & c_R_TA_an(0:nspecies-1,0:nspecies-1), c_rTA_an(0:nspecies-1),
      & c_hTA_an(0:nspecies-1), c_hTA_an_fl(0:nspecies-1),
      & t0, t1, czetap,zetap(-1:nx,-1:ny),
      & cF_limh(0:nspecies-1),
      & cF_lim(0:nspecies-1),cF_limB(0:nspecies-1),
-     & hci0_nofl(-1:nx,-1:ny,0:1),hci0(-1:nx,-1:ny,0:1)
-
+     & hci0_nofl(-1:nx,-1:ny,0:1),hci0(-1:nx,-1:ny,0:1),
+     & c_hw(0:nspecies-1,0:nspecies-1),c_rw(0:nspecies-1,0:nspecies-1),
+     & c_hwB(0:nspecies-1),c_rwB(0:nspecies-1),
+     & c_hTB(0:nspecies-1),c_rTB(0:nspecies-1),
+     & kappa_hTA(0:nspecies-1,0:nspecies-1),kappa_hTB(0:nspecies-1),
+     & kappa_rTA(0:nspecies-1,0:nspecies-1),kappa_rTB(0:nspecies-1)
 
       save ncall
       data ncall/0/
@@ -86,6 +90,9 @@
         call init_mrel(nspecies,znmax,ns)
         call init_zhco(nspecies, nx, ny)
         call b2mod_zhfrtf_init(nx, ny, ns)
+        if (zh_dist_fun.eq.1) then
+          call b2mod_zhfrtf_init_df(nx, ny, ns)
+        endif
 
 *   ..calculate the atom number and the atomic mass of each type of ions
         inucl=1
@@ -134,7 +141,8 @@
 *    ..calculate the correction for each charge state
           call b2trcc(nspecies,mum,mdm,nz2n,
      & c_R_TB_nofl(ix,iy,0:nspecies-1),
-     & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1)) 
+     & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_hwB,c_rwB,c_hTB,c_rTB)
 
           if (zh_imp_analyt.eq.0) then
 *    ..calculate the inversed matrix for heat flux/r-moment
@@ -184,12 +192,31 @@
             call b2trtf(nspecies, G2, G8, mum, mdm,
      & Ainv_fl, Ainv_mdf_fl, c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
 
+*    ..for the distribution function 
+            if (zh_dist_fun.eq.1) then
+              do i = 0, nspecies-1
+                kappa_hTA(i,0:nspecies-1)=
+     &   2.5_R8*(zetap(ix,iy)/(zeffne**2*mp))*
+     &   Ainv(i,0:nspecies-1)*nal(ix,iy,0:nspecies-1)
+                kappa_hTB(i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_hTB(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+
+                kappa_rTA(i,0:nspecies-1)=
+     &   2.5_R8*(zetap(ix,iy)/(zeffne**2*mp))*
+     &   Ainv_mdf(i,0:nspecies-1)*nal(ix,iy,0:nspecies-1)
+                kappa_rTB(i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_rTB(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+              enddo
+            endif
+
           else
 *    ..the analytical thermal force transport coefficient  
             call b2trhrtf_an(nspecies, mum, mdm,nz2n,
      & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
      & c_rwA(0:nspecies-1,0:nspecies-1),  
-     & c_hTA_an,c_R_TA_an_nofl)
+     & c_hTA_an,c_rTA_an,c_R_TA_an_nofl)
 *    ..calculate the classical ion conductivity without flux limiting 
             call b2trht_an(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
      & zetap(ix,iy),zeffne,ti(ix,iy),c_hTA_an,nz2n,rmd2,  
@@ -225,6 +252,28 @@
      & -c_R_TA_an(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
               c_R_TA(ix,iy,i,i)=c_R_TA(ix,iy,i,i)+temp
             enddo
+
+*    ..for the distribution function 
+            if (zh_dist_fun.eq.1) then
+              kappa_hTA=0.0_R8
+              kappa_rTA=0.0_R8
+              do i = 0, nspecies-1
+                kappa_hTA(i,i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_hTA_an(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+                kappa_hTB(i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_hTB(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+
+                kappa_rTA(i,i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_rTA_an(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+                kappa_rTB(i)=
+     &   -(zetap(ix,iy)/(zeffne**2*mp))*
+     & (c_rTB(i)/rmd2(i)*nal(ix,iy,i)/nz2n(i)**2)
+              enddo
+            endif
+
           endif
 
 *    ..calculate the thermal force correction for each charge state
@@ -239,6 +288,55 @@
      & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
      & c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1),
      & c_R_w(ix,iy,0:nspecies-1,0:nspecies-1))
+
+          if (zh_dist_fun.eq.1) then
+*   ..apply charge state correction for the heat flux
+            c_hw(0:nspecies-1,0:nspecies-1)=
+     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1)
+            do inucl = 0, nspecies-1
+              c_hw(inucl,inucl)=c_hw(inucl,inucl)+zhcscorr*
+     & c_hwB(inucl)-sum(c_hwA(ix,iy,0:nspecies-1,inucl))
+            enddo
+
+*   ..apply charge state correction for the r-moment
+            c_rw(0:nspecies-1,0:nspecies-1)=
+     & c_rwA(0:nspecies-1,0:nspecies-1)
+            do inucl = 0, nspecies-1
+              c_rw(inucl,inucl)=c_rw(inucl,inucl)+zhcscorr*
+     & c_rwB(inucl)-sum(c_rwA(0:nspecies-1,inucl))
+            enddo
+
+*    ..moments of the distribution function 
+            do inucl = 0, nspecies-1
+              do iz= 1, znnucl_int(inucl)
+                w_out(ix,iy,nucl2s(inucl,iz)) =
+     & ua(ix,iy,nucl2s(inucl,iz))-avm_u(ix,iy)
+
+                hTdp_out(ix,iy,nucl2s(inucl,iz)) =
+     & sum(kappa_hTA(inucl,0:nspecies-1)*gtalc(ix,iy,0:nspecies-1))+
+     & zhcscorr*kappa_hTB(inucl)*
+     & (na(ix,iy,nucl2s(inucl,iz))/nal(ix,iy,inucl)/
+     & Ia(ix,iy,nucl2s(inucl,iz))*gt_Ac(ix,iy,nucl2s(inucl,iz))-
+     & gtalc(ix,iy,inucl))
+
+                hwdp_out(ix,iy,nucl2s(inucl,iz)) =
+     & sum(c_hw(0:nspecies-1,inucl)*
+     & (ua(ix,iy,nucl2s(inucl,iz))-av_ualpha(ix,iy,0:nspecies-1)))
+
+                rTdpgamma_out(ix,iy,nucl2s(inucl,iz)) =
+     & sum(kappa_rTA(inucl,0:nspecies-1)*gtalc(ix,iy,0:nspecies-1))+
+     & zhcscorr*kappa_rTB(inucl)*
+     & (na(ix,iy,nucl2s(inucl,iz))/nal(ix,iy,inucl)/
+     & Ia(ix,iy,nucl2s(inucl,iz))*gt_Ac(ix,iy,nucl2s(inucl,iz))-
+     & gtalc(ix,iy,inucl))
+
+                rwdpgamma_out(ix,iy,nucl2s(inucl,iz)) =
+     & sum(c_rw(0:nspecies-1,inucl)*
+     & (ua(ix,iy,nucl2s(inucl,iz))-av_ualpha(ix,iy,0:nspecies-1)))
+              enddo
+            enddo
+          endif
+
         enddo
       enddo
       
@@ -255,7 +353,7 @@
             endif
           enddo
         enddo
- 
+
       ncall = ncall+1
       call subend ()
       return

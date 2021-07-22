@@ -20,7 +20,10 @@
       use b2mod_b2cmpa
       use b2mod_b2zhco ,
      & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf,             !som 21.03.21
-     & zhflcorrh 
+     & zhflcorrh,zh_dist_fun 
+      use b2mod_zhfrtf,
+     & only: avm_u,w_out,hTdp_out,hwdp_out,
+     & rTdpgamma_out,rwdpgamma_out
       use b2mod_neoclassical
       use b2mod_subsys
       implicit none
@@ -184,6 +187,7 @@
         call xertst (0.lt.gamma, 'invalid input parameter gamma')      
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
+        call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 15.03.21
         call ipgeti ('b2tral_mode', mode)                         !som 10.06.21
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
@@ -274,6 +278,25 @@
             call my_out(70,nx,ny,chci0_luc(-1,-1,0),
      & 'b2trzh_luciani_fllim_chcix')
           endif
+        endif
+
+        if((iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     & .or. iout_b2wdat.eq.4) .and. zh_dist_fun.eq.1) then
+          call my_out(70,nx,ny,avm_u(-1,-1),
+     & 'b2trzh_avm_u')
+          do is = 0, ns-1
+            write (chns,'(i3.3)') is
+            call my_out(70,nx,ny,w_out(-1,-1,is),
+     & 'b2trzh_w'//chns)
+            call my_out(70,nx,ny,hTdp_out(-1,-1,is),
+     & 'b2trzh_hTdp'//chns)
+            call my_out(70,nx,ny,hwdp_out(-1,-1,is),
+     & 'b2trzh_hwdp'//chns)
+            call my_out(70,nx,ny,rTdpgamma_out(-1,-1,is),
+     & 'b2trzh_rTdpgamma'//chns)
+            call my_out(70,nx,ny,rwdpgamma_out(-1,-1,is),
+     & 'b2trzh_rwdpgamma'//chns)
+          enddo
         endif
       endif     
 *   ..add to previous contributions

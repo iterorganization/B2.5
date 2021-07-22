@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcc(nspecies, mum, mdm,nz2n,
-     & c_R_TB,c_R_wB)
+     & c_R_TB,c_R_wB,c_hwB,c_rwB,c_hTB,c_rTB)
       use b2mod_types
       use b2mod_subsys
       use b2mod_Zzh
@@ -14,7 +14,10 @@
      & mum(0:nspecies-1,0:nspecies-1), mdm(0:nspecies-1,0:nspecies-1)
 *   ..output arguments 
       real (kind=R8) :: c_R_TB(0:nspecies-1),
-     & c_R_wB(0:nspecies-1,0:nspecies-1)
+     & c_R_wB(0:nspecies-1,0:nspecies-1),c_hwB(0:nspecies-1),
+     & c_rwB(0:nspecies-1),c_hTB(0:nspecies-1),
+     & c_rTB(0:nspecies-1)
+
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,9 +39,7 @@
       real (kind=R8) :: Z2s(0:nspecies-1), Z5s(0:nspecies-1),
      & Z8s(0:nspecies-1),Z9s(0:nspecies-1),Z11s(0:nspecies-1),
      & rz2n(0:nspecies-1),
-     & Dpart_al(0:nspecies-1),c_hwB(0:nspecies-1),
-     & c_rwB(0:nspecies-1)
-
+     & Dpart_al(0:nspecies-1)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -77,7 +78,17 @@
      & (1+184.0_R8*sqrt2/139.0_R8*Z9s(i))*(1+4.0_R8*sqrt2*Z8s(i)))/
      & Dpart_al(i)
 
-*    ..the correction for the heat flux
+*    ..the correction for the heat flux (temperature)
+        c_hTB(i)=139750.0_R8/53471.0_R8*
+     & (1+6928.0_R8*sqrt2/8385.0_R8*Z11s(i))/
+     & Dpart_al(i)
+
+*    ..the correction for the r-moment (temperature)
+        c_rTB(i)=194600.0_R8/53471.0_R8*
+     & (1+184.0_R8*sqrt2/139.0_R8*Z9s(i))/
+     & Dpart_al(i)
+
+*    ..the correction for the heat flux (velocity)
         c_hwB(i)=31500.0_R8/53471.0_R8*
      & (1-139.0_R8*sqrt2/105.0_R8*Z8s(i)-
      & 46.0_R8*sqrt2/105.0_R8*Z9s(i)+
@@ -87,7 +98,7 @@
      & 6928.0_R8/1575.0_R8*Z2s(i)*Z11s(i))/
      & Dpart_al(i)
 
-*    ..the correction for the r-moment
+*    ..the correction for the r-moment (velocity)
         c_rwB(i)=17080.0_R8/53471.0_R8*
      & (1+276.0_R8*sqrt2/61.0_R8*Z9s(i)+
      & 417.0_R8*sqrt2/61.0_R8*Z2s(i)-

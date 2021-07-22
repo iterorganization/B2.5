@@ -4,7 +4,7 @@
       subroutine b2trhrtf_an(nspecies, mum, mdm,nz2n,
      & c_hwA_an,
      & c_rwA_an,  
-     & c_hTA_an,c_R_TA_an)
+     & c_hTA_an,c_rTA_an,c_R_TA_an)
       use b2mod_types
       use b2mod_subsys
       use b2mod_b2zhco , only: zh_analyt_mdf
@@ -20,7 +20,7 @@
      & c_R_TA_an(0:nspecies-1,0:nspecies-1),
      & c_hwA_an(0:nspecies-1,0:nspecies-1),
      & c_rwA_an(0:nspecies-1,0:nspecies-1),  
-     & c_hTA_an(0:nspecies-1)
+     & c_hTA_an(0:nspecies-1),c_rTA_an(0:nspecies-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -87,6 +87,13 @@
       do i = 0, nspecies-1
         c_hTA_an(i)=125.0_R8/32.0_R8*
      & (1.0_R8+433.0_R8*sqrt2/360.0_R8*Z11s(i))
+     & /Delta_al(i)
+      enddo
+
+*    ..the r-moment temperature dependent part transport coefficient 
+      do i = 0, nspecies-1
+        c_rTA_an(i)=175.0_R8/48.0_R8*
+     & (1.0_R8+23.0_R8*sqrt2/8.0_R8*Z9s(i))
      & /Delta_al(i)
       enddo
 
