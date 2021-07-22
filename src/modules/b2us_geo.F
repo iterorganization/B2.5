@@ -498,7 +498,7 @@
       gm%fcPbshz = gm%fcPbs * gm%fcHz
 
 *   ..compute vxHz
-      if (switch%fcHz_style.eq.0) then
+      if (switch%vxHz_style.eq.0) then
         call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
       else
         if (isymm.eq.0) then
