@@ -131,8 +131,9 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
      &              fchstoch)                                            !srv 25.01.02 {
 #endif
-      call b2tcpa (nCv, nFc, nVx, switch, geo, mpg, pl%te, pl%po,
-     *     dv%ne, co%csig, co%calf, ehx, dv%fch_p)                               !srv 13.01.17
+      call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
+     *     dv%ne, pl%na, pl%ua, rt%rza, co%csig, co%calf, ehx,
+     &     dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)                           !srv 13.01.17
 
 *   ..compute current due to RS of kt-model
       call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,

@@ -65,10 +65,10 @@
       call subini ('b2nxfx')
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-      if(switch%pot_eq.eq.0 .or. switch%pot_eq.eq.2) then             !srv 16.07.12 27.02.13
+      if(switch%pot_eq.eq.0 .or. switch%pot_eq.eq.2) then               !srv 16.07.12 27.02.13
        ehxp = 0.0_R8
       elseif(switch%pot_eq.eq.1) then
-       if(switch%b2nxfx_style.eq.0) then                               !srv 26.10.08
+      if(switch%b2nxfx_style.eq.0) then                                 !srv 26.10.08
        call xerrab ('b2nxfx -- style 0 not supported for WG')
 #ifdef WG_TODO
 *   ..compute wrk0 and wrk1
@@ -107,25 +107,20 @@
         enddo
        enddo
 #endif
-      else ! style                                     !srv 26.10.08 {
+      else ! style                                                      !srv 26.10.08 {
 *   ..compute wrk0 and wrk1
-       call grad_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
-       call grad_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrk1)
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrkc0)
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrkc1)
 *   ..compute ehxp
-       ehxp = 0.0e0_R8
-       call intcell(nFc,nCv,mpg,mpg%intcellP,wrk0,wrkc0)
-       call intcell(nFc,nCv,mpg,mpg%intcellP,wrk1,wrkc1)
        ehxp = (wrkc0-wrkc1*qe*ne)*geo%cvBb(:,0)/geo%cvBb(:,3)*geo%cvVol
 *   ..zero out guard cells
-       do iCv = mpg%nCi+1, nCv
-         ehxp(iCv) = 0.0_R8
-       enddo
-      endif                                               !srv 26.10.08 }
-      else                                                !srv 16.07.12
+       ehxp(mpg%nCi+1:nCv) = 0.0_R8
+      endif                                                             !srv 26.10.08 }
+      else                                                              !srv 16.07.12
 
-      endif                                               !srv 16.07.12
+      endif                                                             !srv 16.07.12
 
-      if (switch%b2nxfx_iout.eq.1) then                    !srv 11.09.09
+      if (switch%b2nxfx_iout.eq.1) then                                 !srv 11.09.09
         call my_out_us(70,nFc,1,ehxp,'b2nxfx_ehxp')
       endif
 

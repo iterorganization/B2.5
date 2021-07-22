@@ -413,8 +413,8 @@ cwdk move to dv
 
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % cthe( nFc, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( coeff % cthi( nFc, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cthe( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cthi( nCv, 0:ns-1 ), SOURCE=0._R8 )
       
       allocate( coeff % ceqp( nCv ), SOURCE=0._R8 )
 
@@ -1690,8 +1690,8 @@ cwdk move to dv
       call cfrure (ninp, nFC*2,      st % co % csig, 'csig')
       call cfrure (ninp, nFc*2*ns,   st % co % cvla, 'cvla')
       call cfrure (ninp, nFc*2*ns,   st % co % cvsa, 'cvsa')
-      call cfrure (ninp, nFc*2*ns,   st % co % cthe, 'cthe')
-      call cfrure (ninp, nFc*2*ns,   st % co % cthi, 'cthi')
+      call cfrure (ninp, nCv*ns,     st % co % cthe, 'cthe')
+      call cfrure (ninp, nCv*ns,     st % co % cthi, 'cthi')
       call cfrure (ninp, nFc*2*ns*ns,st % co % csigin, 'csigin')
       call cfrure (ninp, nFc*2*ns,   st % co % cvsa_cl, 'cvsa_cl')
       call cfrure (ninp, nFc,        st % dv % fllime, 'fllime')
@@ -1863,8 +1863,8 @@ cwdk move to dv
       call cfwure (nout, nFC*2,      st % co % csig, 'csig')
       call cfwure (nout, nFc*2*ns,   st % co % cvla, 'cvla')
       call cfwure (nout, nFc*2*ns,   st % co % cvsa, 'cvsa')
-      call cfwure (nout, nFc*2*ns,   st % co % cthe, 'cthe')
-      call cfwure (nout, nFc*2*ns,   st % co % cthi, 'cthi')
+      call cfwure (nout, nCv*ns,     st % co % cthe, 'cthe')
+      call cfwure (nout, nCv*ns,     st % co % cthi, 'cthi')
       call cfwure (nout, nFc*2*ns*ns,st % co % csigin, 'csigin')
       call cfwure (nout, nFc*2*ns,   st % co % cvsa_cl, 'cvsa_cl')
       call cfwure (nout, nFc,        st % dv % fllime, 'fllime')

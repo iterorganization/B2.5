@@ -229,8 +229,8 @@ cwdk combined check for poloidal or radial diffusion
         call my_out_us(70,nFc,1,co%cvsa_cl(1,1,is),'cvsa_cly'//chns)
         call my_out_us(70,nFc,1,co%cvsahz_cl(1,0,is),'cvsahz_clx'//chns)
         call my_out_us(70,nFc,1,co%cvsahz_cl(1,1,is),'cvsahz_cly'//chns)
-        call my_out_us(70,nFc,1,co%cthe(1,is),'cthe'//chns)
-        call my_out_us(70,nFc,1,co%cthi(1,is),'cthi'//chns)
+        call my_out_us(70,nCv,0,co%cthe(1,is),'cthe'//chns)
+        call my_out_us(70,nCv,0,co%cthi(1,is),'cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then 
@@ -288,8 +288,8 @@ cwdk combined check for poloidal or radial diffusion
 !     &             chns)
 !        call my_out_us(70,nFc,1,co%cvsahz_cl(1,1,is),'b2tral_cvsahz_cly'//
 !     &             chns)
-        call my_out_us(70,nFc,1,co%cthe(1,is),'b2tral_cthe'//chns)
-        call my_out_us(70,nFc,1,co%cthi(1,is),'b2tral_cthi'//chns)
+        call my_out_us(70,nCv,0,co%cthe(1,is),'b2tral_cthe'//chns)
+        call my_out_us(70,nCv,0,co%cthi(1,is),'b2tral_cthi'//chns)
        enddo
       endif
       if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0) then

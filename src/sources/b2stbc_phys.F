@@ -86,7 +86,6 @@
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
-      integer, save :: drift_style
       real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
@@ -159,7 +158,7 @@
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & bc_type21_ref/1/, drift_style/1/, ndes_sol/0.0_R8/,
+     & bc_type21_ref/1/, ndes_sol/0.0_R8/,
      & is_kinetic/0/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
@@ -211,7 +210,6 @@ c        call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
 c        call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
 c        call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
 c        call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
-c        call ipgeti ('b2tfnb_drift_style', drift_style)
 c        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
 c     1   fix_fch_in_fhe_sheath)
 c        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',

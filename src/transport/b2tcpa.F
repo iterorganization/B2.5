@@ -1,30 +1,34 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tcpa (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, 
-     *    csig, calf, ehx, fch_p)                                       !srv 13.01.17
+      subroutine b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, te, po,
+     *    ne, na, ua, rza, rz2, zeff, csig, calf, ehx, st_ext,
+     &    fch_p, fch_pi_c, fch_pi_f)                                    !srv 13.01.17
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2us_plasma
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tcpa, ncall_b2xehx
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx
+      integer nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     *   te(nCv), po(nCv), ne(nCv),
-     *   csig(nFc,0:1), calf(nFc,0:1)
+     *   te(nCv), po(nCv), ne(nCv), na(nCv,0:ns-1), ua(nCv,0:ns-1),
+     *   rza(nCv,0:ns-1), rz2(nCv,0:ns-1), zeff(nCv), csig(nFc,0:1),
+     *   calf(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fch_p(nFc,0:1), ehx(nFc)                                        !srv 29.01.20
+     &   fch_p(nFc,0:1), ehx(nFc), fch_pi_c(nCv,0:1), fch_pi_f(nFc,0:1) !srv 29.01.20
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -72,18 +76,14 @@
         fch_p(:,0) = (csig(:,0)*ehx - switch%b2sifr_phm2*
      &                               calf(:,0)*dtep)*switch%prl_cur
         if(switch%b2sigp_style.eq.2) then
-          call xerrab ('b2sigp_style 2 not yet supported in b2tcpa')
-#ifdef WG_TODO
-          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
-          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+          call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
+          call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
+     &      st_ext, fch_pi_c)
+          call b2xpif (nCv, nFc, switch, geo, mpg, fch_pi_c, fch_pi_f)
         else
           fch_pi_f = 0.0_R8                                            !srv 04.04.17
-#endif
         endif
-#ifdef WG_TODO
         fch_p = fch_p - fch_pi_f                                       !srv 13.01.17 }
-#endif
         fch_p(:,1) = 0.0e0_R8
       else                                                             !srv 26.07.06 {
         fch_p = 0.0e0_R8

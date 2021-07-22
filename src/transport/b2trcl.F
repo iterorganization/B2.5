@@ -47,7 +47,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  csig(nFc,0:1), calf(nFc,0:1),
      &  cdkt(nFc,0:1),
      &  csigin(nFc,0:1,0:ns-1,0:ns-1),				 !xpb
-     &  cthe(nFc,0:ns-1), cthi(nFc,0:ns-1),
+     &  cthe(nCv,0:ns-1), cthi(nCv,0:ns-1),
      &  vsaf_cl(nFc,0:1,0:ns-1),
      &  cvsa_cl(nFc,0:1,0:ns-1),
      &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
@@ -169,8 +169,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
       call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
       call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
-      call sfill (nFc*ns, switch%cthev, cthe,1)
-      call sfill (nFc*ns, switch%cthiv, cthi,1)
+      call sfill (nCv*ns, switch%cthev, cthe,1)
+      call sfill (nCv*ns, switch%cthiv, cthi,1)
       call sfill (nFc, 1.0_R8, co%fllim_ki, 1)                            !srv 13.01.17 {
       call sfill (nFc, 1.0_R8, co%fllim_ke, 1)
       call sfill (nFc, 1.0_R8, co%fllim_al, 1)
@@ -666,8 +666,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &              'cl_cvsahz_clx'//chns)
         call my_out_us(70,nFc,1,cvsahz_cl(1,1,is),
      &              'cl_cvsahz_cly'//chns)
-        call my_out_us(70,nFc,1,cthe(1,is),'cl_cthe'//chns)
-        call my_out_us(70,nFc,1,cthi(1,is),'cl_cthi'//chns)
+        call my_out_us(70,nCv,0,cthe(1,is),'cl_cthe'//chns)
+        call my_out_us(70,nCv,0,cthi(1,is),'cl_cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0 
          call my_out_us(70,nFc,1,csigin(1,0,is,is0),'cl_csiginx'//
