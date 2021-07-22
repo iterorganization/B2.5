@@ -1307,26 +1307,26 @@ contains
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      nesepm_std(1:nc) = ((nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
-      tesepm_std(1:nc) = ((tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
-      tisepm_std(1:nc) = ((tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
-      posepm_std(1:nc) = ((posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
-      nesepi_std(1:nc) = ((nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
-      tesepi_std(1:nc) = ((tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
-      tisepi_std(1:nc) = ((tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
-      posepi_std(1:nc) = ((posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
-      nesepa_std(1:nc) = ((nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
-      tesepa_std(1:nc) = ((tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
-      tisepa_std(1:nc) = ((tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
-      posepa_std(1:nc) = ((posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
-      nemxip_std(1:nc) = ((nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
-      temxip_std(1:nc) = ((temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
-      timxip_std(1:nc) = ((timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
-      pomxip_std(1:nc) = ((pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
-      nemxap_std(1:nc) = ((nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
-      temxap_std(1:nc) = ((temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
-      timxap_std(1:nc) = ((timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
-      pomxap_std(1:nc) = ((pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
+      nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
+      tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
+      tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
+      posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
+      nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
+      tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
+      tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
+      posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
+      nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
+      tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
+      tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
+      posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
+      nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
+      temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
+      timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
+      pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
+      nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
+      temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
+      timxap_std(1:nc) = (abs(timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
+      pomxap_std(1:nc) = (abs(pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
 
 !wdk write into b2time.nc
       imap(1)=1
@@ -3064,7 +3064,7 @@ contains
     if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
     if (debug) write(*,*) "Variable has nvdims=", nvdims
-    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
@@ -3083,8 +3083,8 @@ contains
         start(i)=1
       endif
     enddo
-    if (debug) write(*,*) "start(:)=", start(1:nvdims)
-    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
