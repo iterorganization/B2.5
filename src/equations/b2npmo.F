@@ -54,9 +54,11 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
 !WG_TODO     &  smof(nCv,0:3,0:ns-1), fmo(nFc,0:1,0:ns-1)
-!WG_TODO_TMP
+!WG_TODO_TMP these sources used to be in b2mod_sources
+!            => add again to B2Source?
       real (kind=R8) ::
-     *  smcf(nCv,0:ns-1)
+     *  smcf(nCv,0:ns-1), smpr(nCv,0:ns-1), smpt(nCv,0:ns-1),
+     *  smfr(nCv,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -88,7 +90,6 @@
 
 *   ..local variables
       integer iCv, iFc, is, ireg, k
-c      integer, save :: b2sifr_ver = 1                                  !srv 04.07.08 26.10.08
 c      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer :: vcount(0:ns-1)
       character chns*3, chk*1                                          !srv 04.07.08
@@ -116,7 +117,7 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
      4  ce1(nCv), ce2(nCv),
      5  cimp1(nCv), cimp2(nCv),
      6  zetap(nCv), zetae(nCv),
-     7  gti(nFc), gte(nFc), gtn(nCv),                   !srv 13.01.17 }
+     7  gti(nCv), gte(nCv), gtn(nCv),                   !srv 13.01.17 }
      8  wrkf0(nFc), wrkf1(nFc),
      9  kt_neo(nCv) !WG_TODO: kt_neo eventually will come through transport...
       real (kind=R8) ::
@@ -144,7 +145,6 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
 *   ..set internal parameters on first call
       if (ncall_b2npmo.eq.0) then
 c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
-c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         write(*,*) 'nsmin, nsmax = ', switch%nsmin, switch%nsmax
         main_lightest = .true.
         do is = 0, ns-1
@@ -215,10 +215,12 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
       czetae = t0*sqrt(me)
       zetap = czetap*(pl%ti/ev)*sqrt(pl%ti/ev)/dv%lnlam
       zetae = czetae*(pl%te/ev)*sqrt(pl%te/ev)/dv%lnlam
-*   ..compute gti,gte
-      call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, gti)
-      call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%tn, wrkv, gtn)
-      call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gte)
+*   ..compute gti, gtn, gte
+      !wdk gti, gtn and gte are now computed directly in cell centers
+      !wdk (instead of faces as in structured code)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, gti)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%tn, wrkv, gtn)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gte)
 *   ..compute ehxp
       if(switch%b2sigp_style.ne.2) then 
         call b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, dv%ne, 
@@ -246,17 +248,11 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
        call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, pl%ti, 
      &               pl%tn, is, pb)
 *    ..compute extended friction term
-!WG_TODO : friction not yet implemented
-       smbch = 0.0e0_R8
-       smbtf = 0.0e0_R8
-       smbfria  = 0.0_R8
-       smbfrea = 0.0_R8
-       smbtfia  = 0.0_R8
-       smbtfea = 0.0_R8
-#ifdef WG_TODO       
-       if(style.eq.2) then                                             !srv 13.01.17
-         if (tn_style.ne.0) then
-           call xerrab('b2sifr not developed for non-default energy eq')
+       if(switch%b2sigp_style.eq.2) then                               !srv 13.01.17
+         call xerrab ('b2sigp_style = 2 not available for WG')
+#ifdef WG_TODO
+         if (switch%tn_style.ne.0)
+     &     call xerrab('b2sifr not developed for non-default energy eq')
          call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
@@ -265,26 +261,30 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
            smbch(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbch(iCv,0:3)
            smbtf(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbtf(iCv,0:3)
          enddo
+#endif
        else
-        smbfria  = 0.0_R8
+        smbfria = 0.0_R8
         smbfrea = 0.0_R8
-        smbtfia  = 0.0_R8
+        smbtfia = 0.0_R8
         smbtfea = 0.0_R8
-        if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
+        if(switch%b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
+         call xerrab ('b2sifr_ver = 0 not available for WG')
+#ifdef WG_TODO
          call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
      &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,        !srv 11.09.09
      &    smbch, smbtf,
      &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
      &    wrk0, wrk1, wrk2)                                            !srv 02.07.08 01.07.09
+#endif
         else
-         call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb,                !srv 09.01.01 18.10.02
-     &    na, ua, te, ti,ni, ne, ne2, ehxp, lnlam, cthe, cthi,
-     &    smbch, smbtf,                                                !srv 11.09.09
-     &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
+         call b2sifr_ (nCv, nFc, nVx, ns, is, switch, geo, mpg,
+     &   pl%na, pl%ua, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2, rt%rza,
+     &   rt%rz2, ehxp, dv%lnlam, co%cthe, co%cthi, st_ext,
+     &   smbch, smbtf, smpr(:,is), smpt(:,is), smfr(:,is),
+     &   wrk0, gti, gte)
         endif                                                          !srv 26.10.08 }
        endif
-#endif
+
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0, 
