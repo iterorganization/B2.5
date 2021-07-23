@@ -382,12 +382,16 @@ c   extra call at this place within internal iteration)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
      &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
-     &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt,
+     &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt, psnc%zt,        !srv 23.07.21
      &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
-     &    dv%ni, dv%kinrgy, pl%kt, sr, .false.)
-*     ..stabilise the source coefficients                                !xpb
+     &    dv%ni, dv%kinrgy, pl%kt, pl%zt, sr, .false.)            !srv 23.07.21
+*     ..stabilise the source coefficients                         !xpb
         call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
-     &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, pl%kt, sr)
+     &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, pl%kt, pl%zt, sr)    !srv 23.07.21
+      endif
+
+
+
       endif
       if (switch%b2sigp_style.eq.2 .or. switch%b2news_iout.ne.0)
 *   ..compute ue, electron parallel velocity
