@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, !srv 29.01.20 {
-     &  geo, mpg, pl, dv, co, rt)                                                 
+     &  geo, mpg, pl, dv, co, rt, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
@@ -24,6 +24,7 @@
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl 
       type(B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
       type(B2Coeff), intent (inout) :: co
@@ -51,7 +52,7 @@
      &    ehx(nFc)                                    !srv 17.05.99
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
-     *    wrk(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
+     *    wrk(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1), zeff(nCv)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
 c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
@@ -132,9 +133,8 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &              fchstoch)                                            !srv 25.01.02 {
 #endif
       call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
-     *     dv%ne, pl%na, pl%ua, rt%rza, co%csig, co%calf, ehx,
-     &     dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)                           !srv 13.01.17
-
+     *     dv%ne, pl%na, pl%ua, rt%rza, rt%rz2, zeff, co%csig, co%calf,
+     &     ehx, st_ext, dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)              !srv 13.01.17
 *   ..compute current due to RS of kt-model
       call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &   pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
