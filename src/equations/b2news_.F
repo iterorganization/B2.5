@@ -389,10 +389,6 @@ c   extra call at this place within internal iteration)
         call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
      &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, pl%kt, pl%zt, sr)    !srv 23.07.21
       endif
-
-
-
-      endif
       if (switch%b2sigp_style.eq.2 .or. switch%b2news_iout.ne.0)
 *   ..compute ue, electron parallel velocity
      > call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rt%rza, rt%rz2, 
@@ -560,7 +556,7 @@ csw 16oct2012 init ier0
         endif
 *   ..compute currents                                                   !srv 29.01.20 {
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
-     &     geo, mpg, pl, dv, co, rt)
+     &     geo, mpg, pl, dv, co, rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
           if (switch%fhe_vis_per.eq.0.0e0_R8.or..true.) then                                 !srv 06.07.00
@@ -587,7 +583,7 @@ csw 16oct2012 init ier0
           call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
-     &     geo, mpg, pl, dv, co, rt)
+     &     geo, mpg, pl, dv, co, rt, st_ext)
 *   ..compute new residual following the tradition 
           call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, 
      &    sr%sch, dv%fch, wrk0)
