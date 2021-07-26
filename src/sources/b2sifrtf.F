@@ -1,42 +1,39 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, bb, na,         !srv 09.01.01 18.10.02 13.01.17 05.07.17
-     &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
-     &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
-     &   smbch, smbtf)
+      subroutine b2sifrtf (nCv, nFc, nVx, ns, isb, ismain, switch, geo,
+     &   mpg, na, ua, ue, te, ti, ni, ne, ne2, rza, rz2, po,
+     &   zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff, 
+     &   f_luc_sg, alfx_c, sigx_c, st_ext,
+     &   smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
       use b2mod_types
-      use b2mod_rates
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_plasma
-     , , only :  po
-      use b2mod_transport
-     , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
-      use b2mod_external
-      use b2mod_geo
-     , , only : hz, vol                                                 !srv 05.07.17
+      use b2mod_switches
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, isb, ismain
+      integer nCv, nFc, nVx, ns, isb, ismain
+      type (switches), intent (in) :: switch
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), ! hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 05.07.17
-     &  bb(-1:nx,-1:ny,0:3),
-     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ue(-1:nx,-1:ny),
-     &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
-     &  te(-1:nx,-1:ny), zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),        !srv 13.01.17
-     &  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),                             !srv 13.01.17
-     &  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny), zeff(-1:nx,-1:ny)       !srv 13.01.17
+     &  na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),
+     &  te(nCv), ti(nCv), ni(nCv,0:1), ne(nCv), ne2(nCv),
+     &  rza(nCv,0:ns-1), rz2(nCv,0:ns-1), po(nCv),
+     &  zetap(nCv), zetae(nCv), gti(nCv), gte(nCv),
+     &  ce1(nCv), ce2(nCv), cimp1(nCv), cimp2(nCv), zeff(nCv),          !srv 13.01.17
+     &  f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)              !srv 13.01.17 05.07.17
+     *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
+     *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17
       real (kind=R8) ::
-     *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3)
+     *  smbch(nCv,0:3), smbtf(nCv,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -62,22 +59,18 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, k
+      integer ncall, iCv, is, k
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
       character chns*3, chk*1, chis*3
       real (kind=R8) ::
-     *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
+     *  coef, t0, calfab, fllim_al_ab, jabmax
       real (kind=R8) ::
-     1  delti, delte
-      real (kind=R8) ::
-     &  KabVp(-1:nx,-1:ny), Kabtf(-1:nx,-1:ny), Kbatf(-1:nx,-1:ny),     !srv 13.01.17 {
-     &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny),
-     &  wrk(-1:nx,-1:ny)
+     &  KabVp(nCv), Kabtf(nCv), Kbatf(nCv), ka(nCv), kb(nCv), wrk(nCv)  !srv 13.01.17 {
 ! Local arrays smb*al have been introduced specially.
 ! The usage of smb*a instaed of smb*al should be checked.
       real (kind=R8) ::
-     *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
-     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbfrial(nCv,0:3), smbfreal(nCv,0:3),
+     *  smbtfial(nCv,0:3), smbtfeal(nCv,0:3)                            !srv 13.01.17 }
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -85,10 +78,9 @@
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialization
-      save ncall, styl0, phm0, phm1, phm2, phm3
-      data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
+      save ncall
+      data ncall/0/
+      roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
 *-----------------------------------------------------------------------
 *.computation
 
@@ -97,43 +89,39 @@
       call subini ('b2sifrtf')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2sifr_styl0', styl0)
-       call ipgetr ('b2sifr_phm0', phm0)
-       call ipgetr ('b2sifr_phm1', phm1)
-       call ipgetr ('b2sifr_phm2', phm2)
-       call ipgetr ('b2sifr_phm3', phm3)
-       call xertst (0.le.styl0.and.styl0.le.2,
+       call xertst (0.le.switch%b2sifr_styl0.and.
+     &              switch%b2sifr_styl0.le.2,
      &  'faulty internal parameter styl0')
-       call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
-     &              0.0_R8.le.phm2.and.0.0_R8.le.phm3,
+       call xertst (0.0_R8.le.switch%b2sifr_phm0.and.
+     &              0.0_R8.le.switch%b2sifr_phm1.and.
+     &              0.0_R8.le.switch%b2sifr_phm2.and.
+     &              0.0_R8.le.switch%b2sifr_phm3,
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of vol
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test sign of na, ni, ti, ne, ne2
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
+       call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+       call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, ne2, 1, 'ne2', '.gt.')
       endif
 
 *   ..initialize to 0
-      call sfill (n2*4, 0.0e0_R8, smbch, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbtf, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)                          !srv 13.01.17 { !srv 05.07.17
-      call sfill (n2*4, 0.0e0_R8, smbfreal, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
+      call sfill (nCv*4, 0.0e0_R8, smbch, 1)                            !srv 11.09.09
+      call sfill (nCv*4, 0.0e0_R8, smbtf, 1)                            !srv 11.09.09
+      call sfill (nCv*4, 0.0e0_R8, smbfrial, 1)                         !srv 13.01.17 { !srv 05.07.17
+      call sfill (nCv*4, 0.0e0_R8, smbfreal, 1)
+      call sfill (nCv*4, 0.0e0_R8, smbtfial, 1)
+      call sfill (nCv*4, 0.0e0_R8, smbtfeal, 1)                         !srv 13.01.17 }
 * ..compute friction
 *   ..loop over all other species
       do is = 0, ns-1
@@ -141,47 +129,39 @@
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
         KabVp=fkabvp(isb,is)
 *     ..contribution from friction between ions
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-           coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
-     &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
-     &           zetap(ix,iy)*KabVp(ix,iy)
-           t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-           if (styl0.eq.0) then
-             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
-           else if (styl0.eq.1) then
-             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-
-     &                           coef*t0/roxa(ix,iy,isb)
-           else if (styl0.eq.2) then
-             smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+coef*t0*ua(ix,iy,is)/
-     &                       roxa(ix,iy,isb)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
-     &                       roxa(ix,iy,isb)
-           endif
-          endif
-         enddo
+        do iCv = 1, mpg%nCi
+         coef = switch%b2sifr_phm0*rz2(iCv,isb)*rz2(iCv,is)*
+     &          mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
+     &          zetap(iCv)*KabVp(iCv)
+         t0 = na(iCv,isb)*na(iCv,is)
+         if (switch%b2sifr_styl0.eq.0) then
+          smbfrial(iCv,0) = smbfrial(iCv,0)+coef*t0*ua(iCv,is)
+          smbfrial(iCv,1) = smbfrial(iCv,1)-coef*t0
+         else if (switch%b2sifr_styl0.eq.1) then
+          smbfrial(iCv,0) = smbfrial(iCv,0)+coef*t0*ua(iCv,is)
+          smbfrial(iCv,3) = smbfrial(iCv,3)-
+     &                      coef*t0/roxa(iCv,isb)
+         else if (switch%b2sifr_styl0.eq.2) then
+          smbfrial(iCv,2) = smbfrial(iCv,2)+coef*t0*ua(iCv,is)/
+     &                      roxa(iCv,isb)
+          smbfrial(iCv,3) = smbfrial(iCv,3)-coef*t0/
+     &                      roxa(iCv,isb)
+         endif
         enddo
        endif
       enddo
 
 !*   ..compute ue, electron parallel velocity
-!      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
-!     &             ne, te, na, ua, ue_ext, ne_ext, ue)
+!       call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza, rz2,
+!     &   alfx_c, sigx_c, fch_pi_c, po, ne, te, na, ua, st_ext, ue)
 *     ..contribution from friction between between electron and ions
       if(.not.is_neutral(isb)) then
-       do iy = 0, ny-1
-        do ix = 0, nx-1
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          coef = phm1*(bb(ix,iy,0)/bb(ix,iy,3))**2*rz2(ix,iy,isb)*qe**2
-     &           /(sigx_c(ix,iy)*zeff(ix,iy))
-          t0 = na(ix,iy,isb)*ne(ix,iy)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-          smbfreal(ix,iy,0) = smbfreal(ix,iy,0)+coef*t0*ue(ix,iy)
-          smbfreal(ix,iy,1) = smbfreal(ix,iy,1)-coef*t0
-         endif
-        enddo
+       do iCv = 1, mpg%nCi
+        coef = switch%b2sifr_phm1*(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))**2*
+     &         rz2(iCv,isb)*qe**2/(sigx_c(iCv)*zeff(iCv))
+        t0 = na(iCv,isb)*ne(iCv)
+        smbfreal(iCv,0) = smbfreal(iCv,0)+coef*t0*ue(iCv)
+        smbfreal(iCv,1) = smbfreal(iCv,1)-coef*t0
        enddo
       endif
 
@@ -191,16 +171,13 @@
 
 *   ..contribution from electron thermal force
       if(.not.is_neutral(isb)) then
-       do iy = 0, ny-1
-        do ix = 0, nx-1
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          coef = -phm2*alfx_c(ix,iy)*ce1(ix,iy)*rz2(ix,iy,isb)*(me/qe)/
-     &           zetae(ix,iy)/(bb(ix,iy,0)/bb(ix,iy,3))/f_luc_sg(ix,iy)   !srv f_luc_sg should be taken in cell center ?
-          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
-          t0 = na(ix,iy,isb)*delte    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-          smbtfeal(ix,iy,0) = smbtfeal(ix,iy,0)+coef*t0
-         endif
-        enddo
+       !wdk interpolate f_luc_sg to cell center
+       call intcell(nFc,nCv,mpg,mpg%intcellP,f_luc_sg,wrk)
+       do iCv = 1, mpg%nCi
+        coef = -switch%b2sifr_phm2*alfx_c(iCv)*ce1(iCv)*rz2(iCv,isb)*
+     &    (me/qe)/zetae(iCv)/(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))/wrk(iCv)
+        t0 = na(iCv,isb)*gte(iCv)
+        smbtfeal(iCv,0) = smbtfeal(iCv,0)+coef*t0
        enddo
       endif
 *   ..contribution from ions thermal force
@@ -213,35 +190,29 @@
         kb    = fka(is)
         KabVp = fkabvp(isb,is)
 
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+        do iCv = 1, mpg%nCi
 c      .. calculations could be simplified 
 c      .. but we did not do it in order to have the same formulae as manual
-           calfab = zetap(ix,iy)/sqrt(mp)*
-     &          qe*(na(ix,iy,isb)+na(ix,iy,is))*
-     &          sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
-     &         (Kabtf(ix,iy)/kb(ix,iy)-Kbatf(ix,iy)/ka(ix,iy))*
-     &          bb(ix,iy,0)/bb(ix,iy,3)
-           coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
-     &          mp/(zetap(ix,iy)*qe)
-           delti=
-     &       (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
-c   .. apply flux limit
-           if(cflim(4).ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
-             jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
-     &        (na(ix,iy,isb)+na(ix,iy,is))
-             t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-             fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
-           else
-             fllim_al_ab = 1.0_R8
-           endif
-
-           t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-     &                             ((na(ix,iy,isb)+na(ix,iy,is)))*delti
-           smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
+          calfab = zetap(iCv)/sqrt(mp)*
+     &         qe*(na(iCv,isb)+na(iCv,is))*
+     &         sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
+     &        (Kabtf(iCv)/kb(iCv)-Kbatf(iCv)/ka(iCv))*
+     &         geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+          coef = switch%b2sifr_phm3*rz2(iCv,isb)*rz2(iCv,is)*calfab*
+     &         mp/(zetap(iCv)*qe)
+c      .. apply flux limit
+          if(cflim(4).ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCv))then
+            jabmax = qe*KabVp(iCv)*sqrt(ti(iCv)/mp)*
+     &       (na(iCv,isb)+na(iCv,is))
+            t0 = abs(calfab*gti(iCv))/(cflim(4)*jabmax)
+            fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+          else
+            fllim_al_ab = 1.0_R8
           endif
-         enddo
+
+          t0 = na(iCv,isb)*na(iCv,is)/
+     &                            ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
+          smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
         enddo
        endif
       enddo
@@ -254,45 +225,46 @@ c   .. apply flux limit
       smbtfea = smbtfeal
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
-	write (chns,'(i3.3)') isb
+       write (chns,'(i3.3)') isb
 
-       wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
-     &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
-     &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
-
-       wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
-       wrk = vol*hz*smbtfial(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
-       wrk = vol*hz*smbtfeal(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
-       call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
-	endif
+       wrk = geo%cvVol*geo%cvHz*
+     &       (smbfria(:,0)+smbfria(:,1)*ua(:,isb)+        !srv 05.07.17 {
+     &        smbfria(:,2)*na(:,isb)*mp*am(isb)+
+     &        smbfria(:,3)*ua(:,isb)*na(:,isb)*mp*am(isb))
+       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smofria'//chns)
+       wrk = geo%cvVol*geo%cvHz*(smbfreal(:,0)+smbfreal(:,1)*ua(:,isb))
+       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smofrea'//chns)
+       wrk = geo%cvVol*geo%cvHz*smbtfial(:,0)
+       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfia'//chns)
+       wrk = geo%cvVol*geo%cvHz*smbtfeal(:,0)
+       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
+       call my_out_us(70,nCv,0,ue,'b2sifrtf_ue')
+      endif
 
       if (iout.gt.1) then                                              !srv 05.07.17
 	 do is = 0,ns-1
 	  write (chis,'(i3.3)') is
-	  call my_out(70,nx,ny,fkabvp(isb, is),
+          call my_out_us(70,nCv,0,fkabvp(isb, is),
      &              'b2sifrtf_kabvp_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(isb, is),
+          call my_out_us(70,nCv,0,fkabtf(isb, is),
      &              'b2sifrtf_kabtf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(is, isb),
+          call my_out_us(70,nCv,0,fkabtf(is, isb),
      &              'b2sifrtf_kbatf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fka(isb),'b2sifrtf_ka_'//chns)
-          call my_out(70,nx,ny,fka(is),'b2sifrtf_kb_'//chis)
+          call my_out_us(70,nCv,0,fka(isb),'b2sifrtf_ka_'//chns)
+          call my_out_us(70,nCv,0,fka(is),'b2sifrtf_kb_'//chis)
         enddo
 
-        call my_out(70,nx,ny,f_luc_sg,'b2sifrtf_f_luc_sg')
-        call my_out(70,nx,ny,ce1,'b2sifrtf_ce1')
-        call my_out(70,nx,ny,ce2,'b2sifrtf_ce2')
-        call my_out(70,nx,ny,cimp1,'b2sifrtf_cimp1')
-        call my_out(70,nx,ny,cimp2,'b2sifrtf_cimp2')
-        call my_out(70,nx,ny,alfx_c,'b2sifrtf_alfx_c')
-        call my_out(70,nx,ny,sigx_c,'b2sifrtf_sigx_c')
-        call my_out(70,nx,ny,zetae,'b2sifrtf_zetae')
+        call intcell(nFc,nCv,mpg,mpg%intcellP,f_luc_sg,wrk)
+        call my_out_us(70,nCv,0,wrk,'b2sifrtf_f_luc_sg')
+        call my_out_us(70,nCv,0,ce1,'b2sifrtf_ce1')
+        call my_out_us(70,nCv,0,ce2,'b2sifrtf_ce2')
+        call my_out_us(70,nCv,0,cimp1,'b2sifrtf_cimp1')
+        call my_out_us(70,nCv,0,cimp2,'b2sifrtf_cimp2')
+        call my_out_us(70,nCv,0,alfx_c,'b2sifrtf_alfx_c')
+        call my_out_us(70,nCv,0,sigx_c,'b2sifrtf_sigx_c')
+        call my_out_us(70,nCv,0,zetae,'b2sifrtf_zetae')
 
-        call my_out(70,nx,ny,ua(:,:,isb),'b2sifrtf_ua'//chns)
+        call my_out_us(70,nCv,0,ua(:,isb),'b2sifrtf_ua'//chns)
       endif
 
 
@@ -306,7 +278,7 @@ c   .. apply flux limit
       function fkabvp(a, b)
       implicit none
       integer a, b 
-      real (kind=R8) :: fkabvp(-1:nx,-1:ny)
+      real (kind=R8) :: fkabvp(nCv)
       if((a.eq.ismain) .and. (b.ne.a) .and. 
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
@@ -328,7 +300,7 @@ c   .. apply flux limit
       function fkabtf(a, b)
       implicit none
       integer a, b 
-      real (kind=R8) :: fkabtf(-1:nx,-1:ny)
+      real (kind=R8) :: fkabtf(nCv)
       if((b.eq.ismain) .and. (b.ne.a) .and. 
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=cimp2
@@ -346,14 +318,14 @@ c   .. apply flux limit
       function fka(a)
       implicit none
       integer a 
-      real (kind=R8) :: fka(-1:nx,-1:ny)
+      real (kind=R8) :: fka(nCv)
       integer r
       fka = 0.0_R8
       do r = 0, ns-1
-        fka = fka + rz2(:,:,r)*na(:,:,r)*sqrt(mp)*
+        fka = fka + rz2(:,r)*na(:,r)*sqrt(mp)*
      &          sqrt(am(a)*am(r)/(am(a)+am(r)))
       enddo
-      fka = fka*rz2(:,:,a)
+      fka = fka*rz2(:,a)
       return
       end function fka
 
