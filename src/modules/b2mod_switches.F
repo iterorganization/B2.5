@@ -206,6 +206,8 @@ c style  switches
       integer :: b2npht_style
       integer :: fnb_drift_style
       integer :: b2sifr_ver
+      integer :: b2sifr_styl0
+      integer :: b2sifr_styl1
 
 c phm switches
       real (kind=R8) :: b2sian_phm0     
@@ -233,7 +235,12 @@ c phm switches
       real (kind=R8) :: b2srdt_phm5  
       real (kind=R8) :: b2nxfv_phm0  
       real (kind=R8) :: b2nxfv_phm1  
-      real (kind=R8) :: b2sifr_phm2  !srv 03.04.15
+      real (kind=R8) :: b2sifr_limthee
+      real (kind=R8) :: b2sifr_limthii
+      real (kind=R8) :: b2sifr_phm0
+      real (kind=R8) :: b2sifr_phm1
+      real (kind=R8) :: b2sifr_phm2
+      real (kind=R8) :: b2sifr_phm3
       real (kind=R8) :: b2tqca_phm0  
       real (kind=R8) :: b2treq_phm0  
       real (kind=R8) :: b2stbc_phm0 
@@ -651,6 +658,8 @@ c Feedback
       s % b2npht_style = 1
       s % fnb_drift_style = 1
       s % b2sifr_ver = 1
+      s % b2sifr_styl0 = 0
+      s % b2sifr_styl1 = 0
 
       s % b2sian_phm0 = 1.0e0_R8
       s % b2sicf_phm0 = 1.0e0_R8
@@ -677,7 +686,12 @@ c Feedback
       s % b2srdt_phm5 = 1.0e0_R8
       s % b2nxfv_phm0 = 1.0e0_R8
       s % b2nxfv_phm1 = 1.0e0_R8
+      s % b2sifr_limthii = 0.3e0_R8
+      s % b2sifr_limthee = 0.3e0_R8
+      s % b2sifr_phm0 = 1.0e0_R8
+      s % b2sifr_phm1 = 1.0e0_R8
       s % b2sifr_phm2 = 1.0e0_R8
+      s % b2sifr_phm3 = 1.0e0_R8
       s % b2tqca_phm0 = 1.0e0_R8
       s % b2treq_phm0 = 1.0e0_R8
       s % b2stbc_phm0 = 1.0e0_R8
@@ -1095,6 +1109,8 @@ c style/mode switches
       call ipgeti ('b2npht_style', s % b2npht_style)                              !srv 09.07.08
       call ipgeti ('b2tfnb_drift_style', s % fnb_drift_style)                      !srv 21.06.08f
       call ipgeti ('b2npmo_b2sifr_', s % b2sifr_ver)
+      call ipgeti ('b2sifr_styl0', s % b2sifr_styl0)
+      call ipgeti ('b2sifr_styl1', s % b2sifr_styl1)
 
 c phm switches
       call ipgetr ('b2sian_phm0', s % b2sian_phm0)   
@@ -1121,8 +1137,13 @@ c phm switches
       call ipgetr ('b2srdt_phm4', s % b2srdt_phm4)        
       call ipgetr ('b2srdt_phm5', s % b2srdt_phm5)  
       call ipgetr ('b2nxfv_phm0', s % b2nxfv_phm0)    
-      call ipgetr ('b2nxfv_phm1', s % b2nxfv_phm1)   
-      call ipgetr ('b2sifr_phm2', s % b2sifr_phm2)  
+      call ipgetr ('b2nxfv_phm1', s % b2nxfv_phm1)
+      call ipgetr ('b2sifr_limthii', s % b2sifr_limthii)
+      call ipgetr ('b2sifr_limthee', s % b2sifr_limthee)
+      call ipgetr ('b2sifr_phm0', s % b2sifr_phm0)  
+      call ipgetr ('b2sifr_phm1', s % b2sifr_phm1)        
+      call ipgetr ('b2sifr_phm2', s % b2sifr_phm2)
+      call ipgetr ('b2sifr_phm3', s % b2sifr_phm3)    
       call ipgetr ('b2tqca_phm0', s % b2tqca_phm0)   
       call ipgetr ('b2treq_phm0', s % b2treq_phm0) 
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07

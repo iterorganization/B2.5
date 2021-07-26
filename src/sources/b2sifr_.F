@@ -59,15 +59,15 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, styl0, styl1, iCv, iFc, is, k                      !srv 17.06.02
+      integer ncall, iCv, iFc, is, k                      !srv 17.06.02
       integer, save :: iout = 0                                         !srv 17.06.02
       integer, save :: icase = 0
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
-     *   phm0, phm1, phm2, phm3, ctaup, coef, t0, t1,
+     *   ctaup, coef, t0, t1,
      *   wrkv(nVx)
       real (kind=R8) ::
-     1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
+     1 delti, delte, zlamii, zlamee, dtiapr, dteapr
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -75,11 +75,8 @@
       external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialisation
-      save ncall, styl0, styl1, 
-     1     phm0, phm1, phm2, phm3, limthii, limthee
-      data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/,
-     &  limthii/0.3e0_R8/, limthee/0.3e0_R8/
+      save ncall
+      data ncall/0/
       roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
 *-----------------------------------------------------------------------
 *.computation
@@ -89,21 +86,19 @@
       call subini ('b2sifr_')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2sifr_styl0', styl0)
-       call ipgeti ('b2sifr_styl1', styl1)
-       call ipgetr ('b2sifr_phm0', phm0)
-       call ipgetr ('b2sifr_phm1', phm1)
-       call ipgetr ('b2sifr_phm2', phm2)
-       call ipgetr ('b2sifr_phm3', phm3)
-       call ipgetr ('b2sifr_limthii', limthii)
-       call ipgetr ('b2sifr_limthee', limthee)
 csw 24sep2013
-       call xertst (0.le.styl0.and.styl0.lt.9.and.0.le.styl1.and.
-     &  styl1.lt.2, 'faulty internal parameter styl0, styl1')
-       call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
-     &  0.0_R8.le.phm2.and.0.0_R8.le.phm3,
+       call xertst (
+     &   0.le.switch%b2sifr_styl0.and.switch%b2sifr_styl0.lt.9.and.
+     &   0.le.switch%b2sifr_styl1.and.switch%b2sifr_styl1.lt.2, 
+     &   'faulty internal parameter styl0, styl1')
+       call xertst (
+     &  0.0_R8.le.switch%b2sifr_phm0.and.
+     &  0.0_R8.le.switch%b2sifr_phm1.and.
+     &  0.0_R8.le.switch%b2sifr_phm2.and.
+     &  0.0_R8.le.switch%b2sifr_phm3,
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
-       call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
+       call xertst (0.0_R8.le.switch%b2sifr_limthii.and.
+     &              0.0_R8.le.switch%b2sifr_limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        call ipgeti ('b2tlnl_ii', icase)
@@ -155,20 +150,20 @@ csw 24sep2013
      &    (.not.is_neutral(is)).and.(.not.is_neutral(isb))) then
 *     ..contribution from friction between charged species
         do iCv = 1, mpg%nCi
-          coef = phm0*(lnlam(iCv)/ctaup)*rz2(iCv,isb)*            !srv 01.07.09
+          coef = switch%b2sifr_phm0*(lnlam(iCv)/ctaup)*rz2(iCv,isb)*    !srv 01.07.09
      &           rz2(iCv,is)*mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))
           t0 = na(iCv,isb)*na(iCv,is)*vti32(iCv)
-          if (styl0.eq.0) then
+          if (switch%b2sifr_styl0.eq.0) then
             smbch(iCv,0) = smbch(iCv,0)+coef*t0*ua(iCv,is)
             smbch(iCv,1) = smbch(iCv,1)-coef*t0
-          else if (styl0.eq.1) then
+          else if (switch%b2sifr_styl0.eq.1) then
             smbch(iCv,0) = smbch(iCv,0)+coef*t0*ua(iCv,is)
             smbch(iCv,3) = smbch(iCv,3)-coef*t0/roxa(iCv,isb)
-          else if (styl0.eq.2) then
+          else if (switch%b2sifr_styl0.eq.2) then
             smbch(iCv,2) = smbch(iCv,2)+coef*t0*ua(iCv,is)/
      &                     roxa(iCv,isb)
-           smbch(iCv,3) = smbch(iCv,3)-coef*t0/
-     &                    roxa(iCv,isb)
+            smbch(iCv,3) = smbch(iCv,3)-coef*t0/
+     &                     roxa(iCv,isb)
           endif
           smfrb(iCv) = smfrb(iCv) + 
      &      coef*t0*(ua(iCv,is)-ua(iCv,isb))
@@ -183,35 +178,40 @@ csw 24sep2013
 *   ..compute thermal force
       if (.not.is_neutral(isb)) then
        do iCv = 1, mpg%nCi
-        if (styl1.eq.0) then
+        if (switch%b2sifr_styl1.eq.0) then
          t0 = na(iCv,isb)*
      &      (rza(iCv,isb)/(ne(iCv)-st_ext%ne(iCv))-
      &       rz2(iCv,isb)/(ne2(iCv)-st_ext%ne2(iCv)))
          delte=gte(iCv)
-         if(limthee.gt.0.0_R8) then
+         if(switch%b2sifr_limthee.gt.0.0_R8) then
            zlamee=1.5e16_R8*(te(iCv)/ev)**2/ne(iCv)
-           dteapr=limthee/zlamee*te(iCv)/geo%cvBb(iCv,0)*geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
+           dteapr=switch%b2sifr_limthee/zlamee*te(iCv)/geo%cvBb(iCv,0)*
+     &      geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
            delte=sign(min(abs(delte),dteapr),delte)
          endif
          delti=gti(iCv)
-         if(limthii.gt.0.0_R8) then
+         if(switch%b2sifr_limthii.gt.0.0_R8) then
            zlamii=1.5e16_R8*(ti(iCv)/ev)**2/ne2(iCv)
-           dtiapr=limthii/zlamii*ti(iCv)/geo%cvBb(iCv,0)*geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
+           dtiapr=switch%b2sifr_limthii/zlamii*ti(iCv)/geo%cvBb(iCv,0)*
+     &      geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
            delti=sign(min(abs(delti),dtiapr),delti)
          endif
 c        if(cthi(iCv,isb).ne.2.65e0_R8)
 c     1    write(*,*) iCv,isb,cthi(iCv,isb)
          smbtf(iCv,0) = smbtf(iCv,0)+t0*
-     &    (phm1*ehxp(iCv)-
-     &    (phm2*cthe(iCv,isb)*delte*ne(iCv)
-     &    +phm3*cthi(iCv,isb)*delti*(ne(iCv)-st_ext%ne(iCv)))*
+     &    (switch%b2sifr_phm1*ehxp(iCv)-
+     &    (switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)
+     &    +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
+     &    (ne(iCv)-st_ext%ne(iCv)))*
      &    geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*geo%cvHz(iCv)  !srv 01.07.05
-         smprb(iCv) = smprb(iCv) + t0*phm1*ehxp(iCv)*geo%cvHz(iCv) 
+         smprb(iCv) = smprb(iCv) + 
+     &        t0*switch%b2sifr_phm1*ehxp(iCv)*geo%cvHz(iCv) 
          smptb(iCv) = smptb(iCv) - t0*geo%cvHz(iCv)*
-     &        (phm2*cthe(iCv,isb)*delte*ne(iCv)
-     &        +phm3*cthi(iCv,isb)*delti*(ne(iCv)-st_ext%ne(iCv)))*
+     &        (switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)
+     &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
+     &        (ne(iCv)-st_ext%ne(iCv)))*
      1        geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
-        else if (styl1.eq.1) then
+        else if (switch%b2sifr_styl1.eq.1) then
          call xerrab ('b2sifr_: option styl1.eq.1 removed')
         endif
        enddo
