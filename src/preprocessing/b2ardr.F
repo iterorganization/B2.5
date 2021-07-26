@@ -378,7 +378,7 @@
       else
        call xerrab ('faulty data flag; flag='//flag)
       endif
-      if (amjhydhel) then                                           !mb 22.05.18
+      if (amjhydhel.ne.0) then                                          !mb 22.05.18
         lblrc(85:120) = 'with AMJUEL neutral rates'
       end if
 *   ..echo label
@@ -545,6 +545,7 @@ cxpb  We must account for the case when the user does not want all bundles
          rewind (ninp(2))
          call ratwei (ninp(2), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
+         rtqa_ra = 0.0_R8
 c**************************************************************************************
 c*****************     New option to use Amjuel-Hydhel for H neutrals *****************
 c**************************************************************************************
