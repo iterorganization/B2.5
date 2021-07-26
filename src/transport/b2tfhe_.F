@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg, 
-     &  pl, dv, co, balance)                                             !djm Jan2017 !srv 29.01.20
+     &  pl, dv, co, rt, st_ext, balance)                                 !djm Jan2017 !srv 29.01.20
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_constants
@@ -15,7 +15,7 @@
 !WG_TODO      use b2mod_balance                                                  !djm Jan2017
 !WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
 !WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
-!WG_TODO      use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_transport_fun                                            !srv 13.01.17
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -26,12 +26,14 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type(B2Plasma), intent (in) :: pl 
-      logical balance                                                    !djm Jan2017
+      type (B2Plasma), intent (in) :: pl 
+      type (B2Rates), intent (in) :: rt 
+      type (B2StateExt), intent (in) :: st_ext
+      logical balance                                                   !djm Jan2017
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
-      type(B2Coeff), intent (inout) :: co
-      type(B2Derivatives), intent (inout) :: dv
+      type (B2Coeff), intent (inout) :: co
+      type (B2Derivatives), intent (inout) :: dv
 *   ..local variables
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
@@ -59,7 +61,7 @@
 *.declarations
 
 *   ..local variables
-      integer is
+      integer iCv, is
 csw 10oct2012
       character(3) :: charns, charns0
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
@@ -67,8 +69,8 @@ csw 10oct2012
      *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1), flomx,
      &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
-     *    fledia(nFc,0:1), c071(nFc)!,                                   !srv 22.11.99 25.01.02
-!WG_TODO    &    zeff(-1:nx,-1:ny)                                           !srv 13.01.17
+     *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
+     &    zeff(nCv)                                                      !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
@@ -116,6 +118,8 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
        call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
       endif
 
+      wght = 1.0_R8
+
       facdriftm = maxval(dv%facdrift)
       fac_ExBm  = maxval(dv%fac_ExB)                                     !srv 23.12.19
       dv%fhePSch   = 0.0_R8
@@ -145,29 +149,24 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       endif                                                              !srv 16.09.02 }
 #endif
       call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)            !srv 16.10.17
+     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)         !srv 16.10.17
 
 * ..compute parallel current
       call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
-     &                                         pl%po, dv%ne, ehx)    !srv 13.01.17 {
+     &                                         pl%po, dv%ne, ehx)      !srv 13.01.17 {
       call b2xehy (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
-     &                                         pl%po, dv%ne, ehy)    !srv 13.01.17
+     &                                         pl%po, dv%ne, ehy)      !srv 13.01.17
       if(switch%b2sigp_style.eq.2) then
-        call xerrab ('b2sigp_style 2 not yet supported')
-#ifdef WG_TODO
-        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-        do iy = -1, ny
-          do ix = -1, nx
-            c071(ix,iy) = fce2n(zeff(ix,iy))
-          end do
+        call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
+        do iCv = 1, nCv
+          c071c(iCv) = fce2n(zeff(iCv))
         end do
-#endif
+        call intface(nCv,nFc,mpg%fcCv,wght,c071c,c071)
       else
         c071 = 0.71e0_R8                                               !srv 13.01.17
       endif
 
 *   ..interpolate ne and te to cell faces
-      wght = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nef)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%te,tef)
 

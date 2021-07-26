@@ -60,7 +60,6 @@
       real (kind=R8) ::
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
      *   wrk00(nFc,2), wrk11(nFc,2),
-!pb     *   zeff(nCv), c071(nCv), c071f(nCv)                                !srv 13.01.17
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
       real (kind=R8) :: t0,t1,t2
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
