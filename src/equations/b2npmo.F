@@ -249,25 +249,22 @@ c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.
      &               pl%tn, is, pb)
 *    ..compute extended friction term
        if(switch%b2sigp_style.eq.2) then                               !srv 13.01.17
-         call xerrab ('b2sigp_style = 2 not available for WG')
-#ifdef WG_TODO
-         if (switch%tn_style.ne.0)
-     &     call xerrab('b2sifr not developed for non-default energy eq')
-         call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
-     &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
-     &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
-     &    smbch, smbtf)  ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
-         do iCv = 1, nCv
-           smbch(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbch(iCv,0:3)
-           smbtf(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbtf(iCv,0:3)
-         enddo
-#endif
+        call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
+     &   mpg, pl%na, pl%ua, dv%ue, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2,
+     &   rt%rza, rt%rz2, pl%po,
+     &   zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff, 
+     &   co%f_luc_sg, co%alfx_c, co%sigx_c, st_ext,
+     &   smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)             ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
+        do k = 0, 3
+         smbch(:,k) = geo%cvVol*geo%cvHz*smbch(:,k)
+         smbtf(:,k) = geo%cvVol*geo%cvHz*smbtf(:,k)
+        enddo
        else
         smbfria = 0.0_R8
         smbfrea = 0.0_R8
         smbtfia = 0.0_R8
         smbtfea = 0.0_R8
-        if(switch%b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
+        if(switch%b2sifr_ver.eq.0) then                                !srv 26.10.08 {
          call xerrab ('b2sifr_ver = 0 not available for WG')
 #ifdef WG_TODO
          call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
