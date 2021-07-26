@@ -187,8 +187,9 @@
         call xertst (0.lt.gamma, 'invalid input parameter gamma')      
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
-        call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 15.03.21
-        call ipgeti ('b2tral_mode', mode)                         !som 10.06.21
+        call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
+        call ipgeti ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
+        call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist

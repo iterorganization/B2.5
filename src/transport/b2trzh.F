@@ -54,6 +54,7 @@
 *.declarations
       integer ncall
       integer ix, iy, is, inucl, iz,i, j 
+      integer tempi
       real (kind=R8) :: temp
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      & zeffne, nz2n(0:nspecies-1),
@@ -116,6 +117,26 @@
 *   ..calculate the N-coefficients and all mass related variables 
         call b2trcn (nspecies, amnucl, N2, N5, N6, N8, N9, N10, 
      & N11, N12, mu, rmu, rmd2, mum, mdm)
+
+*   ..calculate the matrix of thermal force switches 
+        tempi = zh_tf_toff
+        i=nspecies-1
+        j=i-1
+        do is = 1, (nspecies*(nspecies+1))/2-nspecies
+          if ((tempi-(tempi/10)*10).eq.1) then
+            tf_ton_mat(i,j)=0.0_R8
+            tf_ton_mat(j,i)=0.0_R8
+          else
+            tf_ton_mat(i,j)=1.0_R8
+            tf_ton_mat(j,i)=1.0_R8
+          endif
+          tempi=tempi/10
+          j=j-1
+          if (j.eq.-1) then 
+            i=i-1
+            j=i-1
+          endif
+        enddo        
       endif
        
 *   ..main part  
@@ -189,7 +210,7 @@
             call b2trtf(nspecies, G2, G8, mum, mdm,
      & Ainv, Ainv_mdf, c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient with flux limiting 
-            call b2trtf(nspecies, G2, G8, mum, mdm,
+            call b2trtf(nspecies,G2*tf_ton_mat,G8*tf_ton_mat, mum, mdm,
      & Ainv_fl, Ainv_mdf_fl, c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
 
 *    ..for the distribution function 
@@ -237,6 +258,7 @@
             do i = 0, nspecies-1
               c_R_TA_an(i,0:nspecies-1)=
      & cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
+     & *tf_ton_mat(i,0:nspecies-1)
               c_hTA_an_fl(i)=
      & cF_limh(i)*c_hTA_an(i)
             enddo
@@ -353,7 +375,7 @@
             endif
           enddo
         enddo
-
+  
       ncall = ncall+1
       call subend ()
       return

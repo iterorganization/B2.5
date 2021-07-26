@@ -2,7 +2,7 @@
       use b2mod_types
       implicit none
       integer :: zhd_corr=1,zhcscorr=1,zh_imp_analyt=0,
-     & zh_analyt_mdf=0, zh_dist_fun=0
+     & zh_analyt_mdf=0, zh_dist_fun=0, zh_tf_toff=0
       real (kind=R8) :: zhflcorr=1.0_R8
       real (kind=R8) :: zhflcorrh=1.0_R8
       real (kind=R8), allocatable, save ::
@@ -11,7 +11,8 @@
      & c_R_wA(:,:,:,:),
      & c_R_TB(:,:,:),c_R_TB_nofl(:,:,:),
      & c_R_wB(:,:,:,:),
-     & c_R_w(:,:,:,:)
+     & c_R_w(:,:,:,:),
+     & tf_ton_mat(:,:)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -46,6 +47,8 @@
       allocate(c_R_TB_nofl(-1:nx,-1:ny,0:nnucl-1))
       allocate(c_R_wB(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
       allocate(c_R_w(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
+      allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
+      tf_ton_mat=1.0_R8
 
       end subroutine init_zhco
 
