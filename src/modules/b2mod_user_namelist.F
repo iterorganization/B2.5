@@ -445,6 +445,8 @@ c*** Set default values according to current species list
         endif
       ic = ic + 1 
       end do
+      if (.not.found) call xerrab ('Did not find separatrix location. '
+     &  // 'Check specification OMP in b2.user.paramters.')
       ifssep = 0 !flux surface of separatrix
       ic1 = omp(icsep-1) !cv of flux tube just inside sep
       ic2 = omp(icsep) !cv of flux tube just outside sep
