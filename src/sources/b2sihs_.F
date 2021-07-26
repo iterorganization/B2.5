@@ -3,23 +3,24 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, BoRiS, 
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni,
-     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, she0, shi0, shn0)
+     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
+     &  rza, rz2, st_ext, she0, shi0, shn0)
       use b2mod_types
       use b2mod_tallies
-      use b2mod_anomalous_transport
+!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use B2us_plasma
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
 !WG_TODO     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
 !WG_TODO     &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
 !WG_TODO     &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
-!WG_TODO      use b2mod_external                                              !srv 05.07.17
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -30,13 +31,15 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) :: BoRiS,
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
-     &  lnlam(nCv) 
+     &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv)
       real (kind=R8) ::
      *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
-     *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1)
+     *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
+     *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
@@ -79,7 +82,7 @@
      3  zeff(nCv), zmff(nCv), ce1(nCv),                                 !srv 13.01.17 05.07.17 {
      4  ce2(nCv), cimp1(nCv), cimp2(nCv),
      5  zetap(nCv), zetae(nCv),
-     6  gti(nFc), gte(nFc), ne2(nCv),
+     6  gti(nCv), gte(nCv), ne2(nCv),
      7  smbch(nCv,0:3), smbtf(nCv,0:3),
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
@@ -387,8 +390,6 @@
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(switch%b2sigp_style.eq.2) then                                      !srv 05.07.17
-       call xerrab('b2sihs_ -- b2sigp_style=2 not yet supported')
-#ifdef WG_TODO
        call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
        call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
        call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
@@ -399,7 +400,7 @@
          cimp2(iCv)=fce2(zmff(iCv))
        enddo                                                          !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
-       call b2tlnl (nCv, switch, swtich%icase_ii, te, ti, ne, lnlam)
+       call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
@@ -408,17 +409,17 @@
        zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
        zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte at cell faces
-       call grad_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
-       call grad_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
        shifr = 0.0_R8
        shefr = 0.0_R8
        do is = 0,ns-1
          if(.not. is_neutral(is)) then
-           call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,
-     &      ue, te, ti, ni, ne, ne2,
-     &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2,           !srv 05.07.17
-     &      zeff, smbfrea, smbfria, smbtfea, smbtfia,                 !srv 05.07.17
-     &      smbch, smbtf)
+           call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
+     &      mpg, na, ua, ue, te, ti, ni, ne, ne2, rza, rz2, po,
+     &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff, 
+     &      f_luc_sg, alfx_c, sigx_c, st_ext,
+     &      smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
            wrks =
      &      (smbfrea(:,0)+
      &       smbfrea(:,1)*ua(:,is)+
@@ -443,10 +444,10 @@
        enddo
        shefr(:,0) =  ue*shefr(:,0)
 
-       b2joule=0.0_R8
-       b2sihs_joule=0.0_R8
-       b2fraa=0.0_R8
-       b2sihs_fraa=0.0_R8
+!WG_TODO       b2joule=0.0_R8
+!WG_TODO       b2sihs_joule=0.0_R8
+!WG_TODO       b2fraa=0.0_R8
+!WG_TODO       b2sihs_fraa=0.0_R8
        do iCv = 1, mpg%nCi
          if(mpg%cvReg(iCv).ne.0) then
            t0 = switch%b2sihs_phm3*geo%cvVol(iCv)*shefr(iCv,0)
@@ -455,8 +456,8 @@
            shefr(iCv,3) =
      &      (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
      &      (ne(iCv)*te(iCv))
-           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
-           b2sihs_joule(iCv)=t0
+!WG_TODO           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
+!WG_TODO           b2sihs_joule(iCv)=t0
            t0 = -switch%b2sihs_phm4*(1.0_R8-BoRiS)*geo%cvVol(iCv)*
      &           shifr(iCv,0)
 !          shifr(iCv,0) = t0
@@ -466,11 +467,10 @@
            shifr(iCv,3) =
      &      (min(0.0e0_R8,t0)-switch%b2sihs__rf4*abs(t0))/
      &      (ni(iCv,0)*ti(iCv))
-           b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
-           b2sihs_fraa(iCv)=t0
+!WG_TODO           b2fraa(mpg%cvReg(iCv))=b2fraa(mpg%cvReg(iCv))+t0
+!WG_TODO           b2sihs_fraa(iCv)=t0
          endif
        enddo
-#endif
       endif                                                           !srv 05.07.17
 
 *   ..contribution from electron-ion friction
@@ -515,32 +515,28 @@
 !WG_TODO      endif
       call b2saxpy (nCv*4, 1.0e0_R8, shefr, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from atom-atom friction
-#ifdef WG_TODO
       if(switch%b2sigp_style.ne.2) then                                      !srv 05.07.17
-       b2fraa=0.0_R8
-       b2sihs_fraa=0.0_R8
+!WG_TODO       b2fraa=0.0_R8
+!WG_TODO       b2sihs_fraa=0.0_R8
        do isb = 0, ns-1
         do is = isb+1, ns-1
 *     ..consider distinct cases
          if (.not.is_neutral(is).and..not.is_neutral(isb)) then
 *      ..contribution from friction between charged species in case of small impurity amount;
 *       in case of arbitrary impurity amount see above for b2sigp_style.eq.2
-          coef = phm4/ctaup*mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))  !srv 01.07.09 11.01.12
-          do iy = 0, ny-1
-           do ix = 0, nx-1
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-             t0 = rz2(ix,iy,isb)*rz2(ix,iy,is)*
-     &          (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*            !srv 11.01.12
-     &           na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
-     &           ((ua(ix,iy,is)-ua(ix,iy,isb))**2)                    !srv 22.07.05
-             shifr(ix,iy,0) = shifr(ix,iy,0)+
+          coef = switch%b2sihs_phm4/ctaup*mp*
+     &      sqrt(am(isb)*am(is)/(am(isb)+am(is)))  !srv 01.07.09 11.01.12
+          do iCv = 1,mpg%nCi
+            t0 = rz2(iCv,isb)*rz2(iCv,is)*
+     &          (coef*lnlam(iCv)/4.0_R8)*(1.0_R8-BoRiS)*            !srv 11.01.12
+     &           na(iCv,is)*na(iCv,isb)*vti32(iCv)*
+     &           ((ua(iCv,is)-ua(iCv,isb))**2)                    !srv 22.07.05
+            shifr(iCv,0) = shifr(iCv,0)+
      &                        (2.5e0_R8+switch%b2sihs__rf4)*t0
-             shifr(ix,iy,3) = shifr(ix,iy,3)-
-     &        (1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
-             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
-             b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
-            endif                                                     !srv 26.11.02
-           enddo
+            shifr(iCv,3) = shifr(iCv,3)-
+     &        (1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
+!WG_TODO            b2fraa(region(iCv,0))=b2fraa(region(iCv,0))+t0
+!WG_TODO            b2sihs_fraa(iCv)=b2sihs_fraa(iCv)+t0
           enddo
          else
 *      ..contribution from friction involving neutral species
@@ -555,7 +551,6 @@
 !WG_TODO        b2sihs_fraa0to3 = shifr
 !WG_TODO      endif
       call b2saxpy (nCv*4, 1.0e0_R8, shifr, 1, shi0, 1)                !srv 11.09.09
-#endif
 !WG_TODO      b2str=0.0_R8
 !WG_TODO      b2sihs_str=0.0_R8
       b2wrong1=0.0_R8

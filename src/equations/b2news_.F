@@ -658,7 +658,7 @@ c      with diamagnetic drift part                                       !srv 13
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, dv%facdrift, 
      &      dv%fac_ExB, dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
       call b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg,                 !srv 29.01.20
-     &      pl, dv, co, .true.)                                          !djm Jan2017
+     &      pl, dv, co, rt, st_ext, .true.)                              !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg, pl,      !srv 13.10.06
      &  dv, co, rt, .true.)                                              !djm Jan2017
