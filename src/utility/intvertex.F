@@ -25,7 +25,7 @@ c
       integer iVx,iCv
       real (kind=R8) :: volsum
 
-      vertex=0.0_R8
+      vertex = 0.0_R8
       do iVx = 1, nVx
         volsum = 0.0_R8
         do iCv = 1,mpg%vxCvP(iVx,2)
@@ -39,3 +39,31 @@ c
 
       return
       end
+
+      function intvertex_s(iVx,nCv,nVx,mpg,vxvol,centre) result(vertex)
+      !same as intevertex, but interpolation to a single vertex iVx
+      use b2mod_types
+      use b2us_map
+      implicit none
+      integer nCv,nVx,iVx
+      type (mapping), intent (in) :: mpg
+      real (kind=R8), intent(in) ::
+     *   vxvol(mpg%nVmxCv),centre(nCv)
+      real (kind=R8) :: vertex
+  
+      integer iCv
+      real (kind=R8) :: volsum
+
+      vertex = 0.0_R8
+      volsum = 0.0_R8
+      do iCv = 1,mpg%vxCvP(iVx,2)
+        volsum = volsum + 1/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+        vertex = vertex + 
+     &    centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
+     &    vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+      enddo
+      vertex = vertex/volsum
+
+      return
+      end function intvertex_s
+
