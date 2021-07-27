@@ -181,7 +181,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
           elseif (switch%tn_style.eq.1) then
 
             sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
 
 *           shidt(iCv,1) = (unchanged)
 *           shidt(iCv,2) = (otherwise unchanged)
