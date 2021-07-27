@@ -69,8 +69,8 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, is, js, ib, ibc, ib0, ibc0,
-     &  ireg, coreregno, coreregn2,
+      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, js, ib, ibc, ib0,
+     &  ibc0, ireg, coreregno, coreregn2,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -142,7 +142,7 @@
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
-     *  machsfr, expu2, sy, bcint, syhz, sheath_g                        !srv 24.08.08
+     *  machsfr, expu2, sy, bcint, syhz, sheath_g, intvertex_s           !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps, expu2
@@ -554,15 +554,19 @@ cwdk  now need to recompute full diamagnetic component for ud
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-cwdk      Note: specifies the gradient in the outward normal direction
-cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%na(:,is))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%na(:,is))
             srw%sna0(iCv1,0,is)=  VBIG*geo%fcS(iFc)*
-     .         (conpar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .          pl%na(iCv2,is))
+     .         (conpar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%na(iCv2,is))
             srw%sna0(iCv1,1,is)= -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
@@ -2853,16 +2857,20 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .       'parallel velocity gradient ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-cwdk      Note: specifies the gradient in the outward normal direction
-cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             srw%smo0(iCv1,0,is)=
      .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
-     .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .          pl%ua(iCv2,is))
+     .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ua(iCv2,is))
             srw%smo0(iCv1,1,is)=
      .        -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
@@ -3710,15 +3718,19 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .     'electron temperature gradient ',ENEPAR(IB,1),
      1     ' on',BCCHAR(IB),boundary_location(ib)
         endif
-cwdk    Note: specifies the gradient in the outward normal direction
-cwdk    Tmp: in "connector" direction - ok for orthogonal grids
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%te)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%te)
           srw%she0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enepar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .        pl%te(iCv2))
+     .       (EV*enepar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%te(iCv2))
           srw%she0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
@@ -5695,15 +5707,19 @@ cwdk     * need to correct this BC for hybrid scheme
      .     'ion temperature gradient ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
-cwdk    Note: specifies the gradient in the outward normal direction
-cwdk    Tmp: in "connector" direction - ok for orthogonal grids
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ti)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ti)
           srw%shi0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enipar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .        pl%ti(iCv2))
+     .       (EV*enipar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ti(iCv2))
           srw%shi0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
@@ -8148,8 +8164,8 @@ cwdk     * need to correct this BC for hybrid scheme
      1     BCCHAR(IB),boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
           srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*potpar(iB,1)
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
         enddo
@@ -8162,16 +8178,19 @@ cwdk     * need to correct this BC for hybrid scheme
      .     'potential gradient ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
-cwdk    Note: specifies the gradient in the outward normal direction
-cwdk    Tmp: in "connector" direction - ok for orthogonal grids
-cwdk    Todo: check sign convention; do we want to specify gradient in
-cwdk          normal/radial/poloidal direction ???
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
-     .      (potpar(ib,1)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2))+pl%po(iCv2))
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%po)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%po)
+          srw%sch0(iCv1,0)=  PBIG*geo%fcS(iFc)*
+     .       (potpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%po(iCv2))
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
@@ -9352,9 +9371,15 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%kt)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%kt)
           srw%skt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .        pl%kt(iCv2))
+     .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%kt(iCv2))
           srw%skt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
@@ -9733,15 +9758,19 @@ cwdk    Todo: corrections for BCCON.ne.14
      .     'turb. enstr. gradient ',ENZPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
-cwdk    Note: specifies the gradient in the outward normal direction
-cwdk    Tmp: in "connector" direction - ok for orthogonal grids
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%zt)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%zt)
           srw%szt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
-     .        pl%zt(iCv2))
+     .       (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%zt(iCv2))
           srw%szt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
