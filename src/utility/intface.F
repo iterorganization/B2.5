@@ -32,6 +32,7 @@ c
       end subroutine intface
 c
       function intface_s(iFc,nCv,nFc,fcCv,fcVol,centre) result(face)
+      !same as intface, but interpolation to a single face iFc
       use b2mod_types
       implicit none
 
