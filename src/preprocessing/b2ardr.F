@@ -320,20 +320,20 @@
      &  'faulty argument ninp, nout')
 *   ..obtain version numbers
       call cfverr (ninp(3), b2fparam_version)
-      call cfverr (ninp(4), b2fgmtry_version)
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(4), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
+!wdk      call cfverr (ninp(4), b2fgmtry_version)
+!wdk*   ..obtain nx, ny from geometry file
+!wdk      call cfruin (ninp(4), 2, idum, 'nx,ny')
+!wdk      nx = idum(0)
+!wdk      ny = idum(1)
+!wdk      call xertst (0.le.nx.and.0.le.ny,
+!wdk     &  'faulty input nx, ny from geometry file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(3), 1, idum, 'ns')
       ns_pardf = idum(0)
       call xertst (1.le.ns_pardf, 
      &  'faulty input ns from parameters file')
-*   ..read header for geometry
-      call cfruch (ninp(4), 120, lblgm, 'label')
+!wdk*   ..read header for geometry
+!wdk      call cfruch (ninp(4), 120, lblgm, 'label')
 *   ..obtain range and species data
       call b2arin (ninp(0), nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
