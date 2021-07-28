@@ -12,9 +12,6 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
 !WG_TODO     2          balance_netcdf
-!WG_TODO      use b2mod_plasma
-!WG_TODO     & , only : fmo, fchanml                                           !srv 25.09.17
-!WG_TODO: kt_neo (b2mod_transport)
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -24,7 +21,6 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
-!WG_TODO      use b2mod_external
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -53,7 +49,7 @@
       type (B2Derivatives), intent (inout) :: dv
 *   ..output arguments (unspecified on entry)
       integer ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1), fmo(nFc,0:1,0:ns-1)
+!WG_TODO     &  smof(nCv,0:3,0:ns-1)
 !WG_TODO_TMP these sources used to be in b2mod_sources
 !            => add again to B2Source?
       real (kind=R8) ::
@@ -90,7 +86,6 @@
 
 *   ..local variables
       integer iCv, iFc, is, ireg, k
-c      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer :: vcount(0:ns-1)
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
@@ -107,8 +102,7 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
      *  wrkv(nVx), aa(mpg%nCmxNv),
      4  smb(nCv,0:3), flcb(nFc,0:1),
      5  cvcb(nFc,0:1), ro(nCv), rz(nCv),
-     6  pr(nCv), pz(nCv), rob1(nCv), pb1(nCv), !WG_TODO ne2(nCv),
-!WG_TODO     7  ni(nCv,0:1), ne(nCv),
+     6  pr(nCv), pz(nCv), rob1(nCv), pb1(nCv),
      8  ehxp(nCv), smt(nCv,0:3), cst,                  !srv 17.01.14
      9  flct(nFc,0:1), wrk1(nCv), wrks(nCv),
      1  smqdu(nCv), wrk0(nCv), wrk2(nCv),
@@ -118,8 +112,7 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
      5  cimp1(nCv), cimp2(nCv),
      6  zetap(nCv), zetae(nCv),
      7  gti(nCv), gte(nCv), gtn(nCv),                   !srv 13.01.17 }
-     8  wrkf0(nFc), wrkf1(nFc),
-     9  kt_neo(nCv) !WG_TODO: kt_neo eventually will come through transport...
+     8  wrkf0(nFc), wrkf1(nFc)
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)             !srv 13.01.17 05.07.17
@@ -144,7 +137,6 @@ c      integer, save :: ion_vlct_restrict = 0                           !srv 17.
       call subini ('b2npmo')
 *   ..set internal parameters on first call
       if (ncall_b2npmo.eq.0) then
-c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
         write(*,*) 'nsmin, nsmax = ', switch%nsmin, switch%nsmax
         main_lightest = .true.
         do is = 0, ns-1
@@ -302,31 +294,30 @@ c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.
 
 *    ..compute additional viscosity term
        call b2siav (nCv, nFc, nVx, ns, is, switch, geo, mpg, am(is)*mp,
-     &   pl%ua(:,is), dv%wadia(:,:,is), dv%vaecrb(:,:,is), pl%te, pl%ti,
-     &   pl%na(:,is), pl%po, dv%ni(:,1), dv%ne2, dv%lnlam, co%chci,
-     &   co%cvsa(:,:,is), co%cvsa_cl(:,:,is),  co%cvsahz(:,:,is),
-     &   co%cvsahz_cl(:,:,is), smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)
-*    ..compute centrifugal force term                                  !srv 09.07.01
-       call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,   !srv 09.07.01 28.01.02 22.07.05
+     &   pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1), dv%ne2,
+     &   dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is), smbvh, smbvv,
+     &   co%kt_neo, wrk0, wrk1, wrk2)
+*    ..compute centrifugal force term                                   !srv 09.07.01
+       call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
      *   pl%na(:,is), pl%ua(:,is), smbcf, smcf(:,is), ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
 *    ..compute total parallel momentum source
        call b2scopy (nCv*4, sr%smo(:,:,is), 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, sr%smq(:,:,is), 1, smb, 1)
-!WG_TODO       b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)                 !srv 11.09.09 {
+!WG_TODO       b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)                !srv 11.09.09 {
        call b2saxpy (nCv*4, 1.0_R8, smbch, 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
 !WG_TODO       b2npmo_smag(:,:,is)=smbgp(:,:)
        call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
-!WG_TODO       b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)                 !srv 03.07.08 {
+!WG_TODO       b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)                !srv 03.07.08 {
        call b2saxpy (nCv*4, 1.0_R8, smbvh,  1, smb, 1)
-       call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)
+       call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
-       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)             !srv ???
-*    ..save final source for species (is)                              !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                              !srv 10.11.02
+       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv ???
+*    ..save final source for species (is)                               !srv 10.11.02
+!WG_TODO       smof(:,:,is) = smb                                               !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
 !WG_TODO       if (balance_netcdf.ne.0) then
@@ -511,30 +502,25 @@ c     ..compare 9-pt stencil matrices
        enddo
       endif
 
-#ifdef WG_TODO
       vcount = 0
-      if( ion_vlct_restrict .ne. 0 ) then                              !iyv 19.07.12 { !srv 17.01.14
-        do iy = -1,ny
-          do ix = -1,nx
-            do is = 0, ns-1
-              if (.not.is_neutral(is)) then
-                cst=sqrt(pz(ix,iy)/rz(ix,iy))                          !iyv 03.02.14
-!                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
-!     *                                              ( am(is)*mp ))
-                if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then
-                  vcount(is) = vcount(is) + 1
-                  if (switch%vlct_diagno.ge.2) then
-                    write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .               'Parallel velocity restriction applied ',
-     .               'to species ',is,' in cell (',ix,',',iy,'):'
-                    write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .               'Mach 3: ',3.0_R8*cst,' Ua:',ua(ix,iy,is)
-                  end if
-                  ua(ix,iy,is)= sign(3.0_R8*cst,ua(ix,iy,is))          !iyv 03.02.14
-                endif
+      if( switch%ion_vlct_restrict .ne. 0 ) then                        !iyv 19.07.12 { !srv 17.01.14
+        do is = 0, ns-1
+          if (.not.is_neutral(is)) then
+            do iCv = 1, nCv
+              cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
+              if( abs(pl%ua(iCv,is)).gt.3.0_R8*cst ) then
+                vcount(is) = vcount(is) + 1
+                if (switch%vlct_diagno.ge.2) then
+                  write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .             'Parallel velocity restriction applied ',
+     .             'to species ',is,' in cell (',iCv,'):'
+                  write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .             'Mach 3: ',3.0_R8*cst,' Ua:',pl%ua(iCv,is)
+                end if
+                pl%ua(iCv,is)= sign(3.0_R8*cst,pl%ua(iCv,is))           !iyv 03.02.14
               endif
             enddo
-          enddo
+          endif
         enddo
         if (switch%vlct_diagno.ge.1) then
           do is = 0, ns-1
@@ -552,7 +538,7 @@ c     ..compare 9-pt stencil matrices
           end do
         endif
       endif
-#endif
+
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then !srv 12.07.02 {

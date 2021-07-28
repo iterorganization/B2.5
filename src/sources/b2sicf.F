@@ -66,8 +66,7 @@
       smbcf = 0.0e0_R8
       ctcf = 0.0e0_R8                                                    !srv 06.04.07
       if (switch%b2sicf_style.eq.0) then
-        call grad_p(nCv,nFc,nVx,1,geo,mpg,geo%cvHz,geo%vxHz,wrkf)
-        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
+        call gradc_p(nCv,nFc,nVx,1,geo,mpg,geo%cvHz,geo%vxHz,wrk0)
 
 *   .. compute smbcf
         do iCv = 1, mpg%nCi

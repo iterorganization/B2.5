@@ -8695,7 +8695,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &      dv%fchin(iFc,0)     + dv%fchin(iFc,1)     +
      &      dv%fchvispar(iFc,0) + dv%fchvispar(iFc,1) +
      &      dv%fchvisq(iFc,0)   + dv%fchvisq(iFc,1)   +
-     &      dv%fchviskt(iFc,0)   + dv%fchviskt(iFc,1)   +
+     &      dv%fchviskt(iFc,0)  + dv%fchviskt(iFc,1)   +
      &      dv%fchvisper(iFc,0) + dv%fchvisper(iFc,1) +
      &      dv%fchinert(iFc,0)  + dv%fchinert(iFc,1))
         enddo                                                           !srv 03.03.15 }
