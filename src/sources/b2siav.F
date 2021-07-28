@@ -2,17 +2,15 @@
 *.specification
 
       subroutine b2siav (nCv, nFc, nVx, ns, isb, switch, geo, mpg, mb,
-     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
-     & chci, cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
-     & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     & ub, te, ti, nb, ni, ne2, lnlam, hcix_c, cvsbhz_cl, smbvh, smbvv,
+     & kt_neo, wrk0, wrk1, wrk2)                                        !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
-!WG_TODO      use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
-!WG_TODO      use b2mod_balance                                               !djm Jan2017
+!WG_TODO      use b2mod_balance                                                 !djm Jan2017
 !WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -25,14 +23,10 @@
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
       real (kind=R8) ::
-     & mb, lnlam(nCv),                       !srv 01.07.09
-     2 ub(nCv), wbdia(nFc,0:1), 
-     & vbecrb(nFc,0:1),
-     & te(nCv), ti(nCv), nb(nCv),
-     & po(nCv), ni(nCv), ne2(nCv),
-     & chci(nFc,0:1), cvsb(nFc,0:1),                  !srv 23.07.99
-     & cvsb_cl(nFc,0:1), cvsbhz(nFc,0:1),             !srv 04.10.99 09.01.01
-     & cvsbhz_cl(nFc,0:1)                                     !srv 31.07.02
+     & mb, lnlam(nCv),                                                  !srv 01.07.09
+     & ub(nCv),
+     & te(nCv), ti(nCv), nb(nCv), ni(nCv), ne2(nCv),
+     & hcix_c(nCv), cvsbhz_cl(nFc,0:1)                                  !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smbvh(nCv,0:3), smbvv(nCv,0:3),
@@ -54,29 +48,26 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, k
-      integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
-      integer, save :: iout = 0                                     !srv 17.06.02
-      character chns*3, chk*1                                       !srv 17.06.02
+      integer ic, iCv, iFc, iFt, k
+      integer, save :: qstyle = 0, lluciani = 3                         !lk 03.12.09
+      integer, save :: iout = 0                                         !srv 17.06.02
+      integer, save :: nsmooth = 2
+      character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
-     *     t0, ft                                                   !srv 16.10.17
+     *     t0, ft                                                       !srv 16.10.17
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
-     &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
+     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,             !srv 28.03.06 !srv 19.10.08
+     &     cvsa_mltpl = 1.0e0_R8                                        !iyv 06.12.13
       real (kind=R8) ::
-     &     wrks(nCv),
-!WG_TODO     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
-!WG_TODO     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
-     &   tt0(mpg%nFt), tt1(mpg%nFt), bbaverage2(mpg%nFt),                 !lk 23.05.06 05.07.07 {
-     &   dti(nCv)
-!WG_TODO      real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
-!WG_TODO     &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-!WG_TODO     &                , nu1(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
-      integer mintopcut                                             !lk 23.05.06 05.07.07 }
+     &     wrks(nCv), wrkf(nFc), wrkv(nVx), wght(nFc,2),
+     *     tauia(nCv,0:ns-1), qip0(nCv),                                !srv 23.07.99
+     *     qip1(nCv), qipgen(nCv),                                      !srv 23.07.99 19.01.05
+     &     tt0(mpg%nFt), tt1(mpg%nFt), bbaverage2(mpg%nFt),             !lk 23.05.06 05.07.07 {
+     &     tauia1(nCv), alpha1(nCv), nu1(nCv), s2,                      !lk !iyv 02.12.13
+     &     gti(nCv,2)
+      integer mintopcut                                                 !lk 23.05.06 05.07.07 }
 *   ..procedures
       intrinsic abs, sqrt
-!WG_TODO      real (kind=R8) :: hy1
-!WG_TODO      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -85,26 +76,26 @@
       call subini ('b2siav')
 *   ..set internal parameters on first call
       if (ncall_b2siav.eq.0) then
-       call ipgetr ('b2siav_addvis', addvis)                        !srv 23.07.99
-       call ipgetr ('b2siav_addvis1', addvis1)                      !srv 04.10.99
-       call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
-       call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
-       call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
-       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
+       call ipgetr ('b2siav_addvis', addvis)                            !srv 23.07.99
+       call ipgetr ('b2siav_addvis1', addvis1)                          !srv 04.10.99
+       call ipgetr ('b2siav_cqip1', cqip1)                              !srv 28.03.06
+       call ipgeti ('b2siav_iout', iout)                                !lk 23.05.06 05.07.07
+       call ipgeti ('b2siav_style_qip', qstyle)                         !lk 23.05.06 05.07.07
+       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	                !iyv 06.12.13
       endif
-      ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-!WG_TODO      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
-      smbvh  = 0.0_R8
+      ft = 4.0e0_R8/3.0e0_R8                                            !srv 16.10.17
+      s2 = sqrt(2.0_R8)                                                 !iyv 02.12.13
+      smbvh = 0.0_R8
       smbvv = 0.0_R8
 
-      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
-          call xerrab ('addvis not yet available for WG')
-#ifdef WG_TODO
-          call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)           !srv 01.07.09
-*   ..compute radial gradients of ti
-          call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
-          call grad(nCv, nFc, nVx, 0, geo, mpg, ti, wrkVx, dti)
+      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then           !srv 26.10.08
+
+        if (addvis.ne.0.0_R8) then                                      !srv 19.01.05 28.03.06 {
+
+          call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)             !srv 01.07.09
+
+*       ..compute radial gradients of ti in cell centers
+          call gradc(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
 
 * ..calculate the parallel heat flux of ions in the center of the cell
 
@@ -123,210 +114,134 @@
            endif
           enddo
 
-
           qip0 = 0.0e0_R8
 
           if (qstyle .eq. 0) then
-            qip0a = 0.0e0_R8
-            qip0b = 0.0e0_R8
 
-            do iy = 0,mintopcut-1    ! for inner surfaces
-              do ix = 0,nx
-                if(on_closed_surface(ix,iy)) then
-                  qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
-     &             /bb(ix,iy,0)/bbaverage2(iy))
-     &             *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy)
-                endif
+            do iFt = 1, mpg%nFt 
+             if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+              do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+               iCv = mpg%ftCv(ic)
+               qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
+     &           (geo%cvBb(iCv,0)*bbaverage2(iFt))*(ni(iCv)*ti(iCv)/qe)*
+     &           gti(iCv,1)
               enddo
+             endif
             enddo
 
-            do iy = 0,mintopcut-1
-              do ix = -1,nx
-                if(on_closed_surface(ix,iy)) then
-                  if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
-     &              +qip0a(leftix(ix,iy),leftiy(ix,iy))
-     &              +qip0a(rightix(ix,iy),rightiy(ix,iy)))
-                endif
-              enddo
-            enddo
-
-            do iy = 0,mintopcut-1
-              do ix = -1,nx
-                if(on_closed_surface(ix,iy)) then
-                  if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
-     &              +qip0b(leftix(ix,iy),leftiy(ix,iy))
-     &              +qip0b(rightix(ix,iy),rightiy(ix,iy)))
-                endif
-              enddo
+            !smoothing: interpolate to faces and back to cell centers
+            wght = 1.0_R8
+            do k = 1, nsmooth
+             call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
+             call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
             enddo
 
           endif
 
           if (qstyle.eq.1) then
 
-	    wrk0 = 0.0e0_R8
-            do iy=0,ny-1                                                 
-	      do ix=-1,nx                                                 
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02  
-	          wrk0(ix,iy)=-chci(ix,iy,0,0)
-     &             *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
-                endif
+            do iFt = 1, mpg%nFt 
+             if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+              do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+               iCv = mpg%ftCv(ic)
+               qip0(iCv) = -hcix_c(iCv)*gti(iCv,0)*geo%cvBb(iCv,3)/
+     &           geo%cvBb(iCv,0) - 2.5e0_R8*geo%cvBb(iCv,2)/
+     &           (geo%cvBb(iCv,0)*geo%cvBb(iCv,3))*(ni(iCv)*ti(iCv)/qe)*
+     &           gti(iCv,1)
               enddo
-            enddo
-
-            do iy=-1,ny
-              do ix=-1,nx-1
-                if(on_closed_surface(ix,iy)) then
-                  if(rightix(ix,iy).ne.nx+1 .and.
-     &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
-     >             qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
-     &               wrk0(rightix(ix,iy),rightiy(ix,iy)))
-     &               *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &               -2.5e0_R8*bb(ix,iy,2)
-     &               /bb(ix,iy,0)/bb(ix,iy,3)
-     &               *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy)
-                endif
-              enddo
+             endif
             enddo
 
           endif
 
           tauia1 = 0.0e0_R8
-          nu1 = 0.0e0_R8
+          nu1    = 0.0e0_R8
           alpha1 = 0.0e0_R8
-          kt_neo = 0.0e0_R8                                         !iyv 02.12.13
-          do iy = 0,mintopcut-1
-            do ix=0,nx
-              if(on_closed_surface(ix,iy)) then
+          kt_neo = 0.0e0_R8                                             !iyv 02.12.13
+          do iFt = 1, mpg%nFt 
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+              do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+                iCv = mpg%ftCv(ic)
                 if (lluciani.eq.3) then
-                  tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
-     &             (1.0e0_R8+15.12e16_R8/conn(iy)*
-     &             (ti(ix,iy)/ev)**2/ne2(ix,iy))
-     &             /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     &             /conn(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
+                  tauia1(iCv) = cvsa_mltpl*tauia(iCv,isb)/              !lk 20.11.07 { iyv 06.12.13
+     &             (1.0e0_R8+15.12e16_R8/geo%ftConn(iFt)*
+     &             (ti(iCv)/ev)**2/ne2(iCv))
+     &             /(1.0e0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5e0_R8
+     &             /geo%ftConn(iFt)*(ti(iCv)/ev)**2/ne2(iCv))
                 elseif (lluciani.eq.1) then
-                  tauia1(ix,iy) = tauia(ix,iy,isb)/
-     1             (1.0_R8+7.5e16_R8/conn(iy)*
-     2             (ti(ix,iy)/ev)**2/ne2(ix,iy))
+                  tauia1(iCv) = tauia(iCv,isb)/
+     1             (1.0_R8+7.5e16_R8/geo%ftConn(iFt)*
+     2             (ti(iCv)/ev)**2/ne2(iCv))
                 else
-                  tauia1(ix,iy) = tauia(ix,iy,isb)
+                  tauia1(iCv) = tauia(iCv,isb)
                 endif
-                nu1(ix,iy) = conn(iy)/(tauia(ix,iy,isb)
-     &           *sqrt(ti(ix,iy)/(mp*am(isb)))
-     &           *2.0e0_R8*pi*sqrt(eps1(iy)**3))
-                alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))+
-     &           2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy))+
-     &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
-                kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)         !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(ix,iy)*s2)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
-     &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
+                nu1(iCv) = geo%ftConn(iFt)/(tauia(iCv,isb)
+     &           *sqrt(ti(iCv)/(mp*am(isb)))
+     &           *2.0e0_R8*pi*sqrt(geo%ftEps(iFt)**3))
+                alpha1(iCv) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv))+
+     &           2.7e0_R8*nu1(iCv)**2*geo%ftEps1(iFt)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu1(iCv))+
+     &           nu1(iCv)**2*geo%ftEps1(iFt)**3)-1.0e0_R8)*0.533e0_R8   !lk 20.11.07 }
+                kt_neo(iCv) =
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv)*s2)               !iyv 02.12.13
+     &           +2.7e0_R8*(nu1(iCv)*s2)**2*geo%ftEps1(iFt)**3)/
+     &           (1.0e0_R8+0.7e0_R8*sqrt(nu1(iCv)*s2)+
+     &           (nu1(iCv)*s2)**2*geo%ftEps(iFt)**3))
               endif
             enddo
           enddo
 
-          qip1 = 0.0e0_R8
-          do iy=0,ny-1
-            do ix=0,nx-1
-              qip1(ix,iy)=cqip1*
-     &         ni(ix,iy)*ti(ix,iy)*sqrt(te(ix,iy)+ti(ix,iy))
-     &                                /sqrt(am(isb)*mp)
-            enddo
-          enddo
+*       ..compute qip1
+          qip1=cqip1*ni*ti*sqrt(te+ti)/sqrt(am(isb)*mp)
 
-          qipgen = 0.0e0_R8
-          do iy=0,ny-1
-            do ix=0,nx-1
-              qipgen(ix,iy)=qip1(ix,iy)*datan(qip0(ix,iy)/qip1(ix,iy))
-     &                   *sqrt(bb(ix,iy,3))
-            enddo
-          enddo
+*       ..compute qipgen
+          qipgen=qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))
 
-* ..calculate the difference from parallel heat flux of ion
-*   at the face of cell
+*       ..gradient qipgen in cell centers   
+          !wdk modified computation compared to structured code to 
+          !wdk facilitate implementation on unstructured grids
+          call gradc_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrk0)
+          wrk0 = wrk0*geo%cvBb(:,0)/geo%cvBb(:,3)**3*tauia1*alpha1
+          
+*       ..finally calculate the r.h.s. contribution to the parallel balance
+*         corresponding to parallel viscosity connected with heat flow
+          call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
+          smbvh(:,0) = addvis*geo%cvVol*geo%cvBb(:,0)*sqrt(geo%cvBb(:,3))*
+     &      geo%cvHz*wrk1
 
-          wrk1=0.0e0_R8
-          do iy=0,ny-1
-            do ix=-1,nx
-              if(on_closed_surface(ix,iy)) then
-                if(leftix(ix,iy).ne.-2) then
-                  wrk1(ix,iy) = 2.0e0_R8*(qipgen(ix,iy) -
-     &             qipgen(leftix(ix,iy),leftiy(ix,iy)))*
-     &             (bb(ix,iy,0)/bb(ix,iy,3)**3
-     &             *tauia1(ix,iy)*alpha1(ix,iy)
-     &             *hx(leftix(ix,iy),leftiy(ix,iy))+
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0)/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),3)**3
-     &             *tauia1(leftix(ix,iy),leftiy(ix,iy))
-     &             *alpha1(leftix(ix,iy),leftiy(ix,iy))
-     &             *hx(ix,iy))/
-     &             (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
-                endif
-              endif
-            enddo
-          enddo
+*       ..zero out in guard cells
+          smbvh(mpg%nCi+1:nCv,0) = 0.0_R8
 
-* finally calculate the r.h.s. contribution to the parallel balance
-* corresponding to parallel viscosity connected with heat flow
-          do iy=0,ny-1
-            do ix=0,nx-1
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                t0=addvis*vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
-     &            sqrt(bb(ix,iy,3))*hz(ix,iy)
-                smbvh(ix,iy,0) = smbvh(ix,iy,0)
-     &            +t0*(wrk1(rightix(ix,iy),rightiy(ix,iy))-wrk1(ix,iy))
-              endif
-            enddo
-          enddo
-#endif
-        endif                                                       !lk 23.05.06 05.07.07
+        endif                                                           !lk 23.05.06 05.07.07
 
-        if (addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
-          call xerrab ('addvis not yet available for WG')
-#ifdef WG_TODO
+        if (addvis1.ne.0.0_R8) then                                     !srv 19.01.05 30.01.10
 
-          wrk0=0
-          wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
-          wrk1 = log(hz*wrk2)
-          do iy = 0,ny-1                                            !srv 01.07.05 {
-            do ix = 0,nx
-              if(leftix(ix,iy).eq.-2) then
-                wrk0(ix,iy)=0.0e0_R8
-              else
-                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0,0)/       !srv 16.10.17
-     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
-     &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
-              endif
-            enddo
-          enddo
+*       ..prepare wrk arrays
+          wrk2 = sqrt(geo%cvBb(:,3))                                    ! wrk2 is used below twice
+          wrk1 = log(geo%cvHz*wrk2)
 
-          do iy= 0,ny-1
-            do ix= 0,nx-1
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >         then
-                t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
-     *             *wrk2(ix,iy)                                     !srv 01.07.05 }
-                if (t0.gt.0.0e0) then
-                  smbvv(ix,iy,0)=t0*ub(ix,iy)
-                else
-                  smbvv(ix,iy,1)=t0
-                endif
-              else
-                smbvv(ix,iy,0) = 0.0e0_R8
-                smbvv(ix,iy,1) = 0.0e0_R8
-              endif
-            enddo
-          enddo                                                     !srv 19.01.05 }
-#endif
+*       ..poloidal differences of wrk1 on cell faces
+          wrkv = log(geo%vxHz*sqrt(geo%vxBb(:,3)))
+          call diff_p(nCv, nFc, nVx, 1, geo, mpg, wrk1, wrkv, wrkf)
+
+*       ..compute flow and its divergence
+          wrkf = wrkf*ft*cvsbhz_cl(:,0)/sqrt(geo%fcBb(:,3))
+          call div0(nCv, nFc, mpg, wrkf, wrk0)
+
+*       ..add to r.h.s. source
+          do iCv = 1, mpg%nCi
+            t0 = wrk0(iCv)*wrk2(iCv)                                    !srv 01.07.05 }
+            if (t0.gt.0.0e0_R8) then
+              smbvv(iCv,0) = t0*ub(iCv)
+            else
+              smbvv(iCv,1) = t0
+            endif
+          enddo                                                         !srv 19.01.05 }
+
         endif
-      endif                                                         !srv 26.10.08
+      endif                                                             !srv 26.10.08
 
-#ifdef WG_TODO
-      if (iout.ne.0) then                                           !srv 17.06.02 {
+      if (iout.ne.0) then                                               !srv 17.06.02 {
         call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
         call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
         call my_out_us(70,nCv,0,tauia1,'b2siav_tauia1')
@@ -336,16 +251,16 @@
           call my_out_us(70,nCv,0,smbvv(1,k),'b2siav_smovv'//chk//chns)
           call my_out_us(70,nCv,0,smbvh(1,k),'b2siav_smovh'//chk//chns)
         enddo
-        wrks=smbvv(:,0)+smbvv(:,1)*ub(:)+
-     &       smbvv(:,2)*nb(:)*mb+smbvv(:,3)*ub(:)*nb(:)*mb
+        wrks=smbvv(:,0)+smbvv(:,1)*ub+
+     &       smbvv(:,2)*nb*mb+smbvv(:,3)*ub*nb*mb
         call my_out_us(70,nCv,0,wrks,'b2siav_smovv'//chns)
-        wrks=smbvh(:,0)+smbvh(:,1)*ub(:)+
-     &       smbvh(:,2)*nb(:)*mb+smbvh(:,3)*ub(:)*nb(:)*mb
+        wrks=smbvh(:,0)+smbvh(:,1)*ub+
+     &       smbvh(:,2)*nb*mb+smbvh(:,3)*ub*nb*mb
         call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
-        call my_out_us(70,nFc,1,cvsbhz(1,0),'b2siav_cvsbhzx'//chns)
-        call my_out_us(70,nFc,1,cvsbhz(1,1),'b2siav_cvsbhzy'//chns)
-      endif                                                          !srv 17.06.02 }
-#endif
+        call my_out_us(70,nFc,1,cvsbhz_cl(1,0),'b2siav_cvsbhzx'//chns)
+        call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhzy'//chns)
+      endif                                                             !srv 17.06.02 }
+
 cdjm Jan2017 Store linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
 !WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh

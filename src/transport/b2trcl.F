@@ -177,6 +177,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       call sfill (nCv, 1.0_R8, co%fllim_al_c, 1)
       co%alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
       co%sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
+      co%hcix_c(:) = hci(:,0)
 *   ..interpolate vsa to faces
       !wdk need to write general routine for volume interpolation like this...
       !wdk intface_v? intface with mode switch?
@@ -318,6 +319,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      1      7.5e16_R8*(pl%te(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
           co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+          t0 = 1.0_R8/(1.0_R8 +
+     1      7.5e16_R8*(pl%ti(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
+          co%hcix_c(iCv) = co%hcix_c(iCv)*t0
          enddo
         endif
        enddo
@@ -356,6 +360,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      1      0.3e16_R8*(pl%te(iCv)/ev)**2/dv%ne2(iCv))
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
           co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+          t0 = 1.0_R8/(1.0_R8 +
+     1      0.3e16_R8*(pl%ti(iCv)/ev)**2/dv%ne2(iCv))
+          co%hcix_c(iCv) = co%hcix_c(iCv)*t0
          enddo
         endif
        enddo
@@ -431,6 +438,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
           co%alfx_c(iCv) = co%alfx_c(iCv)*t0
+          t0 = 1.0_R8/k2(iCv)*1.60e0_R8*sqrt(geo%ftEps(iFt)**3)
+          co%hcix_c(iCv) = co%hcix_c(iCv)*t0
          enddo
         endif
        enddo
@@ -459,6 +468,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2 
          endif
         enddo
+        !wdk For WG, need to add flux limits for hcix_c !!
         do ix=0,nx                                                  
          if(on_closed_surface(ix,iy)) then
           chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
@@ -470,6 +480,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         enddo
        enddo
 !       do iy = 0, iy_Ratb    ! for the region of overlap with ASTRA
+        !wdk For WG, need to add flux limits for hcix_c !!
        do iy =0,mintopcut-1    
         do ix=0,nx                                                  
          if(on_closed_surface(ix,iy)) then
@@ -551,6 +562,15 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
           co%fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
+         endif
+        enddo
+        !wdk pragmatic approximation for cell center flux limits: based on interpolation 
+        !wdk of face flux limit
+        call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_ki,co%fllim_ki_c)
+        do iCv = 1, nCv
+         if(switch%core_cond_limit.ne.0.or.
+     &      .not.mpg%cvOnClosedSurface(iCv)) then
+          co%hcix_c(iCv)=co%hcix_c(iCv)*co%fllim_ki_c(iCv)
          endif
         enddo
        endif
