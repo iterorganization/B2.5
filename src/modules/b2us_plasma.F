@@ -134,10 +134,18 @@
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
 
         real(R8), allocatable, dimension(:) :: 
+     .                           kt_neo
+
+        real(R8), allocatable, dimension(:) :: 
+     .                           alfx_c, sigx_c, sigx_kt, hcix_c
+
+        real(R8), allocatable, dimension(:) :: 
      .                           fllim_ki, fllim_ke, fllim_al, 
      .                           fllim_al_c, f_luc_ke, f_luc_ki,
-     .                           f_luc_et, f_luc_sg, f_luc_al,
-     .                           alfx_c, sigx_c, sigx_kt
+     .                           f_luc_ki_c,
+     .                           f_luc_et, f_luc_sg, f_luc_al
+
+        real(R8), allocatable, dimension(:) :: cssb
 
 
 cwdk move to dv
@@ -442,18 +450,24 @@ cwdk move to dv
       allocate( coeff%hce_ExB( nCv ), SOURCE=0._R8 )
       allocate( coeff%hci_ExB( nCv ), SOURCE=0._R8 )
 
+      allocate( coeff%kt_neo( nCv ), SOURCE=0._R8 )
+
       allocate( coeff%fllim_ki( nFc ), SOURCE=0._R8 )
       allocate( coeff%fllim_ke( nFc ), SOURCE=0._R8 )
       allocate( coeff%fllim_al( nFc ), SOURCE=0._R8 )
       allocate( coeff%fllim_al_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%f_luc_ke( nFc ), SOURCE=0._R8 )
       allocate( coeff%f_luc_ki( nFc ), SOURCE=0._R8 )
+      allocate( coeff%fllim_ki_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%f_luc_et( nFc ), SOURCE=0._R8 )
       allocate( coeff%f_luc_sg( nFc ), SOURCE=0._R8 )
       allocate( coeff%f_luc_al( nFc ), SOURCE=0._R8 )
       allocate( coeff%alfx_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%sigx_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%sigx_kt( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hcix_c( nCv ), SOURCE=0._R8 )
+
+      allocate( coeff%cssb( nFc ), SOURCE=0._R8 )
 
       return
       end subroutine createB2Coeff
@@ -532,18 +546,24 @@ cwdk move to dv
       deallocate( coeff%hce_ExB )
       deallocate( coeff%hci_ExB )
 
+      deallocate( coeff%kt_neo )
+
       deallocate( coeff%fllim_ki )
       deallocate( coeff%fllim_ke )
       deallocate( coeff%fllim_al )
       deallocate( coeff%fllim_al_c )
       deallocate( coeff%f_luc_ke )
       deallocate( coeff%f_luc_ki )
+      deallocate( coeff%fllim_ki_c )
       deallocate( coeff%f_luc_et )
       deallocate( coeff%f_luc_sg )
       deallocate( coeff%f_luc_al )
       deallocate( coeff%alfx_c )
       deallocate( coeff%sigx_c )
       deallocate( coeff%sigx_kt )
+      deallocate( coeff%hcix_c )
+
+      deallocate( coeff % cssb )
       
       return
       end subroutine destroyB2Coeff
