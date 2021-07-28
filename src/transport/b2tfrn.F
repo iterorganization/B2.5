@@ -204,7 +204,7 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
       if(switch%b2sigp_style.eq.2) then
         call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext) 
         do iCv = 1, nCv
-          c071(iCv) = fce2n(zeff(iCv))
+          c071(iCv) = zeff(iCv)*fce2n(zeff(iCv))
         enddo
       else
         c071 = 0.71e0_R8                                                 !srv 13.01.17
