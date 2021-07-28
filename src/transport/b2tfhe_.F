@@ -159,7 +159,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       if(switch%b2sigp_style.eq.2) then
         call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
         do iCv = 1, nCv
-          c071c(iCv) = fce2n(zeff(iCv))
+          c071c(iCv) = zeff(iCv)*fce2n(zeff(iCv))
         end do
         call intface(nCv,nFc,mpg%fcCv,wght,c071c,c071)
       else
