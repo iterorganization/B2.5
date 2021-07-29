@@ -63,9 +63,9 @@ c consistency checks for combinations of different switches (check_consistency_s
   
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00 
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02 
-      real (kind=R8) :: vspa_vis_par  
       real (kind=R8) :: fnb_vis_per  !srv 02.10.17
       real (kind=R8) :: fnb_vis_q    !srv 02.10.17     
+      real (kind=R8) :: fhe_vis_q
       real (kind=R8) :: PSch         !srv 17.01.07   
       real (kind=R8) :: fhePSch      !srv 17.01.07
       real (kind=R8) :: fhiPSch                
@@ -170,7 +170,8 @@ c iout switches
       integer :: b2wdat_append      
       integer :: AFN_out       
       integer :: copy_background_iout      
-      integer :: eirene_mc_iout         
+      integer :: eirene_mc_iout
+      integer :: b2siav_iout         
                                                                                                            
 
 
@@ -451,6 +452,10 @@ c b2mndt
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
 
+c b2siav
+      integer :: b2siav_qstyle
+      real (kind=R8) :: addvis, addvis1, cqip1, cvsa_mltpl
+
 c Feedback
       integer :: b2stbc_feedback
 
@@ -522,9 +527,9 @@ c Feedback
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
-      s % vspa_vis_par = 1.0e0_R8
       s % fnb_vis_per = 0.0e0_R8
       s % fnb_vis_q   = 1.0e0_R8
+      s % fhe_vis_q   = 1.0e0_R8
       s % PSch        = 1.0e0_R8
       s % fhePSch        = 1.0e0_R8
       s % fhiPSch        = 1.0e0_R8
@@ -629,6 +634,7 @@ c Feedback
       s % AFN_out = 0
       s % copy_background_iout =  0 !srv 14.07.10
       s % eirene_mc_iout = 0
+      s % b2siav_iout = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -896,6 +902,15 @@ c b2mndt
 c Feedback
       s % b2stbc_feedback = 0
 
+
+c b2siav
+      s % b2siav_qstyle = 0
+      s % addvis  = 1.0_R8
+      s % addvis1 = 1.0_R8
+      s % cqip1 = 0.5_R8
+      s % cvsa_mltpl = 1.0_R8
+
+
       return
       end subroutine set_defaults_switches
 
@@ -967,10 +982,10 @@ c Feedback
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
-      call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)   
-      call ipgetr ('b2tvspa_vis_par', s % vspa_vis_par)     
+      call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)      
       call ipgetr ('b2tfnb_vis_per', s % fnb_vis_per)    
       call ipgetr ('b2tfnb_vis_q', s % fnb_vis_q)    
+      call ipgetr ('b2tfhe_vis_q', s % fhe_vis_q)    
       call ipgetr ('b2tfnb_PSch', s % PSch) 
       call ipgetr ('b2tfhe_PSch', s % fhePSch)   
       call ipgetr ('b2tfhi_PSch', s % fhiPSch)                                                     
@@ -1376,6 +1391,15 @@ c b2mndt
       call ipgetr ('b2news_facExB_start',   s%facExB_start)
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
+
+c b2siav
+      call ipgetr ('b2siav_addvis', s%addvis)
+      call ipgetr ('b2siav_addvis1', s%addvis1)
+      call ipgetr ('b2siav_cqip1', s%cqip1)
+      call ipgeti ('b2siav_iout', s%b2siav_iout)
+      call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)
+
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)

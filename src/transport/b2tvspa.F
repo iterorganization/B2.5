@@ -60,17 +60,15 @@
 
       fchvispar = 0.0e0_R8                                               !srv 09.07.99
       dvpar     = 0.0e0_R8                                               !srv 24.06.99
-      if (switch%vspa_vis_par.ne.0.0e0_R8.
+      if (switch%fhe_vis_par.ne.0.0e0_R8.
      &                        and.maxval(fac_vis).ne.0.0_R8) then        !srv
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &    geo%vxOnedBsq, gOnedBsq)
 *     ..compute pre-factor
-        ! To check: this factor had been divided by bx**2? Why?
-        ! Note: now we use inverse volume interpolation
-        !       (original code: simple averaging)
-        wrk = geo%cvBb(:,2)*sqrt(geo%cvBb(:,3))/(3.0_R8*geo%cvBb(:,0))
-        call intface(nCv, nFc, mpg%fcCv, geo%fcVol, wrk, wrk0)
+        ! Note: directly compute magnetic prefactor on faces
+        !       (original code: averaging from cell centers)
+        wrk0 = geo%fcBb(:,2)*sqrt(geo%fcBb(:,3))/(3.0_R8*geo%fcBb(:,0))
         do is = 0, ns-1                                                  !srv 24.06.99
           if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
      &        .not.is_neutral(is)) then                                  !srv 24.06.99
@@ -81,10 +79,10 @@
 	enddo                                                            !srv 24.06.99
 *     ..components of the viscosity parallel current
         fchvispar(:,0) =
-     &   -switch%vspa_vis_par*fac_vis*dvpar*gOnedBsq(:,1)
+     &   -switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,1)
      &    *geo%fcS*geo%fcQalf(:,0)
         fchvispar(:,1) = 
-     &    switch%vspa_vis_par*fac_vis*dvpar*gOnedBsq(:,0)
+     &    switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,0)
      &    *geo%fcS*geo%fcQalf(:,1)
       endif                                                              !srv
 * ..return

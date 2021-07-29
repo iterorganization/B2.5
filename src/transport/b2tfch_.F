@@ -115,11 +115,10 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 *   ..calculate the contribution of viscosity perpendicular current      !srv 22.11.99
       call b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
      &   pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis, dv%fchvisper)
-#ifdef WG_TODO
 *   ..calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,    !srv 10.10.17
-     &             lnlam, te, ti, ni, chci, fchvisq)
-#endif
+      call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
+     &   dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
+     &   dv%fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
       call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
      &      dv%facdrift, dv%fchinert)
