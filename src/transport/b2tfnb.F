@@ -50,7 +50,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, ib, meth                         !srv 13.10.06
+      integer iCv, iCv1, iCv2, iFc, ib, meth                             !srv 13.10.06
       integer, save :: style_int_vel = 0
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: drift_hyb = 1.0_R8
@@ -61,7 +61,7 @@
      *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
-     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                         !srv 21.10.10
+     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                        !srv 21.10.10
      &   kmpr(nCv), kmprv(nVx)!,
 !     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
 !     &   rdiv                                                            !srv 05.03.16
@@ -87,8 +87,6 @@
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
 c      integer, save :: pflux_cor = 1                                     !srv 05.03.16
-c      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
-c      integer, save :: vlct_diagno = 1
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intface, diff
@@ -127,8 +125,6 @@ c The following switches are only used in 'WG-TODO' blocks, i.e. not yet convert
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
-c        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
-c        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
       endif
 
       meth = switch%b2tfnb_discr_meth
@@ -214,15 +210,17 @@ cwdk                   (original code: simple averaging)
         dv%uadia(:,:,isb) = dv%vaecrb(:,:,isb) + dv%vadia(:,:,isb)
         ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
 *     ..computation of P.Sch flows
-        call diff(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
-        call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk1)
-        dv%fnaPSch(:,0,isb) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)*
-     &    dnbti(:,1)!*nbf/wrk1
-        dv%fnaPSch(:,1,isb) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)*
-     &    dnbti(:,0)!*nbf/wrk1
+        wrk  = 1.0_R8/(qe*rt%rza(:,isb))
+        call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
+        wrk1 = wrk1*geo%fcBzb
+        call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk2)
+        dv%fnaPSch(:,0,isb) =  switch%PSch*dv%facdrift*wrk1*dnbti(:,1)*
+     &     geo%fcS*geo%fcQalf(:,0)!*nbf/wrk2
+        dv%fnaPSch(:,1,isb) = -switch%PSch*dv%facdrift*wrk1*dnbti(:,0)*
+     &     geo%fcS*geo%fcQalf(:,1)!*nbf/wrk2
 *     ..linearization coefficients for P.Sch flows
-        cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk1 
-        cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk1
+        cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk2
+        cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk2
         zeros = 0.0_R8
         call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
@@ -249,149 +247,79 @@ cwdk                   (original code: simple averaging)
      &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
         enddo
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
-#ifdef WG_DRIFTS
-cwkd    velocity restriction and flux limits to be adapted to unstructured solver!
         xcount = 0
-        do iy = 0, ny-1
-         do ix = 0, nx
-          if(leftix(ix,iy).ne.-2) then                                   !srv 26.11.02
-           if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-             if( abs(vbecrb(ix,iy,0,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
-               xcount = xcount+1
-               if (vlct_diagno.ge.2) then
-                 write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .            'Poloidal ExB velocity restriction applied ',
-     .            'to species ',isb,' in cell (',ix,',',iy,'):'
-                 write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .            'Mach 2: ',2.0_R8*cssb(ix,iy,0),
-     .            ' Vx_ExB:',vbecrb(ix,iy,0,0)
-               end if
-               vbecrb(ix,iy,0,0)=
-     .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0,0))
-             endif
-             if( abs(vbecrb(ix,iy,0,1)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
-               if (vlct_diagno.ge.2) then
-                 write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .            'Radial ExB velocity restriction applied ',
-     .            'to species ',isb,', cell (',ix,',',iy,'), left face:'
-                 write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .            'Mach 2: ',2.0_R8*cssb(ix,iy,0),
-     .            ' Vy_ExB:',vbecrb(ix,iy,0,1)
-               end if
-               vbecrb(ix,iy,0,1)=
-     .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0,1))
-             endif
-           endif                                                         !iyv 06.02.14  }
-          endif                                                          !srv 26.11.02
-         enddo
-        enddo
-        if (vlct_diagno.ge.1) then
+        if (switch%ion_vlct_restrict.eq.2) then                        !iyv 06.02.14 {
+          do iFc = 1, nFc
+            !wdk for unstructured grids: apply ExB velocity restriction
+            !    to total ExB velocity (instead of individual poloidal and radial
+            !    components). Otherwise: not perpendicular to gradient of potential
+            t0 = sqrt((dv%vaecrb(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%vaecrb(iFc,1,isb)**2)
+            if(t0.gt.2.0_R8*co%cssb(iFc)) then
+              xcount = xcount+1
+              if (switch%vlct_diagno.ge.2) then
+                write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .            'Total ExB velocity restriction applied ',
+     .            'to species ',isb,' on face (',iFc,'):'
+                write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .            'Mach 2: ',2.0_R8*co%cssb(iFc),
+     .            ' Vx_ExB:',dv%vaecrb(iFc,0,isb),
+     .            ' Vy_ExB:',dv%vaecrb(iFc,1,isb),
+     .            ' |V_ExB|:',t0
+              end if
+            endif
+            t1 = 2.0_R8*co%cssb(iFc)/t0
+            dv%vaecrb(iFc,0,isb) = dv%vaecrb(iFc,0,isb)*t1
+            dv%vaecrb(iFc,1,isb) = dv%vaecrb(iFc,1,isb)*t1
+          enddo
+        endif
+        if (switch%vlct_diagno.ge.1) then
           if (xcount.gt.1) then
             write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Poloidal ExB velocity limit of Mach 2 was applied ',
+     .       ' Total ExB velocity limit of Mach 2 was applied ',
      .         xcount,' times for species ',isb
           else if (xcount.eq.1) then
             write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Poloidal ExB velocity limit of Mach 2 was applied ',
+     .       ' Total ExB velocity limit of Mach 2 was applied ',
      .         xcount,' time for species ',isb
           end if
         end if
-
-        ycount = 0
-        do iy = 0, ny
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
-           if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-             if( abs(vbecrb(ix,iy,1,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
-               ycount = ycount + 1
-               if (vlct_diagno.ge.2) then
-                 write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .            'Radial ExB velocity restriction applied ',
-     .            'to species ',isb,' in cell (',ix,',',iy,'):'
-                 write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .            'Mach 2: ',2.0_R8*cssb(ix,iy,1),
-     .            ' Vy_ExB:',vbecrb(ix,iy,1,1)
-               end if
-               vbecrb(ix,iy,1,1)=
-     .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1,1))
-             endif
-           endif                                                         !iyv 06.02.14  }
-          endif                                                          !srv 26.11.02
-         enddo
-        enddo
-
-        if (vlct_diagno.ge.1) then
-          if (ycount.gt.1) then
-            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Radial ExB velocity limit of Mach 2 was applied ',
-     .         ycount,' times for species ',isb
-          else if (ycount.eq.1) then
-            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Radial ExB velocity limit of Mach 2 was applied ',
-     .         ycount,' time for species ',isb
-          end if
-        end if
-
-      if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
-        do iy = 0, ny
-          do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) then
-              t0 = max(ti(ix,iy), ti(leftix(ix,iy),leftiy(ix,iy)))
-              t1 = (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy)))
-     &          /2.0_R8
-              vbar =
-     .         abs(bb(ix,iy,0) + bb(leftix(ix,iy),leftiy(ix,iy),0))     !srv 11.01.13
-     &           /(bb(ix,iy,3) + bb(leftix(ix,iy),leftiy(ix,iy),3))
-     &          *sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))
-              t2 = 1.0_R8 + abs(fnbPSch(ix,iy,0,0))/(
-     &         vbar*t1*(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-     &          )
-              fnbPSch(ix,iy,0,0)= fnbPSch(ix,iy,0,0)/t2
-              fnbPSch(ix,iy,0,1)= fnbPSch(ix,iy,0,1)/t2
-              vbdia(ix,iy,0,0)= vbdia(ix,iy,0,0)/
-     &                            (1.0_R8 + abs(vbdia(ix,iy,0,0))/vbar) 
-              wbdia(ix,iy,0,0)= wbdia(ix,iy,0,0)/
-     &                            (1.0_R8 + abs(wbdia(ix,iy,0,0))/vbar) 
-              ubdia(ix,iy,0,0)= ubdia(ix,iy,0,0)/
-     &                            (1.0_R8 + abs(ubdia(ix,iy,0,0))/vbar) 
-              ub2dia(ix,iy,0,0)= ub2dia(ix,iy,0,0)/
-     &                            (1.0_R8 + abs(ub2dia(ix,iy,0,0))/vbar) 
-              vbdia(ix,iy,0,1)= vbdia(ix,iy,0,1)/
-     &                            (1.0_R8 + abs(vbdia(ix,iy,0,1))/vbar) 
-              wbdia(ix,iy,0,1)= wbdia(ix,iy,0,1)/
-     &                            (1.0_R8 + abs(wbdia(ix,iy,0,1))/vbar) 
-              ubdia(ix,iy,0,1)= ubdia(ix,iy,0,1)/
-     &                            (1.0_R8 + abs(ubdia(ix,iy,0,1))/vbar) 
-              ub2dia(ix,iy,0,1)= ub2dia(ix,iy,0,1)/
-     &                            (1.0_R8 + abs(ub2dia(ix,iy,0,1))/vbar) 
-            endif
-	    if (bottomiy(ix,iy).ne.-2) then
-	      t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
-	      t1 = (nb(ix,iy) + nb(bottomix(ix,iy),bottomiy(ix,iy)))
-     &	       /2.0_R8
-	      vbar=
-     .	       abs(bb(ix,iy,0) + bb(bottomix(ix,iy),bottomiy(ix,iy),0))  !srv 11.01.13
-     &	       /(bb(ix,iy,3) + bb(bottomix(ix,iy),bottomiy(ix,iy),3))
-     &	       *sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))
-	      t2 = 1.0_R8 + abs(fnbPSch(ix,iy,1,1))/(
-     &	       vbar*t1*(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &	       /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     &	       )
-	      fnbPSch(ix,iy,1,1)= fnbPSch(ix,iy,1,1)/t2
-	      vbdia(ix,iy,1,1)= vbdia(ix,iy,1,1)/
-     &	       (1.0_R8 + abs(vbdia(ix,iy,1,1))/vbar) 
-	      wbdia(ix,iy,1,1)= wbdia(ix,iy,1,1)/
-     &	       (1.0_R8 + abs(wbdia(ix,iy,1,1))/vbar) 
-	      ubdia(ix,iy,1,1)= ubdia(ix,iy,1,1)/
-     &	       (1.0_R8 + abs(ubdia(ix,iy,1,1))/vbar) 
-	      ub2dia(ix,iy,1,1)= ub2dia(ix,iy,1,1)/
-     &	       (1.0_R8 + abs(ub2dia(ix,iy,1,1))/vbar) 
-	    endif
-	  enddo
-        enddo
-#endif
-      endif                                                             !lk 02.06.11 }
+        if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
+          do iFc = 1, nFc
+            !wdk for unstructured grids: apply flux limits
+            !    to total drift velocities (instead of individual poloidal and radial
+            !    components). Otherwise: not perpendicular to gradients
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            t0 = max(pl%ti(iCv1), pl%ti(iCv2))
+            t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
+            vbar = geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
+     &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
+            t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 + 
+     .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
+     .        (vbar*t1)
+            dv%fnaPSch(:,0,isb) = dv%fnaPSch(:,0,isb)/t2
+            dv%fnaPSch(:,1,isb) = dv%fnaPSch(:,1,isb)/t2
+            t3 = sqrt((dv%vadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%vadia(iFc,1,isb)**2)
+            dv%vadia(iFc,0,isb) = dv%vadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%vadia(iFc,1,isb) = dv%vadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((dv%wadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%wadia(iFc,1,isb)**2)
+            dv%wadia(iFc,0,isb) = dv%wadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%wadia(iFc,1,isb) = dv%wadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((dv%uadia(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%uadia(iFc,1,isb)**2)
+            dv%uadia(iFc,0,isb) = dv%uadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
+            dv%uadia(iFc,1,isb) = dv%uadia(iFc,1,isb)/(1.0_R8 + t3/vbar)
+            t3 = sqrt((ub2dia(iFc,0)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + ub2dia(iFc,1)**2)
+            ub2dia(iFc,0) = ub2dia(iFc,0)/(1.0_R8 + t3/vbar)
+            ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
+          enddo
+        endif                                                             !lk 02.06.11 }
+      endif
 
 *   ..compute differences of pa at cell faces and poloidal gradients
 *     at cell centers

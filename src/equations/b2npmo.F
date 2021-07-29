@@ -295,8 +295,8 @@
 *    ..compute additional viscosity term
        call b2siav (nCv, nFc, nVx, ns, is, switch, geo, mpg, am(is)*mp,
      &   pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1), dv%ne2,
-     &   dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is), smbvh, smbvv,
-     &   co%kt_neo, wrk0, wrk1, wrk2)
+     &   rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is), smbvh,
+     &   smbvv, co%kt_neo, wrk0, wrk1, wrk2)
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
      *   pl%na(:,is), pl%ua(:,is), smbcf, smcf(:,is), ctcfb, wrk0)

@@ -141,8 +141,8 @@
 
         real(R8), allocatable, dimension(:) :: 
      .                           fllim_ki, fllim_ke, fllim_al, 
-     .                           fllim_al_c, f_luc_ke, f_luc_ki,
-     .                           f_luc_ki_c,
+     .                           fllim_al_c, fllim_ki_c,
+     .                           f_luc_ke, f_luc_ki,
      .                           f_luc_et, f_luc_sg, f_luc_al
 
         real(R8), allocatable, dimension(:) :: cssb

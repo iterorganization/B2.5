@@ -101,11 +101,10 @@
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
       real (kind=R8) :: 
-     *  rxf0, rxf1, rxf2, rxf3,
-     1  t0                                                   !srv 09.07.99 06.07.00
+     *  rxf0, rxf1, rxf2, rxf3, t0                                       !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
      &  ue(nCv), lnlam(nCv), zeff(nCv), ehx(nFc),                        !srv 05.07.17 29.01.20
-     &  rz(nCv), cssb(nFc,0:1),                                          !iyv 06.02.14
+     &  rz(nCv),                                                         !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  respo0(nCv), corpo0(nCv)
@@ -227,7 +226,6 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 !       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
 !       facdrift=facdrift_start                                          !srv 09.07.99
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
-!       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)       !iyv 06.02.14
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFv')
@@ -303,27 +301,22 @@ csw 01oct2012 initialize potential if necessary
      &  co%vsaf_cl, dv%fac_vis, dv%fchvispar)
       call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
      &  dv%facdrift, dv%fchinert)
-#ifdef WG_TODO
 *   ..iterate on momentum balance
-!      if (ncall_b2news_.eq.0) then                                              !srv 01.10.99
-      if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
-        call b2xprz (nx, ny, ns, mp, am, na, rz)
-        call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-        wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
-        call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
-        call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
+!      if (ncall_b2news_.eq.0) then                                      !srv 01.10.99
+      if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
+        call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+        call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, dv%pz, st_ext)
+        wrk0 = sqrt(dv%pz/rz)*geo%cvBb(:,0)/geo%cvBb(:,3)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk0,co%cssb)
       else
-        cssb = 0.0_R8
+        co%cssb = 0.0_R8
       endif   
-#else
-      cssb = 0.0_R8
-#endif
-                                                           !iyv 06.02.14
+                                                                         !iyv 06.02.14
 !        do is=0,ns-1                                                    !srv 01.10.99
         do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
           call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,
-     &      pl%ti, pl%tn, is, dv%pa(:,is))                                   !srv 01.10.99
+     &      pl%ti, pl%tn, is, dv%pa(:,is))                               !srv 01.10.99
 *    ..compute particle flux
           call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo, 
      &      mpg, pl, dv, co, rt, .true.)
@@ -522,7 +515,7 @@ csw 16oct2012 init ier0
       call nancheck(nCv, dv%ne, 'b2news(ne): after call to b2xpne')
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)  !srv 11.07.99
-      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, dv%pz,st_ext)    !srv 18.01.02
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, dv%pz, st_ext)   !srv 18.01.02
 
 *   ..compute ceqp                                                       !srv 03.07.03 {
       call b2xpnm (nCv, ns, rt%rz2, am, pl%na, wrk0)
@@ -602,20 +595,14 @@ csw 16oct2012 init ier0
         call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
       endif                                                              !srv 12.07.05 }
 
-#ifdef WG_TODO
-          if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
-            call b2xprz (nx, ny, ns, mp, am, na, rz)
-            call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-            wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
-            call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
-            call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
-     &                    cssb(-1,-1,1))
-          else
-            cssb = 0.0_R8
-          endif  
-#else
-          cssb = 0.0_R8
-#endif
+      if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
+        call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+        call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, dv%pz, st_ext)
+        wrk0 = sqrt(dv%pz/rz)*geo%cvBb(:,0)/geo%cvBb(:,3)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk0,co%cssb)
+      else
+        co%cssb = 0.0_R8
+      endif   
       do is = 0, ns-1
 *   ..compute partial pressure
         call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te,

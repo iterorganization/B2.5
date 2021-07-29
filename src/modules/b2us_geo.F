@@ -35,6 +35,7 @@
         real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
+        real (kind=R8), allocatable  :: fcBzb(:)       ! Factor for P-S/mdf flows
         real (kind=R8), allocatable  :: fcEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
 
 !  vertex quantities
@@ -46,6 +47,7 @@
         real (kind=R8), allocatable  :: vxFfbz(:)      !
         real (kind=R8), allocatable  :: vxFpsi(:)      ! 
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
+        real (kind=R8), allocatable  :: vxBzb(:)       ! Factor for P-S/mdf flows
 
 !  flux tube/surface quantities
         real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
@@ -92,6 +94,7 @@
       allocate (g%fcQbet(nFc,0:1))
       allocate (g%fcPbs(nFc))
       allocate (g%fcPbshz(nFc))
+      allocate (g%fcBzb(nFc))
       allocate (g%fcEb(nFc,0:2)) 
 
 !  vertex quantites
@@ -103,6 +106,7 @@
       allocate (g%vxFfbz(nVx))
       allocate (g%vxFpsi(nVx))
       allocate (g%vxOnedBsq(nVx))
+      allocate (g%vxBzb(nVx))
 
 !  flux surface quantites
       allocate (g%cvConn(nCv))
@@ -147,6 +151,7 @@
       g%fcQbet = 0._R8
       g%fcPbs = 0._R8
       g%fcPbshz = 0._R8
+      g%fcBzb = 0._R8
       g%fcEb = 0._R8
 
 !  vertex quantites
@@ -158,6 +163,7 @@
       g%vxFfbz = 0._R8
       g%vxFpsi = 0._R8
       g%vxOnedBsq = 0._R8
+      g%vxBzb = 0._R8
 
 !  flux surface quantites
       g%cvConn = 0._R8
@@ -202,6 +208,7 @@
       deallocate (g%fcQbet)
       deallocate (g%fcPbs)
       deallocate (g%fcPbshz)
+      deallocate (g%fcBzb)
       deallocate (g%fcEb) 
       
 !  vertex quantites
@@ -213,6 +220,7 @@
       deallocate (g%vxFfbz)
       deallocate (g%vxFpsi)
       deallocate (g%vxOnedBsq)
+      deallocate (g%vxBzb)
 
 !  flux surface quantites
       deallocate (g%cvConn)
@@ -513,8 +521,8 @@
       endif
 
 *   ..compute Bz/B**2 - Bz/<B**2>
-      !wdk do we need also vxBzb computed in a consistent way??
-      call b2xbzb (nCv, mpg, gm%cvBb, gm%cvVol, gm%cvBzb)
+      call b2xbzb (nCv, nFc, nVx, mpg, gm%cvBb, gm%fcBb, gm%vxBb,
+     &  gm%cvVol, gm%cvBzb, gm%fcBzb, gm%vxBzb)
 
 *   ..modify geometry to recover 5-point stencil behavior
       ! only supported for cases derived from original, structured grid

@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2siav (nCv, nFc, nVx, ns, isb, switch, geo, mpg, mb,
-     & ub, te, ti, nb, ni, ne2, lnlam, hcix_c, cvsbhz_cl, smbvh, smbvv,
-     & kt_neo, wrk0, wrk1, wrk2)                                        !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     & ub, te, ti, nb, ni, ne2, rz2, lnlam, hcix_c, cvsbhz_cl, smbvh,
+     & smbvv, kt_neo, wrk0, wrk1, wrk2)                                 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -26,7 +26,7 @@
      & mb, lnlam(nCv),                                                  !srv 01.07.09
      & ub(nCv),
      & te(nCv), ti(nCv), nb(nCv), ni(nCv), ne2(nCv),
-     & hcix_c(nCv), cvsbhz_cl(nFc,0:1)                                  !srv 31.07.02
+     & hcix_c(nCv), cvsbhz_cl(nFc,0:1), rz2(nCv,0:ns-1)                 !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smbvh(nCv,0:3), smbvv(nCv,0:3),
@@ -64,7 +64,7 @@
      *     qip1(nCv), qipgen(nCv),                                      !srv 23.07.99 19.01.05
      &     tt0(mpg%nFt), tt1(mpg%nFt), bbaverage2(mpg%nFt),             !lk 23.05.06 05.07.07 {
      &     tauia1(nCv), alpha1(nCv), nu1(nCv), s2,                      !lk !iyv 02.12.13
-     &     gti(nCv,2)
+     &     gti(nCv,0:1)
       integer mintopcut                                                 !lk 23.05.06 05.07.07 }
 *   ..procedures
       intrinsic abs, sqrt
@@ -179,16 +179,16 @@
      &           *sqrt(ti(iCv)/(mp*am(isb)))
      &           *2.0e0_R8*pi*sqrt(geo%ftEps(iFt)**3))
                 alpha1(iCv) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv))+
-     &           2.7e0_R8*nu1(iCv)**2*geo%ftEps1(iFt)**3)/(1.0e0_R8+
+     &           2.7e0_R8*nu1(iCv)**2*geo%ftEps(iFt)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu1(iCv))+
-     &           nu1(iCv)**2*geo%ftEps1(iFt)**3)-1.0e0_R8)*0.533e0_R8   !lk 20.11.07 }
+     &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0e0_R8)*0.533e0_R8   !lk 20.11.07 }
                 kt_neo(iCv) =
      &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv)*s2)               !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(iCv)*s2)**2*geo%ftEps1(iFt)**3)/
+     &           +2.7e0_R8*(nu1(iCv)*s2)**2*geo%ftEps(iFt)**3)/
      &           (1.0e0_R8+0.7e0_R8*sqrt(nu1(iCv)*s2)+
      &           (nu1(iCv)*s2)**2*geo%ftEps(iFt)**3))
-              endif
-            enddo
+              enddo
+            endif
           enddo
 
 *       ..compute qip1
@@ -206,8 +206,8 @@
 *       ..finally calculate the r.h.s. contribution to the parallel balance
 *         corresponding to parallel viscosity connected with heat flow
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
-          smbvh(:,0) = addvis*geo%cvVol*geo%cvBb(:,0)*sqrt(geo%cvBb(:,3))*
-     &      geo%cvHz*wrk1
+          smbvh(:,0) = addvis*geo%cvVol*geo%cvBb(:,0)*
+     &      sqrt(geo%cvBb(:,3))*geo%cvHz*wrk1
 
 *       ..zero out in guard cells
           smbvh(mpg%nCi+1:nCv,0) = 0.0_R8
