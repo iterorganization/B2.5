@@ -106,7 +106,6 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
      3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),                  !srv 01.07.99 09.01.01
      4  tef(nFc), tif(nFc), ne2f(nFc), k1f(nFc), k2f(nFc), gtec(nCv)
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
@@ -128,7 +127,6 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
 c        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
-c        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
 c        call ipgeti ('b2trcl_lthf21',lthf21)
 c       call ipgeti ('b2trcl_lvis21',lvis21)
 c#ifdef NO_21
@@ -414,7 +412,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      .      sqrt(geo%ftEps(iFt)**3)
           co%f_luc_ki(iFc) = 1.0_R8/k2f(iFc)*1.60e0_R8*
      .      sqrt(geo%ftEps(iFt)**3)
-          co%f_luc_et(iFc)=cvsa_mltpl/
+          co%f_luc_et(iFc)=switch%cvsa_mltpl/
      1      (1.0e0_R8+15.12e16_R8/geo%ftConn(iFt)*
      2      (tif(iFc)/ev)**2/ne2f(iFc))/
      4      (1.0e0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5e0_R8/

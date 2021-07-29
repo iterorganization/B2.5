@@ -177,6 +177,12 @@
           call xerrab
      &     ('Prohibited "b2news_guard_flows" switch usage!')
         endif
+        if (ipnam(ip).eq.'b2vspa_vis_par') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete. Use b2tfhe_vis_par instead.'
+          call xerrab
+     &     ('Prohibited "b2vspa_vis_par" switch usage!')
+        endif
       enddo
       return
 !srv 15.09.15 }
