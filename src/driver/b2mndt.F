@@ -117,7 +117,7 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, acorkt, acorzt, nasum, na0sum, 
-     &  pz(nCv), rz(nCv), cssb(nCv,0:1)         !iyv 06.02.14
+     &  pz(nCv), rz(nCv)                                                 !iyv 06.02.14
 ! csc UNCOMMENT WITH AD
 !  REAL(kind=r8) :: acorpad(0:ns-1), acoruad(0:ns-1), acorutd, acorted, &
 !& acortid, acorpod, acorktd
@@ -162,7 +162,6 @@
        test_residual=switch%nstg_areshe.gt.0.0_R8.or.
      &               switch%nstg_areshi.gt.0.0_R8.or.
      &               switch%nstg_aresco.gt.0.0_R8
-       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
        if (switch%use_eirene) then
          call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi,
      &                         switch)
@@ -479,16 +478,14 @@ ctmp.dpc
            goto 3
          else if (ntim.eq.0) then ! compute derived quantities
 #ifdef WG_TODO
-           if(ion_vlct_restrict .ne. 0 ) then                            !iyv 06.02.14
-             call b2xprz (nx, ny, ns, mp, am, na, rz)
-             call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-             wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
-             call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
-             call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
-     &                     cssb(-1,-1,1))
+           if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
+             call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
+             call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+             wrk0 = sqrt(pz/rz)*geo%cvBb(:,0)/geo%cvBb(:,3)
+             call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk0,co%cssb)
            else
-              cssb = 0.0_R8
-           endif                                                         !iyv 06.02.14
+             co%cssb = 0.0_R8
+           endif
            do is=0,ns-1
 *      ..compute partial pressure
              call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is),

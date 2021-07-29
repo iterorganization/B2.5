@@ -86,7 +86,7 @@
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
      4  chce0(nFc,0:1), chve0(nFc,0:1), cdkt0(nFc,0:1),
      1	ft,                                                             !srv 16.10.17
-     *  wrk(nFc), wrkmin
+     *  wrkc(nCv), wrkf(nFc), wrkmin, wght(nFc,2)
       character*72 message
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2saxpy
@@ -152,15 +152,18 @@
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       do is = 0, ns-1
        if(.not.is_neutral(is)) then
-        !wdk we use the newly-defined mode = 3 here, for consistency
-        !    with the computation of PSch-flows in b2tfnb and b2tfhe/i
-        !wdk note: factor 1/(qe*rza) might require more careful 
-        !wdk       treatment (check with other drifts in b2tfnb)
-        !wdk also: need to use BzB defined at faces, simular to fcBb?
-        call b2txcx (nCv, nFc, 3, geo, mpg, geo%fcVol, geo%fcS,
-     &   geo%cvBzb/(qe*rt%rza(:,is)), co%cddi(1,0,is))
-        call b2txcy (nCv, nFc, 3, geo, mpg, geo%fcVol, geo%fcS,
-     &   geo%cvBzb/(qe*rt%rza(:,is)), co%cddi(1,1,is))
+        !wdk note: treatment made consistent with the computation of
+        !          PSch-flows in b2tfnb and b2tfhe/i
+        wght = 1.0_R8
+        wrkc = 1.0_R8/(qe*rt%rza(:,is))
+        call intface(nCv,nFc,mpg%fcCv,wght,wrkc,wrkf)
+        wrkf = wrkf*geo%fcBzb
+        do iFc = 1, nFc
+         co%cddi(iFc,0,is) = wrkf(iFc)*geo%fcS(iFc)*geo%fcQalf(iFc,0)/
+     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+         co%cddi(iFc,1,is) = wrkf(iFc)*geo%fcS(iFc)*geo%fcQalf(iFc,1)/
+     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+        enddo
        else
         co%cddi(:,:,is) = 0.0_R8
        endif 
@@ -169,13 +172,13 @@
       if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
 cwdk combined check for poloidal or radial diffusion
-          wrk(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
-     .             co%cdpa(:,0,is)*geo%fcQalf(:,0) + 
-     .             co%cdna(:,1,is)*geo%fcQalf(:,1) + 
-     .             co%cdpa(:,1,is)*geo%fcQalf(:,1)
+          wrkf(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
+     .              co%cdpa(:,0,is)*geo%fcQalf(:,0) + 
+     .              co%cdna(:,1,is)*geo%fcQalf(:,1) + 
+     .              co%cdpa(:,1,is)*geo%fcQalf(:,1)
           wrkmin = huge(1.0_R8)
           do iFc = 1, nFc
-            wrkmin = min(wrkmin, wrk(iFc))
+            wrkmin = min(wrkmin, wrkf(iFc))
           enddo
           write(message,'(a, i3)') 
      .     'No particle diffusion for species ',is
@@ -191,11 +194,11 @@ cwdk combined check for poloidal or radial diffusion
         enddo
 *  ..check that we have some anomalous perpendicular currents
 !WG_TODO
-!WG_TODO        wrk(:) = co%calf_an(:,1)*geo%fcQalf(:,1) +
-!WG_TODO     .           co%csig_an(:,1)*geo%fcQalf(:,1)
+!WG_TODO        wrkf(:) = co%calf_an(:,1)*geo%fcQalf(:,1) +
+!WG_TODO     .            co%csig_an(:,1)*geo%fcQalf(:,1)
 !WG_TODO        wrkmin = huge(1.0_R8)
 !WG_TODO        do iFc = 1, nFc
-!WG_TODO              wrkmin = min(wrkmin, wrk(iFc))
+!WG_TODO              wrkmin = min(wrkmin, wrkf(iFc))
 !WG_TODO        enddo
 !WG_TODO        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
 !WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or. 
