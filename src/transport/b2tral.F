@@ -193,16 +193,16 @@ cwdk combined check for poloidal or radial diffusion
      .      message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
-!WG_TODO
-!WG_TODO        wrkf(:) = co%calf_an(:,1)*geo%fcQalf(:,1) +
-!WG_TODO     .            co%csig_an(:,1)*geo%fcQalf(:,1)
-!WG_TODO        wrkmin = huge(1.0_R8)
-!WG_TODO        do iFc = 1, nFc
-!WG_TODO              wrkmin = min(wrkmin, wrkf(iFc))
-!WG_TODO        enddo
-!WG_TODO        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
-!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or. 
-!WG_TODO     .   no_current.eq.1, 'No anomalous perpendicular currents')
+        wrkf(:) = co%calf_an(:,1)*geo%fcQalf(:,1) +
+     .            co%csig_an(:,1)*geo%fcQalf(:,1) +
+     .            co%csig(:,0)*geo%fcQalf(:,0)      ! on 'poloidal' faces, classical conduction is sufficient
+        wrkmin = huge(1.0_R8)
+        do iFc = 1, nFc
+              wrkmin = min(wrkmin, wrkf(iFc))
+        enddo
+        call xertst (wrkmin.gt.0.0_R8 .or. switch%pot_eq.ne.1 .or. 
+     .   switch%fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or.
+     .   switch%no_current.eq.1, 'No anomalous perpendicular currents')
       endif                                                           !srv 12.03.12 }
 
       if(switch%b2tral_iout.ne.0) then                                              !srv 17.06.08 {

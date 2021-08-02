@@ -547,8 +547,10 @@ cdpc
               endif
             enddo
             hce0(iCv)=hce0(iCv)*poloidal_scale_factor
-            sig0(iCv)=sig0(iCv)*poloidal_scale_factor
-            alf0(iCv)=alf0(iCv)*poloidal_scale_factor
+            if (switch%b2tqna_ballooning_sig.ne.0)  then
+              sig0(iCv)=sig0(iCv)*poloidal_scale_factor
+              alf0(iCv)=alf0(iCv)*poloidal_scale_factor
+            endif
         enddo
       endif
 #ifdef WG_TODO

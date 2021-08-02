@@ -188,7 +188,7 @@
       endif                                                         !lk 31.01.08 }
       call b2saxpy (nCv*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence ue
-      if(switch%style_int_vel.eq.0) then
+      if(switch%b2sihs_style_int_vel.eq.0) then
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ue,wrkf(:,0))
       else
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ue,wrkf(:,0))
@@ -215,7 +215,7 @@
 !WG_TODO      b2divua=0.0_R8
 !WG_TODO      b2sihs_divua=0.0_R8
       do is = 0, ns-1
-        if(switch%style_int_vel.eq.0) then
+        if(switch%b2sihs_style_int_vel.eq.0) then
           call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ua(:,is),wrkf(:,0))
         else
           call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ua(:,is),wrkf(:,0))

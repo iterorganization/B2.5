@@ -140,8 +140,9 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 
 *   ..compute currents
       dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
-     &  dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt
-      dv%fch(:,1) = dv%fch(:,1) + dv%fchvisper(:,1) + fchstoch
+     &  dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt +
+     &  dv%fchvisper
+      dv%fch(:,1) = dv%fch(:,1) + fchstoch
 
 *   ..compute conc
       dumm0 = 0.0e0_R8
