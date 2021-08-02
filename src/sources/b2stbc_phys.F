@@ -86,6 +86,7 @@
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
+      integer, save :: bcpot_12_style =0                                !srv 19.04.13
       real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
@@ -108,7 +109,7 @@
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
-     *  wdia(nCv), wrk0(nCv),
+     *  wdia(nCv), wrk0(nCv), wght(nFc,2),
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
@@ -142,7 +143,8 @@
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
-     *  machsfr, expu2, sy, bcint, syhz, sheath_g, intvertex_s           !srv 24.08.08
+     *  machsfr, expu2, sy, bcint, syhz, sheath_g, intvertex_s,         !srv 24.08.08
+     &  intface_s
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps, expu2
@@ -185,6 +187,7 @@
       if (ncall_b2stbc_phys.eq.0) then
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
         call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
+        call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhi_ycur', ycur)
 c        call ipgeti ('b2tfhe_conduction_only', conduction_only)
@@ -2794,7 +2797,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
              t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv1,is)
              t2 = t2 + geo%cvVol(iCv2)*pl%na(iCv2,is)
              totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
-     &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &         mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
             enddo
             totpar = totpar + conpar(is,ib0,1)
            endif
@@ -5646,7 +5649,7 @@ cwdk     * need to correct this BC for hybrid scheme
            t1 = t1 + geo%cvVol(iCv2)*pl%te(iCv1)
            t2 = t2 + geo%cvVol(iCv2)*pl%te(iCv2)
            totflux = totflux - (dv%fhe(iFc,0) + dv%fhe(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &       mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
           enddo
           totpar = totpar + enepar(ib0,1)
          endif
@@ -8123,7 +8126,7 @@ cwdk     * need to correct this BC for hybrid scheme
            t1 = t1 + geo%cvVol(iCv2)*pl%ti(iCv1)
            t2 = t2 + geo%cvVol(iCv2)*pl%ti(iCv2)
            totflux = totflux - (dv%fhi(iFc,0) + dv%fhi(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &       mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
           enddo
           totpar = totpar + enipar(ib0,1)
          endif
@@ -8640,6 +8643,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         endif
         if(maxval(dv%facdrift) .ne. 0.0_R8) then
 *       ..compute the source
+         if (bcpot_12_style.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
@@ -8662,6 +8666,72 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             enddo
             srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_inertia
           enddo
+         elseif (bcpot_12_style.eq.1) then
+          !wdk experimental - use fchdia / fchinert as computed 
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
+            fchy_dia = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &        (dv%fchdia(iFc,0)  + dv%fchdia(iFc,1))
+            srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_dia
+            fchy_inertia = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &        (dv%fchinert(iFc,0) + dv%fchinert(iFc,1))
+            srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_inertia
+          enddo
+         elseif (bcpot_12_style.eq.2) then
+          !wdk experimental - find constant potential (with 
+          !    perturbation taken from flux tube just inside
+          !    domain) such that total current through core
+          !    is sum of dia + inert currents
+*     ..compute average potential on core boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          t2 = 0.0e0_R8
+          totflux = 0.0e0_R8
+          totpar  = 0.0e0_R8
+          do ib0 = 1, nbc
+           ! identify core boundaries; assume all core boundaries
+           ! form single flux surface
+           ! implicit assumption at the moment: first ring in the
+           ! core is a 'structured grid' ring with quad cells
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
+           if (mpg%cvOnClosedSurface(iCv1)) then
+            if (bcpot(ib0).ne.12) 
+     .        call xerrab ('BCPOT=12: incompatible core BCs')
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                               ! loop over number of cells in the boundary
+             iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                 ! number of the guard cell
+             iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                 ! number of the domain cell
+             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+             t0 = t0 + geo%cvVol(iCv2)
+             t1 = t1 + geo%cvVol(iCv2)*pl%po(iCv1)
+             t2 = t2 + geo%cvVol(iCv2)*pl%po(iCv2)
+             totflux = totflux - mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)*
+     &         (dv%fch(iFc,0) + dv%fch(iFc,1))
+             totpar = totpar - mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)*
+     &         (dv%fchdia(iFc,0) + dv%fchdia(iFc,1) +
+     &          dv%fchinert(iFc,0) + dv%fchinert(iFc,1))
+            enddo
+           endif
+          enddo
+          t1 = t1/t0
+          t2 = t2/t0
+          if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
+          if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          t4 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),totpar,1.0e-10_R8))*t1
+*       ..impose potential with perturbation
+          do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+            srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
+     &        (pl%po(iCv2) + t4 - t2)
+            srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+          enddo
+         else
+          call xerrab ('wrong value bcpot_12_style')
+         endif
         endif
 
 * -- BCPOT=13 -- Test condition for south private & north regions ! Solovyev 07.04.14
@@ -8729,10 +8799,29 @@ cwdk    For testing purposes, use with care!
           srw%sch0(iCv1,1) = 0.0_R8
         enddo  
 
-* -- BCPOT=15 -- Nothing implemented
+* -- BCPOT=15 -- Prescribe zero anomalous current
 
         case (15)
-        CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'zero anomalous current on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - 
+     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fch_p(iFc,0)     + dv%fch_p(iFc,1)     +
+     &        dv%fchdia(iFc,0)    + dv%fchdia(iFc,1)    +
+     &        dv%fchin(iFc,0)     + dv%fchin(iFc,1)     +
+     &        dv%fchvispar(iFc,0) + dv%fchvispar(iFc,1) +
+     &        dv%fchvisq(iFc,0)   + dv%fchvisq(iFc,1)   +
+     &        dv%fchviskt(iFc,0)  + dv%fchviskt(iFc,1)  +
+     &        dv%fchvisper(iFc,0) + dv%fchvisper(iFc,1) +
+     &        dv%fchinert(iFc,0)  + dv%fchinert(iFc,1))
+              ! eventually: add stochastic current?
+        enddo
 
 * -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
@@ -9042,7 +9131,7 @@ c end of implementation
            t1 = t1 + geo%cvVol(iCv2)*pl%po(iCv1)
            t2 = t2 + geo%cvVol(iCv2)*pl%po(iCv2)
            totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &       mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
           enddo
           totpar = totpar + potpar(ib0,1)
          endif

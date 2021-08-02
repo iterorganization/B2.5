@@ -51,9 +51,8 @@
 
 *   ..local variables
       integer iCv, iCv1, iCv2, iFc, ib, meth                             !srv 13.10.06
-      integer, save :: style_int_vel = 0
       character chns*3                                                   !srv 16.09.02
-      real (kind=R8), save :: drift_hyb = 1.0_R8
+      real (kind=R8) :: drift_hyb
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
@@ -102,11 +101,7 @@ c      integer, save :: pflux_cor = 1                                     !srv 0
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
-      if (ncall_b2tfnb.eq.0) then
-        if (switch%b2tfnb_no_hybr .eq.1) meth = 0
-        call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
-        call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
-      endif
+      drift_hyb = switch%fnb_drift_hyb
 *   ..extensive tests on first few calls
       if (ncall_b2tfnb.lt.3) then
 *    ..test sign of nb, ne, pb, cdnb, cdpb
@@ -330,7 +325,7 @@ cwdk                   (original code: simple averaging)
 * ..poloidal fluxes
 
 *   ..interpolate ua to cell faces
-      if(style_int_vel.eq.0) then
+      if(switch%b2tfnb_style_int_vel.eq.0) then
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,isb),wrk0)
       else
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,pl%ua(:,isb),wrk0)
