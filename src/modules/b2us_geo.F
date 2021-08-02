@@ -52,7 +52,9 @@
 !  flux tube/surface quantities
         real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
         real (kind=R8), allocatable  :: ftConn(:)      ! (nFt) Connection length for each flux tube
-        real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio 
+        real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio
+        real (kind=R8), allocatable  :: ftBbav2(:)     ! (nFt) Average B**2 on the flux tube
+
         real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
 
       end type geometry
@@ -108,10 +110,13 @@
       allocate (g%vxOnedBsq(nVx))
       allocate (g%vxBzb(nVx))
 
-!  flux surface quantites
+!  flux tube quantites
       allocate (g%cvConn(nCv))
       allocate (g%ftConn(nFt))
       allocate (g%ftEps(nFt))
+      allocate (g%ftBbav2(nFt))
+
+!  flux surface quantities
       allocate (g%fsPsi(nFs))
 
       call initialize_geometry(g)
@@ -169,6 +174,8 @@
       g%cvConn = 0._R8
       g%ftConn = 0._R8
       g%ftEps = 0._R8
+      g%ftBbav2 = 0._R8
+
       g%fsPsi = 0._R8
       
       return
@@ -226,6 +233,7 @@
       deallocate (g%cvConn)
       deallocate (g%ftConn)
       deallocate (g%ftEps)
+      deallocate (g%ftBbav2)
       deallocate (g%fsPsi)
       
       return
@@ -401,6 +409,8 @@
 *   ..set weights for interpolation to vertices
       if (switch%vxVol_style.eq.0) then
        ! weights for inverse volume interpolation
+       ! idea: each cell divides its volume equally
+       !       between its vertices
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
@@ -410,6 +420,8 @@
        enddo
       elseif (switch%vxVol_style.eq.1) then
        ! weights based on relative volume fraction
+       ! idea: each cell assigns equal volume fraction
+       !       to each of its vertices
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
@@ -437,6 +449,9 @@
          endif
         enddo
        enddo
+      elseif (switch%vxVol_style.eq.3) then
+       ! equal weight for each cell around the vertex
+       gm%vxVol = 1.0_R8
       else
         call xerrab ('wrong value of b2mndr_vxVol_style')
       endif
@@ -557,7 +572,7 @@
       integer :: nfx, iCv, iCv1, iCv2, iFt, i, j, ic, iFc
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
-     .  tt0(mpg%nFt), tt1(mpg%nFt)
+     .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
 
       call ipgeti ('b2mndr_conn_style',conn_style)
       call ipgeti ('b2mndr_conn_iout',iout)
@@ -581,17 +596,23 @@
        wrk0 = 0.0_R8
        tt0 = 0.0_R8
        tt1 = 0.0_R8
+       tt2 = 0.0_R8
+       tt3 = 0.0_R8
        do iFt = 1, mpg%nFt 
          do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
            icv = mpg%ftCv(j)
            wrk0(icv) = wrk1(icv)*gm%cvBb(icv,3)/gm%cvBb(icv,0)
            tt0(iFt) = tt0(iFt) + wrk1(icv)
            tt1(iFt) = tt1(iFt) + wrk1(icv)*gm%cvVol(icv)/gm%cvSz(icv)
+           tt2(iFt) = tt2(iFt) + gm%cvBb(iCv,3)*gm%cvBb(iCv,3)*
+     .         gm%cvVol(iCv)
+           tt3(iFt) = tt3(iFt) + gm%cvVol(iCv)
          enddo
        enddo
        ! full connection length of each flux tube
        gm%ftConn = 0.0_R8
        gm%ftEps = 0.0_R8
+       gm%ftBbav2 = 0.0_R8
        do iFt = 1, mpg%nFt 
          Ll = 0.0_R8
          do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
@@ -600,6 +621,7 @@
          gm%ftConn(iFt) = Ll
          if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
            gm%ftEps(iFt) = tt0(iFt)**2/tt1(iFt)
+           gm%ftBbav2(iFt) = tt2(iFt)/tt3(iFt)
          endif
        enddo
        ! 'effective' connection length for use in k-eps model

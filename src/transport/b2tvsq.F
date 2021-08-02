@@ -27,7 +27,6 @@
       integer, save :: ncall = 0
       real (kind=R8) ::
      *    fac_vism, wrkc(nCv), wrkf(nFc), wrkv(nVx), wght(nFc,2),       !srv 11.07.99
-     *    tt0(mpg%nFt), tt1(mpg%nFt), bbaverage2(mpg%nFt),
      *    qip0(nCv), qip1(nCv), qipgen(nCv), gqipgen(nFc),              !srv 20.12.99
      *    tauia1(nCv), alpha1(nCv), nu1(nCv), tauia(nCv,0:ns-1),        !srv 28.03.99 11.07.99
      *    gti(nCv,0:1), gOnedBsq(nFc,0:1)
@@ -60,23 +59,6 @@
 
           call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)             !srv 01.07.09
 
-*       ..precompute bbaverage2
-
-          tt0 = 0.0e0_R8
-          tt1 = 0.0e0_R8
-          bbaverage2 = 0.0e0_R8
-          do iFt = 1, mpg%nFt 
-           if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
-            do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-             iCv = mpg%ftCv(ic)
-             tt0(iFt) = tt0(iFt) + geo%cvBb(iCv,3)*geo%cvBb(iCv,3)*
-     .         geo%cvVol(iCv)
-             tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)
-            enddo
-            bbaverage2(iFt) = tt0(iFt)/tt1(iFt)
-           endif
-          enddo
-
 *       ..calculate the parallel heat flux of ion at the center of cell !lk 23.05.06 05.07.07 {
 
           qip0 = 0.0e0_R8
@@ -88,8 +70,8 @@
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
                qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
-     &           (geo%cvBb(iCv,0)*bbaverage2(iFt))*(ni(iCv)*ti(iCv)/qe)*
-     &           gti(iCv,1)
+     &           (geo%cvBb(iCv,0)*geo%ftBbav2(iFt))*
+     &           (ni(iCv)*ti(iCv)/qe)*gti(iCv,1)
               enddo
              endif
             enddo

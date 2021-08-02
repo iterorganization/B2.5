@@ -182,7 +182,8 @@ c style  switches
       integer :: b2sihs_style
       integer :: b2sral_style
       integer :: style_visc
-      integer :: style_int_vel        !srv 01.04.19
+      integer :: b2tfnb_style_int_vel
+      integer :: b2sihs_style_int_vel
       integer :: istyle_Joule_heating
       integer :: b2sqcx_styl0
       integer :: b2stcx_styl0
@@ -382,6 +383,7 @@ c b2tqna
       integer :: b2tqna_new_df0
       integer :: b2tqna_ixref
       integer :: b2tqna_transport_inputfile
+      integer :: b2tqna_ballooning_sig
 
 c b2tanml
       real (kind=R8) :: fch_anomalous
@@ -554,7 +556,7 @@ c Feedback
       s % fhi_vdia_par = 1.0e0_R8
       s % xvecrb = 1.0e0_R8
       s % xwdia = 1.0e0_R8
-      s % fnb_drift_hyb = 0.0e0_R8
+      s % fnb_drift_hyb = 1.0e0_R8
       s % xfac = 1.0e0_R8
       s % fch_inert = 1.0e0_R8
       s % cthiv = 2.65_R8
@@ -639,7 +641,8 @@ c Feedback
       s % b2sihs_style = 0
       s % b2sral_style = 2
       s % style_visc = 0
-      s % style_int_vel = 0
+      s % b2tfnb_style_int_vel = 0
+      s % b2sihs_style_int_vel = 0
       s % istyle_Joule_heating = 1
       s % b2sqcx_styl0 = 0
       s % b2stcx_styl0 = 0
@@ -654,9 +657,9 @@ c Feedback
       s % b2tqce_model = 1
       s % b2tqce_style_guard_cells = 0
       s % b2tral_mode = 1
-      s % b2tlv0_style = 0
-      s % b2tlh0_style = 0
-      s % b2tlc0_style = 0
+      s % b2tlv0_style = 1
+      s % b2tlh0_style = 1
+      s % b2tlc0_style = 1
       s % b2tinnt_style = 1
       s % model_sig = 0
       s % b2mwqt_style = 1
@@ -747,8 +750,8 @@ c Feedback
       s % set_po_numerical = 0
 
 c geometry
-      s % fcHz_style = 0
-      s % vxHz_style = 0
+      s % fcHz_style = 1
+      s % vxHz_style = 1
       s % use_9pt_stencil = 1
       s % fcVol_style = 0
       s % vxVol_style = 2
@@ -827,6 +830,7 @@ c b2tqna
       s % b2tqna_new_df0 = 0
       s % b2tqna_ixref = 1
       s % b2tqna_transport_inputfile = 0
+      s % b2tqna_ballooning_sig = 1
 
 c fch_anomalous
       s % fch_anomalous = 1.0e0_R8
@@ -1097,7 +1101,8 @@ c style/mode switches
       call ipgeti ('b2sihs_style', s % b2sihs_style)  
       call ipgeti ('b2sral_style', s % b2sral_style)                              !srv 28.07.08
       call ipgeti ('b2sihs_style_visc', s % style_visc)
-      call ipgeti ('b2sihs_style_int_vel', s % style_int_vel)     
+      call ipgeti ('b2tfnb_style_int_vel', s % b2tfnb_style_int_vel)
+      call ipgeti ('b2sihs_style_int_vel', s % b2sihs_style_int_vel)     
       call ipgeti ('b2sihs_istyle_Joule_heating', 
      &                      s % istyle_Joule_heating)    
       call ipgeti ('b2sqcx_styl0', s % b2sqcx_styl0)    
@@ -1301,6 +1306,7 @@ c b2tqna
       call ipgetr ('b2tqna_bb_ref', s%b2tqna_bb_ref)
       call ipgetr ('b2tqna_ballooning_rescale',
      & s%b2tqna_ballooning_rescale)
+      call ipgeti ('b2tqna_ballooning_sig', s%b2tqna_ballooning_sig)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
       call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                       !srv 15.12.05
