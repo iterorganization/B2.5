@@ -180,6 +180,7 @@
 #else
         read(99,numerics)
 #endif
+        close(99)
         write(*,*) 'Read namelist numerics from ',trim(filename)
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))

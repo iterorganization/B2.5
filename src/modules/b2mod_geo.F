@@ -45,7 +45,7 @@
 
       subroutine alloc_b2mod_geo(nxd,nyd)
       implicit none
-      integer nxd,nyd
+      integer, intent(in) :: nxd, nyd
 
       allocate(bb(-1:nxd,-1:nyd,0:3))
       allocate(crx(-1:nxd,-1:nyd,0:3))

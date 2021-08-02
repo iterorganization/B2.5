@@ -106,4 +106,4 @@ C
         C(2)=0.0e0_R8
         D(2)=0.0e0_R8
         RETURN
-        END
+        END SUBROUTINE DSPLINE

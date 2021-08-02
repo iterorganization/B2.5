@@ -1020,7 +1020,7 @@
           do ix = -1,nx
             if(leftix(ix,iy).eq.-2) then
               ixx=max(-1,ix-1)
-              wdim(iw+1 )= crdy_c_cell(ixx+ishift,iy)
+              wdim(iw+1)= crdy_c_cell(ixx+ishift,iy)
               wdim(iw+2)= ne(ixx+ishift,iy)
               wdim(iw+3)= te(ixx+ishift,iy)/ev
               wdim(iw+4)= ti(ixx+ishift,iy)/ev
@@ -1168,7 +1168,7 @@
           if(leftix(ix,iy).eq.-2) then
             ixx=max(-1,ix-1)
             iw = iw +1
-            wdim(iw )= crdy_c_cell(ixx+ishift,iy)
+            wdim(iw)= crdy_c_cell(ixx+ishift,iy)
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= na(ixx+ishift,iy,is)
@@ -1185,22 +1185,22 @@
         enddo
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
 !       write(70,"(<2*ns+1>es14.6)")
-      enddo
-      close(70)
+       enddo
+       close(70)
 
 *   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Eastern edge
-      if (LSN) then
+       if (LSN) then
         call b2wdat_open(70,'outer_na_ua')                  !srv 26.09.17
-      else
+       else
         call b2wdat_open(70,'inner_na_ua')                  !srv 26.09.17
-      endif
-      do iy = -1,ny
+       endif
+       do iy = -1,ny
         iw = 0
         do ix = -1,nx
           if(rightix(ix,iy).eq.nx+1) then
             ixx=min(nx,ix+1)
             iw = iw +1
-            wdim(iw )= crdy_c_cell(ixx-ishift,iy)
+            wdim(iw)= crdy_c_cell(ixx-ishift,iy)
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= na(ixx-ishift,iy,is)
@@ -1217,42 +1217,42 @@
         enddo
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
 !       write(70,"(<2*ns+1>es14.6)")
-      enddo
-      close(70)                                                !srv 03.04.13 }
+       enddo
+       close(70)                                               !srv 03.04.13 }
 
 *   ..write poloidal coordinates, Up upper separatrix
-      iy = mintopcut+4                                         !srv 13.02.17 {
-      write (chns,'(i3.3)') iy
-      call b2wdat_open(70,'poloidal_ua_at_'//chns)             !srv 26.09.17
-      write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
-      do ix = -1,nx
+       iy = mintopcut+4                                        !srv 13.02.17 {
+       write (chns,'(i3.3)') iy
+       call b2wdat_open(70,'poloidal_ua_at_'//chns)            !srv 26.09.17
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
+       do ix = -1,nx
         iw = 1
-        wdim(iw )= lengthx(ix,iy)
+        wdim(iw)= lengthx(ix,iy)
         do is=0,ns-1
           iw = iw + 1
           wdim(iw)= ua(ix,iy,is)
         enddo
         write(70,hlp_frm) (wdim(is),is=1,iw)
 !       write(70,"(<2*ns+1>es14.6)")
-      enddo
-      close(70)
+       enddo
+       close(70)
 
 *   ..write poloidal coordinates, na upper separatrix
-      iy = mintopcut+4
-      write (chns,'(i3.3)') iy
-      call b2wdat_open(70,'poloidal_na_at_'//chns)             !srv 26.09.17
-      write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
-      do ix = -1,nx
+       iy = mintopcut+4
+       write (chns,'(i3.3)') iy
+       call b2wdat_open(70,'poloidal_na_at_'//chns)            !srv 26.09.17
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
+       do ix = -1,nx
         iw = 1
-        wdim(iw )= lengthx(ix,iy)
+        wdim(iw)= lengthx(ix,iy)
         do is=0,ns-1
           iw = iw + 1
           wdim(iw)= na(ix,iy,is)
         enddo
         write(70,hlp_frm) (wdim(is),is=1,iw)
 !       write(70,"(<2*ns+1>es14.6)")
-      enddo
-      close(70)                                                !srv 13.02.17 }
+       enddo
+       close(70)                                               !srv 13.02.17 }
 
       endif                     !srv   endif for iout=2        !srv 06.05.09 }
 

@@ -51,7 +51,7 @@
 
       subroutine alloc_b2mod_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer, intent(in) :: nxd,nyd,nsd
 
       allocate(calf(-1:nxd,-1:nyd,0:1))
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:nsd-1))
@@ -159,7 +159,7 @@
 
       subroutine read_b2mod_transport(nread)
       implicit none
-      integer nread
+      integer, intent(in) :: nread
 
       call cfrure (nread, size(calf), calf, 'calf')
       call cfrure (nread, size(cdna), cdna, 'cdna')
@@ -229,7 +229,7 @@
 
       subroutine write_b2mod_transport(nwrite)
       implicit none
-      integer nwrite
+      integer, intent(in) :: nwrite
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

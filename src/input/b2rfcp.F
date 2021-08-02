@@ -10,7 +10,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nrid, ns
+      integer, intent(in) :: nrid, ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks

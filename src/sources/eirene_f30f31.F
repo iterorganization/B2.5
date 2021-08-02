@@ -15,8 +15,9 @@
       SUBROUTINE GFSUB3(KARD,NX,NY,NDIMX,NDIMY,NDIMS,DUMMY)
       use b2mod_types
       IMPLICIT NONE
-      INTEGER KARD,NX,NY,NDIMX,NDIMY, NDIMS, ND1, LIM, IS, IY, IX, III
-      REAL (kind=R8) ::
+      INTEGER, INTENT(IN) :: KARD,NX,NY,NDIMX,NDIMY,NDIMS
+      INTEGER ND1, LIM, IS, IY, IX, III
+      REAL (kind=R8), INTENT(IN) ::
      *   DUMMY(0:NDIMX+1,0:NDIMY+1,1:NDIMS)
       ND1 = NX + 2
       LIM = (ND1/5)*5 - 4
@@ -30,7 +31,7 @@
   110   CONTINUE
   120 CONTINUE
       RETURN
-  910 FORMAT(1P,5(E16.8))
+  910 FORMAT(1P,5(1X,1E15.8))
 *=======================================================================
 *//END GFSUB3//
 
@@ -63,8 +64,8 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny,ns
-      real (kind=R8) :: BoRiS
+      integer, intent(in) :: nx,ny,ns
+      real (kind=R8), intent(in) :: BoRiS
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style, iout = 0                           !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrapolate,in,
@@ -535,7 +536,7 @@ c
       use b2mod_eirbra, only: fort_lc
 #endif
       implicit none
-      integer nx,ny
+      integer, intent(in) :: nx,ny
       integer ix,iy,i,nniso
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
@@ -727,7 +728,7 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny
+      integer, intent(in) :: nx,ny
       integer nxx,nyy
       real*8, allocatable :: dummy(:,:,:)
 

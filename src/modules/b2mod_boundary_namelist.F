@@ -119,8 +119,8 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
 
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
-      integer nx ,ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx ,ny, ns
+      real (kind=R8), intent(in) :: tim
       integer ix, iy, is, ib
       logical done, catch_up
 
@@ -246,8 +246,8 @@ cxpb overwrite the defaults with the namelist data
 
       subroutine catchup_b2mod_boundary(nx, ny, ns, tim)
       implicit none
-      integer nx, ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(in) :: tim
       logical catch_up
 
       if(boundary_time_mod.gt.0.0_R8) then
@@ -283,7 +283,7 @@ cxpb overwrite the defaults with the namelist data
 
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
       implicit none
-      integer nxd, nyd, nsd, nbcd_in, nnisod_in
+      integer, intent(in) :: nxd, nyd, nsd, nbcd_in, nnisod_in
       integer ix, iy
 #ifndef ALLOCATE_AND_NAMELIST
       external xertst
@@ -404,6 +404,7 @@ cxpb Have to do this here already in case the namelist is not used
       end subroutine alloc_b2mod_boundary
 
       subroutine dealloc_b2mod_boundary
+      implicit none
 
       if (.not.allocated(iffboundx)) return
 #ifdef ALLOCATE_AND_NAMELIST
@@ -442,8 +443,8 @@ cxpb Have to do this here already in case the namelist is not used
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
       implicit none
-      integer nx, ny, ns
-      logical dotest
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(in) :: dotest
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
@@ -946,7 +947,7 @@ c.. Test consistency with region boundaries
       use b2mod_plasma
       implicit none
       real (kind=R8) :: get_phi_applied
-      integer boundary_namelist, ix, iy
+      integer, intent(in) :: boundary_namelist, ix, iy
       integer i, ib
       logical found
 
