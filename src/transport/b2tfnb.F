@@ -180,6 +180,44 @@ cwdk                   (original code: simple averaging)
         wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
         dv%vaecrb(:,0,isb) = -switch%poleldr*dv%fac_ExB*wrk0*dpo(:,1)
         dv%vaecrb(:,1,isb) =  switch%radeldr*dv%fac_ExB*wrk0*dpo(:,0)
+*     ..restriction ExB drift
+        xcount = 0
+        if (switch%ion_vlct_restrict.eq.2) then                        !iyv 06.02.14 {
+          do iFc = 1, nFc
+            !wdk for unstructured grids: apply ExB velocity restriction
+            !    to total ExB velocity (instead of individual poloidal and radial
+            !    components). Otherwise: not perpendicular to gradient of potential
+            t0 = sqrt((dv%vaecrb(iFc,0,isb)*geo%fcBb(iFc,3)/
+     .        geo%fcBb(iFc,2))**2 + dv%vaecrb(iFc,1,isb)**2)
+            if(t0.gt.2.0_R8*co%cssb(iFc)) then
+              xcount = xcount+1
+              if (switch%vlct_diagno.ge.2) then
+                write(6,'(a,a,i3,a,i4,a)')
+     .            'Total ExB velocity restriction applied ',
+     .            'to species ',isb,' on face (',iFc,'):'
+                write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5,a,1e12.5)')
+     .            'Mach 2: ',2.0_R8*co%cssb(iFc),
+     .            ' Vx_ExB:',dv%vaecrb(iFc,0,isb),
+     .            ' Vy_ExB:',dv%vaecrb(iFc,1,isb),
+     .            ' |V_ExB|:',t0
+              end if
+              t1 = 2.0_R8*co%cssb(iFc)/t0
+              dv%vaecrb(iFc,0,isb) = dv%vaecrb(iFc,0,isb)*t1
+              dv%vaecrb(iFc,1,isb) = dv%vaecrb(iFc,1,isb)*t1
+            endif
+          enddo
+        endif
+        if (switch%vlct_diagno.ge.1) then
+          if (xcount.gt.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
+     .       ' Total ExB velocity limit of Mach 2 was applied ',
+     .         xcount,' times for species ',isb
+          else if (xcount.eq.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
+     .       ' Total ExB velocity limit of Mach 2 was applied ',
+     .         xcount,' time for species ',isb
+          end if
+        end if
 *     ..computation of grad-B drift
 cwdk    use (na*Ti)_f/na_f for consistency with fchdia
 cwdk    check treatment of rza for consistency with other drifts
@@ -242,43 +280,6 @@ cwdk                   (original code: simple averaging)
      &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
         enddo
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
-        xcount = 0
-        if (switch%ion_vlct_restrict.eq.2) then                        !iyv 06.02.14 {
-          do iFc = 1, nFc
-            !wdk for unstructured grids: apply ExB velocity restriction
-            !    to total ExB velocity (instead of individual poloidal and radial
-            !    components). Otherwise: not perpendicular to gradient of potential
-            t0 = sqrt((dv%vaecrb(iFc,0,isb)*geo%fcBb(iFc,3)/
-     .        geo%fcBb(iFc,2))**2 + dv%vaecrb(iFc,1,isb)**2)
-            if(t0.gt.2.0_R8*co%cssb(iFc)) then
-              xcount = xcount+1
-              if (switch%vlct_diagno.ge.2) then
-                write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .            'Total ExB velocity restriction applied ',
-     .            'to species ',isb,' on face (',iFc,'):'
-                write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .            'Mach 2: ',2.0_R8*co%cssb(iFc),
-     .            ' Vx_ExB:',dv%vaecrb(iFc,0,isb),
-     .            ' Vy_ExB:',dv%vaecrb(iFc,1,isb),
-     .            ' |V_ExB|:',t0
-              end if
-            endif
-            t1 = 2.0_R8*co%cssb(iFc)/t0
-            dv%vaecrb(iFc,0,isb) = dv%vaecrb(iFc,0,isb)*t1
-            dv%vaecrb(iFc,1,isb) = dv%vaecrb(iFc,1,isb)*t1
-          enddo
-        endif
-        if (switch%vlct_diagno.ge.1) then
-          if (xcount.gt.1) then
-            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Total ExB velocity limit of Mach 2 was applied ',
-     .         xcount,' times for species ',isb
-          else if (xcount.eq.1) then
-            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
-     .       ' Total ExB velocity limit of Mach 2 was applied ',
-     .         xcount,' time for species ',isb
-          end if
-        end if
         if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
           do iFc = 1, nFc
             !wdk for unstructured grids: apply flux limits
