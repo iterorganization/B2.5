@@ -135,6 +135,7 @@
       integer, save :: elm_count
       integer, save :: style = 2                                        !srv 28.06.08
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 30.06.08, IYS 06.11.2017
+      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
@@ -208,6 +209,7 @@
         call ipgeti ('b2sral_no_fluid_neutral_sources',
      .                                       no_fluid_neutral_sources)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 06.11.17
+        call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -238,6 +240,10 @@
         call alloc_b2mod_numerics(nx,ny,ns)
         if(numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          if(style_b2mndt.eq.2) then                                    !srv 07.07.21 {
+            solvemt=.false.
+            solveet=.false.
+          endif                                                         !srv 07.07.21 }
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then

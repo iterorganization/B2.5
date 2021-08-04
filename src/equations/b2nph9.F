@@ -3,7 +3,7 @@
 
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
-     &  rxf, BoRiS, fac_ExB,
+     &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
      &  hx, hy, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
@@ -20,11 +20,15 @@
       use b2mod_subsys
       use b2mod_sources
      , , only : shedt, shidt                                            !srv 31.01.21
+      use b2mod_numerics_namelist                                       !srv 07.07.21 {
+     & , only : dtee, dtei, time_factor
+      use b2mod_plasma
+     , , only : tep, tip, nep, nip, nap, kinrgyp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
-     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
+     *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),       !srv 07.06.00 02.06.99 07.07.21
      *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
@@ -84,18 +88,18 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
-     *   rxg, pcm0, pcm1
+     *   rxg, pcm0, pcm1, t0, ttim                                      !srv 07.07.21
       real (kind=R8) ::
      * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                    !srv 02.01.07
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                   !srv 02.01.07
      2 she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny),                            !srv 18.09.09
-     4 te_inp(-1:nx,-1:ny), ti_inp(-1:nx,-1:ny)
+     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                             !srv 18.09.09
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: style = 1                                        !srv 09.07.08
       integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       character chns*3                                                  !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
@@ -103,7 +107,7 @@
       external xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
-      data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -116,6 +120,7 @@
 *     of the correction equation, with the effect of limiting the
 *     computed correction. rxg is dimensionless and of order unity;
 *     smaller values of rxg imply stronger damping.
+*     Not used if running in time-dependent mode.
 *
 *     pcm0 - real.
 *     ...
@@ -131,9 +136,29 @@
       call subini ('b2nph9')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2nph9_rxg', rxg)                                  !srv 02.01.07 {
-       call ipgetr ('b2nph9_pcm0', pcm0)
-       call ipgetr ('b2nph9_pcm1', pcm1)                                !srv 02.01.07 }
+       call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
+       if(style_b2mndt.eq.2) then
+         rxg = huge(1.0_R8)
+         pcm0 = 0.0_R8
+         pcm1 = 0.0_R8
+         do iy = -1, ny
+           do ix = -1, nx
+            call xertst(
+     .        rxf*dtee(region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8,
+     .       'rxf*dtee*time_factor must be 1')
+            call xertst(
+     .        rxf*dtei(region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8,
+     .       'rxf*dtei*time_factor must be 1')
+           enddo
+         enddo
+       else
+         rxg = 1.0_R8
+         pcm0 = 1.0_R8
+         pcm1 = 1.0_R8
+         call ipgetr ('b2nph9_rxg', rxg)                                !srv 02.01.07 {
+         call ipgetr ('b2nph9_pcm0', pcm0)
+         call ipgetr ('b2nph9_pcm1', pcm1)                              !srv 02.01.07 }
+       endif                                                            !srv 07.07.21 }
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
@@ -194,6 +219,19 @@
       endif
 
 * ..main computation
+      tep = te                                                          !srv 07.07.21 {
+      tip = ti
+      if(style_b2mndt.eq.2) then
+*  .. calculate time-dependent source
+        call b2shdt (nx, ny, ns, dtim, BoRiS,
+     &   vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
+*  .. add contribution from time-dependent source
+        she = she+shedt
+        she(:,:,0)=she(:,:,0)-1.5_R8*(ne-nep)*tep/dtim*vol
+        shi = shi+shidt
+        shi(:,:,0)=shi(:,:,0)-1.5_R8*(ni(:,:,0)-nip(:,:,0))*tip/dtim*vol
+      endif                                                             !srv 07.07.21 }
+
 *   ..compute final heat sources
       if(style.eq.0) then
        call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,
@@ -213,9 +251,7 @@ cdjm Jan2017 update particle source components for balance
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
-        te_inp=te
         call my_out(70,nx,ny,te,'b2nph9_te_inp')
-        ti_inp=ti
         call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
       endif                                                              !srv 31.01.21
 
@@ -328,33 +364,37 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
         call my_out(70,nx,ny,po,'b2nph9_po')
-        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
-        call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
-        call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
-        wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
-        wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
-        call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
-        wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
       elseif (iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
-        wrk0 = -corte*shedt(:,:,3)*ne                                   !srv 31.01.21 {
-        call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
-        wrk0 =-shedt(:,:,3)*te_inp*ne - shedt(:,:,0)        ! it is supposed that the shedt(:,:,0) was computed using te_inp
-        call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
-        wrk0 = -shedt(:,:,3)*te*ne-shedt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
-        wrk0 = -corti*shidt(:,:,3)*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
-        wrk0 =-shidt(:,:,3)*ti_inp*ni(:,:,0) - shidt(:,:,0) ! it is supposed that the shidt(:,:,0) was computed using ti_inp
-        call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
-        wrk0 = -shidt(:,:,3)*ti*ni(:,:,0)-shidt(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')                     !srv 31.01.21 }
+        if(style_b2mndt.eq.2) then                                      !srv 07.07.21
+         wrk0=1.5_R8*vol*ne*(te-tep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
+         wrk0=1.5_R8*vol*tep*(ne-nep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
+         wrk0=1.5_R8*vol*ni(:,:,0)*(ti-tip)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
+         wrk0=1.5_R8*vol*tip*(ni(:,:,0)-nip(:,:,0))/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
+        else
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-nep(ix,iy)*tep(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ni(ix,iy,0)*ti(ix,iy)-
+     &                  nip(ix,iy,0)*tip(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')
+        endif                                                           !srv 07.07.21 }
       end if
 
 * ..return

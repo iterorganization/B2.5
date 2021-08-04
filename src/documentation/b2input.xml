@@ -751,6 +751,7 @@
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
 					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVEMT, SOLVECO, SOLVEE, SOLVEEI, SOLVEET and SOLVEPO arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
+					When running in time-dependent mode, the total energy and total momentum equations are not solved.
 					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
 					*----------------------------------------------------
 					*        | value |  co  |  mo  |  he  |  hi  |  po  |
@@ -3778,9 +3779,10 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-				  If 0, the SOLPS5.0 physics model is used, by calling the b2news routine.
-				  If 1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
-				  If negative, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
+				  If  0, the SOLPS5.0 physics model is used, by calling the b2news routine.
+				  If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
+				  If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
+				  If -1, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
 				</description>
 			</switch>
 			<switch>
@@ -3959,10 +3961,13 @@
 			</switch>
 			<switch>
 				<name>b2mndt_rxf</name>
-				<default>0.5</default>
+				<default>See description</default>
 				<type>real</type>
 				<description>
 					Main under-relaxation parameter.
+					Should be set to 1.0 (default) if running in time-dependent mode (b2mndt_style.eq.2).
+					Otherwise, default value is 0.5.
+					Setting this switch to zero prevents updating of the principal code quantities.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3996,6 +4001,7 @@
 				<name>b2npco_pcm.</name>
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the velocity correction. It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npco_pcm0</name>
@@ -4014,6 +4020,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4021,6 +4028,7 @@
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the temperature correction.
 					It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npht_pcm0</name>
@@ -4039,6 +4047,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4063,6 +4072,7 @@
 				<type>real</type>
 				<description>
 					Normalisation factor for the parallel momentum equation.
+					Not used when running in time_dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switch>
@@ -4468,6 +4478,22 @@
 				<type>real</type>
 				<description>
 					Linearisation constant.
+				</description>
+			</switch>
+			<switch>
+				<name>b2usht_cor_diag</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Linearisation constant for the temperature equilibration term.
+				</description>
+			</switch>
+			<switch>
+				<name>b2ush9_cor_diag</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Linearisation constant for the temperature equilibration term.
 				</description>
 			</switch>
 			<switch>
@@ -6594,6 +6620,7 @@
 					Used to specifiy time multipliers per equation and per region for the B2.5 solver.
 					Active if 'b2srdt_numerics_namelist' is set to 1 or greater.
 					It is recommended to use the same multiplier for all equations within one region.
+					The time multipliers should not be used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</introduction>
 			<switch>

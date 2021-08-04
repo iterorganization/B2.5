@@ -526,7 +526,7 @@
 
 cxpb
 *   ..iterate on parallel momentum balance
-        call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
+        call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,  !srv 13.01.17 24.05.21
      &    vol, hx, hz, bb, pbshz, lnlam,                                 !srv 01.07.09
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, smof,
@@ -584,8 +584,8 @@ cxpb
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
-!$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna)
-!$OMP& SHARED(ext_sna, use_b2npc9)
+!$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
+!$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna, use_b2npc9)
 #endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
@@ -684,9 +684,9 @@ cxpb
                 if(new_matrix) call restart_ma28_for_7
                 call b2npc7 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18
-     &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,  !srv 22.01.02 01.07.05
-     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
-     &           na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
+     &           solving(1), solvedm2, ncall, is, rxf0, dtim, vol, pbs,  !srv 22.01.02 01.07.05 07.07.21
+     &           flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
+     &           ti, pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc7')
                 last_solve_7(0:nnreg(0)) = solveco(is,0:nnreg(0))
@@ -698,7 +698,7 @@ cxpb
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows,                        !srv 05.07.08
      &           nnreg(0), solving(2), solvedum, solving(1), solvedm2,   !srv 22.05.18
-     &           ncall, is, rxf0, vol, pbs, flob, conb,
+     &           ncall, is, rxf0, dtim, vol, pbs, flob, conb,            !srv 07.07.21
      &           sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna(-1,-1,0,is), resco(-1,-1,is),
      &           corpa(-1,-1,is), ier0)
@@ -715,7 +715,7 @@ cxpb
                   if(new_matrix) call restart_ma28_for_11
                   call b2npc11 (nx, ny, fac_vis, guard_flows,
      &             rza(-1,-1,is), nnreg(0), solving(2), solvedum,        !srv 22.05.18
-     &             solving(1), solvedm2, ncall, is, rxf0, vol,
+     &             solving(1), solvedm2, ncall, is, rxf0, dtim, vol,     !srv 07.07.21
      &             pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             po, ti, pb, na(-1,-1,is), ua(-1,-1,is),
      &             fna_mdf(-1,-1,0,is), resco(-1,-1,is),
@@ -730,7 +730,7 @@ cxpb
                   if(new_matrix) call restart_ma28_for_9
                   call b2npc9 (nx, ny, guard_flows, nnreg(0),
      &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
-     &             is, rxf0, vol, pbs,
+     &             is, rxf0, dtim, vol, pbs,                             !srv 07.07.21
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             pb, na(-1,-1,is), ua(-1,-1,is),
      &             fna_mdf(-1,-1,0,is),
@@ -745,8 +745,8 @@ cxpb
                 end do
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
-     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,
-     &           pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
+     &           vol, pbs, flob, conb, sna(-1,-1,0,is),pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
@@ -1161,7 +1161,7 @@ c     with diamagnetic drift part                                        !xpb
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
      &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, BoRiS, fac_ExB, hx, hy, vol, bb,
+     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv07.07.21
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                     !srv 09.07.08
@@ -1170,7 +1170,7 @@ c     with diamagnetic drift part                                        !xpb
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
           call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
      &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, BoRiS, fac_ExB, hx, hy, vol, bb,                        !srv 07.06.00 02.06.99
+     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv 07.06.00 02.06.99 07.07.21
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif, !srv 31.05.99
@@ -1179,7 +1179,7 @@ c     with diamagnetic drift part                                        !xpb
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
      &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, BoRiS, fac_ExB, hx, hy, vol, bb,                        !srv 07.06.00 02.06.99
+     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv 07.06.00 02.06.99 07.07.21
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,             !srv 31.05.99

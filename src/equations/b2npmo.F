@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
-     &  vol, hx, hz, bb, pbshz, lnlam,
+     &  dtim, vol, hx, hz, bb, pbshz, lnlam,                           !srv 07.07.21
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
@@ -77,8 +77,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
       real (kind=R8) ::
-     *  rxf,
-     &  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                              !srv 09.01.01
+     *  rxf, dtim, hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                   !srv 09.01.01 07.07.21
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  pbshz(-1:nx,-1:ny,0:1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),
@@ -135,9 +134,10 @@
       integer, save :: get_residuals = 0                               !srv 22.05.18
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
+      integer, save :: style_b2mndt = 1                                !srv 07.07.21
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, czetap, czetae                                    !srv 13.01.17
+     *  rxg, t0, t1, czetap, czetae, ttim                              !srv 13.01.17 07.07.21
       real (kind=R8) ::
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
@@ -165,6 +165,7 @@
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
+      character*80 message
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -173,7 +174,7 @@
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
 *   ..initialisation
-      data ncall/0/, rxg/1.0e6_R8/, diagno/0/
+      data ncall/0/, diagno/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -185,7 +186,24 @@
       if (ncall.eq.0) then
         nsmin=0
         nsmax=ns
-        call ipgetr ('b2npmo_rxg', rxg)
+        call ipgeti ('b2mndt_style', style_b2mndt)                      !srv 07.07.21 {
+        if(style_b2mndt.eq.2) then
+         rxg = huge(1.0_R8)
+         write(message,'(a,i3,a)')
+     .    'rxf*dtmo*time_factor for species ',is,' must be 1'
+         do is = 0,ns-1
+          do iy = -1, ny
+           do ix = -1, nx
+            call xertst(
+     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_r8,
+     .       message)
+           enddo
+          enddo
+         enddo
+        else
+         rxg = 1.0e6_R8
+         call ipgetr ('b2npmo_rxg', rxg)
+        endif                                                           !srv 07.07.21 }
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
@@ -268,6 +286,17 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
+      uap = ua                                                           !srv 07.07.21 {
+      if(style_b2mndt.eq.2) then
+*  .. calculate time-dependent source
+       call b2smdt (nx, ny, ns, dtim, hz, vol, na, uap, smodt, .false.)
+*  .. add contribution from time-dependent source
+       smo = smo + smodt
+       do is = 0, ns-1
+         smo(:,:,0,is) = smo(:,:,0,is)-am(is)*mp*vol*hz*
+     &           (na(:,:,is)-nap(:,:,is))*uap(:,:,is)/dtim
+       enddo
+      endif                                                              !srv 07.07.21 }
 *   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
@@ -749,17 +778,27 @@ csw 21feb2014, execute simultaneous corrections always
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
-        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)       !srv 09.03.21 {
-        call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
-        wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
-     &             -smodt(:,:,0,is)
-        call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
-!        wrks = resmo(:,:,is)-wrks
-!        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
-
-        wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
-     &             smodt(:,:,0,is)
-        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }
+        call my_out(70,nx,ny,uap(-1,-1,is),'b2npmo_uap'//chns)
+        call my_out(70,nx,ny,na(-1,-1,is),'b2npmo_na'//chns)
+        call my_out(70,nx,ny,nap(-1,-1,is),'b2npmo_nap'//chns)
+        if(style_b2mndt.eq.2) then                                      !srv 07.07.21 {
+         wrks=mp*am(is)*na(:,:,is)*(ua(:,:,is)-uap(:,:,is))*
+     &         vol*hz/dtim
+         call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
+         wrks=mp*am(is)*uap(:,:,is)*(na(:,:,is)-nap(:,:,is))*
+     &         vol*hz/dtim
+         call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
+        else
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
+           t0 = vol(ix,iy)*hz(ix,iy)/ttim
+           wrks(ix,iy)=mp*am(is)*(na(ix,iy,is)*ua(ix,iy,is)-
+     &                           nap(ix,iy,is)*uap(ix,iy,is))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)
+        endif                                                           !srv 07.07.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then

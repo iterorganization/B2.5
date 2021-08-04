@@ -64,6 +64,7 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
+      integer, save :: style_b2mndt = 1                               !srv 07.07.21
       !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9)
       !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
       integer ireg, ileft, ibot
@@ -71,6 +72,7 @@
       !$OMP THREADPRIVATE(ncall)
       real (kind=R8) ::
      *   t0, t1
+      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
@@ -91,6 +93,8 @@
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06 }
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
+       call ipgetr ('b2ush9_cor_diag', cor_diag)                      !srv 07.07.21
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -128,11 +132,15 @@
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                 !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
-       call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       if(style_b2mndt.ne.2) then                                     !srv 07.07.21
+         call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       endif                                                          !srv 07.07.21
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
        call b2xvsg (n2, she(-1,-1,2), 1, 'she2', '.ge.')
        call b2xvsg (n2, she(-1,-1,3), 1, 'she3', '.le.')
-       call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       if(style_b2mndt.ne.2) then                                     !srv 07.07.21
+         call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       endif                                                          !srv 07.07.21
        call b2xvsg (n2, shi(-1,-1,1), 1, 'shi1', '.le.')
        call b2xvsg (n2, shi(-1,-1,2), 1, 'shi2', '.ge.')
        call b2xvsg (n2, shi(-1,-1,3), 1, 'shi3', '.le.')
@@ -355,7 +363,7 @@
         ireg = region(ix,iy,0)
         if (solveee(ireg))
      >   aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
-     &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*         !srv 02.01.07
+     &    cor_diag*dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*  !srv 02.01.07 07.07.21
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
      &    +abs(reshe(ix,iy))/(rxg*te(ix,iy))                          !srv 02.01.07
        enddo

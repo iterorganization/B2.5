@@ -109,7 +109,7 @@
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
-      data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
+      data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
       data no_solve/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
@@ -125,6 +125,8 @@
        nsmin=0
        nsmax=ns
        call ipgeti ('b2mndt_style', style)                              !srv 18.06.08
+       call xertst (-1.le.style.and.2.ge.style,
+     &   'faulty internal parameter style')                             !srv 07.07.21
        call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
@@ -143,6 +145,11 @@
        call ipgeti ('b2mndt_moitlv', moitlv)
        call xertst (-1.le.moitlv.and.moitlv.le.3,
      &   'faulty internal parameter moitlv')
+       if (style.eq.2) then
+         rxf = 1.0_R8
+       else
+         rxf = 0.5_R8
+       end if
        call ipgetr ('b2mndt_rxf', rxf)
        call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      &   'faulty internal parameter rxf')
@@ -365,8 +372,15 @@ ctmp.dpc
           call b2srsm (nx, ny, ns,
      &     dtim, vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+*     ..stabilise the source coefficients                                !srv 07.07.21 {
+          if(style.eq.2 .and. use_b2srst.eq.1)
+     &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
+     &      ni, sna, smo, she, shi, sch, sne)
+*       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
-          call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
+*     .. contributions due to timestep when style.eq.2 will be done in corresponding subroutines
+          if(style.ne.2)                                                 !srv 07.07.21
+     &    call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
      &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
@@ -378,7 +392,7 @@ ctmp.dpc
           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
 *     ..stabilise the source coefficients
-          if(use_b2srst.eq.1)
+          if(style.ne.2 .and. use_b2srst.eq.1)                           !srv 07.07.21
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
      &      ni, sna, smo, she, shi, sch, sne)
 *       (smq is inherently stable.)
@@ -391,9 +405,12 @@ ctmp.dpc
             call b2news (nx, ny, ns,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
-           else if (style.ge.1) then                                     !srv 01.07.08 {
+           else if (style.eq.1) then                                     !srv 01.07.08 {
             call b2news_(nx, ny, ns,
      &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
+           else if(style.eq.2) then                                      !srv 07.07.08 {
+            call b2news_m(nx, ny, ns,
+     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 07.07.21 }
            else if (style.eq.-1) then ! SOLPS4.x conversion run option
              ier0 = 0
            endif                                                         !srv 01.07.08 )
@@ -552,7 +569,7 @@ ctmp.dpc
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solveet, solvepo, solvemo,               !srv 22.05.18
-     &      rxf, BoRiS, fac_ExB, hx, hy, vol, bb,
+     &      rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                !srv 07.07.21
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08

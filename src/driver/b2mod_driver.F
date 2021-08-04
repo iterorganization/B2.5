@@ -1642,6 +1642,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
+      call b2xpni (nx, ny, ns, na, ni)                                   !srv 07.07.21
 
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
@@ -3119,6 +3120,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call subend ()
       return
       end subroutine b2mndr_2
+
 *-----------------------------------------------------------------------
 *.end b2mndr
 c
