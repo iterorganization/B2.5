@@ -2741,7 +2741,7 @@ c
           nz=ns
           call copy(smcf,1.0_R8,nz,textpl)
         case ('pot')
-        description='Potential energy (eV) (cum. ionisation energy)'
+          description='Potential energy (eV) (cum. ionisation energy)'
           nz=ns
           call copy(rpt,1.0_R8,nz,textpl)
         case ('poti')
@@ -5554,6 +5554,8 @@ c     assumes that bb is OK for 1d cases
           values(15)=maxval(wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          wall_label(iwwrk)='Special'
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('xtow')     ! x dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5573,6 +5575,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('ytow')     ! y dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5592,6 +5595,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('rtow')     ! real --> wall stack
           stack_req=(/0,1,0,0,0,0,0/)

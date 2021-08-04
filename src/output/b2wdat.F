@@ -45,7 +45,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ix, iy, ib, ic, iw, iout_iout_ASTRA !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
@@ -67,7 +67,7 @@
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
      &  phi_app,
-     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cst_a(-1:nx,-1:ny,0:ns-1),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     crd(4*(ny+1)+1), dseval, wdim(8*ns)                     !srv 03.04.13
@@ -132,6 +132,12 @@
       mintopcut = ny                                              !srv 25.02.16
       if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
 
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+      cst = sqrt(pz/rz)
+      do is=0,ns-1
+        cst_a(:,:,is) = sqrt((rza(:,:,is)*te+ti)/(mp*am(is)))     !srv 24.03.10 {
+      end do
+
       if (iout.eq.1) then                                         !srv begin if for iout
 
        call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -143,8 +149,6 @@
        call b2xpro (nx, ny, ns, mp, am, na, ro)                   !srv 30.01.15 {
        call b2xprz (nx, ny, ns, mp, am, na, rz)                   !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-       cst = sqrt(pz/rz)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
        call my_out(70,nx,ny,rz,'rz')
@@ -158,8 +162,7 @@
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
         call my_out(70,nx,ny,wrk0,'pb'//chns)
         call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)             !srv
-        wrk0 = sqrt((rza(:,:,is)*te+ti)/(mp*am(is)))              !srv 24.03.10 {
-        call my_out(70,nx,ny,wrk0,'usound'//chns)
+        call my_out(70,nx,ny,cst_a,'usound'//chns)
         wrk1 = ua(:,:,is)/wrk0
         call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
         call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)    !srv
@@ -1091,6 +1094,21 @@
      *     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
        enddo
        close(70)
+
+       call b2wdat_open(70,'OMP_parallel_electron_flux')
+       do iy=-1,ny
+         write(70,"(1x,2es14.6)") crdy_c_cell(jxa,iy),
+     *     fne(jxa,iy,0)/pitx(jxa,iy)
+       enddo
+       close(70)
+
+       call b2wdat_open(70,'IMP_parallel_electron_flux')
+       do iy=-1,ny
+         write(70,"(1x,2es14.6)") crdy_c_cell(jxi,iy),
+     *     fne(jxi,iy,0)/pitx(jxi,iy)
+       enddo
+       close(70)
+
 *   ..calculate total core energy flux
        power = 0.0_R8
        if (boundary_namelist.eq.1) then
@@ -1155,13 +1173,13 @@
      &    crx(ix-ishift,mintopcut,0)
        close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Western edge
+*   ..write crdy_c_cell, na, ua, cst at Western edges
        if (LSN) then
-         call b2wdat_open(70,'inner_na_ua')                       !srv 03.04.13 { 26.09.17
+         call b2wdat_open(70,'inner_na_ua_cst')                   !srv 03.04.13 { 26.09.17
        else
-         call b2wdat_open(70,'outer_na_ua')                       !srv 03.04.13 { 26.09.17
+         call b2wdat_open(70,'outer_na_ua_cst')                   !srv 03.04.13 { 26.09.17
        endif
-       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
        do iy = -1,ny
          iw = 0
          do ix = -1,nx
@@ -1177,22 +1195,19 @@
               iw = iw + 1
               wdim(iw)= ua(ixx+ishift,iy,is)
             enddo
-!           write(70,"(\1x,12es14.6)")
-!     &     crdy_c_cell(ixx+ishift,iy),
-!     &     (na(ixx+ishift,iy,is),is=0,ns-1),
-!     &     (ua(ixx+ishift,iy,is),is=0,ns-1)
+            iw = iw + 1
+            wdim(iw) = cst(ixx+ishift,iy)
           endif
         enddo
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
-!       write(70,"(<2*ns+1>es14.6)")
        enddo
        close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Eastern edge
+*   ..write crdy_c_cell, na, ua, cst at Eastern edges
        if (LSN) then
-        call b2wdat_open(70,'outer_na_ua')                  !srv 26.09.17
+        call b2wdat_open(70,'outer_na_ua_cst')                  !srv 26.09.17
        else
-        call b2wdat_open(70,'inner_na_ua')                  !srv 26.09.17
+        call b2wdat_open(70,'inner_na_ua_cst')                  !srv 26.09.17
        endif
        do iy = -1,ny
         iw = 0
@@ -1209,16 +1224,279 @@
               iw = iw + 1
               wdim(iw)= ua(ixx-ishift,iy,is)
             enddo
-!           write(70,"(\1x,12es14.6)")
-!     &     crdy_c_cell(ixx-ishift,iy),
-!     &     (na(ixx-ishift,iy,is),is=0,ns-1),
-!     &     (ua(ixx-ishift,iy,is),is=0,ns-1)
+            iw = iw + 1
+            wdim(iw) = cst(ixx-ishift,iy)
           endif
         enddo
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
-!       write(70,"(<2*ns+1>es14.6)")
        enddo
        close(70)                                               !srv 03.04.13 }
+
+*   ..write crdy_c_cell, na, ua, cst at Inner Midplane
+       call b2wdat_open(70,'IMP_na_ua_cst')
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxi,iy)
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= na(jxi,iy,is)
+        enddo
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= ua(jxi,iy,is)
+        enddo
+        iw = iw + 1
+        wdim(iw) = cst(jxi,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Inner Midplane
+       call b2wdat_open(70,'IMP_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxi,iy)
+        iw = 2
+        wdim(iw) = fhe(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        iw = 3
+        wdim(iw) = fhi(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        iw = 4
+        wdim(iw) = fhj(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhm(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        enddo
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhp(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        enddo
+        iw = iw + 1
+        wdim(iw) = fht(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Outer Midplane
+       call b2wdat_open(70,'OMP_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxa,iy)
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= na(jxa,iy,is)
+        enddo
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= ua(jxa,iy,is)
+        enddo
+        iw = iw + 1
+        wdim(iw) = cst(jxa,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Outer Midplane
+       call b2wdat_open(70,'OMP_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxa,iy)
+        iw = 2
+        wdim(iw) = fhe(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        iw = 3
+        wdim(iw) = fhi(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        iw = 4
+        wdim(iw) = fhj(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhm(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        enddo
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhp(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        enddo
+        iw = iw + 1
+        wdim(iw) = fht(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Eastern divertor entrances
+       call b2wdat_open(70,'Eastern_div_entry_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = rightcut(1)
+         else if (ic.eq.2) then
+           ixx = leftcut(2)
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= na(ixx,iy,is)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= ua(ixx,iy,is)
+           enddo
+           iw = iw + 1
+           wdim(iw) = cst(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Eastern divertor entrances
+       call b2wdat_open(70,'Eastern_div_entry_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = rightcut(1)
+         else if (ic.eq.2) then
+           ixx = leftcut(2)
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           iw = 2
+           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           iw = 3
+           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           iw = 4
+           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhm(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhp(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
+           enddo
+           iw = iw + 1
+           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Western divertor entrances
+       call b2wdat_open(70,'Western_div_entry_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = leftcut(1)-1
+         else if (ic.eq.2) then
+           ixx = rightcut(2)-1
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= na(ixx,iy,is)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= ua(ixx,iy,is)
+           enddo
+         enddo
+         iw = iw + 1
+         wdim(iw) = cst(ixx,iy)
+         write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Western divertor entrances
+       call b2wdat_open(70,'Western_div_entry_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = leftcut(1)-1
+         else if (ic.eq.2) then
+           ixx = rightcut(2)-1
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           iw = 2
+           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           iw = 3
+           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           iw = 4
+           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhm(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhp(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
+           enddo
+           iw = iw + 1
+           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, j_sat at Western edges
+       if (LSN) then
+         call b2wdat_open(70,'inner_jsat')                   !srv 03.04.13 { 26.09.17
+       else
+         call b2wdat_open(70,'outer_jsat')                   !srv 03.04.13 { 26.09.17
+       endif
+       write(hlp_frm,'(a)') '(2(1x,2es14.6))'
+       wdim = 0.0_R8
+       do iy = -1,ny
+         iw = 0
+         do ix = -1,nx
+           if(leftix(ix,iy).eq.-2) then
+             ixx=max(-1,ix-1)
+             iw = iw +1
+             wdim(iw)= crdy_c_cell(ixx+ishift,iy)
+             iw = iw +1
+             do is=0,ns-1
+               wdim(iw)= wdim(iw)+rza(ixx+ishift,iy,is)*
+     .                   na(ixx+ishift,iy,is)*cst_a(ixx+ishift,iy,is)
+             enddo
+           endif
+         enddo
+         write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, j_sat at Eastern edges
+       if (LSN) then
+         call b2wdat_open(70,'outer_jsat')                   !srv 03.04.13 { 26.09.17
+       else
+         call b2wdat_open(70,'inner_jsat')                   !srv 03.04.13 { 26.09.17
+       endif
+       wdim = 0.0_R8
+       do iy = -1,ny
+         iw = 0
+         do ix = -1,nx
+           if(rightix(ix,iy).eq.nx+1) then
+             ixx=min(nx,ix+1)
+             iw = iw +1
+             wdim(iw)= crdy_c_cell(ixx-ishift,iy)
+             iw = iw +1
+             do is=0,ns-1
+               wdim(iw)= wdim(iw)+rza(ixx-ishift,iy,is)*
+     .                   na(ixx-ishift,iy,is)*cst_a(ixx-ishift,iy,is)
+             enddo
+           endif
+         enddo
+         write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
 
 *   ..write poloidal coordinates, Up upper separatrix
        iy = mintopcut+4                                        !srv 13.02.17 {

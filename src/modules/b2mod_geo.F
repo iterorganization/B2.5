@@ -39,7 +39,7 @@
 
       public :: abs_diff, dist, disx, disy, distc, match
       public :: divide_by_areas
-      public :: cr, cz, hy1, pit, sy
+      public :: cr, cz, hy1, pit, pitx, sy
 
       contains
 

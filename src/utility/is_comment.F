@@ -8,4 +8,4 @@ c
      .             line(1:1).eq.'!' .or.
      .             line(1:1).eq.'#'
       return
-      end
+      end function is_comment

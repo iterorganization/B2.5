@@ -21,7 +21,7 @@
      &   centre(-1,-1,is),corner(-1,-1,is))
       enddo
       return
-      end
+      end subroutine my_intcor1
 c
       subroutine my_intcor(nx,ny,vol,periodic_bc,nncut,
      & leftix,leftiy,rightix,rightiy,
@@ -299,4 +299,4 @@ c special treatment of limiter tangency X-points
       enddo
 
       return
-      end
+      end subroutine my_intcor
