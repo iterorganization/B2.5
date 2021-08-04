@@ -93,7 +93,7 @@
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
 *   ..initialisation
-      save ncall, iout, use_astra
+      save ncall, iout, use_astra, jxi, jxa, jsep, nxtl, nxtr
       data ncall/0/, iout/0/, use_astra/0/
 
 *-----------------------------------------------------------------------
@@ -111,6 +111,8 @@
        call ipgeti('b2wdat_append', iappend)
        call ipgeti('b2mndr_astra', use_astra)
        call get_boundary_namelist
+       call get_jsep(nx,ny,jxi,jxa,jsep)
+       call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
 *    ..try to create a file in optional output folder
        open(70,file='output/__1__.dat',err=10)
 *    ..folder exists: future output will be done in folder
@@ -140,7 +142,6 @@
 
       if (iout.eq.1) then                                         !srv begin if for iout
 
-       call get_jsep(nx,ny,jxi,jxa,jsep)
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
        Total_flux=0.0_R8
@@ -602,7 +603,6 @@
         wrk1=0.0e0_R8
 
         if(nncut.eq.2) then            !iyv 04.02.11
-          call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
           ix2=nxtr    !outer upper
         endif
