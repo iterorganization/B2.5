@@ -117,7 +117,7 @@
        ehxp(mpg%nCi+1:nCv) = 0.0_R8
       endif                                                             !srv 26.10.08 }
       else                                                              !srv 16.07.12
-
+        call xerrab ('wrong value of pot_eq')
       endif                                                             !srv 16.07.12
 
       if (switch%b2nxfx_iout.eq.1) then                                 !srv 11.09.09
