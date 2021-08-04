@@ -9856,10 +9856,10 @@ C  SKIP READING REST OF THIS BLOCK
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
           READ (IUNIN,'(A72)') ZEILE
-          call fix_logical_input(zeile,4)
-          READ (ZEILE,6665) ldum(0:3) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH
+          call fix_logical_input(zeile,5)
+          READ (ZEILE,6665) ldum(0:4) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH,LSPRCL
           IF (NLTRIMESH) ldum(3)=.true.
-          WRITE(IUNOT,6665) ldum(0:3)
+          WRITE(IUNOT,6665) ldum(0:4)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
