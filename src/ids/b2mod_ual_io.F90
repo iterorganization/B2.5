@@ -134,6 +134,10 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
 #endif
+#if IMAS_MINOR_VERSION > 32
+    use ids_utilities &   ! IGNORE
+     & , only : ids_identifier_static
+#endif
 #if IMAS_MINOR_VERSION > 29
 #ifdef AMNS
     use amns_types  ! IGNORE
