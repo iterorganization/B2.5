@@ -121,6 +121,7 @@
       real (kind=R8), save :: ycur = 1.0e0_R8
       real (kind=R8), save :: corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
+      real (kind=R8), save :: cor9 = 1.0_R8
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
@@ -227,7 +228,7 @@ c        call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10
 c        call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
 c        call ipgetr ('b2stbc_bc_ref', bc_ref)
 c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
-
+         call ipgetr ('b2stbc_BC2_cor9', cor9)                        !srv 11.04.13
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -567,7 +568,7 @@ cwdk  now need to recompute full diamagnetic component for ud
             t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%na(:,is))
             srw%sna0(iCv1,0,is)=  VBIG*geo%fcS(iFc)*
      .         (conpar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .          geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%na(iCv2,is))
             srw%sna0(iCv1,1,is)= -VBIG*geo%fcS(iFc)
@@ -2871,7 +2872,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             srw%smo0(iCv1,0,is)=
      .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .          geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ua(iCv2,is))
             srw%smo0(iCv1,1,is)=
@@ -3731,7 +3732,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%te)
           srw%she0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enepar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%te(iCv2))
           srw%she0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
@@ -5720,7 +5721,7 @@ cwdk     * need to correct this BC for hybrid scheme
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ti)
           srw%shi0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enipar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ti(iCv2))
           srw%shi0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
@@ -8191,7 +8192,7 @@ cwdk     * need to correct this BC for hybrid scheme
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%po)
           srw%sch0(iCv1,0)=  PBIG*geo%fcS(iFc)*
      .       (potpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%po(iCv2))
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
@@ -9467,7 +9468,7 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%kt)
           srw%skt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%kt(iCv2))
           srw%skt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
@@ -9858,7 +9859,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%zt)
           srw%szt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - (t2 - t1)*geo%fcQgam(iFc,1)*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%zt(iCv2))
           srw%szt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
