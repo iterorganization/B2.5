@@ -58,10 +58,9 @@
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 
-      fchvispar = 0.0e0_R8                                               !srv 09.07.99
       dvpar     = 0.0e0_R8                                               !srv 24.06.99
-      if (switch%fhe_vis_par.ne.0.0e0_R8.
-     &                        and.maxval(fac_vis).ne.0.0_R8) then        !srv
+      if (switch%no_current.eq.0.and.switch%fhe_vis_par.ne.0.0e0_R8
+     &                          .and.maxval(fac_vis).ne.0.0_R8) then     !srv
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &    geo%vxOnedBsq, gOnedBsq)
@@ -84,6 +83,8 @@
         fchvispar(:,1) = 
      &    switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,0)
      &    *geo%fcS*geo%fcQalf(:,1)
+      else
+        fchvispar = 0.0e0_R8
       endif                                                              !srv
 * ..return
       call subend ()
