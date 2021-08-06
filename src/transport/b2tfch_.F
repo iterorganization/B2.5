@@ -88,68 +88,73 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 
       facdriftm = maxval(dv%facdrift)
       fac_ExBm  = maxval(dv%fac_ExB)                                     !srv 23.12.19
-      dv%fchin     = 0.0_R8
-      dv%fchdia    = 0.0_R8
-      dv%fchvispar = 0.0_R8
-      dv%fchvisper = 0.0_R8
-      dv%fchvisq   = 0.0_R8
-      dv%fchinert  = 0.0_R8
-      dv%fch_P     = 0.0_R8
-      dv%fchviskt  = 0.0_R8
+      fchstoch     = 0.0_R8
+      csig_stoch   = 0.0_R8
 !WG_TODO      avisper = 0.0_R8
 !WG_TODO      bvisper = 0.0_R8
 !WG_TODO      cvisper = 0.0_R8
-      fchstoch     = 0.0_R8
-      csig_stoch   = 0.0_R8
-*   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
-     &       dv%facdrift,
-     &       dv%fac_ExB, ismain, ismain0, pl%te, pl%po, pl%ti, pl%na,
-     &       dv%fna, co%csigin, dv%fchin)                                !srv 11.05.09
-*   ..compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
-     &            dv%uadia, dv%facdrift, dv%fchdia)
-*   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
-     &   co%vsaf_cl, dv%fac_vis, dv%fchvispar)
-*   ..calculate the contribution of viscosity perpendicular current      !srv 22.11.99
-      call b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
-     &   pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis, dv%fchvisper)
-*   ..calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
-     &   dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
-     &   dv%fchvisq)
-*  .. calculate inertia current                                          !srv 07.07.99
-      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
-     &      dv%facdrift, dv%fchinert)
-*   ..calculate the x,y-components of anomalous current
-      call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an,
-     &             pl%po,dv%fchanml)
+      if (switch%no_current.ne.0) then
+        dv%fch       = 0.0_R8
+        dv%fchin     = 0.0_R8
+        dv%fchdia    = 0.0_R8
+        dv%fchvispar = 0.0_R8
+        dv%fchvisper = 0.0_R8
+        dv%fchvisq   = 0.0_R8
+        dv%fchinert  = 0.0_R8
+        dv%fch_p     = 0.0_R8
+        dv%fchviskt  = 0.0_R8
+        dv%fchanml   = 0.0_R8
+        dv%conc      = 0.0_R8
+      else
+*     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
+        call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
+     &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl%te, pl%po,
+     &    pl%ti, pl%na, dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
+*     ..compute x,y-components of divergent part of diamagnetic current
+        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
+     &    dv%uadia, dv%facdrift, dv%fchdia)
+*     ..calculate x,y-components of viscosity parallel current
+        call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
+     &    co%vsaf_cl, dv%fac_vis, dv%fchvispar)
+*     ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
+        call b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
+     &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis, dv%fchvisper)
+*     ..calculate the parallel viscosity current connected with the heat flux
+        call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
+     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
+     &    dv%fchvisq)
+*     ..calculate inertia current                                        !srv 07.07.99
+        call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
+     &    dv%facdrift, dv%fchinert)
+*     ..calculate the x,y-components of anomalous current
+        call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an,
+     &    pl%po,dv%fchanml)
 #ifdef WG_TODO
-*   ..calculate the y-component of electron current associated with
-*     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
-     &              fchstoch)                                            !srv 25.01.02 {
+*     ..calculate the y-component of electron current associated with
+*       stochastization of magnetic field
+        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
+     &    fchstoch)                                                      !srv 25.01.02 {
 #endif
-      call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
-     *     dv%ne, pl%na, pl%ua, rt%rza, rt%rz2, zeff, co%csig, co%calf,
-     &     ehx, st_ext, dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)              !srv 13.01.17
-*   ..compute current due to RS of kt-model
-      call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &   pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
+      ..calculate the parallel current
+        call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
+     *  dv%ne, pl%na, pl%ua, rt%rza, rt%rz2, zeff, co%csig, co%calf,
+     &  ehx, st_ext, dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)                 !srv 13.01.17
+*     ..compute current due to RS of kt-model
+        call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
 
-*   ..compute currents
-      dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
-     &  dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt +
-     &  dv%fchvisper
-      dv%fch(:,1) = dv%fch(:,1) + fchstoch
+*     ..compute total currents
+        dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
+     &    dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt +
+     &    dv%fchvisper
+        dv%fch(:,1) = dv%fch(:,1) + fchstoch
 
-*   ..compute conc
-      dumm0 = 0.0e0_R8
-      wrk   = co%csig
-      if(switch%fch_ion_neutral.ne.0.0e0_R8 .and.
-     &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
-        do is = 0, ns-1
+*     ..compute conc
+        dumm0 = 0.0e0_R8
+        wrk   = co%csig
+        if(switch%fch_ion_neutral.ne.0.0e0_R8 .and.
+     &    (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then            !srv 23.12.19
+         do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
             do is0 = 0, ns-1
               if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
@@ -159,16 +164,18 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
               endif
             enddo
           endif
-        enddo
-      endif
+         enddo
+        endif
 #ifdef WG_TODO
-      if(fch_stochastic.ne.0.0e0_R8 ) then                               !lk 31.01.08 {
-        wrk(:,1) = wrk(:,1) + csig_stoch
-      endif                                                              !lk 31.01.08 }
+        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
+          wrk(:,1) = wrk(:,1) + csig_stoch
+        endif                                                            !lk 31.01.08 }
 #endif
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
+        call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
 
-      if(switch%b2tfch_iout.ne.0) then                                                 !srv 18.06.08 {
+      endif !no_current
+
+      if(switch%b2tfch_iout.ne.0) then                                   !srv 18.06.08 {
        call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fchx')
        call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fchy')
        call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchinx')

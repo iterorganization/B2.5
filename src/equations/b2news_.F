@@ -534,29 +534,16 @@ csw 16oct2012 init ier0
       endif                                                              !srv 12.07.05 }
 
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        pl%po = 0.0e0_R8
-        dv%fchin     = 0.0_R8
-        dv%fchdia    = 0.0_R8
-        dv%fchvispar = 0.0_R8
-        dv%fchvisper = 0.0_R8
-        dv%fchvisq   = 0.0_R8
-        dv%fchinert  = 0.0_R8
-        dv%fch_p     = 0.0_R8
-        dv%fchviskt  = 0.0_R8
-        dv%fchanml   = 0.0_R8
-        dv%fch       = 0.0_R8
+        pl%po        = 0.0e0_R8
+        !wdk call b2tfch_ to ensure all currents are properly set to 0
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
+     &     geo, mpg, pl, dv, co, rt, st_ext)
       else if (switch%pot_eq.eq.2) then                                  !srv 11.01.12
-        pl%po = 3.1_R8*pl%te/qe
-        dv%fchin     = 0.0_R8
-        dv%fchdia    = 0.0_R8
-        dv%fchvispar = 0.0_R8
-        dv%fchvisper = 0.0_R8
-        dv%fchvisq   = 0.0_R8
-        dv%fchinert  = 0.0_R8
-        dv%fch_p     = 0.0_R8
-        dv%fchviskt  = 0.0_R8
-        dv%fchanml   = 0.0_R8
-        dv%fch       = 0.0_R8
+        pl%po        = 3.1_R8*pl%te/qe
+        !wdk call b2tfch_ to ensure all currents are properly set to 0
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
+     &     geo, mpg, pl, dv, co, rt, st_ext)
+     &     geo, mpg, pl, dv, co, rt, st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
         if (b2news_solving(3)) then

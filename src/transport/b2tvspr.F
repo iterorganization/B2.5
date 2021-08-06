@@ -44,11 +44,11 @@
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,                   !srv 10.10.17
 !     &              qz, bb, avisper, bvisper, cvisper)
-* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
-      fchvisper =0.0e0_R8                                               !srv 22.11.99
 
+*   ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8) then
+      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8.and.
+     &   switch%no_current.eq.0) then
        do is = 0,ns-1                                                   !srv 16.10.17
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
 
@@ -86,6 +86,8 @@
 
         endif                                                           !srv 16.10.17
        enddo                                                            !srv 16.10.17
+      else
+        fchvisper = 0.0e0_R8
       endif                                                             !srv 22.11.99
 
       if(switch%b2tvspr_iout.eq.1) then

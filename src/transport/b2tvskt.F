@@ -39,10 +39,11 @@
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-* ..calculate the contribution of perpendicular current due to RS in kt-model
-      fchviskt = 0.0e0_R8
 
-      if(switch%b2tfhe_vis_kt.ne.0.0e0_R8) then
+*   ..calculate the contribution of perpendicular current due to RS in 
+*     kt-model
+      if(switch%b2tfhe_vis_kt.ne.0.0e0_R8.and.
+     &   switch%no_current.eq.0) then
 
         weight = 1.0_R8
 
@@ -84,6 +85,10 @@
         call intface(nCv, nFc, mpg%fcCv, weight, wrk0, wrkf)
         fchviskt(:,1) = fchviskt(:,1) + switch%b2tfhe_vis_kt*
      &    wrkf*geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
+
+      else
+
+        fchviskt = 0.0_R8
 
       endif
 

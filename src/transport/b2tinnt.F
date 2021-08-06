@@ -84,7 +84,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(switch%pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or.
-     . fac_ExBm.gt.0.0_R8)  
+     . fac_ExBm.gt.0.0_R8.and.switch%no_current.eq.0
      .            .and. switch%fch_ion_neutral .ne. 0.0e0_R8) then         !srv 26.07.06 01.07.99
         if (switch%use_eirene.ne.0) then
           call xerrab ('b2tinnt not yet available for WG + EIRENE')

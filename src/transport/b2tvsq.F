@@ -45,7 +45,8 @@
       
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_q.ne.0.0e0_R8) then    !srv 16.10.17
+      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_q.ne.0.0e0_R8.and.     !srv 16.10.17
+     &   switch%no_current.eq.0) then
 
 *     ..compute gradients of ti in cell centers
         call gradc(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
