@@ -633,8 +633,10 @@ c first save the original NPTS provided by the Eirene input files.
      &     HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
             if (ALLOC.eq.0.0_R8) then
             NPTS(istrai) = 
-     &           max(min(10,NPTS_input(istrai)),   !! minimum 10 trajectories, unless the value in input.dat was even lower (e.g. 0)
-     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai)))
+     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai))
+c Provide a minimum number of trajectories? Does not seem to be necessary for now.
+c     &           max(min(100,NPTS_input(istrai)),   !! minimum 100 trajectories, unless the value in input.dat was even lower (e.g. 0)
+c     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai)))
              write(*,*) 'NPTS for stratum',istrai
              write(*,*) 'adapted from',NPTS_input(istrai),
      &                  ' to ',NPTS(istrai)
