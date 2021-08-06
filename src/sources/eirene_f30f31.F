@@ -362,15 +362,6 @@ c     internal cell -> full diamagnetic drift
               fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
             endif
           end do
-          if (is_neutral(is).and.switch%use_auto_spatial_hyb.eq.1) then 
-            do istra = 1, mpg%nRc
-              do i = 1, mpg%rcCvP(istra,2)
-                iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
-                ifc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
-                fnib(ifc,nflai) = fnn_inc(ifc,is)*kin_frac_hyb(iFc)  ! neutral flux based on the incident flux, not the net flux
-              enddo
-            enddo
-          endif
           
 !!        endif
       enddo
@@ -468,7 +459,8 @@ c we derive the guard cell value from its neighbouring interior cell
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
             elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
-              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
+              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
+     &                                  (1.0_R8-kin_frac_hyb(iFc))
             else
               if (fnn_mol_b(iFc,ifl).gt.0) then
                 call xerrab ('no molecular contribution expected here')
