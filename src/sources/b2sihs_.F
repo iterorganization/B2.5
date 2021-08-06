@@ -408,7 +408,7 @@
        czetae = t0*sqrt(me)
        zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
        zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
-*   ..compute gti,gte at cell faces
+*   ..compute gti,gte at cell centers
        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
        shifr = 0.0_R8
