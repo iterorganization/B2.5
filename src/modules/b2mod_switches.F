@@ -19,7 +19,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
       type, public :: switches
 
-      integer :: tn_style 
+
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
       integer :: mdf_fhi
@@ -40,27 +40,32 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: conductive_limit
       integer :: core_cond_limit
       integer :: lluciani
-      integer :: kul_recycle
       integer :: no_solve
       integer :: no_b2sral_call
       integer :: do_2nd_b2npco_call
       integer :: re_eval_prtls_fluxes
       integer :: istyle_cur_contr_on_S_and_N
       integer :: use_astra
-      integer :: use_uy_uz_0
-      integer :: use_uy_uz_1
-      integer :: remove_FC_el
       integer :: lin_shi0
       integer :: flux_limit_to_dpa
       integer :: flux_limit_to_vsa
       integer :: csig_an_style 
       integer :: user_transport
+
+
+c Advanced fluid neutral models
+      integer :: tn_style 
+      integer :: kul_recycle
+      integer :: use_uy_uz_0
+      integer :: use_uy_uz_1
+      integer :: remove_FC_el
       integer :: spatial_hybrid
       integer :: ineustra
       integer :: use_auto_spatial_hyb
+      integer :: diffusion_bc_safeguard
+      integer :: do_volrec
+      integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
 
-
-  
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00 
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02 
       real (kind=R8) :: fnb_vis_per  !srv 02.10.17
@@ -485,7 +490,7 @@ c Feedback
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
 
-      s % tn_style = 0
+
       s % get_residuals = 0
       s % mdf_fhe = 0
       s % mdf_fhi = 0
@@ -506,25 +511,31 @@ c Feedback
       s % conductive_limit = 1
       s % core_cond_limit = 0
       s % lluciani = 3
-      s % kul_recycle = 0
       s % no_solve = 0
       s % no_b2sral_call = 1
       s % do_2nd_b2npco_call = 0
       s % re_eval_prtls_fluxes = 0 
       s % istyle_cur_contr_on_S_and_N = 2
       s % use_astra = 0
-      s % use_uy_uz_0 = 0
-      s % use_uy_uz_1 = 0
-      s % remove_FC_el = 0
       s % lin_shi0 = 0
       s % flux_limit_to_dpa = 1
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+
+
+c Advanced fluid neutral models
+      s % tn_style = 0
+      s % kul_recycle = 0
+      s % use_uy_uz_0 = 0
+      s % use_uy_uz_1 = 0
+      s % remove_FC_el = 0
       s % spatial_hybrid = 0
       s % ineustra = 0
       s % use_auto_spatial_hyb = 0
-
+      s % diffusion_bc_safeguard = 1
+      s % do_volrec = 1
+      s % transport_afn = 0
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -944,7 +955,6 @@ c b2siav
 
       call alloc_switches (s)
 
-      call ipgeti ('b2mn_tn_style',s % tn_style)
       call ipgeti ('get_residuals',s % get_residuals)    
       call ipgeti ('b2tfhe_mdf', s % mdf_fhe)
       call ipgeti ('b2tfhi_mdf', s % mdf_fhi)   
@@ -966,25 +976,32 @@ c b2siav
       call ipgeti ('b2trcl_conductive_limit', s % conductive_limit)        !srv 16.06.08   
       call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012
       call ipgeti ('b2trcl_lluciani', s % lluciani)   
-      call ipgeti ('b2stbr_kul_recycle', s % kul_recycle)  
+      call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012  
       call ipgeti ('b2news_no_solve', s % no_solve)                        !srv 02.07.08
       call ipgeti ('b2news_no_b2sral_call', s%no_b2sral_call)
       call ipgeti ('b2news_do_2nd_b2npco_call', s%do_2nd_b2npco_call)
       call ipgeti ('b2news_re_eval_prtls_fluxes',s%re_eval_prtls_fluxes)   !srv 28.06.13
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      &                       s%istyle_cur_contr_on_S_and_N)                !srv 01.02.09
-      call ipgeti ('b2mndr_astra', s%use_astra)
-      call ipgeti ('b2stbr_use_uy_uz_0', s % use_uy_uz_0)
-      call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
-      call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)   
+      call ipgeti ('b2mndr_astra', s%use_astra) 
       call ipgeti ('b2stbr_phys_lin_shi0', s % lin_shi0) 
       call ipgeti ('b2trno_flux_limit_to_dpa', s % flux_limit_to_dpa)
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
       call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
+
+
+c Advanced fluid neutral models
+      call ipgeti ('b2mn_tn_style',s % tn_style)
+      call ipgeti ('b2stbr_kul_recycle', s % kul_recycle)  
+      call ipgeti ('b2stbr_use_uy_uz_0', s % use_uy_uz_0)
+      call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
+      call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)  
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
       call ipgeti ('eirene_neutr_strata', s % ineustra)  
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
+      call ipgeti ('b2mn_do_volrec', s % do_volrec) 
+      call ipgeti ('b2tqna_transport_afn', s % transport_afn)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)      
@@ -1752,6 +1769,12 @@ c b2tqna
      &  'faulty input pfr_rescale')
       call xertst (s%b2tqna_divsol_rescale.gt.0.0_R8,
      &   'faulty input divsol_rescale')
+      if (s%user_transport.eq.10) then
+        write(*,*) 'user_transport = 10 is now obsolete, because it',
+     &      'did not allow to combine advanced neutral transport',
+     &      'with non-default plasma transport.'
+        call xerrab('use "b2tqna_transport_afn = 1" instead')
+      endif
 
 c b2stbm
       call xertst (s%b2stbm_linearisation.le.1.0_R8 .and. 
