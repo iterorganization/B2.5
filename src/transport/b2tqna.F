@@ -455,15 +455,10 @@ cxpb Corrected for dimensionality
         call my_out_us(70,nCv,0,alf0,'b2tqna_in_alf0')
       endif                                                           !srv 10.11.09 }
 
-c lvn1
+c User transport options
 
       if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
-      elseif (switch%user_transport.eq.10) then                              !mb 24.04.2017
-        call set_transport_kul(nCv, nFc,
-     &   nVx, ns, nscx, iscx, switch%tn_style, geo, 
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
       else
         call xerrab('transport model undefined or not yet converted')
       endif
@@ -523,6 +518,13 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
      &    nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt, dna0, vsa0, hce0, hci0, hcib, dkt0, dna_ExB,
      &    hce_ExB, hci_ExB)
+      endif
+
+      if(switch%transport_afn.ne.0) then
+        call set_transport_afn(nCv, nFc,
+     &   nVx, ns, nscx, iscx, switch%tn_style, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &   hcn0,hcib)
       endif
 
 cdpc
@@ -3519,7 +3521,7 @@ c      close(14)
 c**************************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
-      subroutine set_transport_kul(nCv, nFc,
+      subroutine set_transport_afn(nCv, nFc,
      &            nVx, ns, nscx, iscx, tn_style, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
@@ -3562,7 +3564,7 @@ c*******************************************************************************
       real (kind=R8) :: expu
 
 *   ..subprogram start-up calls
-      call subini ('set_transport_kul')
+      call subini ('set_transport_afn')
       	do is = 0, ns-1
 	  if (is_neutral(is).and.zn(is).eq.1.0_R8) then
             k=0
@@ -3640,7 +3642,7 @@ c recompute hci0 and hcn0
 *   ..return
       call subend ()
       return
-      end subroutine set_transport_kul
+      end subroutine set_transport_afn
 
       subroutine set_transport_keps(
      &     nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
