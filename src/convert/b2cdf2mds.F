@@ -3,6 +3,7 @@
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
+#ifdef XPB_MDSPLUS_HACK
 
       interface
         integer function descr2(idtype,il1,il2,iflag)
@@ -15,6 +16,9 @@
 
 #     include "mdslib_b2.inc"
       integer mdsput2
+#else
+#     include "mdslib.inc"
+#endif
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -78,11 +82,19 @@ c first handle x-coordinate of profiles (and areas)
 
           write(*,'(a,a,a,i6,a,a)') 'Putting ',trim(ds_filename(i)),
      1     ' with length ',il,' to ',trim(ds_mds(i))
+#ifdef XPB_MDSPLUS_HACK
           status=mdsput2(
      *     trim(ds_mds(i))//char(0),
      *     'build_with_units($,"m")'//char(0),
      *     descr2(idtype_double,il,iflag=0),ds,
      *     0)
+#else
+	  status=mdsput2(
+     *     trim(ds_mds(i))//char(0),
+     *     'build_with_units($,"m")'//char(0),
+     *     descr2(idtype_double,il,0),ds,
+     *     0)
+#endif
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
           if(i.gt.6.and.i.le.10) then
@@ -201,12 +213,20 @@ c first deal with the time vector
           mds_signal_name='\TOP.TIMEDEP:TIME'
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
+#ifdef XPB_MDSPLUS_HACK
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
      *     descr2(idtype_double,dimsize(1),iflag=0),data1,
      *     0)
-          write(*,*) 'mdsput2'
+#else
+          status=mdsput2(
+     *     trim(mds_signal_name)//char(0),
+     *     'build_with_units($,"s")'//char(0),
+     *     descr2(idtype_double,dimsize(1),0),data1,
+     *     0)
+#endif
+	  write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
         else
@@ -361,11 +381,19 @@ c and now for f(t)
      *           trim(units) //
      *           '"),,\TOP.TIMEDEP:TIME)'
                 write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
      *           descr2(idtype_double,dimsize(2),iflag=0),data2T(:,1),
      *           0)
+#else
+                status=mdsput2(
+     *           trim(mds_signal_name)//char(0),
+     *           trim(tdi)//char(0),
+     *           descr2(idtype_double,dimsize(2),0),data2T(:,1),
+     *           0)
+#endif
                 write(*,*) 'mdsput2'
                 call mds_err_msg(status)
                 deallocate(data2T)
@@ -383,11 +411,19 @@ c and now for f(t)
      *           trim(units) //
      *           '"),,\TOP.TIMEDEP:TIME)'
                 write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
      *           descr2(idtype_double,dimsize(1),iflag=0),data1,
      *           0)
+#else
+                status=mdsput2(
+     *           trim(mds_signal_name)//char(0),
+     *           trim(tdi)//char(0),
+     *           descr2(idtype_double,dimsize(1),0),data1,
+     *           0)
+#endif
                 write(*,*) 'mdsput2'
                 call mds_err_msg(status)
                 deallocate(data1)

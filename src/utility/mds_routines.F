@@ -2,7 +2,8 @@
       implicit none
       character*(*) node_name,string
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,iflag,ilen)
         integer, intent(in) :: idtype
@@ -27,7 +28,8 @@
       if(len_trim(string).gt.0) then
         write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
         status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1   descr2(idtype_cstring,iflag=0,ilen=len_trim(string)),
      1   trim(string),0)
@@ -54,7 +56,8 @@
       integer ns
       character*(*) node_name,string(ns)
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,il1,iflag,ilen)
         integer, intent(in) :: idtype
@@ -78,7 +81,8 @@
       do is=1,ns
         string(is)=trim(string(is)) // char(0)
       enddo
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1 descr2(idtype_cstring,ns,iflag=0,ilen=len(string(1))),string,0)
 #else
@@ -99,7 +103,8 @@
       character*(*) node_name
       integer int
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function mdsput2(name,units,description,int,iflg)
         character*(*), intent(in) :: name
@@ -136,7 +141,8 @@
       integer :: nx, ny, data(nx,ny)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,i2,iflag)
         integer, intent(in) :: idtype
@@ -188,7 +194,8 @@
       integer :: ns, data(ns)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,iflag)
         integer, intent(in) :: idtype
@@ -237,7 +244,8 @@
       character*(*) node_name, units
       real (kind=R8) :: value
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,iflag)
         integer, intent(in) :: idtype
@@ -283,7 +291,8 @@
       real (kind=R8) :: data(ns)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,iflag)
         integer, intent(in) :: idtype
@@ -334,7 +343,8 @@
       real (kind=R8) :: data(nx,ny)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,i2,iflag)
         integer, intent(in) :: idtype
@@ -392,7 +402,8 @@
       real (kind=R8) :: data(nx,ny,ns)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,i2,i3,iflag)
         integer, intent(in) :: idtype
@@ -452,7 +463,8 @@
       real (kind=R8) :: data(nx,ny,nd,ns)
 
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,i1,i2,i3,i4,iflag)
         integer, intent(in) :: idtype
@@ -510,7 +522,8 @@
       implicit none
       integer status
 #ifdef MDSPLUS
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
       interface
         integer function descr2(idtype,il1,iflag,ilen)
         integer, intent(in) :: idtype
@@ -528,7 +541,8 @@
       character :: message*80
 
       if(mod(status,2).eq.0) then
-#ifndef G95
+!!!#ifndef G95
+#ifdef XPB_MDSPLUS_HACK
         status=mdsvalue2('getmsg($)'//char(0),
      1   descr2(idtype_long,iflag=0),status,
      2   descr2(idtype_cstring,iflag=0,ilen=80),message,0,size)

@@ -3,6 +3,7 @@
 #ifdef MDSPLUS
       use b2mod_types
       implicit none
+#ifdef XPB_MDSPLUS_HACK
 
       interface
         integer function descr2(idtype,il1,il2,il3,il4,iflag)
@@ -17,6 +18,9 @@
 
 #     include "mdslib_b2.inc"
       integer mdsput2
+#else
+#     include "mdslib.inc"
+#endif
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -142,11 +146,19 @@ c first deal with the time vector
           write(*,'(a,a,a,a)')
      *     'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
+#ifdef XPB_MDSPLUS_HACK
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
      *     descr2(idtype_double,dimsize(1),iflag=0),data1,
      *     0)
+#else
+	  status=mdsput2(
+     *     trim(mds_signal_name)//char(0),
+     *     'build_with_units($,"s")'//char(0),
+     *     descr2(idtype_double,dimsize(1),0),data1,
+     *     0)
+#endif
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
@@ -172,11 +184,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) //',' //
      *       '\TOP.MOVIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),iflag=0),
      *       data2,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(1),dimsize(2),0),
+     *       data2,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -188,11 +208,19 @@ c first deal with the time vector
      *       '"),,\TOP.MOVIES:TIME,' //
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(2),dimsize(1),iflag=0),
      *       data2T,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(2),dimsize(1),0),
+     *       data2T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data2T)
@@ -220,11 +248,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),
      1       dimsize(3),iflag=0),data3,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(1),dimsize(2),
+     1       dimsize(3),0),data3,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -238,11 +274,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#ifdef XPB_MDSPLUS_HACK
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(3),dimsize(1),
      1       dimsize(2),iflag=0),data3T,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(3),dimsize(1),
+     1       dimsize(2),0),data3T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data3T)
