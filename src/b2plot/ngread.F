@@ -535,7 +535,7 @@ cank
             end if
           end do
 c<<<
-          if(nstsi.gt.0) then !{
+          if(ntns.gt.0) then !{
             print *,'Calculated ktns:'
             print '(3x,20i5)',(ktns(i),i=1,ntns)
           end if !}

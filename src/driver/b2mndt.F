@@ -146,6 +146,7 @@
        call xertst (-1.le.moitlv.and.moitlv.le.3,
      &   'faulty internal parameter moitlv')
        if (style.eq.2) then
+         write(*,*) 'Running in time-dependent mode'
          rxf = 1.0_R8
        else
          rxf = 0.5_R8
