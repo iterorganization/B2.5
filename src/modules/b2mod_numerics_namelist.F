@@ -165,12 +165,14 @@
       integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
       integer ix, iy, ireg, is
+      integer, save :: style_b2mndt = 1
       real (kind=R8) :: ttf
       character*260 filename
 
       filename=numerics_filename
       numerics_time_mod = 0.0_R8
       numerics_time_switch = 0.0_R8
+      call ipgeti('b2mndt_style', style_b2mndt)
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -185,9 +187,13 @@
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
+          call xertst(style_b2mndt.le.1.or..not.solveet(ireg),
+     &     'Time-dependent mode requires SOLVEET = .false.!')
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
+          call xertst(style_b2mndt.le.1.or..not.solvemt(ireg),
+     &     'Time-dependent mode requires SOLVEMT = .false.!')
         end do
       else
         call xerrab ('No '//trim(filename))
