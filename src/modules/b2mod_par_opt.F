@@ -121,11 +121,12 @@
 !     Suppose MAP estimation is turned on only when cftype(1)=6
       if (cftype(1).eq.6) then
 !      prior_type refers to the prior type for the design variables:
+!      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
-!      2 - Uniform distribution.
+!      2 - Jeffrey's 1/sigma (only for sigma!!)
        call xertst(any(prior_type(1:nnvar).ge.0).and.
-     &  any(prior_type(1:nnvar).le.1),
-     &  'b2mod_par_opt: prior_type<0 or prior_type>1')
+     &  any(prior_type(1:nnvar).le.2),
+     &  'b2mod_par_opt: prior_type<0 or prior_type>2')
 !      prior_par refers to the prior parameters:
 !      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
 !      For prior_type = 2, not used?

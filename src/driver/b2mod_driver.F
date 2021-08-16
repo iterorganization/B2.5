@@ -60,6 +60,9 @@
      & run_av_fin
       use b2mod_batch_average
      & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
+      use b2mod_par_opt
+     & , only : npar_opt, flag_optim, read_b2mod_par_opt,
+     & par_opt_phys, x0
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
@@ -136,6 +139,7 @@
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
+      integer :: ncon, nele_jac
 #ifndef NO_CDF
       integer ncid
 #endif
@@ -1758,6 +1762,11 @@ c   --> better way doing this is necessary)
       call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
+      if (.not.flag_optim) then
+        call read_b2mod_par_opt(ncon,nele_jac)
+        allocate(par_opt_phys(npar_opt))
+        par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+      endif
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
@@ -2585,6 +2594,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
+      if (.not.flag_optim) deallocate(par_opt_phys)
       deallocate(old_erosion, old_deposition)
 !WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag

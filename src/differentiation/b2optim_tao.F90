@@ -42,9 +42,11 @@
 !      call PetscPrintf(PETSC_COMM_SELF,'Solution should be f(1,1)=-2\n',ierr);CHKERRA(ierr)
 
       ! Allocate and initialize par_opt variables to be used in B2.5
+      flag_optim  = .true.
       call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
       allocate(par_opt_phys(npar_opt))
+      allocate(par_opt_physd(npar_opt,npar_opt))
 !     Initialize derivatives for diffusion coefficients
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
@@ -123,7 +125,9 @@
       endif
 !     FIXME remove until here for adjoint
       par_opt_phys = 0.0_R8
-      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
+      do ipar = 1, npar_opt
+        par_opt_physd(ipar,ipar) = 1.0_R8
+      enddo
 
 !     For the moment only steepest descent is available when specifiyng the Hessian
       hessian = .false.

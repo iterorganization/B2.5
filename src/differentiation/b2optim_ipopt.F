@@ -66,10 +66,11 @@
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
-
+      flag_optim  = .true.
       call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
       allocate(par_opt_phys(npar_opt))
+      allocate(par_opt_physd(npar_opt,npar_opt))
 !     Initialize derivatives for diffusion coefficients
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
@@ -148,7 +149,10 @@
       endif
 !     FIXME remove until here for adjoint
       par_opt_phys = 0.0_R8
-      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
+      par_opt_physd = 0.0_R8
+      do ipar = 1, npar_opt
+        par_opt_physd(ipar,ipar) = 1.0_R8
+      enddo
 
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
