@@ -307,6 +307,8 @@ csw
      , , only : tdata
       use b2mod_ad
      , , only: nncf
+      use b2mod_par_opt
+     & , only : par_opt_phys
       implicit none
       real(kind=R8) :: J(nncf)
 

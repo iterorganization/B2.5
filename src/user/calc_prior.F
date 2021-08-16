@@ -40,11 +40,13 @@
       do ii = 1, nsigma
         select case (prior_type(ii+isigma))
         case (0) !Uniform distribution
-          prior = prior/sigma(ii)
+          prior = prior*1.0_R8
         case (1) !Uninformative, proper, Gaussian prior. Factor two because only positive parameters are allowed.
           prior = prior*2.0_R8/(prior_par(ii+isigma,2)*sqrt(2.0_R8*pi))*
      &            exp(-0.5_R8*((sigma(ii)-prior_par(ii+isigma,1))
      &            /prior_par(ii+isigma,2))**2)
+        case (2) !Jeffrey's 1/sigma
+          prior = prior/sigma(ii)
         case default
           write(*,*) prior_type(ii+isigma)
           call xerrab ('prior_type out of bounds')
