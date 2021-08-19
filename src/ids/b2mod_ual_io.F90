@@ -461,6 +461,7 @@ contains
             &        cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,              &
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
+            &        cvsahz_drho, cvsa_drho,                                      &   !som 18.08.21
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
 !  ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
@@ -479,7 +480,8 @@ contains
             &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,          &
             &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,         &
             &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,       &
-            &        cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,     &
+            &        cdna, cdpa, cvsa_cl, cvsa_drho,                              &!som 18.08.21
+            &        cvla, chce, chve, chci, chvi, calf,                          &
             &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,  &
             &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,       &
             &        wrong_flow, .false.)

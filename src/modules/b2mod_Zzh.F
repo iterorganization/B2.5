@@ -98,4 +98,59 @@
         endif
       enddo
       end function b2mod_Zzh_Z11s
+
+*.........................................................................
+      function b2mod_Zzh_Z11pi(nspecies,i,mumal,mdmal,rz2n)
+      implicit none
+      integer :: i,j
+      integer nspecies
+      real (kind=R8) :: b2mod_Zzh_Z11pi,
+     & mumal(0:nspecies-1),mdmal(0:nspecies-1),rz2n(0:nspecies-1)
+
+      b2mod_Zzh_Z11pi=0.0_R8
+      do j = 0, nspecies-1
+        if (i.ne.j) then
+          b2mod_Zzh_Z11pi=b2mod_Zzh_Z11pi+
+     & (1+5.0_R8/3.0_R8*mdmal(j))*
+     & mumal(j)*sqrt(mumal(j))*rz2n(j)
+        endif
+      enddo
+      end function b2mod_Zzh_Z11pi
+
+*.........................................................................
+      function b2mod_Zzh_Z12pi(nspecies,i,mumal,mdmal,rz2n)
+      implicit none
+      integer :: i,j
+      integer nspecies
+      real (kind=R8) :: b2mod_Zzh_Z12pi,
+     & mumal(0:nspecies-1),mdmal(0:nspecies-1),rz2n(0:nspecies-1)
+
+      b2mod_Zzh_Z12pi=0.0_R8
+      do j = 0, nspecies-1
+        if (i.ne.j) then
+          b2mod_Zzh_Z12pi=b2mod_Zzh_Z12pi+
+     & (1+7.0_R8/3.0_R8*mdmal(j))*
+     & mumal(j)**2*sqrt(mumal(j))*rz2n(j)
+        endif
+      enddo
+      end function b2mod_Zzh_Z12pi
+
+*.........................................................................
+      function b2mod_Zzh_Z22pi(nspecies,i,mumal,mdmal,rz2n)
+      implicit none
+      integer :: i,j
+      integer nspecies
+      real (kind=R8) :: b2mod_Zzh_Z22pi,
+     & mumal(0:nspecies-1),mdmal(0:nspecies-1),rz2n(0:nspecies-1)
+
+      b2mod_Zzh_Z22pi=0.0_R8
+      do j = 0, nspecies-1
+        if (i.ne.j) then
+          b2mod_Zzh_Z22pi=b2mod_Zzh_Z22pi+
+     & (1+185.0_R8/51.0_R8*mdmal(j)+154.0_R8/51.0_R8*mdmal(j)**2+
+     & 140.0_R8/51.0_R8*mdmal(j)**3)*
+     & mumal(j)**3*sqrt(mumal(j))*rz2n(j)
+        endif
+      enddo
+      end function b2mod_Zzh_Z22pi
       end module b2mod_Zzh

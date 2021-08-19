@@ -7,6 +7,7 @@
      2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
+     * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl)
       use b2mod_types
       use b2mod_indirect
@@ -20,7 +21,7 @@
       use b2mod_b2cmpa
       use b2mod_b2zhco ,
      & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf,             !som 21.03.21
-     & zhflcorrh,zh_dist_fun, zh_tf_toff
+     & zhflcorrh,zh_dist_fun, zh_tf_toff 
       use b2mod_zhfrtf,
      & only: avm_u,w_out,hTdp_out,hwdp_out,
      & rTdpgamma_out,rwdpgamma_out
@@ -55,6 +56,7 @@
      &  calf(-1:nx,-1:ny,0:1),
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
@@ -101,6 +103,7 @@
       integer, save :: Zhdanov_closure = 0                              !som 25.01.21
       integer, save :: Zhdanov_test = 0                                 !som 16.06.21
       integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
+      integer, save :: Zhdanov_visu = 1                                 !som 10.08.21
       integer, save :: icase = 0                                        !som 05.03.21
       integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
@@ -118,6 +121,11 @@
      4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
      2  chci0_nofl(-1:nx,-1:ny,0:1), chci0_luc(-1:nx,-1:ny,0:1),        !som 16.06.21
      2  chci0_fl(-1:nx,-1:ny,0:1),                                      !som 16.06.21
+     &  cvsahz0_fl(-1:nx,-1:ny,0:1,0:ns-1),                             !som 10.08.21
+     &  cvsahz0_nofl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21 
+     &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -177,6 +185,7 @@
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)   !som 25.01.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)         !som 16.06.21
         call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)         !som 22.06.21
+        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)         !som 10.08.21
         call ipgetr ('b2tral_zhflcorr', zhflcorr)
         call ipgetr ('b2tral_zhflcorrh', zhflcorrh)               !som 08.06.21
         call ipgeti ('b2tral_zhcscorr', zhcscorr)
@@ -253,32 +262,49 @@
           end if
         endif
         call b2tlnl (nx, ny, icase, te, ti, ne, lnlam) 
-        if(Zhdanov_test.eq.0.and.Zhdanov_cond.eq.1) then              !som 25.06.21
-          call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb,
-     & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0)
+        call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,hz,bb,
+     & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0_luc,
+     & cvsahz0_nofl,cvsahz0_fl,cvsahz0_luc,cvsahz_drho,
+     & cvsa0_luc,cvsa_drho)                                           !som 16.08.2021  
 
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                  .or. iout_b2wdat.eq.4) then
-            call my_out(70,nx,ny,chci0_nofl(-1,-1,0),
-     & 'b2trzh_chcix')
-            call my_out(70,nx,ny,chci0_fl(-1,-1,0),
-     & 'b2trzh_fllim_chcix')
-            call my_out(70,nx,ny,chci0(-1,-1,0),
-     & 'b2trzh_luciani_fllim_chcix')
-          endif
-        else
-          call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,bb,
-     & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0_luc)
+        if(Zhdanov_test.eq.0.and.Zhdanov_cond.eq.1) then              !som 10.08.21
+          chci0(-1:nx,-1:ny,0:1)=chci0_luc(-1:nx,-1:ny,0:1)
+        endif
 
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+        if(Zhdanov_test.eq.0.and.Zhdanov_visu.eq.1) then              !som 10.08.21
+          cvsahz0(-1:nx,-1:ny,0:1,0:ns-1)=
+     & cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsa0(-1:nx,-1:ny,0:1,0:ns-1)=
+     & cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1)=
+     & cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1)=
+     & cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1)
+        endif
+
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-            call my_out(70,nx,ny,chci0_nofl(-1,-1,0),
+          call my_out(70,nx,ny,chci0_nofl(-1,-1,0),
      & 'b2trzh_chcix')
-            call my_out(70,nx,ny,chci0_fl(-1,-1,0),
+          call my_out(70,nx,ny,chci0_fl(-1,-1,0),
      & 'b2trzh_fllim_chcix')
-            call my_out(70,nx,ny,chci0_luc(-1,-1,0),
+          call my_out(70,nx,ny,chci0_luc(-1,-1,0),
      & 'b2trzh_luciani_fllim_chcix')
-          endif
+          call my_out(70,nx,ny,chci0(-1,-1,0),
+     & 'b2trzh_applied_chcix')
+          do is = 0, ns-1
+            write (chns,'(i3.3)') is
+            call my_out(70,nx,ny,cvsahz0_nofl(-1,-1,0,is),
+     & 'b2trzh_cvsahzx'//chns)
+            call my_out(70,nx,ny,cvsahz0_fl(-1,-1,0,is),
+     & 'b2trzh_fllim_cvsahzx'//chns)
+            call my_out(70,nx,ny,cvsahz0_luc(-1,-1,0,is),
+     & 'b2trzh_luciani_fllim_cvsahzx'//chns)
+            call my_out(70,nx,ny,cvsahz_drho(-1,-1,0,is),
+     & 'b2trzh_luciani_fllim_cvsahz_drhox'//chns)
+            call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,is),
+     & 'b2trzh_applied_cvsahzx'//chns)
+          enddo
         endif
 
         if((iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -299,6 +325,9 @@
      & 'b2trzh_rwdpgamma'//chns)
           enddo
         endif
+      else
+        cvsahz_drho=0.0e0_R8
+        cvsa_drho=0.0e0_R8
       endif     
 *   ..add to previous contributions
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17

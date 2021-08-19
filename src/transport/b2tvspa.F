@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl,          !srv 20.09.06 { 16.10.17 19.02.21
-     &                    fac_vis, fchvispar)                           !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,      !srv 20.09.06 { 16.10.17 19.02.21
+     & cvsa_drho, fac_vis, fchvispar)                           !srv 22.06.08 som 18.08.2021
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -12,13 +12,18 @@
       use b2mod_b2cmpa
       use b2mod_geo
      , , only : hy1
+      use b2mod_zhfrtf ,
+     & only: avm_u, rho_A_rel,                                          !som 17.08.21
+     & b2mod_zhfrtf_avm_u                                               !som 18.08.21
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21 
       real (kind=R8) ::
+     & na(-1:nx,-1:ny,0:ns-1),
      & ua(-1:nx,-1:ny,0:ns-1),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 16.10.17
+     & cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                               !som 18.08.21
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -47,6 +52,8 @@
      *   dvpar(-1:nx,-1:ny)
      *  , wrk0(-1:nx,-1:ny)
       save ncall, vis_par
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0           !som 16.08.21
+      integer, save :: Zhdanov_visu = 1                                !som 16.08.21
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -61,6 +68,9 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_vis_par', vis_par)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 16.08.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 16.08.21
+       call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 16.08.21
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -74,6 +84,8 @@ c Drift terms
       fchvispar =0.0e0_R8                                               !srv 09.07.99
       dvpar=0.0e0_R8                                                    !srv 24.06.99
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8) then       !srv
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_visu.eq.0) then                                          !som 16.08.21
         do is = 0, ns-1                                                 !srv 24.06.99
 !          if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
 !     &        .not.is_neutral(is)) then                                !srv 24.06.99
@@ -104,6 +116,28 @@ c Drift terms
             enddo                                                       !srv
           endif                                                         !srv 24.06.99
         enddo                                                           !srv 24.06.99
+       else                                                             !som 16.08.21
+*   ..re-calculate mass-average velocity
+        call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)                     !som 16.08.21
+        do is = 0, ns-1                                           
+            do iy = -1, ny                                           
+              do ix = 0, nx
+                if(leftix(ix,iy).ne.-2) then                           
+!             it has been considered that cvsa_cl was multiplied by bx**2
+                  dvpar(ix,iy)=dvpar(ix,iy) +                           
+     & (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     & bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     & sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     & bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     & cvsa_drho(ix,iy,0,is)*
+     & (avm_u(ix,iy)*sqrt(bb(ix,iy,3))                    
+     & -avm_u(leftix(ix,iy),leftiy(ix,iy))*
+     & sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))         
+                endif                                                   
+              enddo                                                     
+            enddo                                                       
+        enddo                                                           
+       endif
 *       X-COMPONENT OF VISCOSITY PARALLEL CURRENT                       !srv
         do iy = 0, ny-1                                                 !srv
           do ix = 0, nx                                                 !srv 01.07.99

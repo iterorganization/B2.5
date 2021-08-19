@@ -334,6 +334,7 @@
      2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                 !srv 13.10.06
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
+     *   cvsahz_drho, cvsa_drho,                                         !som 18.08.21
      5   fllim0fhi, fllimvisc, csig_cl, calf_cl)
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
@@ -376,8 +377,8 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
-     &                fchvispar)
+        call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
+     & cvsa_drho, fac_vis, fchvispar)                                    !som 18.08.2021
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
@@ -453,7 +454,8 @@
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &    cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,       !xpb
+     &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
+     &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -513,7 +515,7 @@ cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
      &    vol, hx, hz, bb, pbshz, lnlam,                                 !srv 01.07.09
-     &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
+     &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,         !srv 02.07.08 som 18.08.21
      &    smo, smq, cthe, cthi, chci, smof,
      &    resmo, resmt, corua, corut, pcca, pccm, ier0)
         call xertst (ier0.eq.0, 'error return from b2npmo')
@@ -522,8 +524,8 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
-     &                fchvispar)
+        call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
+     & cvsa_drho, fac_vis, fchvispar)                                    !som 18.08.2021
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
@@ -826,7 +828,8 @@ cxpb
      1         ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia, vaecrb,    !xpb
      &         veecrb, ua, fne_32, fne_52,
      &         csig, csigin, chce, chve, chci,
-     &         calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,       !srv 17.12.13 16.10.17
+     &         calf, chvemx, cvsa_cl, cvsa_drho,                         !som 18.08.21
+     &         fch, conc, fchstoch, fchdia,                              !srv 17.12.13 16.10.17
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
      &         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,     !srv 25.11.08
      1         csig_cl, calf_cl)
@@ -1065,7 +1068,8 @@ c     with diamagnetic drift part                                        !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia, vaecrb,          !xpb
      &   veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,
-     &   calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,             !srv 17.12.13 16.10.17
+     &   calf, chvemx, cvsa_cl, cvsa_drho,                               !som 18.08.21
+     &   fch, conc, fchstoch, fchdia,                                    !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
         call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21

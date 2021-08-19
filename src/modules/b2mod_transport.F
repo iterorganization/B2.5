@@ -26,7 +26,9 @@
      *  cvmahz(:,:,:,:),                                              !srv 15.12.05
      *  cvsahz(:,:,:,:),                                              !srv 09.01.01
      *  cvsa_cl(:,:,:,:),                                             !srv 04.10.99
+     &  cvsa_drho(:,:,:,:),                                           !som 16.08.21
      *  cvsahz_cl(:,:,:,:),                                           !srv 09.01.01
+     &  cvsahz_drho(:,:,:,:),                                         !som 18.08.21
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
      *  fllime(:,:),
@@ -76,7 +78,9 @@
       allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 15.12.05
       allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
       allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 04.10.99
+      allocate(cvsa_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !som 16.08.21
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 09.01.01
+      allocate(cvsahz_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                !som 18.08.21
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(fllime(-1:nxd,-1:nyd))
@@ -133,7 +137,9 @@
       deallocate(cvmahz)
       deallocate(cvsahz)
       deallocate(cvsa_cl)
+      deallocate(cvsa_drho)                                      !som 16.08.21
       deallocate(cvsahz_cl)
+      deallocate(cvsahz_drho)                                    !som 18.08.21
       deallocate(csig_cl)
       deallocate(calf_cl)
       deallocate(fllime)

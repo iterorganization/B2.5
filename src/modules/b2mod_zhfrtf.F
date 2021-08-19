@@ -9,7 +9,8 @@
      & is_i(:)
       real (kind=R8), allocatable ::
      & z2n_xy(:,:,:),nal(:,:,:),Ia(:,:,:),av_ualpha(:,:,:),
-     & gt_Ac(:,:,:),gtalc(:,:,:),avm_u(:,:)
+     & gt_Ac(:,:,:),gtalc(:,:,:),avm_u(:,:),rho_A_rel(:,:,:),
+     & gavm_uc(:,:)
       real (kind=R8), allocatable ::
      & w_out(:,:,:),hTdp_out(:,:,:),hwdp_out(:,:,:),
      & rTdpgamma_out(:,:,:),rwdpgamma_out(:,:,:)
@@ -56,6 +57,8 @@
       allocate(avm_u(-1:nx,-1:ny))
       allocate(gtalc(-1:nx,-1:ny,0:nspecies-1))
       allocate(gt_Ac(-1:nx,-1:ny,0:ns-1))
+      allocate(rho_A_rel(-1:nx,-1:ny,0:ns-1))
+      allocate(gavm_uc(-1:nx,-1:ny))
 
       end subroutine b2mod_zhfrtf_init
 
@@ -102,8 +105,8 @@
         do ix = -1, nx
 *   ..calculate the average Z**2*n and numerical density of the isonuclear ion
           do inucl = 0, nspecies-1
-            z2n_xy(ix,iy,inucl) = 0
-            nal(ix,iy,inucl) = 0
+            z2n_xy(ix,iy,inucl) = 0.0_R8
+            nal(ix,iy,inucl) = 0.0_R8
             do iz= 1, znnucl_int(inucl)
               z2n_xy(ix,iy,inucl)=z2n_xy(ix,iy,inucl)+
      & iz**2*na(ix, iy, nucl2s(inucl,iz))
@@ -112,9 +115,9 @@
             enddo
           enddo
 *   ..Ia ratio and Ia weighted average velocity of the isonuclear ion
-          Ia(ix, iy, :)=0
+          Ia(ix, iy, :)=0.0_R8
           do inucl = 0, nspecies-1
-            av_ualpha(ix,iy,inucl) = 0
+            av_ualpha(ix,iy,inucl) = 0.0_R8
             do iz= 1, znnucl_int(inucl)
               Ia(ix, iy, nucl2s(inucl,iz))=
      & iz**2*na(ix, iy, nucl2s(inucl,iz))/z2n_xy(ix,iy,inucl)
@@ -127,6 +130,51 @@
 
       call subend ()
       end subroutine b2mod_zhfrtf_prep
+
+!...................................................................................
+      subroutine b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)
+      use b2mod_constants
+      use b2mod_indirect
+      implicit none
+      integer nx, ny, ns
+
+*   ..input arguments 
+      real (kind=R8) :: 
+     * na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1)
+
+*.declarations
+*   ..local variables
+      integer ix, iy
+      real (kind=R8) :: rho_A(0:ns-1), rho
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     b2mod_zhfrtf_avm_u calculates mass weighted average flow velocity of all ion
+*
+*  3. description 
+*
+*     This routine computes:
+*     rho_A_rel: relative mass density of the ions "a" to the total ion mass density
+*     avm_u: mass weighted average flow velocity of all ion
+*
+*-----------------------------------------------------------------------
+*.computation
+      call subini ('b2mod_zhfrtf_avm_u')
+*   ..temperature of the ion each charge state
+      do iy = -1, ny
+       do ix = -1, nx
+         rho_A(0:ns-1)=is_i(0:ns-1)*am(0:ns-1)*na(ix,iy,0:ns-1)
+         rho=sum(rho_A)
+         rho_A_rel(ix,iy,0:ns-1)=rho_A(0:ns-1)/rho
+         avm_u(ix,iy)=sum(rho_A(0:ns-1)*ua(ix,iy,0:ns-1))/rho
+       enddo
+      enddo
+
+      call subend ()
+      end subroutine b2mod_zhfrtf_avm_u
 
 !...................................................................................
       subroutine b2mod_zhfrtf_tgta(nx, ny, ns, na, ua, ti, hx, bb)
@@ -146,7 +194,7 @@
       integer ix, iy, is,iz,inucl
       real (kind=R8) :: rho_A(0:ns-1), rho, w_A(0:ns-1),
      & t_A(-1:nx,-1:ny,0:ns-1),gti(-1:nx,-1:ny),
-     & gt_A(-1:nx,-1:ny,0:ns-1)
+     & gt_A(-1:nx,-1:ny,0:ns-1),gavm_u(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -158,6 +206,7 @@
 *  3. description 
 *
 *     This routine computes:
+*     rho_A_rel: relative mass density of the ions "a" to the total ion mass density
 *     avm_u: mass weighted average flow velocity of all ion
 *     gtalc: effective temperature gradient of the isonuclear ion in the cell center
 *     gt_Ac: temperature gradient of the ion each charge state in the cell center
@@ -170,6 +219,7 @@
        do ix = -1, nx
          rho_A(0:ns-1)=is_i(0:ns-1)*am(0:ns-1)*na(ix,iy,0:ns-1)
          rho=sum(rho_A)
+         rho_A_rel(ix,iy,0:ns-1)=rho_A(0:ns-1)/rho
          avm_u(ix,iy)=sum(rho_A(0:ns-1)*ua(ix,iy,0:ns-1))/rho
          w_A=ua(ix,iy,0:ns-1)-avm_u(ix,iy)
          t_A(ix,iy,0:ns-1)=ti(ix,iy)+
@@ -225,6 +275,32 @@
           gtalc(nx,iy,inucl)=gtalc(nx-1,iy,inucl)
         enddo
       enddo
+
+*   ..average velocity gradient
+      gavm_u = 0.0_R8
+      do iy = -1, ny
+        do ix = -1, nx
+          if(leftix(ix,iy).ne.-2) then
+           gavm_u(ix,iy) = 
+     & (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))/
+     & (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+          endif
+        enddo
+      enddo
+
+*   ..average velocity gradient in the cell center 
+      gavm_uc = 0.0_R8
+      do iy = 0, ny-1
+        do ix = 0, nx-1
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+           gavm_uc(ix,iy) =  bb(ix,iy,0)/bb(ix,iy,3)*
+     & (gavm_u(ix,iy)+gavm_u(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+          endif
+        enddo
+        gavm_uc(-1,iy)=gavm_uc(0,iy)
+        gavm_uc(nx,iy)=gavm_uc(nx-1,iy)
+      enddo
+
       call subend ()
       end subroutine b2mod_zhfrtf_tgta
 

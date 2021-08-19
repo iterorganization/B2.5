@@ -5,11 +5,14 @@
      & nucl2s(:,:), znnucl_int(:), s2nucl(:) 
       real (kind=R8), allocatable ::
      & amnucl(:), znnucl(:), 
-     & N2(:,:), N5(:,:), 
+     & N2(:,:), N3(:,:), 
+     & N4(:,:), N5(:,:), 
      & N6(:,:), N8(:,:),
      & N9(:,:),
      & N10(:,:), N11(:,:),
      & N12(:,:),
+     & N13(:,:), N14(:,:),
+     & N15(:,:), N16(:,:),
      & mu(:,:), mum(:,:),
      & rmu(:,:),rmd2(:),
      & mdm(:,:)
@@ -44,6 +47,8 @@
       allocate(amnucl(0:nnucl-1))
       allocate(znnucl(0:nnucl-1))
       allocate(N2(0:nnucl-1,0:nnucl-1))
+      allocate(N3(0:nnucl-1,0:nnucl-1))
+      allocate(N4(0:nnucl-1,0:nnucl-1))
       allocate(N5(0:nnucl-1,0:nnucl-1)) 
       allocate(N6(0:nnucl-1,0:nnucl-1))
       allocate(N8(0:nnucl-1,0:nnucl-1))
@@ -51,6 +56,10 @@
       allocate(N10(0:nnucl-1,0:nnucl-1))
       allocate(N11(0:nnucl-1,0:nnucl-1))
       allocate(N12(0:nnucl-1,0:nnucl-1))
+      allocate(N13(0:nnucl-1,0:nnucl-1))
+      allocate(N14(0:nnucl-1,0:nnucl-1))
+      allocate(N15(0:nnucl-1,0:nnucl-1))
+      allocate(N16(0:nnucl-1,0:nnucl-1))
       allocate(mu(0:nnucl-1,0:nnucl-1)) 
       allocate(mum(0:nnucl-1,0:nnucl-1))
       allocate(rmu(0:nnucl-1,0:nnucl-1))

@@ -4,7 +4,8 @@
       subroutine b2tfch_ (nx, ny, ns, ismain, ismain0,                   !srv 09.01.20 {
      & facdrift, fac_ExB, fac_vis,
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
-     1 ti, ni, na, fna, uadia, ua, csig, csigin, chci, calf, cvsa_cl,
+     1 ti, ni, na, fna, uadia, ua, 
+     1 csig, csigin, chci, calf, cvsa_cl, cvsa_drho,                     !som 18.08.21
      & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
@@ -28,6 +29,7 @@
      &   csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
      &   chci(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
+     &   cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
      &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
@@ -147,8 +149,8 @@
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
-     &              fchvispar)
+      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
+     & cvsa_drho, fac_vis, fchvispar)                                    !som 18.08.2021
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)

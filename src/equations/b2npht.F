@@ -5,7 +5,8 @@
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
      1  rxf, BoRiS, fac_ExB, hx, hy, vol, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
-     &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
+     &  fne, fch, cvsa, cvsa_cl, cvsa_drho,                              !som 16.08.21
+     &  fchdia, uadia, wadia, vadia, vaecrb, 
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
      &  shef, shif, reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
@@ -32,6 +33,8 @@
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1),                                            !srv 09.07.08
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
@@ -204,7 +207,9 @@
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, vol, bb, pbs, lnlam,
-     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)       !srv 07.06.00 02.06.99 07.07.09
+     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, cvsa_cl,          !som 16.08.21
+     *  cvsa_drho,                                                        !som 16.08.21
+     *  she0, shi0)       !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)
       do ix=-1,nx

@@ -3,7 +3,9 @@
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
      &  hx, hy, vol, bb, pbs, lnlam,                                     !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
+     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, cvsa_cl,         !som 16.08.21
+     *  cvsa_drho,                                                       !som 16.08.21
+     *  she0, shi0)       !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -17,7 +19,8 @@
       use b2mod_b2zhco ,
      & only: zhd_corr                                                 !som 21.03.21
       use b2mod_zhfrtf ,
-     & only: avm_u                                                    !som 21.03.21
+     & only: avm_u, rho_A_rel,                                        !som 21.03.21 16.08.21
+     & b2mod_zhfrtf_avm_u                                             !som 18.08.21
       use b2mod_geo
      & , only : hy1
       use b2mod_balance !djm Jan2017
@@ -41,6 +44,8 @@
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -71,8 +76,10 @@
       integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      & Zhdanov_tf_fr = 1                                              !som 01.07.21
+      integer, save :: Zhdanov_visu = 1                               !som 16.08.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
+      real (kind=R8) :: ft                                            !som 16.08.21
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -174,6 +181,7 @@
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
+        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 18.08.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -441,20 +449,42 @@
       endif
       call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from viscous heating
+      if ((Zhdanov_closure.eq.1) .and. (Zhdanov_test.eq.0).and.
+     &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
+*   ..re-calculate mass-average velocity
+        call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)
+      endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
+      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
-        do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy)=0.0e0_R8
-          else
-            wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
-     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
-          endif
+        if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                    !som 16.08.21
+         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+          do ix = -1, nx
+           if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+           else
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+           endif
+          enddo
          enddo
-        enddo
+        else
+         do iy = -1, ny                                                
+          do ix = -1, nx
+           if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+           else
+             wrk0(ix,iy) = (cvsa(ix,iy,0,is)-ft*cvsa_cl(ix,iy,0,is))*
+     & (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
+     & ft*cvsa_drho(ix,iy,0,is)*
+     & (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2            !som 16.08.21
+           endif
+          enddo
+         enddo
+        endif
         do iy = -1, ny
          do ix = -1, nx
           if(bottomiy(ix,iy).eq.-2) then

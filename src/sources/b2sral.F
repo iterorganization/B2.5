@@ -12,7 +12,8 @@
      &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
+     &  cdna, cdpa, cvsa_cl, cvsa_drho,                                  !som 18.08.21
+     &  cvla, chce, chve, chci, chvi, calf,                              !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -87,6 +88,7 @@
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
      4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                               !som 18.08.21
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
@@ -271,8 +273,8 @@
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
-     &              fchvispar)
+       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
+     & cvsa_drho, fac_vis, fchvispar)                                   !som 18.08.2021
        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &               facdrift, fchinert)
        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21

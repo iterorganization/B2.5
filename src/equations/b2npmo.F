@@ -3,7 +3,7 @@
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
      &  vol, hx, hz, bb, pbshz, lnlam,
-     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
+     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,
      &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
@@ -25,6 +25,8 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_ilutern
+      use b2mod_zhfrtf                                                 !som 13.08.21
+     1 , only : rho_A_rel, avm_u
 #ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_balance
@@ -61,6 +63,7 @@
      &         b2sigp_pstate_bal, b2sigp_pstate0to3,
      *         b2siav_smovh_bal, b2siav_smovh0to3,
      1         b2siav_smovv_bal, b2siav_smovv0to3,
+     x         b2siav_smovi_bal, b2siav_smovi0to3,                      !som 13.08.21
      2         b2sicf_smo_bal, b2sicf_smo0to3,
      3         b2sian_smo_bal, b2sian_smo0to3,
      4         b2nxdv_smo_bal, b2nxdv_smo0to3
@@ -84,6 +87,7 @@
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
+     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                           !som 18.08.21
      2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
@@ -137,6 +141,7 @@
       integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      & Zhdanov_tf_fr = 1                                              !som 01.07.21
+      integer, save :: Zhdanov_visu = 1                                !som 13.08.21
       real (kind=R8) :: mm(0:ns-1),  am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save ::  mass_multiplicator                      !som 13.11.20
       character chns*3                                                 !srv 04.07.08
@@ -146,6 +151,7 @@
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
+     *  smbvi(-1:nx,-1:ny,0:3),                                        !som 13.08.21
      *  smbcf(-1:nx,-1:ny,0:3), smban(-1:nx,-1:ny,0:3),                !srv 09.07.01 25.09.17
      1  cvct(-1:nx,-1:ny,0:1),
      2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1),
@@ -246,6 +252,7 @@
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
+        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -570,8 +577,18 @@
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,is),     !19.02.21
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_visu.eq.0) then                                         !som 13.08.21
+         call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,is),   !19.02.21
      &              flubv)                                             !srv 01.07.05 11.09.09 16.10.17
+       else
+         if(.not. is_neutral(is)) then
+           call b2nxfv_zh (nx, ny, rho_A_rel(-1,-1,is), hz,            !som 13.08.21
+     &              cvsahz_cl(-1,-1,0,is), flubv)              
+         else
+           flubv=0.0_R8
+         endif        
+       endif
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
        endif
@@ -581,12 +598,29 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, ismain, am(is)*mp,                 !srv 19.02.21
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_visu.eq.0) then                                         !som 13.08.21
+         call b2siav (nx, ny, ns, is, ismain, am(is)*mp,               !srv 19.02.21
      &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo,
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+         smbvi=0.0_R8                                                  !som 13.08.21
+       else
+         if(.not. is_neutral(is)) then
+           call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
+     &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
+     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      
+     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
+     &   cvsahz_drho(-1,-1,0,is), smbvh, smbvv, smbvi, kt_neo,
+     &   wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)       
+         else
+           smbvh=0.0_R8                                                !som 13.08.21
+           smbvv=0.0_R8
+           smbvi=0.0_R8 
+         endif        
+       endif
 *    ..compute centrifugal force term                                  !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz,
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
@@ -602,9 +636,11 @@
        call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
        b2npmo_smag(:,:,:,is)=smbgp(:,:,:)
        call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
-       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                 !srv 03.07.08 {
+       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)+                !srv 03.07.08 {
+     & smbvi(:,:,:)                                                    !som 13.08.21
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
+       call b2saxpy (n2*4, 1.0_R8, smbvi, 1, smb, 1)                   !som 13.08.21
        call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (n2*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
        call b2nxdv (nx, ny, is, rob, smq(-1,-1,0,is), smqdu, smb)      !srv ???
@@ -643,6 +679,10 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &         smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
             call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+            wrks=smbvi(:,:,0)+smbvi(:,:,1)*ua(:,:,is)+                 !som 13.08.21
+     &         smbvi(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbvi(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+            call my_out(70,nx,ny,wrks,'b2npmo_smovi'//chns)
             wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
      &         smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -731,6 +771,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
+        call b2saxpy (n2*4, 1.0_R8, smbvi, 1, smb, 1)                  !som 13.08.21
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
