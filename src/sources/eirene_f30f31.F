@@ -1,6 +1,6 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm, 
      &                           pl, dv, BoRiS, kin_frac_hyb,
-     &                           fnn_inc)
+     &                           fluid_frac_hyb,fnn_inc)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -69,7 +69,8 @@
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8), allocatable, save :: wght(:,:)
-      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
+      real (kind=R8), intent(in)::kin_frac_hyb(nFc),fluid_frac_hyb(nFc),
+     &                             fnn_inc(nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
@@ -460,7 +461,7 @@ c we derive the guard cell value from its neighbouring interior cell
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
             elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
               trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
-     &                                  (1.0_R8-kin_frac_hyb(iFc))
+     &                                  fluid_frac_hyb(iFc)
             else
               if (fnn_mol_b(iFc,ifl).gt.0) then
                 call xerrab ('no molecular contribution expected here')

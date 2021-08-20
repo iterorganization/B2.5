@@ -1,6 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
      1 BoRiS, sna0, smo0, she0, shi0, shn0, main_call, switch, geo,  
-     & mpg, pl, dv, rt, kin_frac_hyb,fnn_inc)
+     & mpg, pl, dv, rt, kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 
 c  version : 26.07.2002 23:39
 
@@ -80,6 +80,7 @@ csw 19oct2012, added save attribute!!!
      * ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
      * kin_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
+     * fluid_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
      * fnn_inc(nFc,0:ns-1) !! incident fluid neutral flux
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
@@ -429,11 +430,12 @@ csw 26feb2013
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then 
           kin_frac_hyb = 1.0_R8
+          fluid_frac_hyb = 1.0_R8
       endif
 
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS,
-     &                       kin_frac_hyb,fnn_inc)
+     &                       kin_frac_hyb,fluid_frac_hyb,fnn_inc)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -617,7 +619,7 @@ c first save the original NPTS provided by the Eirene input files.
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
                 tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)
-     &                                     *(1.0_R8-kin_frac_hyb(iFc))
+     &                                     *fluid_frac_hyb(iFc)
                 tflux0(istrai) = tflux0(istrai) + 2.0_R8*fna_mol(ifc,is)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) + 
      &            2.0_R8*fna_mol(ifc,is)
@@ -803,7 +805,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg, 
      &                          geo, pl, dv, BoRiS,
-     &                          kin_frac_hyb,fnn_inc)
+     &                          kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -3108,14 +3110,14 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                       t1_ppl=t1_ppl-t4_ppl
                     endif
                   end if !}
+                  if (is_neutral(is).and.lneustra) then
+                    t0n=t0n+t1                !! only necessary for kinetic -> fluid condensation
+                  else
+                    t0=t0+t1                  !! only t0 is used by default
+                  endif
                 end do !} !is
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
-              if (is_neutral(is).and.lneustra) then
-                t0n=t0n+t1                !! only necessary for kinetic -> fluid condensation
-              else
-                t0=t0+t1                  !! only t0 is used by default
-              endif
               if (balance_netcdf.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
@@ -3457,7 +3459,7 @@ C           call xerrab ('eirene_mc: bccon <> 13')
       end if
       call copy_background(nCv, nFc, ns, switch, 
      &                     mpg, geo, pl, dv, BoRiS,
-     &                     kin_frac_hyb,fnn_inc)
+     &                     kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011
