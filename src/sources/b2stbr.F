@@ -582,7 +582,7 @@ c   --> better solution wanted here..
         call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
      &                 main_call, switch, geo, mpg, pl, dv, rt,
-     &                 kin_frac_hyb,fnn_inc)
+     &                 kin_frac_hyb,fluid_frac_hyb,fnn_inc)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
