@@ -14,6 +14,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmgs
       use b2mod_xerset
+      use b2mod_mdsplus
       implicit none
 
 *-----------------------------------------------------------------------
@@ -70,43 +71,9 @@
       integer ninp(0:0), nout(0:2)
       real (kind=R8), allocatable :: zero(:,:)
 #ifdef MDSPLUS
-#ifdef XPB_MDSPLUS_HACK
-      interface
-        integer function descr2(idtype,i1,i2,i3,i4,iflag,ilen)
-        integer, intent(in) :: idtype
-        integer, intent(in), optional :: i1
-        integer, intent(in), optional :: i2
-        integer, intent(in), optional :: i3
-        integer, intent(in), optional :: i4
-        integer, intent(in) :: iflag
-        integer, intent(in), optional :: ilen
-        end function descr2
-
-        integer function mdsvalue2(name,description,
-     &   int,idum2d,rdum1d,rdum2d,rdum3d,rdum4d,string,iflg,retlen)
-        use b2mod_types
-        character*(*), intent(in) :: name
-        integer, intent(in) :: description
-        integer, intent(out), optional :: int
-        integer, intent(out), allocatable, optional :: idum2d(:,:)
-        real(kind=R8), intent(out), allocatable, optional :: rdum1d(:)
-        real(kind=R8), intent(out), allocatable, optional :: rdum2d(:,:)
-        real(kind=R8), intent(out), allocatable, optional ::
-     &                                                     rdum3d(:,:,:)
-        real(kind=R8), intent(out), allocatable, optional ::
-     &                                                   rdum4d(:,:,:,:)
-        character*(*), intent(out), optional :: string
-        integer, intent(in) :: iflg
-        integer, intent(out) :: retlen
-        end function mdsvalue2
-      end interface
-
-#     include "mdslib_b2.inc"
-#else
 #     include "mdslib.inc"
-#endif
       integer idum(0:9), io, ishot, n2, nx, ny, ns
-      integer status, retlen, dbversion
+      integer status, retlen
       integer ix, iy, is
       character*120 lblmn, lblgm
       integer, allocatable :: idummy(:,:)
@@ -182,9 +149,9 @@
       write(*,*) 'mdsopen'
       call mds_err_msg(status)
 
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT:NX'//char(0),
-     1 descr2(idtype_long,iflag=0),int=nx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i0('_s=\TOP.IDENT:NX'//char(0),
+     1 descr2_i0(idtype_long,0),nx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT:NX'//char(0),
      1 descr2(idtype_long,0),nx,0,retlen)
@@ -193,9 +160,9 @@
       nx=nx-2
       write(*,*) 'Found NX = ',nx
       call xertst (0.le.nx, 'faulty parameter nx')
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT:NY'//char(0),
-     1 descr2(idtype_long,iflag=0),int=ny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i0('_s=\TOP.IDENT:NY'//char(0),
+     1 descr2_i0(idtype_long,0),ny,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT:NY'//char(0),
      1 descr2(idtype_long,0),ny,0,retlen)
@@ -204,9 +171,9 @@
       ny=ny-2
       write(*,*) 'Found NY = ',ny
       call xertst (0.le.ny, 'faulty parameter ny')
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT:NS'//char(0),
-     1 descr2(idtype_long,iflag=0),int=ns,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i0('_s=\TOP.IDENT:NS'//char(0),
+     1 descr2_i0(idtype_long,0),ns,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT:NS'//char(0),
      1 descr2(idtype_long,0),ns,0,retlen)
@@ -214,10 +181,10 @@
       call mds_err_msg(status)
       write(*,*) 'Found NS = ',ns
       call xertst (1.le.ns, 'faulty parameter ns')
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
-     1 descr2(idtype_cstring,iflag=0,ilen=10),
-     2 string=plasmastate_version,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_str('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
+     1 descr2_str0(idtype_cstring,0,10),
+     2 plasmastate_version,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
      1 descr2(idtype_cstring,0,10),plasmastate_version,0,retlen)
@@ -225,10 +192,9 @@
       call mds_err_msg(status)
       write(*,*) 'Reading plasma state version number = ',
      1 plasmastate_version
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
-     1 descr2(idtype_long,iflag=0),
-     2 int=dbversion,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i0('_s=\TOP.IDENT:VERSION'//char(0),
+     1 descr2_i0(idtype_long,0),dbversion,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
      1 descr2(idtype_long,0),dbversion,0,retlen)
@@ -256,30 +222,27 @@
 
 *   ..read species data
       if (dbversion.ge.9) then
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMIN'//char(0),
-     1   descr2(idtype_double,NS,iflag=0),
-     2   rdum1d=rdum,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r1('_s=\TOP.SNAPSHOT.GRID:ZAMIN'//char(0),
+     1   descr2_i1(idtype_double,NS,0),rdum,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMIN'//char(0),
      1   descr2(idtype_double,NS,0),rdum,0,retlen)
 #endif
         zamin=rdum
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
-     1   descr2(idtype_double,NS,iflag=0),
-     2   rdum1d=rdum,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r1('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
+     1   descr2_i1(idtype_double,NS,0),rdum,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
      1   descr2(idtype_double,NS,0),rdum,0,retlen)
 #endif
         zamax=rdum
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
         status=mdsvalue2('_s=\TOP.SNAPSHOT:RZA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
-     2   rdum3d=rfn,iflg=0,retlen=retlen)
+     1   descr2_i3(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:RZA'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
@@ -288,10 +251,9 @@
         call mds_err_msg(status)
       else
         allocate(za(0:ns-1))
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
-     1   descr2(idtype_double,NS,iflag=0),
-     2   rdum1d=za,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r1('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
+     1   descr2_i1(idtype_double,NS,0),za,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
      1   descr2(idtype_double,NS,0),za,0,retlen)
@@ -304,20 +266,18 @@
         end do
         deallocate(za)
       endif
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
-     1 descr2(idtype_double,NS,iflag=0),
-     2 rdum1d=rdum,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r1('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
+     1 descr2_i1(idtype_double,NS,0),rdum,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
      1 descr2(idtype_double,NS,0),rdum,0,retlen)
 #endif
       zn=rdum
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
-     1 descr2(idtype_double,NS,iflag=0),
-     2 rdum1d=rdum,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r1('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
+     1 descr2_i1(idtype_double,NS,0),rdum,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
      1 descr2(idtype_double,NS,0),rdum,0,retlen)
@@ -326,70 +286,63 @@
       call mds_err_msg(status)
 
 *   ..read plasma data
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:NE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:NE'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NE'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       ne=rdummy
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:NA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:NA'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NA'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #endif
       na=rfn
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:UA'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:UA'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:UA'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #endif
       ua=rfn
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:TE'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:TE'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TE'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       te=rdummy*qe
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:TI'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:TI'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:TI'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       ti=rdummy*qe
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:PO'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:PO'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:PO'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       po=rdummy
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX'//char(0),
+     1 descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -397,10 +350,9 @@
       fna(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2 rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -408,10 +360,9 @@
       fna(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_32'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_32'//char(0),
+     1 descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_32'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -419,10 +370,9 @@
       fna_32(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna_32(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_32'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2 rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_32'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_32'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -430,10 +380,9 @@
       fna_32(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna_32(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_52'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2 rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_52'//char(0),
+     1 descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_52'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -441,10 +390,9 @@
       fna_52(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
       fna_52(-1,:,0,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_52'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2 rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_52'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_52'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -452,10 +400,9 @@
       fna_52(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
       fna_52(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2 rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
+     1 descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -463,10 +410,9 @@
       fhe(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fhe(-1,:,0)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2 rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEY'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -474,10 +420,9 @@
       fhe(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
       fhe(:,-1,1)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2 rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIX'//char(0),
+     1 descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -485,10 +430,9 @@
       fhi(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fhi(-1,:,0)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2 rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIY'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -496,10 +440,9 @@
       fhi(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
       fhi(:,-1,1)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX'//char(0),
-     1 descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2 rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHX'//char(0),
+     1 descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -507,10 +450,9 @@
       fch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
       fch(-1,:,0)=0.0_R8
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2 rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHY'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -530,20 +472,18 @@
           kinrgy(:,:,is)=0.5_R8*am(is)*mp*ua(:,:,is)**2
         enddo
       else
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
-     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r4('_s=\TOP.SNAPSHOT:UADIA'//char(0),
+     1   descr2_i4(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #endif
         uadia=rfn2
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHX_32'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_32'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -551,10 +491,9 @@
         fch_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHY_32'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_32'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -562,10 +501,9 @@
         fch_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fch_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHX_52'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHX_52'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -573,10 +511,9 @@
         fch_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHY_52'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHY_52'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -584,10 +521,9 @@
         fch_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fch_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCH_P'//char(0),  !srv 10.06.09 {
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCH_P'//char(0),  !srv 10.06.09 {
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCH_P'//char(0),  !srv 10.06.09 {
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -595,10 +531,9 @@
         fch_p(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fch_p(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,NS,iflag=0),
-     2   rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,NS,0),rfn,0,retlen)
@@ -607,10 +542,9 @@
         call mds_err_msg(status)
       endif
       if (dbversion.ge.22) then
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_MDF'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_MDF'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -618,10 +552,9 @@
         fna_mdf(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_mdf(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_MDF'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_MDF'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -629,10 +562,9 @@
         fna_mdf(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_mdf(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEX_MDF'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_MDF'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -640,10 +572,9 @@
         fhe_mdf(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhe_mdf(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEY_MDF'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_MDF'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -651,10 +582,9 @@
         fhe_mdf(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhe_mdf(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_MDF'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIX_MDF'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_MDF'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -662,10 +592,9 @@
         fhi_mdf(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhi_mdf(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_MDF'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIY_MDF'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_MDF'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -673,10 +602,9 @@
         fhi_mdf(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhi_mdf(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_FCOR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_FCOR'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_FCOR'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -684,10 +612,9 @@
         fna_fcor(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_fcor(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_FCOR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_FCOR'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_FCOR'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -695,10 +622,9 @@
         fna_fcor(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_fcor(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_NODRIFT'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_NODRIFT'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_NODRIFT'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -706,10 +632,9 @@
         fna_nodrift(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_nodrift(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_NODRIFT'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_NODRIFT'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_NODRIFT'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -717,10 +642,9 @@
         fna_nodrift(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_nodrift(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_HE'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_HE'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_HE'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -728,10 +652,9 @@
         fna_he(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_he(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_HE'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_HE'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_HE'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -739,10 +662,9 @@
         fna_he(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_he(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAPSCHX'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -750,10 +672,9 @@
         fnaPSch(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fnaPSch(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAPSCHY'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -761,10 +682,9 @@
         fnaPSch(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fnaPSch(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEPSCHX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -772,10 +692,9 @@
         fhePSch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhePSch(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEPSCHY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -783,10 +702,9 @@
         fhePSch(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhePSch(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIPSCHX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -794,10 +712,9 @@
         fhiPSch(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhiPSch(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIPSCHY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -805,10 +722,9 @@
         fhiPSch(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhiPSch(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,NS,iflag=0),
-     2   rdum3d=rfnx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAX_EIR'//char(0),
+     1   descr2_i3(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_EIR'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,NS,0),rfnx,0,retlen)
@@ -816,10 +732,9 @@
         fna_eir(0:nx,-1:ny,0,0:ns-1)=rfnx(0:nx,-1:ny,0:ns-1)
         fna_eir(-1,:,0,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,NS,iflag=0),
-     2   rdum3d=rfny,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:FNAY_EIR'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_EIR'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,NS,0),rfny,0,retlen)
@@ -827,10 +742,9 @@
         fna_eir(-1:nx,0:ny,1,0:ns-1)=rfny(-1:nx,0:ny,0:ns-1)
         fna_eir(:,-1,1,:)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEX_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_EIR'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -838,10 +752,9 @@
         fne_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEY_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_EIR'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -849,10 +762,9 @@
         fne_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEX_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_EIR'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -860,10 +772,9 @@
         fhe_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhe_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHEY_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_EIR'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -871,10 +782,9 @@
         fhe_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhe_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_EIR'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIX_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_EIR'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -882,10 +792,9 @@
         fhi_eir(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fhi_eir(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_EIR'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FHIY_EIR'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_EIR'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -893,10 +802,9 @@
         fhi_eir(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fhi_eir(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNIX_32'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_32'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -904,10 +812,9 @@
         fni_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fni_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNIY_32'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_32'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -915,10 +822,9 @@
         fni_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fni_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNIX_52'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_52'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -926,10 +832,9 @@
         fni_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fni_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNIY_52'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_52'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -937,10 +842,9 @@
         fni_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fni_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_32'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEX_32'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_32'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -948,10 +852,9 @@
         fne_32(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_32(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_32'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEY_32'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_32'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -959,10 +862,9 @@
         fne_32(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_32(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_52'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEX_52'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_52'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -970,10 +872,9 @@
         fne_52(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fne_52(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_52'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FNEY_52'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_52'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -981,10 +882,9 @@
         fne_52(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fne_52(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -992,10 +892,9 @@
         fchdia(0:nx,-1:ny,0)=rfx(-1:nx,0:ny)
         fchdia(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHDIAY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1003,10 +902,9 @@
         fchdia(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchdia(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHINX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1014,10 +912,9 @@
         fchin(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchin(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHINY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1025,10 +922,9 @@
         fchin(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchin(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISPARX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1036,10 +932,9 @@
         fchvispar(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvispar(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISPARY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1047,10 +942,9 @@
         fchvispar(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvispar(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISPERX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1058,10 +952,9 @@
         fchvisper(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvisper(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISPERY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1069,10 +962,9 @@
         fchvisper(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvisper(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISQX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1080,10 +972,9 @@
         fchvisq(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchvisq(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHVISQY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1091,10 +982,9 @@
         fchvisq(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchvisq(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTX'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHINERTX'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1102,10 +992,9 @@
         fchinert(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchinert(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTY'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FCHINERTY'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTY'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1113,30 +1002,27 @@
         fchinert(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         fchinert(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:VADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
-     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r4('_s=\TOP.SNAPSHOT:VADIA'//char(0),
+     1   descr2_i4(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VADIA'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #endif
         vadia=rfn2
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:WADIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
-     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r4('_s=\TOP.SNAPSHOT:WADIA'//char(0),
+     1   descr2_i4(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:WADIA'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #endif
         wadia=rfn2
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,NS,iflag=0),
-     2   rdum4d=rfn2,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r4('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
+     1   descr2_i4(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,NS,0),rfn2,0,retlen)
@@ -1145,30 +1031,27 @@
         call mds_err_msg(status)
         deallocate(rfn)
         allocate(rfn(-1:nx,-1:ny,0:1))
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,iflag=0),
-     2   rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #endif
         vedia=rfn
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
-     1   descr2(idtype_double,NX+2,NY+2,2,iflag=0),
-     2   rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
+     1   descr2_i3(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #endif
         veecrb=rfn
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1176,10 +1059,9 @@
         floe_noc(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         floe_noc(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEY_NOC'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FLOEY_NOC'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEY_NOC'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1187,10 +1069,9 @@
         floe_noc(-1:nx,0:ny,1)=rfy(-1:nx,0:ny)
         floe_noc(:,-1,1)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIX_NOC'//char(0),
-     1   descr2(idtype_double,NX+1,NY+2,iflag=0),
-     2   rdum2d=rfx,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FLOIX_NOC'//char(0),
+     1   descr2_i2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIX_NOC'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
@@ -1198,10 +1079,9 @@
         floi_noc(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         floi_noc(-1,:,0)=0.0_R8
         call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIY_NOC'//char(0),
-     1   descr2(idtype_double,NX+2,NY+1,iflag=0),
-     2   rdum2d=rfy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+        status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:FLOIY_NOC'//char(0),
+     1   descr2_i2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
 #else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIY_NOC'//char(0),
      1   descr2(idtype_double,NX+2,NY+1,0),rfy,0,retlen)
@@ -1248,20 +1128,18 @@
 *   ..read geometry data
       deallocate(rfn)
       allocate(rfn(-1:nx,-1:ny,0:3))
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
 #endif
       crx=rfn
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
@@ -1270,40 +1148,36 @@
       call mds_err_msg(status)
       fpsi = 0.0_R8
       ffbz = 0.0_R8
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:B'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,4,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:B'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:B'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,4,0),rfn,0,retlen)
 #endif
       bb=rfn
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:VOL'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:VOL'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:VOL'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       vol=rdummy
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:HX'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:HX'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HX'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #endif
       hx=rdummy
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:HY'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,iflag=0),
-     2 rdum2d=rdummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r2('_s=\TOP.SNAPSHOT:HY'//char(0),
+     1 descr2_i2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:HY'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),rdummy,0,retlen)
@@ -1312,120 +1186,108 @@
       call mds_err_msg(status)
       deallocate(rfn)
       allocate(rfn(-1:nx,-1:ny,0:1))
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT:QZ'//char(0),
-     1 descr2(idtype_double,NX+2,NY+2,2,iflag=0),
-     2 rdum3d=rfn,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_r3('_s=\TOP.SNAPSHOT:QZ'//char(0),
+     1 descr2_i3(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT:QZ'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,2,0),rfn,0,retlen)
 #endif
       qz=rfn
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       region(:,:,0)=idummy(:,:)
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       region(:,:,1)=idummy(:,:)
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       region(:,:,2)=idummy(:,:)
       call mds_err_msg(status)
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       leftix = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       leftiy = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       rightix = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       rightiy = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       bottomix = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       bottomiy = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #endif
       call mds_err_msg(status)
       topix = idummy - 1
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
-     1 descr2(idtype_long,NX+2,NY+2,iflag=0),
-     2 idum2d=idummy,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
+     1 descr2_i2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
      1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
@@ -1591,9 +1453,9 @@
 *   ..wrapping up
       write(nout(0),*) 'Recovered geometry from run number ',ishot
       write(*,*) 'Recovered plasma state from run number ',ishot
-#ifdef XPB_MDSPLUS_HACK
-      status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
-     1 descr2(idtype_long,iflag=0),int=dbversion,iflg=0,retlen=retlen)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      status=mdsvalue2_i0('_s=\TOP.IDENT:VERSION'//char(0),
+     1 descr2_i0(idtype_long,0),dbversion,0,retlen)
 #else
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
      1 descr2(idtype_long,0),dbversion,0,retlen)

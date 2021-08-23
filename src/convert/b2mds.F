@@ -56,23 +56,7 @@
 
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
-#ifdef XPB_MDSPLUS_HACK
-      interface
-        integer function descr2(idtype,il1,il2,il3,iflag,ilen)
-        integer, intent(in) :: idtype
-        integer, intent(in) :: il1
-        integer, intent(in), optional :: il2
-        integer, intent(in), optional :: il3
-        integer, intent(in) :: iflag
-        integer, intent(in), optional :: ilen
-        end function descr2
-      end interface
-
-#     include "mdslib_b2.inc"
-      integer mdsput2
-#else
 #     include "mdslib.inc"
-#endif
 #endif
       integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
       real (kind=R8) :: BoRiS
@@ -487,10 +471,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         end do
       end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),temp,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -506,11 +490,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         end do
       end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),temp,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
@@ -522,10 +506,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,iflag=0),cr_x,0)
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cr_x,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -536,11 +520,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,iflag=0),cz_x,0)
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cz_x,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
@@ -552,10 +536,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,iflag=0),cr_y,0)
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cr_y,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -566,11 +550,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,iflag=0),cz_y,0)
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cz_y,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
@@ -582,11 +566,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:R'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,iflag=0),crx,
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),crx,
      * 0)
 #else
       status=mdsput2(
@@ -600,11 +584,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:Z'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,iflag=0),cry,
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),cry,
      * 0)
 #else
       status=mdsput2(
@@ -641,10 +625,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'dspar :',(dspar(ix,jsep),ix=-1,nx)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSRAD'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dsrad,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dsrad,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -654,10 +638,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPOL'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dspol,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspol,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -667,10 +651,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPAR'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dspar,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspar,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
@@ -801,10 +785,10 @@ c
           tdi='build_with_units($,"m")'
           write(*,'(a,a,a,a)')
      1     'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',' with ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
           status=mdsput2(
      *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
-     *     descr2(idtype_double,4,icnt,iflag=0),vesl,
+     *     descr2_i2(idtype_double,4,icnt,0),vesl,
      *     0)
 #else
           status=mdsput2(
@@ -1240,10 +1224,10 @@ c
 
       tdi='build_with_units($,"K")'
       mds_signal_name='\TOP.SNAPSHOT:WALL_TEMP'
-#ifdef XPB_MDSPLUS_HACK
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nbnd,ndepth_nml,iflag=0),target_temp,0)
+     * descr2_i2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),

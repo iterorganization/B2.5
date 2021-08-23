@@ -2,37 +2,9 @@
       use b2mod_subsys
 #ifdef MDSPLUS
       use b2mod_types
+      use b2mod_mdsplus
       implicit none
-#ifdef XPB_MDSPLUS_HACK
-
-      interface
-        integer function descr2(idtype,il1,il2,il3,iflag,ilen)
-        integer, intent(in) :: idtype
-        integer, intent(in) :: il1
-        integer, intent(in), optional :: il2
-        integer, intent(in), optional :: il3
-        integer, intent(in) :: iflag
-        integer, intent(in), optional :: ilen
-        end function descr2
-
-        integer function mdsput2
-     &   (name,units,description,d1d,d2d,d3d,string,iflg)
-        use b2mod_types
-        character*(*), intent(in) :: name
-        character*(*), intent(in) :: units
-        integer, intent(in) :: description
-        real (kind=R8), intent(in), allocatable, optional :: d1d(:)
-        real (kind=R8), intent(in), allocatable, optional :: d2d(:,:)
-        real (kind=R8), intent(in), allocatable, optional :: d3d(:,:,:)
-        character*(*), intent(in), optional :: string(:)
-        integer, intent(in) :: iflg
-        end function mdsput2
-      end interface
-
-#     include "mdslib_b2.inc"
-#else
 #     include "mdslib.inc"
-#endif
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
@@ -157,12 +129,12 @@ c first deal with the time vector
           mds_signal_name='\TOP.TALLIES:TIME'
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
-#ifdef XPB_MDSPLUS_HACK
-          status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+          status=mdsput2_d1d(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
-     *     descr2(idtype_double,dimsize(1),iflag=0),
-     *     d1d=data1,iflg=0)
+     *     descr2_i1(idtype_double,dimsize(1),0),
+     *     data1,0)
 #else
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
@@ -194,12 +166,12 @@ c first deal with the time vector
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.TALLIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
-            status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_d3d(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(1),dimsize(2),
-     1       dimsize(3),0),d3d=data3,iflg=0)
+     *       descr2_i3(idtype_double,dimsize(1),dimsize(2),
+     1       dimsize(3),0),data3,0)
 #else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
@@ -220,12 +192,12 @@ c first deal with the time vector
      *       '\TOP.TALLIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
-            status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_d3d(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(3),dimsize(1),
-     1       dimsize(2),0),d3d=data3T,iflg=0)
+     *       descr2_i3(idtype_double,dimsize(3),dimsize(1),
+     1       dimsize(2),0),data3T,0)
 #else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
@@ -268,13 +240,12 @@ c first deal with the time vector
               write(*,*) trim(str1(i2))
               str1(i2) = trim(str1(i2)) // char(0)
             enddo
-#ifdef XPB_MDSPLUS_HACK
-            status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_str1(
      *       trim(mds_signal_name)//char(0),
      *       '$'//char(0),
-     *       descr2(idtype_cstring,dimsize(2),
-     *       iflag=0,ilen=len(str1(1))),
-     *       string=str1,iflg=0)
+     *       descr2_str1(idtype_cstring,dimsize(2),0,len(str1(1))),
+     *       str1,0)
 #else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
@@ -296,12 +267,12 @@ c first deal with the time vector
      *         '\TOP.TALLIES:' // trim(dimname(1)) //',' //
      *         '\TOP.TALLIES:TIME)'
               write(*,'(a,a)') 'Using TDI ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
-              status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+              status=mdsput2_d2d(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *         descr2(idtype_double,dimsize(1),dimsize(2),iflag=0),
-     *         d2d=data2,iflg=0)
+     *         descr2_i2(idtype_double,dimsize(1),dimsize(2),0),
+     *         data2,0)
 #else
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
@@ -319,12 +290,12 @@ c first deal with the time vector
      *         '"),,\TOP.TALLIES:TIME,' //
      *         '\TOP.TALLIES:' // trim(dimname(1)) // ')'
               write(*,'(a,a)') 'Using TDI ',trim(tdi)
-#ifdef XPB_MDSPLUS_HACK
-              status=mdsput2(
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+              status=mdsput2_d2d(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *         descr2(idtype_double,dimsize(2),dimsize(1),iflag=0),
-     *         d2d=data2T,iflg=0)
+     *         descr2_i2(idtype_double,dimsize(2),dimsize(1),0),
+     *         data2T,0)
 #else
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),

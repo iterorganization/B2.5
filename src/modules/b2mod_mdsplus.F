@@ -35,6 +35,216 @@
 
       contains
 
+#ifdef MDSPLUS
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+      integer function descr2_str0(idtype,iflag,ilen)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: ilen
+      descr2_str0 = descr2(idtype,iflag,ilen)
+      end function descr2_str0
+
+      integer function descr2_str1(idtype,il1,iflag,ilen)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: il1, ilen
+      descr2_str1 = descr2(idtype,il1,iflag,ilen)
+      end function descr2_str1
+
+      integer function descr2_i0(idtype,iflag)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      descr2_i0 = descr2(idtype,iflag)
+      end function descr2_i0
+
+      integer function descr2_i1(idtype,il1,iflag)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: il1
+      descr2_i1 = descr2(idtype,il1,iflag)
+      end function descr2_i1
+
+      integer function descr2_i2(idtype,il1,il2,iflag)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: il1, il2
+      descr2_i2 = descr2(idtype,il1,il2,iflag)
+      end function descr2_i2
+
+      integer function descr2_i3(idtype,il1,il2,il3,iflag)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: il1, il2, il3
+      descr2_i3 = descr2(idtype,il1,il2,il3,iflag)
+      end function descr2_i3
+
+      integer function descr2_i4(idtype,il1,il2,il3,il4,iflag)
+      integer, intent(in) :: idtype
+      integer, intent(in) :: iflag
+      integer, intent(in) :: il1, il2, il3, il4
+      descr2_i4 = descr2(idtype,il1,il2,il3,il4,iflag)
+      end function descr2_i4
+
+      integer function mdsput2_i0(name,units,description,i0,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      integer, intent(in) :: i0
+      integer, intent(in) :: iflg
+      mdsput2_i0 = mdsput2(name,units,description,i0,iflg)
+      end function mdsput2_i0
+
+      integer function mdsput2_i1d(name,units,description,i1d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      integer, allocatable, intent(in) :: i1d(:)
+      integer, intent(in) :: iflg
+      mdsput2_i1d = mdsput2(name,units,description,i1d,iflg)
+      end function mdsput2_i1d
+
+      integer function mdsput2_i2d(name,units,description,i2d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      integer, allocatable, intent(in) :: i2d(:,:)
+      integer, intent(in) :: iflg
+      mdsput2_i2d = mdsput2(name,units,description,i2d,iflg)
+      end function mdsput2_i2d
+
+      integer function mdsput2_d0(name,units,description,d0,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      real (kind=R8), intent(in) :: d0
+      integer, intent(in) :: iflg
+      mdsput2_d0 = mdsput2(name,units,description,d0,iflg)
+      end function mdsput2_d0
+
+      integer function mdsput2_d1d(name,units,description,d1d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      real (kind=R8), allocatable, intent(in) :: d1d(:)
+      integer, intent(in) :: iflg
+      mdsput2_d1d = mdsput2(name,units,description,d1d,iflg)
+      end function mdsput2_d1d
+
+      integer function mdsput2_d2d(name,units,description,d2d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      real (kind=R8), allocatable, intent(in) :: d2d(:,:)
+      integer, intent(in) :: iflg
+      mdsput2_d2d = mdsput2(name,units,description,d2d,iflg)
+      end function mdsput2_d2d
+
+      integer function mdsput2_d3d(name,units,description,d3d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      real (kind=R8), allocatable, intent(in) :: d3d(:,:,:)
+      integer, intent(in) :: iflg
+      mdsput2_d3d = mdsput2(name,units,description,d3d,iflg)
+      end function mdsput2_d3d
+
+      integer function mdsput2_d4d(name,units,description,d4d,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      real (kind=R8), allocatable, intent(in) :: d4d(:,:,:,:)
+      integer, intent(in) :: iflg
+      mdsput2_d4d = mdsput2(name,units,description,d4d,iflg)
+      end function mdsput2_d4d
+
+      integer function mdsput2_str(name,units,description,string,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+      character*(*), intent(in) :: string
+      integer, intent(in) :: iflg
+      mdsput2_str = mdsput2(name,units,description,string,iflg)
+      end function mdsput2_str
+
+      integer function mdsput2_str1(name,units,description,string,iflg)
+      character*(*), intent(in) :: name
+      character*(*), intent(in) :: units
+      integer, intent(in) :: description
+#ifdef F2003
+      character(len=:), allocatable, intent(in) :: string(:)
+#else
+      integer, parameter :: strmax = 1024
+      character(len=strmax+1), allocatable, intent(in) :: string(:)
+#endif
+      integer, intent(in) :: iflg
+      mdsput2_str1 = mdsput2(name,units,description,string,iflg)
+      end function mdsput2_str1
+
+      integer function mdsvalue2_i0(name,description,i0,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      integer, intent(out) :: i0
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_i0 = mdsvalue2(name,description,i0,iflg,retlen)
+      end function mdsvalue2_i0
+
+      integer function mdsvalue2_i2(name,description,i2d,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      integer, intent(out), allocatable :: i2d(:,:)
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_i2 = mdsvalue2(name,description,i2d,iflg,retlen)
+      end function mdsvalue2_i2
+
+      integer function mdsvalue2_r1(name,description,r1d,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      real(kind=R8), intent(out), allocatable :: r1d(:)
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_r1 = mdsvalue2(name,description,r1d,iflg,retlen)
+      end function mdsvalue2_r1
+
+      integer function mdsvalue2_r2(name,description,r2d,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      real(kind=R8), intent(out), allocatable :: r2d(:,:)
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_r2 = mdsvalue2(name,description,r2d,iflg,retlen)
+      end function mdsvalue2_r2
+
+      integer function mdsvalue2_r3(name,description,r3d,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      real(kind=R8), intent(out), allocatable :: r3d(:,:,:)
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_r3 = mdsvalue2(name,description,r3d,iflg,retlen)
+      end function mdsvalue2_r3
+
+      integer function mdsvalue2_r4(name,description,r4d,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      real(kind=R8), intent(out), allocatable :: r4d(:,:,:,:)
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_r4 = mdsvalue2(name,description,r4d,iflg,retlen)
+      end function mdsvalue2_r4
+
+      integer function mdsvalue2_str(name,description,str0,iflg,retlen)
+      character*(*), intent(in) :: name
+      integer, intent(in) :: description
+      character*(*), intent(out) :: str0
+      integer, intent(in) :: iflg
+      integer, intent(out) :: retlen
+      mdsvalue2_str = mdsvalue2(name,description,str0,iflg,retlen)
+      end function mdsvalue2_str
+#endif
+#endif
+
       subroutine b2mod_mdsplus_write_to_db(nwrite)
       use b2mod_subsys
       implicit none
