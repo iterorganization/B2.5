@@ -2935,7 +2935,6 @@ c*** before correction (r), after correction (c), after iteration (i)
                 src_ei(0,3)=src_ei(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
-              t1=0.0_R8
               if (balance_netcdf.ne.0) then
                 t1_apl=0.0_R8 !djm Jan2017
                 t1_mpl=0.0_R8
@@ -2946,6 +2945,7 @@ cxpb Correction of Eirene energy sources to B2 heat sources
 cxpb Only necessary for SOLPS5.0 equation formulation
               if (BoRiS.eq.0.0_R8.and.no_sseicorr.eq.0) then !{
                 do is=0,ns-1 !{
+                  t1 = 0.0_R8
                   if(use_recyceir.gt.0) then
                     recyctmp=recyceir(istrai)
                   else
