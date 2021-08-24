@@ -146,6 +146,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         t0 = 1e60_R8
@@ -170,6 +171,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &      +abs(resht(iCv))/(rxg*t0)
         endif
       enddo
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -278,6 +280,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 !srv 02.01.07
       endif
 #endif
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -327,6 +330,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solveee(ireg)) then
@@ -337,6 +341,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &    +abs(reshe(iCv))/(rxg*te(iCv))                              !srv 02.01.07
         endif
       enddo
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -432,6 +437,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &  aa, 'b2usht_Te')                                             !srv 02.01.07
       endif
 #endif
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -481,6 +487,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solveei(ireg)) then
@@ -490,6 +497,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &    +abs(reshi(iCv))/(rxg*ti(iCv)))
         endif
       enddo
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -585,6 +593,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &  aa, 'b2usht_Ti')                                             !srv 02.01.07
       endif
 #endif
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -599,6 +608,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
+! $AD II-LOOP
       do iCv = 1, nCv
         corti(iCv) = corti(iCv)
       enddo
@@ -640,6 +650,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
@@ -648,6 +659,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &    +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -743,6 +755,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &  aa, 'b2usht_Tn')                                             !srv 02.01.07
       endif
 #endif
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -757,6 +770,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
+! $AD II-LOOP
       do iCv = 1, nCv
         cortn(iCv) = cortn(iCv)
       enddo
@@ -794,12 +808,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..initialize matrix to zero
        aa = 0.0e0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
        do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvekt(ireg))
      &   aa(mpg%cvNvP(iCv,1)) =
      &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1)
        enddo
+! $AD II-LOOP
        do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -895,6 +911,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &   aa, 'b2usht_kt')                                             !srv 02.01.07
        endif
 #endif
+! $AD II-LOOP
        do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -908,6 +925,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
+! $AD II-LOOP
        do iCv = 1, nCv
         corkt(iCv) = corkt(iCv)
        enddo

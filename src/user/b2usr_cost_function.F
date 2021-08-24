@@ -29,7 +29,7 @@
       real (kind=R8) :: gradr(nCv), funv(nVx)
 #ifdef TEST_MAP
       integer, parameter :: nn=50
-      real (kind=R8), save :: xx(nn), yy(nn), ff(nn)
+      real (kind=R8), save :: xx(nn), dd(nn), ff(nn)
       integer :: ij, jj
 #endif
       integer :: isigma
@@ -49,7 +49,7 @@
             ij = ij + 1
           end do
         end do
-#endif    
+#else
         if (cftype(1).eq.6) then
           call xertst(npar_opt+nsigma.gt.0,'cftype 6 requires at '//
      &    'least one sigma in b2.user.parameters')
@@ -79,11 +79,27 @@
             end do
           endif
         enddo 
+#endif
         first_call = .false.
       endif
 
       J = 0.0_R8
-
+#ifdef TEST_MAP
+      isigma = 1
+      iicf = 2
+      do ii=1,nn
+        ff(ii) = parm_dna(1)*(xx(ii)**1.5)
+      end do
+      call calc_prior(prior, inrange)
+      n1 = ncfdata(iicf)
+      call calc_loglikelihood(n1, ff, cfdata(iicf,3,1:n1),
+     & lll_cum, isigma)
+      if (inrange) then
+        J(1) = -(log(prior) + lll_cum)*cfweight(1)
+      else
+        J(1) = inf_opt
+      endif
+#else
       if (ncf .gt. 0) then
         do icf = 1, ncf
           ic1 = mpg%cfCvP(icf,1)
@@ -142,17 +158,6 @@
               J(icf) = max(J(icf),qq)*cfweight(icf) !!FIXME to be better difined with cffcor...
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
-#ifdef TEST_MAP
-            isigma = 1
-            iicf = 2
-            do ii=1,nn
-              ff(ii) = parm_dna(1)*(xx(ii)**1.5)
-            end do
-            call calc_prior(prior, inrange)
-            n1 = ncfdata(iicf)
-            call calc_loglikelihood(n1, ff, cfdata(iicf,3,1:n1),
-     &       lll_cum, isigma)
-#else
             call calc_prior(prior, inrange)
             lll_cum = 0.0_R8
             isigma = 1
@@ -191,7 +196,6 @@
               lll_cum = lll_cum + lll
               isigma = isigma + 1
             end do
-#endif
             if (inrange) then
               J(icf) = -(log(prior) + lll_cum)*cfweight(icf)
             else
@@ -241,23 +245,10 @@
             J(1) = J(1) + J(icf)
           end do
         endif
-      endif     
+      endif  
+#endif   
       call subend ()
       return
-#ifdef TEST_MAP
-      contains
 
-      function normal_random(mu,ss)
-      use b2mod_constants
-      implicit none
-
-      real(kind=R8):: normal_random, u(2), mu, ss, xx
-
-      call random_number(u)
-      xx = sqrt(-2.0_R8*log(u(1)))*cos(2.0_R8*pi*u(2))
-      normal_random = mu + xx*ss
-      return
-      end function
-#endif
       end subroutine b2usr_cost_function
 
