@@ -831,6 +831,7 @@ ${OBJDIR}/eirmod_wneutrals.${MOD}:
 endif
 
 ifeq ($(COMPILER),gfortran)
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -ge 10; echo $$?),0)
 ${OBJDIR}/b2mod_mdsplus.o : b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
@@ -864,6 +865,7 @@ ifeq ($(strip $(LINK_MOD)),)
 	@if [ -f b2mod_mdsplus.${MOD} ] ; then /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ ; fi
 else
 	@[ -f b2mod_mdsplus.${MOD} ] && [ ! -L b2mod_mdsplus.${MOD} ] && /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/b2mod_mdsplus.${MOD} .
+endif
 endif
 endif
 endif
