@@ -47,7 +47,8 @@
 #endif
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
-      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
+      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017
+      real (kind=R8), save :: dteff
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -166,13 +167,18 @@
       logical :: file_ok
       integer ix, iy, ireg, is
       integer, save :: style_b2mndt = 1
+      integer, save :: ncall = 0
+      real(kind=R8), save :: dtim = 1.0_R8
       real (kind=R8) :: ttf
       character*260 filename
 
       filename=numerics_filename
       numerics_time_mod = 0.0_R8
       numerics_time_switch = 0.0_R8
-      call ipgeti('b2mndt_style', style_b2mndt)
+      if (ncall.eq.0) then
+        call ipgeti('b2mndt_style', style_b2mndt)
+        call ipgetr('b2mndr_dtim', dtim)
+      end if
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -198,6 +204,20 @@
       else
         call xerrab ('No '//trim(filename))
       endif
+
+      dteff = dtim
+      ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
+      if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.minval(dtei(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtei(1:nnreg(0)))) then
+        dteff = dtim*ttf
+        if (ttf.ne.1.0_R8) write(0,*)
+     &   'Effective plasma timestep rescaled to ', dteff,' seconds'
+      end if
 
       call xertst (0.0_R8.le.numerics_time_mod,
      . 'faulty input boundary_time_mod')
@@ -237,6 +257,7 @@ c additional time modification factor
         enddo
       enddo
 
+      ncall = ncall + 1
       return
 #ifdef USE_MPI
   999 call xerrab ('Error while reading NUMERICS namelist!')

@@ -237,15 +237,6 @@
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2news_guard_flows', guard_flows)                 !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        call alloc_b2mod_numerics(nx,ny,ns)
-        if(style_b2mndt.eq.2) then                                      !srv 07.07.21 {
-          solvemt=.false.
-          solveet=.false.
-        endif                                                           !srv 07.07.21 }
-        if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-          call write_b2mod_numerics_namelist
-        endif
         if(numerics_time_mod.gt.0.0_R8) then
           elm_count=int(tim/numerics_time_mod)
         else

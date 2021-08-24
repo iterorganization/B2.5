@@ -368,7 +368,7 @@ contains
         integer, save :: nesepm_istra = -1
         integer, save :: balance_netcdf = 0
         integer, save :: drift_style
-        real(IDS_real), save :: dtim = 0.0_IDS_real
+        real(IDS_real), save :: dtim = 1.0_IDS_real
         real(IDS_real), save :: ndes = 0.0_IDS_real
         real(IDS_real), save :: ndes_sol = 0.0_IDS_real
         real(IDS_real), save :: nesepm_pfr = 0.0_IDS_real

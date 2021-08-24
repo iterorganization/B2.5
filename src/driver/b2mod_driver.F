@@ -30,6 +30,7 @@
       use b2mod_neutr_src_scaling
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
       use b2mod_transport_disruption
@@ -39,7 +40,6 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
-      use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
@@ -129,6 +129,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: b2sigp_style = 2
+      integer, save :: b2mndt_style = 1
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
@@ -149,7 +150,7 @@
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
       integer n2, itim, ierr, edition, b2time, coronal,
-     *  use_eirene, neutrals_namelist,
+     *  use_eirene, neutrals_namelist, numerics_namelist, nsmin, nsmax,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -229,6 +230,7 @@
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
      4  use_astra, BoRiS, density_rescale, neutrals_namelist,
+     .  numerics_namelist, nsmin, nsmax,
      .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
@@ -252,7 +254,8 @@
      2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
-     *     no_solve/0/, no_current/0/, neutrals_namelist/0/,
+     *     no_solve/0/, no_current/0/,
+     &     neutrals_namelist/0/, numerics_namelist/0/,
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
@@ -1960,6 +1963,24 @@ cxpb initialize the data necessary for boundary conditions
       endif
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .true.)
+cxpb initialize the numerics data
+      call ipgeti ('b2mndt_style', b2mndt_style)
+      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
+      call alloc_b2mod_numerics(nx,ny,ns)
+      if(b2mndt_style.eq.2) then                                      !srv 07.07.21 {
+        solvemt=.false.
+        solveet=.false.
+      endif                                                           !srv 07.07.21 }
+      if(numerics_namelist.ge.1) then
+        nsmin = 0
+        nsmax = ns
+        call ipgeti ('b2news_nsmin', nsmin)
+        call ipgeti ('b2news_nsmax', nsmax)
+        nsmin = max(0,min(nsmin,ns))
+        nsmax = max(0,min(nsmax,ns))
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call write_b2mod_numerics_namelist
+      endif
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
@@ -2047,7 +2068,7 @@ c new CDF movie option (1st frame at t=0)
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
-     1            itim,dtim,ntim,stack_ptr,quit
+     1            itim,dteff,ntim,stack_ptr,quit
 
       call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
@@ -2071,7 +2092,7 @@ c new CDF movie option (1st frame at t=0)
      &             (1.0_R8-ax)*(1.0_R8-ay)*ne(ix4,iy4) )
            write(*,'(a,1p,3g15.7)')
      &          'time, factor, created_electrons = ', tim, factor,
-     &          sum(ne*vol)*(factor-1.0)/dtim
+     &          sum(ne*vol)*(factor-1.0)/dteff
            na(:,:,isfb) = na(:,:,isfb) +
      &          ne(:,:) * (factor-1) / rza(:,:,isfb)
            ne(:,:) = ne(:,:) * factor
@@ -2105,7 +2126,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         do while(.not.ok)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
           call b2mndt (nout, nx, ny, ns, ismain, ismain0,
      &     nscx, iscx, itim, dtim, ntim, ierr)
 
@@ -2167,10 +2188,10 @@ csw 09oct2012 set default potential already at this point (BCs)
         itim = itim+1
         itim_plas = itim_plas + 1
         if (no_solve.le.0) then
-          tim = tim+dtim
+          tim = tim+dteff
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
-     &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+     &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dteff
         write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
         write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
         write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
@@ -2200,13 +2221,13 @@ csw 09oct2012 set default potential already at this point (BCs)
         do while(itim.eq.ntim.and.stack_ptr.gt.0)
           write(*,'(a,i8,1p,g14.7,i8,i3)')
      .     'b2mndr_01:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
           ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
           dtim=stack_dtim(stack_ptr)
           stack_ptr=stack_ptr-1
           write(*,'(a,i8,1p,g14.7,i8,i3)')
      .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
         end do
 *    ..produce time-dependent file
         if (save_f31.lt.0) then
@@ -2316,7 +2337,7 @@ c new CDF movie option
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 min((ntim-itim)*(elapsedval-elapsedstart),
-     &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
+     &      max(0.0_R8,(etim-tim)/dteff-(elapsedval-elapsedstart)))      !srv 18.05.09
         else
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
@@ -2785,7 +2806,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       endif
 *   ..produce last time-dependent file if not yet done
 #ifdef JET
-      if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
+      if(tim.gt.save_tran_time-delta_tran_time+dteff.and.
      &   delta_tran_time.gt.0.0_R8) then
         tran_num=tran_num+1
         if(tran_num.le.99) then
@@ -2802,7 +2823,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       endif
 #endif
 *   ..produce last CDF movie frame if not yet done
-      if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
+      if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dteff.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
         call cdfmovie(ncid,nx,ny,ns)
@@ -2844,9 +2865,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end if
       if (delta_ids_time.gt.0.0_R8) then
         ids_done = ids_done .or.
-     .    tim.le.save_ids_time-delta_ids_time+dtim
+     .    tim.le.save_ids_time-delta_ids_time+dteff
         write_ids = write_ids .or.
-     .    tim.gt.save_ids_time-delta_ids_time+dtim
+     .    tim.gt.save_ids_time-delta_ids_time+dteff
       end if
       write_ids = write_ids .or. ids_save.lt.0
       write_ids = write_ids .and. ntim.gt.0 .and. .not.ids_done
