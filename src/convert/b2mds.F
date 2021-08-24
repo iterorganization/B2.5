@@ -471,7 +471,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         end do
       end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
@@ -490,7 +490,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         end do
       end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
@@ -506,7 +506,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+1,ny+2,0),cr_x,0)
@@ -520,7 +520,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
@@ -536,7 +536,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+2,ny+1,0),cr_y,0)
@@ -550,7 +550,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
@@ -566,7 +566,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:R'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
@@ -584,7 +584,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:Z'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
@@ -625,7 +625,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'dspar :',(dspar(ix,jsep),ix=-1,nx)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSRAD'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+2,ny+2,0),dsrad,0)
@@ -638,7 +638,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPOL'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+2,ny+2,0),dspol,0)
@@ -651,7 +651,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPAR'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx+2,ny+2,0),dspar,0)
@@ -785,7 +785,7 @@ c
           tdi='build_with_units($,"m")'
           write(*,'(a,a,a,a)')
      1     'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
           status=mdsput2(
      *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
      *     descr2_i2(idtype_double,4,icnt,0),vesl,
@@ -1224,7 +1224,7 @@ c
 
       tdi='build_with_units($,"K")'
       mds_signal_name='\TOP.SNAPSHOT:WALL_TEMP'
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)

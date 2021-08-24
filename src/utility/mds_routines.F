@@ -9,7 +9,7 @@
       if(len_trim(string).gt.0) then
         write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
         status=mdsput2_str(trim(node_name)//char(0),'$'//char(0),
      1   descr2_str0(idtype_cstring,0,len_trim(string)),
      1   trim(string),0)
@@ -69,7 +69,7 @@
       do is=1,ns
         str1(is)=trim(string(is)) // char(0)
       end do
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_str1(trim(node_name)//char(0),'$'//char(0),
      1 descr2_str1(idtype_cstring,ns,0,strlen),str1,0)
 #else
@@ -96,7 +96,7 @@
 
       write(*,'(a,a,a,i8)') 'mds_put_int to ',trim(node_name),
      1 ' of ',int
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_i0(trim(node_name)//char(0),'$'//char(0),
      1 descr2_i0(idtype_long,0),int,0)
 #else
@@ -128,7 +128,7 @@
       i2d=data
       tdi='$'
 
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_i2d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_long,nx,ny,0),i2d,0)
@@ -165,7 +165,7 @@
       i1d=data
       tdi='$'
 
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_i1d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i1(idtype_long,ns,0),i1d,0)
@@ -200,7 +200,7 @@
       write(*,'(a,a,a,1p,1e22.15,a,a)')
      * 'mds_put_double to ',trim(node_name),' of ',value,
      * ' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_d0(trim(node_name)//char(0),trim(tdi)//char(0),
      1 descr2_i0(idtype_double,0),value,0)
 #else
@@ -232,7 +232,7 @@
       allocate(d1d(ns))
       d1d=data
       tdi='build_with_units($,"'//trim(units)//'")'
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_d1d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i1(idtype_double,ns,0),d1d,0)
@@ -274,7 +274,7 @@
      3 ',\TOP.SNAPSHOT.GRID:CZ' // trim(dirsuffix) //
      4 ')'
 
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_d2d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i2(idtype_double,nx,ny,0),d2d,0)
@@ -320,7 +320,7 @@
 
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_d3d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i3(idtype_double,nx,ny,ns,0),d3d,0)
@@ -366,7 +366,7 @@
 
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2_d4d(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2_i4(idtype_double,nx,ny,nd,ns,0),d4d,0)
@@ -394,7 +394,7 @@
       character :: message*80
 
       if(mod(status,2).eq.0) then
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
         status=mdsvalue2('getmsg($)'//char(0),
      1   descr2_i0(idtype_long,0),status,
      2   descr2_str0(idtype_cstring,0,80),message,0,size)

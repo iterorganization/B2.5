@@ -36,7 +36,7 @@
       contains
 
 #ifdef MDSPLUS
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       integer function descr2_str0(idtype,iflag,ilen)
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
