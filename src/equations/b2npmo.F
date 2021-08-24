@@ -189,9 +189,9 @@
         call ipgeti ('b2mndt_style', style_b2mndt)                      !srv 07.07.21 {
         if(style_b2mndt.eq.2) then
          rxg = huge(1.0_R8)
-         write(message,'(a,i3,a)')
-     .    'rxf*dtmo*time_factor for species ',is,' must be 1'
          do is = 0,ns-1
+          write(message,'(a,i3,a)')
+     .     'rxf*dtmo*time_factor for species ',is,' must be 1'
           do iy = -1, ny
            do ix = -1, nx
             call xertst(

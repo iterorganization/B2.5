@@ -134,6 +134,10 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
 #endif
+#if IMAS_MINOR_VERSION > 32
+    use ids_utilities &   ! IGNORE
+     & , only : ids_identifier_static
+#endif
 #if IMAS_MINOR_VERSION > 29
 #ifdef AMNS
     use amns_types  ! IGNORE
@@ -364,7 +368,7 @@ contains
         integer, save :: nesepm_istra = -1
         integer, save :: balance_netcdf = 0
         integer, save :: drift_style
-        real(IDS_real), save :: dtim = 0.0_IDS_real
+        real(IDS_real), save :: dtim = 1.0_IDS_real
         real(IDS_real), save :: ndes = 0.0_IDS_real
         real(IDS_real), save :: ndes_sol = 0.0_IDS_real
         real(IDS_real), save :: nesepm_pfr = 0.0_IDS_real
@@ -977,11 +981,11 @@ contains
           end if
         end if
 #if IMAS_MINOR_VERSION > 32
-        divertors%midplane = midplane_id
-        edge_profiles%midplane = midplane_id
-        edge_sources%midplane = midplane_id
-        edge_transport%midplane = midplane_id
-        summary%midplane = midplane_id
+        call write_ids_midplane( divertors%midplane, midplane_id )
+        call write_ids_midplane( edge_profiles%midplane, midplane_id )
+        call write_ids_midplane( edge_sources%midplane, midplane_id )
+        call write_ids_midplane( edge_transport%midplane, midplane_id )
+        call write_ids_midplane( summary%midplane, midplane_id )
 #endif
 
         select case (GeometryType)
@@ -6341,6 +6345,37 @@ contains
             return
 
         end subroutine write_ids_code
+
+#if IMAS_MINOR_VERSION > 32
+        subroutine write_ids_midplane( midplane, midplane_id )
+            type(ids_identifier_static) :: midplane
+            integer, intent(in) :: midplane_id
+
+            midplane%index = midplane_id
+            allocate( midplane%name(1) )
+            allocate( midplane%description(1) )
+            select case (midplane_id)
+            case (1)
+              midplane%name = 'magnetic_axis'
+              midplane%description = &
+                 &  'Height of equilibrium O-point'
+            case (2)
+              midplane%name = 'dr_dz_zero_sep'
+              midplane%description = &
+                 &  'Maximum radius location along separatrix'
+            case (3)
+              midplane%name = 'z_zero'
+              midplane%description = &
+                 &  'Z = 0 plane'
+            case (4)
+              midplane%name = 'ggd_subset'
+              midplane%description = &
+                 &  'Location specified by GGD outer midplane grid subset'
+            end select
+            return
+
+        end subroutine write_ids_midplane
+#endif
 
         subroutine write_sourced_constant( val, value )
             type(ids_summary_constant_flt_0d) :: val

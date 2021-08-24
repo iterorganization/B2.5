@@ -179,9 +179,10 @@ c***  wnu_pk  : neutrals at total peak
 c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from Eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
-c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
-c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
+c***    wldnek  :   heat transferred with neutrals. Evaluated as
+c***                   EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
+c***    wldnep  :   potential energy released by neutrals. Evaluated as
+c***                   diss_pot_H2*(PRFAML+PRFPML)
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
 c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
@@ -191,18 +192,22 @@ c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
 c***    wldpa   :   flux of emitted atoms from BI. Equal to PRFPAT
 c***    wldpm   :   flux of emitted molecules from BI. Equal to PRFPML
-c***    wldpeb  :   power carried away by these atoms and molecules. Equal to ERFPAT+ERFPML+ERFPIO
+c***    wldpeb  :   power carried away by these atoms and molecules. Equal to
+c***                  ERFPAT+ERFPML+ERFPIO
 c***    wldspt  :   flux of sputtered wall material
 c***    wldspta :   sputtered flux by emitted atom
 c***    wldsptm :   sputtered flux by emitted molecule
 c***    wlarea  :   areas of the surface segments from Eirene
-c***    wlabsrp :   absorption at the surfaces (1-recyct from Eirene)
+c***    wlabsrp :   absorption at the surfaces (1-RECYCT from Eirene)
 c***    wlpump  :   pumped flux for each pumped particle
-c***    ewldea_res  :   emitted energy flux of atoms. Equal to ERFAAT+ERFMAT+ERFIAT+ERFPHAT
-c***    ewldem_res  :   emitted energy flux due of molecules. Equal to ERFAML+ERFMML+
-c***                      ERFIML+ERFPHML
-c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions. ERFPAT+ERFPML
-c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()PRFAML+PRFPML)*H_EDISS
+c***    ewldea_res  :   emitted energy flux of atoms. Equal to
+c***                      ERFAAT+ERFMAT+ERFIAT+ERFPHAT
+c***    ewldem_res  :   emitted energy flux due of molecules. Equal to
+c***                      ERFAML+ERFMML+ERFIML+ERFPHML
+c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions.
+c***                      ERFPAT+ERFPML
+c***    ewldmr_res  :   energy due to recombination of atoms and ions into molecules.
+c***                     (PRFAML+PRFPML)*H_EDISS
 
 c*** Output data headers
 c***  m_hdpr    : max. length of a quantity name

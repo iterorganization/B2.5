@@ -1729,6 +1729,7 @@
 				<type>real</type>
 				<description>
 					When set to '1.0', the old form of the electron heat flux calculation is used and b2tfhe_fch_pTe should be set to '0.0'. It is recommended to use 0.0.
+					Cannot be set to 1.0 when using the SOLPS5.2 physics model.
 				</description>
 			</switch>
 			<switch>
@@ -1737,6 +1738,7 @@
 				<type>real</type>
 				<description>
 					When set to '1.0', the new form of the electron heat flux calculation is used and b2tfhe_alfTeEh should be set to '0.0'. It is recommended to use 1.0.
+					Cannot be set to 0.0 when using the SOLPS5.2 physics model.
 				</description>
 			</switch>
 			<switch>
@@ -4129,6 +4131,15 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+			    <name>b2tfhe_mode_ehx</name>
+			    <default>0</default>
+				<type>integer</type>
+				<description>
+				  Switch to choose between various discretization schemes when computing the poloidal electric field.
+				  See code for details.
+				</description>
+			</switch>
 			<switch>
 				<name>b2sigp_style</name>
 				<default>2</default>
@@ -6664,14 +6675,6 @@
 				</description>
 			</switch>
 			<switch>
-			  <name>SOLVEMT</name>
-			  <default>.true.</default>
-			  <type>logical array of size (0:NREG)</type>
-			  <description>
-				Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch. It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
-			  </description>
-			</switch>
-			<switch>
 				<name>SOLVEMO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -6681,11 +6684,11 @@
 			</switch>
 			<switch>
 				<name>SOLVEMT</name>
-				<default>.true.</default>
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch.
 					It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
+					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
 				</description>
 			</switch>
 			<switch>
@@ -6714,11 +6717,11 @@
 			</switch>
 			<switch>
 				<name>SOLVEET</name>
-				<default>.true.</default>
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
 					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
 				</description>
 			</switch>
 			<switch>

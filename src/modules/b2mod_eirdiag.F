@@ -28,7 +28,7 @@
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
-     &  ewldmr_res(:,:),    !energy due to recombination of atoms into molecules
+     &  ewldmr_res(:,:),    !energy due to recombination of atoms and ions into molecules
      &  wldspt_res(:),      !flux of sputtered wall material
      &  wldspta_res(:,:),   !sputtered flux for each type of emitted atom
      &  wldsptm_res(:,:),   !sputtered flux for each type of emitted molecule
@@ -77,7 +77,7 @@ c***	srcml	:   power loss due to molecules, including
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
 c***	wldnek	:   heat transferred with neutrals
-c***	wldnep	:   potential energy released by neutrals
+c***	wldnep	:   energy released by recombination into molecules
 c***	wldna	:   flux of atoms impinging onto the surface
 c***	ewlda	:   their average energy
 c***	wldnm	:   flux of molecules impinging onto the surface

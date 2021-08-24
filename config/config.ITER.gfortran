@@ -5,7 +5,7 @@ LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext
 GLI_HOME  ?= ${EBROOTGLI}
 endif
 LD_NAG    ?= `pkg-config openblas --libs`
-NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
+NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 
 DEFINES += -DDOFLUSH -DNO_OPT

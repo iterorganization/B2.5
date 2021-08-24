@@ -81,6 +81,7 @@ csw 10oct2012
       integer, save :: b2_upwind = 0
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
+      integer, save :: style_b2mndt = 1
       character(3) :: charns
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
@@ -118,11 +119,17 @@ csw 10oct2012
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       if (style_b2mndt.ge.1) then
+         call xertst (.not.(alfTeEh.eq.1.0_R8.and.fch_pTe.eq.0.0_R8),
+     &    ' Cannot set alfTeEh to 1.0 and fch_pTe to 0.0 when using'//
+     &    ' the SOLPS5.2 physics model!')
+       end if
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)

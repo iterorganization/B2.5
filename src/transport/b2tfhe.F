@@ -77,6 +77,7 @@
       integer, save :: drift_style
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
+      integer, save :: style_b2mndt = 1
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -125,11 +126,17 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       if (style_b2mndt.ge.1) then
+         call xertst (.not.(alfTeEh.eq.1.0_R8.and.fch_pTe.eq.0.0_R8),
+     &    ' Cannot set alfTeEh to 1.0 and fch_pTe to 0.0 when using'//
+     &    ' the SOLPS5.2 physics model!')
+       end if
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
       endif                                                              !xpb
 *   ..set n2

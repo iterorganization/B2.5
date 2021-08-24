@@ -3708,7 +3708,7 @@ c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
      -      'recycicore,recycisol,recycidivin,recycidivout= ',recycireg
       end if
 
-C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULES
+C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS AND IONS INTO MOLECULES
       IF(L_NEUTFLUX.GE.0) THEN
         DO I=1,NNSTSI
           k=eirdiag_nds_ind(I)
