@@ -38,6 +38,7 @@
 #ifdef MDSPLUS
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       integer function descr2_str0(idtype,iflag,ilen)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: ilen
@@ -45,6 +46,7 @@
       end function descr2_str0
 
       integer function descr2_str1(idtype,il1,iflag,ilen)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: il1, ilen
@@ -52,12 +54,14 @@
       end function descr2_str1
 
       integer function descr2_i0(idtype,iflag)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       descr2_i0 = descr2(idtype,iflag)
       end function descr2_i0
 
       integer function descr2_i1(idtype,il1,iflag)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: il1
@@ -65,6 +69,7 @@
       end function descr2_i1
 
       integer function descr2_i2(idtype,il1,il2,iflag)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: il1, il2
@@ -72,6 +77,7 @@
       end function descr2_i2
 
       integer function descr2_i3(idtype,il1,il2,il3,iflag)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: il1, il2, il3
@@ -79,6 +85,7 @@
       end function descr2_i3
 
       integer function descr2_i4(idtype,il1,il2,il3,il4,iflag)
+#     include "mdslib.inc"
       integer, intent(in) :: idtype
       integer, intent(in) :: iflag
       integer, intent(in) :: il1, il2, il3, il4
@@ -86,6 +93,7 @@
       end function descr2_i4
 
       integer function mdsput2_i0(name,units,description,i0,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -95,6 +103,7 @@
       end function mdsput2_i0
 
       integer function mdsput2_i1d(name,units,description,i1d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -104,6 +113,7 @@
       end function mdsput2_i1d
 
       integer function mdsput2_i2d(name,units,description,i2d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -113,6 +123,7 @@
       end function mdsput2_i2d
 
       integer function mdsput2_d0(name,units,description,d0,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -122,6 +133,7 @@
       end function mdsput2_d0
 
       integer function mdsput2_d1d(name,units,description,d1d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -131,6 +143,7 @@
       end function mdsput2_d1d
 
       integer function mdsput2_d2d(name,units,description,d2d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -140,6 +153,7 @@
       end function mdsput2_d2d
 
       integer function mdsput2_d3d(name,units,description,d3d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -149,6 +163,7 @@
       end function mdsput2_d3d
 
       integer function mdsput2_d4d(name,units,description,d4d,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -158,6 +173,7 @@
       end function mdsput2_d4d
 
       integer function mdsput2_str(name,units,description,string,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -167,6 +183,7 @@
       end function mdsput2_str
 
       integer function mdsput2_str1(name,units,description,string,iflg)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
@@ -181,6 +198,7 @@
       end function mdsput2_str1
 
       integer function mdsvalue2_i0(name,description,i0,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       integer, intent(out) :: i0
@@ -190,6 +208,7 @@
       end function mdsvalue2_i0
 
       integer function mdsvalue2_i2(name,description,i2d,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       integer, intent(out), allocatable :: i2d(:,:)
@@ -199,6 +218,7 @@
       end function mdsvalue2_i2
 
       integer function mdsvalue2_r1(name,description,r1d,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       real(kind=R8), intent(out), allocatable :: r1d(:)
@@ -208,6 +228,7 @@
       end function mdsvalue2_r1
 
       integer function mdsvalue2_r2(name,description,r2d,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       real(kind=R8), intent(out), allocatable :: r2d(:,:)
@@ -217,6 +238,7 @@
       end function mdsvalue2_r2
 
       integer function mdsvalue2_r3(name,description,r3d,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       real(kind=R8), intent(out), allocatable :: r3d(:,:,:)
@@ -226,6 +248,7 @@
       end function mdsvalue2_r3
 
       integer function mdsvalue2_r4(name,description,r4d,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       real(kind=R8), intent(out), allocatable :: r4d(:,:,:,:)
@@ -235,6 +258,7 @@
       end function mdsvalue2_r4
 
       integer function mdsvalue2_str(name,description,str0,iflg,retlen)
+#     include "mdslib.inc"
       character*(*), intent(in) :: name
       integer, intent(in) :: description
       character*(*), intent(out) :: str0
