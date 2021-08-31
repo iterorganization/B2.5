@@ -5399,7 +5399,7 @@
 			<switch>
 				<name>DEPOSITION</name>
 				<default>0.0</default>
-				<type>real*8 array of size (NWALL, NTRACK)</type>
+				<type>real*8 array of size (NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of deposited material (in atoms) from species (itrack) onto wall element (iwall).
 				</description>
@@ -5407,7 +5407,7 @@
 			<switch>
 				<name>EROSION</name>
 				<default>0.0</default>
-				<type>real*8 array of size(NWALL, NTRACK)</type>
+				<type>real*8 array of size(NWALL,NTRACK)</type>
 				<description>
 					Contains the amount of eroded material (in atoms) of species (itrack) from wall element(iwall).
 				</description>

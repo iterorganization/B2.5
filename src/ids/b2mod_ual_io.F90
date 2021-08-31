@@ -651,7 +651,7 @@ contains
           if (style.eq.0) then
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-          else if (style.eq.1) then
+          else if (style.ge.1) then
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
           else if (style.eq.-1) then
@@ -963,9 +963,13 @@ contains
         if (GeometryType .eq. GEOMETRY_LINEAR) then
           midplane_id = 4
         else
-          if ( size( equilibrium%time_slice ).ge.time_sind ) then
-            z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
-             &   magnetic_axis%z
+          if ( associated( equilibrium%time_slice ) ) then
+            if ( size( equilibrium%time_slice ).ge.time_sind ) then
+              z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
+               &   magnetic_axis%z
+            else
+              z_eq = IDS_REAL_INVALID
+            end if
           else
             z_eq = IDS_REAL_INVALID
           end if
