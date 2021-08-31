@@ -522,7 +522,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         end do
         wbbc1(nx1+1,ny1+1,0) =
      &   wbbr1(nx1,ny1,0) - (wbbc1(nx1,ny1,0) - wbbl1(nx1,ny1,0))
-        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1+1,ny1+1,3) / hzc(nx1+1,ny1+1)
+        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
 *   .. correct interpolation of magnetic field for diverted island case
 *      as B is not a periodic quantity
         if(periodic_bc.eq.1 .and. nncut.ge.1) then

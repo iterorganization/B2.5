@@ -567,10 +567,11 @@ c 2002-09-11: logic revised
 #endif
       integer conformal_convert
       real (kind=R8) :: rratio
-      logical open_file, streql, is_comment
+      logical open_file, streql
+      logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits,
-     &  open_file, get_jsep, conformal_convert,
+     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
+     &  open_file, get_jsep, conformal_convert, end_comment,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
@@ -767,9 +768,13 @@ c 2002-09-11: logic revised
     3 continue
        read (ninp(0),'(a)',end=4,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 3
     4  continue
@@ -1333,9 +1338,13 @@ c 2002-09-11: logic revised
     1 continue
        read (ninp(2),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -1706,15 +1715,30 @@ c 2002-09-11: logic revised
     5 continue
       read (ninp(2),'(a)',end=6,err=91) line
       if (.not.is_comment(line)) then
-        read (line,*) cnamip, cvalip
+        ligne = line
+        call strip_spaces(ligne)
+        if (ligne(1:1).eq.'''') then
+          read (line,*) cnamip, cvalip
+        else
+          cnamip = ' '
+          cvalip = ' '
+        end if
       else if (.not.streql(line,' ')) then
-        i = index(ligne,'''')
+        i = index(line,'''')
         if (i.gt.0) then
-          read (line(i:132),*) cnamip, cvalip
+          if (only_comments(line(1:i-1))) then
+            read (line(i:132),*) cnamip, cvalip
+          else
+            cnamip = ' '
+            cvalip = ' '
+          end if
         else
           cnamip = ' '
           cvalip = ' '
         endif
+      else
+        cnamip = ' '
+        cvalip = ' '
       endif
 *   ..integer switches
       todo = .true.
@@ -1870,6 +1894,11 @@ c 2002-09-11: logic revised
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
+          if (wait) then
+            rswitch = b2tvspa_vis_par
+          else
+            rswitch = b2tfhe_vis_par
+          end if
         case ('b2tfnb_ycur')
           rswitch = ycur
           ycur_done = .true.
@@ -1880,13 +1909,28 @@ c 2002-09-11: logic revised
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
       if (.not.is_comment(line) .and. .not.wait) then
-        write(nout(2),'(a1,a,a,a,a1)')
-     .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
+          write(nout(2),'(a1,a,a,a,a,a)')
+     .     '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''//tab,
+     .     trim(line(i:))
+        else if (.not.streql(cnamip,' ')) then
+          write(nout(2),'(a1,a,a,a,a1)')
+     .     '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        else
+          write(nout(2),'(a)') trim(line)
+        end if
       else if (.not.streql(line,' ') .and. .not.streql(cnamip,' ')
      .   .and. .not.wait) then
-        write(nout(2),'(a,a2,a,a,a,a1)') line(1:1),
-     .   ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
-      else if (is_comment(line) .and. .not.streql(line,' ')) then
+        if (end_comment(line(2:),i)) then
+          write(nout(2),'(a1,a2,a,a,a,a)') line(1:1),
+     .     ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),
+     .     ''''//tab//trim(line(i:))
+        else
+          write(nout(2),'(a1,a2,a,a,a,a1)') line(1:1),
+     .     ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        end if
+      else if (is_comment(line) .and. .not.streql(line,' ')
+     .   .and. .not.wait) then
         write(nout(2),'(a)') trim(line)
       else if (.not.wait) then
         write(nout(2),1028)
@@ -3948,43 +3992,61 @@ cxpb  Start reading input.dat file
           IREAD=1
         ELSE
           DO WHILE (I1 /= 0)
-            if (streql(eirene_format,'iter')) then ! no conversion necessary
-              WRITE(IUNOT,'(A80)') ZEILE
-            else
-              I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
-              I3 = SCAN(ZEILE(I2+1:),' ')
-              IH = MIN(I3,6)
-              HANDLE=REPEAT(' ',6)
-              HANDLE(1:IH) = ZEILE(I2:I2+IH-1)
 c   cfile card found. Is this one of the permitted external files?
+            I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
+            I3 = SCAN(ZEILE(I2+1:),' ')
+            IH = MIN(I3,6)
+            HANDLE=REPEAT(' ',6)
+            HANDLE(1:IH) = ZEILE(I2:I2+IH-1)
+            if (streql(handle,'gr_ext').or.streql(handle,'mo_ext')) then ! removed
+              continue
+            else if (streql(handle,'ADAS')) then
+              filename='ratadas.filelist'
+              call find_file(filename,ex)
+              if(silent_open(97,filename,
+     .          'data.local|modules/B2.5/Database',adasfile)) then !{
+                read(97,*) ULINE
+                close(97)
+              end if
+              if(streql(ULINE,' ').or.streql(ULINE,'adas')) then
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE ADAS   modules/adas/adf11                   '
+              else
+                if(ULINE(1:9).eq.'SOLPSTOP/') then
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   '//trim(ULINE(10:))//'/adf11'
+                else if (ULINE(1:5).eq.'adas/') then
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   modules/'//trim(ULINE)//'/adf11'
+                else
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   '//trim(ULINE)//'/adf11'
+                end if
+              end if
+            else if (.not.streql(eirene_format,'iter')) then
               if (streql(handle,'AMJUEL')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE AMJUEL Database/AMdata/amjuel.tex        '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE AMJUEL Database/AMdata/amjuel.tex           '
               else if (streql(handle,'HYDHEL')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE HYDHEL Database/AMdata/hydhel.tex        '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE HYDHEL Database/AMdata/hydhel.tex           '
               else if (streql(handle,'SPUTER')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE SPUTER Database/Surfacedata/SPUTER       '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE SPUTER Database/Surfacedata/SPUTER          '
               else if (streql(handle,'TRIM')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE TRIM   Database/Surfacedata/TRIM/trim.dat'
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE TRIM   Database/Surfacedata/TRIM/trim.dat   '
               else if (streql(handle,'METHAN')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE METHAN Database/AMdata/methane.tex       '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE METHAN Database/AMdata/methane.tex          '
               else if (streql(handle,'AMMONX')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE AMMONX Database/AMdata/ammoniaex.tex     '
-              else if (streql(handle,'gr_ext')) then ! removed
-                continue
-              else if (streql(handle,'mo_ext')) then ! removed
-                continue
-              else if (streql(handle,'ADAS')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE ADAS   modules/adas/adf11                '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE AMMONX Database/AMdata/AMMONX_Arrh-elast.tex'
               else
                 WRITE(IUNOT,'(A80)') ZEILE
-              ENDIF
+              end if
+            else
+              WRITE(IUNOT,'(A80)') ZEILE
             endif
             READ (IUNIN,'(A80)') ZEILE
             I1 = INDEX(ZEILE,'CFILE')
@@ -8444,7 +8506,11 @@ C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
               ENDDO
               SORIND(J,ISTRA) = rdum(0) + rdum(1)
             ELSE
-              SORIND(J,ISTRA) = rdum(0) + ISTEP
+              IF(INDIM(J,ISTRA).NE.0) THEN
+                SORIND(J,ISTRA) = rdum(0) + ISTEP
+              ELSE
+                SORIND(J,ISTRA) = rdum(0)
+              ENDIF
             ENDIF
             WRITE(IUNOT,6666) ISTEP,idum(2:9)
             WRITE(IUNOT,6664) SORWGT(J,ISTRA),SORLIM(J,ISTRA),

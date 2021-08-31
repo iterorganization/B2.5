@@ -93,7 +93,7 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80, line*80
+     &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
 *   ..procedures
@@ -235,9 +235,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
