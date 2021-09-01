@@ -35,7 +35,7 @@
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      &   cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
-     &   fch_p(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny)                   !lk 31.01.08 {
+     &   fch_p(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny,0:1)               !lk 31.01.08 { 24.08.21
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -193,9 +193,9 @@ csw 10oct2012
      &       (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
      &      /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))           !srv 17.05.99 11.03.00
      &      *vedia(ix,iy,1)*vdia_par                                     !srv 17.05.99 11.03.00 18.01.07
-!     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
+!     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
 !     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-!     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
+!     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8             !srv 13.09.02 }
           enddo
          enddo                                                           !srv 25.01.02 }
         endif
@@ -728,14 +728,14 @@ csw 13mar2013 added check upwind (SOLPS4 style)
          ehy = 0.0_R8
         endif                                                            !srv 27.02.13
         floe0 = 1.5e0_R8*(fne(ix,iy,1)-                                  !srv 11.05.99
-     &     5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                        !lk 21.02.08 17.12.13
+     &     5.0e0_R8/3.0e0_R8*fchstoch(ix,iy,1)/qe)+                      !lk 21.02.08 17.12.13 24.08.21
 !* in the next line there is the coeffisient +4 because                  !srv 13.08.02
 !* we need this term with +5/2=-3/2+4                                    !srv 13.08.02 19.08.02
 !     &   +4.0e0_R8*fledia(ix,iy,1)*vdia_par*signmf                      !srv 13.09.02
      &   (chve(ix,iy,1)+2.5e0_R8*fledia(ix,iy,1))*                       !srv 13.09.02 14.05.03 18.01.07 11.01.13 *signmf
      &   (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
         floe0_mdf = 1.5e0_R8*(fne(ix,iy,1)-                              !srv 11.05.99
-     &    5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                         !lk 21.02.08 17.12.13
+     &    5.0e0_R8/3.0e0_R8*fchstoch(ix,iy,1)/qe)+                       !lk 21.02.08 17.12.13 24.08.21
      &   chve(ix,iy,1)*                                                  !srv 13.09.02 14.05.03
      &   (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
         if(no_Ptncr_y_he.eq.0) then                                      !srv 06.07.06 {
@@ -998,8 +998,8 @@ csw 18feb2014 remove fluxes between guard cells
         enddo
       enddo
 
-      if(iout.ne.0) then                                            !srv 18.06.08 {
-       call my_out(70,nx,ny,fchstoch,'b2tfhe__fchstochy')           !lk 31.01.08
+      if(iout.ne.0) then                                             !srv 18.06.08 {
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfhe__fchstochy')   !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,fne(-1,-1,0),'b2tfhe__fnex')
        call my_out(70,nx,ny,fne(-1,-1,1),'b2tfhe__fney')
        call my_out(70,nx,ny,floe(-1,-1,0),'b2tfhe__floex')
@@ -1049,13 +1049,14 @@ csw 18feb2014 remove fluxes between guard cells
      &                          .and. .not. balance) then
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfhe__for_po_fch_px')
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfhe__fch_py')
-       call my_out(70,nx,ny,fchstoch,'b2tfhe__for_po_fchstochy')     !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),
+     &            'b2tfhe__for_po_fchstochy')                        !lk 31.01.08  24.08.21
       endif                                                          !srv 11.09.09 }
 
       if(iout_b2wdat.eq.4 .and. balance) then
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfhe__fch_px')
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfhe__fch_py')
-       call my_out(70,nx,ny,fchstoch,'b2tfhe__fchstochy')            !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfhe__fchstochy')   !lk 31.01.08  24.08.21
       endif                                                          !srv 11.09.09 }
 
 * ..return

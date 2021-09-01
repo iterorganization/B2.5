@@ -92,7 +92,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

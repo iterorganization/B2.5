@@ -526,7 +526,8 @@ contains
             &        cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,              &
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
-            &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
+            &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
+            &        csig_stoch, chce_stoch)
 !  ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
            call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))

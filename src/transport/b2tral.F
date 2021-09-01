@@ -7,7 +7,7 @@
      2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
-     4 fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -58,6 +58,8 @@
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
      &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
+      real (kind=R8) ::
+     &  csig_stoch(-1:nx,-1:ny,0:1), chce_stoch(-1:nx,-1:ny,0:1)        !lk 31.01.08 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -226,20 +228,21 @@
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx,
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,             !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
-     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                   !srv 09.01.01 15.12.05
-     &  chce, chve, chci, chvi, csig, calf, fllim0fhi)
+     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                       !srv 09.01.01 15.12.05
+     &  chce, chve, chci, chvi, csig, calf, csig_stoch, chce_stoch,   !srv 24.08.21
+     &  fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy, hz,                            !srv 23.11.10
+     &  bb, conn, vol, gs, hx, hy, hz,                                !srv 23.11.10
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
-     2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
+     2  chvemx, chvimx, cvsahz0,                                      !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                    !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..add to previous contributions
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
+      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
       if (style.eq.1) then
        do is = 0, ns-1
         if (.not.is_neutral(is)) then

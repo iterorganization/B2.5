@@ -5,7 +5,8 @@
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia, vedia, wadia, vaecrb,
-     2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,      !xpb
+     2  veecrb, ua, fne_32, fne_52, csig, csigin, csig_stoch,            !xpb !srv 24.08.21
+     &  chce, chve, chci,
      &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
@@ -44,6 +45,7 @@
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      4 csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1)                     !lk 31.01.08 } 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1), 
@@ -55,7 +57,7 @@
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
-     &  fchstoch(-1:nx,-1:ny), fchinert(-1:nx,-1:ny,0:1)
+     &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1)             !srv 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -81,7 +83,6 @@
       real (kind=R8), save :: dia_cur = 1.0e0_R8                        !srv 17.05.99
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8), save :: prl_cur = 1.0_R8, phm2 = 1.0_R8           !srv 15.10.18
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flomx,
      &   tex, ehx_po, ehy_po,
@@ -337,7 +338,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
-     8       +fchstoch(ix,iy)                                            !lk 31.01.08
+     8       +fchstoch(ix,iy,1)                                          !lk 31.01.08 24.08.21
             fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
@@ -356,7 +357,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               enddo
             endif
             if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
-              conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
+              conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy,1)
             endif                                                        !lk 31.01.08 }
           endif                                                          !xpb
         enddo
@@ -484,7 +485,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
-       call my_out(70,nx,ny,fchstoch,'fchstochy')                    !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
       endif                                                          !srv 18.06.08 }
 
 * ..return

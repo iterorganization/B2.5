@@ -186,8 +186,7 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
-      character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
-     .          ligne*120
+      character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
@@ -485,7 +484,7 @@ c 2002-09-11: logic revised
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
-      character*500 line
+      character*500 line, ligne
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
