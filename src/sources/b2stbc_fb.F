@@ -91,7 +91,7 @@
       if(vacuum_communication.gt.0) then
 ! this allows for a communication of particle fluxes across vacuum regions
         do ivac=1, vacuum_communication
-          do is=0, ns-1
+          do is = 0, ns-1
 ! this option only applies to neutrals
             if(is_neutral(is)) then
 ! calculate an average pressure and an average temperature
@@ -731,7 +731,8 @@
 
                case (0) ! no action
 
-               case (1) ! local density
+               case (1) ! local density of isonuclear sequence
+                        ! (including contributions from Eirene species)
 
                   if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
@@ -744,25 +745,63 @@
                   vol_feedback = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         do iy = na_feedback_iy1(ispecies),
      &                          na_feedback_iy2(ispecies)
                            do ix = na_feedback_ix1(ispecies),
      &                             na_feedback_ix2(ispecies)
-                              na_feedback_current =
+                             if(region(ix,iy,0).ne.0 .and.
+     &                          leftix(ix,iy).ne.-2 .and.
+     &                          rightix(ix,iy).ne.nx+1 .and.
+     &                          bottomiy(ix,iy).ne.-2 .and.
+     &                          topiy(ix,iy).ne.ny+1) then
+                                na_feedback_current =
      &                             na_feedback_current +
      &                             na(ix,iy,is) * vol(ix, iy)
-                              if(is.eq.is_start) then
-                                 vol_feedback = vol_feedback +
+                                if(is.eq.is_start) then
+                                  vol_feedback = vol_feedback +
      &                                vol(ix, iy)
+                                endif
                               endif
                            enddo
                         enddo
                         is_end=is
                      endif
                   enddo
+#ifdef B25_EIRENE
+                  do j=1,nnatmi !{
+                    if (latmscl(j).eq.ispecies+1) then !{
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies) !{
+                        do ix = na_feedback_ix1(ispecies),
+     &                          na_feedback_ix2(ispecies) !{
+                          if(region(ix,iy,0).ne.0 .and.
+     &                       leftix(ix,iy).ne.-2 .and.
+     &                       rightix(ix,iy).ne.nx+1 .and.
+     &                       bottomiy(ix,iy).ne.-2 .and.
+     &                       topiy(ix,iy).ne.ny+1) then !{
+                            na_feedback_current = na_feedback_current +
+     &                       dab2(ix+1,iy+1,j,1) * vol(ix,iy)
+                            do k=1,nnmoli !{
+                              if (mlcmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + mlcmp(j,k) *
+     &                          dmb2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                            do k=1,nnioni !{
+                              if (micmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + micmp(j,k) *
+     &                          dib2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                          end if !}
+                        end do !}
+                      end do !}
+                    end if !}
+                  end do !}
+#endif
                   na_feedback_current = na_feedback_current /
      &                 vol_feedback
 
@@ -779,7 +818,7 @@
                   vol_feedback = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         is_end=is
@@ -789,9 +828,15 @@
      &                    na_feedback_iy2(ispecies)
                      do ix = na_feedback_ix1(ispecies),
      &                       na_feedback_ix2(ispecies)
-                        na_feedback_current = na_feedback_current +
-     &                    ne(ix, iy) * vol(ix, iy)
-                        vol_feedback = vol_feedback + vol(ix, iy)
+                        if(region(ix,iy,0).ne.0 .and.
+     &                    leftix(ix,iy).ne.-2 .and.
+     &                    rightix(ix,iy).ne.nx+1 .and.
+     &                    bottomiy(ix,iy).ne.-2 .and.
+     &                    topiy(ix,iy).ne.ny+1) then
+                          na_feedback_current = na_feedback_current +
+     &                      ne(ix, iy) * vol(ix, iy)
+                          vol_feedback = vol_feedback + vol(ix, iy)
+                        endif
                      enddo
                   enddo
                   na_feedback_current = na_feedback_current /
@@ -811,14 +856,15 @@
      *                 ne(topix(jxa,jsep),topiy(jxa,jsep)))
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         is_end=is
                      endif
                   enddo
 
-               case (4) ! total particle content for that sequence
+               case (4) ! total particle content for that isonuclear sequence
+                        ! (including contributions from Eirene species)
 
                   if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
@@ -829,7 +875,7 @@
                   na_feedback_current = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         do iy = na_feedback_iy1(ispecies),
@@ -850,8 +896,41 @@
                         is_end=is
                      endif
                   enddo
+#ifdef B25_EIRENE
+                  do j=1,nnatmi !{
+                    if (latmscl(j).eq.ispecies+1) then !{
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies) !{
+                        do ix = na_feedback_ix1(ispecies),
+     &                          na_feedback_ix2(ispecies) !{
+                          if(region(ix,iy,0).ne.0 .and.
+     &                          leftix(ix,iy).ne.-2 .and.
+     &                          rightix(ix,iy).ne.nx+1 .and.
+     &                          bottomiy(ix,iy).ne.-2 .and.
+     &                          topiy(ix,iy).ne.ny+1) then !{
+                            na_feedback_current = na_feedback_current +
+     &                       dab2(ix+1,iy+1,j,1) * vol(ix,iy)
+                            do k=1,nnmoli !{
+                              if (mlcmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + mlcmp(j,k) *
+     &                          dmb2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                            do k=1,nnioni !{
+                              if (micmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + micmp(j,k) *
+     &                          dib2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                          end if !}
+                        end do !}
+                      end do !}
+                    end if !}
+                  end do !}
+#endif
 
-               case (5) ! total ion content for that sequence (not including neutrals)
+               case (5) ! total ion content for that isonuclear sequence
+                        ! (not including neutrals)
 
                   if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
@@ -862,7 +941,7 @@
                   na_feedback_current = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(is_neutral(is)) cycle
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
@@ -976,7 +1055,7 @@
                   sum_e = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                     if(b2espcr(is).eq.ispecies+1) then
                       if(is_start.eq.-1) is_start=is
                       if(is_neutral(is).and.use_eirene.ne.0) cycle
@@ -1013,7 +1092,7 @@
      *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         is_end=is
@@ -1087,7 +1166,7 @@
                        na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
-                       do is=0, ns-1
+                       do is = 0, ns-1
                          if(b2espcr(is).eq.ispecies+1) then
                            if(is_start.eq.-1) is_start=is
                            do iy = na_feedback_iy1(ispecies),
