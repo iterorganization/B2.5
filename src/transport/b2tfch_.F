@@ -4,7 +4,8 @@
       subroutine b2tfch_ (nx, ny, ns, ismain, ismain0,                   !srv 09.01.20 {
      & facdrift, fac_ExB, fac_vis,
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
-     1 ti, ni, na, fna, uadia, ua, csig, csigin, chci, calf, cvsa_cl,
+     1 ti, ni, na, fna, uadia, ua, csig, csigin, csig_stoch,             !srv 24.08.21
+     & chci, calf, cvsa_cl,
      & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
@@ -34,10 +35,11 @@
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1)                      !lk 31.01.08 { 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
-     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1),
+     &   fchstoch(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),          !srv 24.08.21
      &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),             !srv 22.11.99 30.09.02
      &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),                !srv 11.07.99
      2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
@@ -65,7 +67,6 @@
       integer, save :: no_current= 0
 
       character(3) :: charns, charns0
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                          !lk 31.01.08 {
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
       real (kind=R8) ::
      &  dia_cur, vis_par, vis_q,                                         !srv 17.05.99 11.07.99
@@ -222,8 +223,8 @@
          enddo                                                           !srv 24.06.08 }
         endif                                                            !srv
         if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
-          conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
-          fch(ix,iy,1) = fch(ix,iy,1) + fchstoch(ix,iy)
+          conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy,1)            !srv 24.08.21
+          fch(ix,iy,1) = fch(ix,iy,1) + fchstoch(ix,iy,1)                !srv 24.08.21
         endif                                                            !lk 31.01.08 }
        enddo
       enddo
@@ -261,7 +262,7 @@
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch__fchdiay')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch__fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch__fchanmly')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__fchstochy')                !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch__concx')
        call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch__concy')
        call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch__avisperx')
@@ -327,7 +328,8 @@
      &    'b2tfch__for_po_csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),
      &    'b2tfch__for_po_csig_any')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__for_po_fchstochy')         !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),
+     &    'b2tfch__for_po_fchstochy')                                    !lk 31.01.08 24.08.21
       endif                                                              !srv 11.09.09 }
 
       if(iout_b2wdat.eq.4) then
@@ -351,7 +353,7 @@
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__csig_any')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__fchstochy')                !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
       endif                                                              !srv 11.09.09 }
 
 * ..return

@@ -94,7 +94,6 @@
      6  zeff(-1:nx,-1:ny), pz(-1:nx,-1:ny),                              !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
      &  rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),                          !iyv 06.02.14
-     &  fchstoch(-1:nx,-1:ny),                                           !srv 17.12.13
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
@@ -334,7 +333,7 @@
      2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                 !srv 13.10.06
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
-     5   fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     5   fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch) !srv 24.08.21
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
           call hbout('b2ne_npmo   ',nx,ny,ns,te,'te',ti,'ti',
@@ -841,7 +840,7 @@ cxpb
      1         vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam,      !xpb
      1         pz, ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia,        !xpb
      &         vaecrb, veecrb, ua, fne_32, fne_52,
-     &         csig, csigin, chce, chve, chci,
+     &         csig, csigin, csig_stoch, chce, chve, chci,               !srv 24.08.21
      &         calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,       !srv 17.12.13 16.10.17
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
      &         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,     !srv 25.11.08
@@ -1090,7 +1089,8 @@ c     with diamagnetic drift part                                        !xpb
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia, vaecrb,          !xpb
-     &   veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,
+     &   veecrb, ua, fne_32, fne_52, csig, csigin, csig_stoch,
+     &   chce, chve, chci,                                               !srv 24.08.21
      &   calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,             !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
@@ -1159,31 +1159,31 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.01.17
 *   ..iterate on heat balance
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
-          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv07.07.21
-     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
-     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
-     &     na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                     !srv 09.07.08
-     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
+         call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv07.07.21
+     &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
+     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 09.07.08 07.07.09 24.08.21
+     &    na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                      !srv 09.07.08
+     &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
-          call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv 07.06.00 02.06.99 07.07.21
-     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
-     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
-     &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif, !srv 31.05.99
-     &     reshe, reshi, wrk0, corte, corti, ier0)                       !srv 31.05.99 10.11.02
+         call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
+     &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
+     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 27.12.01 28.06.03 30.06.03 07.07.09 24.08.21
+     &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,  !srv 31.05.99
+     &    reshe, reshi, wrk0, corte, corti, ier0)                        !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
-          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
-     &     rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                  !srv 07.06.00 02.06.99 07.07.21
-     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
-     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
-     &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,             !srv 31.05.99
-     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)           !srv 31.05.99 10.11.02
+         call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
+     &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
+     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 27.12.01 28.06.03 30.06.03 07.07.09 24.08.21
+     &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,              !srv 31.05.99
+     &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)            !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npht')
         if(pot_eq.eq.0) po=0.0_R8     !xpb remove pot. correction if unneeded

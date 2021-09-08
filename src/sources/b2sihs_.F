@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, vol, bb, pbs, lnlam,                                     !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
+     &  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                      !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     &  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, she0, shi0)     !srv 28.06.03 07.07.09 24.08.21
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -36,7 +36,7 @@
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1),
+     *  fne(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny,0:1),              !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
@@ -73,7 +73,6 @@
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)!lk 31.01.08 }
       real (kind=R8) :: 
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
@@ -219,7 +218,6 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch) !srv 07.07.14
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -228,17 +226,17 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy)*(hy(ix,iy)
-     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                             !srv 24.08.21
+     &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
-     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)          !srv 24.08.21
+     &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
          endif
         enddo
        enddo
-      endif                                                         !lk 31.01.08 }
-      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)               !srv 17.12.13 24.08.21
+      endif                                                           !lk 31.01.08 }
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
         do ix = 0, nx

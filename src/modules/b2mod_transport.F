@@ -29,6 +29,8 @@
      *  cvsahz_cl(:,:,:,:),                                             !srv 09.01.01
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
+     *  csig_stoch(:,:,:),                                              !srv 24.08.21
+     *  chce_stoch(:,:,:),                                              !srv 24.08.21
      *  fllime(:,:),
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:),
@@ -79,6 +81,8 @@
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 09.01.01
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
+      allocate(csig_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
+      allocate(chce_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
       allocate(fllime(-1:nxd,-1:nyd))
       fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
@@ -136,6 +140,8 @@
       deallocate(cvsahz_cl)
       deallocate(csig_cl)
       deallocate(calf_cl)
+      deallocate(csig_stoch)                               !srv 24.08.21
+      deallocate(chce_stoch)                               !srv 24.08.21
       deallocate(fllime)
       deallocate(fllimi)
       deallocate(fllim0fna)

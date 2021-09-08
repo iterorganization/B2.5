@@ -97,7 +97,7 @@
                 ehx(ix,iy) =
      &           -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &            (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+            !srv
-     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*  srv
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*  !srv
      &            (log(ne(ix,iy))-
      &             log(ne(leftix(ix,iy),leftiy(ix,iy)))))/qe             !srv .98
               endif                                                      !srv 06.04.15 }

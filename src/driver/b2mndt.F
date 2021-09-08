@@ -321,7 +321,8 @@ ctmp.dpc
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
-     5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     5       fllim0fhi, fllimvisc, csig_cl, calf_cl,
+     &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
@@ -572,8 +573,8 @@ ctmp.dpc
      &      solveee, solveei, solveet, solvepo, solvemo,               !srv 22.05.18
      &      rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                !srv 07.07.21
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
-     &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
-     &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
+     &      fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia,     !srv 09.07.08 07.07.09 24.08.21
+     &      vaecrb, na, ua, ue, te, ti, po, ne, ni, fhe, fhi,          !srv 09.07.08
      &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
          endif
 *     ..save total heat sources for printout at end of run
