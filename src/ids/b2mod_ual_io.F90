@@ -368,7 +368,7 @@ contains
         integer, save :: nesepm_istra = -1
         integer, save :: balance_netcdf = 0
         integer, save :: drift_style
-        real(IDS_real), save :: dtim = 0.0_IDS_real
+        real(IDS_real), save :: dtim = 1.0_IDS_real
         real(IDS_real), save :: ndes = 0.0_IDS_real
         real(IDS_real), save :: ndes_sol = 0.0_IDS_real
         real(IDS_real), save :: nesepm_pfr = 0.0_IDS_real
@@ -526,7 +526,8 @@ contains
             &        cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,              &
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
-            &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
+            &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
+            &        csig_stoch, chce_stoch)
 !  ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
            call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))
@@ -651,7 +652,7 @@ contains
           if (style.eq.0) then
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-          else if (style.eq.1) then
+          else if (style.ge.1) then
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
           else if (style.eq.-1) then
@@ -963,9 +964,13 @@ contains
         if (GeometryType .eq. GEOMETRY_LINEAR) then
           midplane_id = 4
         else
-          if ( size( equilibrium%time_slice ).ge.time_sind ) then
-            z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
-             &   magnetic_axis%z
+          if ( associated( equilibrium%time_slice ) ) then
+            if ( size( equilibrium%time_slice ).ge.time_sind ) then
+              z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
+               &   magnetic_axis%z
+            else
+              z_eq = IDS_REAL_INVALID
+            end if
           else
             z_eq = IDS_REAL_INVALID
           end if

@@ -90,9 +90,10 @@ c***    suffix "_t" denotes totals from distributions,
 c***    and "_w" the totals from Eirene.
 c
 c*** Recap of fluxes from Eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
-c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
-c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
+c***    wldnek  :   heat transferred with neutrals. Evaluated as
+c***                    EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
+c***    wldnep  :   energy released by recombination into molecules. Evaluated as
+c***                    diss_pot_H2*(PRFAML+PRFPML)
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
 c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
@@ -102,17 +103,21 @@ c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
 c***    wldpa   :   flux of emitted atoms from BI. Equal to PRFPAT
 c***    wldpm   :   flux of emitted molecules from BI. Equal to PRFPML
-c***    wldpeb  :   power carried away by these atoms and molecules. Equal to ERFPAT+ERFPML+ERFPIO
+c***    wldpeb  :   power carried away by these atoms and molecules. Equal to
+c***                  ERFPAT+ERFPML+ERFPIO
 c***    wldspt  :   flux of sputtered wall material
 c***    wldspta :   sputtered flux by emitted atom
 c***    wldsptm :   sputtered flux by emitted molecule
 c***    wlarea  :   areas of the surface segments from Eirene
-c***    wlabsrp :   absorption at the surfaces (1-recyct from Eirene)
-c***    ewldea_res  :   emitted energy flux of atoms. Equal to ERFAAT+ERFMAT+ERFIAT+ERFPHAT
-c***    ewldem_res  :   emitted energy flux due of molecules. Equal to ERFAML+ERFMML+
-c***                      ERFIML+ERFPHML
-c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions. ERFPAT+ERFPML
-c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()PRFAML+PRFPML)*H_EDISS
+c***    wlabsrp :   absorption at the surfaces (1-RECYCT from Eirene)
+c***    ewldea_res  :   emitted energy flux of atoms. Equal to
+c***                      ERFAAT+ERFMAT+ERFIAT+ERFPHAT
+c***    ewldem_res  :   emitted energy flux due to molecules. Equal to
+c***                      ERFAML+ERFMML+ERFIML+ERFPHML
+c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions.
+c***                      ERFPAT+ERFPML
+c***    ewldmr_res  :   energy due to recombination of atoms and ions into molecules.
+c***                     (PRFAML+PRFPML)*H_EDISS
 
       real (kind=R8) ::
      *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM),
@@ -559,7 +564,7 @@ c     ,          itrg(j),js,wldnek(js,0),wldnep(js,0)
         do iy=lytg,ny-1 !{
 c          if (ft44) wnutrg(iy,itrg(j))=
 c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
-          if (ft44) then 
+          if (ft44) then
             wnutrg(iy,itrg(j))=
      .       wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
             if(abs(wo).gt.0.0_R8) then !{
@@ -645,7 +650,7 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
           write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
      ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
-     ,            'WWpar','WWtrg','Lcnnt','Lcnnx','rd_cr'      
+     ,            'WWpar','WWtrg','Lcnnt','Lcnnx','rd_cr'
         else !}{
           write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',

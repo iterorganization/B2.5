@@ -404,6 +404,15 @@
 *     B2TRNO computes the anomalous transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
 *
+*     B2TRSC computes the X and Y components of electrical conductivity
+*     associated with stochastization of the magnetic field.
+*
+*     B2TRSH computes the X and Y components of electron thermal conductivity
+*     associated with stochastization of the magnetic field.
+*
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
+*
 *     B2TVSPA computes the X and Y components of the parallel viscosity
 *     current
 *
@@ -750,8 +759,8 @@
 *     is terminated because of an error condition.
 *
 *     IPMAIN is a group of routines that
-*     operate on a collection of names and values representing 
-*     "internal parameters" in a code. The entry points are ipsetc, 
+*     operate on a collection of names and values representing
+*     "internal parameters" in a code. The entry points are ipsetc,
 *     ipgetc, and ipfini.
 *     IPSETC saves the value of an internal parameter.
 *     IPGETC returns the value of an internal parameter.

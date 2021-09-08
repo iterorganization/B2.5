@@ -38,7 +38,7 @@
      1 hx(-1:nx,-1:ny),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
-      real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
+      real (kind=R8) :: fchstoch(-1:nx,-1:ny,0:1)                        !lk 31.01.08 24.08.21
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -77,6 +77,7 @@
       integer, save :: drift_style
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
+      integer, save :: style_b2mndt = 1
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -125,11 +126,17 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       if (style_b2mndt.ge.1) then
+         call xertst (.not.(alfTeEh.eq.1.0_R8.and.fch_pTe.eq.0.0_R8),
+     &    ' Cannot set alfTeEh to 1.0 and fch_pTe to 0.0 when using'//
+     &    ' the SOLPS5.2 physics model!')
+       end if
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
       endif                                                              !xpb
 *   ..set n2
@@ -165,7 +172,7 @@
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
           do ix = -1, nx
-            c071(ix,iy) = fce2n(zeff(ix,iy))
+            c071(ix,iy) = zeff(ix,iy)*fce2n(zeff(ix,iy))                 !srv 21.07.21
           enddo
         enddo
       else
@@ -452,7 +459,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+
      1         2.5_R8*fne_52(ix,iy,1)-
-     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                     !lk 21.02.08 !srv 17.12.13
+     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy,1)/qe+                   !lk 21.02.08 !srv 17.12.13 24.08.21
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=

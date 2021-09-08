@@ -85,18 +85,21 @@
      &           te(leftix(ix,iy),leftiy(ix,iy)))*                       !srv
      &          (2.0_R8/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))  !srv
               else if(mode_ehx.eq.1) then
-              t0= (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
-     &             ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &            (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &         (ne(ix,iy)*te(ix,iy)
-     &         -ne(leftix(ix,iy),leftiy(ix,iy))*
-     &          te(leftix(ix,iy),leftiy(ix,iy)))/(qe*t0)
+                t0= (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &               ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &              (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+                ehx(ix,iy) =
+     &             -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+     &              (ne(ix,iy)*te(ix,iy)
+     &              -ne(leftix(ix,iy),leftiy(ix,iy))*
+     &               te(leftix(ix,iy),leftiy(ix,iy)))/(qe*t0)
               else
-              ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+               !srv
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*     !srv
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy)))))/qe !srv .98
+                ehx(ix,iy) =
+     &           -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+     &            (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+            !srv
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*  !srv
+     &            (log(ne(ix,iy))-
+     &             log(ne(leftix(ix,iy),leftiy(ix,iy)))))/qe             !srv .98
               endif                                                      !srv 06.04.15 }
             endif                                                        !srv 26.11.02 02.04.15
           enddo
