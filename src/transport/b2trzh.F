@@ -57,7 +57,7 @@
 *     - c_R_wA: the friction force transport coefficient for isonuclear ions
 *     - c_R_wB: the friction force transport coefficient correction for each charge state
 *     - c_R_w: the total friction force transport coefficient 
-*     - c_hwA: the velocity dependent ion heat flux tansport coefficient for isonuclear ions
+*     - c_hw_save: the velocity dependent ion heat flux tansport coefficient 
 *     - temperature gradients  
 *     - mass-related variables  
 *
@@ -86,12 +86,17 @@
      & tau_Zh(0:nspecies-1,0:nspecies-1),
      & eta_cl(-1:nx,-1:ny,0:ns-1),
      & eta_cl_fl(-1:nx,-1:ny,0:ns-1),
-     & t0, t1, czetap,zetap(-1:nx,-1:ny),
-     & cF_limh(0:nspecies-1),
+     & t0, t1, czetap,zetap(-1:nx,-1:ny),I_al(0:nspecies-1),
+     & cF_limh(0:nspecies-1),cF_limBh(0:nspecies-1),
      & cF_lim(0:nspecies-1),cF_limB(0:nspecies-1),
      & cF_limv(0:ns-1),
      & hci0_nofl(-1:nx,-1:ny,0:1),hci0(-1:nx,-1:ny,0:1),
+     & hci0_al_nofl(-1:nx,-1:ny,0:nspecies-1),
+     & hci0_al(-1:nx,-1:ny,0:nspecies-1),
+     & hciB_al_nofl(0:nspecies-1),
+     & hciB_al(0:nspecies-1),
      & c_hw(0:nspecies-1,0:nspecies-1),c_rw(0:nspecies-1,0:nspecies-1),
+     & c_hwA(0:nspecies-1,0:nspecies-1),
      & c_hwB(0:nspecies-1),c_rwB(0:nspecies-1),
      & c_hTB(0:nspecies-1),c_rTB(0:nspecies-1),
      & kappa_hTA(0:nspecies-1,0:nspecies-1),kappa_hTB(0:nspecies-1),
@@ -208,7 +213,7 @@
 
 *    ..Flux limiting coefficient	
             call b2trfl(ix,iy,Ainv,zeffne,amti,zetap(ix,iy),gamma,
-     & cF_lim,cF_limh,cF_limB)
+     & cF_lim,cF_limh,cF_limB,cF_limBh)
             do i = 0, nspecies-1
               Ainv_fl(i,0:nspecies-1)=
      & cF_lim(i)*Ainv(i,0:nspecies-1)
@@ -226,15 +231,15 @@
 *    ..calculate the classical ion conductivity without flux limiting 
             call b2trht(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
      & zetap(ix,iy),zeffne,ti(ix,iy), Ainv, 
-     & hci0_nofl(ix,iy,0))
+     & hci0_al_nofl(ix,iy,0:nspecies-1))
 *    ..calculate the classical ion conductivity with flux limiting 
             call b2trht(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
      & zetap(ix,iy),zeffne,ti(ix,iy), Ainv_fl_h, 
-     & hci0(ix,iy,0))
+     & hci0_al(ix,iy,0:nspecies-1))
 *    ..calculate the velocity parts heat flux and r transport coefficient 
             call b2trhw(nspecies, G2, G8, mum, rmu,
      & z2n_xy(ix,iy,0:nspecies-1), Ainv, Ainv_mdf, 
-     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_hwA(0:nspecies-1,0:nspecies-1),
      & c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting 
             call b2trtf(nspecies, G2, G8, mum, mdm,
@@ -271,13 +276,13 @@
           else
 *    ..the analytical thermal force transport coefficient  
             call b2trhrtf_an(nspecies, mum, mdm,nz2n,
-     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_hwA(0:nspecies-1,0:nspecies-1),
      & c_rwA(0:nspecies-1,0:nspecies-1),  
      & c_hTA_an,c_rTA_an,c_R_TA_an_nofl)
 *    ..calculate the classical ion conductivity without flux limiting 
             call b2trht_an(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
      & zetap(ix,iy),zeffne,ti(ix,iy),c_hTA_an,nz2n,rmd2,  
-     & hci0_nofl(ix,iy,0))
+     & hci0_al_nofl(ix,iy,0:nspecies-1))
 *    ..the thermal force transport coefficient without flux limiting
             do i = 0, nspecies-1
               temp=sum(c_R_TA_an_nofl(i,0:nspecies-1)*
@@ -290,7 +295,7 @@
 *    ..Flux limiting coefficient (analytical)	
             call b2trfl_an(ix,iy,c_hTA_an,
      & amnucl,amti,zetap(ix,iy),gamma,
-     & cF_lim,cF_limh,cF_limB)
+     & cF_lim,cF_limh,cF_limB,cF_limBh)
             do i = 0, nspecies-1
               c_R_TA_an(i,0:nspecies-1)=
      & cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
@@ -301,7 +306,7 @@
 *    ..calculate the classical ion conductivity with flux limiting 
             call b2trht_an(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
      & zetap(ix,iy),zeffne,ti(ix,iy),c_hTA_an_fl,nz2n,rmd2,  
-     & hci0(ix,iy,0))
+     & hci0_al(ix,iy,0:nspecies-1))
 *    ..the thermal force transport coefficient with flux limiting
             do i = 0, nspecies-1
               temp=sum(c_R_TA_an(i,0:nspecies-1)*
@@ -351,7 +356,7 @@
 *    ..calculate the friction force transport coefficient 
           call b2trfr(nspecies, mum, rmu,
      & z2n_xy(ix,iy,0:nspecies-1), 
-     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1),
+     & c_hwA(0:nspecies-1,0:nspecies-1),
      & c_rwA(0:nspecies-1,0:nspecies-1),
      & c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
      & c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1),
@@ -386,15 +391,44 @@
      & cF_limv(is)
           enddo
 
-          if (zh_dist_fun.eq.1) then
-*   ..apply charge state correction for the heat flux
-            c_hw(0:nspecies-1,0:nspecies-1)=
-     & c_hwA(ix,iy,0:nspecies-1,0:nspecies-1)
-            do inucl = 0, nspecies-1
-              c_hw(inucl,inucl)=c_hw(inucl,inucl)+zhcscorr*
-     & c_hwB(inucl)-sum(c_hwA(ix,iy,0:nspecies-1,inucl))
+*   ..tilde I for each isonuclear ion
+          do inucl = 0, nspecies-1
+            I_al(inucl)=0.0_R8
+            do iz= 1, znnucl_int(inucl)
+              I_al(inucl)=I_al(inucl)+
+     & (na(ix,iy,nucl2s(inucl,iz))/nal(ix,iy,inucl))**2/
+     & Ia(ix,iy,nucl2s(inucl,iz))
             enddo
+          enddo
 
+*    ..calculate the classical ion conductivity correction
+          call b2trht_an(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
+     & zetap(ix,iy),zeffne,ti(ix,iy),c_hTB,nz2n,rmd2,  
+     & hciB_al_nofl(0:nspecies-1))
+*    ..calculate the classical ion conductivity correction with flux limiting
+          call b2trht_an(nspecies,ix,iy,bb(ix,iy,0)/bb(ix,iy,3),
+     & zetap(ix,iy),zeffne,ti(ix,iy),cF_limBh*c_hTB,nz2n,rmd2,  
+     & hciB_al(0:nspecies-1))
+
+*   ..apply charge state correction for the heat flux
+          hci0_nofl(ix,iy,0)=
+     & sum(hci0_al_nofl(ix,iy,0:nspecies-1)+zhcscorr*
+     & hciB_al_nofl(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
+          hci0(ix,iy,0)=
+     & sum(hci0_al(ix,iy,0:nspecies-1)+zhcscorr*
+     & hciB_al(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
+
+          c_hw(0:nspecies-1,0:nspecies-1)=
+     & c_hwA(0:nspecies-1,0:nspecies-1)
+          do inucl = 0, nspecies-1
+            c_hw(inucl,inucl)=c_hw(inucl,inucl)+zhcscorr*
+     & c_hwB(inucl)-sum(c_hwA(0:nspecies-1,inucl))
+          enddo
+*   ..save heat flux velocity dependent part trasport coefficient
+          c_hw_save(ix,iy,0:nspecies-1,0:nspecies-1)=
+     & c_hw(0:nspecies-1,0:nspecies-1)
+
+          if (zh_dist_fun.eq.1) then
 *   ..apply charge state correction for the r-moment
             c_rw(0:nspecies-1,0:nspecies-1)=
      & c_rwA(0:nspecies-1,0:nspecies-1)
@@ -494,146 +528,7 @@
           enddo
         endif
       enddo
-
-      if (ncall.eq.2) then
-!       ix=(nx-1)/2
-!       iy=(ny-1)/2
-!       print *, 'checkpoint_c_R'
-!       print *, 'ix,iy:',ix,iy
-!       print *, 'hci0_nofl:'
-!       do, iy=-1,ny
-!         print *, (hci0_nofl(ix,iy,0), ix=-1,nx )
-!       enddo
-!       print *, 'hci0:'
-!       do, iy=-1,ny
-!         print *, (hci0(ix,iy,0), ix=-1,nx )
-!       enddo
-!       print *, 'chci0_nofl:'
-!       do, iy=-1,ny
-!         print *, (chci0_nofl(ix,iy,0), ix=-1,nx )
-!       enddo
-!       print *, 'chci0:'
-!       do, iy=-1,ny
-!         print *, (chci0(ix,iy,0), ix=-1,nx )
-!       enddo
-!       print *, 'chci0_luc:'
-!       do, iy=-1,ny
-!         print *, (chci0_luc(ix,iy,0), ix=-1,nx )
-!       enddo
-!       is=3  
-!       print *, 'is:'
-!       print *, is
-!       print *, 'eta_cl:'
-!       do, iy=-1,ny
-!         print *, (eta_cl(ix,iy,is), ix=-1,nx )
-!       enddo
-!       print *, 'eta_cl_fl:'
-!       do, iy=-1,ny
-!         print *, (eta_cl_fl(ix,iy,is), ix=-1,nx )
-!       enddo
-!       print *, 'cvsahz0_nofl:'
-!       do, iy=-1,ny
-!         print *, (cvsahz0_nofl(ix,iy,0,is), ix=-1,nx )
-!       enddo
-!       print *, 'cvsahz0:'
-!       do, iy=-1,ny
-!         print *, (cvsahz0(ix,iy,0,is), ix=-1,nx )
-!       enddo
-!       print *, 'cvsahz0_luc:'
-!       do, iy=-1,ny
-!         print *, (cvsahz0_luc(ix,iy,0,is), ix=-1,nx )
-!       enddo
-!       print *, 'cvsahz_drho_luc:'
-!       do, iy=-1,ny
-!         print *, (cvsahz_drho_luc(ix,iy,0,is), ix=-1,nx )
-!       enddo
-!       print *, 'rmd2:'
-!       print *, (rmd2(j), j=0,nspecies-1 )
-!       print *, 'na:'
-!       print *,  (na(ix, iy,j),j=0,ns-1)
-!       print *, 'c_R_TA_nofl:'
-!       do, i=0,nspecies-1
-!         print *, (c_R_TA_nofl(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_R_TA:'
-!       do, i=0,nspecies-1
-!         print *, (c_R_TA(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_R_TB_nofl:'
-!       print *, (c_R_TB_nofl(ix,iy,j), j=0,nspecies-1 )
-!       print *
-!       print *, 'c_R_TB:'
-!       print *, (c_R_TB(ix,iy,j), j=0,nspecies-1 )
-!       print *
-!       print *, 'c_R_wA:'
-!       do, i=0,nspecies-1
-!         print *, (c_R_wA(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_R_wB:'
-!       do, i=0,nspecies-1
-!         print *, (c_R_wB(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_R_w:'
-!       do, i=0,nspecies-1
-!         print *, (c_R_w(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_hwA:'
-!       do, i=0,nspecies-1
-!         print *, (c_hwA(ix,iy,i,j), j=0,nspecies-1 )
-!       enddo
-!       print *, 'c_pi_uA:'
-!       do, i=0,nspecies-1
-!         print *, (c_pi_uA(i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'c_pi_uB:'
-!       do, i=0,nspecies-1
-!         print *, c_pi_uB(i)
-!       enddo
-!       print *
-!       print *, 'eta_cl:'
-!       do, i=0,ns-1
-!         print *, eta_cl(ix,iy,i)
-!       enddo
-!       print *
-!       print *, 'eta_cl_fl:'
-!       do, i=0,ns-1
-!         print *, eta_cl_fl(ix,iy,i)
-!       enddo
-!       print *
-!       print *, 'rho_A_rel:'
-!       do, i=0,ns-1
-!         print *, rho_A_rel(ix,iy,i)
-!       enddo
-!       print *
-!       do, i=0,nspecies-1
-!         print *, (tf_ton_mat(i,j), j=0,nspecies-1 )
-!       enddo
-!       print *
-!       print *, 'avm_u:'
-!       print *, avm_u(ix,iy)
-!       print *
-!       print *, 'w_out:'
-!       print *, (w_out(ix,iy,j), j=0,ns-1 )
-!       print *
-!       print *, 'hTdp_out:'
-!       print *, (hTdp_out(ix,iy,j), j=0,ns-1 )
-!       print *
-!       print *, 'hwdp_out:'
-!       print *, (hwdp_out(ix,iy,j), j=0,ns-1 )
-!       print *
-!       print *, 'rTdpgamma_out:'
-!       print *, (rTdpgamma_out(ix,iy,j), j=0,ns-1 )
-!       print *
-!       print *, 'rwdpgamma_out:'
-!       print *, (rwdpgamma_out(ix,iy,j), j=0,ns-1 )
-!       print *
-      endif  
+ 
       ncall = ncall+1
       call subend ()
       return

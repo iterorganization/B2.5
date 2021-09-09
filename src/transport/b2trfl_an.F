@@ -1,7 +1,7 @@
 *.specification
 
       subroutine b2trfl_an (ix,iy,c_hTA_an,amnucl,amti,zetap,
-     & gamma,cF_lim,cF_limh,cF_limB) 
+     & gamma,cF_lim,cF_limh,cF_limB,cF_limBh) 
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2cmpt
@@ -20,21 +20,23 @@
       real (kind=R8) :: 
      & cF_lim(0:nspecies-1),
      & cF_limh(0:nspecies-1),
-     & cF_limB(0:nspecies-1)
+     & cF_limB(0:nspecies-1),
+     & cF_limBh(0:nspecies-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     b2trfl computes the flux limiting coefficients using analitycaly calculated ion heat conductivity  
+*     b2trfl_an computes the flux limiting coefficients using analitycaly calculated ion heat conductivity  
 *
 *  3. description 
 *
 *     This routine computes:
 *     - cF_lim: the flux limiting coefficient for the thermal force coefficient
+*     - cF_limh: the flux limiting coefficient for the heat flux
 *     - cF_limB: the flux limiting coefficient for the charge state correction 
-*     - cF_limB: the flux limiting coefficient for the charge state correction 
+*     - cF_limBh: the flux limiting coefficient for the charge state correction for the heat flux
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -60,12 +62,15 @@
           cF_limh(i)=
      & 1.0_R8/(1.0_R8+(coef*t0/t2)**gamma)**(1.0_R8/gamma)
           cF_limB(i)=0.5_R8+0.5_R8*
-     & tanh(10*(t1/(coef*t0)-1.0_R8))
+     & tanh(10.0_R8*(t1/(coef*t0)-1.0_R8))
+          cF_limBh(i)=0.5_R8+0.5_R8*
+     & tanh(10.0_R8*(t2/(coef*t0)-1.0_R8))
         enddo
       else
         cF_lim(0:nspecies-1)=1.0_R8
         cF_limh(0:nspecies-1)=1.0_R8
         cF_limB(0:nspecies-1)=1.0_R8
+        cF_limBh(0:nspecies-1)=1.0_R8
       endif 
 
       call subend ()

@@ -14,7 +14,7 @@
       use b2mod_zhfrtf ,
      & only: b2mod_zhfrtf_tf,b2mod_zhfrtf_fr
       use b2mod_b2zhco ,
-     & only: zhd_corr ,zhflcorr                                !som 05.03.21
+     & only: zhd_corr ,zhd_corrT ,zhflcorr                                !som 05.03.21
       use b2mod_plasma
      , , only : roxa
       use b2mod_transport
@@ -158,6 +158,7 @@
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 12.03.21
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)              !som 01.07.21
        call ipgeti ('b2tral_zhd_corr', zhd_corr)                        !som 05.03.21
+       call ipgeti ('b2tral_zhd_corrT', zhd_corrT)                      !som 03.09.21
        call ipgeti ('b2tlnl_ii', icase)                                 !som 05.03.21
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')

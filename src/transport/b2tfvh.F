@@ -6,6 +6,7 @@
       use b2mod_indirect
       use b2mod_zhfrtf
       use b2mod_b2zhco
+      use b2mod_b2mrel , only: s2nucl
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx,ny,ns
@@ -35,7 +36,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer ix,iy,inucl
+      integer ix,iy,is
       real (kind=R8) :: temp
 
       external intfaceh
@@ -52,10 +53,12 @@
       do iy = -1, ny
         do ix = -1, nx
         cfloi_vh(ix,iy)=0.0_R8
-          do inucl = 0, nspecies-1
-            cfloi_vh(ix,iy)=cfloi_vh(ix,iy)+nal(ix,iy,inucl)*
-     & sum(c_hwA(ix,iy,0:nspecies-1,inucl)*
-     & (av_ualpha(ix,iy,inucl)-av_ualpha(ix,iy,0:nspecies-1)))
+          do is = 0, ns-1
+            if (.not.is_neutral(is)) then
+              cfloi_vh(ix,iy)=cfloi_vh(ix,iy)+na(ix,iy,is)*
+     & sum(c_hw_save(ix,iy,0:nspecies-1,s2nucl(is))*
+     & (ua(ix,iy,is)-av_ualpha(ix,iy,0:nspecies-1)))
+            endif
           enddo
         cfloi_vhx(ix,iy)=cfloi_vh(ix,iy)*(vol(ix,iy)/hx(ix,iy))*
      & (bb(ix,iy,0)/bb(ix,iy,3))

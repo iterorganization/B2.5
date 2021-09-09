@@ -223,7 +223,7 @@
          avm_u(ix,iy)=sum(rho_A(0:ns-1)*ua(ix,iy,0:ns-1))/rho
          w_A=ua(ix,iy,0:ns-1)-avm_u(ix,iy)
          t_A(ix,iy,0:ns-1)=ti(ix,iy)+
-     & zhd_corr*(am(0:ns-1)*mp*w_A(0:ns-1)**2)/3.0_R8
+     & zhd_corr*zhd_corrT*(am(0:ns-1)*mp*w_A(0:ns-1)**2)/3.0_R8
        enddo
       enddo
 
