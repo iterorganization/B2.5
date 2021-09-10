@@ -205,7 +205,6 @@
         call xerrab ('No '//trim(filename))
       endif
 
-      dteff = dtim
       ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
       if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
      &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
