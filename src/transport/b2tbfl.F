@@ -13,9 +13,9 @@
 *
 *  1. purpose
 *
-*     B2TBFL computes the total flux through the boundaries
-*            if lcore is true then all boundaries are included
-*            if lcore is false then Core boundary is not included
+*     B2TBFL computes the total flux through the boundaries.
+*            if lcore is .true. then all boundaries are included
+*            if lcore is .false. then the core boundary is not included
 *
 *  8. further comments
 *

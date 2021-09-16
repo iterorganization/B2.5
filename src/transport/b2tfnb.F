@@ -6,7 +6,7 @@
      &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,        !xpb !srv 09.01.01
      &  te, ti, bb, hx, hy, hz, gs, qc, po,                             !srv 09.01.01 13.10.06
      &  cvlb, cdnb, cdpb, cddb, cvlbhz, cdnbhz, cdpbhz,                 !srv 09.01.01
-     &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 20.09.06
+     &  fchvispar_b, fchvisper_b, fchinert_b, fchanml_b, fchvisq_b,     !srv 20.09.06 08.09.21
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,           !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,
      &  fnb_52nd, fnb_53, kbnrgy, fllim0fnb,
@@ -42,9 +42,9 @@
      &  cvlbhz(-1:nx,-1:ny,0:1),                                        !srv 09.01.01
      &  cdnbhz(-1:nx,-1:ny,0:1), cdpbhz(-1:nx,-1:ny,0:1),               !srv 09.01.01
      &  cddb(-1:nx,-1:ny,0:1), cssb(-1:nx,-1:ny,0:1),                   !srv 13.10.06 !iyv 06.02.14
-     &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),          !srv 20.09.06
-     &  fchvisper(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),
-     &  fchanml(-1:nx,-1:ny,0:1)
+     &  fchvispar_b(-1:nx,-1:ny,0:1), fchinert_b(-1:nx,-1:ny,0:1),      !srv 20.09.06
+     &  fchvisper_b(-1:nx,-1:ny,0:1), fchvisq_b(-1:nx,-1:ny,0:1),
+     &  fchanml_b(-1:nx,-1:ny,0:1)
       logical balance                                                   !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -852,16 +852,16 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-
-         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-           scur =
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)
-     &       +fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
+         if(.not.is_neutral(isb)) then                                  !srv 08.09.21
+          scur =
+     &     (fchinert_b(ix,iy,0)+fchvispar_b(ix,iy,0)
+     &     +fchvisper_b(ix,iy,0)
+     &     +fchanml_b(ix,iy,0)+fchvisq_b(ix,iy,0))*xcur/
+     &     (zb(ix,iy)*qe*
+     &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)          !srv 08.09.21
          else
-           scur = 0.0_R8
-         end if
+          scur = 0.0_R8
+         endif
 
          if(drift_style.eq.0)then                                       !srv 21.06.08
           t0 = (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
@@ -1369,16 +1369,17 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fna_pschused(ix,iy,1,isb) = 0.0_R8
          endif
         else
-         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
-           scur =
-     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
-     &       fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/             !srv 17.07.08 {  02.10.17
-     &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8) !srv 17.07.08 }
-           vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
+         if(.not.is_neutral(isb)) then                                 !srv 08.09.21 (
+          scur =
+     &    (fchinert_b(ix,iy,1)+fchvispar_b(ix,iy,1)+
+     &     fchanml_b(ix,iy,1)+vis_q*fchvisq_b(ix,iy,1))*ycur/           !srv 17.07.08 {  02.10.17
+     &    (zb(ix,iy)*qe*
+     &    (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8)       !srv 17.07.08 }
+           vsprcur = vis_per*fchvisper_b(ix,iy,1)/(zb(ix,iy)*qe)*ycur   !srv 02.04.18 08.09.21
          else
            scur = 0.0_R8
            vsprcur = 0.0_R8
-         endif
+         endif                                                          !srv 08.09.21 }
          if(drift_style.eq.0)then                                       !srv 21.06.08
           t0 = (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &          hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
@@ -1546,12 +1547,12 @@ cdjm Jan2017 store components of fnb for balance
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               endif
             endif
-            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
               fna_ch(ix,iy,1,isb) = scur*
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-            else
-              fna_ch(ix,iy,1,isb) = 0.0_R8
-            endif
+!            else
+!              fna_ch(ix,iy,1,isb) = 0.0_R8
+!            endif
             if (mdf_fnb.eq.0) then
               fna_nanom(ix,iy,1,isb) = -con(ix,iy)*
      &          (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -2153,18 +2154,26 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
        call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfnb_fchvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfnb_fchvispary')
-       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
-       wrk(:,:)=vis_per*fchvisper(:,:,0)
-       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
-       wrk(:,:)=vis_per*fchvisper(:,:,1)
-       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
-       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfnb_fchinertx')
-       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
-       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
-       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
+       call my_out(70,nx,ny,fchvispar_b(-1,-1,0),
+     &                                 'b2tfnb_fchvispar_bx'//chns)
+       call my_out(70,nx,ny,fchvispar_b(-1,-1,1),
+     &                                 'b2tfnb_fchvispar_by'//chns)
+       call my_out(70,nx,ny,fchvisq_b(-1,-1,0),
+     &                                  'b2tfnb_fchvisq_bx'//chns)
+       call my_out(70,nx,ny,fchvisq_b(-1,-1,1),
+     &                                  'b2tfnb_fchvisq_by'//chns)
+       wrk(:,:)=vis_per*fchvisper_b(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisper_bx'//chns)
+       wrk(:,:)=vis_per*fchvisper_b(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisper_by'//chns)
+       call my_out(70,nx,ny,fchinert_b(-1,-1,0),
+     &                                 'b2tfnb_fchinert_bx'//chns)
+       call my_out(70,nx,ny,fchinert_b(-1,-1,1),
+     &                                 'b2tfnb_fchinert_by'//chns)
+       call my_out(70,nx,ny,fchanml_b(-1,-1,0),
+     &                                 'b2tfnb_fchanml_bx'//chns)
+       call my_out(70,nx,ny,fchanml_b(-1,-1,1),
+     &                                 'b2tfnb_fchanml_by'//chns)
       endif
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
@@ -2256,22 +2265,26 @@ csw 18feb2014 remove fluxes between guard cells
 !      call my_out(70,nx,ny,zb,'b2tfnb_zb'//chns)
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),
-     &             'b2tfnb_fchvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &             'b2tfnb_fchvispary')
-       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
-       wrk(:,:)=vis_per*fchvisper(:,:,0)
-       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
-       wrk(:,:)=vis_per*fchvisper(:,:,1)
-       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
-       call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &             'b2tfnb_fchinertx')
-       call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &             'b2tfnb_fchinerty')
-       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
-       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
+       call my_out(70,nx,ny,fchvispar_b(-1,-1,0),
+     &             'b2tfnb_fchvispar_bx'//chns)
+       call my_out(70,nx,ny,fchvispar_b(-1,-1,1),
+     &             'b2tfnb_fchvispar_by'//chns)
+       call my_out(70,nx,ny,fchvisq_b(-1,-1,0),
+     &                           'b2tfnb_fchvisq_bx'//chns)
+       call my_out(70,nx,ny,fchvisq_b(-1,-1,1),
+     &                           'b2tfnb_fchvisq_by'//chns)
+       wrk(:,:)=vis_per*fchvisper_b(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisper_bx'//chns)
+       wrk(:,:)=vis_per*fchvisper_b(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisper_by'//chns)
+       call my_out(70,nx,ny,fchinert_b(-1,-1,0),
+     &             'b2tfnb_fchinert_bx'//chns)
+       call my_out(70,nx,ny,fchinert_b(-1,-1,1),
+     &             'b2tfnb_fchinert_by'//chns)
+       call my_out(70,nx,ny,fchanml_b(-1,-1,0),
+     &                           'b2tfnb_fchanml_bx'//chns)
+       call my_out(70,nx,ny,fchanml_b(-1,-1,1),
+     &                           'b2tfnb_fchanml_by'//chns)
       endif                                                              !srv 18.06.08 }
 
 * ..return

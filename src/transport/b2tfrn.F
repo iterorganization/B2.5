@@ -4,8 +4,8 @@
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, gs, qc, bb, pbs,
-     &  ua, na, ne, te, ti, po,
-     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
+     &  ua, na, ne, te, ti, po, fch_p,
+     &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,      !srv 20.09.06 08.09.21
      &  fne, cvla, cdna, cdpa, chce, chci,
      &  veecrb, vaecrb, wadia, ve, wedia,                                !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
@@ -27,10 +27,11 @@
       real (kind=R8) ::
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1),
-     &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
-     &  fchvisper(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),
-     &  fchanml(-1:nx,-1:ny,0:1),
+     &  fch_p(-1:nx,-1:ny,0:1), fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 20.09.06
+     &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchanml_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
      &  fne(-1:nx,-1:ny,0:1),
      &  cvla(-1:nx,-1:ny,0:1,0:ns-1),
@@ -57,7 +58,7 @@
 *  1. purpose
 *
 *     B2TFRN computes the particle and energy fluxes between
-*     neighbouring cells which are to be provided to Eirene
+*     neighbouring cells which are to be provided to Eirene.
 *
 *  3. description (see also routine b2cdca)
 *
@@ -204,12 +205,13 @@
          else
 
 csw 30sep2013, added check for no_hybr
-          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
+          if (.not.is_neutral(is)) then                                  !srv 08.09.21
            scur =
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+
-     &       vis_per*fchvisper(ix,iy,0)                                  !srv 02.10.17
-     &      +fchanml(ix,iy,0)+vis_q*fchvisq(ix,iy,0))*xcur/qe/           !srv 02.10.17
-     &     ((na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
+     &      (fchinert_a(ix,iy,0,is)+fchvispar_a(ix,iy,0,is)+
+     &       vis_per*fchvisper_a(ix,iy,0,is)                             !srv 02.10.17
+     &      +fchanml_a(ix,iy,0,is)+vis_q*fchvisq_a(ix,iy,0,is))*xcur/    !srv 02.10.17
+     &      (rza(ix,iy,is)*qe*
+     &      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
           else
             scur = 0.0_R8
           end if
@@ -322,13 +324,14 @@ csw 30sep2013, added check for no_hybr
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
      &       gs(ix,iy,1)
            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+           if (.not.is_neutral(is)) then                                 !srv 08.09.21
             scur =
-     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
-     &         vis_q*fchvisq(ix,iy,1)+fchanml(ix,iy,1))/                 !srv 02.10.17
-     &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &        (fchvispar_a(ix,iy,1,is)+fchinert_a(ix,iy,1,is)+
+     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is))*ycur/  !srv 02.10.17 08.09.21
+     &        (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2.0_R8)
-            vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
+     &              ycur                                                 !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -369,13 +372,14 @@ csw 30sep2013, added check for no_hybr
      1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
      &       gs(ix,iy,1)
            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then     !srv 20.09.06
-             scur =
-     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
-     &         fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/             !srv 02.10.17
-     &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+           if(.not.is_neutral(is)) then                                   !srv 20.09.06 08.09.21
+            scur =
+     &       (fchinert_a(ix,iy,1,is)+fchvispar_a(ix,iy,1,is)+
+     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is))*ycur/   !srv 02.10.17
+     &       (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &             na(ix,iy,is))/2.0_R8)
-             vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
+     &              ycur                                                 !srv 02.04.18 08.09.21
            else
              scur = 0.0_R8
              vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -812,6 +816,18 @@ csw 18feb2014 remove fluxes between guard cells
           call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2tfrn_cdnay'//chns)
           call my_out(70,nx,ny,ua(-1,-1,is),'b2tfrn_ua'//chns)
           call my_out(70,nx,ny,na(-1,-1,is),'b2tfrn_na'//chns)
+          call my_out(70,nx,ny,fchvispar_a(-1,-1,0,is),
+     &                 'b2tfrn_fchvispar_ax'//chns)
+          call my_out(70,nx,ny,fchvispar_a(-1,-1,1,is),
+     &                 'b2tfrn_fchvispar_ay'//chns)
+          call my_out(70,nx,ny,fchinert_a(-1,-1,0,is),
+     &                 'b2tfrn_fchinert_ax'//chns)
+          call my_out(70,nx,ny,fchinert_a(-1,-1,1,is),
+     &                 'b2tfrn_fchinert_ay'//chns)
+          call my_out(70,nx,ny,fchanml_a(-1,-1,0,is),
+     &                 'b2tfrn_fchanml_ax'//chns)
+          call my_out(70,nx,ny,fchanml_a(-1,-1,1,is),
+     &                 'b2tfrn_fchanml_ay'//chns)
         enddo
         call my_out(70,nx,ny,fne_eir(-1,-1,0),'b2tfrn_fne_eirx')
         call my_out(70,nx,ny,fne_eir(-1,-1,1),'b2tfrn_fne_eiry')
@@ -821,12 +837,6 @@ csw 18feb2014 remove fluxes between guard cells
         call my_out(70,nx,ny,fhi_eir(-1,-1,1),'b2tfrn_fhi_eiry')
         call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfrn_fch_px')
         call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfrn_fch_py')
-        call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfrn_fchvisparx')
-        call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfrn_fchvispary')
-        call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfrn_fchinertx')
-        call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfrn_fchinerty')
-        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfrn_fchanmlx')
-        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfrn_fchanmly')
         call my_out(70,nx,ny,wedia(-1,-1,0),'b2tfrn_wediax')
         call my_out(70,nx,ny,wedia(-1,-1,1),'b2tfrn_wediay')
         call my_out(70,nx,ny,ve,'b2tfrn_ve')

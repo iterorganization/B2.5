@@ -325,15 +325,15 @@ ctmp.dpc
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, csig_an, po, fchanml)                  !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, bb, ua,                            !srv 20.09.06 {
-     &                    cvsa_cl, fac_vis, fchvispar)
-            call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
-     &                    facdrift, fchinert)
-            call b2tvspr (nx, ny, ns, fac_vis, vol,                      !srv 10.10.17
-     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,      !srv 10.10.17
-     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+            call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml) !srv 20.09.06 } 08.09.21 {
+            call b2tvspa_a (nx, ny, ns, bb, ua,                          !srv 20.09.06 {
+     &                    cvsa_cl, fac_vis, fchvispar_a, fchvispar)
+            call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,
+     &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
+            call b2tvspr_a (nx, ny, ns, fac_vis, vol, po, ti, na,        !srv 10.10.17
+     &             avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+            call b2tvsq_a (nx, ny, ns, fac_vis, ne2,                     !srv 10.10.17 08.09.21 }
+     &                    lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
@@ -362,6 +362,7 @@ ctmp.dpc
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
+     &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,      !xpb
@@ -517,7 +518,9 @@ ctmp.dpc
      &          cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
      &          cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
+     &          fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),        !srv 08.09.21
+     &          fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &          fchvisq_a(-1,-1,0,is),                                   !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),

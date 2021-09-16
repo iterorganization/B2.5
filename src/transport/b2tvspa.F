@@ -30,7 +30,7 @@
 *  1. purpose
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
-*     current
+*     current.
 *
 *  8. further comments
 *

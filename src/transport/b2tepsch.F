@@ -26,7 +26,7 @@
 *  1. purpose
 *
 *     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
-*     heat flux
+*     heat flux.
 *
 *  8. further comments
 *

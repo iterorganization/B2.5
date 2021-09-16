@@ -18,6 +18,17 @@
       real (kind=R8) ::
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
      3   cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1)
+*   ..common blocks
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSPR computes the X and Y components of the perpendicular viscosity
+*     current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -43,6 +54,7 @@
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
       call b2txvspr(nx, ny, ns, fac_vis, vol,                           !srv 10.10.17
      &              avisper, bvisper, cvisper)

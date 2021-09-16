@@ -10,6 +10,7 @@
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
      &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
+     &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,      !srv 08.09.21
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
@@ -70,11 +71,8 @@
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fht(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
-     &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
-     &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !srv 21.10.02 }
-     *  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
+     &  fch_p(-1:nx,-1:ny,0:1),
+     &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      *  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),            !srv 28.10.02
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
@@ -104,6 +102,16 @@
      &  rlza(-1:nx,-1:ny,0:1,0:ns-1), rlz2(-1:nx,-1:ny,0:1,0:ns-1),
      &  rlpt(-1:nx,-1:ny,0:1,0:ns-1), rlpi(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     &  fchanml_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 08.09.21 {
+     &  fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 08.09.21 }
+     &  fchvispar(-1:nx,-1:ny,0:1),                                     !srv 21.10.02 {
+     &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
+     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)             !srv 21.10.02 }
       real (kind=R8) ::
      *  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),
      &  rpt(-1:nx,-1:ny,0:ns-1), rpi(-1:nx,-1:ny,0:ns-1)
@@ -294,20 +302,22 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, csig_an, po, fchanml)                      !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
-       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
-     &               facdrift, fchinert)
-       call b2tvspr (nx, ny, ns, fac_vis, vol,                          !srv 10.10.17
-     &               po, ti, na, avisper, bvisper, cvisper, fchvisper)
-       call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,          !srv 10.10.17
-     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+       call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml)     !srv 20.09.06 } 08.09.21 {
+       call b2tvspa_a (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
+     &                fchvispar_a, fchvispar)
+       call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,
+     &               facdrift, fchinert_a, fchinert)
+       call b2tvspr_a (nx, ny, ns, fac_vis, vol,                        !srv 10.10.17
+     &               po, ti, na, avisper, bvisper, cvisper,
+     &               fchvisper_a, fchvisper)
+       call b2tvsq_a (nx, ny, ns, fac_vis,                              !srv 10.10.17   08.09.21 }
+     &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, gs, qc, bb, pbs,
-     &  ua, na, ne, te, ti, po,
-     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
+     &  ua, na, ne, te, ti, po, fch_p,
+     &  fchvispar_a, fchvisper_a, fchinert_a, fchanml_a, fchvisq_a,     !srv 08.09.21
      &  fne, cvla, cdna, cdpa, chce, chci,
      &  veecrb, vaecrb, wadia, ve, wedia,                               !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)

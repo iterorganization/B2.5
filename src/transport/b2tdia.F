@@ -30,7 +30,7 @@
 *  1. purpose
 *
 *     B2TDIA computes the X and Y components of the divergent part of
-*     the diamagnetic current
+*     the diamagnetic current.
 *
 *  8. further comments
 *

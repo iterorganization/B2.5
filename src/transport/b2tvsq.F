@@ -18,6 +18,17 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      $   fchvisq(-1:nx,-1:ny,0:1)                                       !srv 11.07.99
+*   ..common blocks
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSQ computes the X and Y components of the heat viscosity
+*     current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 

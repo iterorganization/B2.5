@@ -365,20 +365,21 @@ csw 01oct2012 initialize potential if necessary
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
 *                                                                        !srv 09.03.21 {
-*   ..set nep 
+*   ..set nep
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
       nip = ni
       uap = ua                                                           !srv 24.05.21
 *   ..recompute currents
-      call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06 }
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
-     &              facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol,                            !srv 10.10.17
-     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
-     &              ne2, lnlam, te, ti, ni, chci, fchvisq)
+      call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml)       !srv 20.09.06 } 08.09.21 {
+      call b2tvspa_a (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
+     &                fchvispar_a, fchvispar)
+      call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
+     &              facdrift, fchinert_a, fchinert)
+      call b2tvspr_a (nx, ny, ns, fac_vis, vol, po, ti, na,              !srv 10.10.17
+     &               avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+      call b2tvsq_a (nx, ny, ns, fac_vis,                                !srv 10.10.17   08.09.21 }
+     &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
 
@@ -429,6 +430,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po)
 !$OMP& SHARED(cvla, cdna, cdpa, cddi, cvlahz, cdnahz, cdpahz)
 !$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
@@ -455,11 +457,13 @@ csw 01oct2012 initialize potential if necessary
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),
@@ -574,7 +578,9 @@ csw 16oct2012 init ier0
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 20.09.06
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
      1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -616,15 +622,16 @@ csw 16oct2012 init ier0
         call my_out(70,nx,ny,pz,'b2news_m_pz')
         call my_out(70,nx,ny,ceqp,'b2news_m_ceqp')
       endif                                                              !srv 12.07.05 }
-*                                                                        !srv 09.03.21 }
-      call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06  }
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis, fchvispar)
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
-     &              facdrift, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol,                            !srv 10.10.17
-     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis, !vol, hx, hy, qz, bb,            !srv 10.10.17
-     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+
+      call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml)       !srv 20.09.06 } 08.09.21 {
+      call b2tvspa_a (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
+     &                fchvispar_a, fchvispar)
+      call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
+     &              facdrift, fchinert_a, fchinert)
+      call b2tvspr_a (nx, ny, ns, fac_vis, vol, po, ti, na,              !srv 10.10.17
+     &               avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+      call b2tvsq_a (nx, ny, ns, fac_vis,                                !srv 10.10.17   08.09.21 }
+     &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -640,6 +647,7 @@ csw 16oct2012 init ier0
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
@@ -658,17 +666,19 @@ csw 16oct2012 init ier0
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                         !djm Jan2017
-        enddo                                                            !srv 01.10.99
+        enddo                                                             !srv 01.10.99
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
@@ -694,6 +704,7 @@ c   extra call at this place within internal iteration)
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
+     &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,       !xpb
@@ -785,7 +796,7 @@ c   extra call at this place within internal iteration)
       endif                                                              !srv 05.07.17
       if (ue_style.ne.2) ue=wrk0
 
-csw 11oct2012 added check on Coriolis force (taken from b2news())
+csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,    !srv 13.01.17 24.05.21
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
@@ -813,7 +824,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
      &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl,                 !srv 24.08.21
-     &    conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
+     &    conc, avisper, bvisper, cvisper,
+     &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
+     &    fch, fch_p, fchdia, fchin,
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
 *   ..solve the potential equation
@@ -845,7 +858,9 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl,               !srv 24.08.21
-     &      conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
+     &      conc, avisper, bvisper, cvisper,
+     &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
+     &      fch, fch_p, fchdia, fchin,
      &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
 *   ..compute new residual following the tradition
           call b2ursd (nx, ny, ne, po, sch, fch, wrk0)
@@ -891,6 +906,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
@@ -912,7 +928,9 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &     cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                         !srv 13.10.06
      &     cvlahz(-1,-1,0,is),                                         !srv 09.01.01 15.12.05
      &     cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &     fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
+     &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),           !srv 08.09.21
+     &     fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &     fchvisq_a(-1,-1,0,is),                                      !srv 20.09.06
      &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &     fna_fcor(-1,-1,0,is),
      &     fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -1077,7 +1095,9 @@ c   recompute particle fluxes
      &   cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                             !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -1201,11 +1221,13 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                             !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is),                                          !srv 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &   fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &   fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   fna_53(-1,-1,0,is),

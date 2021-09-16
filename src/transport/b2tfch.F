@@ -9,7 +9,8 @@
      &  chce, chve, chci,
      &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
-     1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
+     1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,
+     &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)      !srv 08.09.21
       use b2mod_types
       use b2mod_math
       use b2mod_rates
@@ -30,7 +31,7 @@
      & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      & fna(-1:nx,-1:ny,0:1,0:ns-1),
      & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),        !xpb
-     & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
+     & uadia(-1:nx,-1:ny,0:1,0:ns-1),
      & ua(-1:nx,-1:ny,0:ns-1),
      & wadia(-1:nx,-1:ny,0:1,0:ns-1),
      & vaecrb(-1:nx,-1:ny,0:1,0:ns-1),                                   !xpb
@@ -41,17 +42,22 @@
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
+     1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      4 csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1)                     !lk 31.01.08 } 24.08.21
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1)                      !lk 31.01.08 } 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  fch(-1:nx,-1:ny,0:1), 
+     &  fchanml_a(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 08.09.21 {
+     &  fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 08.09.21 }
+     *  fch(-1:nx,-1:ny,0:1),
      &  conc(-1:nx,-1:ny,0:1),
      *  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
-     2  fchdia(-1:nx,-1:ny,0:1), 
+     2  fchdia(-1:nx,-1:ny,0:1),
      3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
@@ -72,7 +78,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is, is0, 
+      integer ncall, n2, ix, iy, ib, is, is0,
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0
@@ -91,6 +97,7 @@
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
      * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
+      character chns*3                                                  !srv 08.09.21
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
@@ -113,7 +120,7 @@
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
        call ipgetr ('b2tstch_sig', sig_stoch)
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
-       call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit)
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgetr ('b2tfhe_vis_q', vis_q)                              !srv 11.07.99
@@ -199,17 +206,17 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, bb,
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, bb, ua,
-     & cvsa_cl, fac_vis, fchvispar)                                      !srv 20.09.06 16.10.17
+      call b2tvspa_a(nx, ny, ns, bb, ua, cvsa_cl, fac_vis,               !srv 08.09.21 {
+     &               fchvispar_a, fchvispar)                             !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, fac_vis, vol,                             !srv 10.10.17
-     & po, ti, na, avisper, bvisper, cvisper, fchvisper)
+      call b2tvspr_a(nx, ny, ns, fac_vis, vol,                           !srv 10.10.17
+     & po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,           !srv 10.10.17
-     & ne2, lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvsq_a (nx, ny, ns, fac_vis, ! vol, hx, hy, qz, bb,         !srv 10.10.17
+     & ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
-     & facdrift, fchinert)
+      call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 22.11.12 08.09.21 }
+     & facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
@@ -260,7 +267,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &        ne(ix,iy))/2.0_R8
-            if (flomx.gt.0.0_R8 .and. 
+            if (flomx.gt.0.0_R8 .and.
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
               t0    = cone0   *abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
@@ -343,7 +350,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
             fch_52(ix,iy,1)=csig_an(ix,iy,1)*ehy_po-calf(ix,iy,1)*
-     .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
+     .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
             conc(ix,iy,1) = csig(ix,iy,1)
             if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
      &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
@@ -378,7 +385,7 @@ cxpb turn off flows between boundary cells
               fchvisper(ix,iy,1)=0.0_R8
               fchvisq(ix,iy,1)=0.0_R8
             endif
-          enddo        
+          enddo
         enddo
 
 cxpb turn off poloidal flows in core boundary
@@ -461,32 +468,54 @@ cxpb turn off current terms if requested
       if(iout.ne.0) then                                             !srv 18.06.08 {
        call my_out(70,nx,ny,fch(-1,-1,0),'b2tfch_fchx')
        call my_out(70,nx,ny,fch(-1,-1,1),'b2tfch_fchy')
-       call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfch_chinx')
-       call my_out(70,nx,ny,fchin(-1,-1,1),'b2tfch_chiny')
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfch_chvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfch_chvispary')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch_chvisqx')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch_chvisqy')
-       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfch_chvisperx')
-       call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tfch_chvispery')
-!       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfch_chinertx')
-!       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfch_chinerty')
-       call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch_chdiax')
-       call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch_chdiay')
-!       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch_chanmlx')
-!       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch_chanmly')
+       call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfch_fchinx')
+       call my_out(70,nx,ny,fchin(-1,-1,1),'b2tfch_fchiny')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfch_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfch_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch_fchvisqy')
+       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfch_fchvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tfch_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfch_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfch_fchinerty')
+       call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch_fchdiax')
+       call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch_fchdiay')
+!       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch_fchanmlx')
+!       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch_fchanmly')
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch_concx')
        call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch_concy')
-       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_ch_px')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_ch_py')
+       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_fch_px')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_fch_py')
        call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
        call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
        call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
-       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
-      endif                                                          !srv 18.06.08 }
+       do is = 0,ns-1                                                    !srv 08.09.21
+!        call my_out(70,nx,ny,fchanml_a(-1,-1,0,is),
+!                             'b2tfch_fchanml_ax'//chns)
+!        call my_out(70,nx,ny,fchanml_a(-1,-1,1,is),
+!                             'b2tfch_fchanml_ay'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,0,is),
+     &                      'b2tfch_fchinert_ax'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,1,is),
+     &                      'b2tfch_fchinert_ay'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,0,is),
+     &                      'b2tfch_fchvispar_ax'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,1,is),
+     &                      'b2tfch_fchvispar_ay'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,0,is),
+     &                      'b2tfch_fchvisper_ax'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,1,is),
+     &                      'b2tfch_fchvisper_ay'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,0,is),
+     &                      'b2tfch_fchvisq_ax'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,1,is),
+     &                      'b2tfch_fchvisq_ay'//chns)
+       enddo                                                             !srv 08.09.21 }
+      endif                                                              !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1
@@ -497,8 +526,8 @@ cxpb turn off current terms if requested
 *.scribbles
 
 cxpb  This version of the routine uses a (1.5+BoRiS) factor for the
-cxpb  poloidal convective heat flux instead of the usual 3/2 or 5/2 
-cxpb  so as to solve the same equation as in BoRiS for benchmark purposes. 
+cxpb  poloidal convective heat flux instead of the usual 3/2 or 5/2
+cxpb  so as to solve the same equation as in BoRiS for benchmark purposes.
 cxpb  The default is BoRiS = 0.0.
 cxpb  For comparison, set BoRiS = 1.0.
 cxpb  Routine rewritten to explicitly separate 3/2 and 5/2 terms.

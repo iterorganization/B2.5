@@ -533,22 +533,23 @@ contains
            call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))
         enddo
 !   ..compute sources
-        call b2sral (nx, ny, ns,                                               &
-            &        nscx, nscxmax, 0, ns, iscx, ismain, ismain0,              &
-            &        dtim, BoRiS, facdrift, fac_ExB, fac_vis,                  &
-            &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,              &
-            &        na, ua,                                                   &
-            &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,    &
-            &        te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,           &
-            &        fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      &
-            &        fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he, &
-            &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,       &
-            &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,      &
-            &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,    &
-            &        cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,  &
-            &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr,                       &
-            &        rlza, rlz2, rlpt, rlpi,                                   &
-            &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,    &
+        call b2sral (nx, ny, ns,                                                 &
+            &        nscx, nscxmax, 0, ns, iscx, ismain, ismain0,                &
+            &        dtim, BoRiS, facdrift, fac_ExB, fac_vis,                    &
+            &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                &
+            &        na, ua,                                                     &
+            &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,      &
+            &        te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,             &
+            &        fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        &
+            &        fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,   &
+            &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,         &
+            &        fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a, &      !srv 08.09.21
+            &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,        &
+            &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,      &
+            &        cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,    &
+            &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr,                         &
+            &        rlza, rlz2, rlpt, rlpi,                                     &
+            &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,      &
             &        wrong_flow, .false.)
         if (balance_netcdf.ne.0) call read_balance
 
@@ -4159,7 +4160,7 @@ contains
 #endif
 
             !! fchanml: Anomalous current
-            call b2tanml (nx, ny, csig_an, po, fchanml)
+            call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml)
             call divide_by_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID

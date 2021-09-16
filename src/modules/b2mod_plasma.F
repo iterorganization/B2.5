@@ -42,6 +42,12 @@
      *  fna_nodrift(:,:,:,:),
      *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
      *  fmo(:,:,:,:)
+      real (kind=R8), allocatable, save ::                               !srv 08.09.21 {
+     &  fchanml_a(:,:,:,:),
+     &  fchinert_a(:,:,:,:),
+     &  fchvispar_a(:,:,:,:),
+     &  fchvisper_a(:,:,:,:),
+     &  fchvisq_a(:,:,:,:)                                               !srv 08.09.21 }
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
 
@@ -167,6 +173,11 @@
       allocate(fchanml(-1:nxd,-1:nyd,0:1))                           !srv 24.03.07
       allocate(fchstoch(-1:nxd,-1:nyd,0:1))                          !srv 24.08.21
       fchstoch = 0.0_R8                                              !srv 24.08.21
+      allocate(fchanml_a(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 08.09.21 {
+      allocate(fchinert_a(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fchvispar_a(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fchvisper_a(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fchvisq_a(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 08.09.21 }
       allocate(vadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
       vadia=0.0_R8
       allocate(vedia(-1:nxd,-1:nyd,0:1))                             !xpb
@@ -265,6 +276,11 @@
       deallocate(fchin)                             !srv 30.09.02
       deallocate(fchanml)                           !srv 24.03.07
       deallocate(fchstoch)                          !srv 24.08.21
+      deallocate(fchanml_a)                         !srv 08.09.21 {
+      deallocate(fchinert_a)
+      deallocate(fchvispar_a)
+      deallocate(fchvisper_a)
+      deallocate(fchvisq_a)                         !srv 08.09.21 }
       deallocate(vadia)
       deallocate(vedia)
       deallocate(wadia)

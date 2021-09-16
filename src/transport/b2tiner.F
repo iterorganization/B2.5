@@ -29,8 +29,7 @@
 *
 *  1. purpose
 *
-*     B2TINER computes the X,Y-COMPONENTS OF INERTIAL CURRENT
-*
+*     B2TINER computes the X and Y components of the inertial current.
 *
 *  8. further comments
 *
@@ -72,9 +71,7 @@
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..extensive tests on first few calls
-      if (ncall.lt.3) then
-      endif
+
 c Drift terms
       fchinert =0.0e0_R8
       if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
