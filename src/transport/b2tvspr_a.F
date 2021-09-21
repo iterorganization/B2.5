@@ -35,11 +35,10 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is
+      integer is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
       integer, save :: no_current = 0
       real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
-      real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures
       external xertst
@@ -62,8 +61,6 @@
       call b2txvspr(nx, ny, ns, fac_vis, vol,                           !srv 10.10.17
      &              avisper, bvisper, cvisper)
 * ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
-      va=0.0e0_R8
-      dva=0.0e0_R8
       fchvisper=0.0e0_R8                                                !srv 22.11.99
       fchvisper_a=0.0e0_R8
         

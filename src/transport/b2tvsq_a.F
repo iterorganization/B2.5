@@ -33,13 +33,12 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, is
+      integer is
       integer, save :: ncall = 0
       integer, save :: no_current = 0
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8) :: fac_vism                                        !srv 16.10.17
 *   ..procedures
-      intrinsic abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------

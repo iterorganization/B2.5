@@ -10,8 +10,6 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_geo
-     &   , only : hyl, hxb                                               ! IYS 04.03.2019
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

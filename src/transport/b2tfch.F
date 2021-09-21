@@ -494,6 +494,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
        do is = 0,ns-1                                                    !srv 08.09.21
+        write (chns,'(i3.3)') is
 !        call my_out(70,nx,ny,fchanml_a(-1,-1,0,is),
 !                             'b2tfch_fchanml_ax'//chns)
 !        call my_out(70,nx,ny,fchanml_a(-1,-1,1,is),

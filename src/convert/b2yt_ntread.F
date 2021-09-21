@@ -32,8 +32,6 @@ c
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
-#else
-      use b2mod_eirbra, only: fort, fort_lc
 #endif
       use b2mod_subsys
       implicit none
