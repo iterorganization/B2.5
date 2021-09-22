@@ -153,13 +153,13 @@ c      data lis_hlp / 110, 111, 112, 49 /
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods,
-     1 repeat_first_call, ionising_core, dpc_fix, eircount,
+     1 repeat_first_call, dpc_fix, eircount,
      2 no_sseicorr, stab_corr
       save ncall, output_style, saved_volrec_used,
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * ncallfeedback, ank_mods,
-     1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
+     1 repeat_first_call, use_recyceir, dpc_fix,
      2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol,
      3 stab_corr
 csw 26mar2013
@@ -227,7 +227,7 @@ csw 26feb2014
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
      2  rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
-     4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
+     4  private_flux_puff/0.0_R8/, dpc_fix/1/,
      5  ndes/0.0_R8/, ank_mods/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
      7  no_sseicorr/0/, nepedm_sol/0.0_R8/, stab_corr/1/
@@ -352,11 +352,6 @@ c not sure this is the right place
      2     'faulty internal parameter solregno')
         endif
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
-        call ipgeti ('eirene_ionising_core', ionising_core)
-        if (ionising_core.eq.0)     ! for backward compatibility
-     >   call ipgeti ('eirene_ionizing_core', ionising_core)
-        call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
-     1   'faulty input ionising_core, abs(ionising_core) > NBC')
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
@@ -406,7 +401,7 @@ csw 26feb2013
         call ipgeti('eirene_lvib',itmp)
         lvib=itmp.ne.0
         write(*,*) 'lvib = ',lvib
-        call xertst(.not.(ank_mods.ne.0 .and. ionising_core.ne.0),
+        call xertst(.not.(ank_mods.ne.0.and.switch%ionising_core.ne.0),
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr',no_sseicorr)
@@ -448,7 +443,7 @@ csw 26feb2013
           end do !}
         end if !}
 
-        if(ank_mods.ne.0 .or. ionising_core.ne.0) then
+        if(ank_mods.ne.0 .or. switch%ionising_core.ne.0) then
 c*** Check the b2espcr array
           hlp_bad_isp=.false.
           ispc_ref=-1
@@ -501,7 +496,7 @@ c          if(crcstra(nstrat).eq.'T') l_ddt=nnlimi+nnstsi
         hlp_tt=.false.
       endif
 
-      if (ncall.eq.0 .and. ionising_core.ne.0) then
+      if (ncall.eq.0 .and. switch%ionising_core.ne.0) then
 cxpb compute core boundary surface area
 #ifdef WG_TODO
         core_surface = 0.0_R8
@@ -768,7 +763,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after eirene call
-      if(ank_mods.ne.0 .or. ionising_core.eq.1) then
+      if(ank_mods.ne.0 .or. switch%ionising_core.eq.1) then
 c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
@@ -2148,7 +2143,7 @@ c     .                          .or. crcstra(istrai).eq.'U'
       endif ! ank_mods
 
       core_flux = 0.0_R8
-      if (ionising_core.ne.0) then
+      if (switch%ionising_core.ne.0) then
         do j = 1, nnlimi+nnstsi
           hlp_cor = .false.
           do i=1,ncns !{
@@ -3209,7 +3204,7 @@ C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULE
 
 cxpb  core recycling into ions of the highest ionisation stage
 #ifdef WG_TODO
-      if (ionising_core.gt.0) then
+      if (switch%ionising_core.gt.0) then
         rf0=RF_NEUT(1)
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
@@ -3272,10 +3267,8 @@ cxpb  core recycling into ions of the highest ionisation stage
             enddo
           enddo
         enddo
-      else if (ionising_core.lt.0) then
-        ib=abs(ionising_core)
-        call xertst (ib.le.nbc,
-     1   'faulty input ionising_core, abs(ionising_core) > NBC')
+      else if (switch%ionising_core.lt.0) then
+        ib=abs(switch%ionising_core)
         do j = 1, nnatmi
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
@@ -3317,7 +3310,7 @@ C           call xerrab ('eirene_mc: bccon <> 13')
      3   sum(ssei(1:nstrat)),sum(sseicorr(1:nstrat)),
      4   sum(sseistab(1:nstrat)),
      2   sum(ssni(1:nstrat,0:ns-1)),sum(ssmo(1:nstrat,0:ns-1))
-        if (ionising_core.ne.0) then
+        if (switch%ionising_core.ne.0) then
           do j = 1, nnatmi
             write(*,*) 'Recycled',trim(ion_name(j)),
      1       ' ion flux through core boundary', core_flux(j)
