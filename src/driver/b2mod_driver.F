@@ -1172,7 +1172,9 @@ c     &   'faulty internal parameter density_rescale')
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
 cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
-       if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
+       if(switch%use_eirene.eq.0 .and. 
+     &  .not.(switch%neutral_sources_rescale.eq.1.0_R8)) write (*,*)
+     &  ' WARNING! Using fluid neutrals with sources rescale /= 1!'
        if(switch%use_eirene.ne.0) then
 c when using kinetic neutrals, volume recombination is fully handled on the EIRENE side.
 c The recombination rate depends on the ion density and not on the neutral density, so the neutral rescaling is not sufficient to turn it off on the B2.5 side

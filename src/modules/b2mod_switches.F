@@ -117,7 +117,6 @@ c consistency checks for combinations of different switches (check_consistency_s
       real (kind=R8) :: pol_anom_scale
       real (kind=R8) :: auto_spatial_hyb_mfp_1
       real (kind=R8) :: auto_spatial_hyb_mfp_2
-      real (kind=R8) :: neutral_sources_rescale
 
 
 c iout switches
@@ -319,8 +318,7 @@ c Eirene coupling
       integer :: eirene_print_minmax
       integer :: save_f30
       integer :: save_f31
-
-
+      integer :: ionising_core
 
       real (kind=R8) :: eir_te_min
       real (kind=R8) :: eir_te_max
@@ -332,6 +330,7 @@ c Eirene coupling
       real (kind=R8) :: eir_ne_max
       real (kind=R8) :: eir_ua_min
       real (kind=R8) :: eir_ua_max
+      real (kind=R8) :: neutral_sources_rescale
 
 
 c k-enstrophy model
@@ -581,7 +580,6 @@ c Feedback
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_mfp_1 = 0.0_R8
       s % auto_spatial_hyb_mfp_2 = 100.0_R8
-      s % neutral_sources_rescale = 1.0_R8
 
 
       s % iout_b2wdat = 0
@@ -766,7 +764,7 @@ c eirene coupling
       s % eirene_print_minmax = 0
       s % save_f30 = 0
       s % save_f31 = 0
-
+      s % ionising_core = 0
 
       s % eir_te_min = 0.0e0_R8
       s % eir_te_max = 1.0e30_R8
@@ -778,6 +776,7 @@ c eirene coupling
       s % eir_ne_max = 1.0e30_R8
       s % eir_ua_min = -1.0e30_R8
       s % eir_ua_max = 1.0e30_R8
+      s % neutral_sources_rescale = 1.0_R8
 
 c k-enstrophy model
       s % transport_keps = 0
@@ -1037,8 +1036,6 @@ c b2siav
       call ipgetr ('b2trno_pol_anom_scale', s % pol_anom_scale)
       call ipgetr ('auto_spatial_hyb_mfp_1', s % auto_spatial_hyb_mfp_1)
       call ipgetr ('auto_spatial_hyb_mfp_2', s % auto_spatial_hyb_mfp_2)
-      call ipgetr ('b2mndr_rescale_neutrals_sources',
-     &                s % neutral_sources_rescale)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)                    
@@ -1238,6 +1235,9 @@ c Eirene coupling
       call ipgeti('eirene_print_minmax',s%eirene_print_minmax)
       call ipgeti ('eirene_savef30', s % save_f30)
       call ipgeti ('eirene_savef31', s % save_f31)                   !srv 14.07.10 
+      call ipgeti ('eirene_ionising_core', s % ionising_core)
+      if (s%ionising_core.eq.0)     ! for backward compatibility
+     > call ipgeti ('eirene_ionizing_core', s % ionising_core)
 
       call ipgetr('eirene_te_min',s % eir_te_min)
       call ipgetr('eirene_te_max',s % eir_te_max)
@@ -1249,6 +1249,8 @@ c Eirene coupling
       call ipgetr('eirene_ne_max',s % eir_ne_max)
       call ipgetr('eirene_ua_min',s % eir_ua_min)
       call ipgetr('eirene_ua_max',s % eir_ua_max)
+      call ipgetr ('b2mndr_rescale_neutrals_sources',
+     &                s % neutral_sources_rescale)
 
 
 c k-enstrophy model
@@ -1724,7 +1726,7 @@ c k-enstrophy model
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
 
-c eirene_mc
+c eirene coupling
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
 
@@ -1806,6 +1808,8 @@ c b2mndt
       subroutine check_consistency_switches (s)
       use b2mod_b2cmrc
      & , only : adpak_used
+c      use b2mod_boundary_namelist
+c     & , only : nbc
 c check the inter-consistency of different switches (e.g. certain combinations of swithces may not (yet) be allowed or developed)
 
       implicit none
@@ -1875,6 +1879,10 @@ c b2stel
          write(*,*)
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
        endif
+
+c Eirene coupling
+c      call xertst (s%ionising_core.gt.0.or.abs(s%ionising_core).le.nbc,
+c     1   'faulty input ionising_core, abs(ionising_core) > NBC')
 
       return
       end subroutine check_consistency_switches
