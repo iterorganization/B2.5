@@ -132,7 +132,7 @@ c
       integer idir, ixf, iyf
 
       logical first !, hlp_lw, hlp_lt
-      integer, save :: mdf_fnb = 0, style_b2mndt = 0                ! IYS 12.01.2018
+      integer, save :: mdf_fnb = 0, style_b2mndt = 1                ! IYS 12.01.2018
 
       real (kind=R8) :: hlp_pls(nbcd,ns)
       integer use_recyceir, use_eirene
@@ -182,9 +182,9 @@ c======================================================================
 
       if(first) then
 
-        call ipgeti('b2tfnb_mdf',mdf_fnb)
-        call ipgeti('b2mndt_style',style_b2mndt)
-        call ipgeti('b2mndr_eirene',use_eirene)
+        call ipgeti('b2tfnb_mdf', mdf_fnb)
+        call ipgeti('b2mndt_style', style_b2mndt)
+        call ipgeti('b2mndr_eirene', use_eirene)
 
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
@@ -523,7 +523,11 @@ c<<<
      &                   .and. rightix(ix,iy).ne.nx+1) then
 
                 if (solveco(is,j)) then
-                  hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                  if (style_b2mndt.eq.2) then
+                    hlpdt = dtim * time_factor(ix,iy)
+                  else
+                    hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                  end if
                 else
                   hlpdt = 0.0_R8
                 endif

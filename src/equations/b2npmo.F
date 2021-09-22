@@ -136,6 +136,7 @@
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
       character chns*3                                                 !srv 04.07.08
+      logical warning
       real (kind=R8) ::
      *  rxg, t0, t1, czetap, czetae, ttim                              !srv 13.01.17 07.07.21
       real (kind=R8) ::
@@ -165,7 +166,6 @@
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
-      character*80 message
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -190,15 +190,18 @@
         if(style_b2mndt.eq.2) then
          rxg = huge(1.0_R8)
          do is = 0,ns-1
-          write(message,'(a,i3,a)')
-     .     'rxf*dtmo*time_factor for species ',is,' must be 1'
+          warning = .false.
           do iy = -1, ny
            do ix = -1, nx
-            call xertst(
-     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_r8,
-     .       message)
+            warning = warning .or.
+     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8
            enddo
           enddo
+          if (warning) then
+           write(6,'(a,i3,a)')
+     .      'rxf*dtmo*time_factor for species ',is,' should be 1 !'
+           write(6,*) 'Time derivative terms may be inacurrate !'
+          end if
          enddo
         else
          rxg = 1.0e6_R8

@@ -102,6 +102,7 @@
       integer, save :: get_residuals = 0                                !srv 22.05.18
       integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       character chns*3                                                  !srv 17.07.05
+      logical warning_e, warning_i
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -142,16 +143,20 @@
          rxg = huge(1.0_R8)
          pcm0 = 0.0_R8
          pcm1 = 0.0_R8
+         warning_e = .false.
+         warning_i = .false.
          do iy = -1, ny
            do ix = -1, nx
-            call xertst(
-     .        rxf*dtee(region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8,
-     .       'rxf*dtee*time_factor must be 1')
-            call xertst(
-     .        rxf*dtei(region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8,
-     .       'rxf*dtei*time_factor must be 1')
+             warning_e = warning_e .or.
+     .        rxf*dtee(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
+             warning_i = warning_i .or.
+     .        rxf*dtei(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
            enddo
          enddo
+         if (warning_e) write(6,*) 'rxf*dtee*time_factor should be 1 !'
+         if (warning_i) write(6,*) 'rxf*dtei*time_factor should be 1 !'
+         if (warning_e .or. warning_i)
+     >    write(6,*) 'Time derivative terms may be inacurrate !'
        else
          rxg = 1.0_R8
          pcm0 = 1.0_R8
