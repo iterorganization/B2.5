@@ -194,7 +194,7 @@
           do iy = -1, ny
            do ix = -1, nx
             warning = warning .or.
-     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8
+     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
            enddo
           enddo
           if (warning) then
