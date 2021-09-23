@@ -543,7 +543,6 @@ csw 16oct2012 init ier0
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, 
      &     geo, mpg, pl, dv, co, rt, st_ext)
-     &     geo, mpg, pl, dv, co, rt, st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
         if (b2news_solving(3)) then

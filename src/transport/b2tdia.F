@@ -57,7 +57,7 @@
       
       facdriftm = maxval(facdrift)
       if (facdriftm.ne.0.0_R8.and.switch%dia_cur.ne.0.0e0_R8.and.        !srv 16.10.17
-          switch%no_current.eq.0) then
+     &    switch%no_current.eq.0) then
 
 *     ..interpolate to faces
         wght = 1.0_R8
