@@ -446,7 +446,7 @@ contains
 
         logical :: namelistExists, openEnv = .false.
 
-        external xertst, xerrab
+        external xerrab, xertst
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
             &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &

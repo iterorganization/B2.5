@@ -1127,6 +1127,9 @@ c.. Test consistency with physical edges within the computational domain
       integer istra
       logical file_ok
       external find_file, xertst
+#ifdef USE_MPI
+      external xerrab
+#endif
 
       saved_volrec(:)=0.0_R8
 

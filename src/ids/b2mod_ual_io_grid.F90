@@ -1401,6 +1401,7 @@ contains
         integer :: isize
         integer :: jsep, nxtl, nxtr, ix1, ix2, ix3, ix4
         character*128 RegionDescription
+        external get_jsep, get_nxt, xertst
 
         !! Procedures
         external get_jsep, get_nxt, xertst
@@ -2724,6 +2725,7 @@ contains
         integer :: ix   !< x-aligned cell index
         integer :: iy   !< y-aligned cell index
         integer :: iObj !< Object index
+        external xertst
 
         !! Procedures
         external xertst
@@ -2816,6 +2818,9 @@ contains
 
     ! internal
     integer, parameter :: NDIM = 2
+
+    ! procedures
+    external ipgetr, xertst
 
     call ipgetr('b2agmt_1d_width', width)
     call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
@@ -3071,6 +3076,9 @@ contains
       integer :: cls(SPACE_COUNT_MAX)
       integer, allocatable :: xpoints(:,:)
 
+      !! procedures
+      external xertst
+
       geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
       !! Figure out total number of subgrids
@@ -3208,11 +3216,13 @@ contains
     real (ITM_R8), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
     integer, intent(out) :: xIn, yIn, xOut, yOut
 
-
     !! internal
     real(ITM_R8) :: rMin, rMax
     type(GridObject) :: obj
     integer :: ix, iy, iObj
+
+    !! procedures
+    external xertst
 
     rMin = huge(rMin)
     rMax = -huge(rMax)
