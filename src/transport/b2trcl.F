@@ -665,7 +665,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         call my_out_us(70,nFc,1,calf(1,0),
      &             'b2trcl_luciani_fllim_calfx')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_fllim_calfy')
-        call my_out_us(70,nCv,1,co%alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),
      &             'b2trcl_luciani_fllim_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
