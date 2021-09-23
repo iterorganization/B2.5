@@ -118,7 +118,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    co%vsaf_cl, dv%fac_vis, dv%fchvispar)
 *     ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
         call b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
-     &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis, dv%fchvisper)
+     &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,dv%fchvisper)
 *     ..calculate the parallel viscosity current connected with the heat flux
         call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
      &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
@@ -135,7 +135,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
         call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
      &    fchstoch)                                                      !srv 25.01.02 {
 #endif
-      ..calculate the parallel current
+*     ..calculate the parallel current
         call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
      *  dv%ne, pl%na, pl%ua, rt%rza, rt%rz2, zeff, co%csig, co%calf,
      &  ehx, st_ext, dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)                 !srv 13.01.17
