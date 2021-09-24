@@ -43,6 +43,7 @@ module b2mod_ual_io
     use b2mod_b2cmpb
     use b2mod_version
     use b2mod_grid_mapping
+#ifdef IMAS
     use b2mod_balance &
      & , only : eirene_mc_pael_sne_bal, eirene_mc_pmel_sne_bal, &
      &          eirene_mc_papl_sna_bal, eirene_mc_pmpl_sna_bal, &
@@ -54,11 +55,12 @@ module b2mod_ual_io
      &          eirene_mc_mapl_smo_bal, eirene_mc_mmpl_smo_bal, &
      &          eirene_mc_eael_she_bal, eirene_mc_emel_she_bal, &
      &          eirene_mc_eapl_shi_bal, eirene_mc_empl_shi_bal, &
-     &          b2stel_she_ion_bal, b2stel_she_rec_bal, b2npht_shei_bal, &
-     &          b2stel_shi_ion_bal, b2stel_shi_rec_bal, &
+     &          b2stel_she_ion_bal, b2stel_shi_ion_bal, b2npht_shei_bal, &
+     &          b2stel_she_rec_bal, b2stel_shi_rec_bal, &
      &          read_balance
     use b2mod_b2plot &
      & , only : nxtl, nxtr, jxi, jxa, jsep
+#endif
     use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
     use eirmod_wneutrals
@@ -66,8 +68,10 @@ module b2mod_ual_io
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
 #else
+#ifdef IMAS
     use b2mod_b2plot &
      & , only : natmi
+#endif
 #endif
 
     use logging
