@@ -36,6 +36,7 @@
       subroutine alloc_b2mod_external(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
+      external xertst
 
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
@@ -145,7 +146,7 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       logical toread
       logical open_file
       integer lnblnk
-      external xertst, xerrab, open_file, lnblnk
+      external xertst, xerrab, extend, find_file, open_file, lnblnk
 
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')

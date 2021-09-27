@@ -1,5 +1,6 @@
       subroutine ifill (n, ka, kx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, ka, kx(0:*), incx
 *     ------------------------------------------------------------------
@@ -10,10 +11,7 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-      intrinsic max
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('ifill--error, incx.eq.0')

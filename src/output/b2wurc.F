@@ -57,7 +57,6 @@
      *   t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
 *   ..procedures
-      intrinsic log
       real (kind=R8) ::
      *   smax
       external xertst, cfwure, cfwuin

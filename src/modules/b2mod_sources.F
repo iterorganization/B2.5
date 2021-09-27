@@ -303,6 +303,7 @@
       subroutine read_b2mod_sources(nread)
       implicit none
       integer nread
+      external cfrure, cfrure_opt
 
       call cfrure (nread, size(sch), sch, 'sch')
       call cfrure (nread, size(she), she, 'she')
@@ -419,6 +420,7 @@
       implicit none
       integer nwrite
       character*3 source_name
+      external cfwure
 
       if (newversion.ge.'01.001.026') then
         source_name = 'sne'

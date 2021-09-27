@@ -152,7 +152,6 @@
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
-      intrinsic log
       real (kind=R8) ::
      *   smax
       external xertst, smax, cfrure, cfruin

@@ -499,6 +499,9 @@ contains
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
 
+        !! Procedures
+        external ipgetr, xertst
+
         call ipgetr ('b2agmt_1d_width', width)
         call xertst (0.0_R8.lt.width, 'faulty input width')
         call xertst( present( gs ) .EQV. present( qc ) , &
@@ -1222,6 +1225,9 @@ contains
         integer :: isize
         integer :: jsep, nxtl, nxtr
         character*128 RegionDescription
+
+        !! Procedures
+        external get_jsep, get_nxt, xertst
 
         geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
         call get_jsep( nx, ny, jxi, jxa, jsep )
@@ -2427,6 +2433,9 @@ contains
         integer :: iy   !< y-aligned cell index
         integer :: iObj !< Object index
 
+        !! Procedures
+        external xertst
+
         rMin = huge(rMin)
         rMax = -huge(rMax)
 
@@ -2982,6 +2991,9 @@ contains
         integer :: nVx
         integer :: iVx
 
+        !! Procedures
+        external xertst
+
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
         nVx = 1
@@ -3072,6 +3084,9 @@ contains
         integer :: nVx
         integer :: iVx
 
+        !! Procedures
+        external xertst
+
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
         nVx = 1
@@ -3152,6 +3167,9 @@ contains
 
         !! internal
         integer :: ix, iy, nInd, iInd, ind
+
+        !! procedures
+        external xertst
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )
@@ -3243,6 +3261,9 @@ contains
         integer :: nInd
         integer :: iInd
         integer :: ind
+
+        !! Procedures
+        external xertst
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )

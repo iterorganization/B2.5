@@ -22,7 +22,7 @@
       subroutine lwiset (lwi0)
       implicit none
       integer, intent(in) :: lwi0
-      external prvrti
+      external prvrti, b25_mpi_stop
 #     include "stackw.h"
 *     (revert base address to lwi0)
       if (lwi0.lt.0.or.lwrki.lt.lwi0) then
@@ -40,6 +40,7 @@
       integer, intent(in) :: nwi
       integer, intent(out) :: lwi1
       intrinsic max
+      external b25_mpi_stop
 #     include "stackw.h"
       if (nwi.lt.0) then
         write (0,*) 'lwiget--faulty argument nwi'

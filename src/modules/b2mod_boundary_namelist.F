@@ -105,6 +105,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       subroutine get_boundary_namelist
       implicit none
+      external ipgeti
 
 cxpb The default is to force usage of b2.boundary.namelist for DN cases
       if (boundary_namelist_set) return
@@ -123,6 +124,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       real (kind=R8), intent(in) :: tim
       integer ix, iy, is, ib
       logical done, catch_up
+      external xertst
 
       call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
@@ -249,6 +251,7 @@ cxpb overwrite the defaults with the namelist data
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(in) :: tim
       logical catch_up
+      external xertst
 
       if(boundary_time_mod.gt.0.0_R8) then
         write(*,'(a,1p,3(1x,e14.7),2i4)')
@@ -285,9 +288,7 @@ cxpb overwrite the defaults with the namelist data
       implicit none
       integer, intent(in) :: nxd, nyd, nsd, nbcd_in, nnisod_in
       integer ix, iy
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
+      external ipgeti, xertst
 
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(CONPAR(0:nsd-1,nbcd_in,3))
@@ -451,6 +452,7 @@ cxpb Have to do this here already in case the namelist is not used
       logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
+      external find_file, xerrab, xertst
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8

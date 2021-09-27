@@ -87,6 +87,7 @@
       logical found
       character*256 filename
       logical file_ok
+      external find_file
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
@@ -169,6 +170,7 @@ cxpb size is changed in DIMENSIONS.F
       integer nread
       character*256 filename
       logical file_ok
+      external find_file
 
       if (control_read) return
       vacuum_communication = 0

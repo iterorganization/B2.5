@@ -2727,7 +2727,7 @@ cdjm Update ion heat sources
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
-      external ipgeti
+      external ipgeti, get_jsep, ipgetr, species, check_cdf_status
 
       write(*,*) 'Begin writing balance.nc file'
 
@@ -3215,6 +3215,7 @@ cdjm Update ion heat sources
       character*(NF_MAX_NAME) :: varname, dimname
       character*256 filename
       logical :: exists
+      external find_file, check_cdf_status
 
       write(*,*) 'Begin reading balance.nc file'
 
@@ -3405,6 +3406,8 @@ c only read a subset of the data as needed by the calling routine(s)
       real (kind=R8) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3432,6 +3435,8 @@ c only read a subset of the data as needed by the calling routine(s)
       real (kind=R8) :: var(1)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3458,6 +3463,8 @@ c only read a subset of the data as needed by the calling routine(s)
       integer :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3484,6 +3491,8 @@ c only read a subset of the data as needed by the calling routine(s)
       character*(*) :: varname
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3510,6 +3519,8 @@ c only read a subset of the data as needed by the calling routine(s)
       character*(*) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)

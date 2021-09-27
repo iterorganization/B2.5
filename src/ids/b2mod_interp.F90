@@ -1606,6 +1606,9 @@ contains
     integer :: ix, iy, is, ixx, iyy
     real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
 
+    ! procedures
+    external xertst
+
     ! For every vertex, find connected cells and average values
     do ix = -1, nx
        do iy = -1, ny

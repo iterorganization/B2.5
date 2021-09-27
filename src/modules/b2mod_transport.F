@@ -166,6 +166,7 @@
       subroutine read_b2mod_transport(nread)
       implicit none
       integer, intent(in) :: nread
+      external cfrure
 
       call cfrure (nread, size(calf), calf, 'calf')
       call cfrure (nread, size(cdna), cdna, 'cdna')
@@ -236,6 +237,7 @@
       subroutine write_b2mod_transport(nwrite)
       implicit none
       integer, intent(in) :: nwrite
+      external cfwure
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

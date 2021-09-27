@@ -18,7 +18,7 @@
       logical lwf, lbot
       character fform*12, srname*8
       logical streql
-      external streql
+      external streql, b25_mpi_stop
 *     ------------------------------------------------------------------
 *     Note: Any routine that is called by xerrab must not call xerrab,
 *     directly or indirectly. Routines xerget and streql are trivial

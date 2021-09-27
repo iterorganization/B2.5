@@ -121,6 +121,9 @@ contains
             !< database
         integer :: status
 
+            !< procedures
+        external xertst, xerrab
+
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
@@ -330,6 +333,9 @@ contains
             !< subsequent data access operation
         integer :: status
 
+            !< procedures
+        external xertst
+
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
@@ -439,6 +445,8 @@ contains
         logical :: lDoCreate = .false., lUseHdf5 = .false.
 
         logical :: namelistExists, openEnv = .false.
+
+        external xertst, xerrab
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
             &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
@@ -573,6 +581,7 @@ contains
                                     !< subsequent data access operation
 #ifdef IMAS
         integer :: status
+        external xertst
 
         call imas_close(idx, status)
         call xertst ( status.eq.0, 'Error closing IMAS database !')

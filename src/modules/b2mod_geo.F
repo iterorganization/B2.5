@@ -122,6 +122,7 @@
       implicit none
       integer nread, nx, ny
       integer ix, iy
+      external cfrure, cfrure_opt, xerrab
 
       call cfrure (nread, size(bb), bb, 'bb')
       call cfrure (nread, size(crx), crx, 'crx')
@@ -197,6 +198,7 @@ c conn
       subroutine write_b2mod_geo(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       call cfwure (nwrite, size(bb), bb, 'bb')
       call cfwure (nwrite, size(crx), crx, 'crx')

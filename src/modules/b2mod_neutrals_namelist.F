@@ -216,6 +216,7 @@ csw 21feb2012
       integer use_eirene
       character*12 hlp_frm
       intrinsic nint
+      external ipgeti, xertst
       data use_eirene /0/
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -422,6 +423,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine alloc_b2mod_neutrals_save(NSTRAID_in)
       integer nstraid_in
+#ifndef ALLOCATE_AND_NAMELIST
+      external xertst
+#endif
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -513,6 +517,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
+      external find_file, xertst
 
       filename=neutrals_filename
       neutrals_time_mod = 0.0_R8
@@ -1121,6 +1126,7 @@ c.. Test consistency with physical edges within the computational domain
       character*256 filename
       integer istra
       logical file_ok
+      external find_file, xertst
 
       saved_volrec(:)=0.0_R8
 
@@ -1185,6 +1191,7 @@ c.. Test consistency with physical edges within the computational domain
       integer ib, ix
       integer, allocatable :: bc(:,:), rc(:,:)
       logical, allocatable :: coincide(:)
+      external xertst
 
 ! Try to create a list which maps strata to boundaries
 ! LBCSTRA(ISTRA) will contain the index of the boundary condition corresponding

@@ -486,7 +486,7 @@ cxpb Data file material properties
       logical found
       character*256 filename
       logical file_ok
-      external xertst
+      external find_file, xertst
 
       if (edition.eq.'    ') then
         filename = 'b2.wall_save.parameters'
@@ -1202,6 +1202,7 @@ cxpb Normalise surface constituents
 #include <netcdf.inc>
       integer :: status, nwallid, ntrackid, ntwoid, tid
       integer :: vdims(3)
+      external check_cdf_status
 
       write(*,*) 'Creating the definitions for b2wall.nc'
 

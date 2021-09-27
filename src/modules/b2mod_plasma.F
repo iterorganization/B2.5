@@ -323,6 +323,7 @@
       implicit none
       integer nxd,nyd,nsd,nread
       integer is
+      external b2xpni, cfrure, cfrure_opt
 
       call cfrure (nread, size(fch),  fch,  'fch')
       call cfrure (nread, size(fch0), fch0, 'fch0')
@@ -451,6 +452,7 @@
       subroutine write_b2mod_plasma(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       call cfwure (nwrite, size(fch),  fch,  'fch')
       call cfwure (nwrite, size(fch0), fch0, 'fch0')
@@ -558,6 +560,7 @@ c
       integer iy_nocoreExB, fac_ref
       integer ix, iy, jxi, jxa, jsep
       real (kind=R8) dssep
+      external get_jsep, ipgeti, ipgetr, xertst
       save
      & iy_nocoreExB, fac_ref,
      & facdrift_tanh_a, facdrift_tanh_b,
@@ -778,6 +781,7 @@ c old style
 
       subroutine set_facdrift_fac_ExB_inc
       implicit none
+      external xertst
       call xertst (0.lt.facdrift_ncall,
      &     'set_facdrift_fac_ExB_inc called before initialisation')
       facdrift_scalar=min(facdrift_scalar*facdrift_inc,facdrift_target)
@@ -789,6 +793,7 @@ c old style
 
       subroutine set_facdrift_fac_ExB_dec
       implicit none
+      external xertst
       call xertst (0.lt.facdrift_ncall,
      &     'set_facdrift_fac_ExB_dec called before initialisation')
       facdrift_scalar=max(facdrift_scalar*facdrift_dec,facdrift_start)

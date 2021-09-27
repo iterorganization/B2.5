@@ -146,7 +146,7 @@ cank
       implicit none
       integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
-      external get_jsep, get_nxt
+      external get_jsep, get_nxt, ipgeti, xertst
 
       nx=nxd
       ny=nyd
@@ -348,6 +348,8 @@ cank
       subroutine read_b2mod_b2plot(nread)
       implicit none
       integer nread
+      external xertst
+
       call xertst(0.lt.nread, 'faulty input nread')
 
       return
@@ -356,6 +358,8 @@ cank
       subroutine write_b2mod_b2plot(nwrite)
       implicit none
       integer nwrite
+      external xertst
+
       call xertst(0.lt.nwrite, 'faulty input nwrite')
 
       return
