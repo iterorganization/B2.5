@@ -3657,7 +3657,7 @@ c recompute hci0 and hcn0
       use b2us_plasma
       use b2mod_switches
       use b2mod_user_namelist
-     , , only : nomp, omp, icsep
+     , , only : nomp, omp, icsepomp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -3690,8 +3690,8 @@ c recompute hci0 and hcn0
         if (switch%keps_local.ne.1) then
          call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
-         call xertst(icsep.gt.0,
-     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+         call xertst(icsepomp.gt.0,
+     &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
         endif
       endif
       hci_ExB = 0.0_R8
@@ -3702,9 +3702,9 @@ c recompute hci0 and hcn0
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
-            rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsep))/
-     &            (am(ismain)*mp))/abs(rt%rza(omp(icsep),ismain)*qe*
-     &             geo%cvBb(omp(icsep),3))
+            rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsepomp))/
+     &            (am(ismain)*mp))/abs(rt%rza(omp(icsepomp),ismain)*qe*
+     &             geo%cvBb(omp(icsepomp),3))
           endif
 *       ..compute radial shear of diamagnetic ExB velocity
           wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
@@ -3748,12 +3748,12 @@ cwdk same dna_ExB for all ion species
           endif
           if (switch%keps_sig.gt.0.0_R8) then
             sig0 = switch%keps_sig*(dna_ExB + switch%dna_min)*qe*
-     &         dv%ne(omp(icsep))*
+     &         dv%ne(omp(icsepomp))*
      &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
           endif
           if (switch%keps_alf.gt.0.0_R8) then
             alf0 = switch%keps_alf*(dna_ExB + switch%dna_min)*
-     &         dv%ne(omp(icsep))*sqrt(qe/pl%te)*
+     &         dv%ne(omp(icsepomp))*sqrt(qe/pl%te)*
      &         switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)
