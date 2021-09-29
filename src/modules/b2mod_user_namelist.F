@@ -19,9 +19,10 @@
       integer l_h_mol(DEF_NMOL,3)
 #endif
       integer, parameter :: nromp=DEF_NYD*4
-      integer, save :: omp(nromp), icsep, nomp, ifssep
+      integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
+     ,  icsepimp, nimp
       real (kind=R8) ::
-     ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2)
+     ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2), rzimp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
@@ -47,7 +48,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp, cfweight
+     ,  cfread, cftype, rzomp, rzimp, cfomp, cfweight
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -130,6 +131,7 @@ c***  Standard setup:
       cfdata = 0.0_R8
       ncfdata = 0
       rzomp = 0.0_R8
+      rzimp = 0.0_R8
       cfweight = 1.0_R8
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
@@ -394,14 +396,24 @@ c*** Set default values according to current species list
      . 'faulty input j_ne_at')
 #endif
       call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
+*   ..Create list of OMP and IMP control volumes
       nomp = 0
-      omp = 0 !Need to add check for monotonicity in list
+      omp = 0
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nomp
         if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
      & call xerrab('OMP LIST NOT SORTED')
+      end do
+      nimp = 0
+      imp = 0
+      call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
+     & 1, ifail)
+      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      do ic=2,nimp
+        if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
+     & call xerrab('IMP LIST NOT SORTED')
       end do
       if (any(cfomp)) call xertst(nomp.gt.0,
      & 'Asking for OMP cost function but no OMP cells, check rzomp')
@@ -432,24 +444,36 @@ c*** Set default values according to current species list
         endif
       end do
 
-*   ..Definition of separatrix position in OMP list (to be improved for DN)
+*   ..Definition of separatrix position in OMP and IMP list (to be improved for DN)
       if (m%IsClassicalGrid) call xertst(m%nncut.le.2,
      & 'Separatrix position to be revised for DN')
-      icsep = 0
+      icsepomp = 0
       ic = 1
       found = .false.
       do while (ic.le.nomp .and..not.found)
         if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
           found = .true.
-          icsep = ic+1
+          icsepomp = ic+1
         endif
       ic = ic + 1 
       end do
       if (.not.found) call xerrab ('Did not find separatrix location. '
      &  // 'Check specification OMP in b2.user.paramters.')
+      icsepimp = 0
+      ic = 1
+      found = .false.
+      do while (ic.le.nimp .and..not.found)
+        if (m%cvReg(imp(ic)).ne.m%cvReg(imp(ic+1))) then
+          found = .true.
+          icsepimp = ic+1
+        endif
+      ic = ic + 1 
+      end do
+      if (.not.found) write(*,*) ('Did not find separatrix location. '
+     &  // 'Check specification IMP in b2.user.paramters.')
       ifssep = 0 !flux surface of separatrix
-      ic1 = omp(icsep-1) !cv of flux tube just inside sep
-      ic2 = omp(icsep) !cv of flux tube just outside sep
+      ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
+      ic2 = omp(icsepomp) !cv of flux tube just outside sep
       ifc1 = m%cvFcP(ic1,1)
       ifc2 = ifc1 + m%cvFcP(ic1,2) - 1
       ifc11 = m%cvFcP(ic2,1)
