@@ -48,7 +48,7 @@ contains
     use b2us_map
     use b2us_plasma
     use b2mod_user_namelist &
-    , only : nomp, omp, icsep
+    , only : nomp, omp, icsepomp
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
     use eirmod_extrab25
@@ -182,7 +182,7 @@ contains
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call xertst(icsep.gt.0,'Invalid icsep value, check rzomp in b2.user.parameters')
+      call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = max(nncutmax,1) !WG_TODO to be fixed
 #ifdef WG_TODO
       call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
@@ -759,15 +759,15 @@ contains
     vssepm = 0.0_R8; nesepa = 0.0_R8; tesepa = 0.0_R8; tisepa = 0.0_R8; tpsepa = 0.0_R8
     posepa = 0.0_R8; ktsepm = 0.0_R8; ktsepi = 0.0_R8; ktsepa = 0.0_R8;
 ! csc For now only identify outer midplane and targets separatrix values using flux tube concept
-    nesepm(1) = dv%ne(omp(icsep))
-    tesepm(1) = pl%te(omp(icsep))/ev
-    tisepm(1) = pl%ti(omp(icsep))/ev
-    posepm(1) = pl%po(omp(icsep))
-    dnsepm(1) = co%dna0(omp(icsep),ismain0)
-    kesepm(1) = co%hce0(omp(icsep))/dv%ne(omp(icsep))
-    kisepm(1) = co%hci0(omp(icsep))/dv%ni(omp(icsep),0)
-    ktsepm(1) = pl%kt(omp(icsep))/ev
-    ift = mpg%cvFt(omp(icsep)) !separatrix flux tube
+    nesepm(1) = dv%ne(omp(icsepomp))
+    tesepm(1) = pl%te(omp(icsepomp))/ev
+    tisepm(1) = pl%ti(omp(icsepomp))/ev
+    posepm(1) = pl%po(omp(icsepomp))
+    dnsepm(1) = co%dna0(omp(icsepomp),ismain0)
+    kesepm(1) = co%hce0(omp(icsepomp))/dv%ne(omp(icsepomp))
+    kisepm(1) = co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),0)
+    ktsepm(1) = pl%kt(omp(icsepomp))/ev
+    ift = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
     cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
     nesepi(1) = dv%ne(cvtrg)
     tesepi(1) = pl%te(cvtrg)/ev
