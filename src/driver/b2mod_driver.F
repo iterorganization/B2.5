@@ -16,7 +16,8 @@
       use b2mod_diag
 !WG_RM      use b2mod_work
       use b2mod_elements
-      use b2mod_feedback
+      use b2us_feedback
+     & , only : write_b2us_feedback, init_feedback, dealloc_feedback
       use b2mod_sputter
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
@@ -1767,7 +1768,10 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
-!      call read_neutrals_namelist(nx, ny, ns, .true.)
+      call read_neutrals_namelist(ns, mpg, switch, .true.)
+      if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
+        call init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo, mpg)
+      endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
 
 #ifdef B25_EIRENE
@@ -2287,7 +2291,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *       ..write additional save namelist data
           filename='b2.feedback_save.parameters'
           call find_file(filename,found)
-          if (found) call write_b2mod_feedback(99,savefile(13:16))
+          if (found) call write_b2us_feedback(99,savefile(13:16))
           filename='b2.neutrals_save.parameters'
           call find_file(filename,found)
           if (found)
@@ -2425,10 +2429,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 * finalise impgyro !yamoto
       call impgyro_last !yamoto
 #endif
-* finalise feedback in b2stbc
-#ifdef WG_TODO
-      call b2stbc_fb_final
-#endif
+* finalise feedback
+      call write_b2us_feedback(99,'    ')
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
 * finalise sputtering
@@ -2602,6 +2604,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
       call dealloc_b2mod_user
+      call dealloc_feedback
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv

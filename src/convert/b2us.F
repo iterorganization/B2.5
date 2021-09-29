@@ -25,6 +25,9 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_switches
+      use b2mod_feedback
+      use b2us_feedback
+     . , only : conv_fbparms, write_fbparms
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -426,6 +429,15 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call write_triangles(nout(0),mpg, gm, nx, ny)
 !      endif
 #endif
+*   ..convert feedback schemes (if present!)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,file_exists)
+      if (file_exists) then
+        call read_b2mod_feedback_control(99)
+        call conv_fbparms (nx, ny, ns, mpg)
+        call write_fbparms(ns)
+      endif
+
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
