@@ -116,7 +116,7 @@ contains
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
-            !< (i. e. solps-iter, iter, aug)
+            !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
             !< database
         integer :: status
@@ -167,8 +167,8 @@ contains
           call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
         else
-        !! Or open and modify existing shot/run (might work much faster than
-        !! imas_create_env)
+        !! Or open and modify existing shot/run
+        !! (might work much faster than imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
 
@@ -414,7 +414,7 @@ contains
         character(*), intent(in), optional :: user  !< Creator/owner of the
                                                     !< database
         character(*), intent(in), optional :: database !< Database name
-                                                       !< (i. e. solps-iter, iter, aug)
+                                                       !< (i. e. solps-iter, ITER, aug)
         character(*), intent(in), optional :: dataversion   !< Major version of
                                                             !< the database
         logical, intent(in), optional :: doCreate

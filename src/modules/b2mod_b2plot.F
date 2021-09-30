@@ -365,4 +365,56 @@ cank
       return
       end subroutine write_b2mod_b2plot
 
+      function ix_e2b(ixe)
+      use b2mod_indirect
+      implicit none
+      integer ix_e2b
+      integer ixe
+      integer ic, i
+
+      if (ixe.eq.-1 .or. ixe.eq.0) then
+        ix_e2b = -2
+      else
+        i = 1
+        ix_e2b = 0
+        do while (i.lt.ixe)
+          i = i + 1
+          ix_e2b = ix_e2b + 1
+          do ic = 1, nncut
+            if (ix_e2b.eq.leftcut(ic)) i = i + 1
+            if (ix_e2b.eq.rightcut(ic)) i = i + 1
+          end do
+          if (nncut.eq.2 .and. ix_e2b.eq.nxtr) i = i + 1
+        end do
+      end if
+      return
+      end function ix_e2b
+
+      function ix_b2e(ixb)
+      use b2mod_indirect
+      implicit none
+      integer ix_b2e
+      integer ixb
+      integer i
+
+      if (ixb.eq.-2) then
+        ix_b2e = -1
+      else if (ixb.gt.nx) then
+        ix_b2e = -1
+      else if (ixb.eq.-1 .or. ixb.eq.nx) then
+        ix_b2e = -1
+      else if (nncut.eq.2 .and.
+     .        (ixb.ge.nxtl .and. ixb.le.nxtr)) then
+        ix_b2e = -1
+      else
+        ix_b2e = ixb + 1
+        do i = 1, nncut
+          if (ixb.ge.leftcut(i)) ix_b2e = ix_b2e + 1
+          if (ixb.ge.rightcut(i)) ix_b2e = ix_b2e + 1
+        end do
+        if (nncut.eq.2 .and. ixb.gt.nxtr) ix_b2e = ix_b2e + 1
+      end if
+      return
+      end function ix_b2e
+
       end module b2mod_b2plot

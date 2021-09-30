@@ -724,6 +724,10 @@ contains
             !! undefined
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(2)%object( iFc )%boundary(2) )
+            !! Allocate list of area projections of the 1D object
+            !! 1: poloidal projection, 2: radial projection
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(2)%object( iFc )%geometry(2) )
             !! Allocate list of 0D objects forming the 1D object
             !! Two 0D objects (vertices/nodes) form one 1D object (face/edge)
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -830,6 +834,14 @@ contains
                     &   object( iFc )%measure = &
                     &   gs(ix, iy, ALIGNX)
             end if
+
+            !! Area projections
+            !! 1: poloidal projection, 2: radial projection
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(1) = &
+                &    gs(ix, iy, ALIGNX)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(2) = 0.0_R8
         end do
 
         !! y-aligned edges
@@ -914,12 +926,22 @@ contains
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
+
             !! 1d object measure: edge length
             if (present(gs)) then
                 grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( iFc )%measure = &
-                    &   gs(ix, iy, ALIGNY)*qc(ix, iy)
+                    &   gs(ix, iy, ALIGNY)
             end if
+
+            !! Area projections
+            !! 1: poloidal projection, 2: radial projection
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(1) = &
+                &    gs(ix, iy, ALIGNY) * qc(ix, iy)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(2) = &
+                &    gs(ix, iy, ALIGNY) * sqrt(1.0_R8 - qc(ix, iy)**2)
         end do
 
         !! Fill in object definitions (i.e. what objects compose an object)

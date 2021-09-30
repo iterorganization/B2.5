@@ -26,7 +26,7 @@
 !!        !< (i.e. "edge_profiles" (mandatory) )
 !!      character(len=24) :: username   !< Creator/owner of the IMAS IDS database
 !!      character(len=24) :: database   !< IMAS IDS database name
-!!        !< (i. e. solps-iter, iter, aug)
+!!        !< (i. e. solps-iter, ITER, aug)
 !!      character(len=24) :: version    !< Major version of the IMAS IDS database
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
@@ -70,7 +70,7 @@ program b2_ual_rewrite
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual &
-     & , only : new_ids_edge
+     & , only : new_ids_edge, delete_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
@@ -213,15 +213,12 @@ program b2_ual_rewrite
 
     write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
-    if (.not.same_run_number) write(*,'(a,i5)') &
-        & ' will be rewritten with run number ',new_run
-    systemarg = 'imasdb '//trim(database)
-    write(*,*) trim(systemarg)
-#ifdef NAGFOR
-    call system(systemarg, status, ierror)
-#else
-    call system(systemarg)
-#endif
+    if (.not.same_run_number) then
+      write(*,'(a,i5)') ' will be rewritten with run number ',new_run
+      if (database.eq.'iter') write(*,'(a)') ' in ITER database'
+    else if (database.eq.'iter') then
+      write(*,'(a)') ' will be rewritten in ITER database'
+    end if
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
@@ -231,6 +228,7 @@ program b2_ual_rewrite
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
+      if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       call ids_get( idx, "dataset_description", old_description, status)
       old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
@@ -239,27 +237,85 @@ program b2_ual_rewrite
         old_imas_version = old_description%dd_version(1)
       end if
       call ids_deallocate( old_description )
-      if (.not.streql(old_imas_version,imas_version)) then
-        write(*,*) &
-          & 'Old IDS was written using IMAS version '// &
-          &  trim(old_imas_version)//'.'
-        write(*,*) &
-          & 'Recreating using IMAS version '// &
-          &  trim(imas_version)//'.'
+      if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
+        if (.not.streql(old_imas_version,imas_version)) then
+          write(*,*) &
+            & 'Old IDS was written using IMAS version '// &
+            &  trim(old_imas_version)//'.'
+          write(*,*) &
+            & 'Recreating using IMAS version '// &
+            &  trim(imas_version)//'.'
+        end if
+        if (database.eq.'iter') &
+          &  write(*,*) 'IDS file will be moved to ITER database.'
+        call close_ual(idx)
+        idx = 0
+! Copy the IDS to a temporary location with the new DD and then bring it back
+        tmp_run = run
+        if (new_run.eq.run .and. database.ne.'iter') then
+          tmp_run = run + 1000
+#if IMAS_MINOR_VERSION > 31
+          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+     &     'idscp --setDatasetVersion'//                   &
+     &        ' -si ',shot,' -ri ',run,                    &
+     &        ' -so ',shot,' -ro ',tmp_run,                &
+     &        ' -d ',trim(database),' -u ',trim(username)
+#else
+          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+     &     'idscp -si ',shot,' -ri ',run,                  &
+     &          ' -so ',shot,' -ro ',tmp_run,              &
+     &          ' -d ',trim(database),' -u ',trim(username)
+#endif
+          if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+#ifdef NAGFOR
+          call system(systemarg, status, ierror)
+#else
+          call system(systemarg)
+#endif
+          if (database.eq.'iter') database = 'ITER'
+        end if
+#if IMAS_MINOR_VERSION > 31
+        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+     &   'idscp --setDatasetVersion'//                   &
+     &        ' -si ',shot,' -ri ',tmp_run,              &
+     &        ' -so ',shot,' -ro ',new_run,              &
+     &        ' -d ',trim(database),' -u ',trim(username)
+#else
+        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+     &   'idscp -si ',shot,' -ri ',tmp_run,              &
+     &        ' -so ',shot,' -ro ',new_run,              &
+     &        ' -d ',trim(database),' -u ',trim(username)
+#endif
+        if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
+#ifdef NAGFOR
+        call system(systemarg, status, ierror)
+#else
+        call system(systemarg)
+#endif
+        if (database.eq.'iter') database = 'ITER'
+        call imas_open_env(treename, shot, new_run, idx, &
+          &                username, database, version, status )
+        call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
       else if (.not.same_run_number) then
         call close_ual(idx)
         idx = 0
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
-        if ( status.ne.0 .or. idx.eq.0 ) then ! New run IDS must be created
+        if ( status.ne.0 .or. idx.eq.0 .or. database.eq.'iter') then ! New run IDS must be created
+          idx = 0
+          if (database.eq.'iter') database = 'ITER'
           call imas_create_env(treename, shot, new_run, 0, 0, idx, &
             &                  username, database, version, status )
-          call xertst( status.eq.0, 'Error creating IDS with new run number !')
+          call xertst( status.eq.0, 'Error creating new IDS file !')
         end if
       end if
     else
       write (0,*) "No previous IDS found, new one will be created"
       idx = 0
+      if (database.eq.'iter') database = 'ITER'
+      call imas_create_env(treename, shot, run, 0, 0, idx, &
+        &                  username, database, version, status )
+      call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
