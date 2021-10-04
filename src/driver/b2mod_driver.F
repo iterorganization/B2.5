@@ -1998,12 +1998,6 @@ cxpb for neutral fluxes used in b2stbc_phys
           call ngread(ismain,iflag)
         endif
       endif
-      filename=fort_lc//'46'
-      call find_file(filename,ex)
-      if(ex.and.use_eirene.ne.0) then
-        open(unit=46,file=filename)
-        call ntread
-      end if
 #endif
       call b2stbr_init (nx, ny, ns, BoRiS)
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)

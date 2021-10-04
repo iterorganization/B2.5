@@ -66,6 +66,8 @@ module b2mod_ual_io
     use eirmod_ctrig
     use eirmod_cestim
     use eirmod_wneutrals
+    use eirmod_cinit &
+     & , only : fort_lc
     use eirmod_comusr &
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
@@ -565,6 +567,16 @@ contains
             &        rlza, rlz2, rlpt, rlpi,                                     &
             &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,      &
             &        wrong_flow, .false.)
+#ifdef B25_EIRENE
+        if (use_eirene.ne.0) then
+          filename=fort_lc//'46'
+          call find_file(filename,exists)
+          if(exists.and.use_eirene.ne.0) then
+            open(unit=46,file=filename)
+            call ntread
+          end if
+        end if
+#endif
         if (balance_netcdf.ne.0) call read_balance
 
         !! Preparing database for writing
