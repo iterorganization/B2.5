@@ -292,7 +292,7 @@ c*** Set default values according to current species list
       call subend ()
       return
 #ifdef USE_MPI
-  999 call xerrab ('Error while reading FEEDBACK namelist!')
+  999 call xerrab ('Error while reading USER namelist!')
 #endif
       end subroutine read_b2mod_user_namelist
 

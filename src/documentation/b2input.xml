@@ -7178,7 +7178,7 @@
 			<introduction>
 				<namelist>USER</namelist>
 				<description>
-					Contains additional data for user-specific diagnostics.
+					Contains additional data for user-specific diagnostics. Always read if present.
 					This version provided by Andrei Kukushkin for ITER cases.
 				</description>
 			</introduction>

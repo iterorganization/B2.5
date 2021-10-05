@@ -291,7 +291,7 @@
        call ipgetr ('b2tfhi_ycur', ycur)
        call ipgetr ('b2tfnb_vis_per', vis_per)                       !srv 02.10.17
        call ipgetr ('b2tfnb_vis_q', vis_q)                           !srv 02.10.17
-       call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
+       call ipgeti ('eirene_sheath_pot', eirene_sheath_pot)
        call ipgeti ('eirene_ionising_core', ionising_core)
        if (ionising_core.eq.0)     ! for backward compatibility
      >   call ipgeti ('eirene_ionizing_core', ionising_core)

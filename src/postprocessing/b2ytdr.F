@@ -10006,6 +10006,8 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
                 NSPZI(I,J)=1
                 NSPZE(I,J)=NS-NSPECIES
               ENDIF
+              ! Remove sheath acceleration for N/S boundaries
+              IF (NIXY(I,J).EQ.2 .AND. idum(10).eq.7) idum(10)=6
               idum(8) =
      .         iplsbeginrange(NSPZI(I,J),NSPZE(I,J),ns-nspecies,ipls1)
               idum(9) =

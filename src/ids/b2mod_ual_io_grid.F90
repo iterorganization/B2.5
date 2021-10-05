@@ -113,6 +113,8 @@ module b2mod_ual_io_grid
     use b2mod_indirect
     use b2mod_b2cmfs
     use b2mod_ppout
+    use b2mod_geo
+    use b2mod_user_namelist
 
     implicit none
 
@@ -439,8 +441,8 @@ contains
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,       &
-        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells, vol, &
-        &   gs, qc )
+        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells,      &
+        &   vol, gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -982,7 +984,7 @@ contains
                 !! Nodes to undefined
                 grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
                     &   object( iCv )%nodes(i) = B2_GRID_UNDEFINED
-                !! Geometry to undefined
+                !! Geometry grid indices to undefined
                 if (i < 3) then
                     grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
                         &   object( iCv )%geometry(i) = B2_GRID_UNDEFINED
@@ -1007,15 +1009,15 @@ contains
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
             !! right edge (y-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%    &
                 &   object( iCv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
             !! top edge (x-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%    &
                 &   object( iCv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
-                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
+                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,   &
                     &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
-                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,   &
+                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, &
                     &   nix, niy ) ) then
                     grid_ggd%space( SPACE_POLOIDALPLANE )%          &
                         &   objects_per_dimension(3)%object( iCv )% &
@@ -1245,7 +1247,7 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer :: jsep, nxtl, nxtr
+        integer :: jsep, nxtl, nxtr, ix1, ix2, ix3, ix4
         character*128 RegionDescription
 
         !! Procedures
@@ -1284,6 +1286,10 @@ contains
         nGSubset = nGSubset + 2
         !! Inner/outer midplane separatrix
         if (jsep /= B2_GRID_UNDEFINED) nGSubset = nGSubset + 2
+        !! Neutral pressure calculation cells
+        if (lpfrs_pmp.ne.0 .or. lpfrb_i.ne.0 .or. lpfrb_o.ne.0 .or. &
+          &                     lpfrt_i.ne.0 .or. lpfrt_o.ne.0)     &
+          &  nGSubset = nGSubset + 1
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
             &//int2str(nGSubset)//" grid subsets" )
@@ -1423,6 +1429,117 @@ contains
 
             end do
         end do
+
+        !! Neutral pressure calculation cells
+        !! Hard-coded to index -101
+        if (lpfrs_pmp.ne.0 .or. lpfrb_i.ne.0 .or. lpfrb_o.ne.0 .or. &
+          &                     lpfrt_i.ne.0 .or. lpfrt_o.ne.0) then
+            cls = CLASS_CELL
+            GSubSetCount = GSubsetCount + 1
+            RegionDescription = "Cells used for neutral pressure calculation"
+
+            call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"// &
+                &   " add (private) grid subset #"//           &
+                &   int2str(GSubsetCount)//                    &
+                &   " for iType "//int2str( iType )//          &
+                &   ", iRegion "//int2str( iRegion )//": "//   &
+                &   "Neutral pressure cells          " )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                        &
+                &   grid_ggd%grid_subset( GSubsetCount ),      &
+                &   -101, "Neutral pressure cells          ",  &
+                &   RegionDescription )
+
+            !! Get explicit cell list
+            deallocate( indexList2d )
+            nInd = 0
+            ix1 = B2_GRID_UNDEFINED
+            ix2 = B2_GRID_UNDEFINED
+            ix3 = B2_GRID_UNDEFINED
+            ix4 = B2_GRID_UNDEFINED
+            if (lpfrb_i.ne.0 .or. lpfrt_i.ne.0) then
+                if (lpfrb_i.ge.0) ix1 = lpfrb_i
+                if (lpfrt_i.ge.0) ix2 = lpfrt_i
+            end if
+            if (lpfrb_o.ne.0 .or. lpfrt_o.ne.0) then
+                if (lpfrb_o.ge.0) ix3 = lpfrb_o
+                if (lpfrt_o.ge.0) ix4 = lpfrt_o
+            end if
+            select case (lpfrs_pmp)
+            case (0, 1)
+                iy = 0
+                if (lpfrb_i.lt.0) ix1 = leftcut(1)-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = leftcut(1)-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nx-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = rightcut(1)-lpfrt_o
+            case (2)
+                iy = ny - 1
+                if (lpfrb_i.lt.0) ix1 = nx-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = nx-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nx-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = nx-1+lpfrt_o
+            case (3)
+                iy = 0
+                if (lpfrb_i.lt.0) ix1 = nxtl-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = leftcut(2)-lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nxtr-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = rightcut(2)-1+lpfrt_o
+            case (4)
+                iy = ny - 1
+                if (lpfrb_i.lt.0) ix1 = nxtl-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = nxtl-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nxtl-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = nxtr+1-lpfrt_o
+            case default
+                call xerrab( "Unrecognized value of lpfrs_pmp!" )
+            end select
+            if (ix1.ne.B2_GRID_UNDEFINED .and. ix2.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix1,ix2), max(ix1,ix2)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
+                end do
+            end if
+            if (ix3.ne.B2_GRID_UNDEFINED .and. ix4.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix3,ix4), max(ix3,ix4)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
+                end do
+            end if
+            allocate( indexList2d(nInd, SPACE_COUNT) )
+            iInd = 0
+            if (ix1.ne.B2_GRID_UNDEFINED .and. ix2.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix1,ix2), max(ix1,ix2)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1
+                        call xertst(iInd <= nInd, &
+                            &   "Assert error 1 (index) in neutral pressure cells grid subset" )
+                        indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end do
+            end if
+            if (ix3.ne.B2_GRID_UNDEFINED .and. ix4.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix3,ix4), max(ix3,ix4)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1
+                        call xertst(iInd <= nInd, &
+                            &   "Assert error 1 (index) in neutral pressure cells grid subset" )
+                        indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end do
+            end if
+            call xertst( iInd == nInd, &
+                &  "Assert error 2 (index) in neutral pressure cells grid subset" )
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
+
+        end if
         deallocate(indexList2d)
 #endif
 

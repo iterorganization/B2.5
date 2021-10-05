@@ -422,7 +422,8 @@ c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE
             if(streql(srfs_m(i),sfpr_m(k))) l=i
           end do !}
           if(l.eq.0) then !{
-            write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
+            if (.not.streql(sfpr_m(k),'dummy'))
+     >       write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
             l_ersmtr(k)=0
 
           else !}{
