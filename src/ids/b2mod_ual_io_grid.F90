@@ -1440,9 +1440,7 @@ contains
 
             call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"// &
                 &   " add (private) grid subset #"//           &
-                &   int2str(GSubsetCount)//                    &
-                &   " for iType "//int2str( iType )//          &
-                &   ", iRegion "//int2str( iRegion )//": "//   &
+                &   int2str(GSubsetCount)//": "//              &
                 &   "Neutral pressure cells          " )
 
             !! Create grid subset with one object list

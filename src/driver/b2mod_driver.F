@@ -2614,8 +2614,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     write(*,*)
      .               "Appending a new time slice at t = ", tim, " s."
                     num_time_slices = num_time_slices + 1
-                    time_slice_index = num_time_slices
                   end if
+                  time_slice_index = num_time_slices
                   call B25_process_ids( edge_profiles, edge_sources,
      &              edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
@@ -3036,8 +3036,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   write(*,*)
      .             "Appending a new time slice at t = ", tim, " s."
                   num_time_slices = num_time_slices + 1
-                  time_slice_index = num_time_slices
                 end if
+                time_slice_index = num_time_slices
                 call B25_process_ids( edge_profiles, edge_sources,
      &            edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21

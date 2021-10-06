@@ -514,6 +514,7 @@ contains
         ns = size( na, 3 )
         nx = ubound( na, 1 )
         ny = ubound( na, 2 )
+        call alloc_b2mod_user(nx, ns, nlim, nmol, ntns)
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
