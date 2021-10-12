@@ -1030,6 +1030,8 @@ cwdk      compatibility for E/W boundaries
 * -- BCCON=11 -- particle flux feedback boundary condition
 
           case (11)
+          call xerrab ('b2stbc_phys -- BCCON = 11 not adapted for WG')
+#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,a,a,a,i3)')
      .      'particle flux feedback boundary condition on ',
@@ -1076,7 +1078,6 @@ cwdk      compatibility for E/W boundaries
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
-#ifdef WG_TODO
           IF (BCCHAR(IB).EQ.'S') THEN
             if (.not.fedback_species) then
 *   ..initialise ireg

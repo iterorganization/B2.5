@@ -26,12 +26,12 @@
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
-      real (kind=R8), allocatable, save :: charge_frac(:)
+      real (kind=R8), allocatable :: charge_frac(:)
       real (kind=R8), parameter :: amtol = 1.0e-2_R8
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
 
-      integer, allocatable, save :: fbRegP(:,:) ! (nFb,2) pointing for each feedback to the first index in the feedback_Reg list, and its number of CVs or faces
+      integer, allocatable, save :: fbRegP(:,:) ! (nFb,2) pointing for each feedback to the first index in the fbReg list, and its number of CVs or faces
       integer, allocatable, save :: fbReg(:)  !         listing for each feedback the cells or faces
       integer, save :: nfbreg = 0
 *   ..namelists
@@ -185,7 +185,7 @@ cxpb size is changed in DIMENSIONS.F
       type (mapping), intent (in) :: mpg
       integer :: nCv, nFc, nVx, ns, natmi
       integer ifb, ifbb, istrai, icount
-      integer ifbreg, is, ib, is0, is_start, is_end
+      integer ifbreg, is, ib, is0, is_start, is_end, is00, iatm
       logical consistent, done
 ! csc old switches
       integer, save :: fhiycore_kinetic_energy
@@ -219,487 +219,631 @@ cxpb size is changed in DIMENSIONS.F
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
      5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      7  private_flux_puff/0.0_R8/,
-     9  save_core_flux_while_overshot/0.0_R8/,
-     9  save_gas_puff_while_overshot/0.0_R8/,
-     9  save_pfr1_puff_while_overshot/0.0_R8/,
-     9  save_pfr2_puff_while_overshot/0.0_R8/,
-     i  coreregno/8/, coreregn2/0/, solregno/3/,
-     i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/
+     9  save_core_flux_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     9  save_gas_puff_while_overshot/0.0_R8/,  !WG_RM not used anymore with new structure
+     9  save_pfr1_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     9  save_pfr2_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     i  coreregno/1/, coreregn2/0/, solregno/6/,
+     i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
 
-       call subini('init_feedback')
-       call read_b2us_feedback_control(99)
-       call read_b2us_feedback(99,'    ',feedback_namelist_used)
-       call xertst(icsepomp.gt.0,
-     &  'Invalid icsepomp value, check rzomp in b2.user.parameters')
-       if (any(fb_type.eq.9)) call xertst(icsepimp.gt.0,
-     &  'Invalid icsepimp value, check rzomp in b2.user.parameters')
-       call ipgetr('b2mndr_dtim', dtim)
-       call xertst(dtim.gt.0.0_R8, 'faulty parameter dtim')
-       dt_prev = dtim
-       call ipgeti ('b2sral_style', b2sral_style)
+      call subini('init_feedback')
+      call read_b2us_feedback_control(99)
+      call read_b2us_feedback(99,'    ',feedback_namelist_used)
+      call xertst(icsepomp.gt.0,
+     & 'Invalid icsepomp value, check rzomp in b2.user.parameters')
+      if (any(fb_type.eq.9)) call xertst(icsepimp.gt.0,
+     & 'Invalid icsepimp value, check rzomp in b2.user.parameters')
+      call ipgetr('b2mndr_dtim', dtim)
+      call xertst(dtim.gt.0.0_R8, 'faulty parameter dtim')
+      dt_prev = dtim
+      call ipgeti ('b2sral_style', b2sral_style)
 *  ..first read data for other feedback schemes given directly in b2mn.dat
 *    This data will be included in the new structure
-       ifb = nFb
-       call ipgetr ('b2stbc_fnaycore', fnaycore)
-       call ipgetr ('b2stbc_fnaycore_alpha', fnaycore_alpha)
-       call xertst (0.0_R8.le.fnaycore_alpha,
-     1   'faulty internal parameter fnaycore_alpha')
-       call ipgetr ('b2stbc_fheycore', fheycore)
-       call xertst (0.0_R8.le.fheycore,
-     1   'faulty internal parameter fheycore')
-       call ipgetr ('b2stbc_fheycore_alpha', fheycore_alpha)
-       call xertst (0.0_R8.le.fheycore_alpha,
-     1   'faulty internal parameter fheycore_alpha')
-       call ipgetr ('b2stbc_fhiycore', fhiycore)
-       call xertst (0.0_R8.le.fhiycore,
-     1   'faulty internal parameter fhiycore')
-       call ipgetr ('b2stbc_fhiycore_alpha', fhiycore_alpha)
-       call xertst (0.0_R8.le.fhiycore_alpha,
-     1   'faulty internal parameter fhiycore_alpha')
-       call ipgeti ('b2tsbc_fhiycore_kinetic_energy',
-     1  fhiycore_kinetic_energy)
-       call ipgetr ('b2stbc_fchycore', fchycore)
-       call ipgetr ('b2stbc_fchycore_alpha', fchycore_alpha)
-       call xertst (0.0_R8.le.fchycore_alpha,
-     1   'faulty internal parameter fchycore_alpha')
-       call ipgetr ('b2stbc_nesepm', nesepm)
-       call xertst (0.0_R8.le.nesepm,
-     1   'faulty internal parameter nesepm')
-       call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
-       call xertst (0.0_R8.le.nesepm_sol,
-     1   'faulty internal parameter nesepm_sol')
-       call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
-       call xertst (0.0_R8.le.nepedm_sol,
-     1   'faulty internal parameter nepedm_sol')
-       call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
-       call xertst (0.0_R8.le.nesepm_pfr,
-     1   'faulty internal parameter nesepm_pfr')
-       call ipgetr ('b2stbc_volrec_sol', volrec_sol)
-       call xertst (0.0_R8.le.volrec_sol,
-     1   'faulty internal parameter volrec_sol')
-       if (volrec_sol.gt.0.0_R8) call xertst(switch%use_eirene.ne.0,
-     1  'b2stbc_volrec_sol needs implementation of cum_volrec for'//
-     2  ' fluid neutrals')
-       call ipgetr ('b2stbc_nesepm_alpha', nesepm_alpha)
-       call xertst (0.0_R8.le.nesepm_alpha,
-     1   'faulty internal parameter nesepm_alpha')
-       call ipgetr ('b2stbc_nesepm_beta', nesepm_beta)
-       call ipgetr ('b2stbc_nesepm_gamma', nesepm_gamma)
-       call xertst (0.0_R8.le.nesepm_gamma,
-     1   'faulty internal parameter nesepm_gamma')
-       call ipgetr ('b2stbc_nesepm_minpuff', nesepm_minpuff)
-       call xertst (0.0_R8.le.nesepm_minpuff,
-     1   'faulty internal parameter nesepm_minpuff')
-       call ipgetr ('b2stbc_nesepm_maxpuff', nesepm_maxpuff)
-       call xertst (0.0_R8.le.nesepm_maxpuff,
-     1   'faulty internal parameter nesepm_maxpuff')
-       call ipgetr ('b2stbc_nesepm_overshoot', nesepm_overshoot)
-       call xertst (1.0_R8.le.nesepm_overshoot.or.
-     1  0.0_R8.eq.nesepm_overshoot,
-     1  'faulty internal parameter nesepm_overshoot')
-       call ipgetr ('b2stbc_volrec_alpha', volrec_alpha)
-       call xertst (0.0_R8.le.volrec_alpha,
-     1   'faulty internal parameter volrec_alpha')
-       call ipgetr ('b2stbc_volrec_beta', volrec_beta)
-       call ipgetr ('b2stbc_volrec_overshoot', volrec_overshoot)
-       call xertst (1.0_R8.le.volrec_overshoot.or.
-     1  0.0_R8.eq.volrec_overshoot,
-     1  'faulty internal parameter volrec_overshoot')
-       if (mpg%nnreg(0).le.2) then
-         coreregno = 0
-       else
-         coreregno = 1
-       end if
-       call ipgeti ('b2stbc_coreregno', coreregno)
-       call ipgeti ('b2stbc_coreregn2', coreregn2)
-       call ipgeti ('b2stbc_solregno', solregno)
-       call ipgetr ('b2stbc_ndes_sol', ndes_sol)
-       call xertst (0.0_R8.le.ndes_sol,
-     .  'faulty internal parameter ndes_sol')
+      ifb = nFb
+      call ipgetr ('b2stbc_fnaycore', fnaycore)
+      call ipgetr ('b2stbc_fnaycore_alpha', fnaycore_alpha)
+      call xertst (0.0_R8.le.fnaycore_alpha,
+     1  'faulty internal parameter fnaycore_alpha')
+      call ipgetr ('b2stbc_fheycore', fheycore)
+      call xertst (0.0_R8.le.fheycore,
+     1  'faulty internal parameter fheycore')
+      call ipgetr ('b2stbc_fheycore_alpha', fheycore_alpha)
+      call xertst (0.0_R8.le.fheycore_alpha,
+     1  'faulty internal parameter fheycore_alpha')
+      call ipgetr ('b2stbc_fhiycore', fhiycore)
+      call xertst (0.0_R8.le.fhiycore,
+     1  'faulty internal parameter fhiycore')
+      call ipgetr ('b2stbc_fhiycore_alpha', fhiycore_alpha)
+      call xertst (0.0_R8.le.fhiycore_alpha,
+     1  'faulty internal parameter fhiycore_alpha')
+      call ipgeti ('b2tsbc_fhiycore_kinetic_energy',
+     1 fhiycore_kinetic_energy)
+      call ipgetr ('b2stbc_fchycore', fchycore)
+      call ipgetr ('b2stbc_fchycore_alpha', fchycore_alpha)
+      call xertst (0.0_R8.le.fchycore_alpha,
+     1  'faulty internal parameter fchycore_alpha')
+      call ipgetr ('b2stbc_nesepm', nesepm)
+      call xertst (0.0_R8.le.nesepm,
+     1  'faulty internal parameter nesepm')
+      call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
+      call xertst (0.0_R8.le.nesepm_sol,
+     1  'faulty internal parameter nesepm_sol')
+      call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
+      call xertst (0.0_R8.le.nepedm_sol,
+     1  'faulty internal parameter nepedm_sol')
+      call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
+      call xertst (0.0_R8.le.nesepm_pfr,
+     1  'faulty internal parameter nesepm_pfr')
+      call ipgetr ('b2stbc_volrec_sol', volrec_sol)
+      call xertst (0.0_R8.le.volrec_sol,
+     1  'faulty internal parameter volrec_sol')
+      if (volrec_sol.gt.0.0_R8) call xertst(switch%use_eirene.ne.0,
+     1 'b2stbc_volrec_sol needs implementation of cum_volrec for'//
+     2 ' fluid neutrals')
+      call ipgetr ('b2stbc_nesepm_alpha', nesepm_alpha)
+      call xertst (0.0_R8.le.nesepm_alpha,
+     1  'faulty internal parameter nesepm_alpha')
+      call ipgetr ('b2stbc_nesepm_beta', nesepm_beta)
+      call ipgetr ('b2stbc_nesepm_gamma', nesepm_gamma) !WG_RM not used anymore with new structure
+      call xertst (0.0_R8.le.nesepm_gamma,
+     1  'faulty internal parameter nesepm_gamma')
+      call ipgetr ('b2stbc_nesepm_minpuff', nesepm_minpuff)
+      call xertst (0.0_R8.le.nesepm_minpuff,
+     1  'faulty internal parameter nesepm_minpuff')
+      call ipgetr ('b2stbc_nesepm_maxpuff', nesepm_maxpuff)
+      call xertst (0.0_R8.le.nesepm_maxpuff,
+     1  'faulty internal parameter nesepm_maxpuff')
+      call ipgetr ('b2stbc_nesepm_overshoot', nesepm_overshoot)
+      call xertst (1.0_R8.le.nesepm_overshoot.or.
+     1 0.0_R8.eq.nesepm_overshoot,
+     1 'faulty internal parameter nesepm_overshoot')
+      call ipgetr ('b2stbc_volrec_alpha', volrec_alpha)
+      call xertst (0.0_R8.le.volrec_alpha,
+     1  'faulty internal parameter volrec_alpha')
+      call ipgetr ('b2stbc_volrec_beta', volrec_beta)
+      call ipgetr ('b2stbc_volrec_overshoot', volrec_overshoot)
+      call xertst (1.0_R8.le.volrec_overshoot.or.
+     1 0.0_R8.eq.volrec_overshoot,
+     1 'faulty internal parameter volrec_overshoot')
+      if (mpg%nnreg(0).le.2) then
+        coreregno = 0
+      else
+        coreregno = 1
+      end if
+      call ipgeti ('b2stbc_coreregno', coreregno)
+      call ipgeti ('b2stbc_coreregn2', coreregn2)
+      call ipgeti ('b2stbc_solregno', solregno)
+      call ipgetr ('b2stbc_ndes_sol', ndes_sol)
+      call xertst (0.0_R8.le.ndes_sol,
+     . 'faulty internal parameter ndes_sol')
 #ifdef WG_RM
-       if(fnaycore.ne.-1.0e30_R8.or.fheycore.gt.0.0_R8.or.
-     &    fhiycore.gt.0.0_R8.or.fchycore.ne.-1.0e30_R8.or.
-     2    nesepm.gt.0.0_R8) then
-         call xertst (cbirso.le.coreregno.and.
-     1          coreregno.lt.cbirso+cbnrso-1,
-     2    'faulty internal parameter coreregno')
-         if (mpg%nncut.ge.2) then
-          call xerrab('b2stbc_nesepm needs revision for DN')
-          call xertst (cbirso.le.coreregn2.and.
-     1    coreregn2.lt.cbirso+cbnrso-1,
-     2    'faulty internal parameter coreregn2')
-         endif
-       endif
+      if(fnaycore.ne.-1.0e30_R8.or.fheycore.gt.0.0_R8.or.
+     &   fhiycore.gt.0.0_R8.or.fchycore.ne.-1.0e30_R8.or.
+     2   nesepm.gt.0.0_R8) then
+        call xertst (cbirso.le.coreregno.and.
+     1         coreregno.lt.cbirso+cbnrso-1,
+     2   'faulty internal parameter coreregno')
+        if (mpg%nncut.ge.2) then
+         call xerrab('b2stbc_nesepm needs revision for DN')
+         call xertst (cbirso.le.coreregn2.and.
+     1   coreregn2.lt.cbirso+cbnrso-1,
+     2   'faulty internal parameter coreregn2')
+        endif
+      endif
 #endif
-       if(nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
-     1    nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
+      if(nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
+     1   nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
 #ifdef WG_RM
-         call xertst (cbirno.le.solregno.and.
-     1    solregno.le.cbirno+cbnrno-1,
-     2    'faulty internal parameter solregno')
+        call xertst (cbirno.le.solregno.and.
+     1   solregno.le.cbirno+cbnrno-1,
+     2   'faulty internal parameter solregno')
 #endif
-         call xertst(
-     .    (ndes_sol.gt.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
-     .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.gt.0.0_R8 .and.
-     .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
-     .     nesepm_sol.gt.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
-     .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.gt.0.0_R8),
-     .    'Simultaneous SOL feedback schemes not allowed!')
-       endif
-       if(nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or.
-     &    nesepm_pfr.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8) then
-          iyped = icsepomp/2 - 2 !This is needed to default to same vale as ST code
-          icped = icsepomp/2
-       endif
-       if(nepedm_sol.gt.0.0_R8) then
-         call ipgeti ('b2stbc_iyped', iyped)
-         icped = iyped+2
-         call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
-     &    .and. iyped.le.nomp, 'faulty input iyped')
-         call xertst (mpg%cvOnClosedSurface(omp(icped)),
-     .    'location of top of pedestal outside core region!')
-       endif
-       call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
-       call ipgetr ('b2stbc_ndes', ndes)
-       call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
+        call xertst(
+     .   (ndes_sol.gt.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
+     .    nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
+     .   (ndes_sol.eq.0.0_R8 .and. volrec_sol.gt.0.0_R8 .and.
+     .    nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
+     .   (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
+     .    nesepm_sol.gt.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
+     .   (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
+     .    nesepm_sol.eq.0.0_R8 .and. nepedm_sol.gt.0.0_R8),
+     .   'Simultaneous SOL feedback schemes not allowed!')
+      endif
+      iyped = icsepomp/2 - 2 !This is needed to default to same vale as ST code
+      icped = icsepomp/2
+      if(nepedm_sol.gt.0.0_R8) then
+        call ipgeti ('b2stbc_iyped', iyped)
+        icped = iyped+2
 #ifdef WG_RM
-       call ipgetr ('b2stbc_cbsnafac', cbsnafac)
-       call xertst (0.0_R8.lt.cbsnafac,
-     1   'faulty internal parameter cbsnafac')
+        call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
+     &   .and. iyped.le.nomp, 'faulty input iyped')
 #endif
-       call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
-       call xertst (0.0_R8.le.private_flux_puff,
-     1  'faulty internal parameter private_flux_puff')
-       call ipgeti ('b2stbc_pfrregno1', pfrregno1)
-       call ipgeti ('b2stbc_pfrregno2', pfrregno2)
-       call ipgeti ('b2stbc_isfeedback', isfeedback)
-       call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
-     1  'faulty internal parameter isfeedback')
-       if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8.or.
-     &     nesepm_pfr.gt.0.0_R8) then
+        call xertst (mpg%cvOnClosedSurface(omp(icped)),
+     .   'location of top of pedestal outside core region!')
+      endif
+      call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
+      call ipgetr ('b2stbc_ndes', ndes)
+      call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
 #ifdef WG_RM
-         call xertst (cbirso.le.pfrregno1.and.
-     1    pfrregno1.le.cbirso+cbnrso-1,
-     2    'faulty internal parameter pfrregno1')
-         call xertst (cbirso.le.pfrregno2.and.
-     1    pfrregno2.le.cbirso+cbnrso-1,
-     2    'faulty internal parameter pfrregno2')
-         if (pfrregno1.gt.cbirso) then
-           ixl1 = max(0, nint(cbrbrk(pfrregno1-1)*mpg%nx))
-         else
-           ixl1 = 0
-         endif
-         ixr1 = min(mpg%nx, nint(cbrbrk(pfrregno1)*mpg%nx))-1
-         if (pfrregno2.gt.cbirso) then
-           ixl2 = max(0, nint(cbrbrk(pfrregno2-1)*mpg%nx))
-         else
-           ixl2 = 0
-         endif
-         ixr2 = min(mpg%nx, nint(cbrbrk(pfrregno2)*mpg%nx))-1
-         call xertst (pfrregno1.eq.pfrregno2 .or.
-     &    rightix(ixr1,-1).eq.ixl2 .or. rightix(ixr2,-1).eq.ixl1,
-     .    'pfrregno1 and pfrregno2 are not connected!')
+      call ipgetr ('b2stbc_cbsnafac', cbsnafac)
+      call xertst (0.0_R8.lt.cbsnafac,
+     1  'faulty internal parameter cbsnafac')
 #endif
-         call xertst(
-     .    (ndes.gt.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
-     .     nesepm_pfr.eq.0.0_R8) .or.
-     .    (ndes.eq.0.0_R8 .and. private_flux_puff.gt.0.0_R8 .and.
-     .     nesepm_pfr.eq.0.0_R8) .or.
-     .    (ndes.eq.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
-     .     nesepm_pfr.gt.0.0_R8),
-     .    'Simultaneous PFR feedback schemes not allowed!')
-       endif
-       call ipgeti ('eirene_nesepm_istra', nesepm_istra)
-       if(nesepm_istra.gt.0) then
-         call xertst (nesepm_istra.le.nstrat,
-     1     'faulty internal parameter nesepm_istra')
-         call xertst (crcstra(nesepm_istra).eq.'C',
-     1     'Stratum nesepm_istra is not declared as a puff stratum!')
-       else
-         do istrai = 1, nstrat
-           if(nesepm_istra.le.0.and.CRCSTRA(istrai).EQ.'C') then
-             nesepm_istra=istrai
-           endif
-         enddo
-         if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
-     &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
-     *    volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &    nepedm_sol.gt.0.0_R8) then
-           icount = 0
-           do istrai = 1, nstrat
-             if (crcstra(istrai).eq.'C' .and.
-     .           species_start(istrai).le.isfeedback .and.
-     .           species_end(istrai).ge.isfeedback) icount = icount+1
-           end do
-           if (icount.eq.0) then
-             message =
-     .        'No puff stratum found for feedback scheme!'
-           else if (icount.gt.1) then
-             message =
-     .        'Multiple definitions of puff strata, use nesepm_istra'
-           end if
-           call xertst (icount.eq.1, trim(message))
-         endif
-       endif
-       if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
-     &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
-     *    volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &    nepedm_sol.gt.0.0_R8) then
-         call xertst (nesepm_istra.gt.0,
-     &     'No "C" stratum for feedback scheme specified !')
-       endif
-! OK UNTIL HERE
-#ifdef WG_TODO
-*   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
-       consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
-     &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
-     &             .and. fchycore.eq.-1.0e30_R8
-       consistent_pfr1 = ndes.eq.0.0_R8 .and. nesepm_pfr.eq.0.0_R8
-     &             .and. private_flux_puff.eq.0.0_R8
-       consistent_pfr2 = consistent_pfr1 .or. pfrregno1.eq.pfrregno2
-       consistent_sol = nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8
-     &             .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
-       do ib = 1, nbc
-         if (bcchar_st(ib).eq.'N') then
-           if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
-     .        volrec_sol.gt.0.0_R8) then
-             consistent_sol = consistent_sol .or.
-     .        bccon(isfeedback,ib).eq.11
-           end if
-           if(ndes_sol.gt.0.0_R8) then
-             consistent_sol = consistent_sol .or.
-     .        bccon(isfeedback,ib).eq.12
-           end if
-         else if (bcchar_st(ib).eq.'S') then
-           if (mpg%cvOnClosedSurface(mpg%bcCv(mpg%bcCvP(ib,1),1))) then
-             if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
-               consistent_core = consistent_core .or.
-     .          bccon(isfeedback,ib).eq.11
-             end if
-             if(fheycore.gt.0.0_R8) then
-               consistent_core = consistent_core .or. bcene(ib).eq.10
-             end if
-             if(fhiycore.gt.0.0_R8) then
-               consistent_core = consistent_core .or. bceni(ib).eq.10
-             end if
-             if(fchycore.ne.-1.0e30_R8) then
-               consistent_core = consistent_core .or. bcpot(ib).eq.10
-             end if
-           else
-             if(ndes.gt.0.0_R8) then
-               if (mod(mpg%cvReg(mpg%bcCv(mpg%bcCvP(ib,1),1)),4).eq.3)
-     &         then
-                 consistent_pfr1 = consistent_pfr1 .or.
-     .            bccon(isfeedback,ib).eq.12
-               else
-                 consistent_pfr2 = consistent_pfr2 .or.
-     .            bccon(isfeedback,ib).eq.12
-               end if
-             end if
-             if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8)
-     >        then
-               if (mod(mpg%cvReg(mpg%bcCv(mpg%bcCvP(ib,1),1)),4).eq.3)
-     &         then
-                 consistent_pfr1 = consistent_pfr1 .or.
-     .            bccon(isfeedback,ib).eq.11
-               else
-                 consistent_pfr2 = consistent_pfr2 .or.
-     .            bccon(isfeedback,ib).eq.11
-               end if
-             end if
-           end if
-         end if
-       end do
-       consistent = consistent_core .and. consistent_sol .and.
-     &              consistent_pfr1 .and. consistent_pfr2
-       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
-     &  switch%b2stbc_boundary_namelist.lt.1
-       call xertst (consistent,
-     .  'feedback scheme not consistent with B.C.''s!')
+      call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
+      call xertst (0.0_R8.le.private_flux_puff,
+     1 'faulty internal parameter private_flux_puff')
+      call ipgeti ('b2stbc_pfrregno1', pfrregno1)
+      call ipgeti ('b2stbc_pfrregno2', pfrregno2)
+      call ipgeti ('b2stbc_isfeedback', isfeedback)
+      call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
+     1 'faulty internal parameter isfeedback')
+      if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8.or.
+     &    nesepm_pfr.gt.0.0_R8) then
+#ifdef WG_RM
+        call xertst (cbirso.le.pfrregno1.and.
+     1   pfrregno1.le.cbirso+cbnrso-1,
+     2   'faulty internal parameter pfrregno1')
+        call xertst (cbirso.le.pfrregno2.and.
+     1   pfrregno2.le.cbirso+cbnrso-1,
+     2   'faulty internal parameter pfrregno2')
+        if (pfrregno1.gt.cbirso) then
+          ixl1 = max(0, nint(cbrbrk(pfrregno1-1)*mpg%nx))
+        else
+          ixl1 = 0
+        endif
+        ixr1 = min(mpg%nx, nint(cbrbrk(pfrregno1)*mpg%nx))-1
+        if (pfrregno2.gt.cbirso) then
+          ixl2 = max(0, nint(cbrbrk(pfrregno2-1)*mpg%nx))
+        else
+          ixl2 = 0
+        endif
+        ixr2 = min(mpg%nx, nint(cbrbrk(pfrregno2)*mpg%nx))-1
+        call xertst (pfrregno1.eq.pfrregno2 .or.
+     &   rightix(ixr1,-1).eq.ixl2 .or. rightix(ixr2,-1).eq.ixl1,
+     .   'pfrregno1 and pfrregno2 are not connected!')
 #endif
+        call xertst(
+     .   (ndes.gt.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
+     .    nesepm_pfr.eq.0.0_R8) .or.
+     .   (ndes.eq.0.0_R8 .and. private_flux_puff.gt.0.0_R8 .and.
+     .    nesepm_pfr.eq.0.0_R8) .or.
+     .   (ndes.eq.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
+     .    nesepm_pfr.gt.0.0_R8),
+     .   'Simultaneous PFR feedback schemes not allowed!')
+      endif
+      call ipgeti ('eirene_nesepm_istra', nesepm_istra)
+      if(nesepm_istra.gt.0) then
+        call xertst (nesepm_istra.le.nstrat,
+     1    'faulty internal parameter nesepm_istra')
+        call xertst (crcstra(nesepm_istra).eq.'C',
+     1    'Stratum nesepm_istra is not declared as a puff stratum!')
+      else
+        do istrai = 1, nstrat
+          if(nesepm_istra.le.0.and.CRCSTRA(istrai).EQ.'C') then
+            nesepm_istra=istrai
+          endif
+        enddo
+        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+     &   private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
+     *   volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
+     &   nepedm_sol.gt.0.0_R8) then
+          icount = 0
+          do istrai = 1, nstrat
+            if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.isfeedback .and.
+     .          species_end(istrai).ge.isfeedback) icount = icount+1
+          end do
+          if (icount.eq.0) then
+            message =
+     .       'No puff stratum found for feedback scheme!'
+          else if (icount.gt.1) then
+            message =
+     .       'Multiple definitions of puff strata, use nesepm_istra'
+          end if
+          call xertst (icount.eq.1, trim(message))
+        endif
+      endif
+      if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+     &   private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
+     *   volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
+     &   nepedm_sol.gt.0.0_R8) then
+        call xertst (nesepm_istra.gt.0,
+     &    'No "C" stratum for feedback scheme specified !')
+      endif
 
 ! now add the feedbacks turned on with switches into the new format
 ! the idea should be that any switch overrides what is in b2.feedback_control.parameters
-       if (fnaycore.ne.-1.0e30_R8) then
-         ifbb=0
-         do ifb=1,nFb
-           if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present..
-         enddo
-         if (ifbb.eq.0) then
-           nFb = nFb + 1
-           ifbb = nFb
-         endif 
-         call xertst(nFb.le.DEF_NATM,
-     &    'init_feedback: increase size of DEF_NATM')
-         fb_type(ifbb) = 10
-         fb_rescale_option(ifbb) = 1
-         fb_target(ifbb) = fnaycore
-         fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-         fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-         fb_actuator(ifbb) = 1
-         fb_species(ifbb) = isfeedback
-         fb_alpha(ifbb) = fnaycore_alpha
-       endif
-       if (fheycore.ne.0.0_R8) then
-         ifbb=0
-         do ifb=1,nFb
-           if (fb_type(ifb).eq.11) ifbb=ifb !to override what is present..
-         enddo
-         if (ifbb.eq.0) then
-           nFb = nFb + 1
-           ifbb = nFb
-         endif 
-         call xertst(nFb.le.DEF_NATM,
-     &    'init_feedback: increase size of DEF_NATM')
-         fb_type(ifbb) = 11
-         fb_rescale_option(ifbb) = 1
-         fb_target(ifbb) = fheycore
-         fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-         fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-         fb_actuator(ifbb) = 4
-         fb_alpha(ifbb) = fheycore_alpha
-       endif
-       if (fhiycore.ne.0.0_R8) then
-         ifbb=0
-         do ifb=1,nFb
-           if (fb_type(ifb).eq.12) ifbb=ifb !to override what is present..
-         enddo
-         if (ifbb.eq.0) then
-           nFb = nFb + 1
-           ifbb = nFb
-         endif 
-         call xertst(nFb.le.DEF_NATM,
-     &    'init_feedback: increase size of DEF_NATM')
-         fb_type(ifbb) = 12
-         fb_rescale_option(ifbb) = 1
-         fb_target(ifbb) = fhiycore
-         fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-         fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-         fb_actuator(ifbb) = 5
-         fb_alpha(ifbb) = fhiycore_alpha
-       endif
-       if (fchycore.ne.-1.0e30_R8) then
-         ifbb=0
-         do ifb=1,nFb
-           if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present..
-         enddo
-         if (ifbb.eq.0) then
-           nFb = nFb + 1
-           ifbb = nFb
-         endif 
-         call xertst(nFb.le.DEF_NATM,
-     &    'init_feedback: increase size of DEF_NATM')
-         fb_type(ifbb) = 13
-         fb_rescale_option(ifbb) = 1
-         fb_target(ifbb) = fchycore
-         fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-         fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-         fb_actuator(ifbb) = 6
-         fb_alpha(ifbb) = fchycore_alpha
-       endif
-! only one between ndes_sol - volrec_sol - nesepm_sol - nepedm_sol
-! only one between ndes - private_flux_puff - nesepm_pfr
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-       do ifb = 1, nFb
-         if (fb_actuator(ifb).ne.1) cycle
-         if(fb_istra(ifb).gt.0) then
-           call xertst (fb_istra(ifb).le.nstrat,
-     1       'faulty internal parameter fb_istra')
-           call xertst (crcstra(fb_istra(ifb)).eq.'C',
-     1       'Stratum fb_istra is not declared as a puff stratum!')
-         else
-           do istrai = 1, nstrat
-             if(fb_istra(ifb).le.0.and.CRCSTRA(istrai).EQ.'C') then
-               fb_istra(ifb)=istrai
-             endif
-           enddo
-           icount = 0
-           do istrai = 1, nstrat
-             if (crcstra(istrai).eq.'C' .and.
-     .           species_start(istrai).le.fb_species(ifb) .and.
-     .           species_end(istrai).ge.fb_species(ifb)) 
-     .           icount = icount+1
-           end do
-           if (icount.eq.0) then
-             message =
-     .        'No puff stratum found for feedback scheme!'
-           else if (icount.gt.1) then
-             message =
-     .        'Multiple definitions of puff strata, use nesepm_istra'
-           end if
-           call xertst (icount.eq.1, trim(message))
-         endif
-         call xertst (fb_istra(ifb).gt.0,
-     &     'No "C" stratum for feedback scheme specified !')
-       enddo
-
-       consistent = .true.
-       do ifb = 1, nFb
-         if (fb_ib(ifb).le.0) cycle
-         call xertst(fb_species(ifb)+1.le.natmi,
-     &     'Init_feedback: fb_species must refer to atoms!')
-         is0 = eb2spcr(fb_species(ifb)+1)
-         is_start = is0+1
-         is_end = is0+nfluids(is0+1)
-         consistent = consistent .and.
-     &    ((fb_target(ifb) .eq. 0.0_R8 .or.
-     &      fb_type(ifb) .eq. 0 .or.
-     &      fb_rescale_option(ifb) .eq. 0 .or.
-     &      fb_actuator(ifb) .eq. 0) .or.
-! FIXME for the moment allow only standard prescribed flux/density BCs (i.e. not the SPb advanced versions with perturbations)
-     &     (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &      bccon(is0,fb_ib(ifb)) .eq. 8) .or.
-     &     fb_actuator(ifb) .eq. 2 .or.
-     &     (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &      bccon(is0,fb_ib(ifb)) .eq. 8) .or.
-     &     (fb_actuator(ifb) .eq. 3 .and. !charged particle flux
-     &      maxval(bccon(is_start:is_end,
-     .                   fb_ib(ifb))).eq.8 .and.
-     &      minval(bccon(is_start:is_end,
-     .                   fb_ib(ifb))).eq.8 .and.
-     &      fb_type(ifb).eq.6) .or.
-     &     (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
-     &      bcene(fb_ib(ifb)) .eq. 8) .or.
-     &     (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
-     &      bceni(fb_ib(ifb)) .eq. 8) .or.
-     &     (fb_actuator(ifb) .eq. 6 .and. !current
-     &      bcpot(fb_ib(ifb)) .eq. 8) .or.
-     &     (fb_actuator(ifb) .eq. 7 .and. !density
-     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1))
-       end do
-       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
-     &  switch%b2stbc_boundary_namelist.lt.1
-       do ifb = 1, nFb
-         if (fb_ib(ifb).ge.0) cycle
-         consistent = consistent .and.
-     &     .not.(fb_actuator(ifb).eq.1 .or.
-     &           fb_actuator(ifb).eq.3) .and.
-     &     .not.(fb_rescale_option(ifb).eq.4)
-       end do
-       do ifb = 1, nFb
-         if (fb_actuator(ifb).ne.2) cycle
-         do is = is_start, is_end
-           do ib = 1, nbc
-             consistent = consistent .and.
-     &        (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
-     &         bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
-     &         bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
-     &         bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
-     &        (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
-     &        (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8))
-           end do
-         end do
-       end do
-       call xertst (consistent,
-     .  'feedback scheme not consistent with B.C.''s!')
+      if (fnaycore.ne.-1.0e30_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_fnaycore not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 10
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = fnaycore
+        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
+        fb_ib(ifbb) = coreregno ! FIXME
+        fb_actuator(ifbb) = 3
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = fnaycore_alpha
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (fheycore.ne.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_fheycore not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.11) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 11
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = fheycore
+        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
+        fb_ib(ifbb) = coreregno ! FIXME
+        fb_actuator(ifbb) = 4
+        fb_alpha(ifbb) = fheycore_alpha
+      endif
+      if (fhiycore.ne.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.12) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 12
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = fhiycore
+        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
+        fb_ib(ifbb) = coreregno ! FIXME
+        fb_actuator(ifbb) = 5
+        fb_alpha(ifbb) = fhiycore_alpha
+      endif
+      if (fchycore.ne.-1.0e30_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 13
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = fchycore
+        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
+        fb_ib(ifbb) = coreregno ! FIXME
+        fb_actuator(ifbb) = 6
+        fb_alpha(ifbb) = fchycore_alpha
+      endif
+      if (ndes.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_ndes not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 14
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = ndes
+        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (nesepm.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 3
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = nesepm
+        fb_ib(ifbb) = coreregno ! FIXME
+        fb_actuator(ifbb) = 3
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = nesepm_alpha
+        fb_overshoot(ifbb) = nesepm_overshoot
+      endif
+      if (nesepm_sol.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm_sol not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 3
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = nesepm_sol
+        fb_ib(ifbb) = solregno ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = nesepm_alpha
+        fb_beta(ifbb) = nesepm_beta
+        fb_puff_min(ifbb) = nesepm_minpuff
+        fb_puff_max(ifbb) = nesepm_maxpuff
+        fb_overshoot(ifbb) = nesepm_overshoot
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (ndes_sol.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_ndes_sol not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 14
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = ndes_sol
+        fb_ib(ifbb) = solregno ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = nesepm_alpha
+        fb_puff_min(ifbb) = nesepm_minpuff
+        fb_puff_max(ifbb) = nesepm_maxpuff
+        fb_overshoot(ifbb) = nesepm_overshoot
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (nesepm_pfr.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm_pfr not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 3
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = nesepm_pfr
+        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = nesepm_alpha
+        fb_puff_min(ifbb) = nesepm_minpuff
+        fb_puff_max(ifbb) = nesepm_maxpuff
+        fb_overshoot(ifbb) = nesepm_overshoot
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (private_flux_puff.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_private_flux_puff '//
+     &  'not fully backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 10
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = private_flux_puff
+        fb_reg_par(ifbb,1) = pfrregno1 ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_reg_par(ifbb,2) = pfrregno2 ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
+        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = nesepm_alpha
+        fb_puff_min(ifbb) = nesepm_minpuff
+        fb_puff_max(ifbb) = nesepm_maxpuff
+        fb_overshoot(ifbb) = nesepm_overshoot
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (volrec_sol.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_volrec_sol '//
+     &  'not fully backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.15) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 15
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = volrec_sol
+        fb_ib(ifbb) = solregno ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_alpha(ifbb) = volrec_alpha
+        fb_beta(ifbb) = volrec_beta
+        fb_puff_min(ifbb) = nesepm_minpuff
+        fb_puff_max(ifbb) = nesepm_maxpuff
+        fb_overshoot(ifbb) = volrec_overshoot
+        fb_istra(ifbb) = nesepm_istra
+      endif
+      if (nepedm_sol.gt.0.0_R8) then
+        write(*,*) 'WARNING! Feedback b2stbc_nepedm_sol not fully'//
+     &  'backward compatible in WG'
+        ifbb=0
+        do ifb=1,nFb
+          if (fb_type(ifb).eq.16) ifbb=ifb !to override what is present..
+        enddo
+        if (ifbb.eq.0) then
+          nFb = nFb + 1
+          ifbb = nFb
+        endif 
+        call xertst(nFb.le.DEF_NATM,
+     &   'init_feedback: increase size of DEF_NATM')
+        fb_type(ifbb) = 16
+        fb_rescale_option(ifbb) = 1
+        fb_target(ifbb) = nepedm_sol
+        fb_ib(ifbb) = solregno ! FIXME
+        fb_actuator(ifbb) = 1
+        fb_species(ifbb) = isfeedback
+        fb_istra(ifbb) = nesepm_istra
+      endif
 
       call xertst(nFb.le.DEF_NATM,
      & 'b2mod_feedback: increase size of DEF_NATM')
 
+      do ifb = 1, nFb
+        if (fb_actuator(ifb).ne.1) cycle
+        if(fb_istra(ifb).gt.0) then
+          call xertst (fb_istra(ifb).le.nstrat,
+     1      'faulty internal parameter fb_istra')
+          call xertst (crcstra(fb_istra(ifb)).eq.'C',
+     1      'Stratum fb_istra is not declared as a puff stratum!')
+        else
+          do istrai = 1, nstrat
+            if(fb_istra(ifb).le.0.and.CRCSTRA(istrai).EQ.'C') then
+              fb_istra(ifb)=istrai
+            endif
+          enddo
+          icount = 0
+          do istrai = 1, nstrat
+            if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.fb_species(ifb) .and.
+     .          species_end(istrai).ge.fb_species(ifb)) 
+     .          icount = icount+1
+          end do
+          if (icount.eq.0) then
+            message =
+     .       'No puff stratum found for feedback scheme!'
+          else if (icount.gt.1) then
+            message =
+     .       'Multiple definitions of puff strata, use nesepm_istra'
+          end if
+          call xertst (icount.eq.1, trim(message))
+        endif
+        call xertst (fb_istra(ifb).gt.0,
+     &    'No "C" stratum for feedback scheme specified !')
+      enddo
+
+      consistent = .true.
+      do ifb = 1, nFb
+        if (fb_ib(ifb).le.0 .and. .not.fb_actuator(ifb).eq.2)
+     &    call xerrab('Init_feedback: fb_ib<=0 and actuator=/2')
+        call xertst(fb_species(ifb)+1.le.ns,
+     &    'Init_feedback: fb_species>ns!')
+        iatm = b2espcr(fb_species(ifb))
+        is0 = eb2spcr(iatm)
+        do ifbb = ifb+1, nFb
+          is0 = eb2spcr(b2espcr(fb_species(ifbb)))
+          call xertst(.not.(is0.eq.is00),'init_feedback: cannot '//
+     &     'define multiple feedbacks on same atom sequence')
+          if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
+     &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
+     &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
+     &          (fb_type(ifb).eq.8)) ) call xerrab('init_feedback:'//
+     &      ' set of feedbacks cannot be applied multiple times')
+        enddo
+        is_start = is0+1
+        is_end = is0+nfluids(iatm)
+        consistent = consistent .and.
+     &   ((fb_target(ifb) .eq. 0.0_R8 .or.
+     &     fb_type(ifb) .eq. 0 .or.
+     &     fb_rescale_option(ifb) .eq. 0 .or.
+     &     fb_actuator(ifb) .eq. 0) .or.
+     &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
+     &     bccon(is0,fb_ib(ifb)) .eq. 8) .or.
+     &    fb_actuator(ifb) .eq. 2 .or.
+     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
+     &     maxval(bccon(is_start:is_end,
+     .                  fb_ib(ifb))).eq.8 .and.
+     &     minval(bccon(is_start:is_end,
+     .                  fb_ib(ifb))).eq.8 .and.
+     &     fb_type(ifb).eq.6) .or.
+     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
+     &     bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .and.
+     &     .not.fb_type(ifb).eq.6) .or.
+     &    (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
+     &     bcene(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
+     &     bceni(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 6 .and. !current
+     &     bcpot(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 7 .and. !density
+     &     bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1))
+      end do
+      consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
+     & switch%b2stbc_boundary_namelist.lt.1
+      do ifb = 1, nFb
+        if (fb_ib(ifb).ge.0) cycle
+        consistent = consistent .and.
+     &    .not.(fb_actuator(ifb).eq.1 .or.
+     &          fb_actuator(ifb).eq.3) .and.
+     &    .not.(fb_rescale_option(ifb).eq.4)
+      end do
+      do ifb = 1, nFb
+        if (fb_actuator(ifb).ne.2) cycle
+        do is = is_start, is_end
+          do ib = 1, nbc
+            consistent = consistent .and.
+     &       (bccon(is,ib).eq.0 .or. bccon(is,ib).eq.2 .or.
+     &        bccon(is,ib).eq.3 .or. bccon(is,ib).eq.4 .or.
+     &        bccon(is,ib).eq.9 .or. bccon(is,ib).eq.10.or.
+     &        bccon(is,ib).eq.14.or. bccon(is,ib).eq.15.or.
+     &       (bccon(is,ib).eq.5 .and.conpar(is,ib,1).eq.0.0_R8).or.
+     &       (bccon(is,ib).eq.8 .and.conpar(is,ib,1).eq.0.0_R8))
+          end do
+        end do
+      end do
+      call xertst (consistent,
+     . 'feedback scheme not consistent with B.C.''s!')
 
       if (.not.feedback_allocated) then
         allocate(fbRegP(nFb,2),fbReg(nMxFbReg))
@@ -721,10 +865,10 @@ cxpb size is changed in DIMENSIONS.F
             done = .true.
           endif
         ! now look for feedback types requiring faces
-          if ((fb_type(ifb).eq.6 .or. fb_type(ifb).eq.7 .or.  
-     &        fb_type(ifb).eq.10 .or.fb_type(ifb).eq.11 .or.
-     &        fb_type(ifb).eq.12 .or.fb_type(ifb).eq.13 .or.
-     &        fb_type(ifb).eq.15) .and. .not.done) then
+          if ((fb_type(ifb).eq.6 .or. fb_type(ifb).eq.10 .or.  
+     &        fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
+     &        fb_type(ifb).eq.13)
+     &        .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
      &        ' in fb_reg_par for fb_type=  6, 7, 10-13 and 15')
@@ -743,8 +887,8 @@ cxpb size is changed in DIMENSIONS.F
           endif
         ! now look for feedback types requiring volumes
           if ((fb_type(ifb).eq.1 .or. fb_type(ifb).eq.2 .or.  
-     &        fb_type(ifb).eq.5 .or.fb_type(ifb).eq.8) .and.
-     &        .not.done) then
+     &        fb_type(ifb).eq.4  .or. fb_type(ifb).eq.5 .or.
+     &        fb_type(ifb).eq.8) .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
      &        ' in fb_reg_par for fb_type=  1, 2, 5 and 8')
@@ -788,7 +932,7 @@ cxpb size is changed in DIMENSIONS.F
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
      & is_end, iss
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback
+      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, add
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -830,7 +974,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,*)
      &           'compute_feedback_type: using ',
      &           'local_density for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               fb_current(ifb) = 0.0_R8
@@ -838,14 +982,13 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    fb_current(ifb) =
-     &                fb_current(ifb) +
-     &                pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                    add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                    fb_current(ifb) = fb_current(ifb) + add
                     if(is.eq.is_start) then
                       vol_feedback = vol_feedback +
      &                               geo%cvVol(fbReg(icv))
@@ -863,7 +1006,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'local_electron_density for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               fb_current(ifb) = 0.0_R8
@@ -871,7 +1014,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                 if(b2espcr(is).eq.fb_species(ifb)+1) then
+                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                    if(is_start.eq.-1) is_start=is
                    is_end=is
                  endif
@@ -879,8 +1022,7 @@ cxpb size is changed in DIMENSIONS.F
               ic1 = fbRegP(ifb,1)
               ic2 = ic1 + fbRegP(ifb,2) - 1
               do iCv = ic1, ic2
-                fb_current(ifb) =
-     &            fb_current(ifb) +
+                fb_current(ifb) = fb_current(ifb) +
      &            dv%ne(fbReg(icv)) * geo%cvVol(fbReg(icv))
                 vol_feedback = vol_feedback +
      &                         geo%cvVol(fbReg(icv))
@@ -894,7 +1036,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
      &           'nesepm_electron_density for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               fb_current(ifb) = 0.5_R8 *
@@ -902,7 +1044,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -914,22 +1056,21 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'total particle content for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
               fb_current(ifb) = 0.0_R8
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
                     if(mpg%cvReg(fbReg(icv)).ne.0 .and.
      &                 fbReg(icv).le.mpg%nCi) then
-                      fb_current(ifb) =
-     &                  fb_current(ifb) +
-     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                      add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                      fb_current(ifb) = fb_current(ifb) + add
                     endif
                   enddo
                   is_end=is
@@ -942,23 +1083,22 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'total ion content for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
               fb_current(ifb) = 0.0_R8
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(is_neutral(is)) cycle
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
                     if(mpg%cvReg(fbReg(icv)).ne.0 .and.
      &                 fbReg(icv).le.mpg%nCi) then
-                      fb_current(ifb) =
-     &                  fb_current(ifb) +
-     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                      add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
+                      fb_current(ifb) = fb_current(ifb) + add
                     endif
                   enddo
                   is_end=is
@@ -973,7 +1113,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'core boundary flux for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
               fb_current(ifb) = fb_const(fb_species(ifb))
               write(*,*) 'WARNING: fb_type = 6 needs to be'//
@@ -996,9 +1136,9 @@ cxpb size is changed in DIMENSIONS.F
               call xerrab('fb_type=6 not yet adapted for'//
      &          ' pure fluid cases')
 #endif
-              is_start = eb2spcr(fb_species(ifb)+1)
-              is_end = eb2spcr(fb_species(ifb)+1)+
-     &          nfluids(fb_species(ifb)+1)
+              is_start = eb2spcr(b2espcr(fb_species(ifb)))
+              is_end = eb2spcr(b2espcr(fb_species(ifb)))+
+     &          nfluids(b2espcr(fb_species(ifb)))
               allocate(charge_frac(1:is_end-is_start+1))
               charge_frac = 0.0_R8
               sum_s = 0.0_R8
@@ -1026,35 +1166,37 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'average separatrix concentration for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
               fb_current(ifb) = 0.0_R8
               sum_e = 0.0_R8
               is_start = -1
               is_end = -1
               do is = 0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = fbRegP(ifb,1)
-                  ifc2 = ifc1 + fbRegP(ifb,2) - 1
+                  ifc1 = mpg%fsFcP(ifssep,1)
+                  ifc2 = ifc1 + mpg%fsFcP(ifssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   do iFc = ifc1, ifc2
-                    ic1 = mpg%fcCv(fbReg(iFc),1)
-                    ic2 = mpg%fcCv(fbReg(iFc),2)
-                    fb_current(ifb) =
-     &                fb_current(ifb) + (pl%na(ic1,is) +
-     &                pl%na(ic2,is)) * geo%fcS(fbReg(iFc))
-                    if (is.eq.is_start+1) then
-                      sum_e = sum_e + (dv%ne(ic1) +
-     &                  dv%ne(ic2)) * geo%fcS(fbReg(iFc))
+                    ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
+                    ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
+                    if(mpg%cvOnClosedSurface(ic1) .or. 
+     &                 mpg%cvOnClosedSurface(ic2)) then
+                      add = (pl%na(ic1,is) + pl%na(ic2,is)) *
+     &                  geo%fcS(mpg%fsFc(iFc))
+                      fb_current(ifb) = fb_current(ifb) + add
+                      if (is.eq.is_start+1) then
+                        sum_e = sum_e + (dv%ne(ic1) +
+     &                    dv%ne(ic2)) * geo%fcS(mpg%fsFc(iFc))
+                      end if
                     end if
                   enddo
                   is_end = is
                 endif
               enddo
-
               fb_current(ifb) = fb_current(ifb)/sum_e
 
             case (8) ! relative average concentration of this species on desired domain
@@ -1062,22 +1204,22 @@ cxpb size is changed in DIMENSIONS.F
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using average ',
-     &            'concentration for sequence ', fb_species(ifb)+1      
+     &            'concentration for sequence ', 
+     &            b2espcr(fb_species(ifb))   
               endif
               fb_current(ifb) = 0.0_R8
               sum_e = 0.0_R8
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    fb_current(ifb) =
-     &                fb_current(ifb) +
-     &                pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
+                    add = pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
+                    fb_current(ifb) = fb_current(ifb) + add
                     if (is.eq.is_start+1) then
                       sum_e = sum_e +
      &                  dv%ne(fbReg(iCv)) * geo%cvVol(fbReg(iCv))
@@ -1094,7 +1236,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
      &           'inner_midplance_electron_density for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               fb_current(ifb) = 0.5_R8 *
@@ -1102,7 +1244,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1114,11 +1256,9 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'radial particle flux for sequence ',
-     &            fb_species(ifb)+1
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
+     &            b2espcr(fb_species(ifb))
               endif
-              fb_current(ifb)=0.0_R8
+              fb_current(ifb) = 0.0_R8
               ifc1 = fbRegP(ifb,1)
               ifc2 = ifc1 + fbRegP(ifb,2) - 1
               do iFc = ifc1, ifc2
@@ -1128,7 +1268,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1140,8 +1280,6 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'electron heat flux'
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
               endif
 #ifdef COMPLICATED
               call xerrab('COMPLICATED not yet converted for WG')
@@ -1152,7 +1290,7 @@ cxpb size is changed in DIMENSIONS.F
               teave2=0.0_R8
               neave2=0.0_R8
 #endif
-              fb_current(ifb)=0.0_R8
+              fb_current(ifb) = 0.0_R8
               ifc1 = fbRegP(ifb,1)
               ifc2 = ifc1 + fbRegP(ifb,2) - 1
               do iFc = ifc1, ifc2
@@ -1178,7 +1316,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1190,8 +1328,6 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'ion heat flux '
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
               endif
 #ifdef COMPLICATED
               call xerrab('COMPLICATED not yet converted for WG')
@@ -1202,7 +1338,7 @@ cxpb size is changed in DIMENSIONS.F
               tiave2=0.0_R8
               niave2=0.0_R8
 #endif
-              fb_current(ifb)=0.0_R8
+              fb_current(ifb) = 0.0_R8
               ifc1 = fbRegP(ifb,1)
               ifc2 = ifc1 + fbRegP(ifb,2) - 1
               do iFc = ifc1, ifc2
@@ -1228,7 +1364,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1240,10 +1376,8 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'current '
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
               endif
-              fb_current(ifb)=0.0_R8
+              fb_current(ifb) = 0.0_R8
               ifc1 = fbRegP(ifb,1)
               ifc2 = ifc1 + fbRegP(ifb,2) - 1
               do iFc = ifc1, ifc2
@@ -1253,7 +1387,7 @@ cxpb size is changed in DIMENSIONS.F
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1265,24 +1399,19 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'total particle content for sequence ',
-     &            fb_species(ifb) 
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
+     &            b2espcr(fb_species(ifb)) 
               endif
-              fb_current(ifb) = 0.0_R8
-              do icv = 1, nCv
-                do is = 0, ns-1
-                  if (zn(is).eq.zn(fb_species(ifb)).and.
-     &                abs(am(is)-am(fb_species(ifb))).lt.amtol)
-     >           fb_current(ifb) = fb_current(ifb) + 
-     &             pl%na(icv,is)*geo%cvVol(icv)
-                enddo
-              enddo
+
               is_start=-1
               is_end=-1
+              fb_current(ifb) = 0.0_R8
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
+                  do icv = 1, nCv
+                   add = pl%na(icv,is)*geo%cvVol(icv)
+                   fb_current(ifb) = fb_current(ifb) + add
+                  enddo
                   is_end=is
                 endif
               enddo
@@ -1293,14 +1422,13 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'volumetric recombination '
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
               endif
               ! in principle nothing to be done here...
+              fb_current(ifb) = cum_volrec
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1312,14 +1440,12 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'pedestal density '
-                if(saved_fb_actuator(ifb).ne.0.0_R8)
-     &            fb_actuator(ifb)=saved_fb_actuator(ifb)
               endif
               fb_current(ifb) = dv%ne(omp(icped))
               is_start=-1
               is_end=-1
               do is=0, ns-1
-                if(b2espcr(is).eq.fb_species(ifb)+1) then
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
@@ -1344,7 +1470,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &            'compute_feedback_option: using ',
      &            'slowed_rescale for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
 
               fb_rescale(ifb) =
@@ -1359,7 +1485,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_option: using ',
      &           'rescale for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
 
               fb_rescale(ifb) = fb_target(ifb) /
@@ -1371,7 +1497,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_option: using ',
      &           'tanh_log_rescale for sequence ',
-     &            fb_species(ifb)+1
+     &            b2espcr(fb_species(ifb))
               endif
 
 ! 2**(tanh(log(x)/b)*log(a)/log(2))
@@ -1388,13 +1514,13 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_option: using ',
      &           'SOLPS4 linear increase for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).lt.0.0_R8) then
                   fb_const(ifb) = 0.0_R8
                   is_start=-1
                   is_end=-1
                   do is=0, ns-1
-                    if(b2espcr(is).eq.fb_species(ifb)+1) then
+                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                       if(is_start.eq.-1) is_start=is
                       ic1 = fbRegP(ifb,1)
                       ic2 = ic1 + fbRegP(ifb,2) - 1
@@ -1432,13 +1558,13 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,*)
      &           'compute_feedback_option: using ',
      &           'SOLPS4 exponential decay for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).lt.0.0_R8) then
                   fb_const(ifb) = 0.0_R8
                   is_start=-1
                   is_end=-1
                   do is=0, ns-1
-                    if(b2espcr(is).eq.fb_species(ifb)+1) then
+                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                       if(is_start.eq.-1) is_start=is
                       do iCv = 1, mpg%nCi
                         if(mpg%cvReg(iCv).ne.0) then
@@ -1478,7 +1604,7 @@ cxpb size is changed in DIMENSIONS.F
             end select
 
             write(*,'(a,1x,1p,i3,6g15.6)')
-     &        'feedback_rescale ', fb_species(ifb)+1, 
+     &        'feedback_rescale ', b2espcr(fb_species(ifb)), 
      &        fb_current(ifb),
      &        fb_target(ifb),
      &        fb_rescale(ifb),
@@ -1497,7 +1623,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_actuator: using ',
      &           'gas_puff for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
@@ -1553,7 +1679,7 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a,i3)')
      &           'compute_feedback_actuator: using ',
      &           'density rescale for sequence ',
-     &           fb_species(ifb)+1
+     &           b2espcr(fb_species(ifb))
               endif
 
               do is = is_start, is_end
@@ -1601,13 +1727,13 @@ cxpb size is changed in DIMENSIONS.F
               if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
      &           'compute_feedback_actuator: using ',
-     &           'core boundary flux condition for sequence ',
-     &           fb_species(ifb)+1
+     &           'boundary flux condition for sequence ',
+     &           b2espcr(fb_species(ifb))
               endif
 
-              is_start = eb2spcr(fb_species(ifb)+1)+1
-              is_end = eb2spcr(fb_species(ifb)+1) +
-     &          nfluids(fb_species(ifb)+1)
+              is_start = eb2spcr(b2espcr(fb_species(ifb)))+1
+              is_end = eb2spcr(b2espcr(fb_species(ifb))) +
+     &          nfluids(b2espcr(fb_species(ifb)))
 
               if(feedback_namelist_used .and.
      &             ncall .eq. 0 .and.
@@ -1615,10 +1741,20 @@ cxpb size is changed in DIMENSIONS.F
      &             saved_fb_actuator(ifb) =
      &             conpar(is_end, fb_ib(ifb), 1)
 
-              saved_fb_actuator(ifb) =
+              if (fb_type(ifb).eq.6) then !csc, this is for backward compatibility, can probably be removed
+                saved_fb_actuator(ifb) =
      &             (1.0_R8 - fb_alpha(ifb)) *
      &             saved_fb_actuator(ifb) +
      &             fb_rescale(ifb)
+              else
+                if (fb_rescale_option(ifb).lt.4) then
+                  saved_fb_actuator(ifb) =
+     &              saved_fb_actuator(ifb) * fb_rescale(ifb)
+                else
+                  saved_fb_actuator(ifb) =
+     &              fb_rescale(ifb)
+                endif
+              end if
 
               if(fb_puff_min(ifb) .ge. 0.0_R8)
      &             saved_fb_actuator(ifb) =
@@ -1638,20 +1774,115 @@ cxpb size is changed in DIMENSIONS.F
                  total_flux = saved_fb_actuator(ifb)
               endif
 
-              do is = is_start, is_end
-                iss = is-is_start+1
-                conpar(is, fb_ib(ifb), 1) =
-     &            total_flux * charge_frac(iss)
-              end do
+              if (fb_type(ifb).eq.6) then
+                do is = is_start, is_end
+                  iss = is-is_start+1
+                  conpar(is, fb_ib(ifb), 1) =
+     &              total_flux * charge_frac(iss)
+                end do
+               deallocate(charge_frac)
+              else
+                conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
+              endif
 
             case (4) ! electron heat flux
-              call xerrab('fb_actuator=4 not converted')
+
+              if(ncall.eq.0) then
+                     write(*,'(a,a)')
+     &           'compute_feedback_actuator: using ',
+     &           'electron heat flux boundary condition'
+              endif
+
+              if(feedback_namelist_used .and.
+     &             ncall .eq. 0 .and.
+     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &             saved_fb_actuator(ifb) =
+     &             enepar(fb_ib(ifb), 1)
+
+              if (fb_rescale_option(ifb).lt.4) then
+                saved_fb_actuator(ifb) =
+     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &            fb_rescale(ifb)
+              end if
+
+              enepar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+
             case (5) ! ion heat flux
-              call xerrab('fb_actuator=5 not converted')
+
+              if(ncall.eq.0) then
+                     write(*,'(a,a)')
+     &           'compute_feedback_actuator: using ',
+     &           'ion heat flux boundary condition'
+              endif
+
+              if(feedback_namelist_used .and.
+     &             ncall .eq. 0 .and.
+     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &             saved_fb_actuator(ifb) =
+     &             enipar(fb_ib(ifb), 1)
+
+              if (fb_rescale_option(ifb).lt.4) then
+                saved_fb_actuator(ifb) =
+     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &            fb_rescale(ifb)
+              end if
+
+              enipar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+
             case (6) ! current
-              call xerrab('fb_actuator=6 not converted')
+
+              if(ncall.eq.0) then
+                     write(*,'(a,a)')
+     &           'compute_feedback_actuator: using ',
+     &           'electric current boundary condition'
+              endif
+
+              if(feedback_namelist_used .and.
+     &             ncall .eq. 0 .and.
+     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &             saved_fb_actuator(ifb) =
+     &             potpar(fb_ib(ifb), 1)
+
+              if (fb_rescale_option(ifb).lt.4) then
+                saved_fb_actuator(ifb) =
+     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &            fb_rescale(ifb)
+              end if
+
+              potpar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
+
             case (7) ! density
-              call xerrab('fb_actuator=7 not converted')
+
+              if(ncall.eq.0) then
+                     write(*,'(a,a,i3)')
+     &           'compute_feedback_actuator: using ',
+     &           'density condition for sequence ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              if(feedback_namelist_used .and.
+     &             ncall .eq. 0 .and.
+     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &             saved_fb_actuator(ifb) =
+     &             conpar(fb_species(ifb),fb_ib(ifb), 1)
+
+              if (fb_rescale_option(ifb).lt.4) then
+                saved_fb_actuator(ifb) =
+     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &            fb_rescale(ifb)
+              end if
+
+              conpar(fb_species(ifb),fb_ib(ifb), 1) = 
+     &          saved_fb_actuator(ifb)
+
             case default
               write(*,*) 'fb_actuator not coded ',
      &          fb_type(ifb)
@@ -1661,10 +1892,7 @@ cxpb size is changed in DIMENSIONS.F
             if (fb_actuator(ifb).eq.1 .or.
      &          fb_actuator(ifb).eq.3)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
-     &         fb_species(ifb)+1, saved_fb_actuator(ifb)
-
-            if(fb_type(ifb).eq.6)
-     >        deallocate(charge_frac)
+     &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
           endif
 
@@ -1757,7 +1985,7 @@ cxpb size is changed in DIMENSIONS.F
       fb_overshoot(1:nfb) = na_feedback_overshoot(0:nspecies-1)
       ifbreg = 1
       do is = 0,nspecies-1
-        fb_species(is+1) = is
+        fb_species(is+1) = eb2spcr(is+1) !new format specifies feedbacks on fluid species
         if (na_feedback_ix1(is).gt.-2.or.na_feedback_ix2(is).gt.-2.or.
      &      na_feedback_iy1(is).gt.-2.or.na_feedback_iy2(is).gt.-2) then
           done = .false. 
@@ -1846,6 +2074,9 @@ cxpb size is changed in DIMENSIONS.F
   
       write (iout,'(1x,a)') '/'
       close (iout)
+
+      open(newunit=iout,file='b2us.feedback_control.parameters')
+
       return
       end subroutine write_fbparms
 

@@ -117,6 +117,7 @@
       type(B2StateExt), save :: state_ext
       type(switches), save :: switch
       integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2, natm_loc
+      integer :: dofeedback = 0
 *   ..procedures
       integer lnblnk
       logical is_comment
@@ -436,6 +437,11 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call read_b2mod_feedback_control(99)
         call conv_fbparms (nx, ny, ns, mpg)
         call write_fbparms(ns)
+      endif
+      call ipgeti ('b2stbc_feedback', dofeedback)
+      if (LFEEDBACK .or. dofeedback.eq.1) then
+        write(*,*) 'WARNING: some feedback schemes are not fully'//
+     &  ' backwards compatible after converting to unstrictured code!'
       endif
 
 *   ..close other files
