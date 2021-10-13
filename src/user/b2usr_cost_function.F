@@ -118,7 +118,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case (2) !electron temperature on desired CVs
             TMP1(1:n1) = st%pl%te(mpg%cfCv(ic1:ic2))/ev
             call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
@@ -127,7 +128,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case (3) !ion temperature on desired CVs
             TMP1(1:n1) = st%pl%ti(mpg%cfCv(ic1:ic2))/ev
             call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
@@ -136,7 +138,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case (4) !max electron temperature on desired CVs
             do iCv = ic1, ic2
               J(icf) = max(J(icf),st%pl%te(mpg%cfCv(iCv)))
@@ -211,7 +214,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case (8) !electron temperature radial gradient
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
      &        funv, gradr)
@@ -222,7 +226,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case (9) !ion temperature radial gradient
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
      &        funv, gradr)
@@ -233,7 +238,8 @@
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
             end do
-            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
           case default
             write(*,*) cftype(icf)
             call xerrab ('cftype out of bounds')

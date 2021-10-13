@@ -3,14 +3,13 @@
       use b2mod_user_namelist
      & , only : inf_opt, nsigma, sigma,
      & prior_type, prior_par, prior_range,
-     & nsigmx, cftype
+     & nsigmx, cftype, nvmx
       implicit none
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:)
       logical, save :: flag_optim = .false.
-      integer nvmx, nnvar, nncon, nnjac
-      parameter (nvmx = 20)
+      integer nnvar, nncon, nnjac
       double precision :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
      &  gu(nvmx), jcol(nvmx*nvmx), jrow(nvmx*nvmx), jj(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
@@ -184,6 +183,9 @@
       end do
       ncon = nncon
       nele_jac = nnjac
+      write (*,*) 'NPAR_OPT = ',npar_opt
+      write (*,*) 'NCON = ',ncon
+      write (*,*) 'NELE_JAC = ',NELE_JAC
 
       return
       end subroutine read_b2mod_par_opt
