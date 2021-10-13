@@ -38,7 +38,7 @@
       integer, save :: ncfdata(nncf), ncf
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
-      parameter (nvmx = 20, nsigmx=10)
+      parameter (nvmx = 50, nsigmx=10)
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
       real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
       logical, save :: scale_sigma

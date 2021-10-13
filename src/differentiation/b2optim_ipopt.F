@@ -70,11 +70,13 @@
       call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
       allocate(par_opt_phys(npar_opt))
-      allocate(par_opt_physd(npar_opt,npar_opt))
+      par_opt_phys = 0.0_R8
 !     Initialize derivatives for diffusion coefficients
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
 !     FIXME remove from here for adjoint
+      call xertst(npar_opt.le.nbdirsmax,
+     & 'Increase size of nbdirsmax in diffsizes.F')
       tdatad = 0.0_R8
       parm_dnad = 0.0_R8
       parm_dpad = 0.0_R8
@@ -147,12 +149,17 @@
           endif
         end do
       endif
-!     FIXME remove until here for adjoint
-      par_opt_phys = 0.0_R8
+      allocate(par_opt_physd(npar_opt,npar_opt))
       par_opt_physd = 0.0_R8
       do ipar = 1, npar_opt
         par_opt_physd(ipar,ipar) = 1.0_R8
       enddo
+!     FIXME remove until here for adjoint
+
+!     FIXME remove from here for tangent
+      allocate(par_opt_physb(npar_opt))
+      par_opt_physb = 0.0_R8
+!     FIXME remove until here for tangent
 
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
@@ -333,6 +340,8 @@
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
       deallocate(par_opt_phys)
+      deallocate(par_opt_physd) !FIXME remove for adjoint
+      deallocate(par_opt_physb) !FIXME remove for tangent
       stop 'b2optim'
  9990 continue
       write(*,*) 'Error setting an option'
@@ -422,6 +431,7 @@
 !         spatially dependent coefficient
           do i = 1, spatial_points(ipar)
             grad(idir) = DBLE(tdatab(2,i,partype(ipar),1))
+            grad(idir) = grad(idir) + DBLE(par_opt_physb(idir)) !FIXME remove for tangent
             idir = idir + 1
           end do
         else
@@ -459,6 +469,7 @@
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
           end select
+          grad(idir) = grad(idir) + DBLE(par_opt_physb(idir)) !FIXME remove for tangent
           idir = idir + 1
         endif
       end do
