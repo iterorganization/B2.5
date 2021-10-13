@@ -10,7 +10,7 @@
       use taomodule ! IGNORE
       use b2mod_par_opt_diff
       use b2mod_main_diff &
-      , only : b2mn_init_d, b2mn_step_d, b2mn_fin_d
+      , only : b2mn_init_d, b2mn_step, b2mn_step_d, b2mn_fin_d
       use b2mod_ad_diff &
       , only : nncf
       use b2mod_user_namelist_diff &
@@ -46,11 +46,12 @@
       call b2mn_init_d
       call read_b2mod_par_opt(ncon, nele_jac)
       allocate(par_opt_phys(npar_opt))
-      allocate(par_opt_physd(npar_opt,npar_opt))
+      par_opt_phys = 0.0_R8
 !     Initialize derivatives for diffusion coefficients
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
 !     FIXME remove from here for adjoint
+      call xertst(npar_opt.le.nbdirsmax,'Increase size of nbdirsmax in diffsizes.F')
       tdatad = 0.0_R8
       parm_dnad = 0.0_R8
       parm_dpad = 0.0_R8
@@ -123,11 +124,16 @@
           endif
         end do
       endif
-!     FIXME remove until here for adjoint
-      par_opt_phys = 0.0_R8
+      allocate(par_opt_physd(npar_opt,npar_opt))
       do ipar = 1, npar_opt
         par_opt_physd(ipar,ipar) = 1.0_R8
       enddo
+!     FIXME remove until here for adjoint
+
+!     FIXME remove from here for tangent
+      allocate(par_opt_physb(npar_opt))
+      par_opt_physb = 0.0_R8
+!     FIXME remove until here for tangent
 
 !     For the moment only steepest descent is available when specifiyng the Hessian
       hessian = .false.
@@ -148,6 +154,8 @@
       call TaoSetInitialVector(tao,X,ierr);CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr);CHKERRA(ierr) 
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr);CHKERRA(ierr) 
+      call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr);CHKERRA(ierr) 
+      call TaoSetGradientRoutine(tao,FormGradient,0,ierr);CHKERRA(ierr) 
       call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr);CHKERRA(ierr)
 
       call TaoSetFromOptions(tao,ierr);CHKERRA(ierr) 
@@ -294,6 +302,7 @@
 !         spatially dependent coefficient
           do i = 1, spatial_points(ipar)
             g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
+            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
             idir = idir + 1
           end do
         else
@@ -331,6 +340,7 @@
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
           end select
+          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
           idir = idir + 1
         endif
       end do
@@ -348,6 +358,148 @@
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0
       end subroutine FormFunctionGradient
+
+      subroutine FormFunction(tao, XX, F, dummy, ierr)
+      implicit none
+      real(kind=r8) j(nncf)
+      integer ipar, isigma, idir, i
+      character*3 str
+      PetscErrorCode ierr
+      PetscInt dummy
+      Vec XX
+      Tao tao
+      PetscScalar F
+      PetscScalar x_v(0:npar_opt-1)
+      PetscOffset x_i
+
+
+      call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+
+      do ipar = 1, npar_opt - nsigma_opt
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
+      end do
+      isigma = npar_opt - nsigma_opt + 1
+      do ipar = 1, nsigma
+        if (sigma_opt(ipar)) then
+          sigma(ipar) = x_v(x_i+isigma-1)
+          write(str,"(I1)") isigma
+          if (isigma.ge.10) write(str,"(I2)") isigma
+          write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
+          isigma = isigma + 1
+        endif
+      end do
+      call b2mn_step(j)
+      F = j(1)
+
+      call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+      ierr = 0
+      end subroutine FormFunction
+
+      subroutine FormGradient(tao, XX, grad, dummy, ierr)
+      implicit none
+      real(kind=r8) j(nncf), jd(nncf)
+      integer ipar, isigma, idir, i
+      character*3 str
+      PetscErrorCode ierr
+      PetscInt dummy
+      Vec XX,grad
+      Tao tao
+      PetscScalar x_v(0:npar_opt-1),g_v(0:npar_opt-1)
+      PetscOffset x_i,g_i
+
+
+      call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+      call VecGetArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+
+      do ipar = 1, npar_opt - nsigma_opt
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+      end do
+      isigma = npar_opt - nsigma_opt + 1
+      do ipar = 1, nsigma
+        if (sigma_opt(ipar)) then
+          sigma(ipar) = x_v(x_i+isigma-1)
+          write(str,"(I1)") isigma
+          if (isigma.ge.10) write(str,"(I2)") isigma
+          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
+          isigma = isigma + 1
+        endif
+      end do
+      call b2mn_step_d(j,jd,switchdiff)
+      F = j(1)
+!     FIXME remove from here for adjoint
+      do ipar = 1, npar_opt
+        g_v(g_i+ipar-1) = jd(1)
+      end do
+!     FIXME remove until here for adjoint
+!     FIXME remove from here for tangent
+      idir = 1 !this indicates the different directions of adjoint mode
+      do ipar = 1, nnvar - nsigma_opt
+        if (spatial_dep(ipar)) then
+!         spatially dependent coefficient
+          do i = 1, spatial_points(ipar)
+            g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
+            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+            idir = idir + 1
+          end do
+        else
+!         non spatially dependent --> specified in b2tqna
+          select case (partype(ipar))
+          case (1) ! dna
+            g_v(g_i+idir-1) = parm_dnab(1) ! FIXME to improve for multispecies
+          case (2) ! dpa
+            g_v(g_i+idir-1) = parm_dpab(1) ! FIXME to improve for multispecies
+          case (3) ! hci
+            g_v(g_i+idir-1) = parm_hcib(1) ! FIXME to improve for multispecies
+          case (4) ! hce
+            g_v(g_i+idir-1) = parm_hceb
+          case (5) ! vla
+            g_v(g_i+idir-1) = parm_vlab(1)
+          case (7) ! vsa
+            g_v(g_i+idir-1) = parm_vsab(1)
+          case (8) ! sig
+            g_v(g_i+idir-1) = parm_sigb
+          case (9) ! alf
+            g_v(g_i+idir-1) = parm_alfb
+          case (10) ! enkpar(1,1)
+            g_v(g_i+idir-1) = enkparb(1,1)
+          case (11) ! b2sikt_fac_sheath
+            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath
+          case (12) ! b2sikt_fac_sheath_core
+            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath_core
+          case (13) ! keps_cd
+            g_v(g_i+idir-1) = switchdiff%keps_cd
+          case (14) ! keps_heat
+            g_v(g_i+idir-1) = switchdiff%keps_heat
+          case (15) ! keps_heat_i
+            g_v(g_i+idir-1) = switchdiff%keps_heat_i
+          case default
+            write(*,*) partype(ipar)
+            call xerrab ('partype out of bounds')
+          end select
+          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+          idir = idir + 1
+        endif
+      end do
+      if (nsigma_opt.gt.0) then
+        do ipar = 1, nsigma
+!         only if sigma is being optimized!
+          if (sigma_opt(ipar)) then
+            g_v(g_i+idir-1) = sigmab(ipar)
+            idir = idir + 1
+          endif
+        end do
+      endif
+!     FIXME remove until here for tangent
+      call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+      call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+      ierr = 0
+      end subroutine FormGradient
 
 
       subroutine FormHessian(tao,XX,HH,PrecH,dummy,ierr)
