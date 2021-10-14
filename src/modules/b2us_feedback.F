@@ -22,7 +22,7 @@
 
 *   ..variables
       real (kind=R8), save ::
-     * cum_volrec, dt_prev, dtim
+     * cum_volrec, dt_prev, ddtim
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
@@ -232,10 +232,10 @@ cxpb size is changed in DIMENSIONS.F
       call xertst(icsepomp.gt.0,
      & 'Invalid icsepomp value, check rzomp in b2.user.parameters')
       if (any(fb_type.eq.9)) call xertst(icsepimp.gt.0,
-     & 'Invalid icsepimp value, check rzomp in b2.user.parameters')
-      call ipgetr('b2mndr_dtim', dtim)
-      call xertst(dtim.gt.0.0_R8, 'faulty parameter dtim')
-      dt_prev = dtim
+     & 'Invalid icsepimp value, check rzimp in b2.user.parameters')
+      call ipgetr('b2mndr_dtim', ddtim)
+      call xertst(ddtim.gt.0.0_R8, 'faulty parameter dtim')
+      dt_prev = ddtim
       call ipgeti ('b2sral_style', b2sral_style)
 *  ..first read data for other feedback schemes given directly in b2mn.dat
 *    This data will be included in the new structure
@@ -663,11 +663,12 @@ cxpb size is changed in DIMENSIONS.F
         fb_istra(ifbb) = nesepm_istra
       endif
       if (private_flux_puff.gt.0.0_R8) then
+        call xerrab('private_flux_puff not converted for US code')
         write(*,*) 'WARNING! Feedback b2stbc_private_flux_puff '//
      &  'not fully backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present..
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -675,7 +676,7 @@ cxpb size is changed in DIMENSIONS.F
         endif 
         call xertst(nFb.le.DEF_NATM,
      &   'init_feedback: increase size of DEF_NATM')
-        fb_type(ifbb) = 10
+        fb_type(ifbb) = 13
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = private_flux_puff
         fb_reg_par(ifbb,1) = pfrregno1 ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
@@ -777,7 +778,7 @@ cxpb size is changed in DIMENSIONS.F
       do ifb = 1, nFb
         if (fb_ib(ifb).le.0 .and. .not.fb_actuator(ifb).eq.2)
      &    call xerrab('Init_feedback: fb_ib<=0 and actuator=/2')
-        call xertst(fb_species(ifb)+1.le.ns,
+        call xertst(0.le.fb_species(ifb).and.fb_species(ifb).le.ns-1,
      &    'Init_feedback: fb_species>ns!')
         iatm = b2espcr(fb_species(ifb))
         is0 = eb2spcr(iatm)
@@ -798,8 +799,11 @@ cxpb size is changed in DIMENSIONS.F
      &     fb_type(ifb) .eq. 0 .or.
      &     fb_rescale_option(ifb) .eq. 0 .or.
      &     fb_actuator(ifb) .eq. 0) .or.
+! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
+!     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC 
      &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &     bccon(is0,fb_ib(ifb)) .eq. 8) .or.
+     &     ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
+     &      switch%use_eirene.ne.0) ) .or.
      &    fb_actuator(ifb) .eq. 2 .or.
      &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
      &     maxval(bccon(is_start:is_end,
@@ -930,9 +934,9 @@ cxpb size is changed in DIMENSIONS.F
       type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
-     & is_end, iss
+     & is_end, iss, i, j, k, l
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, add
+      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -987,8 +991,8 @@ cxpb size is changed in DIMENSIONS.F
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
-                    fb_current(ifb) = fb_current(ifb) + add
+                    fb_current(ifb) = fb_current(ifb) +
+     &                 pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
                     if(is.eq.is_start) then
                       vol_feedback = vol_feedback +
      &                               geo%cvVol(fbReg(icv))
@@ -1069,8 +1073,8 @@ cxpb size is changed in DIMENSIONS.F
                   do iCv = ic1, ic2
                     if(mpg%cvReg(fbReg(icv)).ne.0 .and.
      &                 fbReg(icv).le.mpg%nCi) then
-                      add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
-                      fb_current(ifb) = fb_current(ifb) + add
+                      fb_current(ifb) = fb_current(ifb) +
+     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
                     endif
                   enddo
                   is_end=is
@@ -1097,8 +1101,8 @@ cxpb size is changed in DIMENSIONS.F
                   do iCv = ic1, ic2
                     if(mpg%cvReg(fbReg(icv)).ne.0 .and.
      &                 fbReg(icv).le.mpg%nCi) then
-                      add = pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
-                      fb_current(ifb) = fb_current(ifb) + add
+                      fb_current(ifb) = fb_current(ifb) +
+     &                  pl%na(fbReg(icv),is) * geo%cvVol(fbReg(icv))
                     endif
                   enddo
                   is_end=is
@@ -1107,30 +1111,29 @@ cxpb size is changed in DIMENSIONS.F
 
             case (6) ! neutral particle flux through the core boundary (??)
 
-              call xerrab('fb_type=6 not converted for WG code')
-#ifdef WG_TODO
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &            'compute_feedback_type: using ',
      &            'core boundary flux for sequence ',
      &            b2espcr(fb_species(ifb))
               endif
-              fb_current(ifb) = fb_const(fb_species(ifb))
+              fb_current(ifb) = fb_const(ifb)
               write(*,*) 'WARNING: fb_type = 6 needs to be'//
      &         ' adapted for hybrid methods!'
+
 #ifdef B25_EIRENE
               do k=1,ncns !{
                 l=nlim+lcns(k)
                 do j=1,nnatmi !{
-                  if (latmscl(j).eq.ispecies+1) then !{
+                  if (latmscl(j).eq.b2espcr(fb_species(ifb))) then !{
                     fb_current(ifb)=fb_current(ifb)
      .                +wldna(l,j,0)-wldra(l,j,0)-wldpa(l,j,0)
                     do i=1,nnmoli !{
-                      fb_current(ifb)=fb_current(ifb)
-     .             +mlcmp(j,i)*(wldnm(l,i,0)-wldrm(l,i,0)-wldpm(l,i,0))
-                   end do !}
-                 end if !}
-               end do !}
+                      fb_current(ifb)=fb_current(ifb)+mlcmp(j,i)*
+     .                 (wldnm(l,i,0)-wldrm(l,i,0)-wldpm(l,i,0))
+                    end do !}
+                  end if !}
+                end do !}
               end do !}
 #else
               call xerrab('fb_type=6 not yet adapted for'//
@@ -1145,21 +1148,18 @@ cxpb size is changed in DIMENSIONS.F
               do is = is_start, is_end
                 iss = is-is_start+1
                 if (is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                do iy = na_feedback_iy1(ispecies),
-     .                  na_feedback_iy2(ispecies)
-                  do ix = na_feedback_ix1(ispecies),
-     .                    na_feedback_ix2(ispecies)
-                    icv = mpg%imapCv(ix,iy)
-                    if (mpg%cvOnClosedSurface(icv)) then
-                      sum_s = sum_s + pl%na(icv,is) * geo%cvVol(icv)
-                      charge_frac(iss) = charge_frac(iss) +
-     .                  pl%na(icv,is) * geo%cvVol(icv)
-                    end if
-                  end do
+                ic1 = fbRegP(ifb,1)
+                ic2 = ic1 + fbRegP(ifb,2) - 1
+                do iCv = ic1, ic2
+                  if (mpg%cvOnClosedSurface(icv)) then
+                    sum_s = sum_s + pl%na(icv,is) * geo%cvVol(icv)
+                    charge_frac(iss) = charge_frac(iss) +
+     .                pl%na(icv,is) * geo%cvVol(icv)
+                  end if
                 end do
               end do
               charge_frac = charge_frac / sum_s
-#endif
+
             case (7) ! relative average concentration of this species at the separatrix
 
               if(ncall.eq.0) then
@@ -1185,9 +1185,9 @@ cxpb size is changed in DIMENSIONS.F
                     ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
                     if(mpg%cvOnClosedSurface(ic1) .or. 
      &                 mpg%cvOnClosedSurface(ic2)) then
-                      add = (pl%na(ic1,is) + pl%na(ic2,is)) *
+                      fb_current(ifb) = fb_current(ifb) +
+     &                  (pl%na(ic1,is) + pl%na(ic2,is)) *
      &                  geo%fcS(mpg%fsFc(iFc))
-                      fb_current(ifb) = fb_current(ifb) + add
                       if (is.eq.is_start+1) then
                         sum_e = sum_e + (dv%ne(ic1) +
      &                    dv%ne(ic2)) * geo%fcS(mpg%fsFc(iFc))
@@ -1218,8 +1218,8 @@ cxpb size is changed in DIMENSIONS.F
                   ic1 = fbRegP(ifb,1)
                   ic2 = ic1 + fbRegP(ifb,2) - 1
                   do iCv = ic1, ic2
-                    add = pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
-                    fb_current(ifb) = fb_current(ifb) + add
+                    fb_current(ifb) = fb_current(ifb) +
+     &                pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
                     if (is.eq.is_start+1) then
                       sum_e = sum_e +
      &                  dv%ne(fbReg(iCv)) * geo%cvVol(fbReg(iCv))
@@ -1409,8 +1409,8 @@ cxpb size is changed in DIMENSIONS.F
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   do icv = 1, nCv
-                   add = pl%na(icv,is)*geo%cvVol(icv)
-                   fb_current(ifb) = fb_current(ifb) + add
+                   fb_current(ifb) = fb_current(ifb) +
+     &               pl%na(icv,is)*geo%cvVol(icv)
                   enddo
                   is_end=is
                 endif
@@ -1422,6 +1422,12 @@ cxpb size is changed in DIMENSIONS.F
                 write(*,'(a,a)')
      &            'compute_feedback_type: using ',
      &            'volumetric recombination '
+                if (cum_volrec .lt. 1.0e4_R8) then
+                  cum_volrec = 1.0e4_R8
+                write(*,'(a,a)')
+     &            'Warning! compute_feedback_type: setting ',
+     &            'cum_volrec=1e4 for first timestep' 
+                endif
               endif
               ! in principle nothing to be done here...
               fb_current(ifb) = cum_volrec
@@ -1546,7 +1552,7 @@ cxpb size is changed in DIMENSIONS.F
               fb_rescale =
      .          fb_alpha(ifb) *
      .          ((fb_target(ifb) -
-     .          fb_current(ifb))/dtim +
+     .          fb_current(ifb))/ddtim +
      .          (fb_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
               saved_fb_actuator(ifb) = fb_current(ifb)
@@ -1587,7 +1593,7 @@ cxpb size is changed in DIMENSIONS.F
               fb_rescale(ifb) =
      .           fb_alpha(ifb) *
      .           ((fb_target(ifb) -
-     .           fb_current(ifb))/dtim +
+     .           fb_current(ifb))/ddtim +
      .           (fb_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
               saved_fb_actuator(ifb) = fb_current(ifb)
@@ -1609,7 +1615,7 @@ cxpb size is changed in DIMENSIONS.F
      &        fb_target(ifb),
      &        fb_rescale(ifb),
      &        fb_prev(ifb),
-     &        dtim, dt_prev
+     &        ddtim, dt_prev
 
 ! phase 3:
 
@@ -1666,11 +1672,20 @@ cxpb size is changed in DIMENSIONS.F
      &           fb_current(ifb) .gt.
      &           fb_target(ifb) *
      &           fb_overshoot(ifb)) then
-                conpar(is_start, fb_ib(ifb), 1) =
-     &            0.0_R8
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+                if (switch%use_eirene.eq.0) then
+                  conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
+                else
+                  userfluxparm(fb_istra(ifb),1) = 0.0_R8
+                endif
               else
-                conpar(is_start, fb_ib(ifb), 1) =
-     &            saved_fb_actuator(ifb)
+                if (switch%use_eirene.eq.0) then
+                  conpar(is_start, fb_ib(ifb), 1) = 
+     &              saved_fb_actuator(ifb)
+                else
+                  userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)
+                endif
               endif
 
             case (2) ! rescale na
@@ -1780,7 +1795,6 @@ cxpb size is changed in DIMENSIONS.F
                   conpar(is, fb_ib(ifb), 1) =
      &              total_flux * charge_frac(iss)
                 end do
-               deallocate(charge_frac)
               else
                 conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
               endif
@@ -1893,15 +1907,16 @@ cxpb size is changed in DIMENSIONS.F
      &          fb_actuator(ifb).eq.3)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
+            if (fb_type(ifb).eq.6) deallocate(charge_frac)
 
           endif
 
-        feedback_namelist_used = feedback_namelist_used .or.
-     &   fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
+          feedback_namelist_used = feedback_namelist_used .or.
+     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
 
         enddo !ifb
 
-        dt_prev = dtim
+        dt_prev = ddtim
       endif
 
 
