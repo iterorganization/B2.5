@@ -17,7 +17,7 @@ c  version : 26.07.2002 23:39
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_neutr_src_scaling
-      use b2mod_feedback
+      use b2us_feedback
       use b2mod_diag
       use b2mod_time
       use b2mod_rates
@@ -66,14 +66,19 @@ c  version : 26.07.2002 23:39
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
-      integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
-     1 nesepm_istra, use_recyceir
+      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,ifb
+#ifdef WG_RM
+      integer ncallfeedback,pfrregno1, pfrregno2,
+     & solregno, isfeedback, nesepm_istra,
+#endif
+      integer use_recyceir
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
+#ifdef WG_RM
      * ndes, private_flux_puff, nesepm_sol,
-     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
-     * kin_frac_hyb(nFc)
+     * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
+#endif
+     * recyctmp, kin_frac_hyb(nFc)
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
      1 SSEISTAB(:),
@@ -149,19 +154,23 @@ c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical last, saved_volrec_used, na_feedback_on
+      logical last, saved_volrec_used
+#ifdef WG_RM
+      logical feedback_on
+#endif
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods,
      1 repeat_first_call, dpc_fix, eircount,
      2 no_sseicorr, stab_corr
       save ncall, output_style, saved_volrec_used,
+#ifdef WG_RM
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * ncallfeedback, ank_mods,
-     1 repeat_first_call, use_recyceir, dpc_fix,
-     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol,
-     3 stab_corr
+     * volrec_sol, ndes_sol, ncallfeedback, nepedm_sol
+#endif
+     * ank_mods,repeat_first_call, use_recyceir, dpc_fix,
+     2 no_sseicorr,stab_corr
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
@@ -223,14 +232,18 @@ csw 26feb2014
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
-     .  linearisation/1/, solregno/3/,
-     1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
+     .  linearisation/1/,
+#ifdef WG_RM
+     &  solregno/3/,ndes/0.0_R8/, nepedm_sol/0.0_R8/, ndes_sol/0.0_R8/,
+     &  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, volrec_sol/0.0_R8/, 
+     &  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/, 
+     &  private_flux_puff/0.0_R8/,  ncallfeedback/0/,
+#endif
      2  rec_tol/1.e-4_R8/,
-     3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
-     4  private_flux_puff/0.0_R8/, dpc_fix/1/,
-     5  ndes/0.0_R8/, ank_mods/0/, repeat_first_call/1/,
-     6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, stab_corr/1/
+     4  dpc_fix/1/,
+     5  ank_mods/0/, repeat_first_call/1/,
+     6  use_recyceir/1/, 
+     7  no_sseicorr/0/, stab_corr/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -282,6 +295,7 @@ c not sure this is the right place
      >   call ipgeti ('eirene_mc_linearization', linearisation)
         call xertst (linearisation.eq.1 .or. linearisation.eq.0,
      .   'faulty input parameter linearisation')
+#ifdef WG_RM
         call ipgetr ('b2stbc_ndes', ndes)
         call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
         call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
@@ -352,6 +366,7 @@ c not sure this is the right place
      2     'faulty internal parameter solregno')
         endif
         call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
+#endif
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
@@ -529,19 +544,20 @@ c*** tflux(i)  : source strength for stratum i as given to Eirene
 c*** tfl(i,j)  : the same for species j only
 c*** flux_scale: conversion factor Eirene-B2
 c*** recyc     : fudge factors for the sources in B2
-
-      na_feedback_on = .false.
-      do is = 0, nspecies-1
-        if (na_feedback_on) cycle
-        na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
-     &                   na_feedback_actuator(is).eq.1.and.
-     &                   nesepm_istra.gt.0
-        if (na_feedback_on) then
-          na_feedback_on = na_feedback_on .and.
-     &      species_start(nesepm_istra).le.eb2spcr(is+1).and.
-     &      species_end(nesepm_istra).ge.eb2spcr(is+1)
+#ifdef WG_RM
+      feedback_on = .false.
+      do ifb = 1, nFb
+        if (feedback_on) cycle
+        feedback_on = fb_target(ifb).gt.0.0_R8.and.
+     &                fb_actuator(ifb).eq.1.and.
+     &                fb_istra(ifb).gt.0
+        if (feedback_on) then
+          feedback_on = feedback_on .and.
+     &      species_start(fb_istra(ifb)).le.fb_species(ifb).and.
+     &      species_end(fb_istra(ifb)).ge.fb_species(ifb)
         end if
       end do
+#endif
 
       tfl=0.0_R8
       tflux=0.0_R8
@@ -569,6 +585,7 @@ c*** recyc     : fudge factors for the sources in B2
           end do   
 
         else if(crcstra(istrai).eq.'C') then !}{
+#ifdef WG_RM
           if (ncall.ge.ncallfeedback.and.istrai.eq.nesepm_istra.and.
      &     (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &      private_flux_puff.gt.0.0_R8)) then !{
@@ -619,7 +636,8 @@ c*** recyc     : fudge factors for the sources in B2
      2       switch%neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
-          else if (time_dep_puff(istrai)) then !}{
+#endif
+          if (time_dep_puff(istrai)) then !{
             if (tim.lt.gpdata(1,1,istrai)) then
               tflux(istrai)=userfluxparm(istrai,1)
             else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
@@ -648,6 +666,7 @@ c*** recyc     : fudge factors for the sources in B2
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
             end if
+#ifdef WG_RM
           else if (ncall.ge.ncallfeedback.and.
      &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
@@ -660,6 +679,9 @@ c*** recyc     : fudge factors for the sources in B2
      .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
               end if !}
             end do !}
+#endif
+! csc the new idea is that if using Eirene, then compute_feedback changes the value of userfluxparm directly
+! csc TO BE REVISED WITH HYBRID KIN-FLUID
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
           end if !}
