@@ -1763,6 +1763,18 @@ cwdk also need to correct for degenerate faces?
         
         call xerrab ('conv_bcparms -- problem setting up bc arrays')
       end if
+
+! now convert feedback BC: BCCON 11/12-->8, BCENE/I/POT 10-->8
+      do ib = 1, m%nBc
+        if (bcene(ib) .eq. 10) bcene(ib) = 8
+        if (bceni(ib) .eq. 10) bceni(ib) = 8
+        if (bcpot(ib) .eq. 10) bcpot(ib) = 8
+        do is = 0, ns-1
+          if (bccon(is,ib) .eq. 11 .or. bccon(is,ib) .eq. 12)
+     &      bccon(is,ib) = 8
+        enddo
+      enddo
+
       return
       end subroutine conv_bcparms
 
