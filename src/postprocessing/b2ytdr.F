@@ -5600,9 +5600,42 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
             NCHARP(JPLS)=4
           END IF
           IF (NMASSP(JPLS).EQ.2.AND.NCHARP(JPLS).EQ.2.AND. ! Correcting another
-     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').GT.0) THEN
+     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').EQ.1) THEN
             NPRTP(JPLS)=2
           END IF
+          IF (NPRTP(JPLS).EQ.2.AND.INDEX(TEXTP(JPLS),'H2(B)').GT.1) THEN ! And another
+            I=INDEX(TEXTP(JPLS),'H2(B)')
+            DO JATM = 1, NATM
+              IF(streql(TEXTP(JPLS)(1:I-1),TEXTA(JATM)))
+     >         NPRTP(JPLS)=NPRTA(JATM)
+            END DO
+            DO JMOL = 1, NMOL
+              IF(streql(TEXTP(JPLS)(1:I-1),TEXTM(JMOL)))
+     >         NPRTP(JPLS)=NPRTM(JMOL)
+            END DO
+          END IF
+          FOUND = .FALSE.
+          DO JATM = 1, NATMI
+            IF (FOUND) CYCLE
+            FOUND = NMASSA(JATM).EQ.NMASSP(JPLS) .AND.
+     &              NCHARA(JATM).EQ.NCHARP(JPLS) .AND.
+     &              NPRTA (JATM).EQ.NPRTP (JPLS)
+            IF (FOUND.AND.INDEX(TEXTP(JPLS),'(B)').GT.0) THEN ! Make sure the BGK species matches the neutral
+              ISRFP(JPLS)=ISRFA(JATM)
+              ISRTP(JPLS)=ISRTA(JATM)
+            END IF
+          END DO
+          DO JMOL = 1, NMOLI
+            IF (FOUND) CYCLE
+            FOUND = NMASSM(JMOL).EQ.NMASSP(JPLS) .AND.
+     &              NCHARM(JMOL).EQ.NCHARP(JPLS) .AND.
+     &              NPRTM (JMOL).EQ.NPRTP (JPLS)
+            IF (FOUND.AND.INDEX(TEXTP(JPLS),'(B)').GT.0) THEN ! Make sure the BGK species matches the neutral
+              ISRFP(JPLS)=ISRFM(JMOL)
+              ISRTP(JPLS)=ISRTM(JMOL)
+            END IF
+          END DO
+          FOUND = .FALSE.
           IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
             LKINDP(JPLS)=ISRFP(JPLS)
           ELSE

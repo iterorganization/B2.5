@@ -1383,7 +1383,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'Database not defined !')
        end if
 #else
-       if (ids_save.ne.0) write(*,*)
+       if (ids_save.ne.0 .or. delta_ids_time.gt.0.0_R8) write(*,*)
      1   'Not compiled with IMAS option, IDS will not be written.'
 #endif
 * ..return
@@ -1990,14 +1990,18 @@ cxpb for neutral fluxes used in b2stbc_phys
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_WNEUTRALS_INIT
-      if (ex) then
+      if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
-        if (use_eirene.ne.0) then
+        if (use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
           call ngread(ismain,iflag)
         endif
       endif
+#else
+      if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
+     > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     .                         natm,nmol,nion,nlimps)
 #endif
       call b2stbr_init (nx, ny, ns, BoRiS)
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
@@ -2971,7 +2975,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &         (ids_end_time.lt.tim .and.
      &          ids_end_time.ne.IDS_REAL_INVALID)
               continued = continued .or.
-     &          run_start_time.ge.ids_end_time
+     &         (run_start_time.ge.ids_end_time .and.
+     &          ids_end_time.ne.IDS_REAL_INVALID)
               if (continued.or.database.eq.'iter') then
                 if (.not.streql(old_imas_version,imas_version).or.
      &              database.eq.'iter') then
