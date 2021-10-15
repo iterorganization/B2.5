@@ -52,6 +52,8 @@
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+      use b2mod_b2plot
+     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -70,8 +72,7 @@
       use eirmod_wneutrals
       use b2mod_eirene
       use b2mod_b2plot
-     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot,
-     ,        vxa, dealloc_b2mod_b2plot_eirene
+     , ,only: vxa, dealloc_b2mod_b2plot_eirene
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -3179,6 +3180,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_INFCOP
 #else
+      if (ids_save.ne.0 .or. delta_ids_time.ne.0.0_R8)
+     & call dealloc_b2mod_b2plot
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra
 #endif
