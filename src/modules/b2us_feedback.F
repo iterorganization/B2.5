@@ -51,6 +51,45 @@
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
 
+! csc old switches
+      integer, save :: fhiycore_kinetic_energy
+      integer, save :: coreregno, coreregn2, solregno,
+     &                 pfrregno1, pfrregno2,
+     &                 isfeedback, nesepm_istra, iyped
+      real (kind=R8), save :: 
+     &  fnaycore, fnaycore_alpha,
+     1  fheycore, fheycore_alpha,
+     1  fhiycore, fhiycore_alpha,
+     2  fchycore, fchycore_alpha,
+     3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
+     3  nesepm_alpha, nesepm_beta, nesepm_gamma,
+     3  nesepm_minpuff, nesepm_maxpuff, nesepm_overshoot,
+     4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
+     4  ndes, ndes_sol, private_flux_puff,
+     9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
+     9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
+      data 
+     1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
+     1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
+     2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
+     2  fhiycore_kinetic_energy/0/,
+     2  fchycore/-1.0e30_R8/, fchycore_alpha/1.0e-1_R8/,
+     3  nesepm/0.0_R8/, nesepm_sol/0.0_R8/, nepedm_sol/0.0_R8/,
+     3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
+     3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
+     3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
+     3  nesepm_overshoot/0.0_R8/,
+     4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
+     4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
+     5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
+     7  private_flux_puff/0.0_R8/,
+     9  save_core_flux_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     9  save_gas_puff_while_overshot/0.0_R8/,  !WG_RM not used anymore with new structure
+     9  save_pfr1_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     9  save_pfr2_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
+     i  coreregno/1/, coreregn2/0/, solregno/6/,
+     i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
+
       namelist /feedback/ saved_fb_actuator
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/
@@ -187,44 +226,6 @@ cxpb size is changed in DIMENSIONS.F
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is_start, is_end, is00, iatm
       logical consistent, done
-! csc old switches
-      integer, save :: fhiycore_kinetic_energy
-      integer, save :: coreregno, coreregn2, solregno,
-     &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra, iyped
-      real (kind=R8), save :: 
-     &  fnaycore, fnaycore_alpha,
-     1  fheycore, fheycore_alpha,
-     1  fhiycore, fhiycore_alpha,
-     2  fchycore, fchycore_alpha,
-     3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
-     3  nesepm_alpha, nesepm_beta, nesepm_gamma,
-     3  nesepm_minpuff, nesepm_maxpuff, nesepm_overshoot,
-     4  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
-     4  ndes, ndes_sol, private_flux_puff,
-     9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
-     9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
-      data 
-     1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
-     1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
-     2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
-     2  fhiycore_kinetic_energy/0/,
-     2  fchycore/-1.0e30_R8/, fchycore_alpha/1.0e-1_R8/,
-     3  nesepm/0.0_R8/, nesepm_sol/0.0_R8/, nepedm_sol/0.0_R8/,
-     3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
-     3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
-     3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
-     3  nesepm_overshoot/0.0_R8/,
-     4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
-     4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
-     5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
-     7  private_flux_puff/0.0_R8/,
-     9  save_core_flux_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
-     9  save_gas_puff_while_overshot/0.0_R8/,  !WG_RM not used anymore with new structure
-     9  save_pfr1_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
-     9  save_pfr2_puff_while_overshot/0.0_R8/, !WG_RM not used anymore with new structure
-     i  coreregno/1/, coreregn2/0/, solregno/6/,
-     i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
 
       call subini('init_feedback')
       call read_b2us_feedback_control(99)
@@ -469,9 +470,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 10
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = fnaycore
-        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-        fb_ib(ifbb) = coreregno ! FIXME
+        fb_ib(ifbb) = coreregno
         fb_actuator(ifbb) = 3
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = fnaycore_alpha
@@ -493,9 +492,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 11
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = fheycore
-        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-        fb_ib(ifbb) = coreregno ! FIXME
+        fb_ib(ifbb) = coreregno
         fb_actuator(ifbb) = 4
         fb_alpha(ifbb) = fheycore_alpha
       endif
@@ -515,9 +512,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 12
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = fhiycore
-        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-        fb_ib(ifbb) = coreregno ! FIXME
+        fb_ib(ifbb) = coreregno
         fb_actuator(ifbb) = 5
         fb_alpha(ifbb) = fhiycore_alpha
       endif
@@ -537,9 +532,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 13
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = fchycore
-        fb_reg_par(ifbb,1) = coreregno ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_reg_par(ifbb,2) = coreregn2 ! FIXME
-        fb_ib(ifbb) = coreregno ! FIXME
+        fb_ib(ifbb) = coreregno
         fb_actuator(ifbb) = 6
         fb_alpha(ifbb) = fchycore_alpha
       endif
@@ -559,7 +552,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 14
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = ndes
-        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_ib(ifbb) = pfrregno1
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_istra(ifbb) = nesepm_istra
@@ -580,7 +573,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 3
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = nesepm
-        fb_ib(ifbb) = coreregno ! FIXME
+        fb_ib(ifbb) = coreregno
         fb_actuator(ifbb) = 3
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = nesepm_alpha
@@ -602,7 +595,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 3
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = nesepm_sol
-        fb_ib(ifbb) = solregno ! FIXME
+        fb_ib(ifbb) = solregno
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = nesepm_alpha
@@ -628,7 +621,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 14
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = ndes_sol
-        fb_ib(ifbb) = solregno ! FIXME
+        fb_ib(ifbb) = solregno
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = nesepm_alpha
@@ -653,7 +646,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 3
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = nesepm_pfr
-        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_ib(ifbb) = pfrregno1
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = nesepm_alpha
@@ -664,6 +657,7 @@ cxpb size is changed in DIMENSIONS.F
       endif
       if (private_flux_puff.gt.0.0_R8) then
         call xerrab('private_flux_puff not converted for US code')
+        ! not sure what to do with this..
         write(*,*) 'WARNING! Feedback b2stbc_private_flux_puff '//
      &  'not fully backward compatible in WG'
         ifbb=0
@@ -679,9 +673,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 13
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = private_flux_puff
-        fb_reg_par(ifbb,1) = pfrregno1 ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_reg_par(ifbb,2) = pfrregno2 ! FIXME SUPPOSE THAT CONVERTER HAS DONE THIS ALREADY!
-        fb_ib(ifbb) = pfrregno1 ! FIXME
+        fb_ib(ifbb) = pfrregno1
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = nesepm_alpha
@@ -706,7 +698,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 15
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = volrec_sol
-        fb_ib(ifbb) = solregno ! FIXME
+        fb_ib(ifbb) = solregno
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_alpha(ifbb) = volrec_alpha
@@ -732,7 +724,7 @@ cxpb size is changed in DIMENSIONS.F
         fb_type(ifbb) = 16
         fb_rescale_option(ifbb) = 1
         fb_target(ifbb) = nepedm_sol
-        fb_ib(ifbb) = solregno ! FIXME
+        fb_ib(ifbb) = solregno
         fb_actuator(ifbb) = 1
         fb_species(ifbb) = isfeedback
         fb_istra(ifbb) = nesepm_istra
@@ -801,6 +793,7 @@ cxpb size is changed in DIMENSIONS.F
      &     fb_actuator(ifb) .eq. 0) .or.
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC 
+!     Can be arbitrarily expanded to allow applying feedback to any already existent BC
      &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
      &     ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
      &      switch%use_eirene.ne.0) ) .or.
@@ -2030,6 +2023,7 @@ cxpb size is changed in DIMENSIONS.F
         endif
       end do
       nfbreg = ifbreg - 1
+
       return
       end subroutine conv_fbparms
 
