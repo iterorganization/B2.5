@@ -27,7 +27,6 @@
       use b2mod_switches
       use b2mod_feedback
       use b2us_feedback
-     . , only : conv_fbparms, write_fbparms
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -117,7 +116,6 @@
       type(B2StateExt), save :: state_ext
       type(switches), save :: switch
       integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2, natm_loc
-      integer :: dofeedback = 0
 *   ..procedures
       integer lnblnk
       logical is_comment
@@ -438,10 +436,28 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call conv_fbparms (nx, ny, ns, mpg)
         call write_fbparms(ns)
       endif
-      call ipgeti ('b2stbc_feedback', dofeedback)
-      if (LFEEDBACK .or. dofeedback.eq.1) then
-        write(*,*) 'WARNING: some feedback schemes are not fully'//
-     &  ' backwards compatible after converting to unstrictured code!'
+      call ipgetr ('b2stbc_fnaycore', fnaycore)
+      call ipgetr ('b2stbc_fheycore', fheycore)
+      call ipgetr ('b2stbc_fhiycore', fhiycore)
+      call ipgetr ('b2stbc_fchycore', fchycore)
+      call ipgetr ('b2stbc_nesepm', nesepm)
+      call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
+      call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
+      call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
+      call ipgetr ('b2stbc_volrec_sol', volrec_sol)
+      call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
+      call ipgetr ('b2stbc_ndes', ndes)
+      call ipgetr ('b2stbc_ndes_sol', ndes_sol)
+      if(fnaycore.ne.-1.0e30_R8 .or. fheycore.gt.0.0_R8 .or.
+     &   fhiycore.gt.0.0_R8 .or. fchycore.ne.-1.0e30_R8 .or.
+     &   nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or.
+     &   nesepm_pfr.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
+     &   volrec_sol.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8 .or.
+     &   ndes.gt.0.0_R8 .or. ndes_sol.gt.0.0_R8) then
+        write(0,'(a)') 'WARNING: some feedback switches are not fully'//
+     &  ' backwards compatible after converting to unstructured code!'
+        write(0,'(a)') 'WARNING: coreregno, solregno, etc., now'//
+     &   ' identify only the boundary where feedback is applied!'
       endif
 
 *   ..close other files
