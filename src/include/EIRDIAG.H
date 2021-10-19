@@ -27,7 +27,7 @@ c  version : 27.07.2000 22:52
      .  ewldea_res(natm,nsgmx),    !emitted energy flux of atoms
      .  ewldem_res(nmol,nsgmx),    !net incident energy flux due of molecules
      .  ewldrp_res(nsgmx),         !kinetic energy of reflected neutrals originated from ions
-     .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms and ions into molecules
+     .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms and atomic ions into molecules
      .  wldspt_res(nsgmx),         !flux of sputtered wall material
      .  wldspta_res(natm,nsgmx),   !sputtered flux for each type of emitted atom
      .  wldsptm_res(nmol,nsgmx),   !sputtered flux for each type of emitted molecule
