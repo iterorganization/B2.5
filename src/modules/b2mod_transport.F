@@ -29,6 +29,7 @@
      &  cvsa_drho(:,:,:,:),                                           !som 16.08.21
      *  cvsahz_cl(:,:,:,:),                                           !srv 09.01.01
      &  cvsahz_drho(:,:,:,:),                                         !som 18.08.21
+     *  chci_a(:,:,:,:), 
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
      *  fllime(:,:),
@@ -45,6 +46,7 @@
      *  f_luc_et(:,:),
      *  f_luc_sg(:,:),
      *  f_luc_al(:,:),
+     *  alpha1(:,:),                                                  !som 05.10.21
      *  alfx_c(:,:),
      *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17 }
      *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
@@ -81,6 +83,7 @@
       allocate(cvsa_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !som 16.08.21
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 09.01.01
       allocate(cvsahz_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                !som 18.08.21
+      allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1)) 
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(fllime(-1:nxd,-1:nyd))
@@ -102,6 +105,7 @@
       allocate(f_luc_et(-1:nxd,-1:nyd))
       allocate(f_luc_sg(-1:nxd,-1:nyd))
       allocate(f_luc_al(-1:nxd,-1:nyd))
+      allocate(alpha1(-1:nxd,-1:nyd))                                 !som 05.10.21
       allocate(sigx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13
       allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17 }
       allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
@@ -140,6 +144,7 @@
       deallocate(cvsa_drho)                                      !som 16.08.21
       deallocate(cvsahz_cl)
       deallocate(cvsahz_drho)                                    !som 18.08.21
+      deallocate(chci_a) 
       deallocate(csig_cl)
       deallocate(calf_cl)
       deallocate(fllime)
@@ -156,6 +161,7 @@
       deallocate(f_luc_et)
       deallocate(f_luc_sg)
       deallocate(f_luc_al)
+      deallocate(alpha1)                                   !som 05.10.21
       deallocate(sigx_c)                                   !iys 19.11.13
       deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
@@ -214,6 +220,7 @@
         call cfrure (nread, size(f_luc_et), f_luc_et, 'f_luc_et')
         call cfrure (nread, size(f_luc_sg), f_luc_sg, 'f_luc_sg')
         call cfrure (nread, size(f_luc_al), f_luc_al, 'f_luc_al')
+        call cfrure (nread, size(alpha1), alpha1, 'alpha1')             !som 05.10.21
         call cfrure (nread, size(fllim_ke), fllim_ke, 'fllim_ke')
         call cfrure (nread, size(fllim_ki), fllim_ki, 'fllim_ki')
         call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
@@ -224,6 +231,7 @@
         f_luc_et=1.0_R8
         f_luc_sg=1.0_R8
         f_luc_al=1.0_R8
+        alpha1=1.0_R8                                                   !som 05.10.21
         fllim_ke=1.0_R8
         fllim_ki=1.0_R8
         fllim_al=1.0_R8

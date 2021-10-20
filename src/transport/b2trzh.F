@@ -3,8 +3,10 @@
 
       subroutine b2trzh (nx, ny, ns, znmax, na, ua, ti, lnlam,hx,hz,bb,
      & vol,gs,qz,mode,gamma, chci0_nofl,chci0,chci0_luc,
+     & chci0_al, chci0_al_luc, chci0_a, chci0_a_luc,
      & cvsahz0_nofl,cvsahz0,cvsahz0_luc,cvsahz_drho_luc,
-     & cvsa0_luc,cvsa_drho_luc)        !som 16.08.2021  
+     & cvsa0_luc,cvsa_drho_luc,
+     & cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)      !som 08.10.2021  
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_constants     
@@ -12,7 +14,7 @@
       use b2mod_b2mrel
       use b2mod_b2zhco
       use b2mod_zhfrtf
-      use b2mod_transport , only: f_luc_ki, f_luc_et
+      use b2mod_transport , only: f_luc_ki, f_luc_et, alpha1
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -28,6 +30,10 @@
       real (kind=R8) ::
      &  chci0(-1:nx,-1:ny,0:1), chci0_nofl(-1:nx,-1:ny,0:1),
      &  chci0_luc(-1:nx,-1:ny,0:1),
+     &  chci0_al(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  chci0_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  chci0_al_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
+     &  chci0_a_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), 
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1), 
      &  cvsahz0_nofl(-1:nx,-1:ny,0:1,0:ns-1),
@@ -36,7 +42,11 @@
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), 
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1), 
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_drho_luc(-1:nx,-1:ny,0:1,0:ns-1) 
+     &  cvsa_drho_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1), 
+     &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1) 
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -83,9 +93,14 @@
      & c_pi_uA(0:nspecies-1,0:nspecies-1),
      & c_pi_uB(0:nspecies-1),
      & c_pi_uA_an(0:nspecies-1),
+     & c_pi_hA(0:nspecies-1,0:nspecies-1),
+     & c_pi_hB(0:nspecies-1),
+     & c_pi_hA_an(0:nspecies-1),
      & tau_Zh(0:nspecies-1,0:nspecies-1),
      & eta_cl(-1:nx,-1:ny,0:ns-1),
      & eta_cl_fl(-1:nx,-1:ny,0:ns-1),
+     & eta_hAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     & eta_hBdp(-1:nx,-1:ny,0:nspecies-1),
      & t0, t1, czetap,zetap(-1:nx,-1:ny),I_al(0:nspecies-1),
      & cF_limh(0:nspecies-1),cF_limBh(0:nspecies-1),
      & cF_lim(0:nspecies-1),cF_limB(0:nspecies-1),
@@ -95,6 +110,8 @@
      & hci0_al(-1:nx,-1:ny,0:nspecies-1),
      & hciB_al_nofl(0:nspecies-1),
      & hciB_al(0:nspecies-1),
+     & hci0_a_nofl(-1:nx,-1:ny,0:ns-1),
+     & hci0_a(-1:nx,-1:ny,0:ns-1),
      & c_hw(0:nspecies-1,0:nspecies-1),c_rw(0:nspecies-1,0:nspecies-1),
      & c_hwA(0:nspecies-1,0:nspecies-1),
      & c_hwB(0:nspecies-1),c_rwB(0:nspecies-1),
@@ -195,7 +212,7 @@
      & c_hwB,c_rwB,c_hTB,c_rTB)
 *    ..calculate the correction for each charge state (stress-visouss tensor)
           call b2trcs(nspecies,mum,mdm,nz2n,
-     & c_pi_uB(0:nspecies-1))
+     & c_pi_uB(0:nspecies-1),c_pi_hB(0:nspecies-1))
 
           if (zh_imp_analyt.eq.0) then
 *    ..calculate the inversed matrix for the heat flux/r-moment
@@ -248,10 +265,14 @@
             call b2trtf(nspecies,G2*tf_ton_mat,G8*tf_ton_mat, mum, mdm,
      & Ainv_fl, Ainv_mdf_fl, c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
 
-*    ..calculate the transport coefficient of the velocity dependent part of the stress-viscosity
             do j = 0, nspecies-1
+*    ..calculate the transport coefficient of the velocity dependent part of the stress-viscosity
               c_pi_uA(0:nspecies-1,j)=-nz2n(0:nspecies-1)*nz2n(j)*
      & Cinv(0:nspecies-1,j)/rmu(0:nspecies-1,j)
+*    ..calculate the transport coefficient of the heat flux dependent part of the stress-viscosity
+              c_pi_hA(0:nspecies-1,j)=-nz2n(0:nspecies-1)*nz2n(j)*
+     & (Cinv(0:nspecies-1,j)+3.5_R8*Cinv(0:nspecies-1,j+nspecies))/
+     & rmu(0:nspecies-1,j)
             enddo
 
 *    ..for the distribution function 
@@ -318,12 +339,15 @@
 
 *    ..the analytical stress-viscousity transport coefficient  
             call b2trvis_an(nspecies, mum, mdm,nz2n,
-     & c_pi_uA_an)
+     & c_pi_uA_an,c_pi_hA_an)
 
-*    ..calculate the transport coefficient of the velocity dependent part of the stress-viscosity
             c_pi_uA=0.0_R8
+            c_pi_hA=0.0_R8
             do j = 0, nspecies-1
+*    ..calculate the transport coefficient of the velocity dependent part of the stress-viscosity
               c_pi_uA(j,j)=2.0_R8*c_pi_uA_an(j)
+*    ..calculate the transport coefficient of the heat flux dependent part of the stress-viscosity
+              c_pi_hA(j,j)=2.0_R8*c_pi_hA_an(j)
             enddo
 
 *    ..for the distribution function 
@@ -367,6 +391,8 @@
           do i = 0, nspecies-1
             tau_Zh(i,0:nspecies-1)=rmu(i,0:nspecies-1)*((zetap(ix,iy)*
      & nal(ix,iy,i))/(z2n_xy(ix,iy,i)*z2n_xy(ix,iy,0:nspecies-1)))
+
+*    ..the velocity dependent part
             temp=sum(c_pi_uA(i,0:nspecies-1)*tau_Zh(i,0:nspecies-1)*
      & (nal(ix,iy,0:nspecies-1)/nal(ix,iy,i)))
 
@@ -376,19 +402,39 @@
      & (temp+zhcscorr*2.0_R8*c_pi_uB(i)*tau_Zh(i,i)*
      & (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
             enddo
+
+*    ..the heat flux dependent part
+            do j = 0, nspecies-1
+              eta_hAdp(ix,iy,i,j)=c_pi_hA(i,j)*tau_Zh(i,j)
+            enddo
+
+            eta_hBdp(ix,iy,i)=2.0_R8*c_pi_hB(i)*tau_Zh(i,i)
           enddo
 
 *    ..calculate flux limiting for the stress-viscosity
           call b2trfl_vis (ix,iy,ns,eta_cl(ix,iy,0:ns-1),
      & na(ix,iy,0:ns-1)*ti(ix,iy),gamma,cF_limv) 
 
+*    ..the velocity dependent part
           do is = 0, ns-1
-*    ..apply bx^2 and rho_A_rel
+*    ..apply bx^2 
             eta_cl(ix,iy,is)=eta_cl(ix,iy,is)*
      & (bb(ix,iy,0)/bb(ix,iy,3))**2
 *    ..apply flux limiting
             eta_cl_fl(ix,iy,is)=eta_cl(ix,iy,is)*
      & cF_limv(is)
+          enddo
+
+*    ..the heat flux dependent part
+          do i = 0, nspecies-1
+*    ..apply bx^2 
+            do j = 0, nspecies-1
+              eta_hAdp(ix,iy,i,j)=eta_hAdp(ix,iy,i,j)*
+     & (bb(ix,iy,0)/bb(ix,iy,3))**2
+            enddo
+
+            eta_hBdp(ix,iy,i)=eta_hBdp(ix,iy,i)*
+     & (bb(ix,iy,0)/bb(ix,iy,3))**2
           enddo
 
 *   ..tilde I for each isonuclear ion
@@ -417,6 +463,22 @@
           hci0(ix,iy,0)=
      & sum(hci0_al(ix,iy,0:nspecies-1)+zhcscorr*
      & hciB_al(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
+
+*   ..ion heat conductivity for each charge state
+          hci0_a_nofl(ix,iy,0:ns-1)=0.0_R8
+          hci0_a(ix,iy,0:ns-1)=0.0_R8
+          do i = 0, nspecies-1
+            do iz= 1, znnucl_int(i)
+              hci0_a_nofl(ix,iy,nucl2s(i,iz))=
+     & na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
+     & (hci0_al_nofl(ix,iy,i)+zhcscorr*hciB_al_nofl(i)*
+     & (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
+              hci0_a(ix,iy,nucl2s(i,iz))=
+     & na(ix,iy,nucl2s(i,iz))/nal(ix,iy,i)*
+     & (hci0_al(ix,iy,i)+zhcscorr*hciB_al(i)*
+     & (z2n_xy(ix,iy,i)/(nal(ix,iy,i)*iz**2)-1.0_R8))
+            enddo
+          enddo
 
           c_hw(0:nspecies-1,0:nspecies-1)=
      & c_hwA(0:nspecies-1,0:nspecies-1)
@@ -476,7 +538,16 @@
      & chci0(-1,-1,0))
       call b2txcx(nx,ny,mode,vol,gs,hx,qz,hci0_nofl(-1,-1,0),
      & chci0_nofl(-1,-1,0))
-*    ..ion viscosity on the cell boudary      
+      do i = 0, nspecies-1
+        call b2txcx(nx,ny,mode,vol,gs,hx,qz,hci0_al(-1,-1,i),
+     & chci0_al(-1,-1,0,i))
+      enddo
+      do is = 0, ns-1
+        call b2txcx(nx,ny,mode,vol,gs,hx,qz,hci0_a(-1,-1,is),
+     & chci0_a(-1,-1,0,is))
+      enddo
+
+*    ..ion velocity dependent viscosity on the cell boudary      
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,  
      &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is),
@@ -493,6 +564,18 @@
      &   eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,is))
       enddo
 
+*    ..ion heat flux dependent viscosity on the cell boudary      
+      do i = 0, nspecies-1
+        do j = 0, nspecies-1
+       call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,  
+     &   eta_hAdp(-1,-1,i,j),
+     &   cvsahz_hAdp(-1,-1,0,i,j))
+        enddo
+
+       call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,  
+     &   eta_hBdp(-1,-1,i),
+     &   cvsahz_hBdp(-1,-1,0,i))
+      enddo
 
 *    ..apply luciani correction for the ion conductivity  
       do iy=-1,ny
@@ -504,7 +587,32 @@
           endif
         enddo
       enddo
-*    ..apply luciani correction for the ion viscosity  
+      do i = 0, nspecies-1
+        do iy=-1,ny
+          do ix=0,nx
+            if (on_closed_surface(ix,iy)) then
+              chci0_al_luc(ix,iy,0,i)=chci0_al(ix,iy,0,i)*
+     & f_luc_ki(ix,iy)
+            else
+              chci0_al_luc(ix,iy,0,i)=chci0_al(ix,iy,0,i)
+            endif
+          enddo
+        enddo
+      enddo
+      do is = 0, ns-1
+        do iy=-1,ny
+          do ix=0,nx
+            if (on_closed_surface(ix,iy)) then
+              chci0_a_luc(ix,iy,0,is)=chci0_a(ix,iy,0,is)*
+     & f_luc_ki(ix,iy)
+            else
+              chci0_a_luc(ix,iy,0,is)=chci0_a(ix,iy,0,is)
+            endif
+          enddo
+        enddo
+      enddo
+
+*    ..apply luciani correction for the ion velosity dependent viscosity  
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
           do iy=-1,ny
@@ -528,7 +636,34 @@
           enddo
         endif
       enddo
- 
+
+*    ..apply luciani and neo corrections for the ion heat flux dependent viscosity  
+      do i = 0, nspecies-1
+        do j = 0, nspecies-1
+          do iy=-1,ny
+            do ix=0,nx
+              if (on_closed_surface(ix,iy)) then
+                cvsahz_hAdp_luc(ix,iy,0,i,j)=cvsahz_hAdp(ix,iy,0,i,j)*
+     & f_luc_et(ix,iy)*alpha1(ix,iy)
+              else
+                cvsahz_hAdp_luc(ix,iy,0,i,j)=cvsahz_hAdp(ix,iy,0,i,j)
+              endif
+            enddo
+          enddo
+        enddo
+
+        do iy=-1,ny
+          do ix=0,nx
+            if (on_closed_surface(ix,iy)) then
+              cvsahz_hBdp_luc(ix,iy,0,i)=cvsahz_hBdp(ix,iy,0,i)*
+     & f_luc_et(ix,iy)*alpha1(ix,iy)
+            else
+              cvsahz_hBdp_luc(ix,iy,0,i)=cvsahz_hBdp(ix,iy,0,i)
+            endif
+          enddo
+        enddo
+      enddo
+
       ncall = ncall+1
       call subend ()
       return

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trvis_an(nspecies, mum, mdm,nz2n,
-     & c_pi_uA_an)
+     & c_pi_uA_an,c_pi_hA_an)
       use b2mod_types
       use b2mod_subsys
       use b2mod_Zzh
@@ -14,7 +14,8 @@
      & mum(0:nspecies-1,0:nspecies-1), mdm(0:nspecies-1,0:nspecies-1)
 *   ..output arguments 
       real (kind=R8) :: 
-     & c_pi_uA_an(0:nspecies-1)
+     & c_pi_uA_an(0:nspecies-1),
+     & c_pi_hA_an(0:nspecies-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -67,6 +68,13 @@
       do i = 0, nspecies-1
         c_pi_uA_an(i)=1025.0_R8/1068.0_R8*
      & (1.0_R8+204.0_R8*sqrt2/205.0_R8*Z22pi(i))/Deltapi_al(i)
+      enddo
+
+*    ..the velosity dependent viscosity transport coefficient 
+      do i = 0, nspecies-1
+        c_pi_hA_an(i)=1655.0_R8/1068.0_R8*
+     & (1.0_R8+204.0_R8*sqrt2/331.0_R8*Z22pi(i)+
+     & 252.0_R8*sqrt2/331.0_R8*Z12pi(i))/Deltapi_al(i)
       enddo
 
       call subend ()

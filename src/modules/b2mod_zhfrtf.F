@@ -10,7 +10,7 @@
       real (kind=R8), allocatable ::
      & z2n_xy(:,:,:),nal(:,:,:),Ia(:,:,:),av_ualpha(:,:,:),
      & gt_Ac(:,:,:),gtalc(:,:,:),avm_u(:,:),rho_A_rel(:,:,:),
-     & gavm_uc(:,:)
+     & gavm_uc(:,:),Z_to_m1(:,:,:)
       real (kind=R8), allocatable ::
      & w_out(:,:,:),hTdp_out(:,:,:),hwdp_out(:,:,:),
      & rTdpgamma_out(:,:,:),rwdpgamma_out(:,:,:)
@@ -59,6 +59,7 @@
       allocate(gt_Ac(-1:nx,-1:ny,0:ns-1))
       allocate(rho_A_rel(-1:nx,-1:ny,0:ns-1))
       allocate(gavm_uc(-1:nx,-1:ny))
+      allocate(Z_to_m1(-1:nx,-1:ny,0:nspecies-1))
 
       end subroutine b2mod_zhfrtf_init
 
@@ -118,11 +119,14 @@
           Ia(ix, iy, :)=0.0_R8
           do inucl = 0, nspecies-1
             av_ualpha(ix,iy,inucl) = 0.0_R8
+            Z_to_m1(ix,iy,inucl) = 0.0_R8
             do iz= 1, znnucl_int(inucl)
               Ia(ix, iy, nucl2s(inucl,iz))=
      & iz**2*na(ix, iy, nucl2s(inucl,iz))/z2n_xy(ix,iy,inucl)
               av_ualpha(ix,iy,inucl)=av_ualpha(ix,iy,inucl)+
      & Ia(ix, iy, nucl2s(inucl,iz))*ua(ix, iy, nucl2s(inucl,iz))
+              Z_to_m1(ix,iy,inucl)=Z_to_m1(ix,iy,inucl)+
+     & Ia(ix, iy, nucl2s(inucl,iz))/iz
             enddo
           enddo
         enddo

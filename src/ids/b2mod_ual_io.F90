@@ -30,6 +30,7 @@ module b2mod_ual_io
     use b2mod_sources
     use b2mod_feedback
     use b2mod_transport
+    use b2mod_transport_nspecies
     use b2mod_anomalous_transport
     use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
@@ -462,6 +463,7 @@ contains
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
             &        cvsahz_drho, cvsa_drho,                                      &   !som 18.08.21
+            &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           &   !som 08.10.21
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
 !  ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1

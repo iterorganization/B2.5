@@ -341,10 +341,10 @@
       endif                                                         !srv 26.10.08
 
       if (iout.ne.0) then                                           !srv 17.06.02 {
-        call my_out(70,nx,ny,alpha1,'b2siav_alpha1')
-        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo')
-        call my_out(70,nx,ny,tauia1,'b2siav_tauia1')
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,alpha1,'b2siav_alpha1'//chns)
+        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo'//chns)
+        call my_out(70,nx,ny,tauia1,'b2siav_tauia1'//chns)
         do k=0,3
           write (chk,'(i1)') k
           call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smovv'//chk//chns)

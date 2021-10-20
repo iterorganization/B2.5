@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcs(nspecies, mum, mdm,nz2n,
-     & c_pi_uB)
+     & c_pi_uB,c_pi_hB)
       use b2mod_types
       use b2mod_subsys
       use b2mod_Zzh
@@ -13,7 +13,7 @@
      & nz2n(0:nspecies-1),
      & mum(0:nspecies-1,0:nspecies-1), mdm(0:nspecies-1,0:nspecies-1)
 *   ..output arguments 
-      real (kind=R8) :: c_pi_uB(0:nspecies-1)
+      real (kind=R8) :: c_pi_uB(0:nspecies-1),c_pi_hB(0:nspecies-1)
 
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -63,10 +63,18 @@
      & 648.0_R8/835.0_R8*Z12pi(i)**2
       enddo
 
-      do i = 0, nspecies-1
 *    ..the correction for the velocity dependent part 
+      do i = 0, nspecies-1
         c_pi_uB(i)=265.0_R8/334.0_R8*
      & (1+204.0_R8*sqrt2/265.0_R8*Z22pi(i))/
+     & Dpipart_al(i)
+      enddo
+
+*    ..the correction for the heat flux dependent part 
+      do i = 0, nspecies-1
+        c_pi_hB(i)=475.0_R8/334.0_R8*
+     & (1+204.0_R8*sqrt2/475.0_R8*Z22pi(i)+
+     & 252.0_R8*sqrt2/475.0_R8*Z12pi(i))/
      & Dpipart_al(i)
       enddo
       call subend ()

@@ -10,6 +10,7 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_anomalous_transport
       use b2mod_work
       use b2mod_indirect
@@ -362,6 +363,7 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      * cvsahz_drho, cvsa_drho,                                           !som 18.08.21
+     * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
       call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06  }
       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
@@ -423,7 +425,7 @@ csw 01oct2012 initialize potential if necessary
         enddo                                                            !srv 01.10.99
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
 !$OMP END PARALLEL DO
-!! FR end of loop (18
+!! FR end of loop (1)
 #ifdef WITH_FTIMINGS
         call timer%stop("parallel")
 #endif
@@ -543,6 +545,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,          !srv 13.01.17
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,          !srv 19.07.02 som 18.08.21
+     &   alpha1,
+     *   chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,              !som 08.10.21
      &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 

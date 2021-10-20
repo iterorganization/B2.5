@@ -1,7 +1,8 @@
       module b2mod_b2zhco
       use b2mod_types
       implicit none
-      integer :: zhd_corr=1,zhd_corrT=1,zhcscorr=1,zh_imp_analyt=0,
+      integer :: zhd_corr=1,zhd_corrT=1,zhcscorr=1,zhcscorr_vq=1,
+     & zh_imp_analyt=0,
      & zh_analyt_mdf=0, zh_dist_fun=0, zh_tf_toff=0
       real (kind=R8) :: zhflcorr=1.0_R8
       real (kind=R8) :: zhflcorrh=1.0_R8

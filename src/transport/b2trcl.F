@@ -20,7 +20,8 @@
      &                    , only :
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
-     &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
+     &                     fllim_al_c, alfx_c, sigx_c,                   !srv 08.10.14
+     &                     alpha1, kt_neo                                !som 05.10.21
       use b2mod_transport_namelist
 #ifdef ASTRA
       use b2mod_geo_corner
@@ -290,6 +291,8 @@ csw 13mar2012
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
       f_luc_al = 1.0_R8                                                  !srv 13.01.17 }
+      alpha1 = 1.0_R8                                                    !som 05.10.21
+      kt_neo = 1.7_R8                                                    !som 05.10.21
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -425,6 +428,15 @@ csw 13mar2012
      &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
      &      +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
      &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
+           alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))+
+     &           2.7e0_R8*nu2(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu2(ix,iy))+
+     &           nu2(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)/1.7e0_R8           !som 05.10.21
+           kt_neo(ix,iy) =
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))         
+     &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu2(ix,iy))+
+     &           (nu2(ix,iy))**2*eps1(iy)**3))                        !som 05.10.21
           endif
          enddo
         enddo                                                            !lk 19.09.07 }

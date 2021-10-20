@@ -8,6 +8,7 @@
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
+     * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl)
       use b2mod_types
       use b2mod_indirect
@@ -20,7 +21,7 @@
      , , only : rza
       use b2mod_b2cmpa
       use b2mod_b2zhco ,
-     & only: zhflcorr,zhcscorr,zh_imp_analyt,zh_analyt_mdf,             !som 21.03.21
+     & only: zhflcorr,zhcscorr,zhcscorr_vq,zh_imp_analyt,zh_analyt_mdf, !som 21.03.21
      & zhflcorrh,zh_dist_fun, zh_tf_toff 
       use b2mod_zhfrtf,
      & only: avm_u,w_out,hTdp_out,hwdp_out,
@@ -57,6 +58,11 @@
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
+     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21 
+     &  chci_al_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 08.10.21
+     &  chci_a_luc(-1:nx,-1:ny,0:1,0:ns-1),                             !som 08.10.21
+     &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),     !som 08.10.21
+     &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
@@ -124,8 +130,11 @@
      &  cvsahz0_fl(-1:nx,-1:ny,0:1,0:ns-1),                             !som 10.08.21
      &  cvsahz0_nofl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21 
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  chci0_al(-1:nx,-1:ny,0:1,0:nspecies-1),                         !som 08.10.21
+     &  chci0_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
+     &  cvsahz0_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 08.10.21 
+     &  cvsahz0_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 08.10.21 
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -189,6 +198,7 @@
         call ipgetr ('b2tral_zhflcorr', zhflcorr)
         call ipgetr ('b2tral_zhflcorrh', zhflcorrh)               !som 08.06.21
         call ipgeti ('b2tral_zhcscorr', zhcscorr)
+        call ipgeti ('b2tral_zhcscorr_vq', zhcscorr_vq)           !som 11.10.21
         call ipgeti ('b2tlnl_ii', icase)                          !som 05.03.21
         call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
@@ -264,8 +274,10 @@
         call b2tlnl (nx, ny, icase, te, ti, ne, lnlam) 
         call b2trzh (nx, ny, ns, zmaxmax, na, ua, ti, lnlam,hx,hz,bb,
      & vol,gs,qz,mode,gamma,chci0_nofl,chci0_fl,chci0_luc,
+     & chci0_al, chci_al_luc, chci0_a, chci_a_luc,
      & cvsahz0_nofl,cvsahz0_fl,cvsahz0_luc,cvsahz_drho,
-     & cvsa0_luc,cvsa_drho)                                           !som 16.08.2021  
+     & cvsa0_luc,cvsa_drho,
+     & cvsahz0_hAdp, cvsahz0_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)  !som 08.10.21  
 
         if(Zhdanov_test.eq.0.and.Zhdanov_cond.eq.1) then              !som 10.08.21
           chci0(-1:nx,-1:ny,0:1)=chci0_luc(-1:nx,-1:ny,0:1)
@@ -294,6 +306,10 @@
      & 'b2trzh_applied_chcix')
           do is = 0, ns-1
             write (chns,'(i3.3)') is
+            call my_out(70,nx,ny,chci0_a(-1,-1,0,is),
+     & 'b2trzh_fllim_chci_ax'//chns)
+            call my_out(70,nx,ny,chci_a_luc(-1,-1,0,is),
+     & 'b2trzh_luciani_fllim_chci_ax'//chns)
             call my_out(70,nx,ny,cvsahz0_nofl(-1,-1,0,is),
      & 'b2trzh_cvsahzx'//chns)
             call my_out(70,nx,ny,cvsahz0_fl(-1,-1,0,is),
@@ -304,6 +320,25 @@
      & 'b2trzh_luciani_fllim_cvsahz_drhox'//chns)
             call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,is),
      & 'b2trzh_applied_cvsahzx'//chns)
+          enddo
+          do is = 0, nspecies-1
+            write (chns,'(i3.3)') is
+            call my_out(70,nx,ny,chci0_al(-1,-1,0,is),
+     & 'b2trzh_fllim_chci_alx'//chns)
+            call my_out(70,nx,ny,chci_al_luc(-1,-1,0,is),
+     & 'b2trzh_luciani_fllim_chci_alx'//chns)
+
+            do is0=0,nspecies-1
+             write (chns0,'(i3.3)') is0
+              call my_out(70,nx,ny,cvsahz0_hAdp(-1,-1,0,is,is0),
+     & 'b2trzh_cvsahz_hAdpx'//chns//'_'//chns0)
+              call my_out(70,nx,ny,cvsahz_hAdp_luc(-1,-1,0,is,is0),
+     & 'b2trzh_luciani_cvsahz_hAdpx'//chns//'_'//chns0)
+            enddo
+            call my_out(70,nx,ny,cvsahz0_hBdp(-1,-1,0,is),
+     & 'b2trzh_cvsahz_hBdpx'//chns)
+            call my_out(70,nx,ny,cvsahz_hBdp_luc(-1,-1,0,is),
+     & 'b2trzh_luciani_cvsahz_hBdpx'//chns)
           enddo
         endif
 

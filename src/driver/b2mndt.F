@@ -11,6 +11,7 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_indirect
       use b2mod_constants
       use b2mod_diag
@@ -313,6 +314,7 @@ ctmp.dpc
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
+     *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
 !          if(style.ne.0) then                                           !srv 18.06.08 {
