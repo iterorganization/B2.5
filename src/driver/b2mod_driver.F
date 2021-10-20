@@ -102,7 +102,7 @@
       use ids_schemas   ! IGNORE
      , ,only: ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34)
       use ids_schemas   ! IGNORE
      , ,only: ids_numerics
 #endif
@@ -197,7 +197,7 @@
 #if IMAS_MINOR_VERSION > 21
       type(ids_summary) :: summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
       type(ids_numerics) :: numerics
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2543,7 +2543,7 @@ c new CDF movie option
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
                 else if (associated(old_description%dd_version)) then
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
@@ -2626,7 +2626,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &              summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &              numerics, old_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2656,7 +2656,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &        numerics, run_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2675,7 +2675,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &        numerics, old_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2691,7 +2691,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &        numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2704,7 +2704,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &        numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -2908,7 +2908,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &      numerics, old_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -3049,7 +3049,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &            summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &            numerics, old_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -3078,7 +3078,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &      numerics, run_start_time, run_end_time,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -3092,7 +3092,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &      numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -3105,7 +3105,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
      &      numerics,
 #endif
 #if IMAS_MINOR_VERSION > 30

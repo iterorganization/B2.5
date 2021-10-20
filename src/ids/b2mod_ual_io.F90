@@ -135,7 +135,7 @@ module b2mod_ual_io
      &          ids_summary_dynamic_int_1d_root, ids_summary_dynamic_flt_1d_root,   &
      &          ids_summary_dynamic_flt_1d_root_parent_2, ids_summary_static_str_0d
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
     use ids_schemas &     ! IGNORE
      & , only : ids_numerics
 #endif
@@ -196,7 +196,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, run_start_time_IN, run_end_time_IN, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -229,7 +229,7 @@ contains
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
@@ -332,6 +332,7 @@ contains
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
+        real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -635,7 +636,7 @@ contains
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time, comment, source, create_date )
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call write_ids_properties( numerics%ids_properties, &
           &  homogeneous_time, comment, source, create_date )
 #endif
@@ -718,7 +719,7 @@ contains
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         !! Allocate numerics.time and set it to desired values
         allocate( numerics%time(num_time_slices) )
         numerics%time(time_sind) = time
@@ -892,7 +893,7 @@ contains
         description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
 #endif
@@ -1328,7 +1329,8 @@ contains
           endif
         end if
         totFace=abs(fht)
-        call divide_by_areas(nx,ny,totFace,tmpFace)
+        call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
+        call divide_by_contact_areas(nx,ny,totFace,flxFace)
         call alloc_b2plot_wall_loading(nlim,nsgmx)
         allocate(wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM))
         wrdtrg = 0.0_IDS_real
@@ -1428,7 +1430,7 @@ contains
                 power_recomb_neutrals(itrg(i)) = &
                    &  power_recomb_neutrals(itrg(i)) + ewldmr_res(imol,iy+ias)
               end do
-              tmpFace(ifpos(itrg(i)),iy,0) = tmpFace(ifpos(itrg(i)),iy,0) + &
+              flxFace(ifpos(itrg(i)),iy,0) = flxFace(ifpos(itrg(i)),iy,0) + &
                 &  ewldt_res(iy+ias)/gs(ifpos(itrg(i)),iy,0)
             end do
             do iatm = 1, natmi
@@ -1443,7 +1445,7 @@ contains
             end do
           end do
 #endif
-          power_flux_peak(itrg(i)) = maxval(tmpFace(ifpos(itrg(i)),0:ny-1,0))
+          power_flux_peak(itrg(i)) = maxval(flxFace(ifpos(itrg(i)),0:ny-1,0))
         end do
 #if IMAS_MINOR_VERSION > 30
         select case ( GeometryType )
@@ -3212,7 +3214,7 @@ contains
                 &   value = ne,                                             &
                 &   time_sind = time_sind )
             !! fne: Electron particle flux
-            call divide_by_areas(nx,ny,fne,totFace)
+            call divide_by_contact_areas(nx,ny,fne,totFace)
             call write_face_scalar(                                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
@@ -3303,7 +3305,8 @@ contains
             !! fna: Ion particle flux
                 totFace(:,:,0:1) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  call divide_by_areas(nx,ny,fna(-1,-1,0,ispion(is,js)),tmpFace)
+                  call divide_by_contact_areas                              &
+                      &  (nx,ny,fna(-1,-1,0,ispion(is,js)),tmpFace)
                   totFace(:,:,0) = totFace(:,:,0) + tmpFace(:,:,0)
                   totFace(:,:,1) = totFace(:,:,1) + tmpFace(:,:,1)
                   call write_face_scalar(                                   &
@@ -3612,7 +3615,8 @@ contains
                 !! fmo: Ion momentum flux
                 totFace(:,:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  call divide_by_areas(nx,ny,fmo(-1,-1,0,ispion(is,js)),tmpFace)
+                  call divide_by_contact_areas                                &
+                      &  (nx,ny,fmo(-1,-1,0,ispion(is,js)),tmpFace)
                   call write_face_vector_component(                           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
@@ -3835,7 +3839,7 @@ contains
                 &         electrons%energy%v,                           &
                 &   value = chve,                                       &
                 &   time_sind = time_sind )
-            call divide_by_areas(nx,ny,fhe,totFace)
+            call divide_by_contact_areas(nx,ny,fhe,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
@@ -3964,7 +3968,7 @@ contains
                  &   value = chvi,                                    &
                  &   time_sind = time_sind )
             !! fhi : Ion heat flux
-            call divide_by_areas(nx,ny,fhi,totFace)
+            call divide_by_contact_areas(nx,ny,fhi,totFace)
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
@@ -4230,7 +4234,7 @@ contains
 
 #if IMAS_MINOR_VERSION > 32
             !! fch: Total current
-            call divide_by_areas(nx,ny,fch,tmpFace)
+            call divide_by_contact_areas(nx,ny,fch,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4247,7 +4251,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fch_p: Parallel current
-            call divide_by_areas(nx,ny,fch_p,tmpFace)
+            call divide_by_poloidal_areas(nx,ny,fch_p,tmpFace)
             call write_face_scalar(                                          &
                 &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
                 &   value = tmpFace,                                         &
@@ -4256,7 +4260,7 @@ contains
 
             !! fchanml: Anomalous current
             call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml)
-            call divide_by_areas(nx,ny,fchanml,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4273,7 +4277,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchinert: Inertial current
-            call divide_by_areas(nx,ny,fchinert,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchinert,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4290,7 +4294,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchin: Ion-neutral friction current
-            call divide_by_areas(nx,ny,fchin,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchin,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4307,7 +4311,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvispar: Parallel viscosity current
-            call divide_by_areas(nx,ny,fchvispar,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchvispar,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4324,7 +4328,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisper: Perpendicular viscosity current
-            call divide_by_areas(nx,ny,fchvisper,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchvisper,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4341,7 +4345,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisq: Heat viscosity current
-            call divide_by_areas(nx,ny,fchvisq,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchvisq,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -4358,7 +4362,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchdia: Diamagnetic current
-            call divide_by_areas(nx,ny,fchdia,tmpFace)
+            call divide_by_contact_areas(nx,ny,fchdia,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
             call write_face_vector_component(                                &
@@ -5093,7 +5097,7 @@ contains
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                     end if
                 !! fna: Fluid neutral particle flux
-                    call divide_by_areas(nx,ny,fna(-1,-1,0,js),totFace)
+                    call divide_by_contact_areas(nx,ny,fna(-1,-1,0,js),totFace)
                     call write_face_scalar(                                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux,                &
@@ -5154,7 +5158,7 @@ contains
                         &   b2FaceData = cvsa(:,:,:,js),                      &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! fmo: Ion momentum flux
-                    call divide_by_areas(nx,ny,fmo(-1,-1,0,js),tmpFace)
+                    call divide_by_contact_areas(nx,ny,fmo(-1,-1,0,js),tmpFace)
                     call write_face_vector_component(                         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
@@ -6323,7 +6327,7 @@ contains
           end do
           lambda = 0.0_IDS_real
           totFace=abs(fhe)
-          call divide_by_areas(nx,ny,totFace,tmpFace)
+          call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(ii,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(ii,jsep+1:ny,0),dim=1)
           i = jsep+j
@@ -6341,7 +6345,7 @@ contains
           call write_sourced_value( summary%scrape_off_layer%heat_flux_e_decay_length, lambda )
           lambda = 0.0_IDS_real
           totFace=abs(fhi)
-          call divide_by_areas(nx,ny,totFace,tmpFace)
+          call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
           u = maxval(tmpFace(jj,jsep+1:ny,0))/2.0_IDS_real
           j = maxloc(tmpFace(jj,jsep+1:ny,0),dim=1)
           i = jsep+j

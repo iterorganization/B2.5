@@ -225,7 +225,7 @@ program b2_ual_write
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%dd_version)) then
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           old_start_time = old_description%simulation%time_begin
           old_end_time = old_description%simulation%time_end
 #endif
@@ -305,7 +305,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 21
              &  summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
              &  numerics, old_start_time, run_end_time, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -329,7 +329,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 21
          &  summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
          &  numerics, run_start_time, run_end_time, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -345,7 +345,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30

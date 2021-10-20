@@ -24,7 +24,7 @@ module b2mod_ual
     use ids_schemas &   ! IGNORE
      & ,only: ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
     use ids_schemas &   ! IGNORE
      & ,only: ids_numerics
 #endif
@@ -52,7 +52,7 @@ module b2mod_ual
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
   public ids_numerics
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -71,7 +71,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -99,7 +99,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -129,7 +129,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           &  "numerics, "// &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -158,7 +158,7 @@ contains
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_put( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
@@ -187,7 +187,7 @@ contains
           call ids_put_slice( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_put_slice( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
@@ -206,7 +206,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_deallocate( numerics )
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -224,7 +224,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -252,7 +252,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -274,7 +274,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
           call ids_delete( idx, "summary", summary)
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_delete( idx, "numerics", numerics)
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -293,7 +293,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -321,7 +321,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -341,7 +341,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           &  "numerics, "// &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -364,7 +364,7 @@ contains
         call ids_put( idx, "summary", summary, status )
         call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_put( idx, "numerics", numerics, status )
         call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
@@ -382,7 +382,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_deallocate( numerics )
 #endif
 #if IMAS_MINOR_VERSION > 30

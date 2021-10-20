@@ -77,7 +77,7 @@ program b2_ual_rewrite
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
@@ -323,7 +323,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 21
       &  summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
       &  numerics, run_start_time, run_end_time, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -337,7 +337,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30

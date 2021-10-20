@@ -491,10 +491,10 @@ contains
         !! Cell flags
         integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS ) !< Cell flag
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
-        !! Optional B2 measure information
-        real(R8), intent(in), optional :: vol( -1:nx, -1:ny) !< Cell volume
-        real(R8), intent(in), optional :: gs( -1:nx, -1:ny, 0:2)
-        real(R8), intent(in), optional :: qc(-1:nx,-1:ny)   !< Cosine of the
+        !! Geometrical B2 measure information
+        real(R8), intent(in) :: vol( -1:nx, -1:ny) !< Cell volume
+        real(R8), intent(in) :: gs( -1:nx, -1:ny, 0:2) !< Face areas
+        real(R8), intent(in) :: qc(-1:nx,-1:ny)   !< Cosine of the
             !< angle between flux line direction and left cell face
         real(R8), save :: width = 1.0_R8
 
@@ -506,8 +506,6 @@ contains
 
         call ipgetr ('b2agmt_1d_width', width)
         call xertst (0.0_R8.lt.width, 'faulty input width')
-        call xertst( present( gs ) .EQV. present( qc ) , &
-            "Assert error ( gz or qc missing ) in b2_IMAS_Fill_Grid_Desc" )
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
@@ -572,14 +570,50 @@ contains
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(1)%object( gmap%nVx ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+            &   geometry_content%name = "node_coordinates"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+            &   geometry_content%description = "(R, Z) coordinates of nodes"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+            &   geometry_content%index = 1
+#endif
         !! 1D faces/edges
         !! For SN: gmap%nFcx + gmap%nFcy = nx*( ny+1 ) + ( nx+1 )*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+            &   geometry_content%name = "edge_areas"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+            &   geometry_content%description = "Projected areas of edges: poloidal, radial, total"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+            &   geometry_content%index = 21
+#endif
         !! 2D cells
         !! For SN: gmap%nCv = nx*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(3)%object( gmap%nCv ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            &   geometry_content%name = "face_indices_volume"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            &   geometry_content%description = "(ix, iy) indices of B2.5 cell and cell volume"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            &   geometry_content%index = 31
+#endif
 
         !! Fill in vertex/node information
         do iVx = 1, gmap%nVx
@@ -729,7 +763,7 @@ contains
             !! Allocate list of area projections of the 1D object
             !! 1: poloidal projection, 2: radial projection
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(2)%object( iFc )%geometry(2) )
+                &   objects_per_dimension(2)%object( iFc )%geometry(3) )
             !! Allocate list of 0D objects forming the 1D object
             !! Two 0D objects (vertices/nodes) form one 1D object (face/edge)
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -830,20 +864,20 @@ contains
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
 
-            !! 1d object measure: face area
-            if (present(gs)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%measure = &
-                    &   gs(ix, iy, ALIGNX)
-            end if
+            !! 1d object measure: edge length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &   object( iFc )%measure = &
+                &   dist( ix, iy, 0, 1)
 
             !! Area projections
-            !! 1: poloidal projection, 2: radial projection
+            !! 1: poloidal projection, 2: radial projection, 3: total area
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(1) = &
                 &    gs(ix, iy, ALIGNX)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(2) = 0.0_R8
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(3) = gs(ix, iy, ALIGNX)
         end do
 
         !! y-aligned edges
@@ -930,20 +964,21 @@ contains
             end if
 
             !! 1d object measure: edge length
-            if (present(gs)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%measure = &
-                    &   gs(ix, iy, ALIGNY)
-            end if
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &   object( iFc )%measure = &
+                &   dist( ix, iy, 0, 2)
 
             !! Area projections
-            !! 1: poloidal projection, 2: radial projection
+            !! 1: poloidal projection, 2: radial projection, 3: total area
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(1) = &
                 &    gs(ix, iy, ALIGNY) * qc(ix, iy)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(2) = &
                 &    gs(ix, iy, ALIGNY) * sqrt(1.0_R8 - qc(ix, iy)**2)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                &    object( iFc )%geometry(3) = &
+                &    gs(ix, iy, ALIGNY)
         end do
 
         !! Fill in object definitions (i.e. what objects compose an object)
@@ -965,11 +1000,9 @@ contains
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(3)%object( iCv )%nodes(4) )
             !! Also store additional geometry information: position in
-            !! computational space
-            !! FIXME: this should go into alternate geometry, which is not
-            !!        available yet for grid objects
+            !! computational space and total volume
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
-                &   objects_per_dimension(3)%object( iCv )%geometry(2) )
+                &   objects_per_dimension(3)%object( iCv )%geometry(3) )
             do i = 1, 4
                 !! Boundary to undefined
                 grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
@@ -1000,6 +1033,8 @@ contains
                 &   object( iCv )%geometry(1) = ix
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(2) = iy
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+                &   object( iCv )%geometry(3) = vol(ix,iy)
 
             !! Set edges composing the quadrilateral in the list:
             !! left edge (y-aligned)
@@ -1026,10 +1061,8 @@ contains
                 end if
             end do
             !! 2d object measure: cell area
-            if (present(vol)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                    &   object( iCv )%measure = vol(ix, iy)
-            end if
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%    &
+                &   object( iCv )%measure = gs(ix, iy, 2)
         end do
 
         !! Set nodes list, composing the 2D objects - Cells, using a subroutine

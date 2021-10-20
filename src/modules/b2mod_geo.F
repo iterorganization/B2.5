@@ -38,7 +38,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: abs_diff, dist, disx, disy, distc, match
-      public :: divide_by_areas
+      public :: divide_by_poloidal_areas, divide_by_contact_areas
       public :: cr, cz, hy1, pit, pitx, sy
 
       contains
@@ -2520,7 +2520,30 @@ c conn
 
       end subroutine init_connectivity
 
-      subroutine divide_by_areas(nx,ny,field,result)
+      subroutine divide_by_contact_areas(nx,ny,field,result)
+      implicit none
+      integer, intent(in) :: nx, ny
+      real(kind=R8), intent(in) :: field(-1:nx,-1:ny,0:1)
+      real(kind=R8), intent(out) :: result(-1:nx,-1:ny,0:1)
+      integer ix, iy
+      do iy = -1, ny
+        do ix = -1, nx
+          if (gs(ix,iy,0).gt.0.0_R8) then
+            result(ix,iy,0) = field(ix,iy,0)/gs(ix,iy,0)
+          else
+            result(ix,iy,0) = 0.0_R8
+          end if
+          if (gs(ix,iy,1).gt.0.0_R8) then
+            result(ix,iy,1) = field(ix,iy,1)/gs(ix,iy,1)
+          else
+            result(ix,iy,1) = 0.0_R8
+          end if
+        end do
+      end do
+      return
+      end subroutine divide_by_contact_areas
+
+      subroutine divide_by_poloidal_areas(nx,ny,field,result)
       implicit none
       integer, intent(in) :: nx, ny
       real(kind=R8), intent(in) :: field(-1:nx,-1:ny,0:1)
@@ -2541,7 +2564,7 @@ c conn
         end do
       end do
       return
-      end subroutine divide_by_areas
+      end subroutine divide_by_poloidal_areas
 
       function abs_diff(p1,p2)
       implicit none
