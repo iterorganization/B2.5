@@ -3193,11 +3193,24 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
         case (27)
           if(ncall.eq.0) then
-            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
-     1       'BCCON = 27 is applied to highest ionisation stages only')
-            write(*,'(a,a,i3)')
-     &       'given total particle flux with constant',
-     &       ' density for highest ionisation stage ion is =', is
+!            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
+!     1       'BCCON = 27 is applied to highest ionisation stages only')
+!========== IYS 13.10.2021
+            isb = is+1
+            do while (b2espcr(is).eq.b2espcr(isb))
+             call xertst(BCCON(isb,IB) .ne. 27 ,
+     &       'BCCON = 27 should be applied to only one ionization state'
+     &       // 'of isonuclear sequence')
+             BCCON(isb,IB) = 2
+             CONPAR(IS,IBW,1) = 0.0_R8
+             isb = isb + 1
+            enddo
+!========== IYS 13.10.2021
+            
+            write(*,'(a,a,a,i3)')
+     &       'given total particle flux for all ionization states ',
+     &       'within the isonuclear sequence with constant density ',
+     &       'for ionisation stage ion is =', is
             DO IBW=IB,NBC
               if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
