@@ -972,10 +972,10 @@ contains
             !! 1: poloidal projection, 2: radial projection, 3: total area
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(1) = &
-                &    gs(ix, iy, ALIGNY) * qc(ix, iy)
+                &    gs(ix, iy, ALIGNY) * sqrt(1.0_R8 - qc(ix, iy)**2)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(2) = &
-                &    gs(ix, iy, ALIGNY) * sqrt(1.0_R8 - qc(ix, iy)**2)
+                &    gs(ix, iy, ALIGNY) * qc(ix, iy)
             grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                 &    object( iFc )%geometry(3) = &
                 &    gs(ix, iy, ALIGNY)
