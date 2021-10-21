@@ -492,7 +492,7 @@
               if(leftix(ix,iy).eq.-2) then
                 wrk0(ix,iy)=0.0e0_R8
               else
-                wrk0(ix,iy) = 2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)*     !som 18.08.21
+                wrk0(ix,iy) = 2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/     !som 21.10.21
      &           (bb(ix,iy,0)*bb(ix,iy,3)*
      &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
      &           bb(leftix(ix,iy),leftiy(ix,iy),0)*
