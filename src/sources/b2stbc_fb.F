@@ -204,7 +204,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
-     & ,only : nomp, omp, icsep, ifssep
+     & ,only : nomp, omp, icsepomp, ifssep
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -341,8 +341,8 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
 c       call get_jsep(nx,ny,jxi,jxa,jsep)
-       call xertst(icsep.gt.0,
-     &  'Invalid icsep value, check rzomp in b2.user.parameters')
+       call xertst(icsepomp.gt.0,
+     &  'Invalid icsepomp value, check rzomp in b2.user.parameters')
        call read_b2mod_feedback_control(99)
        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
        call ipgetr('b2mndr_dtim', dtim)
@@ -502,7 +502,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        if(nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or.
      &    nesepm_pfr.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8) then
           iyped = jsep/2
-          icped = icsep/2
+          icped = icsepomp/2
        endif
        if(nepedm_sol.gt.0.0_R8) then
          call xertst(mpg%isClassicalGrid.eq.1,
@@ -793,7 +793,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               endif
 
               na_feedback_current = 0.5_R8 *
-     *          (dv%ne(omp(icsep-1))+dv%ne(omp(icsep)))
+     *          (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
               is_start=-1
               is_end=-1
               do is=0, ns-1

@@ -125,7 +125,7 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
-      logical decay_length_ok, fedback_species
+      logical decay_length_ok, fedback_species, ishigh
       logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
       real (kind=R8) ::
      *  rz(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
@@ -513,6 +513,11 @@ cwdk  now need to recompute full diamagnetic component for ud
         ENDIF
 #endif
         DO IS=0, NS-1
+        if (is.eq.ns-1) then
+          ishigh = .true.
+        else
+          ishigh = .not.lnext(is,is+1)
+        end if
 
 * -- BOUNDARY CONDITIONS FOR CONTINUITY EQUATIONS --
           select case (BCCON(IS,IB))
@@ -523,10 +528,13 @@ cwdk  now need to recompute full diamagnetic component for ud
 
           case (1)
           if(ncall_b2stbc_phys.eq.0) then
-            IF(BCCHAR(iB).EQ.'S') THEN
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv)) then
             if(is.eq.ismain.and.switch%use_astra.ne.0) then
               conpar(is,iB,1) = neb_astra                               !srv 28.07.11
             endif
+             if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 1')
             ENDIF
             if (conpar(is,iB,1).eq.0.0_R8) then
               conpar(is,iB,1) = switch%b2mndr_na_min
@@ -557,6 +565,10 @@ cwdk  now need to recompute full diamagnetic component for ud
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 2')
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -611,6 +623,10 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       'BCCON = 4, CONPAR(,,1) !> 0')
             call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
      1       'BCCON = 4, CONPAR(,,2) !> 0')
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     .       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 4')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -710,6 +726,10 @@ cghgh
      .      'total particle flux ',CONPAR(IS,IB,1),
      1      ' with const density on ',BCCHAR(IB),
      2      boundary_location(ib),' for species ',IS
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >      call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 6')
           endif
           IF(BCCHAR(IB).EQ.'N') THEN
             s1=0.0_R8
@@ -848,6 +868,10 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).ne.0.0_R8,
      1       'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 9')
           if (switch%mdf_fhi.ne.0) then
             call xerrab('BCCON = 9 not yet imlemented for mdf')
           endif
@@ -964,6 +988,10 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      .       'leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
      2       ' for species ',IS
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 10')
           endif
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
@@ -1006,6 +1034,8 @@ cwdk      compatibility for E/W boundaries
 * -- BCCON=11 -- particle flux feedback boundary condition
 
           case (11)
+          call xerrab ('b2stbc_phys -- BCCON = 11 not adapted for WG')
+#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
            write(*,'(a,a,a,a,i3)')
      .      'particle flux feedback boundary condition on ',
@@ -1052,7 +1082,6 @@ cwdk      compatibility for E/W boundaries
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
-#ifdef WG_TODO
           IF (BCCHAR(IB).EQ.'S') THEN
             if (.not.fedback_species) then
 *   ..initialise ireg
@@ -1132,6 +1161,10 @@ cwdk      compatibility for E/W boundaries
            call xertst ((0.0_R8.eq.nesepm.and.0.0_R8.eq.ndes_sol).or.
      1      0.0_R8.eq.nesepm_overshoot,
      1      'BCCON=12 coding incompatible with nesepm_overshoot!')
+           icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+           if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >      call xertst (switch%ionising_core.eq.0,
+     .      'ionising_core switch usage inconsistent with BCCON = 12')
           endif
           IF (BCCHAR(IB).EQ.'S') THEN
 *   ..initialise ireg
@@ -1207,6 +1240,10 @@ cwdk      compatibility for E/W boundaries
      1       BCCHAR(IB),boundary_location(ib),
      2       ' for species ',IS, ' with parameters ',
      3       CONPAR(IS,IB,1),CONPAR(IS,IB,2)
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     .       call xertst (switch%ionising_core.le.0,
+     .       'ionising_core switch usage inconsistent with BCCON = 13')
           endif
 c dpc
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -1342,6 +1379,10 @@ c dpc
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     .       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 15')
           endif
 cwdk      Notes: 
 cwdk       * need correction for misaligned grids -> t1
@@ -1396,6 +1437,10 @@ cwdk       * need to correct this BC for hybrid scheme
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     .       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 16')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -1582,6 +1627,8 @@ cwdk       * need to correct this BC for hybrid scheme
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 19')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -1715,6 +1762,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 1, CONPAR(,,1) !> 0')
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 20')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -1829,6 +1880,8 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             END DO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 21')
           endif
           IF(BCCHAR(IB).EQ.'S' .and.
      &       on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
@@ -1935,6 +1988,8 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 22')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then
@@ -2072,6 +2127,8 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 23')
           endif
 
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -2198,6 +2255,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       'BCCON = 24, CONPAR(,,1) !> 0')
             call xertst(CONPAR(is,ib,2).gt.0.0_R8,
      &           'faulty parameter conpar2')
+            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+     >       call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 24')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -2340,6 +2401,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             END DO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 25')
           endif
 
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -2445,6 +2508,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (switch%ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 26')
           endif  ! ncall_b2stbc_phys == 0
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then

@@ -1746,6 +1746,7 @@
       m%fsFcP = 0
       m%ftLbl = 0
       if (m%isClassicalGrid.eq.1) then
+        call conv_regions(nnreg)
 ! csc these arrays are needed because otherwise the nFt with which the mapping is written
 !     is different wrt the nFt with which they have been allocated
         allocate (ftCvP(m%nFt,2))
@@ -1957,8 +1958,10 @@
         deallocate(ixstart, ixend, iystart, iyend, reg, nxreg, nseg)
       else
         write (*,*) 'WARNING flux surfaces not yet available'//
-     .              ' for non-classical grids'
+     .              ' for non-structured grids'
       endif
+
+
 
       deallocate (icorner)
       deallocate (ighostcv)
@@ -4051,6 +4054,33 @@
 
       end subroutine prep_plasma_ext
 
+
+******************************************************************************
+
+
+      subroutine conv_regions (nnreg)
+        implicit none
+        integer, intent(in) :: nnreg(0:2)
+        integer :: ii, iout
+
+! csc Provide conversion of x/y directed regions
+        open(newunit=iout,file='b2us.regions.parameters')
+        write (iout,'(1x,a,i0)') 'number of face regions  = ',
+     &   nnreg(1)+nnreg(2)
+
+        write (iout,'(1x,a,1x,a)') 'x-directed regions','| fcReg'
+        do ii = 1, nnreg(1)
+          write (iout,'(1x,i0,1x,a,1x,i0)') ii, '|',ii
+        end do
+
+        write (iout,'(1x,a,1x,a)') 'y-directed regions','| fcReg'
+        do ii = 1, nnreg(2)
+          write (iout,'(1x,i0,1x,a,1x,i0)') ii,'|', ii+nnreg(1)
+        end do
+
+        close (iout)
+
+      end subroutine conv_regions
 
       end module b2us_prep
 
