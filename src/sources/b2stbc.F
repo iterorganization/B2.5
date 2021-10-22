@@ -13,7 +13,7 @@
 !      use b2mod_balance !djm Jan 2017
 !     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
 !     2          b2stbc_shi0to3,balance_netcdf
-      use b2mod_feedback
+      use b2us_feedback
       use b2mod_b2cmpa
       use b2mod_time
       use b2mod_switches
@@ -39,7 +39,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Plasma), intent (in) :: pl
+      type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2RatesWork), intent (in) :: rtw
@@ -81,11 +81,10 @@
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys,
+     1   b2stbc_phys
 #ifdef WG_TODO
-     &          b2stbc_bas,                                              !srv 27.06.21
+     &          b2stbc_bas                                              !srv 27.06.21
 #endif
-     &          b2stbc_fb_pre, b2stbc_fb_post
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -330,12 +329,11 @@
       if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
-#ifdef WG_TODO
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &    call b2stbc_fb_pre(nCv, nFc, nVx, ns, ismain, BoRiS,
+     &    call compute_feedback(nCv, nFc, nVx, ns, ismain,
      &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
      &     main_call, switch%b2stbc_diagno)
-#endif
+
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
      &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
@@ -376,12 +374,12 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
 #endif
       endif
-#ifdef WG_TODO
-      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
-     &    switch, geo, mpg, pl, dv, srw, main_call, 
-     &    switch%b2stbc_diagno)
-#endif
+
+!WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
+!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call, 
+!WG_RM     &    switch%b2stbc_diagno)
+
 * ..compute conditions on the cuts
 *     (no flow)
 !WG_TODO*   ..compute suitable large coefficient

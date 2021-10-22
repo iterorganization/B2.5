@@ -25,6 +25,8 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_switches
+      use b2mod_feedback
+      use b2us_feedback
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -426,6 +428,38 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call write_triangles(nout(0),mpg, gm, nx, ny)
 !      endif
 #endif
+*   ..convert feedback schemes (if present!)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,file_exists)
+      if (file_exists) then
+        call read_b2mod_feedback_control(99)
+        call conv_fbparms (nx, ny, ns, mpg)
+        call write_fbparms(ns)
+      endif
+      call ipgetr ('b2stbc_fnaycore', fnaycore)
+      call ipgetr ('b2stbc_fheycore', fheycore)
+      call ipgetr ('b2stbc_fhiycore', fhiycore)
+      call ipgetr ('b2stbc_fchycore', fchycore)
+      call ipgetr ('b2stbc_nesepm', nesepm)
+      call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
+      call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
+      call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
+      call ipgetr ('b2stbc_volrec_sol', volrec_sol)
+      call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
+      call ipgetr ('b2stbc_ndes', ndes)
+      call ipgetr ('b2stbc_ndes_sol', ndes_sol)
+      if(fnaycore.ne.-1.0e30_R8 .or. fheycore.gt.0.0_R8 .or.
+     &   fhiycore.gt.0.0_R8 .or. fchycore.ne.-1.0e30_R8 .or.
+     &   nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or.
+     &   nesepm_pfr.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
+     &   volrec_sol.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8 .or.
+     &   ndes.gt.0.0_R8 .or. ndes_sol.gt.0.0_R8) then
+        write(0,'(a)') 'WARNING: some feedback switches are not fully'//
+     &  ' backwards compatible after converting to unstructured code!'
+        write(0,'(a)') 'WARNING: coreregno, solregno, etc., now'//
+     &   ' identify only the boundary where feedback is applied!'
+      endif
+
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

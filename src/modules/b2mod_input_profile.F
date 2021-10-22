@@ -455,7 +455,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_user_namelist
-     , , only : nomp, omp, icsep
+     , , only : nomp, omp, icsepomp
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -511,8 +511,8 @@ cdjm Jan2017 Keep linearised sources for balance
         enddo
         call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
-        call xertst(icsep.gt.0,
-     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+        call xertst(icsepomp.gt.0,
+     &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
         nlbl = max(1,maxval(mpg%ftLbl))
         if (any(poloidal_scaling)) 
      .    call xerrab('Poloidal scaling not yet coded for WG')
@@ -588,8 +588,8 @@ cdjm Jan2017 Keep linearised sources for balance
 #endif
 ! csc for now identify pr with r-coordinate of midplane CVs
             pr = 0.0_R8
-            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
-     &             geo%cvX(omp(icsep))) ! FIXME should use distance of face center to neighbouring CV center?
+            rsep = 0.5_R8*(geo%cvX(omp(icsepomp-1)) + 
+     &             geo%cvX(omp(icsepomp))) ! FIXME should use distance of face center to neighbouring CV center?
             do ic=1, nomp
               pr(ic) = geo%cvX(omp(ic)) - rsep
             end do

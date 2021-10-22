@@ -18,7 +18,7 @@
       use b2mod_b2cmpa
 c      use b2mod_keps
       use b2mod_user_namelist
-     , , only : nomp, omp, icsep
+     , , only : nomp, omp, icsepomp
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -84,8 +84,8 @@ c      use b2mod_keps
      &     (switch%b2sikt_sheath_local.ne.1)) then
         call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
-        call xertst(icsep.gt.0,
-     &    'Invalid icsep value, check rzomp in b2.user.parameters')
+        call xertst(icsepomp.gt.0,
+     &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
        endif
       endif
 *   ..test nCv, ns
@@ -131,10 +131,10 @@ cwdk     parallel transport due to parallel current fluctuations
           rhol = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       abs(rza(:,ismain)*qe*geo%cvBb(:,3))
         else
-          csfs = cs(omp(icsep))
-          connfs = geo%cvConn(omp(icsep))
-          rhol = sqrt(2.0_R8*pl%ti(omp(icsep))*(am(ismain)*mp))/
-     &       abs(rza(omp(icsep),ismain)*qe*geo%cvBb(omp(icsep),3))
+          csfs = cs(omp(icsepomp))
+          connfs = geo%cvConn(omp(icsepomp))
+          rhol = sqrt(2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp))/
+     &       abs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
