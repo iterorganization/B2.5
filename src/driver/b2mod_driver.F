@@ -2486,8 +2486,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
          call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')      
        endif          
       endif                                                              !srv 29.11.18 }
+      call b2wdat (nCv, nFc, ns, ismain, ismain0, 
+     .                   mpg, geo, state, state_ext, BoRiS)              !srv 05.10.01
 #ifdef WG_TODO
-      call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (switch%use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
