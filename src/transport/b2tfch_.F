@@ -6,6 +6,7 @@
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
      1 ti, ni, na, fna, uadia, ua, 
      1 csig, csigin, chci, calf, cvsa_cl, cvsa_drho,                     !som 18.08.21
+     & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
      & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
@@ -30,6 +31,10 @@
      &   chci(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
      &   cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
+     &   chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                          !som 20.10.21
+     &   chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                 !som 20.10.21   
+     &   cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 20.10.21
+     &   cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 20.10.21
      &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
@@ -156,7 +161,10 @@
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &             ne2, lnlam, te, ti, ni, chci, 
+     &             na,                                                   !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
      &              facdrift, fchinert)
@@ -332,9 +340,9 @@
        call my_out(70,nx,ny,fchin(-1,-1,1),'b2tfch__fchiny')
        call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfch__fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfch__fchvispary')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__fchvisqx')
        call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch__fchvisqy')
-!       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfch__fchvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfch__fchvisperx')
        call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tfch__fchvispery')
        call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfch__fchinertx')
        call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfch__fchinerty')

@@ -128,6 +128,13 @@
 !     if(isb.eq.ismain) then                                        !srv 19.02.21
       if (.not.is_neutral(isb)) then                                !som 11.10.21
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
+          hip0  = 0.0e0_R8
+          hip1  = 0.0e0_R8
+          hipgen= 0.0e0_R8
+          hip0a = 0.0e0_R8
+          hip0b = 0.0e0_R8
+          wrk0 = 0.0e0_R8
+
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 

@@ -4,6 +4,8 @@
       implicit none
       real (kind=R8), allocatable, save ::
      *  chci_al(:,:,:,:),
+     *  cvsa_hAdp_albe(:,:,:,:,:),
+     *  cvsa_hBdp_al(:,:,:,:),                                        !som 20.10.21
      *  cvsahz_hAdp_albe(:,:,:,:,:),
      *  cvsahz_hBdp_al(:,:,:,:)                                       !som 08.10.21
 
@@ -15,6 +17,9 @@
 
       print *, 'nspecies:', nspecies
       allocate(chci_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))
+      allocate(cvsa_hAdp_albe(-1:nxd,-1:nyd,0:1,
+     & 0:nspecies-1,0:nspecies-1))
+      allocate(cvsa_hBdp_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))          !som 20.10.21
       allocate(cvsahz_hAdp_albe(-1:nxd,-1:nyd,0:1,
      & 0:nspecies-1,0:nspecies-1))
       allocate(cvsahz_hBdp_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))        !som 08.10.21
@@ -27,6 +32,8 @@
 
       if (.not.allocated(chci_al)) return
       deallocate(chci_al)
+      deallocate(cvsa_hAdp_albe)
+      deallocate(cvsa_hBdp_al)                                   !som 08.10.21
       deallocate(cvsahz_hAdp_albe)
       deallocate(cvsahz_hBdp_al)                                 !som 08.10.21
 

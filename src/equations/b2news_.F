@@ -364,6 +364,7 @@ csw 01oct2012 initialize potential if necessary
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      * cvsahz_drho, cvsa_drho,                                           !som 18.08.21
      * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
+     * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
       call b2tanml (nx, ny, csig_an, po, fchanml)                        !srv 20.09.06  }
       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
@@ -373,7 +374,10 @@ csw 01oct2012 initialize potential if necessary
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &             ne2, lnlam, te, ti, ni, chci, 
+     &             na,                                                   !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -451,6 +455,7 @@ c   extra call at this place within internal iteration)
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
+     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
      &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
@@ -563,7 +568,10 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
      &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &              ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &             ne2, lnlam, te, ti, ni, chci, 
+     &             na,                                                   !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq)
 
 *     ..iterate on particle balance
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
@@ -812,6 +820,7 @@ csw 16oct2012 init ier0
      &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, chci, calf, cvsa_cl, cvsa_drho,                  !som 18.08.21
+     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
      &    conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
@@ -844,6 +853,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, chci, calf, cvsa_cl, cvsa_drho,                !som 18.08.21
+     &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
      &      conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
 *   ..compute new residual following the tradition

@@ -292,7 +292,7 @@ csw 13mar2012
       f_luc_sg = 1.0_R8
       f_luc_al = 1.0_R8                                                  !srv 13.01.17 }
       alpha1 = 1.0_R8                                                    !som 05.10.21
-      kt_neo = 1.7_R8                                                    !som 05.10.21
+      kt_neo = 2.7_R8                                                    !som 05.10.21
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then

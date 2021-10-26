@@ -315,6 +315,7 @@ ctmp.dpc
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
      *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
+     *       cvsa_hAdp_albe, cvsa_hBdp_al,                               !som 20.10.21
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
 !          if(style.ne.0) then                                           !srv 18.06.08 {
@@ -326,7 +327,10 @@ ctmp.dpc
             call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
             call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
-     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &             ne2, lnlam, te, ti, ni, chci, 
+     &             na,                                                   !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) ! vol, hx, hy, qz, bb,   !srv 05.06.18
@@ -357,6 +361,7 @@ ctmp.dpc
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
+     &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
      &     cvla, chce, chve, chci, chvi, calf,                           !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,

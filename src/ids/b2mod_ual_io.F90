@@ -464,6 +464,7 @@ contains
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
             &        cvsahz_drho, cvsa_drho,                                      &   !som 18.08.21
             &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           &   !som 08.10.21
+            &        cvsa_hAdp_albe, cvsa_hBdp_al,                                &   !som 20.10.21
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl)
 !  ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
@@ -483,6 +484,7 @@ contains
             &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,         &
             &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,       &
             &        cdna, cdpa, cvsa_cl, cvsa_drho,                              &!som 18.08.21
+            &        chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               &!som 20.10.21
             &        cvla, chce, chve, chci, chvi, calf,                          &
             &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,  &
             &        rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,       &

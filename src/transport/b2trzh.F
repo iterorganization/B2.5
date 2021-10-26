@@ -6,6 +6,7 @@
      & chci0_al, chci0_al_luc, chci0_a, chci0_a_luc,
      & cvsahz0_nofl,cvsahz0,cvsahz0_luc,cvsahz_drho_luc,
      & cvsa0_luc,cvsa_drho_luc,
+     & cvsa_hAdp, cvsa_hBdp, cvsa_hAdp_luc, cvsa_hBdp_luc,      
      & cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)      !som 08.10.2021  
       use b2mod_types
       use b2mod_b2cmpa
@@ -43,6 +44,10 @@
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1), 
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho_luc(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     &  cvsa_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1), 
+     &  cvsa_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     &  cvsa_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1), 
      &  cvsahz_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1), 
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
@@ -570,11 +575,17 @@
        call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,  
      &   eta_hAdp(-1,-1,i,j),
      &   cvsahz_hAdp(-1,-1,0,i,j))
+       call b2txcx (nx, ny, mode, vol, gs, hx, qz,  
+     &   eta_hAdp(-1,-1,i,j),
+     &   cvsa_hAdp(-1,-1,0,i,j))
         enddo
 
        call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,  
      &   eta_hBdp(-1,-1,i),
      &   cvsahz_hBdp(-1,-1,0,i))
+       call b2txcx (nx, ny, mode, vol, gs, hx, qz,  
+     &   eta_hBdp(-1,-1,i),
+     &   cvsa_hBdp(-1,-1,0,i))
       enddo
 
 *    ..apply luciani correction for the ion conductivity  
@@ -645,8 +656,11 @@
               if (on_closed_surface(ix,iy)) then
                 cvsahz_hAdp_luc(ix,iy,0,i,j)=cvsahz_hAdp(ix,iy,0,i,j)*
      & f_luc_et(ix,iy)*alpha1(ix,iy)
+                cvsa_hAdp_luc(ix,iy,0,i,j)=cvsa_hAdp(ix,iy,0,i,j)*
+     & f_luc_et(ix,iy)*alpha1(ix,iy)
               else
                 cvsahz_hAdp_luc(ix,iy,0,i,j)=cvsahz_hAdp(ix,iy,0,i,j)
+                cvsa_hAdp_luc(ix,iy,0,i,j)=cvsa_hAdp(ix,iy,0,i,j)
               endif
             enddo
           enddo
@@ -657,8 +671,11 @@
             if (on_closed_surface(ix,iy)) then
               cvsahz_hBdp_luc(ix,iy,0,i)=cvsahz_hBdp(ix,iy,0,i)*
      & f_luc_et(ix,iy)*alpha1(ix,iy)
+              cvsa_hBdp_luc(ix,iy,0,i)=cvsa_hBdp(ix,iy,0,i)*
+     & f_luc_et(ix,iy)*alpha1(ix,iy)
             else
               cvsahz_hBdp_luc(ix,iy,0,i)=cvsahz_hBdp(ix,iy,0,i)
+              cvsa_hBdp_luc(ix,iy,0,i)=cvsa_hBdp(ix,iy,0,i)
             endif
           enddo
         enddo

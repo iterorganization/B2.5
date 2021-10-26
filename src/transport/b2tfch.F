@@ -6,7 +6,9 @@
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia, vedia, wadia, vaecrb,
      2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,      !xpb
-     &  calf, chvemx, cvsa_cl, cvsa_drho, fch, conc, fchstoch, fchdia,   !srv 17.12.13 16.10.17 som 18.08.21
+     &  calf, chvemx, cvsa_cl, cvsa_drho,
+     &  chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17 som 18.08.21
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
@@ -38,6 +40,10 @@
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
      & cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                                !som 18.08.21
+     & chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 20.10.21
+     & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21   
+     & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
+     & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
      2 facdrift(-1:nx,-1:ny), BoRiS,
@@ -204,7 +210,10 @@ c Drift terms
      & po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     & ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &             ne2, lnlam, te, ti, ni, chci, 
+     &             na,                                                   !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
      & facdrift, fchinert)
