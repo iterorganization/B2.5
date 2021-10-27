@@ -52,8 +52,8 @@
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Plasma), intent (in) :: pl
 *   ..input/output arguments
+      type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (inout) :: rt
       type (B2RatesWork), intent (inout) :: rtw
