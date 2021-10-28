@@ -722,29 +722,7 @@
               enddo
             enddo
 
-           endif
-         write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,hipgen(-1,-1),
-     & 'b2tvsq_hipgen'//chns)
-        call my_out(70,nx,ny,na(-1,-1,is),
-     & 'b2tvsq_nb'//chns)
-        call my_out(70,nx,ny,1.0e0_R8/rza(-1:nx,-1:ny,is),
-     & 'b2tvsq_zb_to_m1'//chns)
-
-            do k=0,ns-1
-             write (chns0,'(i3.3)') k 
-              call my_out(70,nx,ny,Ia(-1,-1,k),
-     & 'b2tvsq_Ia'//chns//'_'//chns0)
-            enddo
-            do inucl=0,nspecies-1
-             write (chns0,'(i3.3)') inucl 
-              call my_out(70,nx,ny,hipgen_al(-1,-1,inucl),
-     & 'b2tvsq_hipgen_al'//chns//'_'//chns0)
-              call my_out(70,nx,ny,nal(-1,-1,inucl),
-     & 'b2tvsq_nal'//chns//'_'//chns0)
-              call my_out(70,nx,ny,Z_to_m1(-1,-1,inucl),
-     & 'b2tvsq_Z_to_m1'//chns//'_'//chns0)
-            enddo   
+           endif 
          enddo
 
        endif                                                             !som 20.10.21
