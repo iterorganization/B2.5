@@ -50,20 +50,25 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
+     &  pbs(-1:nx,-1:ny,0:1),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), lnlam(-1:nx,-1:ny),
+     &  wedia(-1:nx,-1:ny,0:1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fht(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
@@ -78,10 +83,11 @@
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06 25.12.06
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),              !srv 23.10.09
-     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
+     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1),
+     &  fne_eir(-1:nx,-1:ny,0:1),
      &  fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
 *     (transport coefficients)                                           !xpb
       real (kind=R8) ::                                                  !xpb
@@ -135,6 +141,7 @@
       integer, save :: elm_count
       integer, save :: style = 2                                        !srv 28.06.08
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 30.06.08, IYS 06.11.2017
+      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
@@ -147,7 +154,7 @@
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
-     7  fne(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                       !srv 02.04.18
+     7  fne(-1:nx,-1:ny,0:1),
      8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1), !srv 11.09.09
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
@@ -164,7 +171,7 @@
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
-     &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
+     &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti
 *   ..initialisation
       data ncall/0/, sources_inputfile/0/, guard_flows/2/, use_astra/0/,
      *  numerics_namelist/0/
@@ -208,6 +215,7 @@
         call ipgeti ('b2sral_no_fluid_neutral_sources',
      .                                       no_fluid_neutral_sources)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 06.11.17
+        call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -235,24 +243,28 @@
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2news_guard_flows', guard_flows)                 !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        call alloc_b2mod_numerics(nx,ny,ns)
-        if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-          call write_b2mod_numerics_namelist
-        endif
         if(numerics_time_mod.gt.0.0_R8) then
           elm_count=int(tim/numerics_time_mod)
         else
           elm_count=0
         endif
-        catch_up=numerics_time_mod.gt.0.0_R8
+        if(numerics_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &      .and.numerics_time_switch.gt.0.0_R8
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up)
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
-     1     then
-            write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-            call write_b2mod_numerics_namelist
-            catch_up=numerics_time_mod.gt.0.0_R8
+          write(*,*) 'b2sral: catching up ...'
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call write_b2mod_numerics_namelist
+          if(numerics_time_mod.gt.0.0_R8) then
+            catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &        .and.numerics_time_switch.gt.0.0_R8
+          else if (numerics_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.numerics_time_switch
           else
             catch_up=.false.
           endif
@@ -262,12 +274,23 @@
           write(*,'(a,1p,3e12.4,2i6)')
      .     'ELM: ',tim,mod(tim,numerics_time_mod),
      1     numerics_time_switch,int(tim/numerics_time_mod),elm_count
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
-     1     int(tim/numerics_time_mod).gt.elm_count) then
-            elm_count=int(tim/numerics_time_mod)
-            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
-            call write_b2mod_numerics_namelist
-          endif
+          catch_up=
+     1    (mod(tim,numerics_time_mod).ge.numerics_time_switch.and.
+     1     numerics_time_switch.gt.0.0_R8).or.
+     2     int(tim/numerics_time_mod).gt.elm_count
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next numerics namelist file ',
+     .      trim(numerics_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(numerics_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/numerics_time_mod)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+          call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.
@@ -292,10 +315,12 @@
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, ismain, guard_flows,                    !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
+     &  vol, hx, gs, qc, bb, pbs,
+     &  ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,   !srv 05.06.18
-     &  wedia, fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  veecrb, vaecrb, wadia, ve, wedia,                               !srv 05.06.18
+     &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients
@@ -357,19 +382,10 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
-     &  te, ti, po, ne, ni,
+     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,            !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
-*   ..zero out contributions in dead cells
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 1, sne0)
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0)
-      call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
       call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -394,15 +410,6 @@ csw 30sep2013, added cdpa in call, uadia
      &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
-*   ..zero out contributions in dead cells and core boundary
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 1, sne0)
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0)
-      call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
       call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -414,15 +421,6 @@ csw 30sep2013, added cdpa in call, uadia
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
      &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall)
-*   ..zero out contributions in dead cells and core boundary
-        do is = 0, ns-1
-          call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-          call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
-        enddo
-        call b2xzdd (nx, ny, 1, sne0)
-        call b2xzdd (nx, ny, 3, she0)
-        call b2xzdd (nx, ny, 3, shi0)
-        call b2xzdd (nx, ny, 3, sch0)
 *   ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smo0, 1, smo, 1)
@@ -438,16 +436,6 @@ csw 30sep2013, added cdpa in call, uadia
      & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,  !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09 {
-*   ..zero out contributions in dead cells and core boundary
-      do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0_ion(-1,-1,0,is))
-        call b2xzdd (nx, ny, 1, sna0_rec(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smq0_ion(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smq0_rec(-1,-1,0,is))
-      enddo
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0_ion)
-      call b2xzdd (nx, ny, 3, shi0_rec)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, sna0_ion, 1, sna, 1)
       call b2saxpy (n2*2*ns, 1.0_R8, sna0_rec, 1, sna, 1)
@@ -467,7 +455,7 @@ csw 30sep2013, added cdpa in call, uadia
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
-          write(*,*) 'Allocating arrays for cx'
+          write(*,*) 'Allocating arrays for CX'
           allocate (shi0_cx(-1:nx,-1:ny,0:3))
           allocate (sna0_cx(-1:nx,-1:ny,0:1,0:ns-1))
           allocate (smo0_cx(-1:nx,-1:ny,0:3,0:ns-1))
@@ -485,19 +473,13 @@ csw 30sep2013, added cdpa in call, uadia
 *      (parallel momentum source must be pure friction)
         call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,    !srv 09.01.01
      &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)       !srv 07.07.09
-*   ..zero out contributions in dead cells and core boundary
-        do is = 0, ns-1
-         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-         call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
-        enddo
-        call b2xzdd (nx, ny, 3, shi0)
 *    ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smq, 1)
         call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
 *      (no contribution to she, sne or sch)
         if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-          write(*,*) 'Summing cx sources over hydrogenic neutrals'
+          write(*,*) 'Summing CX sources over hydrogenic neutrals'
           call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna0_cx, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smo0_cx, 1)
           call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi0_cx, 1)
@@ -505,7 +487,7 @@ csw 30sep2013, added cdpa in call, uadia
       enddo
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-        write(*,*) 'Writing cx sources'
+        write(*,*) 'Writing CX sources'
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           wrk(:,:) = sna0_cx(:,:,0,is)+sna0_cx(:,:,1,is)*na(:,:,is)

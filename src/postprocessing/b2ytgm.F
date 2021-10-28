@@ -239,7 +239,7 @@ cxpb
      &    (cry1(ix,iy,2)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,1)))
          if(qcb1(ix,iy).le.0.0_R8) then
           write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qcb1(ix,iy) <= 0',qcb1(ix,iy),ix,iy
+     1     'Problem in b2ytgm: qcb1(ix,iy) <= 0',qcb1(ix,iy),ix,iy
           write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
          endif
@@ -522,7 +522,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         end do
         wbbc1(nx1+1,ny1+1,0) =
      &   wbbr1(nx1,ny1,0) - (wbbc1(nx1,ny1,0) - wbbl1(nx1,ny1,0))
-        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1+1,ny1+1,3) / hzc(nx1+1,ny1+1)
+        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
 *   .. correct interpolation of magnetic field for diverted island case
 *      as B is not a periodic quantity
         if(periodic_bc.eq.1 .and. nncut.ge.1) then

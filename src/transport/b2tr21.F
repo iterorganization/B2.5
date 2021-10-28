@@ -15,8 +15,8 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),     !srv 01.07.09
-     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
-     &  na(-1:nx,-1:ny,0:ns-1),
+     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
+     &  fch_p(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -224,8 +224,8 @@ c     1          ix,iy,chce(ix,iy,0),he/gte*pitface**2,ce*pitface**2
 c         write(*,*) 'ix,iy,old_chci(ix,iy,0),new_chci(ix,iy,0),ci',
 c     1     ix,iy,chci(ix,iy,0),hi/gti*pitface**2,ci*pitface**2
 
-            chce(ix,iy,0) = fac*ce*pitface**2 + (1-fac)*chce(ix,iy,0)
-            chci(ix,iy,0) = fac*ci*pitface**2 + (1-fac)*chci(ix,iy,0)
+            chce(ix,iy,0) = fac*ce*pitface**2+(1-fac)*chce(ix,iy,0)
+            chci(ix,iy,0) = fac*ci*pitface**2+(1-fac)*chci(ix,iy,0)
 
 c         write(*,*) 'ix,iy,chce(ix,iy,0)',ix,iy,chce(ix,iy,0)
 c         write(*,*) 'ix,iy,chci(ix,iy,0)',ix,iy,chci(ix,iy,0)

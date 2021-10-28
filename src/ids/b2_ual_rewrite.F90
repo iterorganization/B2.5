@@ -54,6 +54,8 @@
 !!        !< run summary data
 !!      type (ids_numerics) :: numerics !< IDS designed to store
 !!        !< run numerics data
+!!      type (ids_divertors) :: divertors !< IDS designed to store
+!!        !< divertor data
 !!
 !!-----------------------------------------------------------------------------
 
@@ -62,14 +64,26 @@ program b2_ual_rewrite
     use b2mod_main
     use b2mod_driver
     use b2mod_grid_mapping
-    use b2mod_ual    &
-     & , only : new_ids_edge, delete_ids_edge, b25_process_ids, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description
-    use b2mod_ual_io
+    use ids_routines &  ! IGNORE
+     & , only : imas_create_env
+    use ids_schemas &   ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
+    use b2mod_ual &
+     & , only : new_ids_edge
+    use b2mod_ual_io &
+     & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & , only : ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &   ! IGNORE
+     & , only : ids_divertors
 #endif
 #ifdef B25_EIRENE
     use eirmod_comusr
@@ -93,15 +107,19 @@ program b2_ual_rewrite
     !! Local variables
     character(len=24) :: shot_string
     character(len=24) :: run_string
+    character(len=24) :: new_run_string
     character(len=24) :: argName
-    integer narg, cptArg
+    integer narg, cptArg, new_run
     character*16 usrnam
+    logical same_run_number
+    data new_run / 0 /
     external usrnam
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
     version = '3'
     treename = 'ids'
+    same_run_number = .true.
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
@@ -119,7 +137,18 @@ program b2_ual_rewrite
     call read_b2mod_transport(56)
 
     call ipgeti('b2mndr_shot_number', shot )
+    if (shot.gt.0) then
+      write(shot_string,'(i8)') shot
+      call strip_spaces(shot_string)
+    end if
     call ipgeti('b2mndr_run_number', run )
+    if (run.gt.0) then
+      write(run_string,'(i5)') run
+      call strip_spaces(run_string)
+      new_run = run
+      write(new_run_string,'(i5)') new_run
+      call strip_spaces(new_run_string)
+    end if
     username = usrnam()
     call ipgetc('b2mndr_user', username )
     database = 'solps-iter'
@@ -157,6 +186,15 @@ program b2_ual_rewrite
           call get_command_argument( cptArg + 1, run_string )
           !! Transform dummy string variable to integer
           read( run_string, *) run
+          if (same_run_number) then
+            new_run_string = run_string
+            new_run = run
+          end if
+        case("--newrun","-n")
+          call get_command_argument( cptArg + 1, new_run_string )
+          !! Transform dummy string variable to integer
+          read( new_run_string, *) new_run
+          same_run_number = new_run.eq.run
         case("--username","-u")
           call get_command_argument( cptArg + 1, username )
         case("--database","--device","-d")
@@ -168,23 +206,36 @@ program b2_ual_rewrite
 
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( 0.le.new_run.and.new_run.le.99999, 'Invalid new run number')
+    call xertst( new_run.ge.run, 'New run number must be larger than old one!')
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
+    write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
+    if (.not.same_run_number) write(*,'(a,i5)') &
+        & ' will be rewritten with run number ',new_run
+    systemarg = 'imasdb '//trim(database)
+    write(*,*) trim(systemarg)
+#ifdef NAGFOR
+    call system(systemarg, status, ierror)
+#else
+    call system(systemarg)
+#endif
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
-    call imas_open_env(treename, shot, run, idx, username, database, version, status)
+    call imas_open_env(treename, shot, run, idx, &
+      &                username, database, version, status)
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
+      call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "dataset_description", old_description, status)
+      old_imas_version = 'x.xx.x'
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old dataset_description IDS !'
-        old_imas_version = 'x.xx.x'
-      else
+      else if (associated(old_description%dd_version)) then
         old_imas_version = old_description%dd_version(1)
       end if
       call ids_deallocate( old_description )
@@ -195,54 +246,35 @@ program b2_ual_rewrite
         write(*,*) &
           & 'Recreating using IMAS version '// &
           &  trim(imas_version)//'.'
+      else if (.not.same_run_number) then
         call close_ual(idx)
-!xpb Do the recreate to a temporary location and then bring it back
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-          & 'recreate -si ',shot,' -ri ',run,      &
-          &         ' -so ',shot,' -ro ',run+1000, &
-          &         ' -d ',database,' -u ',username
-#ifdef NAGFOR
-        call system(systemarg, status, ierror)
-#else
-        call system(systemarg)
-#endif
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-          & 'recreate -si ',shot,' -ri ',run+1000, &
-          &         ' -so ',shot,' -ro ',run,      &
-          &         ' -d ',database,' -u ',username
-#ifdef NAGFOR
-        call system(systemarg, status, ierror)
-#else
-        call system(systemarg)
-#endif
-        call imas_open_env(treename, shot, run, idx, &
+        idx = 0
+        call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status)
+        if ( status.ne.0 .or. idx.eq.0 ) then ! New run IDS must be created
+          call imas_create_env(treename, shot, new_run, 0, 0, idx, &
+            &                  username, database, version, status )
+          call xertst( status.eq.0, 'Error creating IDS with new run number !')
+        end if
       end if
     else
       write (0,*) "No previous IDS found, new one will be created"
       idx = 0
     end if
+    !! Create/Write the set data to IDSs
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-      &  radiation, description, &
+      &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
       &  summary, &
 #endif
 #if IMAS_MINOR_VERSION > 25
       &  numerics, run_start_time, run_end_time, &
 #endif
-      &  tim, dtim, shot, run, database, version )
+#if IMAS_MINOR_VERSION > 30
+      &  divertors, &
+#endif
+      &  tim, dtim, shot, new_run, database, version )
 
-    !! Create/Write the set data to IDSs
-    write(*,*) "START delete_ids_edge"
-    call delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-#if IMAS_MINOR_VERSION > 25
-        &   numerics, &
-#endif
-        &   idx )
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, description, &
@@ -252,8 +284,31 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
         &   idx )
+    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+    write(*,*) trim(systemarg)
+#ifdef NAGFOR
+    call system(systemarg, status, ierror)
+#else
+    call system(systemarg)
+#endif
+    if (.not.same_run_number) then
+! Add superceding information to .yaml file
+      systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
+        &  trim(run_string)//' '//trim(new_run_string)
+      write(*,*) trim(systemarg)
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
+      call system(systemarg)
+#endif
+    end if
     call close_ual(idx)
+    idx = 0
 
 end program b2_ual_rewrite
 

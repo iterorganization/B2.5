@@ -12,11 +12,30 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use b2mod_ual_io
+    use ids_routines &  ! IGNORE
+     & ,only: imas_open_env, imas_create_env, imas_close, &
+     &        ids_deallocate, ids_get, ids_put, ids_delete, ids_put_slice
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &        ids_radiation, ids_dataset_description, ids_equilibrium
+    use b2mod_ual_io &
+     & ,only: b25_process_ids
+#if IMAS_MINOR_VERSION > 21
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &   ! IGNORE
+     & ,only: ids_divertors
+#endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-    use euITM_schemas  ! IGNORE
-    use euITM_routines ! IGNORE
+    use euITM_schemas   ! IGNORE
+    use euITM_routines  ! IGNORE
 # endif
 #endif
 
@@ -29,12 +48,15 @@ module b2mod_ual
   public put_ids_edge, new_ids_edge, delete_ids_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-    &    ids_radiation, ids_dataset_description
+    &    ids_radiation, ids_dataset_description, ids_equilibrium
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif
 #if IMAS_MINOR_VERSION > 25
   public ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+  public ids_divertors
 #endif
 #endif
 
@@ -51,6 +73,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
 #endif
             &   treename, shot, run, idx, username, database, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
@@ -78,6 +103,10 @@ contains
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store run data related to the divertor plates
+#endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot   !< The shot number of the database being created
@@ -99,6 +128,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
           &  "numerics, "// &
+#endif
+#if IMAS_MINOR_VERSION > 30
+          &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
 
@@ -127,6 +159,10 @@ contains
           call ids_put( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_put( idx, "divertors", divertors, status )
+          call xertst( status.eq.0, 'Error putting divertors IDS !')
+#endif
         else
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
@@ -152,6 +188,10 @@ contains
           call ids_put_slice( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_put_slice( idx, "divertors", divertors, status )
+          call xertst( status.eq.0, 'Error putting slice in divertors IDS !')
+#endif
         end if
 
         !! Close IDS
@@ -165,6 +205,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
         call ids_deallocate( numerics )
+#endif
+#if IMAS_MINOR_VERSION > 30
+        call ids_deallocate( divertors )
 #endif
         write(*,*) "IDS write finished"
         return
@@ -180,6 +223,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
 #endif
             &   idx )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
@@ -206,6 +252,10 @@ contains
 #if IMAS_MINOR_VERSION > 25
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
+#endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store data related to divertor plates
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
@@ -224,6 +274,9 @@ contains
 #if IMAS_MINOR_VERSION > 25
           call ids_delete( idx, "numerics", numerics)
 #endif
+#if IMAS_MINOR_VERSION > 30
+          call ids_delete( idx, "divertors", divertors)
+#endif
           write(*,*) "IDS delete finished"
         end if
         return
@@ -239,6 +292,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
 #endif
             &   idx )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
@@ -266,6 +322,10 @@ contains
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store data related to the divertor plates
+#endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
         integer :: status
@@ -277,6 +337,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
           &  "numerics, "// &
+#endif
+#if IMAS_MINOR_VERSION > 30
+          &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
 
@@ -299,6 +362,10 @@ contains
         call ids_put( idx, "numerics", numerics, status )
         call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
+#if IMAS_MINOR_VERSION > 30
+        call ids_put( idx, "divertors", divertors, status )
+        call xertst( status.eq.0, 'Error putting divertors IDS !')
+#endif
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
@@ -311,6 +378,9 @@ contains
 #endif
 #if IMAS_MINOR_VERSION > 25
         call ids_deallocate( numerics )
+#endif
+#if IMAS_MINOR_VERSION > 30
+        call ids_deallocate( divertors )
 #endif
         write(*,*) "IDS rewrite finished"
         return

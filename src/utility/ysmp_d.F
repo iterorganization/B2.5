@@ -566,7 +566,7 @@ C----FOR EACH VERTEX VI IN EK
 C
 C------IF VI NEITHER PROTOTYPE NOR DUPLICATE VERTEX, THEN MERGE ELEMENTS
 C------TO COMPUTE DEGREE
-    1       TAG = TAG + 1
+            TAG = TAG + 1
             DVI = LAST(EK)
 C
 C--------FOR EACH VERTEX/ELEMENT VS/ES IN ELEMENT LIST OF VI
@@ -904,10 +904,10 @@ C
      *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
      *     UMAX, IL(N), JL(N), FLAG, VJ
         INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !srv 11.01.07
-C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
-         real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI              !srv 11.01.07
+C       REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
+        real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI               !srv 11.01.07
 #ifdef DBG
-         real (kind=R8) :: product
+        real (kind=R8) :: product
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
@@ -923,7 +923,7 @@ C----FOR EACH ROW K
         DO 11 K=1,N
 C
 C------INITIALIZE K-TH ROW WITH ELEMENTS NONZERO IN ROW P(K) OF M
-    3     JMIN = IA(P(K))
+          JMIN = IA(P(K))
           JMAX = IA(P(K)+1) - 1
           IF (JMIN.GT.JMAX) GO TO 5
           DO 4 J=JMIN,JMAX
@@ -947,7 +947,7 @@ C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
      &         (ABS(U(ILI)).ge. tiny(1.0_R8).or.
      &          ABS(U(ILI)).le.-tiny(1.0_R8))) then
               product = log(abs(ukidi)) + log(abs(u(ili)))
-              if (product.ge.cutlo) DK = DK + UKIDI * U(ILI)
+              if (product.ge.cutll) DK = DK + UKIDI * U(ILI)
             END IF
 #else
             DK = DK + UKIDI * U(ILI)
@@ -966,7 +966,7 @@ C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
      &             (ABS(U(J)) .ge. tiny(1.0_R8).or.
      &              ABS(U(J)) .le.-tiny(1.0_R8))) then
                   product = log(abs(ukidi)) + log(abs(u(j)))
-                  if (product.ge.cutlo)
+                  if (product.ge.cutll)
      >             D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
                 END IF
 #else

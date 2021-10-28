@@ -3,8 +3,8 @@
 
       subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
-     &  te, ti, po, ne, ni,
+     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
@@ -65,7 +65,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
      &  fht(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
@@ -150,7 +151,7 @@
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -186,7 +187,7 @@
      *     in_size_of_table/200000/,
      1     use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, output/0/,
-     1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
+     1     coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
      7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
@@ -327,6 +328,11 @@
      *       neutral_sources_rescale)
         if(use_eirene.eq.0) neutral_rescale=1.0_R8
         if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+        if(nnreg(0).le.2) then
+          coreregno = 0
+        else
+          coreregno = 1
+        endif
         call ipgeti ('b2stbc_coreregno', coreregno)
         call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
@@ -355,15 +361,26 @@
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
-          if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
-     1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=int(tim/neutrals_time_mod)
-            call read_neutrals_namelist(nx, ny, ns, .true.)
-            new_sputter_namelist=.true.
-            call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
-            call write_b2mod_neutrals_namelist
-          endif
+          catch_up=
+     1    (mod(tim,neutrals_time_mod).ge.neutrals_time_switch.and.
+     1     neutrals_time_switch.gt.0.0_R8).or.
+     2     int(tim/neutrals_time_mod).gt.neutrals_count
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next neutrals namelist file ',
+     .      trim(neutrals_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(neutrals_time_mod.gt.0.0_R8)
+     >     neutrals_count=int(tim/neutrals_time_mod)
+          call read_neutrals_namelist(nx, ny, ns, .true.)
+          new_sputter_namelist=.true.
+          call xertst (nstrat.le.nstraid,
+     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+          call write_b2mod_neutrals_namelist
         endif
       endif
 *   ..set n2
@@ -389,7 +406,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -450,9 +468,22 @@ c   --> better solution wanted here..
           if(is_neutral(is).and.lnext(is,is+1)) then
             do iy=-1,ny
               do ix=-1,nx
-                f_redep(ix,iy,is) = 1.0_R8 /
-     1           ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
-     2           (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                if (redep_alpha.gt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb R. Dux et al., Nucl. Fusion 51 (2011) 053002
+                  f_redep(ix,iy,is) = 1.0_R8 /
+     1             ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                else if (redep_alpha.lt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb D. Tskhakaya et al., JNM 463 (2015) 624
+cxpb Recommended value is abs(redep_alpha) = 0.01
+cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
+                  f_redep(ix,iy,is) = 1.0_R8 / ( 1.0_R8 +
+     1              abs(redep_alpha)*(ti(ix,iy)/te(ix,iy))*
+     2             (qe*bb(ix,iy,3)/(am(ismain)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy))) )
+                end if
               enddo
             enddo
             if(main_call.and.output.ge.1) then
@@ -766,9 +797,13 @@ c   --> better solution wanted here..
           endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
@@ -914,6 +949,16 @@ cwdk these are now put back into the constant part of the sources (0-component)
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
         call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
+
+*   ..zero out contributions in dead cells
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
 
 * ..sources
       b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
@@ -1232,8 +1277,10 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (.not. is_neutral(is)) then
-        call my_out(70,nx,ny,fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
-        call my_out(70,nx,ny,fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
         endif
        enddo 
       endif                                                           
@@ -1390,10 +1437,7 @@ c        write(*,*) 'Called neutr_scl'
       call ipgetr ('b2stbr_plate_thick', plate_thick)
       call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 
-cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
-      call read_neutrals_namelist
-     1   (nx, ny, ns, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
@@ -1403,16 +1447,26 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       else
         neutrals_count=0
       endif
-      catch_up=neutrals_time_mod.gt.0.0_R8
+      if(neutrals_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &    .and.neutrals_time_switch.gt.0.0_R8
+      else if (neutrals_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.neutrals_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
-        if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch) then
-          write(*,*) 'b2stbr_init: catching up ...'
-          call read_neutrals_namelist(nx, ny, ns, .true.)
-          new_sputter_namelist=.true.
-          call xertst (nstrat.le.nstraid,
+        write(*,*) 'b2stbr_init: catching up ...'
+        call read_neutrals_namelist(nx, ny, ns, .true.)
+        new_sputter_namelist=.true.
+        call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
-          call write_b2mod_neutrals_namelist
-          catch_up=neutrals_time_mod.gt.0.0_R8
+        call write_b2mod_neutrals_namelist
+        if(neutrals_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &      .and.neutrals_time_switch.gt.0.0_R8
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
         else
           catch_up=.false.
         endif

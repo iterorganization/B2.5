@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,      !srv 20.09.06 { 16.10.17 19.02.21
-     & cvsa_drho, fac_vis, fchvispar)                           !srv 22.06.08 som 18.08.2021
+     & cvsa_drho, fac_vis, fchvispar)                           !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -49,8 +49,8 @@
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
-     *   dvpar(-1:nx,-1:ny)
-     *  , wrk0(-1:nx,-1:ny)
+     *   dvpar(-1:nx,-1:ny),
+     *   wrk0(-1:nx,-1:ny)
       save ncall, vis_par
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0           !som 16.08.21
       integer, save :: Zhdanov_visu = 1                                !som 16.08.21
@@ -77,7 +77,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of cvsa_cl
-       call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                         !srv 16.10.17
+        call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                        !srv 16.10.17
       endif
 
 c Drift terms
@@ -173,7 +173,7 @@ c Drift terms
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 18.02.00
      &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv
-     &        /3.0e0_R8                                                 !srv 18.02.00
+     &       /3.0e0_R8                                                  !srv 18.02.00
             endif                                                       !srv 26.11.02
           enddo
         enddo

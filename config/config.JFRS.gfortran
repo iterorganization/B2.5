@@ -5,7 +5,7 @@ LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
 LD_MSCL     ?= -L${SOLPSLIB} -lmscl
 ifdef USE_MPI
-LD_NETCDF   ?= `pkg-config netcdf-parallel-fortran --libs`
+LD_NETCDF   ?= `pkg-config pnetcdf --libs`
 ifdef USE_OPENMP
 LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
 else
@@ -27,8 +27,6 @@ CPP = /lib/cpp -traditional
 FC = ftn
 
 DDBLOPTION = -Ad # ???
-
-INCMOD = -B
 
 ifdef USE_MPI
 INCMODS += ${MPI_CPP}

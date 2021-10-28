@@ -2,23 +2,36 @@
 
       use b2mod_external
 
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
-      private
-
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
-
-      integer :: mpi_err,mpi_stat
-      integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
+#endif
+#endif
+      private
 
-      integer :: mpi_err,mpi_stat
+#ifdef USE_MPI
+      integer :: mpi_err,mpi_stat(mpi_status_size)
+      integer :: mpi_rank,mpi_size,mpi_local
+#else
+#ifdef USE_IMPGYRO
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
-
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source

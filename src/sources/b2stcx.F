@@ -28,7 +28,8 @@
      *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -91,7 +92,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -299,6 +300,13 @@ ctmp.dpc
       call timer%stop("parallel")
 #endif
 #endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, shi0)
+
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
@@ -365,7 +373,6 @@ ctmp.dpc
            enddo
         enddo
       endif
-
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

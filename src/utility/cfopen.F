@@ -1,8 +1,8 @@
       subroutine cfopen (ioun, chname, chstat, chform)
       use b2mod_types
       implicit none
-      integer ioun
-      character chname*(*), chstat*(*), chform*(*)
+      integer, intent(in) :: ioun
+      character, intent(in) :: chname*(*), chstat*(*), chform*(*)
 *     ------------------------------------------------------------------
 *     CFOPEN opens an external file. The file may be formatted or
 *     unformatted.
@@ -73,4 +73,4 @@
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfopen

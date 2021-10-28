@@ -29,7 +29,8 @@
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
      *  vol1(-1:nx1,-1:ny1), hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1),
-     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1), qcb1(-1:nx1,-1:ny1),
+     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1),
+     &  qcb1(-1:nx1,-1:ny1),
      &  gs1(-1:nx1,-1:ny1,0:2),
      1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
      2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),

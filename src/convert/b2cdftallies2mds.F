@@ -2,6 +2,7 @@
       use b2mod_subsys
 #ifdef MDSPLUS
       use b2mod_types
+      use b2mod_mdsplus
       implicit none
 #     include "mdslib.inc"
 #ifndef NO_CDF
@@ -19,7 +20,7 @@
       character(len=strmax+1), allocatable :: str1(:)
 #endif
       integer :: i,ivar,idim,iatt,i1,i2,i3
-      integer :: status, 
+      integer :: status,
      1 ncid, ndims, nvars, natts, unlimid, xtypev, xtypeu,
      2 dimids(NF_MAX_VAR_DIMS), length,
      3 dimsize(NF_MAX_VAR_DIMS), underscore_pos
@@ -53,9 +54,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i6,a)')
-     *   'variable: ',trim(varname),' has type ',xtypev,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -122,12 +129,19 @@ c first deal with the time vector
           mds_signal_name='\TOP.TALLIES:TIME'
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+          status=mdsput2_d1d(
+     *     trim(mds_signal_name)//char(0),
+     *     'build_with_units($,"s")'//char(0),
+     *     descr2_i1(idtype_double,dimsize(1),0),
+     *     data1,0)
+#else
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
-     *     descr2(idtype_double,dimsize(1),0),data1,
-     *     0)
-          write(*,*) 'mdsput2'
+     *     descr2(idtype_double,dimsize(1),0),data1,0)
+#endif
+	  write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
         elseif(ndims.eq.3) then
@@ -152,12 +166,20 @@ c first deal with the time vector
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.TALLIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_d3d(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i3(idtype_double,dimsize(1),dimsize(2),
+     1       dimsize(3),0),data3,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),
      1       dimsize(3),0),data3,0)
-            write(*,*) 'mdsput2'
+#endif
+	    write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
             allocate(data3T(dimsize(3),dimsize(1),dimsize(2)))
@@ -170,11 +192,19 @@ c first deal with the time vector
      *       '\TOP.TALLIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_d3d(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i3(idtype_double,dimsize(3),dimsize(1),
+     1       dimsize(2),0),data3T,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(3),dimsize(1),
      1       dimsize(2),0),data3T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data3T)
@@ -191,11 +221,11 @@ c first deal with the time vector
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           if(xtypev.eq.nf_char) then
-! this is 1 1d array of text strings and not time dependent
+! this is a 1d array of text strings and not time-dependent
             allocate(data2c(dimsize(1),dimsize(2)))
             status=nf_get_var_text(ncid,ivar,data2c)
             call check_cdf_status(status)
-#ifdef F2003            
+#ifdef F2003
             allocate(character(len=dimsize(1)+1) :: str1(dimsize(2)))
 #else
             call xertst(dimsize(1).le.strmax,
@@ -210,10 +240,18 @@ c first deal with the time vector
               write(*,*) trim(str1(i2))
               str1(i2) = trim(str1(i2)) // char(0)
             enddo
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2_str1(
+     *       trim(mds_signal_name)//char(0),
+     *       '$'//char(0),
+     *       descr2_str1(idtype_cstring,dimsize(2),0,len(str1(1))),
+     *       str1,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       '$'//char(0),
-     *       descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
+     *	     descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data2c,str1)
@@ -229,10 +267,18 @@ c first deal with the time vector
      *         '\TOP.TALLIES:' // trim(dimname(1)) //',' //
      *         '\TOP.TALLIES:TIME)'
               write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+              status=mdsput2_d2d(
+     *         trim(mds_signal_name)//char(0),
+     *         tdi//char(0),
+     *         descr2_i2(idtype_double,dimsize(1),dimsize(2),0),
+     *         data2,0)
+#else
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *         descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+     *	       descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+#endif
               write(*,*) 'mdsput2'
               call mds_err_msg(status)
             else
@@ -244,10 +290,18 @@ c first deal with the time vector
      *         '"),,\TOP.TALLIES:TIME,' //
      *         '\TOP.TALLIES:' // trim(dimname(1)) // ')'
               write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+              status=mdsput2_d2d(
+     *         trim(mds_signal_name)//char(0),
+     *         tdi//char(0),
+     *         descr2_i2(idtype_double,dimsize(2),dimsize(1),0),
+     *         data2T,0)
+#else
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
      *         descr2(idtype_double,dimsize(2),dimsize(1),0),data2T,0)
+#endif
               write(*,*) 'mdsput2'
               call mds_err_msg(status)
               deallocate(data2T)
@@ -266,7 +320,7 @@ c first deal with the time vector
       status=nf_close(ncid)
       call check_cdf_status(status)
 #else
-      write(*,*) 
+      write(*,*)
      . 'b2cdftallies2mds failed because compiled with NO_CDF option'
 #endif
 #else

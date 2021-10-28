@@ -47,14 +47,12 @@ endif
 
 DDBLOPTION = -Ad # ???
 
-INCMOD = -B
-
 ifndef SOLPS_CPP
 DEFINES += -DITM -DNO_F01AAF -DNAG22
 endif
 
 ifdef IMAS_VERSION
-GGD_VERSION ?= 1.9.1
+GGD_VERSION ?= `pkg-config ggd --modversion`
 LD_UAL += -lstdc++
 else
 UAL_MAJOR_VERSION = 0

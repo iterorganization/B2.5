@@ -48,7 +48,7 @@ C 2002.11.01
 
       character*80 adasid
 
-      character*120, save :: labgeo
+      character*132, save :: labgeo
 
 c   ..functions
       integer ixm1, ixp1
@@ -58,7 +58,7 @@ c   ..functions
      *  vdot, vlen, thetasepx
 #else
 #ifdef IMAS
-      character*120, save :: labgeo
+      character*132, save :: labgeo
 #endif
 #endif
 

@@ -11,4 +11,4 @@ c
         endif
       enddo
       return
-      end
+      end subroutine lower_case

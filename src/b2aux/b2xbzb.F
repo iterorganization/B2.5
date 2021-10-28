@@ -37,11 +37,7 @@
         bzbv = 0.0_R8
       endif
 
-
-      !bzbl,bzbr
-
-
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
-      end                                                   !srv 13.10.06 23.07.10 }
+      end subroutine b2xbzb                                 !srv 13.10.06 23.07.10 }

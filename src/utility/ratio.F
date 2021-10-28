@@ -30,4 +30,4 @@
       rratio = real(m/k)/real(n/k)
       return
 *     ------------------------------------------------------------------
-      end
+      end function rratio

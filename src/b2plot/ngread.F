@@ -26,6 +26,7 @@ c
       use b2mod_b2cmpa
       use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_boundary_namelist
       use eirmod_wneutrals
       use eirmod_clogau
       use eirmod_cinit
@@ -43,12 +44,13 @@ c
 #ifdef B25_EIRENE
       INTEGER NNX, NNY, IX, IY, jvft44, istra
       integer i, j, k, ncl
+      integer geometryType
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
       character*256 filename
-      logical ex
+      logical ex, target_east, target_west
 #endif
       integer, save :: use_recyceir, iout
       data use_recyceir /1/, iout/0/
@@ -379,6 +381,12 @@ cank-960727
         if (jvft44 .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
+          do j = 1, natmi
+            eirspta(j) = sum(wldspta(:,j,0))
+          enddo
+          do j = 1, nmoli
+            eirsptm(j) = sum(wldsptm(:,j,0))
+          enddo
         end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
@@ -458,6 +466,10 @@ cank
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
      ,                          i=1,nstsi)
+
+          do j=1,k+nplsi
+            eirpump(j) = sum(wlpump(j,:))
+          end do
         end if
 
         if(jvft44 .ge. 20071209) then
@@ -483,6 +495,51 @@ cank
           READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
           READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
 
+          geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
+          if (geometryType.eq.GEOMETRY_LINEAR .or.
+     &        geometryType.eq.GEOMETRY_CYLINDER) then
+            target_east = .false.
+            target_west = .false.
+            do i = 1, nbc
+              if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+                target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                        bcene(i).eq.15
+              end if
+              if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+                target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                        bcene(i).eq.15
+              end if
+            end do
+          else if (geometryType.eq.GEOMETRY_ANNULUS) then
+            target_east = .false.
+            target_west = .false.
+          else
+            target_east = .true.
+            target_west = .true.
+          end if
+          do i = 1, ntns
+            if (eirdiag_nds_typ(ltns(i)).eq.2) then
+              if (eirdiag_nds_srf(ltns(i)).eq.0) then
+                if (target_west) ktns(i) = 1
+              else if (eirdiag_nds_srf(ltns(i)).eq.nx) then
+                if (nncut.ge.1) then
+                  ktns(i) = 2*nncut
+                else if (nncut.eq.0) then
+                  if (target_east) ktns(i) = 2
+                end if
+              else if (eirdiag_nds_srf(ltns(i)).eq.nxtl) then
+                ktns(i) = 3
+              else if (eirdiag_nds_srf(ltns(i)).eq.nxtr) then
+                ktns(i) = 4
+              end if
+            end if
+          end do
+c<<<
+          if(ntns.gt.0) then !{
+            print *,'Calculated ktns:'
+            print '(3x,20i5)',(ktns(i),i=1,ntns)
+          end if !}
+c>>>
           NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(wldna_res))

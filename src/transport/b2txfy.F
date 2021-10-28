@@ -1,5 +1,6 @@
       subroutine b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, kapy, cony)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_geo
      , , only : hy1
@@ -18,11 +19,8 @@
       real (kind=R8) ::
      *   t0, t1, kaps, kapsn
       intrinsic max, sqrt
-      real (kind=R8) ::
-     *   harm
       external xertst
       external b2xxgs
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txfy')

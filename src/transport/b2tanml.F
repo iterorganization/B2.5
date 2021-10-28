@@ -70,37 +70,33 @@
       if (ncall.lt.3) then
       endif
 
-      if(no_current.ne.0) then                                !srv 27.02.13
+      if(no_current.ne.0.or.fch_anomalous.eq.0.0e0_R8) then                                !srv 27.02.13
         fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
-        if(fch_anomalous.ne.0.0e0_R8) then
-          do iy = -1, ny
-            do ix = -1, nx
-              if(leftix(ix,iy).eq.-2)then
-                fchanml(ix,iy,0)   = 0.0e0_R8
-              else
-                fchanml(ix,iy,0) = - csig_an(ix,iy,0)*
-     &           (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
-              endif
-            enddo
-          enddo
-
+        do iy = -1, ny
           do ix = -1, nx
-            fchanml(ix,-1,1) = 0.0e0_R8
+            if(leftix(ix,iy).eq.-2)then
+              fchanml(ix,iy,0)   = 0.0e0_R8
+            else
+              fchanml(ix,iy,0) = - csig_an(ix,iy,0)*
+     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
+            endif
           enddo
-          do iy = 0, ny
-            do ix = -1, nx
-              if(bottomiy(ix,iy).eq.-2)then
-                fchanml(ix,iy,1) = 0.0e0_R8
-              else
-                fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
-     &           (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
-              endif
-            enddo
+        enddo
+
+        do ix = -1, nx
+          fchanml(ix,-1,1) = 0.0e0_R8
+        enddo
+        do iy = 0, ny
+          do ix = -1, nx
+            if(bottomiy(ix,iy).eq.-2)then
+              fchanml(ix,iy,1) = 0.0e0_R8
+            else
+              fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
+     &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+            endif
           enddo
-        else
-          fchanml = 0.0e0_R8
-        endif
+        enddo
       endif                                                   !srv 27.02.13
 
       if(guard_flows.eq.0) then                                         !xpb
@@ -153,4 +149,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end subroutine b2tanml                                                            !srv 20.09.06 }
+      end subroutine b2tanml                                            !srv 20.09.06 }

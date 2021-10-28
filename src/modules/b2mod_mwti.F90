@@ -103,8 +103,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), tpmxip(nncutmax), &
-         tpmxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         tpmxip(nncutmax), tpmxap(nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
@@ -1260,14 +1260,18 @@ contains
       slice=0.0_R8
       if(minval(xymap(-1,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(-1,0),1)
-        slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy)=target_temp(xymap(-1,iy),1)
+        end do
         slice(ny)=target_temp(xymap(-1,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dl',imap,slice,iret)
       slice=0.0_R8
       if(minval(xymap(nx,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(nx,0),1)
-        slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy)=target_temp(xymap(nx,iy),1)
+        end do
         slice(ny)=target_temp(xymap(nx,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
@@ -1275,14 +1279,18 @@ contains
         slice=0.0_R8
         if(minval(xymap(ixtl,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtl,0),1)
-          slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
+          do iy=0,ny-1
+            slice(iy)=target_temp(xymap(ixtl,iy),1)
+          end do
           slice(ny)=target_temp(xymap(ixtl,ny-1),1)
         endif
         call rwcdf(rw,ncid,'tp3dtl',imap,slice,iret)
         slice=0.0_R8
         if(minval(xymap(ixtr,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtr,0),1)
-          slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
+          do iy=0,ny-1
+            slice(iy)=target_temp(xymap(ixtr,iy),1)
+          end do
           slice(ny)=target_temp(xymap(ixtr,ny-1),1)
         endif
         call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
@@ -1299,26 +1307,26 @@ contains
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      nesepm_std = ((nesepm_std - nesepm_av**2)*fac)**0.5
-      tesepm_std = ((tesepm_std - tesepm_av**2)*fac)**0.5
-      tisepm_std = ((tisepm_std - tisepm_av**2)*fac)**0.5
-      posepm_std = ((posepm_std - posepm_av**2)*fac)**0.5
-      nesepi_std = ((nesepi_std - nesepi_av**2)*fac)**0.5
-      tesepi_std = ((tesepi_std - tesepi_av**2)*fac)**0.5
-      tisepi_std = ((tisepi_std - tisepi_av**2)*fac)**0.5
-      posepi_std = ((posepi_std - posepi_av**2)*fac)**0.5
-      nesepa_std = ((nesepa_std - nesepa_av**2)*fac)**0.5
-      tesepa_std = ((tesepa_std - tesepa_av**2)*fac)**0.5
-      tisepa_std = ((tisepa_std - tisepa_av**2)*fac)**0.5
-      posepa_std = ((posepa_std - posepa_av**2)*fac)**0.5
-      nemxip_std = ((nemxip_std - nemxip_av**2)*fac)**0.5
-      temxip_std = ((temxip_std - temxip_av**2)*fac)**0.5
-      timxip_std = ((timxip_std - timxip_av**2)*fac)**0.5
-      pomxip_std = ((pomxip_std - pomxip_av**2)*fac)**0.5
-      nemxap_std = ((nemxap_std - nemxap_av**2)*fac)**0.5
-      temxap_std = ((temxap_std - temxap_av**2)*fac)**0.5
-      timxap_std = ((timxap_std - timxap_av**2)*fac)**0.5
-      pomxap_std = ((pomxap_std - pomxap_av**2)*fac)**0.5
+      nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
+      tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
+      tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
+      posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
+      nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
+      tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
+      tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
+      posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
+      nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
+      tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
+      tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
+      posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
+      nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
+      temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
+      timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
+      pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
+      nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
+      temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
+      timxap_std(1:nc) = (abs(timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
+      pomxap_std(1:nc) = (abs(pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
 
 !wdk write into b2time.nc
       imap(1)=1
@@ -3038,7 +3046,11 @@ contains
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
     integer :: istride, imax
+#ifdef DBG
+    logical, parameter :: debug = .true.
+#else
     logical, parameter :: debug = .false.
+#endif
     external xerrab
     !
     call subini ('rwcdf')
@@ -3052,7 +3064,7 @@ contains
     if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
     if (debug) write(*,*) "Variable has nvdims=", nvdims
-    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
@@ -3071,8 +3083,8 @@ contains
         start(i)=1
       endif
     enddo
-    if (debug) write(*,*) "start(:)=", start(1:nvdims)
-    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1

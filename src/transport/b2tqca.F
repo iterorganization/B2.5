@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2,       !srv 01.07.09
+      subroutine b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2,           !srv 01.07.09
      1 vsa, hci)
       use b2mod_types
       use b2mod_geo
@@ -66,7 +66,7 @@
       integer ncall, model, style, n2, ix, iy, is, js
       integer, save :: icase = 0                                      !srv 20.09.11
       integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0 
+     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, ft,

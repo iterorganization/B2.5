@@ -1164,7 +1164,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
 
       END FUNCTION SLREAC_EXTRAP
 
-      subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,lambda,
+      subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,
      1 safetyfactor,ne,te,ti,na,transport)
       use b2mod_types
       use b2mod_geo
@@ -1175,7 +1175,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       use b2mod_subsys
       implicit none
       integer nx,ny,ns,ismain,jsep,jxa
-      real (kind=R8) :: lambda,
+      real (kind=R8) :: lnlam(-1:nx,-1:ny),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)
@@ -1183,11 +1183,12 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       integer ix,iy,is,irmin,irmax
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
-     2 bave,epsilon,lnlam,vthi,omegaci,
+     2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
       external xerrab
 
       call subini('old_chang_hinton')
+      call b2tlnl(nx,ny,1,te,ti,ne,lnlam)
       transport=0
       do iy=-1,jsep
         write(*,*) 'iy: ',iy
@@ -1230,15 +1231,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
      1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
         epsilon=(crmax-crmin)/(crmax+crmin)
         write(*,*) 'epsilon: ',epsilon
-cxpb    Coulomb logarithm formula from Wesson for ion-ion collisions
-        if (lambda.lt.0.0_R8) then
-          lnlam=max(-lambda,17.3_R8-
-     1     log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-        else
-          lnlam = lambda
-        endif
-        write(*,*) 'lnlam: ',lnlam
+        write(*,*) 'lnlam: ',lnlam(ix,iy)
         cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
         cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
         cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
@@ -1268,7 +1261,7 @@ cxpb    Coulomb logarithm formula from Wesson for ion-ion collisions
             write(*,*) 'alpha: ',alpha
             taui=12.0_R8*pi**1.5_R8*eps0**2*
      1             (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2             (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+     2             (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
             write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
             nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/

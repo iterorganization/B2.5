@@ -62,4 +62,4 @@ c
       deallocate(mz_hlp,hlp_al)
 c
       return
-      end
+      end subroutine b2pabrmv

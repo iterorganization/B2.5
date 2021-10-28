@@ -15,26 +15,26 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1)    !srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
+     & fchstoch(-1:nx,-1:ny,0:1)                                        !srv 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2Tstch computes the y-component of electron current 
-*       associated with stochastization of magnetic field
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
@@ -82,18 +82,13 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      csig_stoch = 0.0e0_R8
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-
+        call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)               !srv 24.08.21
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-            csig_stoch(ix,iy) = sig_stoch*
-     &      qe*(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8*  !lk 24.03.08 17.12.13
-     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-     &      /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2         !srv 07.07.14
-            fchstoch(ix,iy) = -csig_stoch(ix,iy)*
+            fchstoch(ix,iy,1) = -csig_stoch(ix,iy,1)*                   !srv 24.08.21
      &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       0.5e0_R8/qe*
      &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -104,10 +99,9 @@
            endif
           enddo
         enddo
-      endif                                                               !lk 31.01.08 }
+      endif                                                             !lk 31.01.08 }
 
-!      call my_out(70,nx,ny,csig_stoch,'b2tstch_csigy_stoch')
-!      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstochy')
+!      call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tstch_fchstochy')      !srv 24.08.21
 
 * ..return
       ncall = ncall+1

@@ -78,6 +78,7 @@
       endif
 
 * ..compute the correction
+      aa7 = 0.0_R8
 *   ..compute the five-point matrix
       do iy = -1, ny
        do ix = -1, nx
@@ -117,24 +118,22 @@
           aa7(ix,iy,-2) = 0.0_R8
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),2) = -conc(ix,iy,1)
-          if (solvereg(ireg))
-     >     aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,1)
-          if (solvereg(ibot))
-     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),0) =
+          if (solvereg(ibot)) then
+           aa7(bottomix(ix,iy),bottomiy(ix,iy),2) =
+     &       aa7(bottomix(ix,iy),bottomiy(ix,iy),2)-conc(ix,iy,1)
+           aa7(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa7(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1)
-          if (solvereg(ireg))
-     >     aa7(ix,iy,-2) = -conc(ix,iy,1)
+          endif
+          if (solvereg(ireg)) then
+           aa7(ix,iy, 0) = aa7(ix,iy, 0)+conc(ix,iy,1)
+           aa7(ix,iy,-2) = aa7(ix,iy,-2)-conc(ix,iy,1)
+         endif
         endif
         if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa7(ix,iy,2) = 0.0_R8
         endif
        enddo
       enddo
-*   ..compute the seven-point matrix                               !srv 26.01.00
-      aa7(:,:,-3) = 0.0e0_R8
-      aa7(:,:, 3) = 0.0e0_R8
 
       do iy = -1, ny
        do ix = -1, nx                                              !srv 26.11.02

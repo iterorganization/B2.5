@@ -15,7 +15,8 @@
      *   pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny)
 *   ..inout argument
-      real (kind=R8) :: cvsb(-1:nx,-1:ny,0:1), flub(-1:nx,-1:ny,0:1)
+      real (kind=R8) ::
+     *   cvsb(-1:nx,-1:ny,0:1), flub(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flcb(-1:nx,-1:ny,0:1), cvcb(-1:nx,-1:ny,0:1)
@@ -100,7 +101,7 @@
         if(leftix(ix,iy).eq.-2) then
           wrk0(ix,iy) = 0.0e0_R8
         else
-          wrk0(ix,iy) = 
+          wrk0(ix,iy) =
      &     (vol(ix,iy)*ub(leftix(ix,iy),leftiy(ix,iy))+
      &      vol(leftix(ix,iy),leftiy(ix,iy))*ub(ix,iy))/
      &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
@@ -125,14 +126,14 @@
         enddo
        elseif(style.eq.1) then
         do ix = -1, nx                                                 !srv 26.11.02
-          if(leftix(ix,iy).eq.-2) then
-           flcb(ix,iy,0) = 0.0e0_R8
-           cvcb(ix,iy,0) = 0.0e0_R8
-          else                                                          !srv 26.11.02 {
-           flcb(ix,iy,0) = flub(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
-     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
-           cvcb(ix,iy,0) = cvsb(ix,iy,0)
-          endif                                                         !srv 26.11.02 }
+         if(leftix(ix,iy).eq.-2) then                                  !srv 26.11.02 {
+          flcb(ix,iy,0) = 0.0_R8
+          cvcb(ix,iy,0) = 0.0_R8
+         else                                                          !srv 26.11.02 {
+          flcb(ix,iy,0) = flub(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
+     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8     !srv 01.07.05 }
+          cvcb(ix,iy,0) = cvsb(ix,iy,0)
+         endif                                                         !srv 26.11.02 }
         enddo
        else
         call xerrab ('Only style 0 or 1 in b2nxfc are included')
@@ -142,7 +143,7 @@
       call b2scopy (n2, flub(-1,-1,1), 1, flcb(-1,-1,1), 1)
       call b2scopy (n2, cvsb(-1,-1,1), 1, cvcb(-1,-1,1), 1)
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then
@@ -164,20 +165,16 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            flcb(ix,iy,0)=0.0_R8
-            cvcb(ix,iy,0)=0.0_R8
-            flcb(ix,iy,1)=0.0_R8
-            cvcb(ix,iy,1)=0.0_R8
-            flub(ix,iy,0)=0.0_R8
-            cvsb(ix,iy,0)=0.0_R8
-            flub(ix,iy,1)=0.0_R8
-            cvsb(ix,iy,1)=0.0_R8
+            flcb(ix,iy,:)=0.0_R8
+            cvcb(ix,iy,:)=0.0_R8
+            flub(ix,iy,:)=0.0_R8
+            cvsb(ix,iy,:)=0.0_R8
           end do
         end do
       end do
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
-        write (charns,'(i3.3)') isb    
+        write (charns,'(i3.3)') isb
         call my_out(70,nx,ny,flub(-1,-1,0),'b2nxfc_flubx'//charns)
         call my_out(70,nx,ny,flub(-1,-1,1),'b2nxfc_fluby'//charns)
         call my_out(70,nx,ny,flcb(-1,-1,0),'b2nxfc_flcbx'//charns)

@@ -62,7 +62,7 @@
 *!!   IMPORTANT NOTE 0: This STRAHL package does not include rate
 *!!   coefficients for charge exchange. The value returned by the
 *!!   present code is the responsibility of BJB, who has no expertise
-*!!   in this matter. The cx rate coefficients supplied here for
+*!!   in this matter. The CX rate coefficients supplied here for
 *!!   helium might be particularly bad. (See the code for further
 *!!   comments.)
 *

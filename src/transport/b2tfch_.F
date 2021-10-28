@@ -5,7 +5,8 @@
      & facdrift, fac_ExB, fac_vis,
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
      1 ti, ni, na, fna, uadia, ua, 
-     1 csig, csigin, chci, calf, cvsa_cl, cvsa_drho,                     !som 18.08.21
+     1 csig, csigin, csig_stoch,                                         !srv 24.08.21
+     & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
      & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
      & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
@@ -27,7 +28,8 @@
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
      &   uadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),          !srv 17.05.99 25.01.02
-     &   csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
+     &   csig(-1:nx,-1:ny,0:1),
+     &   csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
      &   chci(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
      &   cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
@@ -40,15 +42,16 @@
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1)                      !lk 31.01.08 { 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
-     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1),
-     &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),      !srv 22.11.99 30.09.02
-     &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),         !srv 11.07.99
-     2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),      !srv 07.07.99
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)       !srv 24.03.07
+     &   fchstoch(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),          !srv 24.08.21
+     &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),             !srv 22.11.99 30.09.02
+     &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),                !srv 11.07.99
+     2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
+     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)              !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -71,7 +74,6 @@
       integer, save :: no_current= 0
 
       character(3) :: charns, charns0
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                          !lk 31.01.08 {
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
       real (kind=R8) ::
      &  dia_cur, vis_par, vis_q,                                         !srv 17.05.99 11.07.99
@@ -195,7 +197,8 @@
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
              do is0 = 0, ns-1
               if (is_neutral(is0).and.nint(zn(is0)).eq.1) then           !srv 20.10.17
-               conc(ix,iy,0) = conc(ix,iy,0) + csigin(ix,iy,0,is,is0) !*facdrift    !srv 07.02.03
+               conc(ix,iy,0) = conc(ix,iy,0) +
+     &            csigin(ix,iy,0,is,is0) !*facdrift                      !srv 07.02.03
      &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
 !     1        *((bb(ix,iy,2)/bb(ix,iy,3))**2+                           !srv 25.02.03 {
 !     2        (bb(leftix(ix,iy),leftiy(ix,iy),2)/
@@ -215,7 +218,7 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        conc(ix,iy,1) = csig(ix,iy,1)                                    !srv
+         conc(ix,iy,1) = csig(ix,iy,1)                                   !srv
          if(fch_ion_neutral.ne.0.0e0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
@@ -223,15 +226,15 @@
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
-             conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+            conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
             endif                                                        !srv 20.10.17
            enddo
           endif
          enddo                                                           !srv 24.06.08 }
         endif                                                            !srv
         if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
-          conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
-          fch(ix,iy,1) = fch(ix,iy,1) + fchstoch(ix,iy)
+          conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy,1)            !srv 24.08.21
+          fch(ix,iy,1) = fch(ix,iy,1) + fchstoch(ix,iy,1)                !srv 24.08.21
         endif                                                            !lk 31.01.08 }
        enddo
       enddo
@@ -240,14 +243,14 @@
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,0)    =0.0e0_R8
-            conc(ix,iy,0)   =0.0e0_R8
+            fch(ix,iy,0)  = 0.0e0_R8
+            conc(ix,iy,0) = 0.0e0_R8
           enddo
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,1)   =0.0e0_R8
-            conc(ix,iy,1)  =0.0e0_R8
+            fch(ix,iy,1)  = 0.0e0_R8
+            conc(ix,iy,1) = 0.0e0_R8
           end do
         enddo
       enddo
@@ -269,7 +272,7 @@
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch__fchdiay')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch__fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch__fchanmly')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__fchstochy')                !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch__concx')
        call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch__concy')
        call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch__avisperx')
@@ -279,7 +282,7 @@
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch__cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch__cvispery')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__fch_px')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_fch_py')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__csig_any')
        call my_out(70,nx,ny,csig(-1,-1,0),'b2tfch__csigx')
@@ -311,26 +314,32 @@
        call my_out(70,nx,ny,fchvispar(-1,-1,0),
      &   'b2tfch__for_po_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &  'b2tfch__for_po_fchvispary')
+     &   'b2tfch__for_po_fchvispary')
 !       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__for_po_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch__for_po_fchvisqy')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),
+     &   'b2tfch__for_po_fchvisqy')
 !       call my_out(70,nx,ny,fchvisper(-1,-1,0),
 !     &    'b2tfch__for_po_fchvisperx')
        call my_out(70,nx,ny,fchvisper(-1,-1,1),
-     &     'b2tfch__for_po_fchvispery')
+     &    'b2tfch__for_po_fchvispery')
        call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &      'b2tfch__for_po_fchinertx')
+     &    'b2tfch__for_po_fchinertx')
        call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &      'b2tfch__for_po_fchinerty')
+     &    'b2tfch__for_po_fchinerty')
        call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch__for_po_fchdiax')
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch__for_po_fchdiay')
-       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch__for_po_fchanmlx')
-       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch__for_po_fchanmly')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),
+     &    'b2tfch__for_po_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),
+     &    'b2tfch__for_po_fchanmly')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__for_po_fch_px')
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
-       call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__for_po_csig_anx')
-       call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__for_po_csig_any')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__for_po_fchstochy')         !lk 31.01.08
+       call my_out(70,nx,ny,csig_an(-1,-1,0),
+     &    'b2tfch__for_po_csig_anx')
+       call my_out(70,nx,ny,csig_an(-1,-1,1),
+     &    'b2tfch__for_po_csig_any')
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),
+     &    'b2tfch__for_po_fchstochy')                                    !lk 31.01.08 24.08.21
       endif                                                              !srv 11.09.09 }
 
       if(iout_b2wdat.eq.4) then
@@ -354,7 +363,7 @@
 !      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfch__csig_any')
-       call my_out(70,nx,ny,fchstoch,'b2tfch__fchstochy')                !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
       endif                                                              !srv 11.09.09 }
 
 * ..return

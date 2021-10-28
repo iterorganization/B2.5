@@ -326,14 +326,14 @@ cdjm Store the total change in linearised sources for balance
       endif
 
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
-         do is = 0, ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
-!         call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
+!         call my_out(70,nx,ny,smosm(:,:,0,is)+                      !srv 07.10.09
 !     &        smosm(:,:,1,is)*ua(:,:,is)+
 !     &        smosm(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smosm(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
 !     &        'b2srsm_smosm'//chns)
-         enddo
+        enddo
       endif
       if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
      &    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 ) then             !srv 02.04.18
@@ -344,7 +344,7 @@ cdjm Store the total change in linearised sources for balance
         enddo
       endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-!        call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+            !srv 07.10.09
+!        call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+          !srv 07.10.09
 !     &   shesm(:,:,2)*ne + shesm(:,:,3)*te*ne,'b2srsm_shesm')
 !        call my_out(70,nx,ny,shism(:,:,0)+shism(:,:,1)*ti+
 !     &   shism(:,:,2)*ni(:,:,0) +

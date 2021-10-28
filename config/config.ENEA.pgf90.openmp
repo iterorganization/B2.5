@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -31,6 +31,10 @@ FC = mpif90
 else
 FC = pgf90
 endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifeq (${FC},mpif90)

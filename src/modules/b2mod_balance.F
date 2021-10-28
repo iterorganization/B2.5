@@ -2735,13 +2735,14 @@ cdjm Update ion heat sources
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
      .        eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
-      integer vdims(4)
+      integer vdims(4),idum(1)
       integer jxi,jxa,jsep
       integer is
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
       real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
       external ipgeti
@@ -2811,8 +2812,11 @@ cdjm Update ion heat sources
       vdims(1)=nsid
       call write_cdf_double(ncid,'am',am,vdims,1)
 *   ..mp, ev:
-      call write_cdf_double_single(ncid,'mp',mp,n1id)
-      call write_cdf_double_single(ncid,'ev',ev,n1id)
+      vdims(1)=n1id
+      rdum(1)=mp
+      call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
+      rdum(1)=ev
+      call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
 *   ..rightix, rightiy etc:
       vdims(1)=nxid
       call write_cdf_int(ncid,'leftix',leftix,vdims,2)
@@ -2825,9 +2829,13 @@ cdjm Update ion heat sources
       call write_cdf_int(ncid,'bottomiy',bottomiy,vdims,2)
 *   ..jxi, jxa, jsep:
       call get_jsep(nxd,nyd,jxi,jxa,jsep)
-      call write_cdf_int_single(ncid,'jxi',jxi,n1id)
-      call write_cdf_int_single(ncid,'jxa',jxa,n1id)
-      call write_cdf_int_single(ncid,'jsep',jsep,n1id)
+      vdims(1)=n1id
+      idum(1)=jxi
+      call write_cdf_int_single(ncid,'jxi',idum,vdims(1))
+      idum(1)=jxa
+      call write_cdf_int_single(ncid,'jxa',idum,vdims(1))
+      idum(1)=jsep
+      call write_cdf_int_single(ncid,'jsep',idum,vdims(1))
 *   ..species string:
       vdims(1)=specid
       vdims(2)=nsid
@@ -2839,10 +2847,14 @@ cdjm Update ion heat sources
 *   ..b2mndr_eirene:
       use_eirene=0
       call ipgeti ('b2mndr_eirene', use_eirene)
-      call write_cdf_int_single(ncid,'b2mndr_eirene',use_eirene,n1id)
+      vdims(1)=n1id
+      idum(1)=use_eirene
+      call write_cdf_int_single(ncid,'b2mndr_eirene',idum,vdims(1))
 *   ..fac_hz:
       call ipgetr ('b2mndr_hz', fac_hz)
-      call write_cdf_double_single(ncid,'b2mndr_hz',fac_hz,n1id)
+      vdims(1)=n1id
+      rdum(1)=fac_hz
+      call write_cdf_double_single(ncid,'b2mndr_hz',rdum,vdims(1))
 *   ..za:
       vdims(1)=nsid
       allocate(za(0:nsd-1))
@@ -3115,7 +3127,7 @@ cdjm Update ion heat sources
         call write_cdf_double(ncid,'eirene_mc_pppl_sna_bal',
      &                     eirene_mc_pppl_sna_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_core_sna_bal',
-     &                     eirene_mc_core_sna_bal_av,vdims,3)
+     &                     eirene_mc_core_sna_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_mapl_smo_bal',
      &                     eirene_mc_mapl_smo_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_mmpl_smo_bal',
@@ -3434,9 +3446,10 @@ c only read a subset of the data as needed by the calling routine(s)
       implicit none
 #include <netcdf.inc>
 *   ..input arguments
-      integer :: ncid,vdim
+      integer :: ncid
+      integer :: vdim(1)
       character*(*) :: varname
-      real (kind=R8) :: var
+      real (kind=R8) :: var(1)
 *   ..local variables
       integer status,varid
 
@@ -3486,7 +3499,8 @@ c only read a subset of the data as needed by the calling routine(s)
       implicit none
 #include <netcdf.inc>
 *   ..input arguments
-      integer :: ncid,var,vdim
+      integer :: ncid
+      integer :: vdim(1),var(1)
       character*(*) :: varname
 *   ..local variables
       integer status,varid

@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -12,7 +12,7 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
 DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
 CPP = /lib/cpp -C -traditional
@@ -25,6 +25,10 @@ FC = ifort
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 DEFINES += -D_OPENMP
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives

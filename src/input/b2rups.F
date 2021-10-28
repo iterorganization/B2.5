@@ -29,21 +29,27 @@
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      1  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      2  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), fhe_mdf(-1:nx,-1:ny,0:1),
-     &  fhi_mdf(-1:nx,-1:ny,0:1), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhe_mdf(-1:nx,-1:ny,0:1),
+     &  fhi_mdf(-1:nx,-1:ny,0:1),
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fhePSch(-1:nx,-1:ny,0:1),
-     &  fhiPSch(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhePSch(-1:nx,-1:ny,0:1),
+     &  fhiPSch(-1:nx,-1:ny,0:1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1), fhe_eir(-1:nx,-1:ny,0:1),
      &  fhi_eir(-1:nx,-1:ny,0:1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1), fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  fchdia(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)
@@ -87,7 +93,7 @@
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
-*    
+*
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
@@ -379,9 +385,9 @@
       call cfrure (nget, n2, po, 'po')
 *   ..read fluxes
       call cfrure (nget, n2*2*ns, fna, 'fna')
-      call cfrure (nget, n2*2, fhe, 'fhe')
-      call cfrure (nget, n2*2, fhi, 'fhi')
-      call cfrure (nget, n2*2, fch, 'fch')
+      call cfrure (nget, n2*2,    fhe, 'fhe')
+      call cfrure (nget, n2*2,    fhi, 'fhi')
+      call cfrure (nget, n2*2,    fch, 'fch')
       if(b2fstat_version.ge.'01.001.005') then                  !xpb
         call cfrure (nget, n2*2, fch_32, 'fch_32')
         call cfrure (nget, n2*2, fch_52, 'fch_52')
@@ -477,10 +483,10 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,0)=fna(:,:,:,0)
-        fna_32(:,:,:,1)=0.0_R8
-        fna_52(:,:,:,0)=0.0_R8
-        fna_52(:,:,:,1)=fna(:,:,:,1)
+        fna_32(:,:,0,:)=fna(:,:,0,:)
+        fna_32(:,:,1,:)=0.0_R8
+        fna_52(:,:,0,:)=0.0_R8
+        fna_52(:,:,1,:)=fna(:,:,1,:)
         call b2xpfi (nx, ny, ns, fna_32, fni_32)
         call b2xpfi (nx, ny, ns, fna_52, fni_52)
         call b2xpfe (nx, ny, ns, 0, qe,

@@ -22,9 +22,16 @@
       use b2mod_b2_to_astra
       use b2mod_driver
       use b2mod_xerset
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------

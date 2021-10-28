@@ -92,7 +92,7 @@
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,0,1)/gs(ix,0,1), fhi(ix,0,1)/gs(ix,0,1),
      &    fne(ix,0,1)/gs(ix,0,1), fch(ix,0,1)/gs(ix,0,1),
-     &    (fna(ix,0,1,is)/gs(ix,0,1),is=0,ns-1)
+     &   (fna(ix,0,1,is)/gs(ix,0,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzno segment?
@@ -105,7 +105,7 @@
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,ny,1)/gs(ix,ny,1), fhi(ix,ny,1)/gs(ix,ny,1),
      &    fne(ix,ny,1)/gs(ix,ny,1), fch(ix,ny,1)/gs(ix,ny,1),
-     &    (fna(ix,ny,1,is)/gs(ix,ny,1),is=0,ns-1)
+     &   (fna(ix,ny,1,is)/gs(ix,ny,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzwe segment?

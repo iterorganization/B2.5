@@ -1,22 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uspo (nx, ny, nregionv, solvereg, itcnt, 
+      subroutine b2uspo (nx, ny, nregionv, solvereg, itcnt,
      &  ne, te, conc, sch, respo, corpo, aa5, name)                  !srv 18.03.10
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_openmp
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
       character*(*) name                                             !srv 18.03.10
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), te(-1:nx,-1:ny), 
+     *  ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &  conc(-1:nx,-1:ny,0:1),
      &  sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  corpo(-1:nx,-1:ny)
@@ -37,6 +38,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      !$OMP THREADPRIVATE(ncall)
       save ncall
 *   ..procedures
       intrinsic min
@@ -94,12 +96,12 @@
          if (solvereg(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,0)
          if (solvereg(ileft))
-     >    aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >    aa5(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa5(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
          if (solvereg(ireg))
      >    aa5(ix,iy,-1) = -conc(ix,iy,0)
-        endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
+        endif                                                        !srv 26.11.02
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -115,7 +117,7 @@
           if (solvereg(ireg))
      >     aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,1)
           if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa5(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1)
           if (solvereg(ireg))
      >     aa5(ix,iy,-2) = -conc(ix,iy,1)
@@ -128,19 +130,19 @@ cxpb
            if (solvereg(ireg))
      >      aa5(ix,iy,2) = -conc(topix(ix,iy),topiy(ix,iy),1)
            if (solvereg(itop))
-     >      aa5(topix(ix,iy),topiy(ix,iy),0) = 
+     >      aa5(topix(ix,iy),topiy(ix,iy),0) =
      &      aa5(topix(ix,iy),topiy(ix,iy),0)+
      &      conc(topix(ix,iy),topiy(ix,iy),1)
            if (solvereg(ireg))
-     >      aa5(ix,iy,0) = 
+     >      aa5(ix,iy,0) =
      &      aa5(ix,iy,0)+conc(topix(ix,iy),topiy(ix,iy),1)
            if (solvereg(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),2) =
-     &      -conc(topix(ix,iy),topiy(ix,iy),1) 
+     &      -conc(topix(ix,iy),topiy(ix,iy),1)
           endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo

@@ -95,6 +95,8 @@ c*** msns: msns(1,k): index of first surface in lsns list for Eirene
 c***                  recycling source k
 c***       msns(2,k): number of surfaces for Eirene recycling source k
 c-----------------------------------------------------------------------
+      integer, save :: ntgs(ntrgs_tmp)
+      data ntgs / ntrgs_tmp*0 /
       integer, allocatable :: ltgs(:,:)
 c*** Identification suffices:
       data hlp_trgs / 'il','ol','wl','  ','  ',
@@ -176,8 +178,6 @@ c-----------------------------------------------------------------------
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
 #ifdef B25_EIRENE
       integer, save :: l, m, js
-      integer, save :: ntgs(ntrgs_tmp)
-      data ntgs / ntrgs_tmp*1 /
       real (kind=R8), save :: hlp
 #endif
 c-----------------------------------------------------------------------
@@ -592,7 +592,12 @@ c*** Sort the targets
         end do !}
 
 c*** Eirene surfaces corresponding to the target surfaces
-        ltgs(1,l)=-abs(ltns(l))
+        do i=1,ntns !{
+          if (ktns(i).eq.l) then !{
+            ntgs(l)=ntgs(l)+1
+            ltgs(ntgs(l),l)=-abs(ltns(i))
+          end if !}
+        end do !}
       end do !}
 
 c*** Assign the identification suffices
@@ -616,7 +621,7 @@ c*** Assign the identification suffices
 
 c<<<
 c      print *,'b2blne: targets ',(indt_hlp(1,i),':',hlp_trg(i),':',
-c     ,                                             ltgs(1,i),' ',i=1,k)
+c     ,                                 (ltgs(j,i),j=1,ntgs(i)),' ',i=1,k)
 c>>>
 
 c*** Walls in B2
@@ -639,6 +644,7 @@ c*** Walls in B2
         end do !}
         nsrf_hlp(k)=l
         hlp_trg(k)='wl'
+        ntgs(k)=1
         ltgs(1,k)=0
       else !}{
         write(*,*) '@ b2blne: no room for the wall data. ',

@@ -28,7 +28,7 @@
 *  1. purpose
 *
 *     B2SIAN computes contribution to the parallel momentum source due
-*     to the anomalous current
+*     to the anomalous current.
 *
 *-----------------------------------------------------------------------
 *.declarations

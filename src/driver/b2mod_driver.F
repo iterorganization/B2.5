@@ -30,6 +30,7 @@
       use b2mod_neutr_src_scaling
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
       use b2mod_transport_disruption
@@ -39,7 +40,6 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
-      use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
@@ -87,11 +87,31 @@
       use b2mod_impgyro !yamoto
 #endif
 #ifdef IMAS
-      use ids_schemas   ! IGNORE
-      use b2mod_ual
-     , ,only: put_ids_edge, b25_process_ids, close_ual
-      use b2mod_ual_io
+      use ids_routines  ! IGNORE
      , ,only: imas_open_env, ids_deallocate, ids_get
+      use ids_schemas   ! IGNORE
+     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,        ids_radiation, ids_dataset_description, ids_equilibrium
+#if IMAS_MINOR_VERSION > 8
+      use ids_schemas   ! IGNORE
+     , ,only: ids_real, ids_real_invalid
+#endif
+#if IMAS_MINOR_VERSION > 21
+      use ids_schemas   ! IGNORE
+     , ,only: ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+      use ids_schemas   ! IGNORE
+     , ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+      use ids_schemas   ! IGNORE
+     , ,only: ids_divertors
+#endif
+      use b2mod_ual
+     , ,only: put_ids_edge, new_ids_edge, close_ual
+      use b2mod_ual_io
+     , ,only: b25_process_ids, num_time_slices
 #endif
       use b2mod_subsys
       implicit none
@@ -109,9 +129,11 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: b2sigp_style = 2
+      integer, save :: b2mndt_style = 1
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
+      integer, save :: iappend = 0
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -127,14 +149,15 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
+      integer n2, itim, ierr, edition, b2time, coronal,
+     *  use_eirene, neutrals_namelist, numerics_namelist, nsmin, nsmax,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
-      logical lwti, lwav, lrav, lrer, continued
+      logical lwti, lwav, lrav, lrer, continued, ids_replace
       character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
@@ -161,6 +184,7 @@
       character*6 tran_file_name
 #endif
 #ifdef IMAS
+      type(ids_equilibrium) :: equilibrium
       type(ids_edge_profiles) :: edge_profiles
       type(ids_edge_profiles) :: old_edge_profiles
       type(ids_edge_sources) :: edge_sources
@@ -174,10 +198,14 @@
 #if IMAS_MINOR_VERSION > 25
       type(ids_numerics) :: numerics
 #endif
-      integer :: num_time_slices, time_slice_index
+#if IMAS_MINOR_VERSION > 30
+      type(ids_divertors) :: divertors
+#endif
+      integer :: time_slice_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
-      character old_imas_version*132, imas_version*132, systemarg*256
+      character old_imas_version*132, imas_version*132
+      character systemarg*512
 #endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -201,7 +229,8 @@
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
-     4  use_astra, BoRiS, density_rescale,
+     4  use_astra, BoRiS, density_rescale, neutrals_namelist,
+     .  numerics_namelist, nsmin, nsmax,
      .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
@@ -226,6 +255,7 @@
      *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
      *     no_solve/0/, no_current/0/,
+     &     neutrals_namelist/0/, numerics_namelist/0/,
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
@@ -930,15 +960,16 @@
        call print_openmp_info()
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
-       call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
-       call ipgeti ('balance_average',balance_average)
+       call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
+       call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
-       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
+       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
+       dteff = dtim
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1057,12 +1088,17 @@
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
+       call ipgeti ('b2wdat_append', iappend)
        call ipgeti ('b2mndr_b2time', b2time)
        call xertst (0.le.b2time,
      &   'faulty internal parameter b2time')
        call ipgetr ('b2mndr_density_rescale', density_rescale)
        call ipgeti ('b2mndr_zn_rescale', zn_rescale)
 csw dec2013 allow for negative values; this is tweak to scale a specific species density
+       call xertst (zn_rescale.ge.0,
+     &   'faulty internal parameter zn_rescale')
+       call xertst (zn_rescale.gt.0.or.density_rescale.gt.0.0_R8,
+     &   'faulty internal parameter zn_rescale')
        call xertst (0.0_R8.lt.density_rescale.or.
      &             (0.0_R8.gt.density_rescale.and.zn_rescale.gt.0),
      &   'faulty internal parameter density_rescale')
@@ -1177,6 +1213,7 @@ csw dec2013 allow for negative values; this is tweak to scale a specific species
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
+       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
        call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
@@ -1219,7 +1256,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
          call xertst (nscx.lt.nscxmax,
-     1    'too many neutral hydrogen species')
+     1    'too many neutral hydrogenic species')
          iscx(nscx) = is
          nscx = nscx+1
         endif
@@ -1609,6 +1646,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
+      call b2xpni (nx, ny, ns, na, ni)                                   !srv 07.07.21
 
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
@@ -1697,17 +1735,18 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
            na(:,:,is) = na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+
      .             na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0_R8)
-           fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
-           fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
-           fna_fcor(:,:,0:1,is) =
-     .      fna_fcor(:,:,0:1,is)*(-density_rescale)
-           fna_nodrift(:,:,0:1,is) =
-     .      fna_nodrift(:,:,0:1,is)*(-density_rescale)
-           fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*(-density_rescale)
-           fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*(-density_rescale)
-           fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
-           fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
-           fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
+           fna(:,:,:,is) = fna(:,:,:,is)*(-density_rescale)
+           fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*(-density_rescale)
+           fna_fcor(:,:,:,is) =
+     .      fna_fcor(:,:,:,is)*(-density_rescale)
+           fna_nodrift(:,:,:,is) =
+     .      fna_nodrift(:,:,:,is)*(-density_rescale)
+           fna_he(:,:,:,is) = fna_he(:,:,:,is)*(-density_rescale)
+           fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*(-density_rescale)
+           fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*(-density_rescale)
+           fna_32(:,:,:,is) = fna_32(:,:,:,is)*(-density_rescale)
+           fna_52(:,:,:,is) = fna_52(:,:,:,is)*(-density_rescale)
+           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1757,16 +1796,16 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
         do is=0,ns-1
           if(is_neutral(is)) then
             na(:,:,is) = na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
-            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
-            fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
-            fna_nodrift(:,:,0:1,is) =
-     .       fna_nodrift(:,:,0:1,is)*neutral_rescale
-            fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*neutral_rescale
-            fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*neutral_rescale
-            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
-            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
-            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
+            fna(:,:,:,is) = fna(:,:,:,is)*neutral_rescale
+            fna_mdf(:,:,:,is) = fna_mdf(:,:,:,is)*neutral_rescale
+            fna_fcor(:,:,:,is) = fna_fcor(:,:,:,is)*neutral_rescale
+            fna_nodrift(:,:,:,is) =
+     .       fna_nodrift(:,:,:,is)*neutral_rescale
+            fna_he(:,:,:,is) = fna_he(:,:,:,is)*neutral_rescale
+            fnaPSch(:,:,:,is) = fnaPSch(:,:,:,is)*neutral_rescale
+            fna_eir(:,:,:,is) = fna_eir(:,:,:,is)*neutral_rescale
+            fna_32(:,:,:,is) = fna_32(:,:,:,is)*neutral_rescale
+            fna_52(:,:,:,is) = fna_52(:,:,:,is)*neutral_rescale
             kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
@@ -1841,6 +1880,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 *   ..initialise previous state and fluxes
       call b2scopy (n2*ns, na, 1, na0, 1)
       call b2scopy (n2, ne, 1, ne0, 1)
+      call b2scopy (n2*2, ni, 1, ni0, 1)                                 !srv 07.07.21
       call b2scopy (n2*ns, ua, 1, ua0, 1)
       call b2scopy (n2, te, 1, te0, 1)
       call b2scopy (n2, ti, 1, ti0, 1)
@@ -1852,6 +1892,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2scopy (n2*ns, kinrgy, 1, kinrgy0, 1)
       call b2scopy (n2*ns, na, 1, nap, 1)
       call b2scopy (n2, ne, 1, nep, 1)
+      call b2scopy (n2*2, ni, 1, nip, 1)                                 !srv 07.07.21
       call b2scopy (n2*ns, ua, 1, uap, 1)
       call b2scopy (n2, te, 1, tep, 1)
       call b2scopy (n2, ti, 1, tip, 1)
@@ -1920,6 +1961,26 @@ cxpb initialize the data necessary for boundary conditions
         call initialize_b2mod_boundary(nx,ny,ns,tim)
       else
         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
+     > call read_neutrals_namelist(nx, ny, ns, .true.)
+cxpb initialize the numerics data
+      call ipgeti ('b2mndt_style', b2mndt_style)
+      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
+      call alloc_b2mod_numerics(nx,ny,ns)
+      if(b2mndt_style.eq.2) then                                      !srv 07.07.21 {
+        solvemt=.false.
+        solveet=.false.
+      endif                                                           !srv 07.07.21 }
+      if(numerics_namelist.ge.1) then
+        nsmin = 0
+        nsmax = ns
+        call ipgeti ('b2news_nsmin', nsmin)
+        call ipgeti ('b2news_nsmax', nsmax)
+        nsmin = max(0,min(nsmin,ns))
+        nsmax = max(0,min(nsmax,ns))
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+        call write_b2mod_numerics_namelist
       endif
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
@@ -2008,7 +2069,7 @@ c new CDF movie option (1st frame at t=0)
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
-     1            itim,dtim,ntim,stack_ptr,quit
+     1            itim,dteff,ntim,stack_ptr,quit
 
       call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
@@ -2032,7 +2093,7 @@ c new CDF movie option (1st frame at t=0)
      &             (1.0_R8-ax)*(1.0_R8-ay)*ne(ix4,iy4) )
            write(*,'(a,1p,3g15.7)')
      &          'time, factor, created_electrons = ', tim, factor,
-     &          sum(ne*vol)*(factor-1.0)/dtim
+     &          sum(ne*vol)*(factor-1.0)/dteff
            na(:,:,isfb) = na(:,:,isfb) +
      &          ne(:,:) * (factor-1) / rza(:,:,isfb)
            ne(:,:) = ne(:,:) * factor
@@ -2066,7 +2127,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         do while(.not.ok)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
           call b2mndt (nout, nx, ny, ns, ismain, ismain0,
      &     nscx, iscx, itim, dtim, ntim, ierr)
 
@@ -2128,10 +2189,10 @@ csw 09oct2012 set default potential already at this point (BCs)
         itim = itim+1
         itim_plas = itim_plas + 1
         if (no_solve.le.0) then
-          tim = tim+dtim
+          tim = tim+dteff
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
-     &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+     &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dteff
         write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
         write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
         write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
@@ -2161,15 +2222,15 @@ csw 09oct2012 set default potential already at this point (BCs)
         do while(itim.eq.ntim.and.stack_ptr.gt.0)
           write(*,'(a,i8,1p,g14.7,i8,i3)')
      .     'b2mndr_01:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
           ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
           dtim=stack_dtim(stack_ptr)
           stack_ptr=stack_ptr-1
           write(*,'(a,i8,1p,g14.7,i8,i3)')
      .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
-     1                itim,dtim,ntim,stack_ptr
+     1                itim,dteff,ntim,stack_ptr
         end do
-*    ..produce time dependent file
+*    ..produce time-dependent file
         if (save_f31.lt.0) then
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
@@ -2251,6 +2312,10 @@ c new CDF movie option
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(nx,ny,ns,nxtl,nxtr,nnreg(0),ismain,dtim,BoRiS)
         endif
+        if (iappend.gt.0) then
+          if (mod(itim,iappend).eq.0)
+     >     call b2wdat (nx, ny, ns, ismain, ismain0)
+        endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
@@ -2273,7 +2338,7 @@ c new CDF movie option
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 min((ntim-itim)*(elapsedval-elapsedstart),
-     &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
+     &      max(0.0_R8,(etim-tim)/dteff-(elapsedval-elapsedstart)))      !srv 18.05.09
         else
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
@@ -2414,6 +2479,7 @@ c new CDF movie option
             write (*,*) aver_name,' saved '
           end if
         endif
+        ids_replace = .false.
         write_ids = ids_save.gt.0 .and. ntim.gt.0
         if (write_ids) write_ids = mod(itim,ids_save).eq.0
         write_ids = write_ids .or.
@@ -2429,6 +2495,7 @@ c new CDF movie option
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
               write(*,*) "Reading old IDS ", trim(database), shot, run
+              call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
      .          status)
               if (status.ne.0) then
@@ -2446,14 +2513,14 @@ c new CDF movie option
                 call ids_deallocate( old_edge_profiles )
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
+                old_imas_version = 'x.xx.x'
                 call ids_get( idx, "dataset_description",
      .                                  old_description, status)
                 if ( status.ne.0 ) then
-                  old_imas_version = 'x.xx.x'
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
+                else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-                else
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
@@ -2474,20 +2541,51 @@ c new CDF movie option
      &               'Recreating using IMAS version '//
      &                trim(imas_version)//'.'
                     call close_ual(idx)
-cxpb Do the recreate to a temporary location and then bring it back
+                    idx = 0
+cxpb Copy the IDS to a temporary location with the new DD and then bring it back
+#if IMAS_MINOR_VERSION > 31
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'recreate -si ',shot,' -ri ',run,
-     &                       ' -so ',shot,' -ro ',run+1000,
-     &                       ' -d ',database,' -u ',username
+     &               'idscp --setDatasetVersion'//
+     &                    ' -si ',shot,' -ri ',run,
+     &                    ' -so ',shot,' -ro ',run+1000,
+     &                    ' -d ',trim(database),' -u ',trim(username)
+#else
+                    write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
+     &               'idscp -si ',shot,' -ri ',run,
+     &                    ' -so ',shot,' -ro ',run+1000,
+     &                    ' -d ',trim(database),' -u ',trim(username)
+#endif
+                    systemarg = trim(systemarg)//' edge_profiles'
+                    systemarg = trim(systemarg)//' edge_sources'
+                    systemarg = trim(systemarg)//' edge_transport'
+                    systemarg = trim(systemarg)//' radiation'
+                    systemarg = trim(systemarg)//' dataset_description'
+#if IMAS_MINOR_VERSION > 21
+                    systemarg = trim(systemarg)//' summary'
+#endif
+#if IMAS_MINOR_VERSION > 25
+                    systemarg = trim(systemarg)//' numerics'
+#endif
+#if IMAS_MINOR_VERSION > 30
+                    systemarg = trim(systemarg)//' divertors'
+#endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)
 #else
                     call system(systemarg)
 #endif
+#if IMAS_MINOR_VERSION > 31
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'recreate -si ',shot,' -ri ',run+1000,
+     &               'idscp --setDatasetVersion'//
+     &                       ' -si ',shot,' -ri ',run+1000,
      &                       ' -so ',shot,' -ro ',run,
-     &                       ' -d ',database,' -u ',username
+     &                       ' -d ',trim(database),' -u ',trim(username)
+#else
+                    write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
+     &               'idscp  -si ',shot,' -ri ',run+1000,
+     &                     ' -so ',shot,' -ro ',run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
+#endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)
 #else
@@ -2501,20 +2599,24 @@ cxpb Do the recreate to a temporary location and then bring it back
                   num_time_slices = num_time_slices + 1
                   time_slice_index = num_time_slices
                   call B25_process_ids( edge_profiles, edge_sources,
-     &              edge_transport, radiation, description,
+     &              edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &              summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &              numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &              divertors,
+#endif
      &              tim, dtim, shot, run, database, version,
      &              time_slice_index, num_time_slices )
                   write_ids = .false.
                 else
                   write(*,*)
-     .             'Not a time continuation, IDS will be overwritten !'
-                  idx = 0
+     .             'Not a time continuation, edge IDS components '//
+     .             'will be replaced !'
+                  ids_replace = .true.
                 end if
               end if
             else
@@ -2526,12 +2628,15 @@ cxpb Do the recreate to a temporary location and then bring it back
           if (write_ids .and. (status.ne.0 .or. idx.eq.0)) then
             if (status.ne.0) idx = 0
             call B25_process_ids( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &        numerics, run_start_time, run_end_time,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
 #endif
      &        tim, dtim, shot, run, database, version )
             old_start_time = run_start_time
@@ -2542,26 +2647,47 @@ cxpb Do the recreate to a temporary location and then bring it back
             num_time_slices = num_time_slices + 1
             time_slice_index = num_time_slices
             call B25_process_ids( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &        numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
      &        tim, dtim, shot, run, database, version,
      &        time_slice_index, num_time_slices )
             write_ids = .false.
           end if
-          call put_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+          if (ids_replace) then
+            call new_ids_edge( edge_profiles, edge_sources,
+     &        edge_transport, radiation, description,
 #if IMAS_MINOR_VERSION > 21
-     &      summary,
+     &        summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
-     &      numerics,
+     &        numerics,
 #endif
-     &      treename, shot, run, idx, username, database, version )
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
+     &        idx )
+          else
+            call put_ids_edge( edge_profiles, edge_sources,
+     &        edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &        summary,
+#endif
+#if IMAS_MINOR_VERSION > 25
+     &        numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &        divertors,
+#endif
+     &        treename, shot, run, idx, username, database, version )
+          end if
 #endif
           if (.not.continued) continued = .true.
           if (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
@@ -2577,7 +2703,7 @@ cxpb Do the recreate to a temporary location and then bring it back
      &      fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &      na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor,
      &      uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi,
-     &      float(rightix), float(topiy))
+     &      rightix, topiy)
         endif
 #endif
         goto 1
@@ -2644,8 +2770,7 @@ cxpb Do the recreate to a temporary location and then bring it back
 * ..display and save the result of the calculation
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns)
-      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -2658,7 +2783,11 @@ cxpb Do the recreate to a temporary location and then bring it back
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
-      call b2wdat (nx, ny, ns, ismain, ismain0)                          !srv 05.10.01
+      if (iappend.eq.0) then
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
+      else if (mod(itim,iappend).ne.0) then
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
+      end if
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
@@ -2676,9 +2805,9 @@ cxpb Do the recreate to a temporary location and then bring it back
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
         call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
       endif
-*   ..produce last time dependent file if not yet done
+*   ..produce last time-dependent file if not yet done
 #ifdef JET
-      if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
+      if(tim.gt.save_tran_time-delta_tran_time+dteff.and.
      &   delta_tran_time.gt.0.0_R8) then
         tran_num=tran_num+1
         if(tran_num.le.99) then
@@ -2695,7 +2824,7 @@ cxpb Do the recreate to a temporary location and then bring it back
       endif
 #endif
 *   ..produce last CDF movie frame if not yet done
-      if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
+      if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dteff.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
         call cdfmovie(ncid,nx,ny,ns)
@@ -2730,15 +2859,16 @@ cxpb Do the recreate to a temporary location and then bring it back
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
+      ids_replace = .false.
       if (ids_save.gt.0) then
         ids_done = mod(itim,ids_save).eq.0
         write_ids = mod(itim,ids_save).ne.0
       end if
       if (delta_ids_time.gt.0.0_R8) then
         ids_done = ids_done .or.
-     .    tim.le.save_ids_time-delta_ids_time+dtim
+     .    tim.le.save_ids_time-delta_ids_time+dteff
         write_ids = write_ids .or.
-     .    tim.gt.save_ids_time-delta_ids_time+dtim
+     .    tim.gt.save_ids_time-delta_ids_time+dteff
       end if
       write_ids = write_ids .or. ids_save.lt.0
       write_ids = write_ids .and. ntim.gt.0 .and. .not.ids_done
@@ -2750,12 +2880,15 @@ cxpb Do the recreate to a temporary location and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &      numerics, old_start_time, run_end_time,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
 #endif
      &      tim, dtim, shot, run, database, version,
      &      time_slice_index, num_time_slices )
@@ -2767,6 +2900,7 @@ cxpb Do the recreate to a temporary location and then bring it back
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
             write(*,*) "Reading old IDS ", trim(database), shot, run
+            call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
      .        status)
             if (status.ne.0) then
@@ -2784,13 +2918,13 @@ cxpb Do the recreate to a temporary location and then bring it back
               call ids_deallocate( old_edge_profiles )
               old_start_time = 0.0_IDS_real
               old_end_time = IDS_REAL_INVALID
+              old_imas_version = 'x.xx.x'
               call ids_get( idx, "dataset_description",
      .                                old_description, status)
               if ( status.ne.0 ) then
-                old_imas_version = 'x.xx.x'
                 write(*,*) 'Error opening old dataset_description IDS !'
+              else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-              else
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
@@ -2811,20 +2945,51 @@ cxpb Do the recreate to a temporary location and then bring it back
      &             'Recreating using IMAS version '//
      &              trim(imas_version)//'.'
                   call close_ual(idx)
-cxpb Do the recreate to a temporary location and then bring it back
+                  idx = 0
+cxpb Copy the IDS to a temporary location with the new DD and then bring it back
+#if IMAS_MINOR_VERSION > 31
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &             'recreate -si ',shot,' -ri ',run,
+     &             'idscp --setDatasetVersion'//
+     &                     ' -si ',shot,' -ri ',run,
      &                     ' -so ',shot,' -ro ',run+1000,
-     &                     ' -d ',database,' -u ',username
+     &                     ' -d ',trim(database),' -u ',trim(username)
+#else
+                  write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
+     &             'idscp  -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',run+1000,
+     &                   ' -d ',trim(database),' -u ',trim(username)
+#endif
+                  systemarg = trim(systemarg)//' edge_profiles'
+                  systemarg = trim(systemarg)//' edge_sources'
+                  systemarg = trim(systemarg)//' edge_transport'
+                  systemarg = trim(systemarg)//' radiation'
+                  systemarg = trim(systemarg)//' dataset_description'
+#if IMAS_MINOR_VERSION > 21
+                  systemarg = trim(systemarg)//' summary'
+#endif
+#if IMAS_MINOR_VERSION > 25
+                  systemarg = trim(systemarg)//' numerics'
+#endif
+#if IMAS_MINOR_VERSION > 30
+                  systemarg = trim(systemarg)//' divertors'
+#endif
 #ifdef NAGFOR
                   call system(systemarg, status, ierror)
 #else
                   call system(systemarg)
 #endif
+#if IMAS_MINOR_VERSION > 31
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &             'recreate -si ',shot,' -ri ',run+1000,
+     &             'idscp --setDatasetVersion'//
+     &                     ' -si ',shot,' -ri ',run+1000,
      &                     ' -so ',shot,' -ro ',run,
-     &                     ' -d ',database,' -u ',username
+     &                     ' -d ',trim(database),' -u ',trim(username)
+#else
+                  write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
+     &             'idscp  -si ',shot,' -ri ',run+1000,
+     &                   ' -so ',shot,' -ro ',run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
+#endif
 #ifdef NAGFOR
                   call system(systemarg, status, ierror)
 #else
@@ -2838,19 +3003,23 @@ cxpb Do the recreate to a temporary location and then bring it back
                 num_time_slices = num_time_slices + 1
                 time_slice_index = num_time_slices
                 call B25_process_ids( edge_profiles, edge_sources,
-     &            edge_transport, radiation, description,
+     &            edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &            summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &            numerics, old_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &            divertors,
+#endif
      &            tim, dtim, shot, run, database, version,
      &            time_slice_index, num_time_slices )
               else
-                write(*,*)
-     .           'Not a time continuation, IDS will be overwritten !'
-                idx = 0
+                write(*,'(a)')
+     .           'Not a time continuation, edge IDS components '//
+     .           'will be replaced !'
+                ids_replace = .true.
               end if
             end if
           else
@@ -2859,28 +3028,50 @@ cxpb Do the recreate to a temporary location and then bring it back
             idx = 0
           end if
         end if
-        if (status.ne.0 .or. idx.eq.0) then
+        if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
      &      numerics, run_start_time, run_end_time,
 #endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
      &      tim, dtim, shot, run, database, version )
         end if
-        call put_ids_edge( edge_profiles, edge_sources,
-     &    edge_transport, radiation, description,
+        if (ids_replace) then
+          call new_ids_edge( edge_profiles, edge_sources,
+     &      edge_transport, radiation, description,
 #if IMAS_MINOR_VERSION > 21
-     &    summary,
+     &      summary,
 #endif
 #if IMAS_MINOR_VERSION > 25
-     &    numerics,
+     &      numerics,
 #endif
-     &    treename, shot, run, idx, username, database, version )
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
+     &      idx )
+        else
+          call put_ids_edge( edge_profiles, edge_sources,
+     &      edge_transport, radiation, description,
+#if IMAS_MINOR_VERSION > 21
+     &      summary,
+#endif
+#if IMAS_MINOR_VERSION > 25
+     &      numerics,
+#endif
+#if IMAS_MINOR_VERSION > 30
+     &      divertors,
+#endif
+     &      treename, shot, run, idx, username, database, version )
+        end if
         call close_ual(idx)
+        idx = 0
 #endif
       end if
 
@@ -2951,6 +3142,7 @@ cxpb Do the recreate to a temporary location and then bring it back
       call subend ()
       return
       end subroutine b2mndr_2
+
 *-----------------------------------------------------------------------
 *.end b2mndr
 c

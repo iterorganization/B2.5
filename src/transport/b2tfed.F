@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfed (nx, ny, facdrift, fac_ExB, 
+      subroutine b2tfed (nx, ny, facdrift, fac_ExB,
      & te, po, vedia, veecrb)
       use b2mod_types
       use b2mod_indirect
@@ -14,8 +14,6 @@
       integer nx, ny
       real (kind=R8) ::
      * facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-!     * vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-!     * qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -83,8 +81,8 @@ c Drift terms
       vedia=0.0_R8                                                       !xpb
       veecrb=0.0_R8                                                      !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
- 
-       if(drift_style.eq.0) then ! 5.0 treatment
+
+        if(drift_style.eq.0) then ! 5.0 treatment
 
           call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
           do iy = -1, ny
@@ -121,8 +119,8 @@ cxpb  Standard case
      1            bb(ix,iy,2)/bb(ix,iy,3)**2*                            !xpb
      2           (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
      &            radeldr*fac_ExB(ix,iy)                                 !xpb
-                vedia(ix,iy,1) = - te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy))* !xpb
-     &           (2.0_R8/bb(ix,iy,3)**3)*                                !xpb
+                vedia(ix,iy,1) = - te(ix,iy)*bb(ix,iy,2)/                !xpb
+     &           (qe*hx(ix,iy))*(2.0_R8/bb(ix,iy,3)**3)*                 !xpb
      &           (wbbr(ix,iy,3)-wbbl(ix,iy,3))*raddidr*facdrift(ix,iy)   !xpb
               endif
             enddo
@@ -134,19 +132,24 @@ cxpb  Standard case
           do ix = -1, nx                                                 !xpb
             do iy = -1, ny                                               !xpb
               if(leftix(ix,iy).eq.-2) then
-                veecrb(ix,iy,:) =veecrb(rightix(ix,iy),rightiy(ix,iy),:) !xpb
-                vedia(ix,iy,:) = vedia(rightix(ix,iy),rightiy(ix,iy),:)  !xpb
+                veecrb(ix,iy,:) =
+     .            veecrb(rightix(ix,iy),rightiy(ix,iy),:)                !xpb
+                vedia(ix,iy,:) =
+     .            vedia(rightix(ix,iy),rightiy(ix,iy),:)                 !xpb
               elseif(rightix(ix,iy).eq.nx+1) then                        !xpb
-                veecrb(ix,iy,:) = veecrb(leftix(ix,iy),leftiy(ix,iy),:)  !xpb
-                vedia(ix,iy,:) = vedia(leftix(ix,iy),leftiy(ix,iy),:)    !xpb
+                veecrb(ix,iy,:) =
+     .            veecrb(leftix(ix,iy),leftiy(ix,iy),:)                  !xpb
+                vedia(ix,iy,:) =
+     .            vedia(leftix(ix,iy),leftiy(ix,iy),:)                   !xpb
               endif
               if(topiy(ix,iy).eq.ny+1) then                              !xpb
                 veecrb(ix,iy,:) = 
-     .           veecrb(bottomix(ix,iy),bottomiy(ix,iy),:)               !xpb
+     .            veecrb(bottomix(ix,iy),bottomiy(ix,iy),:)              !xpb
                 vedia(ix,iy,:) =
-     .           vedia(bottomix(ix,iy),bottomiy(ix,iy),:)                !xpb
+     .            vedia(bottomix(ix,iy),bottomiy(ix,iy),:)               !xpb
               elseif(bottomiy(ix,iy).eq.-2) then
-                veecrb(ix,iy,:) = veecrb(topix(ix,iy),topiy(ix,iy),:)    !xpb
+                veecrb(ix,iy,:) =
+     .            veecrb(topix(ix,iy),topiy(ix,iy),:)                    !xpb
                 vedia(ix,iy,:) = vedia(topix(ix,iy),topiy(ix,iy),:)      !xpb
               endif
             enddo
@@ -245,7 +248,7 @@ cxpb  Standard case
 
          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
-         CALL XERRAB (
+         call xerrab (
      &   'faulty definition of drift_style and redef_gmtry, ' // 
      &   'or logical mistake occurred')
 

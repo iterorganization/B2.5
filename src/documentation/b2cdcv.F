@@ -1671,6 +1671,7 @@
 *     rxf specifies the main under-relaxation parameter. Computed
 *     corrections to the unknowns are scaled by a factor rxf before
 *     being applied. It will hold that 0.le.rxf.le.1.
+*     Should be set to 1 when running in time-dependent mode.
 *
 *     rxg - real.
 *     rxg specifies a special under-relaxation parameter. A term of the
@@ -1678,6 +1679,7 @@
 *     of the correction equation, with the effect of limiting the
 *     computed correction. rxg is dimensionless and of order unity;
 *     smaller values of rxg imply stronger damping.
+*     Not used when running in time-dependent mode.
 *
 *   ..variables for input-output
 *

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
-     &  vol, hx, hz, bb, pbshz, lnlam,
+     &  dtim, vol, hx, hz, bb, pbshz, lnlam,                           !srv 07.07.21
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,
      &  alpha1,
      *  chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,             !som 08.10.21
@@ -16,7 +16,7 @@
       use b2mod_constants
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
-     2          smpr, smpt, smfr, smcf
+     2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
@@ -82,12 +82,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
       real (kind=R8) ::
-     *  rxf,
-     &  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                              !srv 09.01.01
+     *  rxf, dtim, hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),                   !srv 09.01.01 07.07.21
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  pbshz(-1:nx,-1:ny,0:1),
-     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                           !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                         !som 08.10.21
@@ -144,6 +144,7 @@
       integer, save :: get_residuals = 0                               !srv 22.05.18
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
+      integer, save :: style_b2mndt = 1                                !srv 07.07.21
       integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      & Zhdanov_tf_fr = 1                                              !som 01.07.21
@@ -152,7 +153,7 @@
       real (kind=R8), save ::  mass_multiplicator                      !som 13.11.20
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, czetap, czetae                                    !srv 13.01.17
+     *  rxg, t0, t1, czetap, czetae, ttim                              !srv 13.01.17 07.07.21
       real (kind=R8) ::
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
@@ -181,8 +182,11 @@
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
+      real (kind=R8) ::
+     &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
-      save ncall, rxg, diagno, nsmin, nsmax
+      character*80 message
+      save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
@@ -190,7 +194,7 @@
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
 *   ..initialisation
-      data ncall/0/, rxg/1.0e6_R8/, diagno/0/
+      data ncall/0/, diagno/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -202,7 +206,24 @@
       if (ncall.eq.0) then
         nsmin=0
         nsmax=ns
-        call ipgetr ('b2npmo_rxg', rxg)
+        call ipgeti ('b2mndt_style', style_b2mndt)                      !srv 07.07.21 {
+        if(style_b2mndt.eq.2) then
+         rxg = huge(1.0_R8)
+         do is = 0,ns-1
+          write(message,'(a,i3,a)')
+     .     'rxf*dtmo*time_factor for species ',is,' must be 1'
+          do iy = -1, ny
+           do ix = -1, nx
+            call xertst(
+     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_r8,
+     .       message)
+           enddo
+          enddo
+         enddo
+        else
+         rxg = 1.0e6_R8
+         call ipgetr ('b2npmo_rxg', rxg)
+        endif                                                           !srv 07.07.21 }
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
@@ -283,10 +304,10 @@
        do is = 0, ns-1
         call b2xvff (nx, ny, fna_fcor(-1,-1,0,is), 'fna_fcor')
        enddo
-*    ..test sign of cvsa
-       call b2xvsg (n2*2*ns, cvsa, 1, 'cvsa', '.ge.')
-*    ..test edge values of cvsa
+*    ..test sign and edge values of cvsa
        do is = 0, ns-1
+        call b2xvsg (n2, cvsa(-1,-1,0,is), 1, 'cvsa0', '.ge.')
+        call b2xvsg (n2, cvsa(-1,-1,1,is), 1, 'cvsa1', '.ge.')
         call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')
        enddo
 *    ..test sign of smo, smq
@@ -297,6 +318,17 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
+      uap = ua                                                           !srv 07.07.21 {
+      if(style_b2mndt.eq.2) then
+*  .. calculate time-dependent source
+       call b2smdt (nx, ny, ns, dtim, hz, vol, na, uap, smodt, .false.)
+*  .. add contribution from time-dependent source
+       smo = smo + smodt
+       do is = 0, ns-1
+         smo(:,:,0,is) = smo(:,:,0,is)-am(is)*mp*vol*hz*
+     &           (na(:,:,is)-nap(:,:,is))*uap(:,:,is)/dtim
+       enddo
+      endif                                                              !srv 07.07.21 }
 *   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
@@ -430,6 +462,9 @@
       if (iout.ne.0) then
        call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
       endif
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                        !srv 09.03.21 {
+        ua_inp = ua
+      endif                                                            !srv 09.03.21 }
 *   ..initialise
       call sfill (n2*4, 0.0_R8, smt, 1)
       call sfill (n2*2, 0.0_R8, flct, 1)
@@ -577,7 +612,7 @@
      &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
         endif                                                          !srv 26.10.08 }
        endif
-*     ..compute pressure gradient term
+*    ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
 *    ..compute flub
@@ -611,7 +646,8 @@
          call b2siav (nx, ny, ns, is, ismain, am(is)*mp,               !srv 19.02.21
      &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
-     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
+     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is),
+     &   cvsahz(-1,-1,0,is),
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo,
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
          smbvi=0.0_R8                                                  !som 13.08.21
@@ -711,7 +747,8 @@ cdjm Jan2017 update momentum source components for balance
 *    ..compute residual
        if((solving.and.any(solvemo(is,0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
-        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
+        call b2urmo (nx, ny, is,
+     &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
         fmo(:,:,:,is)=wrkf
 
@@ -790,20 +827,20 @@ cdjm Mar2019 output the total momentum flux and source for balance
        endif                                                           !srv 12.07.02 }
 
        if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
-        solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
+         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
-        new_matrix = .false.
-        do ireg = 0, nnreg(0)
-         new_matrix = new_matrix.or.
-     &    solvemo(is,ireg).neqv.last_solve_5(ireg)
-        end do
-        if (new_matrix) call restart_ma28
+         new_matrix = .false.
+         do ireg = 0, nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solvemo(is,ireg).neqv.last_solve_5(ireg)
+         end do
+         if (new_matrix) call restart_ma28
 *    ..compute correction
-        call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
-     &   vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
-     &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
-     &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
-        last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
+     &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
+     &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
+     &    pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
+         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
 csw 21feb2014 added this else branch
        else
          pcca(:,:,:,is)  = 0.0_R8
@@ -829,8 +866,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbvi, 1, smb, 1)                  !som 13.08.21
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
-        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
-     &   flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
+        call b2urmo (nx, ny, is, ua(-1,-1,is), rob,                    !srv 09.01.01
+     &   smb, flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
 *    ..accumulate residual
         call b2saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
 *    ..accumulate smb
@@ -852,17 +889,17 @@ csw 21feb2014, execute simultaneous corrections always
      &                  .and.any(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
 !      if (solving) then                                              !srv 22.05.18
 *   ..compute simultaneous correction
-       call sfill (n2, 0.0_R8, wrk0, 1)
-       new_matrix = .false.
-       do ireg = 0, nnreg(0)
-         new_matrix = new_matrix.or.
-     &    solvemt(ireg).neqv.last_solve_5(ireg)
-       end do
-       if (new_matrix) call restart_ma28
-       call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &  vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
-     &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
-       last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
+         call sfill (n2, 0.0_R8, wrk0, 1)
+         new_matrix = .false.
+         do ireg = 0, nnreg(0)
+           new_matrix = new_matrix.or.
+     &      solvemt(ireg).neqv.last_solve_5(ireg)
+         end do
+         if (new_matrix) call restart_ma28
+         call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
+     &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
+     &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
+         last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
       else
        pccm  = 0.0_R8
 !       resmt = 0.0_R8                                                 !srv 22.05.18
@@ -882,7 +919,7 @@ csw 21feb2014, execute simultaneous corrections always
               if(solvemt(ireg)) then                                   !srv 22.05.18
                 ua(ix,iy,is) = ua(ix,iy,is)+
      &          rxf*med(corua(ix,iy,is),corut(ix,iy),
-     &          corua(ix,iy,is)+corut(ix,iy))
+     &                  corua(ix,iy,is)+corut(ix,iy))
               else                                                     !srv 22.05.18 {
                 ua(ix,iy,is) = ua(ix,iy,is)+rxf*corua(ix,iy,is)
               endif                                                    !srv 22.05.18 }
@@ -939,11 +976,48 @@ csw 21feb2014, execute simultaneous corrections always
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
+        call my_out(70,nx,ny,uap(-1,-1,is),'b2npmo_uap'//chns)
+        call my_out(70,nx,ny,na(-1,-1,is),'b2npmo_na'//chns)
+        call my_out(70,nx,ny,nap(-1,-1,is),'b2npmo_nap'//chns)
+        if(style_b2mndt.eq.2) then                                      !srv 07.07.21 {
+         wrks=mp*am(is)*na(:,:,is)*(ua(:,:,is)-uap(:,:,is))*
+     &         vol*hz/dtim
+         call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
+         wrks=mp*am(is)*uap(:,:,is)*(na(:,:,is)-nap(:,:,is))*
+     &         vol*hz/dtim
+         call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
+        else
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
+           t0 = vol(ix,iy)*hz(ix,iy)/ttim
+           wrks(ix,iy)=mp*am(is)*(na(ix,iy,is)*ua(ix,iy,is)-
+     &                           nap(ix,iy,is)*uap(ix,iy,is))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)
+        endif                                                           !srv 07.07.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
        call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pcca0_'//chns)
+        call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pcca1_'//chns)
+        wrks=-na(:,:,is)*mp*am(is)*smodt(:,:,3,is)*corua(:,:,is)       !srv 09.03.21 {
+        call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
+        wrks=-smodt(:,:,3,is)*ua_inp(:,:,is)*na(:,:,is)*mp*am(is)
+     &             -smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_mavadnadt'//chns)
+!        wrks = resmo(:,:,is)-wrks
+!        call my_out(70,nx,ny,wrks,'b2npmo_resmo_no_dt'//chns)
+
+        wrks=-smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)-
+     &             smodt(:,:,0,is)
+        call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)            !srv 09.03.21 }
+       enddo
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

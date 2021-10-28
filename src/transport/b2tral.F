@@ -10,7 +10,7 @@
      * cvsahz_drho, cvsa_drho,                                          !som 18.08.21
      * chci_al_luc, chci_a_luc, cvsahz_hAdp_luc, cvsahz_hBdp_luc,       !som 08.10.21
      * cvsa_hAdp_luc, cvsa_hBdp_luc,                                    !som 20.10.21
-     4 fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -36,8 +36,8 @@
      *  bb(-1:nx,-1:ny,0:3),
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), bzb(-1:nx,-1:ny),    !srv 13.10.06
-     &  lnlam(-1:nx,-1:ny),                                             !srv 01.07.09
+     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),                      !srv 13.10.06
+     &  bzb(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),                           !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
@@ -45,16 +45,21 @@
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)                      !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
+     *  cdna(-1:nx,-1:ny,0:1,0:ns-1),
+     *  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
-     &  cvla(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1), cdpahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
+     &  cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cdpahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 09.01.01
+     &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 09.01.01
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 09.01.01
      &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 15.12.05
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     &  csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),   !xpb
+     &  csig(-1:nx,-1:ny,0:1),
+     &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                          !xpb
      &  calf(-1:nx,-1:ny,0:1),
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
@@ -70,6 +75,8 @@
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1),
      &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
+      real (kind=R8) ::
+     &  csig_stoch(-1:nx,-1:ny,0:1), chce_stoch(-1:nx,-1:ny,0:1)        !lk 31.01.08 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -126,7 +133,8 @@
       real (kind=R8) ::
      1  chvi0(-1:nx,-1:ny,0:1), csig0(-1:nx,-1:ny,0:1),
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
-     3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
+     3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
+     3  cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
      2  chci0_nofl(-1:nx,-1:ny,0:1), chci0_luc(-1:nx,-1:ny,0:1),        !som 16.06.21
      2  chci0_fl(-1:nx,-1:ny,0:1),                                      !som 16.06.21
@@ -223,27 +231,48 @@
           else
             elm_count=0
           endif
-          catch_up=transport_time_mod.gt.0.0_R8
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+          else
+            catch_up=.false.
+          end if
           do while(catch_up)
-            if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1       then
-              write(*,*) 'b2tqna: catching up ...'
-              call read_b2mod_transport_namelist
-              call write_b2mod_transport_namelist
-              catch_up=transport_time_mod.gt.0.0_R8
+            write(*,*) 'b2tqna: catching up ...'
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+            if(transport_time_mod.gt.0.0_R8) then
+              catch_up=transport_time_switch.gt.0.0_R8.and.
+     1         mod(tim,transport_time_mod).ge.transport_time_switch
+            else if (transport_time_switch.gt.0.0_R8) then
+              catch_up=tim.ge.transport_time_switch
             else
               catch_up=.false.
             endif
           enddo
         endif
       else
-        if(transport_namelist.eq.1.and.
-     1   transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=int(tim/transport_time_mod)
+        if(transport_namelist.eq.1) then
+          if(transport_time_mod.gt.0.0_R8) then
+            write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+     1       transport_time_switch,int(tim/transport_time_mod),elm_count
+            catch_up=
+     1      (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1       transport_time_switch.gt.0.0_R8).or.
+     2       int(tim/transport_time_mod).gt.elm_count
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+            if(catch_up) write(*,'(a,a)')
+     .       'Switching to next transport namelist file ',
+     .        trim(transport_filename)
+          else
+            catch_up=.false.
+          end if
+          if(catch_up) then
+            if(transport_time_mod.gt.0.0_R8)
+     >       elm_count=int(tim/transport_time_mod)
             call read_b2mod_transport_namelist
             call write_b2mod_transport_namelist
           endif
@@ -256,17 +285,18 @@
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx,
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,             !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
-     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                   !srv 09.01.01 15.12.05
-     &  chce, chve, chci, chvi, csig, calf, fllim0fhi)
+     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                       !srv 09.01.01 15.12.05
+     &  chce, chve, chci, chvi, csig, calf, csig_stoch, chce_stoch,   !srv 24.08.21
+     &  fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy, hz,                            !srv 23.11.10
+     &  bb, conn, vol, gs, hx, hy, hz,                                !srv 23.11.10
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
-     2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
+     2  chvemx, chvimx, cvsahz0,                                      !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                    !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..compute Zhdanov closure coefficients
       if(Zhdanov_closure.eq.1) then                                !som 09.02.21
@@ -379,17 +409,17 @@
         cvsa_drho=0.0e0_R8
       endif     
 *   ..add to previous contributions
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
+      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
       if (style.eq.1) then
        do is = 0, ns-1
         if (.not.is_neutral(is)) then
-          cvsa(:,:,0,is)   = ft*cvsa_cl(:,:,0,is)   + cvsa(:,:,0,is)
-          cvsa(:,:,1,is)   =    cvsa_cl(:,:,1,is)   + cvsa(:,:,1,is)
-          cvsahz(:,:,0,is) = ft*cvsahz_cl(:,:,0,is) + cvsahz(:,:,0,is)
-          cvsahz(:,:,1,is) =    cvsahz_cl(:,:,1,is) + cvsahz(:,:,1,is)
+         cvsa(:,:,0,is)  =ft*cvsa_cl(:,:,0,is)  + cvsa(:,:,0,is)
+         cvsa(:,:,1,is)  =   cvsa_cl(:,:,1,is)  + cvsa(:,:,1,is)
+         cvsahz(:,:,0,is)=ft*cvsahz_cl(:,:,0,is)+cvsahz(:,:,0,is)
+         cvsahz(:,:,1,is)=   cvsahz_cl(:,:,1,is)+cvsahz(:,:,1,is)
         else
-          cvsa(:,:,:,is)   =    cvsa_cl(:,:,:,is) + cvsa(:,:,:,is)
-          cvsahz(:,:,:,is) =  cvsahz_cl(:,:,:,is) + cvsahz(:,:,:,is)
+         cvsa(:,:,:,is)  =   cvsa_cl(:,:,:,is) + cvsa(:,:,:,is)
+         cvsahz(:,:,:,is)= cvsahz_cl(:,:,:,is) + cvsahz(:,:,:,is)
         end if
        end do
       else
@@ -409,16 +439,12 @@
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
+      cddi = 0.0_R8
       do is = 0, ns-1
-       if(is_neutral(is)) then
-        cddi(:,:,0,is) = 0.0_R8
-        cddi(:,:,1,is) = 0.0_R8
-       else
+       if(.not.is_neutral(is)) then
         do iy = -1, ny
          do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-           cddi(ix,iy,0,is) = 0.0_R8
-          else
+          if(leftix(ix,iy).ne.-2) then
            cddi(ix,iy,0,is) =
      &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
@@ -432,9 +458,7 @@
 
         do iy = -1, ny
          do ix = -1, nx
-          if(bottomiy(ix,iy).eq.-2) then
-           cddi(ix,iy,1,is) = 0.0e0_R8
-          else
+          if(bottomiy(ix,iy).ne.-2) then
            cddi(ix,iy,1,is) =
      &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
@@ -532,10 +556,10 @@
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then
-          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//chns//
-     &        '_'//chns0)
-          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//chns//
-     &        '_'//chns0)
+          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//
+     &        chns//'_'//chns0)
+          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//
+     &        chns//'_'//chns0)
          endif
         enddo
        enddo
@@ -573,8 +597,10 @@
       if(iout_b2npmo.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2tral_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2tral_cvsahzy'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2tral_cvsahzx'//
+     &              chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2tral_cvsahzy'//
+     &              chns)
 !        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),'b2tral_cvsa_clx'//
 !     &              chns)
 !        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,is),'b2tral_cvsa_cly'//

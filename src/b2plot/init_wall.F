@@ -767,8 +767,9 @@ cxpb          North boundary
               enddo
             else if (leftix(imapx(ibnd),imapy(ibnd)).eq.-2) then
 cxpb          West boundary
-              qpl = max(0.0_R8,-fht(rightix(imapx(ibnd),imapy(ibnd)),
-     &                              rightiy(imapx(ibnd),imapy(ibnd)),0))
+              qpl = max(0.0_R8,
+     &                 -fht(rightix(imapx(ibnd),imapy(ibnd)),
+     &                      rightiy(imapx(ibnd),imapy(ibnd)),0))
      &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
      &               rightiy(imapx(ibnd),imapy(ibnd)),0)
               qex = max(0.0_R8,

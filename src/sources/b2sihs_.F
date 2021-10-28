@@ -2,10 +2,10 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, vol, bb, pbs, lnlam,                                     !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, cvsa_cl,         !som 16.08.21
+     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                         !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,           !som 16.08.21 !srv 24.08.21
      *  cvsa_drho,                                                       !som 16.08.21
-     *  she0, shi0)       !srv 28.06.03 07.07.09
+     *  she0, shi0)                                                      !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -36,13 +36,14 @@
       integer nx, ny, ns, ismain                                      !srv 05.07.17
       real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
-     *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
+     *  vol(-1:nx,-1:ny),
+     &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1),
+     *  fne(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny,0:1),              !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
@@ -87,8 +88,7 @@
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                !lk 31.01.08 {
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny) !lk 31.01.08 }
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
       real (kind=R8) :: 
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
@@ -248,8 +248,6 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,           !srv 07.07.14
-     &      fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -258,17 +256,17 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy)*(hy(ix,iy)
-     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                             !srv 24.08.21
+     &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
-     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)          !srv 24.08.21
+     &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
          endif
         enddo
        enddo
-      endif                                                         !lk 31.01.08 }
-      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)               !srv 17.12.13 24.08.21
+      endif                                                           !lk 31.01.08 }
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
         do ix = 0, nx
@@ -277,7 +275,7 @@
           else
             wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
-     2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
           endif
         enddo
       enddo                                                           !srv 05.03.11 }
@@ -312,8 +310,8 @@
             wrk0(ix,iy) = 0.0e0_R8
           else
             wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1                 hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
-     2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+     1                hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
           endif                                                       !srv 21.07.05 }
 !         if(leftix(ix,iy).eq.-2) then
 !           wrk0(ix,iy) = 0.0e0_R8
@@ -400,7 +398,8 @@
 !     &                                                )*0.25e0_R8*signmf !srv 21.04.00
          wrk0(ix,iy) = bb(ix,iy,2)*vol(ix,iy)*                        !srv 11.01.13
      &   ((dpo(ix,iy,1)+dpo(topix(ix,iy),topiy(ix,iy),1))*
-     &   (dOnedBsq(ix,iy,0)+dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
+     &   (dOnedBsq(ix,iy,0)+
+     &    dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
      &    (dpo(ix,iy,0)+dpo(rightix(ix,iy),rightiy(ix,iy),0))*
      &   (dOnedBsq(ix,iy,1)+dOnedBsq(topix(ix,iy),topiy(ix,iy),1)))
      &    *0.25e0_R8 ! *signmf                                        !srv 11.01.13 03.04.07 }
@@ -705,7 +704,7 @@
 *     (a.k.a. Joule heating) in case of small impurity amount;
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)                      !srv 13.01.17
+       call b2xehx (nx, ny, hx, te, po, ne, ehx)
        if (istyle_Joule_heating.eq.0)
      &   call b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
        b2joule=0.0_R8
@@ -716,16 +715,16 @@
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
            t0 = fch(ix,iy,0)*ehx(ix,iy)/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
-     &      ehx(rightix(ix,iy),rightiy(ix,iy))/
-     &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+     &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+     &        fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &        ehx(rightix(ix,iy),rightiy(ix,iy))/
+     &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
           if (istyle_Joule_heating.eq.0) t0 = t0 +
      &      fch(ix,iy,1)*ehy(ix,iy)/
-     &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-     &      fch(topix(ix,iy),topiy(ix,iy),1)*
-     &      ehy(topix(ix,iy),topiy(ix,iy))/
-     &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
+     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
+     &       fch(topix(ix,iy),topiy(ix,iy),1)*
+     &       ehy(topix(ix,iy),topiy(ix,iy))/
+     &      (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
           t0 = phm3*vol(ix,iy)*t0
           shefr(ix,iy,0) = shefr(ix,iy,0)+max(0.0e0_R8,t0)+rf3*abs(t0)
           shefr(ix,iy,3) = shefr(ix,iy,3)+

@@ -196,7 +196,7 @@
        do iy = -1, ny
         do ix = -1, nx
          t0 = te(ix,iy)/ev
-         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)          !xpb !srv 01.07.09
+         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)        !xpb !srv 01.07.09
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit

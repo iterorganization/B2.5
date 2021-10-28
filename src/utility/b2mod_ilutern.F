@@ -94,7 +94,7 @@ c
        call set_data_bd3
 #endif
       endif
-c     write(*,*) 'ncall,nwrite',ncall,nwrite
+      if (nwrite.gt.ncall) write(*,*) 'ncall,nwrite',ncall,nwrite
 
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -221,10 +221,10 @@ cdpc
      1      'b2_matrix_ files will not be written out'
             !$OMP END MASTER
           else
-            if(ncall.eq.0) then
+            if (ncall.eq.0) then
               write(*,*) 'Opening 69'
               open(69,file='b2_matrix')
-            endif
+            end if
             write(*,*) 'Writing 69'
             write(69,*) 'Called from '//trim(name)
             write(69,*) n,' n'
@@ -241,10 +241,11 @@ cdpc
               write(69,'(4(i6,1x),1p,1e15.8)')
      .         IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
             enddo
+            if (ncall+1.eq.nwrite) then
+              write(*,*) 'Closing 69'
+              close(69)
+            end if
           end if
-        elseif(nwrite.eq.ncall .and. .not. in_parallel()) then
-          write(*,*) 'Closing 69'
-          close(69)
         endif
       endif
 cdpc

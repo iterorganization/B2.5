@@ -6,9 +6,9 @@
      *  calf(:,:,:),
      *  cdna(:,:,:,:),
      *  cdpa(:,:,:,:),
-     *  cddi(:,:,:,:),                                                !srv 13.10.06
-     *  cdnahz(:,:,:,:),                                              !srv 09.01.01
-     *  cdpahz(:,:,:,:),                                              !srv 09.01.01
+     *  cddi(:,:,:,:),                                                  !srv 13.10.06
+     *  cdnahz(:,:,:,:),                                                !srv 09.01.01
+     *  cdpahz(:,:,:,:),                                                !srv 09.01.01
      *  ceqp(:,:),
      *  chce(:,:,:),
      *  chci(:,:,:),
@@ -32,12 +32,14 @@
      *  chci_a(:,:,:,:), 
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
+     *  csig_stoch(:,:,:),                                              !srv 24.08.21
+     *  chce_stoch(:,:,:),                                              !srv 24.08.21
      *  fllime(:,:),
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
      *  fllimvisc(:,:,:),
-     *  fllim_ki(:,:),                                                !srv 13.01.17 {
+     *  fllim_ki(:,:),                                                  !srv 13.01.17 {
      *  fllim_ke(:,:),
      *  fllim_al(:,:),
      *  fllim_al_c(:,:),
@@ -48,21 +50,21 @@
      *  f_luc_al(:,:),
      *  alpha1(:,:),                                                  !som 05.10.21
      *  alfx_c(:,:),
-     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17 }
-     *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
+     *  sigx_c(:,:),                                                    !iyv 19.11.13 08.10.14 !srv 13.01.17 }
+     *  kt_neo(:,:)                                                     !iys 02.12.13 08.10.14
 
       contains
 
       subroutine alloc_b2mod_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer, intent(in) :: nxd,nyd,nsd
 
       allocate(calf(-1:nxd,-1:nyd,0:1))
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cdpa(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 13.10.06
-      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
+      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 13.10.06
+      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(ceqp(-1:nxd,-1:nyd))
       allocate(chce(-1:nxd,-1:nyd,0:1))
       allocate(chci(-1:nxd,-1:nyd,0:1))
@@ -86,6 +88,8 @@
       allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1)) 
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
+      allocate(csig_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
+      allocate(chce_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
       allocate(fllime(-1:nxd,-1:nyd))
       fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
@@ -96,7 +100,7 @@
       fllim0fhi=1.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=1.0_R8
-      allocate(fllim_ki(-1:nxd,-1:nyd))                               !srv 13.01.17 {
+      allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
       allocate(fllim_al_c(-1:nxd,-1:nyd))
@@ -147,6 +151,8 @@
       deallocate(chci_a) 
       deallocate(csig_cl)
       deallocate(calf_cl)
+      deallocate(csig_stoch)                               !srv 24.08.21
+      deallocate(chce_stoch)                               !srv 24.08.21
       deallocate(fllime)
       deallocate(fllimi)
       deallocate(fllim0fna)
@@ -171,7 +177,7 @@
 
       subroutine read_b2mod_transport(nread)
       implicit none
-      integer nread
+      integer, intent(in) :: nread
 
       call cfrure (nread, size(calf), calf, 'calf')
       call cfrure (nread, size(cdna), cdna, 'cdna')
@@ -243,7 +249,7 @@
 
       subroutine write_b2mod_transport(nwrite)
       implicit none
-      integer nwrite
+      integer, intent(in) :: nwrite
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

@@ -138,8 +138,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-1) = 0.0_R8
         else
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          t0 =  flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
-          t1 = -flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t0 =  flcb(ix,iy,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t1 = -flcb(ix,iy,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
          else
           t0 =  flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
           t1 = -flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
@@ -173,8 +175,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-2) = 0.0_R8
         else
          if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
-          t1 = -flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t0 =  flcb(ix,iy,1)/2.0_R8 -
+     &          hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t1 = -flcb(ix,iy,1)/2.0_R8 -
+     &          hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
          else
           t0 =  flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
           t1 = -flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
@@ -194,10 +198,10 @@ cxpb
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
      &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
-           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2-
+           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2.0_R8-
      &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                cvsb(topix(ix,iy),topiy(ix,iy),1))
-            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
+            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2.0_R8-
      &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                 cvsb(topix(ix,iy),topiy(ix,iy),1))
             itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -218,6 +222,7 @@ cxpb
        enddo
       enddo
 *   ..compute pccb
+      pccb = 0.0_R8
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -227,8 +232,6 @@ cxpb
          pccb(ix,iy,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
-         pccb(ix,iy,0) = 0.0_R8
-         pccb(ix,iy,1) = 0.0_R8
          resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
         endif
        enddo

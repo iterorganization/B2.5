@@ -96,7 +96,7 @@
       integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
-      character line*500
+      character line*500, ligne*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
@@ -313,9 +313,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -416,7 +420,7 @@
      & hxx, hyy, qz1, qc1, qcb1, gs1,
      & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
 *   ..improved computation of qc based on interpolation of qz values
-cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
+cwdk  avoids artificial reduction of poloidal contact area between faces for
 cwdk  curvilinear grids; angle between left face and average direction of top/bottom
 cwdk  faces is not representative for orthogonality of left face to field!
       if (redef_qc.eq.1.and.qc_style.eq.0) then

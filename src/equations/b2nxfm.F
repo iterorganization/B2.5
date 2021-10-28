@@ -67,15 +67,14 @@
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
 
+* ..initialize flub to zero
+      flub = 0.0_R8
+
 * ..compute convection factors
 *   ..compute flubx
       do iy = -1, ny
        do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         flub(ix,iy,0) = 0
-        elseif(rightix(ix,iy).eq.nx+1) then
-         flub(ix,iy,0) = 0
-        else
+        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
          flub(ix,iy,0) = (mb/2)*
      1    (fnb(ix,iy,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0))
         endif
@@ -84,11 +83,7 @@
 *   ..compute fluby
       do iy = -1, ny
        do ix = -1, nx
-        if(bottomiy(ix,iy).eq.-2) then
-         flub(ix,iy,1) = 0
-        elseif(topiy(ix,iy).eq.ny+1) then
-         flub(ix,iy,1) = 0
-        else
+        if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
          flub(ix,iy,1) = (mb/2)*
      1    (fnb(topix(ix,iy),topiy(ix,iy),1)+fnb(ix,iy,1))
         endif

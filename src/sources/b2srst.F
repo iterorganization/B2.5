@@ -51,7 +51,7 @@
      &  shest(-1:nx,-1:ny,0:3), shist(-1:nx,-1:ny,0:3),
      &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1),
      &  wrk0(-1:nx,-1:ny)
-      character chns*3, chk*1                                        !srv 11.09.09 }
+      character chns*3, chk*1                                         !srv 11.09.09 }
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
       save ncall, rf0, rf1, rf2, rf3, use_eirene
@@ -249,7 +249,7 @@ cdjm Jan2017 Store for balance
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
 !         write (chns,'(i3.3)') is
-!         wrk0=smost(:,:,0,is)+              !srv 07.10.09
+!         wrk0=smost(:,:,0,is)+                             !srv 07.10.09
 !     &        smost(:,:,1,is)*ua(:,:,is)+
 !     &        smost(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smost(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -260,14 +260,14 @@ cdjm Jan2017 Store for balance
 !          iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1) then
 !       do is = 0, ns-1
 !         write (chns,'(i3.3)') is
-!         wrk0=snast(:,:,0,is)+              !srv 07.10.09
+!         wrk0=snast(:,:,0,is)+                             !srv 07.10.09
 !     &        snast(:,:,1,is)*na(:,:,is)
 !         call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &          then
-        wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
+        wrk0=shest(:,:,0)+shest(:,:,1)*te+                  !srv 07.10.09
      &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2srst_shest')
         wrk0=shist(:,:,0)+shist(:,:,1)*ti+
@@ -280,7 +280,7 @@ cdjm Jan2017 Store for balance
 !        call my_out(70,nx,ny,wrk0,'b2srst_schst')
 !      endif
 
-      if (iout.eq.1) then                       !srv 11.09.09 {
+      if (iout.eq.1) then                                   !srv 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           do k=0,3

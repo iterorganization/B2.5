@@ -212,4 +212,4 @@ c
       if(scol .gt. 1) call gsplci(1)
 #endif
       return
-      end
+      end subroutine pltsptrix

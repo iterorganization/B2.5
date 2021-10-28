@@ -294,7 +294,7 @@ c not sure this is the right place
         volsumnold=-1.0_R8
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
-        allocate(sum_wld(2,2+NATM))
+        allocate(sum_wld(4,2+NATM))
         allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
@@ -380,7 +380,7 @@ c not sure this is the right place
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
         if (lfeedback) then
-           if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+          if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
      1       .or.nesepm_pfr.gt.0.0_R8) then !{
             call xertst (cbirso.le.pfrregno1.and.
      1       pfrregno1.le.cbirso+cbnrso-1,
@@ -569,7 +569,8 @@ c*** tflux(i)  : source strength for stratum i as given to Eirene
 c*** tfl(i,j)  : the same for species j only
 c*** flux_scale: conversion factor Eirene-B2
 c*** recyc     : fudge factors for the sources in B2
-
+cwdk only take outgoing fluxes into account in tflux and tfl, since
+cwdk ingoing fluxes will be cut off on the EIRENE side
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
@@ -600,12 +601,13 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)-
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+                tflux(istrai)=tflux(istrai)-min(0.0_R8,
+     1     fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     2         rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .      min(0.0_R8,
+     1     fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     2         rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is))
               end do !}
             end if !}
           end do !}
@@ -613,10 +615,11 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+                tflux(istrai)=tflux(istrai)+max(0.0_R8,
+     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+     .           max(0.0_R8,
+     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is))
               end do !}
             end if !}
           end do !}
@@ -624,12 +627,13 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)-
+                tflux(istrai)=tflux(istrai)-min(0.0_R8,
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
+     .      min(0.0_R8,
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is))
               end do !}
             end if !}
           end do !}
@@ -637,10 +641,11 @@ c*** recyc     : fudge factors for the sources in B2
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
-                tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+                tflux(istrai)=tflux(istrai)+max(0.0_R8,
+     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+     .           max(0.0_R8,
+     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is))
               end do !}
             end if !}
           end do !}
@@ -894,26 +899,23 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'Eirene output in eirene_mc :'
         sum_wld(1:2,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
-          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          if (ltns(2).ne.0)
-     >     sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
-          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          if (ltns(2).ne.0)
-     >     sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
-          do is = 1, nnatmi
-            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
-     .       is,istrai)
-            if (ltns(2).ne.0)
-     >       sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .        is,istrai)
+          do i=1,ntns
+            sum_wld(ktns(i),1)=sum_wld(ktns(i),1)+
+     .                         wldnek(nnlimi+ltns(i),istrai)
+            sum_wld(ktns(i),2)=sum_wld(ktns(i),2)+
+     .                         wldnep(nnlimi+ltns(i),istrai)
+            do is = 1, nnatmi
+              sum_wld(ktns(i),2+is)=sum_wld(ktns(i),2+is)+
+     .                                  wldna(nnlimi+ltns(i),is,istrai)
+            end do
           end do
         end do
-        write(*,*) 'Summed Western target data : '
-        write(*,*)
-     .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nnatmi)
-        write(*,*) 'Summed Eastern target data : '
-        write(*,*)
-     .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nnatmi)
+        write(*,*) 'Summed target data : '
+        write(hlp_frm,'(a,i2,a)') '(a,i1,a,a,',2+nnatmi,'e14.6)'
+        do i = 1, 2*max(1,nncut)
+          write(*,hlp_frm) 'Target ',i,' : ',
+     .     'wldnek, wldnep, wldna = ', sum_wld(i,1:2+nnatmi)
+        end do
       endif
 cxpb
 
@@ -3706,7 +3708,7 @@ c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
      -      'recycicore,recycisol,recycidivin,recycidivout= ',recycireg
       end if
 
-C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULES
+C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS AND IONS INTO MOLECULES
       IF(L_NEUTFLUX.GE.0) THEN
         DO I=1,NNSTSI
           k=eirdiag_nds_ind(I)
@@ -3860,8 +3862,15 @@ cxpb  core recycling into ions of the highest ionisation stage
      .             rf0*abs(t0)
                   if (balance_netcdf.ne.0) then
                     eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
-     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))
-     .               -rf0*abs(t0)
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+
+     .               rf0*abs(t0)
+                  endif
+                  sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))-
+     1             rf0*abs(t0)/na(ix,-1,ishigh(j))
+                  if (balance_netcdf.ne.0) then
+                    eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))-
+     .               rf0*abs(t0)/na(ix,-1,ishigh(j))
                   endif
                 elseif(linearisation.eq.0) then !}{
                   sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0
@@ -3883,7 +3892,7 @@ cxpb  core recycling into ions of the highest ionisation stage
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,'(a,i3,1x,i3,a,i3)')
-     .       'eirene_mc: bccon for is,ib= ',is,ib,
+     .       'eirene_mc: bccon for is,ib = ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
 c            call xerrab
 c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
@@ -3892,7 +3901,7 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
             if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
      .       'eirene_mc: conpar(is,ib,3) = ',
-     2       conpar(is,ib,3),' for is,ib= ',is,ib
+     2       conpar(is,ib,3),' for is,ib = ',is,ib
           endif
         enddo
       endif
@@ -4095,8 +4104,8 @@ c*** recombination is already evaluated above.
               if(crcstra(istrai).eq.'W') then !{
                 do iy=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st-
-     .    fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     .       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
                 end do !}
               else if(crcstra(istrai).eq.'E') then !}{
                 do iy=1,rc_list_size(istrai) !{

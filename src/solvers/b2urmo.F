@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, isb, ub, rob, smb, flub, cvsb,
-     .  resmb, fmb)                                                     !srv 02.06.11
+      subroutine b2urmo (nx, ny, isb, ub, rob,
+     .  smb, flub, cvsb, resmb, fmb)                                    !srv 02.06.11
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -19,9 +19,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1)
-*   ..local variables
-      real (kind=R8) ::
-     *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -57,14 +54,15 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0       !srv 06.07.06
-      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
-      character chns*3                                            !srv 02.06.11
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
+      character chns*3                                                  !srv 02.06.11
       save ncall
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
       !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo          !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo,               !srv 11.09.09
+     *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff

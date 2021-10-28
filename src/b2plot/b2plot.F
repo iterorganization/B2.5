@@ -99,7 +99,8 @@ c
      *   wall_tmp(:,:), trg_tmp(:,:)
       real (kind=R8) ::
      *   fetx(-1:nxd,-1:nyd), fety(-1:nxd,-1:nyd),
-     *   fhtx(-1:nxd,-1:nyd), fhty(-1:nxd,-1:nyd)
+     *   fhtx(-1:nxd,-1:nyd), fhty(-1:nxd,-1:nyd),
+     *   lnlam(-1:nxd,-1:nyd)
       real (kind=R8) ::
      *   fnax(-1:nxd,-1:nyd,0:nsd_local-1),
      *   fnay(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -217,8 +218,7 @@ c
 c
       real (kind=R8) ::
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time
-      real (kind=R8) ::
-     1 lambda, lnlam, hh, hhn, phi_app
+      real (kind=R8) :: hh, hhn, phi_app
       integer i,j,icell,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
@@ -228,14 +228,14 @@ c
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
-     8     sput_phys_model/1/, sput_phys/0.0_R8/, lambda/-5.0_R8/,
+     8     sput_phys_model/1/, sput_phys/0.0_R8/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      2     use_eirene/0/, ismain0/0/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
-     3     sput_phys_model, sput_phys_col, sput_phys, lambda, BoRiS,
+     3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
      4     neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
@@ -382,13 +382,25 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
-            imi=nint(am(is))
+          imi=nint(am(is))
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .le. 1) then
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(imi.ne.nuclear_mass(il)) then
+              if(imi.lt.10) then
+                write(textsp(iss),'(a,i1,a)') ' ',imi,trim(elements(il))
+              else if(imi.lt.100) then
+                write(textsp(iss),'(a,i2,a)') ' ',imi,trim(elements(il))
+              else
+                write(textsp(iss),'(a,i3,a)') ' ',imi,trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -443,8 +455,6 @@ cxpb  quantities before their mapping to cell centers
         call copy_background(nx, ny, ns, BoRiS)
       endif
 c
-      call ipgetr ('b2trcl_lambda', lambda)
-      call xertst (0.0_R8.ne.lambda, 'faulty internal parameter lambda')
       call ipgeti ('b2stbr_refl_model', refl_model)
       call ipgeti ('b2stbr_plate_model', plate_model)
       if (plate_model.eq.0) then
@@ -877,7 +887,8 @@ cxpb  Western boundary
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
-     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
+     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/
+     &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
      &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo
@@ -2060,12 +2071,12 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          call b2xehx (nx, ny, hx, te, po, ne, mach(-1,-1,0))           !srv 13.01.17
+          call b2xehx(nx, ny, hx, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
           nz=1
-          call b2xehy (nx, ny, te, po, ne, mach(-1,-1,0))               !srv 13.01.17
+          call b2xehy(nx, ny, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'
@@ -2730,7 +2741,7 @@ c
           nz=ns
           call copy(smcf,1.0_R8,nz,textpl)
         case ('pot')
-        description='Potential energy (eV) (cum. ionisation energy)'
+          description='Potential energy (eV) (cum. ionisation energy)'
           nz=ns
           call copy(rpt,1.0_R8,nz,textpl)
         case ('poti')
@@ -3530,29 +3541,24 @@ c
         case ('lnlam')
           description='ln \GK\R'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-!xpb lnlam is allowed to vary as per the NRL formulary using the
-!xpb formula for ion-ion collisions or may be set by user.
-!further modified to use Wesson
-              if (lambda.eq.-5.0_R8) then                    !srv 09.02.11
-                lnlam=max(-lambda,17.3_R8-
-     1           log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     2           1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-              elseif (lambda.eq.-4.0_R8) then                !srv 09.02.11 {
-                if(te(ix,iy)/ev .le. 50.0_R8) then
-                  lnlam=23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
-     *                            3.45_R8*log10(te(ix,iy)/ev)
-                else
-                  lnlam=25.3_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
-     *                            2.30_R8*log10(te(ix,iy)/ev)
-                endif                                         !srv 09.02.11 }
-              else
-                lnlam = lambda
-              endif
-              mach(ix,iy,0)=lnlam
-            end do
-          end do
+          isel=0
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+          end if
+          if (isel.eq.0) then
+            description=trim(description)//'_{Br}'
+          else if (isel.eq.1) then
+            description=trim(description)//'_{ii}'
+          else if (isel.eq.2) then
+            description=trim(description)//'_{ee}'
+          else if (isel.eq.3) then
+            description=trim(description)//'_{ei}'
+          else
+            write(*,*) 'selected value of ',isel,' out of range 0..3'
+            return
+          end if
+          call b2tlnl(nx,ny,isel,te,ti,ne,lnlam)
+          mach(-1:nx,-1:ny,0)=lnlam(-1:nx,-1:ny)
           call copy(mach,1.0_R8,nz,textbl)
         case ('q')
           description='q'
@@ -4462,8 +4468,8 @@ c     assumes that bb is OK for 1d cases
           call copy(deltapar,1.0_R8,nz,textplel)
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
-          call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,lambda,
-     1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
+          call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,
+     1     safetyfactor,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
@@ -5548,6 +5554,7 @@ c     assumes that bb is OK for 1d cases
           values(15)=maxval(wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('xtow')     ! x dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5567,6 +5574,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('ytow')     ! y dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5586,6 +5594,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('rtow')     ! real --> wall stack
           stack_req=(/0,1,0,0,0,0,0/)
@@ -10163,11 +10172,6 @@ c
             enddo
           enddo
           close(99)
-        case('trgl')     ! ANK target loading
-          stack_req=(/2,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) return
-          call b2ptrg(istack,iistack)
-          call pop_stack(stack_req)
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return

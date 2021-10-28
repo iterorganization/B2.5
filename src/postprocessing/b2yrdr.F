@@ -100,11 +100,12 @@
       integer nidis, njdis, idis(0:ndismx-1), jdis(0:ndismx-1)
       integer idum(0:9)
       integer i, is, is1, nx, ny, ns, ns1
-      character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
+      character id*8, lblrc*120, lblcp*120
+      character cnamip*80, cvalip*80, line*80, ligne*80
 *   ..procedures
-      logical streql
+      logical streql, is_comment
       external xertst, xerrab, cfruch
-      external cfruin, streql, ipgeti, gacwk, gdawk
+      external cfruin, streql, ipgeti, gacwk, gdawk, is_comment
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------
@@ -276,9 +277,16 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=97) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-       call ipsetc (cnamip, cvalip)
+       read (ninp(0),*,end=2,err=97) line
+       if (.not.is_comment(line)) then
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'

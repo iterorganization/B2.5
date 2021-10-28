@@ -91,7 +91,7 @@
      &  veecrb1(:,:,:), vedia1(:,:,:),
      &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8, line*500
+      character lblps*120, lblgm*120, id*8, id0*8, line*500, ligne*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
       real (kind=R8) ::
      *  naini(0:ns-1), ttini, na_min
@@ -484,9 +484,13 @@
     1 continue
        read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -635,7 +639,7 @@
          fna_mdf(:,:,:,is)     = fna_mdf1(:,:,:,is)
          fna_fcor(:,:,:,is)    = fna_fcor1(:,:,:,is)
          fna_nodrift(:,:,:,is) = fna_nodrift1(:,:,:,is)
-         fna_he(:,:,:,is)      = fna_he(:,:,:,is)
+         fna_he(:,:,:,is)      = fna_he1(:,:,:,is)
          fnaPSch(:,:,:,is)     = fnaPSch1(:,:,:,is)
          fna_eir(:,:,:,is)     = fna_eir1(:,:,:,is)
          fna_32(:,:,:,is)      = fna_321(:,:,:,is)
@@ -652,6 +656,8 @@
          call sfill (n2*2, 0.0_R8, fna_32(-1,-1,0,is), 1)
          call sfill (n2*2, 0.0_R8, fna_52(-1,-1,0,is), 1)
        enddo
+       vedia     = vedia1
+       veecrb    = veecrb1
        fne_eir   = fne_eir1
        fne_32    = fne_321
        fne_52    = fne_521

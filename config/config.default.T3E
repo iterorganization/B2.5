@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
 ifndef LD_MSCL
   $(error LD_MSCL not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
 endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
@@ -12,8 +12,12 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07adf=f07ade -Df06qff=f06qfe -Dd07ajf=d07aje -Dx05baf=x05bae
+EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07adf=f07ade -Df06qff=f06qfe -Dd07ajf=d07aje -Dx05baf=x05bae -Dsamax=damax
 DEFINES += -DUSE_PXFGETENV -DNO_CDF
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 CPP = /opt/ctl/cf90/cf90/lib/ftpp -F
 CPP = /usr/lib/make/cpp

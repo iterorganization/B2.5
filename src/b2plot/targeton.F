@@ -10,8 +10,8 @@ c======================================================================
       integer, intent(in) :: trglog
       real (kind=R8), intent(in) :: trgmind,trgmaxd
 c======================================================================
-c	 print *,'%% targeton: onflag,trgmind,trgmaxd,trglog=',
-c     , 	               onflag,trgmind,trgmaxd,trglog
+c     print *,'%% targeton: onflag,trgmind,trgmaxd,trglog=',
+c    ,                      onflag,trgmind,trgmaxd,trglog
       trgmin=real(trgmind,R4)
       trgmax=real(trgmaxd,R4)
       trglinlog=trglog

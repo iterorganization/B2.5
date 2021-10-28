@@ -39,8 +39,8 @@
 !!      CLASS_NODE = (/ 0, 0 /)                 | IDS_CLASS_NODE = 1
 !!      CLASS_RZ_EDGE = (/ 1, 0 /)              | IDS_CLASS_RZ_EDGE = 2
 !!      CLASS_PHI_EDGE = (/ 0,10 /)             | IDS_CLASS_PHI_EDGE = 2
-!!      CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_FACE = 2
-!!      CLASS_TOROIDAL_FACE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_FACE = 2
+!!      CLASS_POLOIDALRADIAL_EDGE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_EDGE = 2
+!!      CLASS_TOROIDAL_EDGE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_EDGE = 2
 !!      CLASS_CELL = (/ 2, 1 /)                 | IDS_CLASS_CELL = 3
 !!
 !!      <b> Grid subset IDs </b>:
@@ -241,6 +241,8 @@
 !!        !< run summary data
 !!      type (ids_numerics) :: numerics !< IDS designed to store
 !!        !< run numerics data
+!!      type (ids_divertors) :: divertors !< IDS designed to store
+!!        !< divertor data
 !!      integer num_time_slices, time_slice_index
 !!      real(IDS_real) :: old_start_time, old_end_time, ids_end_time
 !!      logical continued
@@ -251,14 +253,26 @@ program b2_ual_write_b2mod
 
     use b2mod_main
     use b2mod_driver
-    use b2mod_ual    &
-     & , only : put_ids_edge, b25_process_ids, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description
-    use b2mod_ual_io
+    use ids_routines &  ! IGNORE
+     & , only : imas_create_env
+    use ids_schemas &   ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
+    use b2mod_ual &
+     & , only : new_ids_edge
+    use b2mod_ual_io &
+     & , only : b25_process_ids
 #if IMAS_MINOR_VERSION > 21
-    use b2mod_ual    &
+    use ids_schemas &   ! IGNORE
      & , only : ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+    use ids_schemas &   ! IGNORE
+     & , only : ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+    use ids_schemas &   ! IGNORE
+     & , only : ids_divertors
 #endif
     use b2mod_grid_mapping
 #if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
@@ -402,6 +416,7 @@ program b2_ual_write_b2mod
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
+      call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
@@ -417,12 +432,12 @@ program b2_ual_write_b2mod
         call ids_deallocate( old_edge_profiles )
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
+        old_imas_version = 'x.xx.x'
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
-          old_imas_version = 'x.xx.x'
           write (0,*) 'Error opening old dataset_description IDS !'
+        else if (associated(old_description%dd_version)) then
 #if IMAS_MINOR_VERSION > 25
-        else
           old_start_time = description%simulation%time_begin
           old_end_time = description%simulation%time_end
 #endif
@@ -442,20 +457,51 @@ program b2_ual_write_b2mod
              & 'Recreating using IMAS version '// &
              &  trim(imas_version)//'.'
             call close_ual(idx)
-!xpb Do the recreate to a temporary location and then bring it back
+            idx = 0
+!xpb Copy the IDS to a temporary location with the new DD and then bring it back
+#if IMAS_MINOR_VERSION > 31
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run,      &
-             &         ' -so ',shot,' -ro ',run+1000, &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion'// &
+             &       ' -si ',shot,' -ri ',run,      &
+             &       ' -so ',shot,' -ro ',run+1000, &
+             &       ' -d ',trim(database),' -u ',trim(username)
+#else
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+             & 'idscp -si ',shot,' -ri ',run,      &
+             &      ' -so ',shot,' -ro ',run+1000, &
+             &      ' -d ',trim(database),' -u ',trim(username)
+#endif
+            systemarg = trim(systemarg)//' edge_profiles'
+            systemarg = trim(systemarg)//' edge_sources'
+            systemarg = trim(systemarg)//' edge_transport'
+            systemarg = trim(systemarg)//' radiation'
+            systemarg = trim(systemarg)//' dataset_description'
+#if IMAS_MINOR_VERSION > 21
+            systemarg = trim(systemarg)//' summary'
+#endif
+#if IMAS_MINOR_VERSION > 25
+            systemarg = trim(systemarg)//' numerics'
+#endif
+#if IMAS_MINOR_VERSION > 30
+            systemarg = trim(systemarg)//' divertors'
+#endif
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
             call system(systemarg)
 #endif
+#if IMAS_MINOR_VERSION > 31
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'recreate -si ',shot,' -ri ',run+1000, &
-             &         ' -so ',shot,' -ro ',run,      &
-             &         ' -d ',database,' -u ',username
+             & 'idscp --setDatasetVersion'// &
+             &       ' -si ',shot,' -ri ',run+1000, &
+             &       ' -so ',shot,' -ro ',run,      &
+             &       ' -d ',trim(database),' -u ',trim(username)
+#else
+            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+             & 'idscp -si ',shot,' -ri ',run+1000, &
+             &      ' -so ',shot,' -ro ',run,      &
+             &      ' -d ',trim(database),' -u ',trim(username)
+#endif
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
@@ -468,12 +514,15 @@ program b2_ual_write_b2mod
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, &
+             &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
              &  summary, &
 #endif
 #if IMAS_MINOR_VERSION > 25
              &  numerics, old_start_time, run_end_time, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+             &  divertors, &
 #endif
              &  tim, dtim, shot, run, database, version, &
              &  time_slice_index, num_time_slices )
@@ -488,12 +537,15 @@ program b2_ual_write_b2mod
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, &
+         &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
          &  summary, &
 #endif
 #if IMAS_MINOR_VERSION > 25
          &  numerics, run_start_time, run_end_time, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+         &  divertors, &
 #endif
          &  tim, dtim, shot, run, database, version )
     end if
@@ -508,8 +560,12 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
         &   treename, shot, run, idx, username, database, version )
     call close_ual(idx)
+    idx = 0
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin
@@ -538,7 +594,8 @@ contains
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, database, version )
-        use b2mod_ual_io
+        use ids_routines &  ! IGNORE
+         & , only : imas_close
         implicit none
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created

@@ -20,7 +20,8 @@
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
-     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
+     &  fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)

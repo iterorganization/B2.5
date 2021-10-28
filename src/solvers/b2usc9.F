@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2usc9 (nx, ny, isb, nregionv, solvereg, itcnt, rxg,   !srv 13.10.06 26.09.12
-     &   pcm1, pbs, nb, pb, snbv, flob, conb, pccb1, rescb, corpb, aa9,
-     &   name)                                                          !srv 18.05.02
+     &   pcm1, pbs, nb, pb, snbv, flob, conb, pccb1, rescb, corpb,
+     &   aa9, name)                                                     !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
@@ -11,7 +11,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       real (kind=R8) ::
      *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
      &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
@@ -33,7 +33,7 @@
 *     B2USC9 computes a correction towards the solution of the
 *     continuity equation for one atomic species using a
 *     nine-point stencil.
-*     
+*
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
@@ -101,7 +101,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of nb, pb
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
@@ -113,8 +114,8 @@
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                   !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')                   !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                   !srv 13.10.06 }
 !*    ..test edge values of pccb1                                       !srv 15.04.05
 !       call b2xvfx (nx, ny, pccb1, 'pccb1')                            !srv 15.04.05
       endif
@@ -142,8 +143,8 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
-     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+             !srv 13.10.06 {
+     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))          !srv 13.10.06 }
         else
           aa9(ix,iy,0) = rscal(pb(ix,iy))
         endif
@@ -156,22 +157,26 @@
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
         else                                                            !srv 26.11.02 }
-          t0 =  flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
+          t0 =  flob(ix,iy,0)/2.0_R8
+     &        - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,1)                                         !srv 13.10.06
-          t1 = -flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
+          t1 = -flob(ix,iy,0)/2.0_R8
+     &        - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,2)                                         !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-          if (solvereg(ileft))
-     >     aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa9(ix,iy,0) = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-          if (solvereg(ileft))
-     >     aa9(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa9(leftix(ix,iy),leftiy(ix,iy),0)
-     &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-          if (solvereg(ireg))
-     >     aa9(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-          endif                                                         !srv 26.11.02
+          if (solvereg(ileft)) then
+           aa9(leftix(ix,iy),leftiy(ix,iy),1) =
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0*rscal(pb(ix,iy))
+           aa9(leftix(ix,iy),leftiy(ix,iy),0) =
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),0) -
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+          endif
+          if (solvereg(ireg)) then
+           aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
+           aa9(ix,iy,-1) = aa9(ix,iy,-1) +
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+          endif
+        endif                                                           !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa9(ix,iy,1) = 0.0e0_R8                                        !srv 26.11.02
        enddo
@@ -184,19 +189,23 @@
          if(bottomiy(ix,iy).eq.-2) then
           aa9(ix,iy,-3) = 0.0_R8
          else
-          t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)     !srv 13.10.06
-          t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)     !srv 13.10.06
+          t0 = 0.5_R8*flob(ix,iy,1)
+     &       - conb(ix,iy,1,0) - conb(ix,iy,1,1)                        !srv 13.10.06
+          t1 =-0.5_R8*flob(ix,iy,1)
+     &       - conb(ix,iy,1,0) - conb(ix,iy,1,2)                        !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa9(ix,iy,0) = aa9(ix,iy,0)-t0*rscal(pb(ix,iy))
-          if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+          if (solvereg(ibot)) then
+           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*rscal(pb(ix,iy))
+           aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if (solvereg(ireg))
-     >     aa9(ix,iy,-3) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
+          if (solvereg(ireg)) then
+           aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
+           aa9(ix,iy,-3) = aa9(ix,iy,-3) +
+     &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
          endif
        enddo
       enddo
@@ -204,8 +213,8 @@
 
 *   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg, conb(-1,-1,0,3),
-     &  aa9, name)                                                      !srv 02.01.07
+       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg,
+     &   conb(-1,-1,0,3), aa9, name)                                    !srv 02.01.07
       endif
 
       do iy=-1,ny
@@ -226,7 +235,7 @@
       enddo
 
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)             !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)              !srv 18.05.02
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx
@@ -235,6 +244,9 @@
       enddo
       if (iout.ne.0) then                                               !srv 17.06.02 {
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa9(-1,-1,-6),name//'_aa9m6'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-5),name//'_aa9m5'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-4),name//'_aa9m4'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)
@@ -242,6 +254,9 @@
         call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 4),name//'_aa9p4'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 5),name//'_aa9p5'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 6),name//'_aa9p6'//chns)
         call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
         call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
         call my_out(70,nx,ny,nb,name//'_na'//chns)

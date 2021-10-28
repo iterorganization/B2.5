@@ -41,7 +41,8 @@
      &  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadia(-1:nx,-1:ny,0:1,0:ns-1)                                 !srv 07.07.09
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
@@ -460,6 +461,16 @@ c accounted for)
       call timer%stop("parallel")
 #endif
 #endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0_ion(-1,-1,0,is))
+        call b2xzdd (nx, ny, 1, sna0_rec(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0_ion(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0_rec(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0_ion)
+      call b2xzdd (nx, ny, 3, shi0_rec)
 #ifndef NO_OPENMP_B2STEL
 !$OMP SINGLE
 #endif
