@@ -1,4 +1,4 @@
-      subroutine b2txvspr(nx, ny, ns, fac_vis, vol,                     !srv 10.10.17
+      subroutine b2txvspr(nx, ny, ns, ismain, fac_vis, vol,             !srv 10.10.17 19.02.21
      &   avisper, bvisper, cvisper)
       use b2mod_types
       use b2mod_indirect
@@ -12,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny),
      1   vol(-1:nx,-1:ny)
@@ -53,7 +53,8 @@
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
 
        do is = 0,ns-1                                                   !srv 16.10.17
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+        if(is.eq.ismain) then                                           !srv 19.02.21
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2)then
@@ -99,7 +100,8 @@
        call my_out(70,nx,ny,vol,'b2tvspr_vol')
        do is = 0,ns-1
          write (chns,'(i3.3)') is
-         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+!         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+         if(is.eq.ismain) then                                          !srv 19.02.21
            call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tvspr_vsa0_'//chns)
          endif
        enddo

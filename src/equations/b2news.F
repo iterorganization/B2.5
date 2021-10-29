@@ -383,14 +383,14 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)       !srv 20.09.06 } 08.09.21 {
-        call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                 fchvispar_a, fchvispar)
+        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
+     &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
      &                facdrift, fchinert_a, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,              !srv 10.10.17
-     &               avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis,                                !srv 10.10.17  08.09.21 }
-     &               ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
+        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
+     &  po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
+     &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -542,14 +542,14 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)       !srv 20.09.06 } 08.09.21 {
-        call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                  fchvispar_a, fchvispar)                          !srv 20.09.06 {
-        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
+        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
+     &                fchvispar_a, fchvispar)                          !srv 20.09.06 {
+        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert_a, fchinert)
-        call b2tvspr (nx, ny, ns, fac_vis, vol,                          !srv 10.10.17
+        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &                po, ti, na, avisper, bvisper, cvisper,
      &                fchvisper_a, fchvisper)
-        call b2tvsq (nx, ny, ns, fac_vis,                                !srv 10.10.17  08.09.21 }
+        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &               ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -686,7 +686,8 @@ cxpb
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             new_matrix = .false.
             if(mdf_fnb.eq.0) then                                        !srv 13.10.06
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                      !srv 19.02.21
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -717,7 +718,8 @@ cxpb
               endif                                                      !srv 02.04.18
             else                                                         !srv 13.10.06 {
               if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then         !srv 06.11.08
-                if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then      !srv 02.04.18
+!                if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then      !srv 02.04.18
+                if(is.eq.ismain) then                                    !srv 19.02.21
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
      &               solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -860,11 +862,11 @@ cxpb
      &         avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,   !srv 25.11.08
      1         fchanml_a, fchinert_a, fchvispar_a,
      &         fchvisper_a, fchvisq_a)                                   !srv 08.09.21
-              call b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1         BoRiS, vol, hx, te, po, ne, na, vedia,                    !xpb  !srv 13.01.17
-     &         veecrb, fne_32, fne_52, fch_p, csig, chce, chve, calf,    !xpb
-     &         chvemx, cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone,    !xpb  !srv 13.10.06
-     &         fllime, fchstoch, .false.)                                !djm Jan2017 !srv 17.12.13
+              call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
+     1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
+     &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
+     &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
+     &         fchstoch, .false.)                             !djm Jan2017 !srv 17.12.13
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
@@ -1114,7 +1116,7 @@ c     with diamagnetic drift part                                        !xpb
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,
      &   fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)     !srv 08.09.21
-        call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
+        call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21
      1   vol, hx, te, po, ne, na, vedia, veecrb,                         !srv 13.01.17
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
+      subroutine b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,      !stv 19.02.21
      1  BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,                   !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
@@ -25,7 +25,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows                                    !xpb
+      integer nx, ny, ns, ismain, guard_flows                            !xpb 19.02.21
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
@@ -162,8 +162,8 @@
        call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
-      call b2tepsch(nx, ny, ns, facdrift,
-     &  cddi, te, ne, cone, fhePSch)
+      call b2tepsch(nx, ny, ns, ismain, facdrift, cddi, te, ne, cone,  !srv 19.02.21
+     &   fhePSch)
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 

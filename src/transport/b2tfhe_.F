@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB,                 !srv 23.11.10
-     1 vol, hx, te, po, ne, na, vedia, fne,                              !srv 11.07.99
-     2 chce, chve, calf, chvemx, cddi, fch_p, fchstoch,                  !srv 17.05.99 11.07.99
+      subroutine b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol,    !srv 23.11.10 19.02.21
+     1 hx, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99
+     & chvemx, cddi, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
       use b2mod_types
       use b2mod_math
@@ -24,7 +24,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                         !srv 19.02.21
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny),
@@ -170,7 +170,8 @@ csw 10oct2012
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
        do is = 0,ns-1                                                    !srv 12.05.11
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
+        if(is.eq.ismain) then                                            !srv 19.02.21
 !         is = ismain   ! 1    ! for is = 1 (za = 1)                     !srv 12.05.11
 * ..compute flediax
          do iy = -1, ny
@@ -212,8 +213,8 @@ csw 10oct2012
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 
-      call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne,
-     .  cone, fhePSch)                                                   !srv 16.10.17
+      call b2tepsch(nx, ny, ns, ismain, facdrift, cddi, te, ne, cone,    !srv 19.02.21
+     &  fhePSch)                                                         !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 

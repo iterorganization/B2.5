@@ -365,13 +365,13 @@ csw 01oct2012 initialize potential if necessary
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
       call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                fchvispar_a, fchvispar)
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
-     &              avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17   08.09.21 }
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
+     &   po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
@@ -567,13 +567,13 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       nip = ni                                                           !srv 07.07.21
 *   ..recompute currents
       call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                fchvispar_a, fchvispar)
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
-     &             avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq   (nx, ny, ns, fac_vis,                                !srv 10.10.17  08.09.21 }
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
+     & po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+      call b2tvsq   (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -664,7 +664,8 @@ csw 16oct2012 init ier0
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if(is.eq.ismain) then                                        !srv 19.02.21
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -695,7 +696,8 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                     !srv 19.02.21
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -977,10 +979,9 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB,
-     & vol, hx,                                                          !srv 29.01.20
-     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
-     2 chvemx, cddi, fch_p, fchstoch,
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol, hx,      !srv 09.01.20 19.02.21
+     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99 11.07.99
+     & chvemx, cddi, fch_p, fchstoch,
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx,
@@ -1126,7 +1127,8 @@ c   recompute particle fluxes
 !         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if(is.eq.ismain) then                                        !srv 19.02.21
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -1160,7 +1162,8 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(is.eq.ismain) then                                     !srv 19.02.21
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)

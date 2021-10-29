@@ -155,13 +155,13 @@
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, bb, ua, cvsa_cl, fac_vis,                 !srv 08.09.21 {
-     &               fchvispar_a, fchvispar)                             !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar_a, fchvispar)                             !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, fac_vis, vol, po, ti, na,                 !srv 10.10.17
-     &              avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+      call b2tvspr(nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
+     &         po, ti, na, avisper, bvisper, fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
