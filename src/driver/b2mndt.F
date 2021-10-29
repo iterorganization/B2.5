@@ -325,14 +325,14 @@ ctmp.dpc
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
-            call b2tanml_a (nx, ny, ns, csig_an, po, fchanml_a, fchanml) !srv 20.09.06 } 08.09.21 {
-            call b2tvspa_a (nx, ny, ns, bb, ua,                          !srv 20.09.06 {
+            call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)   !srv 20.09.06 } 08.09.21 {
+            call b2tvspa (nx, ny, ns, bb, ua,                            !srv 20.09.06 {
      &                    cvsa_cl, fac_vis, fchvispar_a, fchvispar)
-            call b2tiner_a (nx, ny, ns, vol, gs, bb, na, ua,
+            call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
-            call b2tvspr_a (nx, ny, ns, fac_vis, vol, po, ti, na,        !srv 10.10.17
+            call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,          !srv 10.10.17
      &             avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-            call b2tvsq_a (nx, ny, ns, fac_vis, ne2,                     !srv 10.10.17 08.09.21 }
+            call b2tvsq (nx, ny, ns, fac_vis, ne2,                       !srv 10.10.17 08.09.21 }
      &                    lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities

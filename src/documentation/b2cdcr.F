@@ -341,9 +341,7 @@
 *     to the electron-atom collision processes of ionisation,
 *     recombination, and radiation.
 *
-*     B2TANML computes the X and Y components of the anomalous current.
-*
-*     B2TANML_A computes the X and Y components of the anomalous current
+*     B2TANML computes the X and Y components of the anomalous current
 *     for each species and calculates the X and Y components of
 *     the total anomalous current.
 *
@@ -373,9 +371,7 @@
 *     B2TFRN computes the particle and energy fluxes between
 *     neighbouring cells which are to be provided to Eirene.
 *
-*     B2TINER computes the X and Y components of the inertial current.
-*
-*     B2TINER_A computes the X and Y components of the inertial current
+*     B2TINER computes the X and Y components of the inertial current
 *     for each species and calculates the X and Y components of
 *     the total inertial current.
 *
@@ -426,23 +422,14 @@
 *     associated with stochastization of the magnetic field.
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
-*     current.
-*
-*     B2TVSPA_A computes the X and Y components of the parallel viscosity
 *     current for each species and calculates the X and Y components of
 *     the total parallel viscosity current.
 *
 *     B2TVSPR computes the X and Y components of the perpendicular viscosity
-*     current.
-*
-*     B2TVSPR_A computes the X and Y components of the perpendicular viscosity
 *     current for each species and calculates the X and Y components of
 *     the total perpendicular viscosity current.
 *
 *     B2TVSQ computes the X and Y components of the heat viscosity
-*     current.
-*
-*     B2TVSQ_A computes the X and Y components of the heat viscosity
 *     current for each species and calculates the X and Y components of
 *     the total heat viscosity current.
 *

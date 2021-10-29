@@ -1,5 +1,5 @@
       subroutine b2tvsq (nx, ny, ns, fac_vis,
-     &           ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &           ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -17,7 +17,7 @@
      &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     $   fchvisq(-1:nx,-1:ny,0:1)                                       !srv 11.07.99
+     &   fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1), fchvisq(-1:nx,-1:ny,0:1)    !srv 11.07.99
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -37,6 +37,7 @@
       integer mintopcut                                                 !lk
       integer, save :: ncall = 0
       integer, save :: qstyle = 0                                       !lk 23.05.06 05.07.07 {
+      integer, save :: no_current = 0
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8), save :: cqip1 = 0.5e0_R8                          !lk
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                     !iyv 06.12.13
@@ -74,13 +75,16 @@
        call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
 !       write(*,*) 'redef_gmtry = ',redef_gmtry,
 !     &               ' drfit_style = ',drift_style
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
+      fchvisq_a = 0.0e0_R8
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then               !srv 16.10.17
+      if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.               !srv 16.10.17
+     &   no_current.eq.0) then               
          do is = 0,ns-1                                                 !srv 12.05.11
           if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
 !           is = ismain    !
@@ -258,8 +262,8 @@
                do ix = 0,nx
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
-                   fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                 !srv 16.10.17
-     &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+                   fchvisq_a(ix,iy,0,is) =                               !srv 16.10.17
+     &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
      &         *alpha1(ix,iy)
@@ -287,8 +291,8 @@
                do ix = 0,nx
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
-                   fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                  !srv 16.10.17
-     &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*    !srv 11.01.13 16.10.17
+                   fchvisq_a(ix,iy,0,is) = 
+     &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
      &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
@@ -311,7 +315,7 @@
                 if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                   if(rightix(ix,iy).ne.nx+1) then
-                    fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                 !srv 16.10.17
+                    fchvisq_a(ix,iy,1,is) = 
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)
@@ -343,11 +347,11 @@
            elseif (drift_style .eq. 2) then                              !IYS 26.05.2020
 
             do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
-              do ix = 0,nx
-                if(on_closed_surface(bottomix(ix,iy),
+             do ix = 0,nx
+              if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
-                  if(rightix(ix,iy).ne.nx+1) then
-                    fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                 !srv 16.10.17
+               if(rightix(ix,iy).ne.nx+1) then
+                fchvisq_a(ix,iy,1,is) = 
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
      &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
      &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
@@ -363,14 +367,17 @@
      &          *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
      &          -OnedBsqc(ix,iy))
-                  endif
-                endif                                                    !lk 23.05.06 05.07.07 }
-              enddo
+               endif
+              endif                                                      !lk 23.05.06 05.07.07 }
+             enddo
             enddo
 
            endif
 
+          else
+            fchvisq_a(:,:,:,is)=0.0_R8
           endif
+          fchvisq(:,:,:) = fchvisq(:,:,:) + fchvisq_a(:,:,:,is)
 
          enddo
       endif
