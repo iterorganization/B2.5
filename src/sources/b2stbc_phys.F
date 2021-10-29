@@ -3202,7 +3202,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &       'BCCON = 27 should be applied to only one ionization state'
      &       // 'of isonuclear sequence')
              BCCON(isb,IB) = 2
-             CONPAR(IS,IBW,1) = 0.0_R8
+             CONPAR(isb,IB,1) = 0.0_R8
              isb = isb + 1
             enddo
 !========== IYS 13.10.2021
