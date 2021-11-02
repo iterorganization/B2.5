@@ -364,7 +364,8 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
-      call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
+      call b2tanml (nx, ny, ns, csig_an, po, ne, na,                     !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 
       call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
      &              fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
@@ -566,7 +567,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2scopy (n2, ne, 1, nep, 1)
       nip = ni                                                           !srv 07.07.21
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
+      call b2tanml (nx, ny, ns, csig_an, po, ne, na,                     !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 
       call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
      &              fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21

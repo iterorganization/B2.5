@@ -1,12 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)   !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, csig_an, po, ne, na,       !som 02.11.21
+     & fchanml_a, fchanml)                                       !srv 20.09.06 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_subsys
@@ -15,6 +17,7 @@
       integer nx, ny, ns
       real (kind=R8) ::
      & po(-1:nx,-1:ny),
+     & ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),                  !som 02.11.21
      1 csig_an(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -74,14 +77,19 @@
       fchanml_a = 0.0e0_R8
       if(no_current.eq.0 .and. fch_anomalous.ne.0.0e0_R8) then           !srv 27.02.13
        do is = 0, ns-1
-        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+!       if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+        if (.not.is_neutral(is)) then                                    !som 02.11.21
          do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2)then
               fchanml_a(ix,iy,0,is) = 0.0e0_R8
             else
               fchanml_a(ix,iy,0,is) = - csig_an(ix,iy,0)*
-     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
+     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))*
+     &         ((na(ix,iy,is)*rza(ix,iy,is))/ne(ix,iy)+
+     &         (na(leftix(ix,iy),leftiy(ix,iy),is)*
+     &         rza(leftix(ix,iy),leftiy(ix,iy),is))/
+     &         ne(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8                   !som 02.11.21
             endif
           enddo
          enddo
@@ -95,16 +103,30 @@
               fchanml_a(ix,iy,1,is) = 0.0e0_R8
             else
               fchanml_a(ix,iy,1,is) = - csig_an(ix,iy,1)*
-     &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         ((na(ix,iy,is)*rza(ix,iy,is))/ne(ix,iy)+
+     &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &         rza(bottomix(ix,iy),bottomiy(ix,iy),is))/
+     &         ne(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8               !som 02.11.21
             endif
           enddo
          enddo
-        else
-         fchanml_a(:,:,:,is) = 0.0_R8
+!       else
+!        fchanml_a(:,:,:,is) = 0.0_R8
         endif
         fchanml(:,:,:)=fchanml(:,:,:)+fchanml_a(:,:,:,is)
        enddo                                                             !srv 08.09.21
       endif                                                              !srv 27.02.13
+
+! it will be soon removed {
+       do is = 0, ns-1
+        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+         fchanml_a(:,:,:,is) = fchanml(:,:,:) 
+        else
+         fchanml_a(:,:,:,is) = 0.0_R8
+        endif
+       enddo
+! }
 
       if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells

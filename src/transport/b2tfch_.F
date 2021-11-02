@@ -168,7 +168,8 @@
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
      &              facdrift, fchinert_a, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 08.09.21 }
+      call b2tanml (nx, ny, ns, csig_an, po, ne, na,                     !som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                 !srv 07.07.14
