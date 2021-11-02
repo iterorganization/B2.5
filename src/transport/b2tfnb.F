@@ -853,7 +853,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
 !         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-         if(isb.eq.ismain) then                                         !srv 19.02.21
+!         if(isb.eq.ismain) then                                         !srv 19.02.21
+         if(.not.is_neutral(isb)) then                                  !srv 08.09.21
            scur =
      &     (fchinert_b(ix,iy,0)+fchvispar_b(ix,iy,0)
      &     +fchvisper_b(ix,iy,0)
@@ -1371,7 +1372,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         else
 !         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
-         if(isb.eq.ismain) then                                         !srv 19.02.21
+!         if(isb.eq.ismain) then                                         !srv 19.02.21
+         if(.not.is_neutral(isb)) then                                  !srv 08.09.21
           scur =
      &    (fchinert_b(ix,iy,1)+fchvispar_b(ix,iy,1)+
      &     fchanml_b(ix,iy,1)+vis_q*fchvisq_b(ix,iy,1))*ycur/           !srv 17.07.08 {  02.10.17

@@ -159,7 +159,8 @@
      &              fchvispar_a, fchvispar)                             !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
-     &         po, ti, na, avisper, bvisper, fchvisper_a, fchvisper)
+     &         po, ti, na, avisper, bvisper, cvisper, fchvisper_a,
+     &         fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)

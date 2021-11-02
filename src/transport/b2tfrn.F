@@ -206,7 +206,8 @@
 
 csw 30sep2013, added check for no_hybr
 !          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
-          if(is.eq.ismain) then                                          !srv 19.02.21
+!          if(is.eq.ismain) then                                          !srv 19.02.21
+          if (.not.is_neutral(is)) then                                  !srv 08.09.21
            scur =
      &      (fchinert_a(ix,iy,0,is)+fchvispar_a(ix,iy,0,is)+
      &       vis_per*fchvisper_a(ix,iy,0,is)                             !srv 02.10.17

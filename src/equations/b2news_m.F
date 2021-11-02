@@ -372,13 +372,13 @@ csw 01oct2012 initialize potential if necessary
       uap = ua                                                           !srv 24.05.21
 *   ..recompute currents
       call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 02.11.1
      &                fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 02.11.21
      &               avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17   08.09.21 }
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -624,13 +624,13 @@ csw 16oct2012 init ier0
       endif                                                              !srv 12.07.05 }
 
       call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 02.11.21
      &                fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 02.11.21
      &               avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17   08.09.21 }
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
@@ -965,7 +965,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB,
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB,
      & vol, hx,                                                          !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
      2 chvemx, cddi, fch_p, fchstoch,
