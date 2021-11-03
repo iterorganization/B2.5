@@ -111,22 +111,10 @@
             endif
           enddo
          enddo
-!       else
-!        fchanml_a(:,:,:,is) = 0.0_R8
         endif
         fchanml(:,:,:)=fchanml(:,:,:)+fchanml_a(:,:,:,is)
        enddo                                                             !srv 08.09.21
       endif                                                              !srv 27.02.13
-
-! it will be soon removed {
-       do is = 0, ns-1
-        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
-         fchanml_a(:,:,:,is) = fchanml(:,:,:) 
-        else
-         fchanml_a(:,:,:,is) = 0.0_R8
-        endif
-       enddo
-! }
 
       if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells
