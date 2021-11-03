@@ -208,16 +208,6 @@ c Drift terms
         endif
       endif                                                              !srv 07.07.99
 
-! it will be soon removed {
-       do is = 0, ns-1
-        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
-         fchinert_a(:,:,:,is) = fchinert(:,:,:) 
-        else
-         fchinert_a(:,:,:,is) = 0.0_R8
-        endif
-       enddo
-! }
-
       if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
