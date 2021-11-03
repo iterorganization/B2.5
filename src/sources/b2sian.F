@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2sian (nx, ny, isb, ismain, facdrift, fac_ExB,         !srv 19.02.21
-     &  fchanml, smban)
+     &  fchanml_b,                                                       !som 03.11.21 
+     &  smban)
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
@@ -17,7 +18,7 @@
       integer nx, ny, isb, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                    !srv 15.04.19
-     &   fchanml(-1:nx,-1:ny,0:1)
+     &   fchanml_b(-1:nx,-1:ny,0:1)                                      !som 03.11.21 
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smban(-1:nx,-1:ny,0:3)
@@ -69,7 +70,8 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8
 !      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-      if (isb.eq.ismain) then                                            !srv 19.02.21
+!      if (isb.eq.ismain) then                                            !srv 19.02.21
+      if (.not.is_neutral(isb)) then                                     !som 03.11.21
 *   ..  compute smban
         do iy = -1, ny
           do ix = -1, nx
@@ -84,8 +86,8 @@
             t0= phm0*min(facdrift(ix,iy),fac_ExB(ix,iy))                 !srv 15.04.19
             smban(ix,iy,0) = -t0*hz(ix,iy)*hy1(ix,iy)*                   !srv 15.04.19
      &          bb(ix,iy,0)/bb(ix,iy,2)*bb(ix,iy,3)*
-     &          (fchanml(ix,iy,1)+
-     &           fchanml(topix(ix,iy),topiy(ix,iy),1))*0.5_R8
+     &          (fchanml_b(ix,iy,1)+
+     &           fchanml_b(topix(ix,iy),topiy(ix,iy),1))*0.5_R8          !som 03.11.21
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8
             smban(ix,iy,3) = 0.0e0_R8
