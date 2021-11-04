@@ -4,7 +4,7 @@
       subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,       !srv 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb,       !srv 09.01.01 01.07.09
      1 lnlam, fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,   !srv 03.06.03
-     2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
+     2 cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,            !srv 13.10.06 !som 03.11.21
      3 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
      4 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)  !srv 24.08.21
@@ -39,6 +39,7 @@
      *  cdna(-1:nx,-1:ny,0:1,0:ns-1),
      *  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
+     *  cdde(-1:nx,-1:ny,0:1),                                          !som 03.11.21
      &  cvla(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1),
@@ -306,6 +307,37 @@
        endif
       enddo                                                           !srv 13.10.06 }
 
+*   ..compute terms from diamagnetic parts for electrons              !som 03.11.21 {
+      cdde = 0.0_R8
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).ne.-2) then
+         cdde(ix,iy,0) =
+     &    +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &       bzb(leftix(ix,iy),leftiy(ix,iy))
+     &       +vol(ix,iy)*bzb(ix,iy))/
+     &     ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
+     &      (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
+     &      qe
+        endif
+       enddo
+      enddo
+
+      do iy = -1, ny
+       do ix = -1, nx
+        if(bottomiy(ix,iy).ne.-2) then
+         cdde(ix,iy,1) =
+     &     2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
+     &       bzb(bottomix(ix,iy),bottomiy(ix,iy))
+     &       +vol(ix,iy)*bzb(ix,iy))/
+     &     ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
+     &      (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
+     &      qe
+        endif
+       enddo
+      enddo
+                                                                      !som 03.11.21 }
+
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
@@ -396,6 +428,8 @@
          endif
         enddo
        enddo
+       call my_out(70,nx,ny,cdde(-1,-1,0),'cddex')
+       call my_out(70,nx,ny,cdde(-1,-1,1),'cddey')
        call my_out(70,nx,ny,chce(-1,-1,0),'chcex')
        call my_out(70,nx,ny,chce(-1,-1,1),'chcey')
        call my_out(70,nx,ny,chci(-1,-1,0),'chcix')
@@ -425,6 +459,8 @@
 !        call my_out(70,nx,ny,cvla(-1,-1,0,is),'b2tral_cvlax'//chns)
 !        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2tral_cvlay'//chns)
        enddo
+       call my_out(70,nx,ny,cdde(-1,-1,0),'b2tral_cddex')
+       call my_out(70,nx,ny,cdde(-1,-1,1),'b2tral_cddey')
       endif
 
       if(iout_b2npmo.ne.0) then

@@ -3,7 +3,7 @@
 
       subroutine b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol,    !srv 23.11.10 19.02.21
      1 hx, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99
-     & chvemx, cddi, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99
+     & chvemx, cdde, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99 !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
       use b2mod_types
       use b2mod_math
@@ -34,7 +34,7 @@
      &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     &   cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
+     &   cdde(-1:nx,-1:ny,0:1),                                          !som 03.11.21
      &   fch_p(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny,0:1)               !lk 31.01.08 { 24.08.21
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
@@ -169,9 +169,9 @@ csw 10oct2012
 
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
-       do is = 0,ns-1                                                    !srv 12.05.11
+!      do is = 0,ns-1                                                    !srv 12.05.11
 !        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
-        if(is.eq.ismain) then                                            !srv 19.02.21
+!       if(is.eq.ismain) then                                            !srv 19.02.21
 !         is = ismain   ! 1    ! for is = 1 (za = 1)                     !srv 12.05.11
 * ..compute flediax
          do iy = -1, ny
@@ -199,8 +199,8 @@ csw 10oct2012
 !     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8             !srv 13.09.02 }
           enddo
          enddo                                                           !srv 25.01.02 }
-        endif
-       enddo
+!       endif
+!      enddo
       endif                                                              !srv 18.01.07
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -213,7 +213,7 @@ csw 10oct2012
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 
-      call b2tepsch(nx, ny, ns, ismain, facdrift, cddi, te, ne, cone,    !srv 19.02.21
+      call b2tepsch(nx, ny, ns, ismain, facdrift, cdde, te, ne, cone,    !srv 19.02.21 !som 03.11.21
      &  fhePSch)                                                         !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06

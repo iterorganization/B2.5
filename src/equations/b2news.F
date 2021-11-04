@@ -330,7 +330,7 @@
      1   bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry,
      .   bzb, lnlam,                                                     !srv 13.10.06 01.07.09
      1   fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,         !srv 03.06.03
-     2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                 !srv 13.10.06
+     2   cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,           !srv 13.10.06 !som 03.11.21
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
      5   fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch) !srv 24.08.21
@@ -867,7 +867,7 @@ cxpb
               call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
      1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
-     &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
+     &         cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06 !som 03.11.21
      &         fchstoch, .false.)                             !djm Jan2017 !srv 17.12.13
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, ti, ni, na,
@@ -1121,7 +1121,7 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21
      1   vol, hx, te, po, ne, na, vedia, veecrb,                         !srv 13.01.17
      1   fne_32, fne_52, fch_p,
-     1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06
+     1   csig, chce, chve, calf, chvemx, cdde, fhe, fhe_mdf, fhePSch,    !srv 13.10.06 !som 03.11.21
      &   fhet, floe, cone, fllime, fchstoch,                             !xpb !srv 17.12.13
      &   .true.)                                                         !djm Jan2017
         call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
