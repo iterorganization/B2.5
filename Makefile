@@ -6,11 +6,11 @@ ifndef COMPILER
   $(error COMPILER not defined)
 endif
 
-SRCB2   = ${PWD}
-SRCDIR  = ${SRCB2}/src
-DOCDIR  = ${SRCDIR}/documentation
-PYTHON  = python
-INCLUDE =
+SRCB2    = ${PWD}
+SRCDIR   = ${SRCB2}/src
+DOCDIR   = ${SRCDIR}/documentation
+PYTHON   = python
+INCLUDE ?=
 TAGSLIST =
 
 MAKES = ${SRCB2}/Makefile
@@ -28,18 +28,21 @@ ifndef SOLPS_CPP
     include ${SOLPSTOP}/SETUP/config.common.${COMPILER}
     MAKES += ${SOLPSTOP}/SETUP/config.common.${COMPILER}
   endif
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+    include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+    MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+  endif
 else
   MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
   ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
     MAKES += ${SOLPSTOP}/SETUP/config.common.${COMPILER}
   endif
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+    MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+  endif
 endif
 ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
   MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER}.local
-endif
-ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
-  include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
-  MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
 endif
 
 ifdef USE_EIRENE

@@ -61,12 +61,12 @@
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
       call b2txvspr(nx, ny, ns, fac_vis, vol,                           !srv 10.10.17
      &              avisper, bvisper, cvisper)
-* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
+* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
       va=0.0e0_R8
       dva=0.0e0_R8
       fchvisper =0.0e0_R8                                               !srv 22.11.99
       fchvisper_a=0.0e0_R8
-        
+
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
      &   no_current.eq.0) then
@@ -123,7 +123,7 @@
               elseif(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then
                 fchvisper_a(ix,iy,1,is) = 0.0_R8   ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
               else
-                fchvisper_a(ix,iy,1,is) =  
+                fchvisper_a(ix,iy,1,is) =
      &            -avisper(ix,iy,1)*
      &           (dva(ix,iy)-dva(bottomix(ix,iy),bottomiy(ix,iy)))
               endif
