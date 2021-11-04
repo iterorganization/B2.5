@@ -4380,7 +4380,6 @@ contains
 
             if (use_eirene.ne.0) then
 #ifdef B25_EIRENE
-                !! Neutral pressure
                 do is = 1, nspecies
                    tmpCv(:,:) = 0.0_IDS_real
                    totCv(:,:) = 0.0_IDS_real
@@ -4397,6 +4396,7 @@ contains
                            &  rfluxa(0:nx+1,0:ny+1,iss,1)
                       end if
                    end do
+                !! Neutral pressure
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( is )%pressure,                     &
@@ -6741,7 +6741,7 @@ contains
             integer, intent(in) :: time_sind    !< General grid description
                                                 !< slice identifier
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             real(IDS_real) :: weight( -1:gmap%b2nx, -1:gmap%b2ny, TO_SELF:TO_TOP )
             integer :: nSubsets  !< number of grid subsets to fill
             integer :: iSubset   !< Grid subset iterator
@@ -6758,6 +6758,17 @@ contains
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
 #endif
+            !! Interpolate data to vertices
+            tmpVx = interpolateToVertices(  &
+                  &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
+
+            !! Interpolate data to cell faces, using a volume weighting
+            tmpFace = 0.0_IDS_real
+            do i = TO_SELF, TO_TOP
+                weight(:,:,i) = vol(:,:)
+            end do
+            call value_on_faces( nx, ny, weight, value, tmpFace)
+
             !! Allocate data fields for grid subsets
             allocate( val(nSubsets) )
 
@@ -6835,12 +6846,10 @@ contains
                end if
                select case (ndim)
                case ( 1 ) !< Grid subset consists of nodes
-                  tmpVx = interpolateToVertices(  &
-                     &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
 #if IMAS_MINOR_VERSION < 15
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(            &
-                     &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
-                     &   gmap, tmpVx )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
+                     &   edge_profiles%ggd( time_sind )%grid,         &
+                     &   iGsOuterMidplane, gmap, tmpVx )
 #else
                   idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
                      &   edge_profiles%grid_ggd( time_sind ),         &
@@ -6853,11 +6862,6 @@ contains
 #endif
                   deallocate( idsdata )
                case ( 2 ) !< Grid subset consists of faces
-                  tmpFace = 0.0_IDS_real
-                  do i = TO_SELF, TO_TOP
-                     weight(:,:,i) = vol(:,:)
-                  end do
-                  call value_on_faces( nx, ny, weight, value, tmpFace)
 #if IMAS_MINOR_VERSION < 15
                   idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
                      &   edge_profiles%ggd( time_sind )%grid, iSubset,     &
@@ -6875,11 +6879,13 @@ contains
                   deallocate( idsdata )
                case ( 3 ) !< Grid subset consists of cells
 #if IMAS_MINOR_VERSION < 15
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                      &   ggd( time_sind )%grid, iSubset, gmap, value )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
+                      &  edge_profiles% ggd( time_sind )%grid, iSubset,    &
+                      &  gmap, value )
 #else
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                      &   grid_ggd( time_sind ), iSubset, gmap, value )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
+                      &  edge_profiles%grid_ggd( time_sind ), iSubset,     &
+                      &  gmap, value )
 #endif
 #if GGD_MINOR_VERSION > 8
                   call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
@@ -6982,7 +6988,7 @@ contains
                 !< Type of IDS data structure, designed for scalar data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             integer :: nSubsets  !< number of grid subsets to fill
             integer :: iSubset   !< Grid subset iterator
             integer :: ndim      !< Grid subset dimension
@@ -7065,7 +7071,6 @@ contains
 
         !> Write a vector component B2 cell quantity to ids_generic_grid_vector
         !! components
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields (vector IDs):
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7079,7 +7084,7 @@ contains
                     !> designed for vector data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
             integer :: nSubsets  !< number of grid subsets to fill
@@ -7161,7 +7166,6 @@ contains
 
         !> Write a vector component B2 face quantity to ids_generic_grid_vector
         !! components
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields (vector IDs):
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7176,7 +7180,7 @@ contains
             real(IDS_real), intent(in) ::  &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
             integer :: nSubsets  !< number of grid subsets to fill
@@ -7263,7 +7267,6 @@ contains
         !! @note    The routine will make sure the required storage is
         !!          allocated, and will deallocate and re-allocate fields as
         !!          necessary.
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields:
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7711,7 +7714,7 @@ contains
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
     character(len=13) :: spclabel
 
-    !! allocate and init the cpo
+    !! allocate and init the CPO
     allocate(edgecpo%datainfo%dataprovider(1))
     edgecpo%datainfo%dataprovider="ITER"
     allocate(edgecpo%codeparam%codename(1))
@@ -7858,7 +7861,7 @@ contains
       integer i
 
       allocate(values(5))
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, value )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, gmap, value )
       call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
@@ -7866,17 +7869,17 @@ contains
         weight(:,:,i)=vol(:,:)
       end do
       call value_on_faces(nx,ny,weight,value,tmpFace)
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, iSgCore, gmap, tmpFace )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, iSgCore, gmap, tmpFace )
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
       call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )
       call gridWriteData( values(4), iSgOuterMidplane, cpodata )
       deallocate(cpodata)
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, B2_SUBGRID_NODES, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, B2_SUBGRID_NODES, gmap, tmpVx )
       call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
       deallocate(cpodata)
       allocate( fluxes(2) )
@@ -7893,7 +7896,7 @@ contains
 
       !! TODO: add checks whether already allocated
       allocate(scalar(1))
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
       call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
     end subroutine write_cell_scalar
@@ -7923,7 +7926,7 @@ contains
 
       !! Fill in vector component data
       do i = 1, dim
-         cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
+         cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
          call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
          deallocate(cpodata)
       end do
@@ -7951,10 +7954,10 @@ contains
 !!$          vector%alignid(2) = VEC_ALIGN_RADIAL_ID
 !!$
 !!$          ! Fill in vector component data
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_Y, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_EDGES_Y, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_X, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_EDGES_X, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
@@ -7965,7 +7968,7 @@ contains
 !!$          vector%align(1) = GRID_UNDEFINED
 !!$          vector%alignid(1) = ""
 !!$
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, subgridInd, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, subgridInd, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(1), subgridInd, cpodata )
 !!$          deallocate(cpodata)
 !!$      end if

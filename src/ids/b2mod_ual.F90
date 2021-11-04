@@ -93,8 +93,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
-        type (ids_dataset_description) :: description !< IDS designed to store
-            !< a description of the simulation
+        type (ids_dataset_description), intent(inout) :: description !< IDS
+            !<  designed to store a description of the simulation
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
