@@ -527,77 +527,62 @@
       if(b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
-      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     & Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
-        if ((impr_form_tf.eq.0) .and. (impr_form_fr.eq.0)) then
-          call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
-        elseif ((impr_form_tf.eq.1) .and.
-     &          (impr_form_fr.eq.1)) then
-          mm(0:ns-1) = mass_multiplicator
-          mm(ismain) = 1.0_R8
-          am1=mm*am
-          call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
-          call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
-          call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
-          call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
-          call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
-          call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)        
-        else
-          mm(0:ns-1) = mass_multiplicator
-          mm(ismain) = 1.0_R8
-          am1=mm*am           
-          call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
-          call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
-          call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
-          call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
-          call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
-          call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
-          call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
-        endif
-      endif
       
-      do iy = -1, ny
-        do ix = -1, nx
-          ce1(ix,iy)=fce1(zeff(ix,iy))
-          ce2(ix,iy)=fce2(zeff(ix,iy))
-        enddo
-      enddo
-      
-      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     & Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
-        if (impr_form_fr.eq.0) then
-          do iy = -1, ny
-            do ix = -1, nx
-              cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
-            enddo
-          enddo
-        else
-          do iy = -1, ny
-            do ix = -1, nx
-              do is = 0, ns-1
-                cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
-     &   z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
-              enddo 
-            enddo
-          enddo       
-        endif
-        if (impr_form_tf.eq.0) then
-          do iy = -1, ny
-            do ix = -1, nx
-              cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
-            enddo
-          enddo       
-        else
-          do iy = -1, ny
-            do ix = -1, nx
-              do is = 0, ns-1
-                cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
-     &   z11(ix,iy),z12(ix,iy),z22(ix,iy))
-              enddo         
-            enddo
-          enddo       
-        endif
-      endif                                                          !som 13.11.20 }    
+       do iy = -1, ny
+         do ix = -1, nx
+           ce1(ix,iy)=fce1(zeff(ix,iy))
+           ce2(ix,iy)=fce2(zeff(ix,iy))
+         enddo
+       enddo
+
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     &  Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
+         mm(0:ns-1) = mass_multiplicator
+         mm(ismain) = 1.0_R8
+         am1=mm*am           
+         call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+         call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+         call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+         call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+         call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+         call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+         call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+       
+         if (impr_form_fr.eq.0) then
+           do iy = -1, ny
+             do ix = -1, nx
+               cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
+             enddo
+           enddo
+         else
+           do iy = -1, ny
+             do ix = -1, nx
+               do is = 0, ns-1
+                 cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
+     &    z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+               enddo 
+             enddo
+           enddo       
+         endif
+
+         if (impr_form_tf.eq.0) then
+           do iy = -1, ny
+             do ix = -1, nx
+               cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
+             enddo
+           enddo       
+         else
+           do iy = -1, ny
+             do ix = -1, nx
+               do is = 0, ns-1
+                 cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
+     &    z11(ix,iy),z12(ix,iy),z22(ix,iy))
+               enddo         
+             enddo
+           enddo       
+         endif
+       endif                                                          !som 13.11.20 }    
+
 *   ..compute the Coulomb logarithm
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

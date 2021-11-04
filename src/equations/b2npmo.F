@@ -338,34 +338,6 @@
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
-      if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     & Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
-        if ((impr_form_tf.eq.0) .and. (impr_form_fr.eq.0)) then
-          call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
-        elseif ((impr_form_tf.eq.1) .and.
-     &          (impr_form_fr.eq.1)) then
-          mm(0:ns-1) = mass_multiplicator
-          mm(ismain) = 1.0_R8
-          am1=mm*am
-          call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
-          call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
-          call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
-          call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
-          call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
-          call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)        
-        else
-          mm(0:ns-1) = mass_multiplicator
-          mm(ismain) = 1.0_R8
-          am1=mm*am           
-          call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
-          call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
-          call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
-          call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
-          call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
-          call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
-          call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
-        endif
-      endif
       
       do iy = -1, ny
         do ix = -1, nx
@@ -373,9 +345,20 @@
           ce2(ix,iy)=fce2(zeff(ix,iy))
         enddo
       enddo
-      
+
       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
      & Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1=mm*am           
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+
         if (impr_form_fr.eq.0) then
           do iy = -1, ny
             do ix = -1, nx
@@ -392,6 +375,7 @@
             enddo
           enddo       
         endif
+
         if (impr_form_tf.eq.0) then
           do iy = -1, ny
             do ix = -1, nx
@@ -409,16 +393,7 @@
           enddo       
         endif                                                          
       endif                                                            !som 13.11.20 }    
-      if (iout.ne.0 .or. iout_b2wdat .eq. 4) then 
-        call my_out(70,nx,ny,cimp1(:,:,4),'b2test_cimp1')              !som 02.12.20       
-        call my_out(70,nx,ny,cimp2(:,:,4),'b2test_cimp2')              !som 02.12.20
-        call my_out(70,nx,ny,zmc(:,:),'b2test_zc')              !som 02.12.20 
-        call my_out(70,nx,ny,z11(:,:),'b2test_z11')              !som 02.12.20    
-        call my_out(70,nx,ny,z12(:,:),'b2test_z12')              !som 02.12.20   
-        call my_out(70,nx,ny,z22(:,:),'b2test_z22')              !som 02.12.20 
-        call my_out(70,nx,ny,zf1(:,:),'b2test_zf1')              !som 02.12.20   
-        call my_out(70,nx,ny,zf2(:,:),'b2test_zf2')              !som 02.12.20     
-      endif
+
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
