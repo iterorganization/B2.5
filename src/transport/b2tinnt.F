@@ -65,6 +65,7 @@
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny),
      &   csigia(-1:nx,-1:ny,0:1),                                         !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
+      real (kind=R8) :: mu                                                !som 05.11.21
 *   ..procedures
       external ipgeti, xertst
 *   ..initialisation
@@ -99,7 +100,7 @@
           fchin = 0.0e0_R8                                                !srv 15.02.11 {
 *   ..calculate section
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
-          sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)
+!         sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)
 ! From 5.0/5.1: Using the CX rate
 !        k = 0
 !        found = .false.
@@ -122,6 +123,10 @@
            ia = b2eatcr(is0)           ! ia should correspond to atom of hydrogen isotope
            do is = 0, ns-1
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then 
+
+            mu=am(is)*am(is0)/(am(is)+am(is0))                            !som 05.11.21
+            sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)*sqrt(1.0_R8/mu)
+
 !*   ..get density in the guard cells (boundaries)
 !      do ix = -1, nx
 !       do iy = -1, ny
@@ -149,8 +154,8 @@
 !        endif
 !       enddo
 !      enddo
-          sigi(:,:) = am(is)*mp*na(:,:,is)*sec/                           !som 04.11.21
-     .                              (2.0_R8*bb(:,:,3)**2)
+          sigi(:,:) = mu*mp*na(:,:,is)*sec/                               !som 05.11.21
+     .                              (bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
           sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,ia,1)                 !som 04.11.21
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
