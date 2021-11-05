@@ -420,7 +420,7 @@ contains
 #endif
 #endif
         external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xpve, b2xzef
-        external b2sral, b2spcx, b2tral, b2tanml_a, b2ptrdl
+        external b2sral, b2spcx, b2tral, b2tanml, b2ptrdl
         external ipgetr, ipgeti, species, usrnam, streql, xerrab, xertst
         external find_file, get_B25_hash, get_ADAS_hash
 
