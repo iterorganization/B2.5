@@ -3096,7 +3096,8 @@ contains
 #ifdef B25_EIRENE
 !! Obtain the neutral velocities
 !! Recall that P[XYZ]DEN[AM] are momentum densities in CGS units!
-        if (use_eirene.ne.0) then
+!! P[UV][XY] will only exist if fort.46 file was written with format 20170930 or later
+        if (use_eirene.ne.0 .and. allocated(pux)) then
           allocate(un0(-1:nx,-1:ny,0:2,natmi))
           allocate(um0(-1:nx,-1:ny,0:2,nmoli))
           un0 = 0.0_IDS_real
@@ -4415,62 +4416,64 @@ contains
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                 !! Neutral velocity (poloidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,0,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                   if (allocated(un0)) then
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,0,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                 !! Neutral velocity (radial projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,1,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,1,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! Neutral velocity (toroidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,2,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,2,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                 !! Neutral particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do iss = 1, natmi
@@ -4582,21 +4585,23 @@ contains
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   call write_cell_vector_component(                         &
+                   if (allocated(un0)) then
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,0,is),                       &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
                      call write_cell_vector_component(                       &
@@ -4729,62 +4734,64 @@ contains
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                 !! ua: Molecular velocity (poloidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,0,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                   if (allocated(um0)) then
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,0,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                 !! Molecular velocity (radial projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,1,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,1,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! Molecular velocity (toroidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,2,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,2,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                  !! Molecular particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do is = 1, nmoli
@@ -4898,21 +4905,23 @@ contains
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   call write_cell_vector_component(                         &
+                   if (allocated(um0)) then
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,0,is),                       &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
                      call write_cell_vector_component(                       &
@@ -6369,7 +6378,7 @@ contains
         if (use_eirene.ne.0) then
           deallocate(isstat,imneut,imiion)
           deallocate(in_species)
-          deallocate(un0,um0)
+          if (allocated(un0)) deallocate(un0,um0)
         end if
 #endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
