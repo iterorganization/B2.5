@@ -403,7 +403,7 @@ contains
         character*32 ADAS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
-        character*132 code_commit, radiation_commit
+        character*132 code_commit, radiation_commit, eq_source
         character*256 filename
         logical match_found, streql, exists, wrong_flow, eq_found
         logical at_top, at_bot, at_mid, target_east, target_west
@@ -902,9 +902,12 @@ contains
         allocate( summary%tag%name(1) )
         summary%tag%name = B25_git_version(1:i-1)
         eq_found = .false.
+        eq_source = "ITER Baseline q95=3 equilibrium"
         if ( associated( equilibrium%time_slice ) ) then
           if ( size( equilibrium%time_slice ).ge.time_sind ) then
             eq_found = .true.
+            if ( associated( equilibrium%ids_properties%source ) ) &
+               & eq_source = equilibrium%ids_properties%source(1)
             r0 = equilibrium%vacuum_toroidal_field%r0
             b0 = equilibrium%vacuum_toroidal_field%b0( time_sind )
             b0r0 = b0 * r0
@@ -994,6 +997,22 @@ contains
             if (eq_found) then
               call write_sourced_value( summary%global_quantities%b0, b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+              if ( equilibrium%time_slice( time_sind )%global_quantities%  &
+                 & ip .ne. IDS_REAL_INVALID ) then
+                call write_sourced_value( summary%global_quantities%ip,    &
+                  &  equilibrium%time_slice( time_sind )%global_quantities%ip )
+                summary%global_quantities%ip%source = eq_source
+              end if
+              if ( equilibrium%time_slice( time_sind )%global_quantities%  &
+                 & q_95 .ne. IDS_REAL_INVALID ) then
+                call write_sourced_value( summary%global_quantities%q_95,  &
+                  &  equilibrium%time_slice( time_sind )%global_quantities%q_95 )
+                summary%global_quantities%q_95%source = eq_source
+              else if (streql(eq_source,"ITER Baseline q95=3 equilibrium")) then
+                call write_sourced_value( summary%global_quantities%q_95,  &
+                  &  3.0_IDS_real )
+                summary%global_quantities%q_95%source = eq_source
+              end if
             else if (isymm.ne.0) then
               call write_sourced_value( summary%global_quantities%b0, -b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
