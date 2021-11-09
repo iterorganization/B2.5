@@ -405,7 +405,7 @@ contains
         character*32 get_ADAS_hash
         character*132 code_commit, radiation_commit
         character*256 filename
-        logical match_found, streql, exists, wrong_flow
+        logical match_found, streql, exists, wrong_flow, eq_found
         logical at_top, at_bot, at_mid, target_east, target_west
 #ifdef B25_EIRENE
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
@@ -901,53 +901,64 @@ contains
         i=index(B25_git_version,'-')
         allocate( summary%tag%name(1) )
         summary%tag%name = B25_git_version(1:i-1)
-        r0 = 0.0_R8
-        icnt = 0
-        do ix = -1, nx
-          if (on_closed_surface(ix,-1)) then
-            icnt = icnt + 1
-            if (isymm.eq.1.or.isymm.eq.2) then
-              r0 = r0 + crx(ix,-1,0)
-            else if (isymm.eq.3.or.isymm.eq.4) then
-              r0 = r0 + cry(ix,-1,0)
-            end if
+        eq_found = .false.
+        if ( associated( equilibrium%time_slice ) ) then
+          if ( size( equilibrium%time_slice ).ge.time_sind ) then
+            eq_found = .true.
+            r0 = equilibrium%vacuum_toroidal_field%r0
+            b0 = equilibrium%vacuum_toroidal_field%b0( time_sind )
+            b0r0 = b0 * r0
           end if
-        end do
-        if (icnt.gt.0) then
-          r0 = r0 / float(icnt)
-          if (ffbz(jxa,-1,0).ne.0.0_R8) then
-            if (isymm.eq.0) then
-              b0r0 = ffbz(jxa,-1,0)
-            else
-              b0r0 = ffbz(jxa,-1,0)/(2.0_R8 * pi)
+        end if
+        if (.not.eq_found) then
+          r0 = 0.0_R8
+          icnt = 0
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              icnt = icnt + 1
+              if (isymm.eq.1.or.isymm.eq.2) then
+                r0 = r0 + crx(ix,-1,0)
+              else if (isymm.eq.3.or.isymm.eq.4) then
+                r0 = r0 + cry(ix,-1,0)
+              end if
             end if
-            b0 = b0r0/r0
-          else if (isymm.eq.0) then
+          end do
+          if (icnt.gt.0) then
+            r0 = r0 / float(icnt)
+            if (ffbz(jxa,-1,0).ne.0.0_R8) then
+              if (isymm.eq.0) then
+                b0r0 = ffbz(jxa,-1,0)
+              else
+                b0r0 = ffbz(jxa,-1,0)/(2.0_R8 * pi)
+              end if
+              b0 = b0r0/r0
+            else if (isymm.eq.0) then
+              b0 = bb(jxa,-1,2)
+              b0r0 = b0*r0
+            else if (isymm.eq.1 .or. isymm.eq.2) then
+              b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
+                                &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
+              b0 = b0r0 / r0
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
+                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+              b0 = b0r0 / r0
+            end if
+          else
             b0 = bb(jxa,-1,2)
-            b0r0 = b0*r0
-          else if (isymm.eq.1 .or. isymm.eq.2) then
-            b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
-                              &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
-            b0 = b0r0 / r0
-          else if (isymm.eq.3 .or. isymm.eq.4) then
-            b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
-                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
-            b0 = b0r0 / r0
-          end if
-        else
-          b0 = bb(jxa,-1,2)
-          if (isymm.eq.1 .or. isymm.eq.2) then
-            b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
-                              &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
-          else if (isymm.eq.3 .or. isymm.eq.4) then
-            b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
-                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+            if (isymm.eq.1 .or. isymm.eq.2) then
+              b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
+                                &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
+                                &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+            end if
           end if
         end if
         !> Careful: Sign convention for magnetic field in IDS
         !>          is OPPOSITE to that in SOLPS toroidal geometries
         if ( b0.ne.0.0_IDS_real ) then
-          if (streql(database,'ITER')) then
+          if (streql(database,'ITER').and..not.eq_found) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
             i = nint(b0r0_ref/b0r0)
@@ -980,7 +991,10 @@ contains
             call write_sourced_constant( summary%global_quantities%r0, r0 )
             edge_profiles%vacuum_toroidal_field%r0 = r0
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
-            if (isymm.ne.0) then
+            if (eq_found) then
+              call write_sourced_value( summary%global_quantities%b0, b0 )
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+            else if (isymm.ne.0) then
               call write_sourced_value( summary%global_quantities%b0, -b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
             else
@@ -993,13 +1007,9 @@ contains
         if (GeometryType .eq. GEOMETRY_LINEAR) then
           midplane_id = 4
         else
-          if ( associated( equilibrium%time_slice ) ) then
-            if ( size( equilibrium%time_slice ).ge.time_sind ) then
-              z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
+          if ( eq_found ) then
+            z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
                &   magnetic_axis%z
-            else
-              z_eq = IDS_REAL_INVALID
-            end if
           else
             z_eq = IDS_REAL_INVALID
           end if
