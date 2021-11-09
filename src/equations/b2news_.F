@@ -83,6 +83,7 @@
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
       integer, save :: get_residuals = 0                                 !srv 22.05.18
+      integer, save :: visper_all_ions = 1
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
@@ -278,6 +279,7 @@ csw 26feb2014 some extra variables
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
        call ipgeti ('get_residuals', get_residuals)                      !srv 22.05.18
+       call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
       endif                                                              !srv 02.07.08
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -606,7 +608,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
 #endif
-!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
 !$OMP& SHARED(zn, zamax)
@@ -666,8 +668,8 @@ csw 16oct2012 init ier0
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
-!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
-            if(is.eq.ismain) then                                        !srv 19.02.21
+            if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -698,8 +700,7 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
-!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
-              if(is.eq.ismain) then                                     !srv 19.02.21
+              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -1129,8 +1130,8 @@ c   recompute particle fluxes
 !         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-!            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
-            if(is.eq.ismain) then                                        !srv 19.02.21
+            if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -1164,8 +1165,7 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
-!              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
-              if(is.eq.ismain) then                                     !srv 19.02.21
+              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
