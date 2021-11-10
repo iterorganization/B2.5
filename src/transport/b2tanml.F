@@ -1,31 +1,34 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, csig_an, po, fchanml)                 !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, csig_an, po, ne, na,       !som 02.11.21
+     & fchanml_a, fchanml)                                       !srv 20.09.06 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nx, ny, ns
       real (kind=R8) ::
      & po(-1:nx,-1:ny),
+     & ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),                  !som 02.11.21
      1 csig_an(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & fchanml(-1:nx,-1:ny,0:1)
+     & fchanml_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TANML computes the x,y-components of anomalous current
+*     B2TANML computes the X and Y components of the anomalous current.
 *
 *
 *  8. further comments
@@ -36,7 +39,7 @@
 *   ..global named constants
 
 *   ..local variables
-      integer ncall, ix, iy, ib
+      integer ncall, ix, iy, ib, is
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: pot_eq
       integer, save :: guard_flows
@@ -70,40 +73,55 @@
       if (ncall.lt.3) then
       endif
 
-      if(no_current.ne.0.or.fch_anomalous.eq.0.0e0_R8) then                                !srv 27.02.13
-        fchanml = 0.0e0_R8
-      else                                                    !srv 27.02.13
-        do iy = -1, ny
+      fchanml   = 0.0e0_R8
+      fchanml_a = 0.0e0_R8
+      if(no_current.eq.0 .and. fch_anomalous.ne.0.0e0_R8) then           !srv 27.02.13
+       do is = 0, ns-1
+!       if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+        if (.not.is_neutral(is)) then                                    !som 02.11.21
+         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2)then
-              fchanml(ix,iy,0)   = 0.0e0_R8
+              fchanml_a(ix,iy,0,is) = 0.0e0_R8
             else
-              fchanml(ix,iy,0) = - csig_an(ix,iy,0)*
-     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
+              fchanml_a(ix,iy,0,is) = - csig_an(ix,iy,0)*
+     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))*
+     &         ((na(ix,iy,is)*rza(ix,iy,is))/ne(ix,iy)+
+     &         (na(leftix(ix,iy),leftiy(ix,iy),is)*
+     &         rza(leftix(ix,iy),leftiy(ix,iy),is))/
+     &         ne(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8                   !som 02.11.21
             endif
           enddo
-        enddo
+         enddo
 
-        do ix = -1, nx
-          fchanml(ix,-1,1) = 0.0e0_R8
-        enddo
-        do iy = 0, ny
+         do ix = -1, nx
+          fchanml_a(ix,-1,1,is) = 0.0e0_R8
+         enddo
+         do iy = 0, ny
           do ix = -1, nx
             if(bottomiy(ix,iy).eq.-2)then
-              fchanml(ix,iy,1) = 0.0e0_R8
+              fchanml_a(ix,iy,1,is) = 0.0e0_R8
             else
-              fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
-     &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+              fchanml_a(ix,iy,1,is) = - csig_an(ix,iy,1)*
+     &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         ((na(ix,iy,is)*rza(ix,iy,is))/ne(ix,iy)+
+     &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &         rza(bottomix(ix,iy),bottomiy(ix,iy),is))/
+     &         ne(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8               !som 02.11.21
             endif
           enddo
-        enddo
-      endif                                                   !srv 27.02.13
+         enddo
+        endif
+        fchanml(:,:,:)=fchanml(:,:,:)+fchanml_a(:,:,:,is)
+       enddo                                                             !srv 08.09.21
+      endif                                                              !srv 27.02.13
 
       if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+              fchanml_a(ix,iy,1,:)=0.0_R8
               fchanml(ix,iy,1)=0.0_R8
             endif
           enddo
@@ -114,13 +132,15 @@ cxpb turn off poloidal flows in core boundary
           do ib = 1, nbc
             if(core_boundary(ib)) then
               do ix = 1, bc_list_size(ib)
-                fchanml(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchanml_a(bc_list_x(ix,ib),bc_list_y(ix,ib),0,:)=0.0_R8
+                fchanml(bc_list_x(ix,ib),bc_list_y(ix,ib),0)=0.0_R8
               enddo
             endif
           enddo
         else
           do ix = -1, nx
             if (on_closed_surface(ix,-1)) then
+              fchanml_a(ix,-1,0,:) = 0.0_R8
               fchanml(ix,-1,0) = 0.0_R8
             endif
           enddo
@@ -131,11 +151,13 @@ cxpb turn off poloidal flows in core boundary
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
+            fchanml_a(ix,iy,0,:)=0.0e0_R8
             fchanml(ix,iy,0)=0.0e0_R8
           end do
         end do
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
+            fchanml_a(ix,iy,1,:)=0.0e0_R8
             fchanml(ix,iy,1)=0.0e0_R8
           end do
         end do
@@ -149,4 +171,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end subroutine b2tanml                                            !srv 20.09.06 }
+      end subroutine b2tanml                                             !srv 20.09.06 }

@@ -71,6 +71,7 @@ c----------------------------------------------------------------------
       subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       implicit none
       integer nx, ns, nlim, nmol, ntns
+      external xertst
 
       call xertst(0.le.nx, 'faulty argument nx')
       call xertst(1.le.ns, 'faulty argument ns')
@@ -139,7 +140,7 @@ c***  Standard set-up:
       logical old_style, done
       integer, save :: use_eirene, neutrals_namelist
       logical, save :: hydrogen, helium, neon
-      external ipgeti
+      external ipgeti, find_file, xertst
 
       call subini ('readuser')
       call ipgeti ('b2mndr_eirene', use_eirene)
@@ -291,7 +292,7 @@ c*** Set default values according to current species list
       call subend ()
       return
 #ifdef USE_MPI
-  999 call xerrab ('Error while reading FEEDBACK namelist!')
+  999 call xerrab ('Error while reading USER namelist!')
 #endif
       end subroutine read_b2mod_user_namelist
 

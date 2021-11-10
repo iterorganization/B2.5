@@ -7,6 +7,7 @@
      *  cdna(:,:,:,:),
      *  cdpa(:,:,:,:),
      *  cddi(:,:,:,:),                                                  !srv 13.10.06
+     *  cdde(:,:,:),                                                    !som 03.11.21
      *  cdnahz(:,:,:,:),                                                !srv 09.01.01
      *  cdpahz(:,:,:,:),                                                !srv 09.01.01
      *  ceqp(:,:),
@@ -63,6 +64,7 @@
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cdpa(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 13.10.06
+      allocate(cdde(-1:nxd,-1:nyd,0:1))                                 !som 03.11.21
       allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(ceqp(-1:nxd,-1:nyd))
@@ -126,6 +128,7 @@
       deallocate(cdna)
       deallocate(cdpa)
       deallocate(cddi)
+      deallocate(cdde)
       deallocate(cdnahz)
       deallocate(cdpahz)
       deallocate(ceqp)
@@ -178,6 +181,7 @@
       subroutine read_b2mod_transport(nread)
       implicit none
       integer, intent(in) :: nread
+      external cfrure
 
       call cfrure (nread, size(calf), calf, 'calf')
       call cfrure (nread, size(cdna), cdna, 'cdna')
@@ -250,6 +254,7 @@
       subroutine write_b2mod_transport(nwrite)
       implicit none
       integer, intent(in) :: nwrite
+      external cfwure
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

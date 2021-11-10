@@ -341,7 +341,7 @@ cxpb-end
         call cfruin (nget, 1, idum, 'redef_gmtry')
         redef_gmtry=idum(0)
         call cfrure (nget, n2*4, wbbl, 'wbbl')
-        if (redef_gmtry.eq.0) write(*,*)
+        if (redef_gmtry.eq.0) write(*,'(a)')
      .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
      .   'because redef_gmtry.eq.0 !'
       else

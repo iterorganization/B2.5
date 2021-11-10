@@ -528,14 +528,22 @@ cank
                   if (target_east) ktns(i) = 2
                 end if
               else if (eirdiag_nds_srf(ltns(i)).eq.nxtl) then
+                ktns(i) = 2
+              else if (eirdiag_nds_srf(ltns(i)).eq.nxtr+1) then
                 ktns(i) = 3
-              else if (eirdiag_nds_srf(ltns(i)).eq.nxtr) then
-                ktns(i) = 4
               end if
             end if
           end do
 c<<<
           if(ntns.gt.0) then !{
+            print *,'ltns = :'
+            print '(3x,20i5)',(ltns(i),i=1,ntns)
+            print *,'eirdiag_nds_typ = :'
+            print '(3x,20i5)',(eirdiag_nds_typ(ltns(i)),i=1,ntns)
+            print *,'eirdiag_nds_srf = :'
+            print '(3x,20i5)',(eirdiag_nds_srf(ltns(i)),i=1,ntns)
+            print *,'nx, nxtl, nxtr, nncut:'
+            print '(20i5)', nx, nxtl, nxtr, nncut
             print *,'Calculated ktns:'
             print '(3x,20i5)',(ktns(i),i=1,ntns)
           end if !}

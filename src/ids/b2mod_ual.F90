@@ -24,7 +24,7 @@ module b2mod_ual
     use ids_schemas &   ! IGNORE
      & ,only: ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
     use ids_schemas &   ! IGNORE
      & ,only: ids_numerics
 #endif
@@ -52,7 +52,7 @@ module b2mod_ual
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
   public ids_numerics
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -71,7 +71,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -99,7 +99,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -116,17 +116,20 @@ contains
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
         character(len=24), intent(in) :: database   !< IMAS database name
-            !< (i. e. solps-iter, iter, aug)
+            !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
             !< database
         integer :: status
+
+            !< procedures
+        external xertst, xerrab
 
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           &  "numerics, "// &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -155,7 +158,7 @@ contains
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_put( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
@@ -164,8 +167,8 @@ contains
           call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
         else
-        !! Or open and modify existing shot/run (might work much faster than
-        !! imas_create_env)
+        !! Or open and modify existing shot/run
+        !! (might work much faster than imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
 
@@ -184,7 +187,7 @@ contains
           call ids_put_slice( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting slice in summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_put_slice( idx, "numerics", numerics, status )
           call xertst( status.eq.0, 'Error putting slice in numerics IDS !')
 #endif
@@ -203,7 +206,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_deallocate( numerics )
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -221,7 +224,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -249,7 +252,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -271,7 +274,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
           call ids_delete( idx, "summary", summary)
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           call ids_delete( idx, "numerics", numerics)
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -290,7 +293,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
             &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -318,7 +321,7 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
 #endif
@@ -330,12 +333,15 @@ contains
             !< subsequent data access operation
         integer :: status
 
+            !< procedures
+        external xertst
+
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           &  "numerics, "// &
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -358,7 +364,7 @@ contains
         call ids_put( idx, "summary", summary, status )
         call xertst( status.eq.0, 'Error putting summary IDS !')
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_put( idx, "numerics", numerics, status )
         call xertst( status.eq.0, 'Error putting numerics IDS !')
 #endif
@@ -376,7 +382,7 @@ contains
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_deallocate( numerics )
 #endif
 #if IMAS_MINOR_VERSION > 30
@@ -408,7 +414,7 @@ contains
         character(*), intent(in), optional :: user  !< Creator/owner of the
                                                     !< database
         character(*), intent(in), optional :: database !< Database name
-                                                       !< (i. e. solps-iter, iter, aug)
+                                                       !< (i. e. solps-iter, ITER, aug)
         character(*), intent(in), optional :: dataversion   !< Major version of
                                                             !< the database
         logical, intent(in), optional :: doCreate
@@ -439,6 +445,8 @@ contains
         logical :: lDoCreate = .false., lUseHdf5 = .false.
 
         logical :: namelistExists, openEnv = .false.
+
+        external xertst, xerrab
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
             &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
@@ -573,6 +581,7 @@ contains
                                     !< subsequent data access operation
 #ifdef IMAS
         integer :: status
+        external xertst
 
         call imas_close(idx, status)
         call xertst ( status.eq.0, 'Error closing IMAS database !')

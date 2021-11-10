@@ -152,6 +152,7 @@
       real (kind=R8) :: mm(0:ns-1),  am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save ::  mass_multiplicator                      !som 13.11.20
       character chns*3                                                 !srv 04.07.08
+      logical warning
       real (kind=R8) ::
      *  rxg, t0, t1, czetap, czetae, ttim                              !srv 13.01.17 07.07.21
       real (kind=R8) ::
@@ -185,7 +186,6 @@
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
-      character*80 message
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -210,15 +210,18 @@
         if(style_b2mndt.eq.2) then
          rxg = huge(1.0_R8)
          do is = 0,ns-1
-          write(message,'(a,i3,a)')
-     .     'rxf*dtmo*time_factor for species ',is,' must be 1'
+          warning = .false.
           do iy = -1, ny
            do ix = -1, nx
-            call xertst(
-     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_r8,
-     .       message)
+            warning = warning .or.
+     .       rxf*dtmo(is,region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
            enddo
           enddo
+          if (warning) then
+           write(6,'(a,i3,a)')
+     .      'rxf*dtmo*time_factor for species ',is,' should be 1 !'
+           write(6,*) 'Time derivative terms may be inacurrate !'
+          end if
          enddo
         else
          rxg = 1.0e6_R8
@@ -692,7 +695,8 @@
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nx, ny, is, ismain, facdrift, fac_ExB, fchanml,    !srv 19.02.21
+       call b2sian (nx, ny, is, ismain, facdrift, fac_ExB,             !srv 19.02.21
+     &   fchanml_a(-1,-1,0,is),                                        !som 03.11.21    
      &   smban)
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)

@@ -168,6 +168,9 @@ contains
         integer :: iVx      !< vertex index
         type(GridObject) :: curObj
 
+        !! Procedures
+        external xertst
+
         !! .neqv. is xor (exclusive or)
         !! (http://de.wikibooks.org/wiki/Fortran:_Fortran_95:_Logische_Ausdr%C3%BCcke)
         !! TODO: FIX

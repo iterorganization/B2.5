@@ -206,7 +206,7 @@ c***    ewldem_res  :   emitted energy flux due of molecules. Equal to
 c***                      ERFAML+ERFMML+ERFIML+ERFPHML
 c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions.
 c***                      ERFPAT+ERFPML
-c***    ewldmr_res  :   energy due to recombination of atoms and ions into molecules.
+c***    ewldmr_res  :   energy due to recombination of atoms and atomic ions into molecules.
 c***                     (PRFAML+PRFPML)*H_EDISS
 
 c*** Output data headers
@@ -422,7 +422,8 @@ c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE
             if(streql(srfs_m(i),sfpr_m(k))) l=i
           end do !}
           if(l.eq.0) then !{
-            write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
+            if (.not.streql(sfpr_m(k),'dummy'))
+     >       write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
             l_ersmtr(k)=0
 
           else !}{

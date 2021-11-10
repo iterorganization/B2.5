@@ -7,6 +7,7 @@ c
       use b2mod_geo
       use b2mod_constants
       use b2mod_subsys
+      use b2mod_b2plot
       implicit none
       
       real (kind=R8) ::
@@ -31,9 +32,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      integer ix_e2b
       intrinsic sqrt,sin,cos,abs,atan2
-      external chord_find, xertst, ix_e2b
+      external chord_find, xertst
 
       call subini ('chord_tria_value')
       x=xp

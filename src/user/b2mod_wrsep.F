@@ -136,7 +136,7 @@ c*** Local variables of general use
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
       integer i,j,k,l,ia,is,ix,iy
 
-      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
+      integer :: mdf_fnb = 0, style_b2mndt = 1, use_eirene = 0
       logical :: first=.TRUE.
 
       save

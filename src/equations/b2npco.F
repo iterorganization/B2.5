@@ -78,7 +78,7 @@
       integer, save :: get_residuals = 0                           !srv 22.05.18
       integer, save :: style_b2mndt = 1                            !srv 07.07.21
       character chns*3                                             !srv 04.07.08
-      character message*80
+      logical warning
       !$OMP THREADPRIVATE(iout, iout_b2wdat)
       !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
       real (kind=R8) ::
@@ -125,15 +125,18 @@
         rxg = huge(1.0_R8)
         pcm0 = 0.0_R8
         pcm1 = 0.0_R8
-        write(message,'(a,i3,a)')
-     .   'rxf*dtco*time_factor for species ',isb,' must be 1'
+        warning = .false.
         do iy = -1, ny
          do ix = -1, nx
-          call xertst(
-     .     rxf*dtco(isb,region(ix,iy,0))*time_factor(ix,iy).eq.1.0_R8,
-     .     message)
+          warning = warning .or.
+     .     rxf*dtco(isb,region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
          enddo
         enddo
+        if (warning) then
+          write(6,'(a,i3,a)')
+     .     'rxf*dtco*time_factor for species ',isb,' should be 1 !'
+          write(6,*) 'Time derivative terms may be inacurrate !'
+        end if
        else
         rxg = 1.0_R8
         pcm0 = 1.0_R8

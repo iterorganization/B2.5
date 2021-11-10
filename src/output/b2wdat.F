@@ -505,6 +505,22 @@ c     calculate coordinates of cell centre
         call my_out(70,nx,ny,pcca(-1,-1,0,is),'pccax'//chns)      !srv 11.01.13
         call my_out(70,nx,ny,pcca(-1,-1,1,is),'pccay'//chns)      !srv 11.01.13
 
+        call my_out(70,nx,ny,fchanml_a(-1,-1,0,is),'fchanml_ax'//chns)      !srv 08.09.21 {
+        call my_out(70,nx,ny,fchanml_a(-1,-1,1,is),'fchanml_ay'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,0,is),
+     &                      'fchinert_ax'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,1,is),
+     &                      'fchinert_ay'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,0,is),
+     &                      'fchvispar_ax'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,1,is),
+     &                      'fchvispar_ay'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,0,is),
+     &                      'fchvisper_ax'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,1,is),
+     &                      'fchvisper_ay'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,0,is),'fchvisq_ax'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,1,is),'fchvisq_ay'//chns)      !srv 08.09.21 }
        enddo
 
        call my_out(70,nx,ny,pccm(-1,-1,0),'pccmx')                !srv 11.01.13

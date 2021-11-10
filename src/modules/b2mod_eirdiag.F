@@ -28,7 +28,7 @@
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
-     &  ewldmr_res(:,:),    !energy due to recombination of atoms and ions into molecules
+     &  ewldmr_res(:,:),    !energy due to recombination of atoms and atomic ions into molecules
      &  wldspt_res(:),      !flux of sputtered wall material
      &  wldspta_res(:,:),   !sputtered flux for each type of emitted atom
      &  wldsptm_res(:,:),   !sputtered flux for each type of emitted molecule

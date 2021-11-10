@@ -142,6 +142,7 @@
       implicit none
       integer ip
       logical prohib
+      external xerrab
       do ip = 0, iptbmx-1
         prohib = .true.
         select case (ipnam(ip))

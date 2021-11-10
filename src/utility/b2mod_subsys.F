@@ -32,6 +32,7 @@
       subroutine subini (srname)
       implicit none
       character srname*(*)
+      external xertst
 #ifdef PERFMON
       call perfon (srname)
 #endif
@@ -57,6 +58,7 @@ cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
 *     ------------------------------------------------------------------
       subroutine subend ()
       implicit none
+      external xertst
 #ifdef WITH_FTIMINGS
       call timer%stop()
 #endif

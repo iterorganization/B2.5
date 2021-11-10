@@ -116,7 +116,7 @@ c***    ewldem_res  :   emitted energy flux due to molecules. Equal to
 c***                      ERFAML+ERFMML+ERFIML+ERFPHML
 c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions.
 c***                      ERFPAT+ERFPML
-c***    ewldmr_res  :   energy due to recombination of atoms and ions into molecules.
+c***    ewldmr_res  :   energy due to recombination of atoms and atomic ions into molecules.
 c***                     (PRFAML+PRFPML)*H_EDISS
 
       real (kind=R8) ::

@@ -286,6 +286,7 @@ contains
         character(256) :: VERTEX_FILE_TEMP
         integer, parameter :: VERTEX_UNIT = 99
         logical :: vertexfileExists
+        external xertst, find_file
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" B2 grid" )

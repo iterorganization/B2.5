@@ -107,7 +107,7 @@ c
       integer i, is, iss
       character*18 hlp_frm
       logical streql
-      external streql
+      external streql, ipgeti, xertst, xerrab
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')

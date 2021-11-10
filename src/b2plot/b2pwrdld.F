@@ -157,6 +157,8 @@ c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
       write(*,*)   '  Total radiation         : ',ttsrc
+      if (add_rad.gt.0.0_R8)
+     >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
         write(*,*) '  Reaching the targets    : ',tttrg
       else if (irdparm.eq.2) then
