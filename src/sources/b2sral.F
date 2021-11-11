@@ -30,7 +30,7 @@
       use b2mod_time
       use b2mod_anomalous_transport
       use b2mod_work                                                     !srv 02.04.18 {
-     &     , only: avisper, bvisper, cvisper
+     &     , only: avisper_a, bvisper_a, cvisper_a
       use b2mod_plasma
      &     , only: ne2                                                   !srv 02.04.18 }
       use b2mod_b2cmpa
@@ -309,7 +309,7 @@
        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &               facdrift, fchinert_a, fchinert)
        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
-     &               po, ti, na, avisper, bvisper, cvisper,
+     &               po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &               fchvisper_a, fchvisper)
        call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)

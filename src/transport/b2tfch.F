@@ -9,7 +9,7 @@
      &  chce, chve, chci,
      &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
-     1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,
+     1  avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl, calf_cl,
      &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)      !srv 08.09.21
       use b2mod_types
       use b2mod_math
@@ -60,8 +60,9 @@
      2  fchdia(-1:nx,-1:ny,0:1),
      3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
-     5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
+     5  avisper_a(-1:nx,-1:ny,0:1,0:ns-1), 
+     &  bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchvisper(-1:nx,-1:ny,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
      &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1)             !srv 24.08.21
 *   ..common blocks
@@ -210,7 +211,8 @@ c Drift terms
      &              fchvispar_a, fchvispar)                             !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
-     & po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+     & po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     & fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      & ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
@@ -487,14 +489,20 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch_concy')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_fch_px')
        call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_fch_py')
-       call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
-       call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
-       call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')
-       call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
-       call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
-       call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
        do is = 0,ns-1                                                    !srv 08.09.21
         write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,avisper_a(-1,-1,0,is),
+     &  'b2tfch_avisper_ax'//chns)
+        call my_out(70,nx,ny,avisper_a(-1,-1,1,is),
+     &  'b2tfch_avisper_ay'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,0,is),
+     &  'b2tfch_bvisper_ax'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,1,is),
+     &  'b2tfch_bvisper_ay'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,0,is),
+     &  'b2tfch_cvisper_ax'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,1,is),
+     &  'b2tfch_cvisper_ay'//chns)
 !        call my_out(70,nx,ny,fchanml_a(-1,-1,0,is),
 !                             'b2tfch_fchanml_ax'//chns)
 !        call my_out(70,nx,ny,fchanml_a(-1,-1,1,is),

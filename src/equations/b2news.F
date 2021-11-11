@@ -78,7 +78,7 @@
       integer, save :: iout = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16 13.01.17
-      integer, save :: visper_all_ions = 1
+      integer, save :: visper_all_ions = 0
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
@@ -391,7 +391,8 @@
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
-     &  po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+     &  po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
+     &  fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
@@ -551,7 +552,7 @@ cxpb
         call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
-     &                po, ti, na, avisper, bvisper, cvisper,
+     &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
      &               ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
@@ -583,7 +584,7 @@ cxpb
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
 #endif
-!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, zn, zamax, te, ti, am, ua, ne)
 !$OMP& SHARED(is_neutral, uadia, ncall, ncallout, resmo, corua)
@@ -862,8 +863,8 @@ cxpb
      &         calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,       !srv 17.12.13 16.10.17
      &         fch_p, fchvispar, fchvisq, fchin, fchinert,
      &         fch_32, fch_52,
-     &         avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,   !srv 25.11.08
-     1         fchanml_a, fchinert_a, fchvispar_a,
+     &         avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,      !srv 25.11.08
+     1         calf_cl, fchanml_a, fchinert_a, fchvispar_a,
      &         fchvisper_a, fchvisq_a)                                   !srv 08.09.21
               call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
      1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
@@ -948,9 +949,9 @@ cxpb
      &             wrk0, wrk1, ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
-                  call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
-     &             ncall, rxf2, ne, te, conc,
-     1             avisper, bvisper, cvisper,
+                  call b2npp7 (nx, ny, ns, ismain, nnreg(0), solving(3), !srv 22.05.18
+     &             solvepo, ncall, rxf2, ne, te, conc,
+     1             avisper_a, bvisper_a, cvisper_a,
      &             sch, po, fch, wrk0, wrk1, ier0)
                 endif
                 t0 = 0.0_R8
@@ -1117,7 +1118,7 @@ c     with diamagnetic drift part                                        !xpb
      &   chce, chve, chci,                                               !srv 24.08.21
      &   calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,             !srv 17.12.13 16.10.17
      &   fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,     !srv 25.11.08
-     1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl,
+     1   avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl, calf_cl,
      &   fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)     !srv 08.09.21
         call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21
      1   vol, hx, te, po, ne, na, vedia, veecrb,                         !srv 13.01.17

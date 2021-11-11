@@ -332,7 +332,8 @@ ctmp.dpc
             call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
      &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
             call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
-     &  po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+     &                    po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     &                    fchvisper_a, fchvisper)
             call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
      &               ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
