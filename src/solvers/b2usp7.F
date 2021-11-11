@@ -40,7 +40,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ixb, iyb, ixt, iyt, k         !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
-      integer, save :: visper_all_ions = 0
+      integer, save :: visper_all_ions = 1
       character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot
       real (kind=R8) :: aa7p2, aa7m2, aa7p3, aa7m3                 !srv 27.01.00

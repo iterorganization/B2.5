@@ -78,7 +78,7 @@
       integer, save :: iout = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16 13.01.17
-      integer, save :: visper_all_ions = 0
+      integer, save :: visper_all_ions = 1
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb

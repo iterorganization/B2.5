@@ -83,7 +83,7 @@
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
       integer, save :: get_residuals = 0                                 !srv 22.05.18
-      integer, save :: visper_all_ions = 0
+      integer, save :: visper_all_ions = 1
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
