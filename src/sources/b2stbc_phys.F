@@ -3185,7 +3185,16 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
 * -- BCCON=27  Feedback boundary condition: prescribe the particle flux sum
 *              for all neutrals and ions belonging to a given isonuclear sequence
-*              and find the average density of the highest ionization stage.
+*              and find the average density of those ionization state which the
+*              BCCON=27 is applied to. For main ion and low Z impurity it is recommended 
+*              to set BCCON=27 for highest ionization state. For high Z impurity,
+*              if the ionization state of highest ionization state is much bigger than
+*              expected core plasma temperature, the BCCON=27 may be set for those ionization state,
+*              for which the density is expected to be maximal. 
+*              For ionization states higher than that one it is
+*              recommended to set BCCON=2 with CONPAR=0.0 since their densities
+*              are expected to be negligible, and BCCON=2 with CONPAR=0.0 seems to
+*              be the safest BC condition in this case. 
 *              THE POLOIDAL DENSITY VARIATION FROM THE NEIGHBOURING RADIAL
 *              CELL IS ADDED TO THE AVERAGE DENSITY.
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
@@ -3201,8 +3210,17 @@ cxpb  Add contribution from Eirene core boundary fluxes
              call xertst(BCCON(isb,IB) .ne. 27 ,
      &       'BCCON = 27 should be applied to only one ionization state'
      &       // 'of isonuclear sequence')
-             BCCON(isb,IB) = 2
-             CONPAR(isb,IB,1) = 0.0_R8
+!             BCCON(isb,IB) = 2
+!             CONPAR(isb,IB,1) = 0.0_R8
+
+! DO WE REALLY NEED THIS CHECKING AND THIS ERROR MESSAGE????????
+!             call xertst(
+!     &  (BCCON(isb,IB) .ne. 2) .and. (CONPAR(isb,IB,1) .ne. 0.0_R8) ,
+!     &       'If BCCON = 27 is applied for given ion, the BCCON =2 '
+!     &       // 'with CONPAR=0.0 should be set for all higher'
+!     &       // 'ionization states of given isonuclear sequence')
+! DO WE REALLY NEED THIS CHECKING AND THIS ERROR MESSAGE????????
+
              isb = isb + 1
             enddo
 !========== IYS 13.10.2021
