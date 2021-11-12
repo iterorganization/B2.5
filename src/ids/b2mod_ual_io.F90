@@ -403,9 +403,9 @@ contains
         character*32 ADAS_git_version
         character*32 get_B25_hash
         character*32 get_ADAS_hash
-        character*132 code_commit, radiation_commit
+        character*132 code_commit, radiation_commit, eq_source
         character*256 filename
-        logical match_found, streql, exists, wrong_flow
+        logical match_found, streql, exists, wrong_flow, eq_found
         logical at_top, at_bot, at_mid, target_east, target_west
 #ifdef B25_EIRENE
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
@@ -420,7 +420,7 @@ contains
 #endif
 #endif
         external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xpve, b2xzef
-        external b2sral, b2spcx, b2tral, b2tanml_a, b2ptrdl
+        external b2sral, b2spcx, b2tral, b2tanml, b2ptrdl
         external ipgetr, ipgeti, species, usrnam, streql, xerrab, xertst
         external find_file, get_B25_hash, get_ADAS_hash
 
@@ -901,53 +901,67 @@ contains
         i=index(B25_git_version,'-')
         allocate( summary%tag%name(1) )
         summary%tag%name = B25_git_version(1:i-1)
-        r0 = 0.0_R8
-        icnt = 0
-        do ix = -1, nx
-          if (on_closed_surface(ix,-1)) then
-            icnt = icnt + 1
-            if (isymm.eq.1.or.isymm.eq.2) then
-              r0 = r0 + crx(ix,-1,0)
-            else if (isymm.eq.3.or.isymm.eq.4) then
-              r0 = r0 + cry(ix,-1,0)
-            end if
+        eq_found = .false.
+        eq_source = "ITER Baseline q95=3 equilibrium"
+        if ( associated( equilibrium%time_slice ) ) then
+          if ( size( equilibrium%time_slice ).ge.time_sind ) then
+            eq_found = .true.
+            if ( associated( equilibrium%ids_properties%source ) ) &
+               & eq_source = equilibrium%ids_properties%source(1)
+            r0 = equilibrium%vacuum_toroidal_field%r0
+            b0 = equilibrium%vacuum_toroidal_field%b0( time_sind )
+            b0r0 = b0 * r0
           end if
-        end do
-        if (icnt.gt.0) then
-          r0 = r0 / float(icnt)
-          if (ffbz(jxa,-1,0).ne.0.0_R8) then
-            if (isymm.eq.0) then
-              b0r0 = ffbz(jxa,-1,0)
-            else
-              b0r0 = ffbz(jxa,-1,0)/(2.0_R8 * pi)
+        end if
+        if (.not.eq_found) then
+          r0 = 0.0_R8
+          icnt = 0
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              icnt = icnt + 1
+              if (isymm.eq.1.or.isymm.eq.2) then
+                r0 = r0 + crx(ix,-1,0)
+              else if (isymm.eq.3.or.isymm.eq.4) then
+                r0 = r0 + cry(ix,-1,0)
+              end if
             end if
-            b0 = b0r0/r0
-          else if (isymm.eq.0) then
+          end do
+          if (icnt.gt.0) then
+            r0 = r0 / float(icnt)
+            if (ffbz(jxa,-1,0).ne.0.0_R8) then
+              if (isymm.eq.0) then
+                b0r0 = ffbz(jxa,-1,0)
+              else
+                b0r0 = ffbz(jxa,-1,0)/(2.0_R8 * pi)
+              end if
+              b0 = b0r0/r0
+            else if (isymm.eq.0) then
+              b0 = bb(jxa,-1,2)
+              b0r0 = b0*r0
+            else if (isymm.eq.1 .or. isymm.eq.2) then
+              b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
+                                &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
+              b0 = b0r0 / r0
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
+                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+              b0 = b0r0 / r0
+            end if
+          else
             b0 = bb(jxa,-1,2)
-            b0r0 = b0*r0
-          else if (isymm.eq.1 .or. isymm.eq.2) then
-            b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
-                              &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
-            b0 = b0r0 / r0
-          else if (isymm.eq.3 .or. isymm.eq.4) then
-            b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
-                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
-            b0 = b0r0 / r0
-          end if
-        else
-          b0 = bb(jxa,-1,2)
-          if (isymm.eq.1 .or. isymm.eq.2) then
-            b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
-                              &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
-          else if (isymm.eq.3 .or. isymm.eq.4) then
-            b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
-                              &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+            if (isymm.eq.1 .or. isymm.eq.2) then
+              b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
+                                &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
+                                &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
+            end if
           end if
         end if
         !> Careful: Sign convention for magnetic field in IDS
         !>          is OPPOSITE to that in SOLPS toroidal geometries
         if ( b0.ne.0.0_IDS_real ) then
-          if (streql(database,'ITER')) then
+          if (streql(database,'ITER').and..not.eq_found) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
             i = nint(b0r0_ref/b0r0)
@@ -980,7 +994,26 @@ contains
             call write_sourced_constant( summary%global_quantities%r0, r0 )
             edge_profiles%vacuum_toroidal_field%r0 = r0
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
-            if (isymm.ne.0) then
+            if (eq_found) then
+              call write_sourced_value( summary%global_quantities%b0, b0 )
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+              if ( equilibrium%time_slice( time_sind )%global_quantities%  &
+                 & ip .ne. IDS_REAL_INVALID ) then
+                call write_sourced_value( summary%global_quantities%ip,    &
+                  &  equilibrium%time_slice( time_sind )%global_quantities%ip )
+                summary%global_quantities%ip%source = eq_source
+              end if
+              if ( equilibrium%time_slice( time_sind )%global_quantities%  &
+                 & q_95 .ne. IDS_REAL_INVALID ) then
+                call write_sourced_value( summary%global_quantities%q_95,  &
+                  &  equilibrium%time_slice( time_sind )%global_quantities%q_95 )
+                summary%global_quantities%q_95%source = eq_source
+              else if (streql(eq_source,"ITER Baseline q95=3 equilibrium")) then
+                call write_sourced_value( summary%global_quantities%q_95,  &
+                  &  3.0_IDS_real )
+                summary%global_quantities%q_95%source = eq_source
+              end if
+            else if (isymm.ne.0) then
               call write_sourced_value( summary%global_quantities%b0, -b0 )
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
             else
@@ -993,13 +1026,9 @@ contains
         if (GeometryType .eq. GEOMETRY_LINEAR) then
           midplane_id = 4
         else
-          if ( associated( equilibrium%time_slice ) ) then
-            if ( size( equilibrium%time_slice ).ge.time_sind ) then
-              z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
+          if ( eq_found ) then
+            z_eq = equilibrium%time_slice( time_sind )%global_quantities%  &
                &   magnetic_axis%z
-            else
-              z_eq = IDS_REAL_INVALID
-            end if
           else
             z_eq = IDS_REAL_INVALID
           end if
@@ -3096,7 +3125,8 @@ contains
 #ifdef B25_EIRENE
 !! Obtain the neutral velocities
 !! Recall that P[XYZ]DEN[AM] are momentum densities in CGS units!
-        if (use_eirene.ne.0) then
+!! P[UV][XY] will only exist if fort.46 file was written with format 20170930 or later
+        if (use_eirene.ne.0 .and. allocated(pux)) then
           allocate(un0(-1:nx,-1:ny,0:2,natmi))
           allocate(um0(-1:nx,-1:ny,0:2,nmoli))
           un0 = 0.0_IDS_real
@@ -4381,7 +4411,6 @@ contains
 
             if (use_eirene.ne.0) then
 #ifdef B25_EIRENE
-                !! Neutral pressure
                 do is = 1, nspecies
                    tmpCv(:,:) = 0.0_IDS_real
                    totCv(:,:) = 0.0_IDS_real
@@ -4398,6 +4427,7 @@ contains
                            &  rfluxa(0:nx+1,0:ny+1,iss,1)
                       end if
                    end do
+                !! Neutral pressure
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( is )%pressure,                     &
@@ -4416,62 +4446,64 @@ contains
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                 !! Neutral velocity (poloidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,0,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                   if (allocated(un0)) then
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,0,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                 !! Neutral velocity (radial projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,1,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,1,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! Neutral velocity (toroidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do iss = 1, natmi
-                     if (latmscl(iss).eq.is) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  un0(-1:nx,-1:ny,2,iss)*dab2(0:nx+1,0:ny+1,iss,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do iss = 1, natmi
+                       if (latmscl(iss).eq.is) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  un0(-1:nx,-1:ny,2,iss)*dab2(0:nx+1,0:ny+1,iss,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                 !! Neutral particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do iss = 1, natmi
@@ -4583,21 +4615,23 @@ contains
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   call write_cell_vector_component(                         &
+                   if (allocated(un0)) then
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,0,is),                       &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
                      call write_cell_vector_component(                       &
@@ -4730,62 +4764,64 @@ contains
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                 !! ua: Molecular velocity (poloidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,0,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                   if (allocated(um0)) then
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,0,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                 !! Molecular velocity (radial projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,1,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,1,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! Molecular velocity (toroidal projection)
-                   tmpCv(:,:) = 0.0_IDS_real
-                   do is = 1, nmoli
-                     if (imneut(is).eq.js) then
-                       tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +             &
-                          &  um0(-1:nx,-1:ny,2,is)*dmb2(0:nx+1,0:ny+1,is,1)
-                     end if
-                   end do
-                   do iy = -1, ny
-                     do ix = -1, nx
-                       if (totCv(ix,iy).gt.0.0_IDS_real)                     &
-                         &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                     tmpCv(:,:) = 0.0_IDS_real
+                     do is = 1, nmoli
+                       if (imneut(is).eq.js) then
+                         tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) +           &
+                           &  um0(-1:nx,-1:ny,2,is)*dmb2(0:nx+1,0:ny+1,is,1)
+                       end if
                      end do
-                   end do
-                   call write_cell_vector_component(                         &
+                     do iy = -1, ny
+                       do ix = -1, nx
+                         if (totCv(ix,iy).gt.0.0_IDS_real)                   &
+                           &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
+                       end do
+                     end do
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                  !! Molecular particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
                    do is = 1, nmoli
@@ -4899,21 +4935,23 @@ contains
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
-                   call write_cell_vector_component(                         &
+                   if (allocated(um0)) then
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,0,is),                       &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_cell_vector_component(                         &
+                     call write_cell_vector_component(                       &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+                   end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
                      call write_cell_vector_component(                       &
@@ -6370,7 +6408,7 @@ contains
         if (use_eirene.ne.0) then
           deallocate(isstat,imneut,imiion)
           deallocate(in_species)
-          deallocate(un0,um0)
+          if (allocated(un0)) deallocate(un0,um0)
         end if
 #endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
@@ -6742,7 +6780,7 @@ contains
             integer, intent(in) :: time_sind    !< General grid description
                                                 !< slice identifier
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             real(IDS_real) :: weight( -1:gmap%b2nx, -1:gmap%b2ny, TO_SELF:TO_TOP )
             integer :: nSubsets  !< number of grid subsets to fill
             integer :: iSubset   !< Grid subset iterator
@@ -6759,6 +6797,17 @@ contains
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
 #endif
+            !! Interpolate data to vertices
+            tmpVx = interpolateToVertices(  &
+                  &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
+
+            !! Interpolate data to cell faces, using a volume weighting
+            tmpFace = 0.0_IDS_real
+            do i = TO_SELF, TO_TOP
+                weight(:,:,i) = vol(:,:)
+            end do
+            call value_on_faces( nx, ny, weight, value, tmpFace)
+
             !! Allocate data fields for grid subsets
             allocate( val(nSubsets) )
 
@@ -6836,12 +6885,10 @@ contains
                end if
                select case (ndim)
                case ( 1 ) !< Grid subset consists of nodes
-                  tmpVx = interpolateToVertices(  &
-                     &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
 #if IMAS_MINOR_VERSION < 15
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(            &
-                     &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
-                     &   gmap, tmpVx )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
+                     &   edge_profiles%ggd( time_sind )%grid,         &
+                     &   iGsOuterMidplane, gmap, tmpVx )
 #else
                   idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
                      &   edge_profiles%grid_ggd( time_sind ),         &
@@ -6854,11 +6901,6 @@ contains
 #endif
                   deallocate( idsdata )
                case ( 2 ) !< Grid subset consists of faces
-                  tmpFace = 0.0_IDS_real
-                  do i = TO_SELF, TO_TOP
-                     weight(:,:,i) = vol(:,:)
-                  end do
-                  call value_on_faces( nx, ny, weight, value, tmpFace)
 #if IMAS_MINOR_VERSION < 15
                   idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
                      &   edge_profiles%ggd( time_sind )%grid, iSubset,     &
@@ -6876,11 +6918,13 @@ contains
                   deallocate( idsdata )
                case ( 3 ) !< Grid subset consists of cells
 #if IMAS_MINOR_VERSION < 15
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                      &   ggd( time_sind )%grid, iSubset, gmap, value )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
+                      &  edge_profiles% ggd( time_sind )%grid, iSubset,    &
+                      &  gmap, value )
 #else
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                      &   grid_ggd( time_sind ), iSubset, gmap, value )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS(             &
+                      &  edge_profiles%grid_ggd( time_sind ), iSubset,     &
+                      &  gmap, value )
 #endif
 #if GGD_MINOR_VERSION > 8
                   call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
@@ -6983,7 +7027,7 @@ contains
                 !< Type of IDS data structure, designed for scalar data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             integer :: nSubsets  !< number of grid subsets to fill
             integer :: iSubset   !< Grid subset iterator
             integer :: ndim      !< Grid subset dimension
@@ -7066,7 +7110,6 @@ contains
 
         !> Write a vector component B2 cell quantity to ids_generic_grid_vector
         !! components
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields (vector IDs):
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7080,7 +7123,7 @@ contains
                     !> designed for vector data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
             integer :: nSubsets  !< number of grid subsets to fill
@@ -7162,7 +7205,6 @@ contains
 
         !> Write a vector component B2 face quantity to ids_generic_grid_vector
         !! components
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields (vector IDs):
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7177,7 +7219,7 @@ contains
             real(IDS_real), intent(in) ::  &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
             integer :: nSubsets  !< number of grid subsets to fill
@@ -7264,7 +7306,6 @@ contains
         !! @note    The routine will make sure the required storage is
         !!          allocated, and will deallocate and re-allocate fields as
         !!          necessary.
-        !! @note Currently works only with parallel velocity data field
         !! @note Available IDS vector component data fields:
         !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !!          - "diamagnetic",
@@ -7712,7 +7753,7 @@ contains
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
     character(len=13) :: spclabel
 
-    !! allocate and init the cpo
+    !! allocate and init the CPO
     allocate(edgecpo%datainfo%dataprovider(1))
     edgecpo%datainfo%dataprovider="ITER"
     allocate(edgecpo%codeparam%codename(1))
@@ -7859,7 +7900,7 @@ contains
       integer i
 
       allocate(values(5))
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, value )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, gmap, value )
       call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
@@ -7867,17 +7908,17 @@ contains
         weight(:,:,i)=vol(:,:)
       end do
       call value_on_faces(nx,ny,weight,value,tmpFace)
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, iSgCore, gmap, tmpFace )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, iSgCore, gmap, tmpFace )
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
       call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )
       call gridWriteData( values(4), iSgOuterMidplane, cpodata )
       deallocate(cpodata)
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, B2_SUBGRID_NODES, gmap, tmpVx )
+      cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, B2_SUBGRID_NODES, gmap, tmpVx )
       call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
       deallocate(cpodata)
       allocate( fluxes(2) )
@@ -7894,7 +7935,7 @@ contains
 
       !! TODO: add checks whether already allocated
       allocate(scalar(1))
-      cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
+      cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
       call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
     end subroutine write_cell_scalar
@@ -7924,7 +7965,7 @@ contains
 
       !! Fill in vector component data
       do i = 1, dim
-         cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
+         cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
          call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
          deallocate(cpodata)
       end do
@@ -7952,10 +7993,10 @@ contains
 !!$          vector%alignid(2) = VEC_ALIGN_RADIAL_ID
 !!$
 !!$          ! Fill in vector component data
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_Y, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_EDGES_Y, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_EDGES_X, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, B2_SUBGRID_EDGES_X, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
@@ -7966,7 +8007,7 @@ contains
 !!$          vector%align(1) = GRID_UNDEFINED
 !!$          vector%alignid(1) = ""
 !!$
-!!$          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, subgridInd, gmap, b2FaceData)
+!!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, subgridInd, gmap, b2FaceData)
 !!$          call gridWriteData( vector%comp(1), subgridInd, cpodata )
 !!$          deallocate(cpodata)
 !!$      end if

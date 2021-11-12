@@ -75,7 +75,7 @@
       dva=0.0e0_R8
       fchvisper =0.0e0_R8                                               !srv 22.11.99
       fchvisper_a=0.0e0_R8
-        
+
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
      &   no_current.eq.0) then
