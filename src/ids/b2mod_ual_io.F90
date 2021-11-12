@@ -4226,7 +4226,7 @@ contains
                       &         state( js )%z_square_average,               &
                       &   value = rz2(:,:,ispion(is,js)),                   &
                       &   time_sind = time_sind )
-                !! Ionization potential
+                !! Ionisation potential
                   call write_quantity(                                      &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionisation_potential,           &

@@ -19,14 +19,14 @@
 c This module contains definitions for bundled stages
 c     zn      : Nuclear charge of bundled stage (is)
 c     am      : Atomic mass of bundled stage (is) (in amu)
-c     zamax   : Highest ionization stage of bundle (is)
-c     zamin   : Lowest ionization stage of bundle (is)
-c     potmin  : Cumulative ionization cost to reach zamin(is) (in eV)
-c     potmax  : Cumulative ionization cost to reach zamax(is) (in eV)
-c     potimin : Ionization cost to reach zamin(is) from zamax(is-1) (in eV)
-c     potimax : Ionization cost to reach zamax(is) from zamin(is-1) (in eV)
+c     zamax   : Highest ionisation stage of bundle (is)
+c     zamin   : Lowest ionisation stage of bundle (is)
+c     potmin  : Cumulative ionisation cost to reach zamin(is) (in eV)
+c     potmax  : Cumulative ionisation cost to reach zamax(is) (in eV)
+c     potimin : Ionisation cost to reach zamin(is) from zamax(is-1) (in eV)
+c     potimax : Ionisation cost to reach zamax(is) from zamin(is-1) (in eV)
 c     is_neutral(is) is true if a stage is a neutral species
-c     partition_number indicates the stage number within its homonuclear sequence
+c     partition_number indicates the stage number within its isonuclear sequence
 c     
 c     It is not allowed to bundle neutral and charged states together.
 

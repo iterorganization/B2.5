@@ -2198,7 +2198,7 @@ c dpc
           if(ncall.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
      1       'BCCON = 19 can only be applied to ions in their '//
-     2       'highest ionization stage')
+     2       'highest ionisation stage')
             write(*,*) 'given sum of particle flux for '//
      .                 'isonuclear sequence with constant highest '//
      .                 'ionisation stage density '
@@ -2280,7 +2280,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
 ! totfluxn here means the sum of fluxes over all ions (including fluid
-! neutrals) of this isotope except for the highest ionization stage.
+! neutrals) of this isotope except for the highest ionisation stage.
 ! For coupled runs, both fna and fna_mdf are rescaled for neutrals
 ! Note that for neutrals fna = fna_mdf
                     do isb = 0, ns-1
@@ -2298,7 +2298,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                         endif
                       endif
                     enddo
-! totfluxi here means the flux of the ion in the highest ionization stage.
+! totfluxi here means the flux of the ion in the highest ionisation stage.
                     if(mdf_fnb.ne.0) then
                       totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -3185,13 +3185,14 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
 * -- BCCON=27  Feedback boundary condition: prescribe the particle flux sum
 *              for all neutrals and ions belonging to a given isonuclear sequence
-*              and find the average density of those ionization state which the
-*              BCCON=27 is applied to. For main ion and low Z impurity it is recommended 
-*              to set BCCON=27 for highest ionization state. For high Z impurity,
-*              if the ionization state of highest ionization state is much bigger than
-*              expected core plasma temperature, the BCCON=27 may be set for those ionization state,
-*              for which the density is expected to be maximal. 
-*              For ionization states higher than that one it is
+*              and find the average density of the ionisation state to which the
+*              BCCON=27 condition is applied.
+*              For main ions and low Z impurities, it is recommended
+*              to set BCCON=27 for the highest ionisation state. For high Z impurities,
+*              if the ionisation potential of the highest ionisation state is much larger than
+*              the expected core plasma temperature, the BCCON=27 condition should be set for the ionisation state,
+*              for which the density is expected to be maximal.
+*              For ionisation states higher than that one, it is
 *              recommended to set BCCON=2 with CONPAR=0.0 since their densities
 *              are expected to be negligible, and BCCON=2 with CONPAR=0.0 seems to
 *              be the safest BC condition in this case. 
@@ -3202,31 +3203,28 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
         case (27)
           if(ncall.eq.0) then
-!            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
-!     1       'BCCON = 27 is applied to highest ionisation stages only')
 !========== IYS 13.10.2021
             isb = is+1
             do while (b2espcr(is).eq.b2espcr(isb))
-             call xertst(BCCON(isb,IB) .ne. 27 ,
-     &       'BCCON = 27 should be applied to only one ionization state'
-     &       // 'of isonuclear sequence')
+              call xertst(BCCON(isb,IB).ne.27,
+     &         'BCCON = 27 should be applied to '
+     &          // 'only one ionisation state per isonuclear sequence')
+! IYS: POSSIBLE OVERWRITE TO FLAT DENSITY GRADIENTS FOR ANY HIGHER IONISATION STATES
 !             BCCON(isb,IB) = 2
 !             CONPAR(isb,IB,1) = 0.0_R8
-
-! DO WE REALLY NEED THIS CHECKING AND THIS ERROR MESSAGE????????
+! IYS: OR SIMPLE TESTING TO ENFORCE BCCON=2 AND CONPAR(,IB,1)=0 IN b2.boundary.parameters
 !             call xertst(
-!     &  (BCCON(isb,IB) .ne. 2) .and. (CONPAR(isb,IB,1) .ne. 0.0_R8) ,
-!     &       'If BCCON = 27 is applied for given ion, the BCCON =2 '
-!     &       // 'with CONPAR=0.0 should be set for all higher'
-!     &       // 'ionization states of given isonuclear sequence')
-! DO WE REALLY NEED THIS CHECKING AND THIS ERROR MESSAGE????????
-
-             isb = isb + 1
+!     &         BCCON(isb,IB).eq.2 .and. CONPAR(isb,IB,1).eq.0.0_R8,
+!     &       'If BCCON = 27 is applied for a given ionisation state, '
+!     &       // 'then BCCON =2 with CONPAR=0.0 should be set '
+!     &       // 'for all higher ionisation states '
+!     &       // 'of the isonuclear sequence')
+              isb = isb + 1
             enddo
 !========== IYS 13.10.2021
             
             write(*,'(a,a,a,i3)')
-     &       'given total particle flux for all ionization states ',
+     &       'given total particle flux for all ionisation states ',
      &       'within the isonuclear sequence with constant density ',
      &       'for ionisation stage ion is =', is
             DO IBW=IB,NBC
@@ -3307,7 +3305,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
 ! totfluxn here means the sum of fluxes over all ions (including fluid
-! neutrals) of this isotope except for the highest ionization stage.
+! neutrals) of this isotope except for the highest ionisation stage.
 ! For coupled runs, both fna and fna_mdf are rescaled for neutrals
 ! Note that for neutrals fna = fna_mdf
                     do isb = 0, ns-1
@@ -3325,7 +3323,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                         endif
                       endif
                     enddo
-! totfluxi here means the flux of the ion in the highest ionization stage.
+! totfluxi here means the flux of the ion in the highest ionisation stage.
                     if(mdf_fnb.ne.0) then
                       totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
