@@ -329,14 +329,15 @@ ctmp.dpc
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, csig_an, po, ne, na,               !srv 20.09.06 }!som 02.11.21
+            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,       !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 
             call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,       !srv 20.09.06 { 19.02.21
      & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
-            call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+            call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
             call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
-     &  po, ti, na, avisper, bvisper, cvisper, fchvisper_a, fchvisper)
+     &                    po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     &                    fchvisper_a, fchvisper)
             call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, 
      &             na,                                                   !som 21.10.21

@@ -3915,12 +3915,23 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
 ! { IYS 12.01.2018
       sna_eir = 0.0_R8
       if (ank_tracing .gt. 0) then
-        do is = 1, nspecies
-          do iy = -1, ny
-            do ix = -1, nx
-              sna_eir(is) = sna_eir(is) +
-     &           sna0(ix,iy,0,eb2spcr(is)+1) +
-     &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
+!        do is = 1, nspecies
+!          do iy = -1, ny
+!            do ix = -1, nx
+!              sna_eir(is) = sna_eir(is) +
+!     &           sna0(ix,iy,0,eb2spcr(is)+1) +
+!     &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
+!            enddo
+!          enddo
+!        enddo
+        do ix=-1, nx
+          do iy=-1,ny
+            do is = 0, ns-1
+              if( is_neutral(is) ) cycle
+              k = b2espcr(is)
+              sna_eir(k) = sna_eir(k) +
+     &           sna0(ix,iy,0,is) +
+     &           sna0(ix,iy,1,is)*na(ix,iy,is)
             enddo
           enddo
         enddo

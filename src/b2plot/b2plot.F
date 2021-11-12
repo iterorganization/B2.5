@@ -74,6 +74,7 @@ c 2002-09-11: logic revised
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_interp
       use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
@@ -2566,41 +2567,8 @@ c
           nz=1
           do ix=-1,nx
             do iy=-1,ny
-              ixl=leftix(ix,iy)
-              if (ixl.ne.-2) then
-                t1=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t1=0.0_R8
-              endif
-              ix1=ixl
-              if (ixl.ne.-2) ixl=leftix(ix1,iy)
-              do while(ix1.ne.ix.and.ixl.ne.-2)
-                t1=t1+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixl
-                ixl=leftix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              ixr=rightix(ix,iy)
-              if (ixr.ne.nx+1) then
-                t2=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t2=0.0_R8
-              endif
-              ix1=ixr
-              if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
-              do while(ix1.ne.ix.and.ixr.ne.nx+1)
-                t2=t2+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixr
-                ixr=rightix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              mach(ix,iy,0)=min(t1,t2)
+              mach(ix,iy,0) =
+     &         get_connection_length( 3, 2, nx, ny, ix, iy)
             end do
           end do
           call copy(mach,1.0_R8,nz,textbl)

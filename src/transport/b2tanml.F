@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, csig_an, po, ne, na,       !som 02.11.21
-     & fchanml_a, fchanml)                                       !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na, !som 02.11.21
+     & fchanml_a, fchanml)                                         !srv 20.09.06 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -14,7 +14,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain
       real (kind=R8) ::
      & po(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),                  !som 02.11.21
@@ -41,6 +41,7 @@
 *   ..local variables
       integer ncall, ix, iy, ib, is
       integer, save :: no_current = 0                          !srv 27.02.13
+      integer, save :: anml_all_ions = 1
       integer, save :: pot_eq
       integer, save :: guard_flows
       real (kind=R8) :: fch_anomalous
@@ -62,6 +63,7 @@
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgeti ('b2tfhe_no_current', no_current)                !srv 27.02.13
+       call ipgeti ('b2tanml_anml_all_ions', anml_all_ions)
        call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
@@ -115,6 +117,16 @@
         fchanml(:,:,:)=fchanml(:,:,:)+fchanml_a(:,:,:,is)
        enddo                                                             !srv 08.09.21
       endif                                                              !srv 27.02.13
+
+      if (anml_all_ions.eq.0) then
+       do is = 0, ns-1
+        if (is.eq.ismain) then
+         fchanml_a(:,:,:,is) = fchanml(:,:,:) 
+        else
+         fchanml_a(:,:,:,is) = 0.0_R8
+        endif
+       enddo
+      endif
 
       if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells

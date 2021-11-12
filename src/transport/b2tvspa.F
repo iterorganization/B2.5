@@ -113,8 +113,8 @@ c Drift terms
      &         (ua(ix,iy,is)*sqrt(bb(ix,iy,3))                          !srv 16.10.17
      &         -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))                 !srv 18.02.00 23.07.05 }
-!              dvpar(ix,iy)=dvpar(ix,iy)                                !srv 24.06.99
-!     &            + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)          !srv
+!              dvpar(ix,iy)=                                            !srv 24.06.99
+!     &            bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)            !srv
 !     &            *cvsa_cl(ix,iy,0,is)*                                !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                    !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)              !srv 18.02.00
@@ -181,7 +181,7 @@ c Drift terms
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
             fchvispar_a(ix,iy,1,is)=                                    !srv 16.10.17
-     &       +vis_par*fac_vis(ix,iy)*                       ! signmf*   !srv 25.04.00 21.04.00 22.06.08 11.01.13
+     &        vis_par*fac_vis(ix,iy)*                       ! signmf*   !srv 25.04.00 21.04.00 22.06.08 11.01.13
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 18.02.00
      &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv

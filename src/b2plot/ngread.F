@@ -534,20 +534,19 @@ cank
               end if
             end if
           end do
-c<<<
+#ifdef DBG
           if(ntns.gt.0) then !{
-            print *,'ltns = :'
-            print '(3x,20i5)',(ltns(i),i=1,ntns)
-            print *,'eirdiag_nds_typ = :'
-            print '(3x,20i5)',(eirdiag_nds_typ(ltns(i)),i=1,ntns)
-            print *,'eirdiag_nds_srf = :'
-            print '(3x,20i5)',(eirdiag_nds_srf(ltns(i)),i=1,ntns)
-            print *,'nx, nxtl, nxtr, nncut:'
-            print '(20i5)', nx, nxtl, nxtr, nncut
-            print *,'Calculated ktns:'
-            print '(3x,20i5)',(ktns(i),i=1,ntns)
+            write(hlp_frm,'(a,i3,a)') '(1x,a,3x,',max(ntns,4),'i5)'
+            write(*,hlp_frm) 'ltns = ',(ltns(i),i=1,ntns)
+            write(*,hlp_frm) 'eirdiag_nds_typ = ',
+     .                       (eirdiag_nds_typ(ltns(i)),i=1,ntns)
+            write(*,hlp_frm) 'eirdiag_nds_srf = ',
+     .                       (eirdiag_nds_srf(ltns(i)),i=1,ntns)
+            write(*,hlp_frm) 'nx, nxtl, nxtr, nncut :',
+     .                        nx, nxtl, nxtr, nncut
+            write(*,hlp_frm) 'Calculated ktns :',(ktns(i),i=1,ntns)
           end if !}
-c>>>
+#endif
           NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(wldna_res))

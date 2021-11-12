@@ -8,7 +8,7 @@
      1 csig, csigin, csig_stoch,                                         !srv 24.08.21
      & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
      & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
-     & conc, avisper, bvisper, cvisper,
+     & conc, avisper_a, bvisper_a, cvisper_a,
      & fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,       !srv 08.09.21
      & fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
@@ -57,8 +57,9 @@
      &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),             !srv 22.11.99 30.09.02
      &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),                !srv 11.07.99
      2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1)              !srv 24.03.07
+     3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 27.01.00
+     $   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)       !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -167,7 +168,7 @@
      & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
-     &         po, ti, na, avisper, bvisper, cvisper, fchvisper_a,
+     &         po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
      &         fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
@@ -176,10 +177,10 @@
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 22.11.12
      &              facdrift, fchinert_a, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, csig_an, po, ne, na,                     !som 02.11.21
+      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
@@ -284,12 +285,6 @@
        call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch__concx')
        call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch__concy')
-       call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch__avisperx')
-       call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch__avispery')
-       call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch__bvisperx')
-       call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch__bvispery')
-       call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch__cvisperx')
-       call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch__cvispery')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__fch_px')
        call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfch__csig_anx')
@@ -303,6 +298,18 @@
        call my_out(70,nx,ny,po,'b2tfch__po')
        do is = 0, ns-1
         write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,avisper_a(-1,-1,0,is),
+     &  'b2tfch__avisper_ax'//chns)
+        call my_out(70,nx,ny,avisper_a(-1,-1,1,is),
+     &  'b2tfch__avisper_ay'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,0,is),
+     &  'b2tfch__bvisper_ax'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,1,is),
+     &  'b2tfch__bvisper_ay'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,0,is),
+     &  'b2tfch__cvisper_ax'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,1,is),
+     &  'b2tfch__cvisper_ay'//chns)
         call my_out(70,nx,ny,na(-1,-1,is),'b2tfch__na'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0

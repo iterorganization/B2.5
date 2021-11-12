@@ -1930,6 +1930,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>'b2tvspr_visper_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the separation of the viscosity ion perpendicular current is applied for all ions.
+          Othewise the viscosity ion perpendicular current will be non zero only for main ions.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sifr_phm0</name>
 				<default>1.0</default>
 				<type>real</type>

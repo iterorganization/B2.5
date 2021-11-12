@@ -61,7 +61,7 @@ c
       promp(2) = repeat(' ',8)
       ufile='param.dg'
       call find_file(ufile,file_ok)
-      if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
+      if(.not.open_file(lun,ufile,'modules/Uinp')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
         call subend ()

@@ -108,7 +108,7 @@
       fchvisq_a = 0.0e0_R8
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.               !srv 16.10.17
-     &   no_current.eq.0) then  
+     &   no_current.eq.0) then
        if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
      & Zhdanov_vish.eq.0) then                                           !som 20.10.21
          do is = 0,ns-1                                                  !srv 12.05.11
@@ -317,7 +317,7 @@
                do ix = 0,nx
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
-                   fchvisq_a(ix,iy,0,is) = 
+                   fchvisq_a(ix,iy,0,is) =
      &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
@@ -341,7 +341,7 @@
                 if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                   if(rightix(ix,iy).ne.nx+1) then
-                    fchvisq_a(ix,iy,1,is) = 
+                    fchvisq_a(ix,iy,1,is) =
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)
@@ -377,7 +377,7 @@
               if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                if(rightix(ix,iy).ne.nx+1) then
-                fchvisq_a(ix,iy,1,is) = 
+                fchvisq_a(ix,iy,1,is) =
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
      &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
      &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
