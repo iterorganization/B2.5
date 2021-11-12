@@ -41,6 +41,9 @@
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
       integer, save :: no_current = 0
       integer, save :: visper_all_ions = 1
+      integer, save :: dia_lim_all_ions = 1                             !som 11.11.21
+      real (kind=R8) ::
+     *    vbar, t0                                                      !som 11.11.21
       real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
@@ -59,6 +62,7 @@
        call ipgeti ('b2tvspr_iout', iout)                               !srv 06.12.17
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
+       call ipgeti ('b2tvspr_dia_lim_all_ions', dia_lim_all_ions)       !som 11.11.21
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -95,6 +99,13 @@
      &            (rza(ix,iy,is)*na(ix,iy,is)+
      &            rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is)))
+              endif
+
+              if (dia_lim_all_ions .eq. 1) then        
+               t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
+               vbar = sqrt(8.0_R8 * t0 / (pi * am(is)*mp))              !som 11.11.21 
+               va(ix,iy,1) = va(ix,iy,1)/
+     &          (1.0_R8 + abs(va(ix,iy,1))/vbar)
               endif
             enddo
           enddo
