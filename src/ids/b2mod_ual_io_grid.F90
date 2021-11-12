@@ -111,6 +111,7 @@ module b2mod_ual_io_grid
 
     use b2mod_grid_mapping
     use b2mod_indirect
+    use b2mod_interp
     use b2mod_b2cmfs
     use b2mod_ppout
     use b2mod_geo
@@ -577,14 +578,20 @@ contains
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%name(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
-            &   geometry_content%name = "node_coordinates"
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%name = "node_coordinates_connection"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%description(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
-            &   geometry_content%description = "(R, Z) coordinates of nodes"
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)% &
-            &   geometry_content%index = 1
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%description =              &
+            &    "(R, Z) coordinates of nodes + "//         &
+            &    "connection length + distance to nearest surface"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%index = 11
 #endif
         !! 1D faces/edges
         !! For SN: gmap%nFcx + gmap%nFcy = nx*( ny+1 ) + ( nx+1 )*ny
@@ -617,21 +624,29 @@ contains
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%name(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
-            &   geometry_content%name = "face_indices_volume"
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%name = "face_indices_volume_connection"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%description(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
-            &   geometry_content%description = "(ix, iy) indices of B2.5 cell and cell volume"
-        grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
-            &   geometry_content%index = 31
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%description =              &
+            &    "(ix, iy) indices of B2.5 cell + "//       &
+            &    "cell volume + connection length + "//     &
+            &    "distance to nearest solid surface"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%index = 32
 #endif
 
         !! Fill in vertex/node information
         do iVx = 1, gmap%nVx
             !! Allocate geometry leaf for each vertex/node
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( iVx )%geometry(2) )
+                &   objects_per_dimension( IDS_CLASS_NODE )%    &
+                &   object( iVx )%geometry(4) )
             !! Set geometry (R and Z coordinates) of each vertex/node
             !! The way of writing vertices/nodes data identically to the
             !! conversion to IDS of
@@ -667,6 +682,22 @@ contains
                   &   crx( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ), &
                   &        gmap%mapVxIVx( iVx ) )
             end if
+
+            !! Provide connection length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(3) =                      &
+                &   get_connection_length( IDS_CLASS_NODE, 1,        &
+                &   nx, ny, gmap%mapVxix( iVx ),                     &
+                &   gmap%mapVxiy( iVx ), gmap%mapVxIVx( iVx ) )
+
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(4) =                      &
+                &   get_connection_length( IDS_CLASS_NODE, 2,        &
+                &   nx, ny, gmap%mapVxix( iVx ),                     &
+                &   gmap%mapVxiy( iVx ), gmap%mapVxIVx( iVx ) )
 
             !! Set additional vertex/node index (REQUIRED!)
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
@@ -766,9 +797,6 @@ contains
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 1D objects: faces/edges
         nFc = gmap%nFcx + gmap%nFcy !! Number of all faces/edges
-        !! Allocate 1D objects
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
         !! Each 1D object has two boundaries and two neighbours, in positive
         !! and negative coordinate direction, one on each side (for x-aligned
         !! edges: along flux surface, for y-aligned edges: orthogonal to flux
@@ -1106,6 +1134,16 @@ contains
             grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
                 &   objects_per_dimension( IDS_CLASS_CELL )%         &
                 &   object( iCv )%geometry(3) = vol(ix,iy)
+            !! Provide connection length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(4) =                      &
+                &   get_connection_length( IDS_CLASS_CELL, 1, nx, ny, ix, iy )
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(5) =                      &
+                &   get_connection_length( IDS_CLASS_CELL, 2, nx, ny, ix, iy )
 
             !! Set edges composing the quadrilateral in the list:
             !! left edge (y-aligned)

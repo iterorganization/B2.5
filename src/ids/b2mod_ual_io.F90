@@ -348,7 +348,7 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u,            &
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, nibnd, frac, u, v,         &
             &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum, area
         real(IDS_real) :: gpff, gsum, gmid, gbot, gtop
@@ -360,9 +360,6 @@ contains
             &             power_recomb_neutrals(4), power_radiated(4),       &
             &             recycled_flux(4)
         real(IDS_real), allocatable :: wrdtrg(:,:,:)
-#if IMAS_MINOR_VERSION > 30
-        real(IDS_real) :: v
-#endif
 #ifdef B25_EIRENE
         real(IDS_real), allocatable :: un0(:,:,:,:), um0(:,:,:,:)
 #endif
