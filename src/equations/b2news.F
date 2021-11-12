@@ -1216,7 +1216,8 @@ c     with diamagnetic drift part                                        !xpb
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
      &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
-     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 09.07.08 07.07.09 24.08.21
+     &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17 
      &    na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                      !srv 09.07.08
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
@@ -1225,7 +1226,9 @@ c     with diamagnetic drift part                                        !xpb
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
      &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
-     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 27.12.01 28.06.03 30.06.03 07.07.09 24.08.21
+     &    fne, fch, fchstoch, cvsa,                                      !srv 24.08.21
+     &    cvsa_cl, cvsa_drho,                                            !som 16.08.21
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,  !srv 31.05.99
      &    reshe, reshi, wrk0, corte, corti, ier0)                        !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
@@ -1234,7 +1237,8 @@ c     with diamagnetic drift part                                        !xpb
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
      &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
-     &    fne, fch, fchstoch, cvsa, fchdia, uadia, wadia, vadia, vaecrb, !srv 27.12.01 28.06.03 30.06.03 07.07.09 24.08.21
+     &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17 
      &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,              !srv 31.05.99
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)            !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
