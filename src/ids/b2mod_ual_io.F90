@@ -4259,7 +4259,7 @@ contains
 #endif
 
             !! fchanml: Anomalous current
-            call b2tanml (nx, ny, ns, csig_an, po, ne, na,                   &!som 02.11.21
+            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           &!som 02.11.21
                 &              fchanml_a, fchanml)                            
             call divide_by_contact_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)

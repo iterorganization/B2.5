@@ -302,11 +302,11 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, csig_an, po, ne, na,                    !srv 20.09.06 }!som 02.11.21
+       call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,            !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 
        call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
      &              fchvispar_a, fchvispar)
-       call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &               facdrift, fchinert_a, fchinert)
        call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &               po, ti, na, avisper_a, bvisper_a, cvisper_a,

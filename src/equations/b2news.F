@@ -384,11 +384,11 @@
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
-        call b2tanml (nx, ny, ns, csig_an, po, ne, na,                   !srv 20.09.06 }!som 02.11.21
+        call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 
         call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
      &                fchvispar_a, fchvispar)
-        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                   !srv 08.09.21
+        call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,           !srv 08.09.21
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &  po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
@@ -415,7 +415,7 @@
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
@@ -545,11 +545,11 @@ cxpb
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-        call b2tanml (nx, ny, ns, csig_an, po, ne, na,                   !srv 20.09.06 }!som 02.11.21
+        call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 
         call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,      !srv 19.02.21
      &                fchvispar_a, fchvispar)                          !srv 20.09.06 {
-        call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+        call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
@@ -591,7 +591,7 @@ cxpb
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
 !$OMP& SHARED(cssb, vaecrb, vadia, wadia)
 !$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
@@ -1009,7 +1009,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)

@@ -166,10 +166,10 @@
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 22.11.12
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 22.11.12
      &              facdrift, fchinert_a, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, csig_an, po, ne, na,                     !som 02.11.21
+      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
