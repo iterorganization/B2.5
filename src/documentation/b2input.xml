@@ -1174,6 +1174,15 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>b2tanml_anml_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the subdivision between all ions of the anamalous current is applied. The SOLPS5.2 physics model is used.
+          Otherwise the total anamalous current (summed over all ions) is assigned to main ions.
+				</description>
+			</switch>
+			<switch>
 				<name>b2news_ExB</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -1775,7 +1784,7 @@
 					vis_q is a multiplier to the heat viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
-			<switch>
+		  <switch>
 				<name>b2tqce_fke_Zhdanov</name>
 				<default>1</default>
 				<type>integer</type>
@@ -1930,12 +1939,21 @@
 				</description>
 			</switch>
 			<switch>
-				<name>'b2tvspr_visper_all_ions</name>
+				<name>b2tvspr_visper_all_ions</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to 1 the separation of the viscosity ion perpendicular current is applied for all ions.
-          Othewise the viscosity ion perpendicular current will be non zero only for main ions.
+					When set to 1 the subdivision of the viscosity ion perpendicular current is applied for all ions. The SOLPS5.2 physics model is used.
+          Otherwise the viscosity ion perpendicular current will be non zero only for main ions.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tvspr_dia_lim_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the limitation of the diamagnatic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
+          Otherwise the limitation is not applied.
 				</description>
 			</switch>
 			<switch>
@@ -2084,6 +2102,15 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2tfnb_dia_lim_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the limitation of the diamagnetic velocity is applied for all ions. The SOLPS5.2 physics model is used.
+          Otherwise the restriction is applied for all ions except of main ions and the limit velocity is by the factor bx smaller.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2tlc0_*</name>
 				<description>
@@ -4433,6 +4460,15 @@
 					Controls the numerical approximation for the inertia current.
 					Default value is '2' unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
 					A value of '0' recovers the older behaviour (versions 3.0.6 or less).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tiner_inert_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the subdivision between all ions of the inertia current is applied. The SOLPS5.2 physics model is used.
+          Otherwise the total inertia current (summed over all ions) is assigned to main ions.
 				</description>
 			</switch>
 			<switch>
