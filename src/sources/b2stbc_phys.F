@@ -3190,12 +3190,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              For main ions and low Z impurities, it is recommended
 *              to set BCCON=27 for the highest ionisation state. For high Z impurities,
 *              if the ionisation potential of the highest ionisation state is much larger than
-*              the expected core plasma temperature, the BCCON=27 condition should be set for the ionisation state,
-*              for which the density is expected to be maximal.
+*              the expected core plasma temperature, the BCCON=27 condition should be set
+*              for the ionisation state for which the density is expected to be maximal.
 *              For ionisation states higher than that one, it is
 *              recommended to set BCCON=2 with CONPAR=0.0 since their densities
 *              are expected to be negligible, and BCCON=2 with CONPAR=0.0 seems to
-*              be the safest BC condition in this case. 
+*              be the safest boundary condition in this case.
 *              THE POLOIDAL DENSITY VARIATION FROM THE NEIGHBOURING RADIAL
 *              CELL IS ADDED TO THE AVERAGE DENSITY.
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
