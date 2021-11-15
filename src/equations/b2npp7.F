@@ -15,9 +15,9 @@
       real (kind=R8) ::
      *   rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   conc(-1:nx,-1:ny,0:1), sch(-1:nx,-1:ny,0:3),
-     3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 27.01.00
+     3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 27.01.00
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
-     4   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1)                                 !srv 27.01.00
+     4   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1)                               !srv 27.01.00
       logical solving, solvereg(0:nregionv)                              !srv 22.05.18
 *   ..input/output arguments
       real (kind=R8) ::
@@ -89,7 +89,7 @@
 *    ..test sign of ne, te
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-*    ..test sign of conc, avisper_a, bvisper_a, cvisper_a                   !srv 27.01.00
+*    ..test sign of conc, avisper_a, bvisper_a, cvisper_a                 !srv 27.01.00
        call b2xvsg (n2*2, conc, 1, 'conc', '.ge.')
        call b2xvsg (n2*2*ns, avisper_a, 1, 'avisper_a', '.ge.')           !srv 27.01.00
        call b2xvsg (n2*2*ns, bvisper_a, 1, 'bvisper_a', '.ge.')           !srv 27.01.00
@@ -105,7 +105,7 @@
 
       if(iout .eq. 1) then                !srv 11.09.09 {
         call my_out(70,nx,ny,po,'b2npp7_po0')
-      endif                                                       !srv 11.09.09 }
+      endif                                                         !srv 11.09.09 }
 
 * ..main computation
 *   ..compute residual

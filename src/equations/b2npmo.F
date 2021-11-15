@@ -532,8 +532,7 @@
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nx, ny, is, ismain, facdrift, fac_ExB,             !srv 19.02.21
-     &   fchanml_a(-1,-1,0,is),                                        !som 03.11.21    
-     &   smban)
+     &   fchanml_a(-1,-1,0,is), smban)                                 !som 03.11.21
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)

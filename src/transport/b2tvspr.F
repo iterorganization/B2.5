@@ -1,6 +1,5 @@
-      subroutine b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
-     &   po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
-     &   fchvisper)
+      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,  !srv 10.10.17 19.02.21
+     &   avisper_a, bvisper_a, cvisper_a, fchvisper_a, fchvisper)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -70,7 +69,7 @@
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
       call b2txvspr(nx, ny, ns, ismain, fac_vis, vol,                   !srv 10.10.17 19.02.21
      &              avisper_a, bvisper_a, cvisper_a)
-* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
+* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
       va=0.0e0_R8
       dva=0.0e0_R8
       fchvisper =0.0e0_R8                                               !srv 22.11.99
@@ -80,8 +79,8 @@
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
      &   no_current.eq.0) then
        do is = 0,ns-1                                                   !srv 16.10.17
-!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
-!        if(is.eq.ismain) then                                           !srv 19.02.21
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 16.10.17
+!        if(is.eq.ismain) then                                          !srv 19.02.21
          if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
      &       (visper_all_ions.eq.0 .and. is.eq.ismain)) then
           do iy=-1,ny

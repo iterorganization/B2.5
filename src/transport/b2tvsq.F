@@ -86,8 +86,8 @@
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.               !srv 16.10.17
      &   no_current.eq.0) then
          do is = 0,ns-1                                                 !srv 12.05.11
-!          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 12.05.11
-          if(is.eq.ismain) then                                          !srv 19.02.21   !
+!          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 12.05.11
+          if(is.eq.ismain) then                                         !srv 19.02.21   !
            qip0  = 0.0e0_R8
            qip1  = 0.0e0_R8
            qipgen= 0.0e0_R8

@@ -103,7 +103,7 @@
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
-!      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
+!      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then      !srv 26.10.08
       if(isb.eq.ismain) then                                        !srv 19.02.21
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
