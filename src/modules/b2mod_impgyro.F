@@ -35,7 +35,7 @@
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
-     &                      !    by ionization/recombination
+     &                      !    by ionisation/recombination
      &     im_cc (:,:,:),   ! ion momentum source by Coulomb collision
      &     ie_cc (:,:),     ! ion heat source by Coulomb collision
      &     ee_rd (:,:),     ! electron heat source by radiation

@@ -19,4 +19,4 @@
      &  'maintained by David Coster and Martin O''Mullane. ')
   102 format ()
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2wfr3
