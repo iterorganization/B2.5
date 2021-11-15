@@ -891,7 +891,8 @@ c           l_ddt=l_ddt+1
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
       if (ncall.eq.0) then
-        call b2trci(nx,ny,ns,nnreg(0))
+        call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+        if (main_call) call b2trci(nx,ny,ns,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
