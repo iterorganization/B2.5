@@ -995,7 +995,7 @@ contains
           if (streql(database,'ITER').and..not.eq_found) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
             allocate( edge_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
-            if ( pit_rescale.eq.1.0_IDS_real ) then
+            if ( abs(pit_rescale).eq.1.0_IDS_real ) then
               i = nint(b0r0_ref/b0r0)
               select case (i)
               case (1)
@@ -1021,15 +1021,15 @@ contains
               call write_sourced_value( summary%global_quantities%q_95, 3.0_IDS_real )
               summary%global_quantities%q_95%source = "ITER Baseline q95=3 equilibrium"
             else
-              call write_sourced_value( summary%global_quantities%b0, -b0 )
-              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
+              call write_sourced_value( summary%global_quantities%b0, -b0r0 / 6.2_IDS_real )
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0r0 / 6.2_IDS_real
               write(eq_source, '(a,1pe12.5,a)' ) "ITER Baseline q95=3 equilibrium"// &
-                  &  " (current rescaled by ",pit_rescale,")"
+                  &  " (current rescaled by ",abs(pit_rescale),")"
               call write_sourced_value( summary%global_quantities%ip, &
-                  &  -15.0e6_IDS_real*pit_rescale )
+                  &  -15.0e6_IDS_real*abs(pit_rescale) )
               summary%global_quantities%ip%source = eq_source
               call write_sourced_value( summary%global_quantities%q_95, &
-                  &   3.0_IDS_real/pit_rescale )
+                  &   3.0_IDS_real/abs(pit_rescale) )
               summary%global_quantities%q_95%source = eq_source
             end if
             call write_sourced_constant( summary%global_quantities%r0, 6.2_IDS_real )
