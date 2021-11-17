@@ -56,7 +56,7 @@
           do is = 0, ns-1
             if (.not.is_neutral(is)) then
               cfloi_vh(ix,iy)=cfloi_vh(ix,iy)+na(ix,iy,is)*
-     & sum(c_hw_save(ix,iy,0:nspecies-1,s2nucl(is))*
+     & sum(c_hw_save(ix,iy,0:nspecies-1,s2nucl(is)-1)*
      & (ua(ix,iy,is)-av_ualpha(ix,iy,0:nspecies-1)))
             endif
           enddo
