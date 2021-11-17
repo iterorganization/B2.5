@@ -872,9 +872,6 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             if (mpg%cvOnClosedSurface(icv).and.ishigh)
      >       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 9')
-          if (switch%mdf_fhi.ne.0) then
-            call xerrab('BCCON = 9 not yet imlemented for mdf')
-          endif
           endif
           
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
@@ -887,7 +884,26 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             srw%sna0(iCv1,1,is) = -(co%dna0(iCv1,is)+co%dpa0(iCv1,is)*
      &             (rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1)))/
      &             conpar(is,ib,1)*sy
-
+            if (switch%mdf_fnb.eq.1) then
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     .          (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))
+              if(t0.ge.0.0_R8) then
+                srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + t0
+              else
+                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     .            t0/pl%na(iCv1,is)
+              endif
+              t1 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
+     &          0.5_R8*(pl%na(iCv1,is) + pl%na(iCv2,is))
+              if(t1.ge.0.0_R8) then
+                srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + t1
+              else
+                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) + 
+     &            t1/pl%na(iCv1,is)
+              endif
+            endif
           enddo
 #ifdef WG_TODO
 
@@ -4509,9 +4525,6 @@ cghgh
      &         'Please ensure that this boundary condition '//
      &         'is consistent with density boundary conditions'  !srv 21.09.12
             end if
-            if(switch%mdf_fhe.ne.0) then                              
-              call xerrab('BCENE=9 not yet for mdf')
-            endif
           enddo
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
@@ -4528,6 +4541,20 @@ cghgh
             srw%she0(iCv1,1) = srw%she0(iCv1,1) + rt%rza(iCv1,is)*
      &                     2.5_R8*srw%sna0(iCv1,1,is)*pl%na(iCv1,is)
           enddo !! end species loop
+          if(switch%mdf_fhe.ne.0) then
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+            t0 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*1.5_R8*
+     &        (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%veecrb(iFc,0) +
+     &         geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%veecrb(iFc,1))*
+     &         0.5_R8*(dv%ne(iCv1)+dv%ne(iCv2))*
+     &         0.5_R8*(pl%te(iCv1)+pl%te(iCv2))
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%she0(iCv1,1) = srw%she0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%te(iCv1)
+          endif
         enddo   !! end loop over cells
 #ifdef WG_TODO
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -6463,9 +6490,6 @@ cghgh
      &                 'Please ensure that this boundary condition '//
      &                 'is consistent with density boundary condition'  !srv 21.09.12
           endif
-          if (switch%mdf_fhi.ne.0) then
-            call xerrab('BCENI = 9 not yet imlemented for mdf')
-          endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -6487,6 +6511,22 @@ cghgh
      &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
             endif
           enddo !! end species loop
+          if(switch%mdf_fhi.ne.0) then
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+            do is=0,ns-1
+              t0 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*1.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
+     &           0.5_R8*(pl%ti(iCv1)+pl%ti(iCv2))
+              srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &          max(0.0_R8,t0)
+              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
+     &          min(0.0_R8,t0)/pl%ti(iCv1)
+            enddo
+          endif
         enddo   !! end boundary cell loop
 #ifdef WG_TODO
         IF(BCCHAR(IB).EQ.'S') THEN
