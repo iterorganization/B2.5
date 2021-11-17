@@ -18,7 +18,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain                                        !srv 19.02.21 
+      integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      & na(-1:nx,-1:ny,0:ns-1),
      & ua(-1:nx,-1:ny,0:ns-1),

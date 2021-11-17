@@ -18,7 +18,7 @@
      1   vol(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 27.01.00
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 27.01.00
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1)
 *-----------------------------------------------------------------------
@@ -50,7 +50,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
-      avisper_a  = 0.0e0_R8; bvisper_a = 0.0e0_R8; cvisper_a = 0.0e0_R8       !srv 27.01.00 22.03.02
+      avisper_a  = 0.0e0_R8; bvisper_a = 0.0e0_R8; cvisper_a = 0.0e0_R8 !srv 27.01.00 22.03.02
         
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
@@ -90,10 +90,10 @@
       if(iout.eq.1) then
        do iy=-1,ny
         do ix=-1,nx
-          wrk0(ix,iy)=hy1(ix,iy)
+         wrk0(ix,iy) = hy1(ix,iy)
         enddo
        enddo
-       call my_out(70,nx,ny,wrk0,'hy1') 
+       call my_out(70,nx,ny,wrk0,'hy1')
        call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvspr_bbv')
        call my_out(70,nx,ny,vol,'b2tvspr_vol')
        do is = 0,ns-1

@@ -254,7 +254,7 @@ cxpb
           ta_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state temperature
         enddo
         read(74,*) dext(:,:)     ! electron particle source
-     &                           !    by ionization/recombination == ep_ir
+     &                           !    by ionisation/recombination == ep_ir
         sne_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         read(74,*) dext(:,:)     ! ion momentum source by Coulomb collision == im_cc
         smo_ext(0:nxd-1,0:nyd-1,ismain) = dext(:,:)
@@ -263,7 +263,6 @@ cxpb
         read(74,*) dext(:,:)     ! electron heat source by radiation = ee_rd
         she_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         deallocate(dext)
-        close(74)
         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
@@ -339,6 +338,7 @@ cxpb
       endif
 
       initialised_externals=.true.
+      close(74)
       return
   974 continue
       if (.not.initialised_externals)

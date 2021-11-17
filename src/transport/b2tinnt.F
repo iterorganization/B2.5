@@ -224,7 +224,7 @@
      &                     (qe*rza(ix,iy,is)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
      &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,is0)*
-     &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 
+     &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
 !     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
@@ -244,7 +244,7 @@
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
      &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,is0)*
-     &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 
+     &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
 !     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
@@ -490,10 +490,10 @@
        call my_out(70,nx,ny,csigia(-1,-1,1),'b2tinnt_csigiay')
        do is0 = 0, ns-1                                                   !som 04.11.21 {
         if (is_neutral(is0).and.nint(zn(is0)).eq.1) then 
-         write (chns0,'(i3.3)') is0 
+         write (chns0,'(i3.3)') is0
          do is = 0, ns-1
-          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then 
-           write (chns,'(i3.3)') is 
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+           write (chns,'(i3.3)') is
            call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),
      &                                      'b2tinnt_csiginx'
      &                                       //chns//'_'//chns0)
@@ -502,9 +502,9 @@
      &                                       //chns//'_'//chns0)
           endif
          enddo
-         call my_out(70,nx,ny,fnan(-1,-1,0,is0),'b2tinnt_fnanx' 
+         call my_out(70,nx,ny,fnan(-1,-1,0,is0),'b2tinnt_fnanx'
      &                                       //chns0)
-         call my_out(70,nx,ny,fnan(-1,-1,1,is0),'b2tinnt_fnany' 
+         call my_out(70,nx,ny,fnan(-1,-1,1,is0),'b2tinnt_fnany'
      &                                       //chns0)
         endif
        enddo                                                              !som 04.11.21 }

@@ -1166,7 +1166,9 @@ c.. Test consistency with physical edges within the computational domain
       subroutine write_b2mod_neutrals_save(nwrite,edition)
       implicit none
       integer nwrite
+      integer i
       character*4 edition
+      character*24 hlp_frm
       character*256 filename
 
       if (edition.eq.'    ') then
@@ -1176,7 +1178,11 @@ c.. Test consistency with physical edges within the computational domain
       endif
       if (maxval(saved_volrec).gt.0.0_R8) then
         open(nwrite,file=trim(filename))
-        write(nwrite,neutrals_save)
+        write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1e15.8,1x,a1))'
+        write(nwrite,'(a)') '&NEUTRALS_SAVE'
+        write(nwrite,hlp_frm) 'SAVED_VOLREC= ',
+     .                        (saved_volrec(i),',',i=1,nstrat)
+        write(nwrite,'(a)') '/'
         close(nwrite)
         write(*,*) 'Saved ',trim(filename)
       endif

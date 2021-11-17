@@ -4778,7 +4778,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               IF (INDEX(REACZEILE,'ADAS') .NE. 0 .and.
      &           (INDEX(REACZEILE,'plt') .NE. 0 .or.
      &            INDEX(REACZEILE,'prb') .NE. 0) .and.
-     &            DPP .EQ. 0.0_R8) THEN ! Add missing ionization potential
+     &            DPP .EQ. 0.0_R8) THEN ! Add missing ionisation potential
                 found = .false.
                 is = 1
                 do while (.not.found.and.is.le.92)
@@ -4804,7 +4804,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                   end if
                 else
                   write(*,'(a,i3,a)') 'Reaction ',IREAC1(I),
-     .             ' is missing the ionization potential value.'
+     .             ' is missing the ionisation potential value.'
                   write(*,*) 'Could not find a species match!'
                   write(*,*) 'Needs to be added in by hand'
                   write(*,*) 'Check the Eirene input files!'
@@ -5083,7 +5083,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
               ELSE
                 EELECA(JATM,J) = EELECA(JATM,K)
                 IF (NCHARA(JATM).EQ.2) THEN
- ! Correct round-off of He ionization energy
+ ! Correct round-off of He ionisation energy
                   IF (ABS(EELECA(JATM,J)+24.55).LT.0.01) THEN
                     EELECA(JATM,J)=-24.5874
                   ENDIF

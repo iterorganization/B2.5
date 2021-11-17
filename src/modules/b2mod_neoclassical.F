@@ -3,7 +3,7 @@
       use b2mod_b2cmpa
       use b2mod_version
 
-c     max. number of ionization stages
+c     max. number of ionisation stages
       integer, save :: nzdecl
 
       logical, save :: newneo

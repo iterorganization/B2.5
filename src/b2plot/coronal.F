@@ -5,7 +5,7 @@ c     =========================================================================
 c     -------------------------------------------------------------------------
 c     subroutine getsa:
 c     calculating the ionisation and recombination coefficents rsa and rra for
-c     impurity belonging to the same homonuclear sequence as species i, for 
+c     impurity belonging to the same isonuclear sequence as species i, for
 c     all charge states, at temperature T in eV and ne=1e16/m3.
 c     -------------------------------------------------------------------------
 
@@ -391,7 +391,7 @@ c     coronal equilibrium
           work(-1:nx,-1:ny,co1,iwrk)=
      .     n(-1:nx,-1:ny,co1)*ntot(-1:nx,-1:ny,isstart)
         enddo
-c Move on to next homonuclear sequence
+c Move on to next isonuclear sequence
         is0 = is 
       enddo
 

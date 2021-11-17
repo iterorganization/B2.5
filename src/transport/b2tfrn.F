@@ -213,7 +213,7 @@
 
 csw 30sep2013, added check for no_hybr
 !          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
-!          if(is.eq.ismain) then                                          !srv 19.02.21
+!          if(is.eq.ismain) then                                         !srv 19.02.21
           if (.not.is_neutral(is)) then                                  !srv 08.09.21
            scur =
      &      (fchinert_a(ix,iy,0,is)+fchvispar_a(ix,iy,0,is)+
@@ -605,15 +605,15 @@ c Drift terms
      &       fle_eir*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
      &        /2.0_R8
             do is = 0,ns-1                                           !som 07.11.21
-              if (.not.is_neutral(is)) then          
-                if(no_Ptncr_x_co.eq.0) then            
+              if (.not.is_neutral(is)) then
+                if(no_Ptncr_x_co.eq.0) then
                   cone_eir = hybr(fle_eir,cdna(ix,iy,0,is))
                 else
                   cone_eir = cdna(ix,iy,0,is)
                 endif
                 fne_eir(ix,iy,0) = fne_eir(ix,iy,0) -       
      &            cone_eir*(rza(ix,iy,is)*na(ix,iy,is)-
-     &            rza(leftix(ix,iy),leftiy(ix,iy),is)* 
+     &            rza(leftix(ix,iy),leftiy(ix,iy),is)*
      &            na(leftix(ix,iy),leftiy(ix,iy),is))
               endif
             enddo
@@ -685,8 +685,8 @@ c Drift terms
      &       (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/
      &       2.0_R8
             do is = 0,ns-1                                           !som 07.11.21
-              if (.not.is_neutral(is)) then          
-                if(no_Ptncr_x_co.eq.0) then            
+              if (.not.is_neutral(is)) then
+                if(no_Ptncr_x_co.eq.0) then
                   cone_eir = hybr(fle_eir,cdna(ix,iy,1,is))
                 else
                   cone_eir = cdna(ix,iy,1,is)

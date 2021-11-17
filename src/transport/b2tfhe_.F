@@ -170,7 +170,7 @@ csw 10oct2012
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
 !      do is = 0,ns-1                                                    !srv 12.05.11
-!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
+!        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 12.05.11
 !       if(is.eq.ismain) then                                            !srv 19.02.21
 !         is = ismain   ! 1    ! for is = 1 (za = 1)                     !srv 12.05.11
 * ..compute flediax

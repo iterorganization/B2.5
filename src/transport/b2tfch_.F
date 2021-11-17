@@ -58,8 +58,8 @@
      &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),                !srv 11.07.99
      2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
      3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
-     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 27.01.00
-     $   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)       !srv 24.03.07
+     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 27.01.00
+     $   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)     !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -132,6 +132,7 @@
      &         .or.(maxval(facdrift).ne.0.0_R8.and.dia_cur.ne.0.0_R8)
      &         .or.(vis_per.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8),
      &         'No radial current terms activated!')                     !xpb
+       call ipgeti ('b2tfch_iout', iout)                                 !srv 18.06.08
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
@@ -165,11 +166,12 @@
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+     &              cvsa_drho, fac_vis,                                  !som 18.08.21
+     &              fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 19.02.21
-     &         po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
-     &         fchvisper)
+      call b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,         !srv 10.10.17 19.02.21
+     &         avisper_a, bvisper_a, cvisper_a,
+     &         fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, 

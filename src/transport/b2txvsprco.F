@@ -21,7 +21,7 @@
      &   kmpr(-1:nx,-1:ny), zb(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   avisper_b(-1:nx,-1:ny,0:1), bvisper_b(-1:nx,-1:ny,0:1),            !srv 27.01.00
+     3   avisper_b(-1:nx,-1:ny,0:1), bvisper_b(-1:nx,-1:ny,0:1),        !srv 27.01.00
      &   cvisper_b(-1:nx,-1:ny,0:1), dvisper_b(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.declarations
@@ -45,7 +45,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
-       call ipgeti ('b2txvsprco_iout',iout)                             !srv 06.12.17
+       call ipgeti ('b2txvsprco_iout', iout)                            !srv 06.12.17
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
          write(*,*)
@@ -57,7 +57,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
-      avisper_b  = 0.0e0_R8; bvisper_b = 0.0e0_R8; cvisper_b = 0.0e0_R8;     !srv 27.01.00 22.03.02
+      avisper_b  = 0.0e0_R8; bvisper_b = 0.0e0_R8; cvisper_b = 0.0e0_R8; !srv 27.01.00 22.03.02
       dvisper_b = 0.0e0_R8
 
       fac_vism = maxval(fac_vis)

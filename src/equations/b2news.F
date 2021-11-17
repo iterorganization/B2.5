@@ -391,19 +391,20 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21 
+     &                fchanml_a, fchanml)                                !srv 08.09.21
         call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
-     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+     &                cvsa_drho, fac_vis,                                !som 18.08.21
+     &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,           !srv 08.09.21
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
-     &  po, ti, na, avisper_a, bvisper_a, cvisper_a, fchvisper_a,
-     &  fchvisper)
+     &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci, 
-     &             na,                                                   !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
-     &             fchvisq_a, fchvisq)
+     &                ne2, lnlam, te, ti, ni, chci, 
+     &                na,                                                !som 21.10.21
+     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
+     &                fchvisq_a, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -559,19 +560,20 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21 
+     &                fchanml_a, fchanml)                                !srv 08.09.21 
         call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
-     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+     &                cvsa_drho, fac_vis,                                !som 18.08.21
+     &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &                facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                  !srv 10.10.17 19.02.21
      &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci, 
-     &             na,                                                   !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
-     &             fchvisq_a, fchvisq)
+     &                ne2, lnlam, te, ti, ni, chci, 
+     &                na,                                                !som 21.10.21
+     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
+     &                fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
 #ifndef NO_OPENMP_B2NEWS_LOOP2

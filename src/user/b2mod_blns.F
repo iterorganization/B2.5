@@ -30,7 +30,7 @@ c***   ion_core        flxic       ion flow across the core boundary (based on f
 c***   ion_targ        flxit       ion flow to the targets (based on fna array)         ! IYS 12.01.2018
 c***   ion_wall        flxiw       ion flow to the side walls (based on fna array)      ! IYS 12.01.2018
 c***   ion_dndt        flxid       time derivative of the ion content over the whole domain
-c***   src_ioniz       flxis       ion source due to ionization from neutral (ground) state
+c***   src_ioniz       flxis       ion source due to ionisation from neutral (ground) state
 c***   src_ext         flxex       external source (provided by b2.sources.profile)
 
 c***   ntr_core        flxnc       neutral flow across the core boundary
@@ -313,15 +313,15 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 ! Set all output arrays to zero
 
-      flxic        = 0.0_R8                 ! Ion flux through core boundary based on fna array (sum over all core boundary segments and over all ionization states of given isonuclear sequence)
+      flxic        = 0.0_R8                 ! Ion flux through core boundary based on fna array (sum over all core boundary segments and over all ionisation states of given isonuclear sequence)
 
-      flxit        = 0.0_R8                 ! Ion flux through targets (sum over all targets and over all ionization states of given isonuclear sequence)
+      flxit        = 0.0_R8                 ! Ion flux through targets (sum over all targets and over all ionisation states of given isonuclear sequence)
 
       flxiw        = 0.0_R8                 ! Ion flux through wall boundaries based on fna array
 
-      flxid        = 0.0_R8                 ! Time derivative of the ion content in the whole domain (sum over all cells and over all ionization states of given isonuclear sequence)
+      flxid        = 0.0_R8                 ! Time derivative of the ion content in the whole domain (sum over all cells and over all ionisation states of given isonuclear sequence)
 
-      flxis        = 0.0_R8                 ! Ion source due to ionization from the neutral state (sum over all cells for first ionized state of given isonuclear sequence)
+      flxis        = 0.0_R8                 ! Ion source due to ionisation from the neutral state (sum over all cells for first ionized state of given isonuclear sequence)
 
       flxnc        = 0.0_R8                 ! Neutral flux through core boundary (sum over all core boundary segments for neutrals corresponding to given isonuclear sequence)
       flxnt        = 0.0_R8                 ! Neutral flux through targets (sum over all targets and over all kind of molecules containing given atom)
@@ -512,7 +512,7 @@ c<<<
           enddo
 
 !!!!!
-! Compute the sum of ionization sources for all ionized states of given isonuclear sequence and the time derivative term
+! Compute the sum of ionisation sources for all ionized states of given isonuclear sequence and the time derivative term
 !!!!!
           do iy=0,ny-1
             do ix=0,nx-1
@@ -538,7 +538,7 @@ c<<<
 
                 if (is .eq. EB2SPCR(ls)+1) then  ! means the first ionized state
                   if (use_eirene.ne.0) then
-!     If Eirene is coupled, just take the ionization source from Eirene for given isonuclear sequence
+!     If Eirene is coupled, just take the ionisation source from Eirene for given isonuclear sequence
                     flxis(ls) = sna_eir(ls)
                   else
 !     For standalone run take the source of neutrals with the opposite sign

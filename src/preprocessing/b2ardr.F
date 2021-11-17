@@ -301,7 +301,7 @@
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *
 *     npart - (0:nnucm-1) integer array.
-*     Specifies the number of partitions of the homonuclear sequence.
+*     Specifies the number of partitions of the isonuclear sequence.
 *
 *     izlo, izhi - (0:nnucm-1) integer array.
 *     For inuc in (0:nnuc-1), (izlo(inuc):izhi(inuc)) specifies the

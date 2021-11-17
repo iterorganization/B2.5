@@ -49,4 +49,4 @@
      &  'Heifetz and J. C. Weisheit, ''Survey of Atomic Processes in'/,
      &  ' Edge Plasmas'', J. Nuclear Mater. 121 (1984) 10-16.')
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2wfr0

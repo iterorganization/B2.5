@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,  !srv 27.01.00
-     &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,                       !srv 27.01.00
+     &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,                 !srv 27.01.00
      &    sch, respo, corpo, aa7)                                        !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
@@ -207,9 +207,9 @@
            endif                                                     !srv 26.11.02 12.12.17 }
          enddo
         enddo
-       endif  
+       endif
       enddo
-       
+
 *   ..correct RHS if not solving
       do iy = -1, ny
        do ix = -1, nx

@@ -601,7 +601,7 @@
        if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
      & Zhdanov_visu.eq.0) then                                         !som 13.08.21
          call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,is),   !19.02.21
-     &              flubv)                                             !srv 01.07.05 11.09.09 16.10.17
+     &                flubv)                                           !srv 01.07.05 11.09.09 16.10.17
        else
          if(.not. is_neutral(is)) then
            call b2nxfv_zh (nx, ny, rho_A_rel(-1,-1,is), hz,            !som 13.08.21
@@ -696,8 +696,7 @@
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nx, ny, is, ismain, facdrift, fac_ExB,             !srv 19.02.21
-     &   fchanml_a(-1,-1,0,is),                                        !som 03.11.21    
-     &   smban)
+     &   fchanml_a(-1,-1,0,is), smban)                                 !som 03.11.21
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)

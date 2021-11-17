@@ -139,7 +139,7 @@
        call xertst
      &  (.not.(streql(b2frates_flag,'adpak').and.fix_recomb.ne.0),
      &   'fix_recomb should not be used with ADPAK rates!')
-*   ..identify impurity homonuclear sequences
+*   ..identify impurity isonuclear sequences
        nimp_tmp=0
        jimp_tmp=0
        do is = 1, nspecies !{
@@ -379,10 +379,10 @@
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
-c the default treatment is to have the entire ionization potential
+c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
-c this treatment changes this --- the ionization potential difference
+c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
