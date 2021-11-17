@@ -654,8 +654,8 @@
           enddo
 
           wrk0=0.0_R8
-          do iy = -1, ny                                           
-            do ix = 0, nx
+          do iy = 0, ny                                           
+            do ix = -1, nx
              if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
                if(leftix(ix,iy).ne.-2) then                           
@@ -714,8 +714,8 @@
 * ..calculate the y-component of the parallel viscosity current
 *                                  connected with the heat flux
             wrk0 = 0.0e0_R8       
-            do iy = -1,mintopcut                                       
-              do ix = 0,nx
+            do iy = 0,mintopcut                                       
+              do ix = -1,nx
                 if(on_closed_surface(bottomix(ix,iy),
      .                               bottomiy(ix,iy))) then
                  if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1)then
