@@ -26,11 +26,11 @@
 *
 *     This routine computes:
 *     z2n_xy: squared charge weighted average density of the one type of ions
-*     nal: average density of the isonuclear ion
-*     Ia: squared charge weighted density to squared charge weighted average density of the isonuclear ion ratio
-*     av_ualpha: Ia weighted average flow velocity of the isonuclear ion
+*     nal: average density of the one type of ions
+*     Ia: squared charge weighted density to squared charge weighted average density of the one type of ions ratio
+*     av_ualpha: Ia weighted average flow velocity of the one type of ions
 *     avm_u: mass weighted average flow velocity of all ion
-*     gtalc: effective temperature gradient of the isonuclear ion in the cell center
+*     gtalc: effective temperature gradient of the one type of ions in the cell center
 *     gt_Ac: temperature gradient of the ion each charge state in the cell center
 *
 *-----------------------------------------------------------------------
@@ -89,22 +89,22 @@
 *
 *  1. purpose
 *
-*     b2mod_zhfrtf_prep calculates averaged densities, Ia ratio and Ia weighted average velocity of the isonuclear ion
+*     b2mod_zhfrtf_prep calculates averaged densities, Ia ratio and Ia weighted average velocity of the one type of ions 
 *
 *  3. description 
 *
 *     This routine computes:
-*     z2n_xy: squared charge weighted average density of the isonuclear ion
-*     nal: average density of the isonuclear ion
-*     Ia: squared charge weighted density to squared charge weighted average density of the isonuclear ion ratio
-*     av_ualpha: Ia weighted average flow velocity of the isonuclear ion
+*     z2n_xy: squared charge weighted average density of the one type of ions 
+*     nal: average density of the one type of ions 
+*     Ia: squared charge weighted density to squared charge weighted average density of the one type of ions ratio
+*     av_ualpha: Ia weighted average flow velocity of the one type of ions 
 *
 *-----------------------------------------------------------------------
 
       call subini ('b2mod_zhfrtf_prep')
       do iy = -1, ny
         do ix = -1, nx
-*   ..calculate the average Z**2*n and numerical density of the isonuclear ion
+*   ..calculate the average Z**2*n and numerical density of the one type of ions
           do inucl = 0, nspecies-1
             z2n_xy(ix,iy,inucl) = 0.0_R8
             nal(ix,iy,inucl) = 0.0_R8
@@ -115,7 +115,7 @@
      & na(ix, iy, nucl2s(inucl,iz))
             enddo
           enddo
-*   ..Ia ratio and Ia weighted average velocity of the isonuclear ion
+*   ..Ia ratio and Ia weighted average velocity of the one type of ions
           Ia(ix, iy, :)=0.0_R8
           do inucl = 0, nspecies-1
             av_ualpha(ix,iy,inucl) = 0.0_R8
@@ -212,7 +212,7 @@
 *     This routine computes:
 *     rho_A_rel: relative mass density of the ions "a" to the total ion mass density
 *     avm_u: mass weighted average flow velocity of all ion
-*     gtalc: effective temperature gradient of the isonuclear ion in the cell center
+*     gtalc: effective temperature gradient of the one type of ions in the cell center
 *     gt_Ac: temperature gradient of the ion each charge state in the cell center
 *
 *-----------------------------------------------------------------------
@@ -262,7 +262,7 @@
        endif
       enddo
 
-*   ..effective temperature gradient of each isonuclear ion in the cell center 
+*   ..effective temperature gradient of each type of ions ion in the cell center 
       gtalc = 0.0_R8
       do iy = 0, ny-1
         do ix = 0, nx-1
