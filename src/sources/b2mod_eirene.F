@@ -475,58 +475,54 @@ csw 26feb2013
           end do !}
         end if !}
 
-        if(ank_mods.ne.0 .or. ionising_core.ne.0) then
 c*** Check the b2espcr array
-          hlp_bad_isp=.false.
-          ispc_ref=-1
-          do i=0,ns-1 !{
+        hlp_bad_isp=.false.
+        ispc_ref=-1
+        do i=0,ns-1 !{
 cwd exclude fluid neutrals from this check: their recycling coefficient does not
 c   necessarily have to match that of the ions, since they are not treated in the
 c   same Eirene stratum
-            if (is_neutral(i)) cycle
-            j=b2espcr(i)
-            if(ispc_ref(j).lt.0) then !{
-              ispc_ref(j)=i
-              do k=1,nstrat !{
-                if(use_recyceir.gt.0) then
-                  recyctmp=recyceir(k)
-                else
-                  recyctmp=recyc(i,k)
-                endif
-                hlp_scp(j,k)=recyctmp
-              end do !}
-            else !}{
-              hlp_tt=.false.
-              do k=1,nstrat !{
-                if(use_recyceir.gt.0) then
-                  recyctmp=recyceir(k)
-                else
-                  recyctmp=recyc(i,k)
-                endif
-                hlp_tt=hlp_tt.or.
-     1           abs(hlp_scp(j,k)-recyctmp).gt.rec_tol
-              end do !}
-              if(hlp_tt) then !{
-                write (0,*)
+          if (is_neutral(i)) cycle
+          j=b2espcr(i)
+          if(ispc_ref(j).lt.0) then !{
+            ispc_ref(j)=i
+            do k=1,nstrat !{
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(k)
+              else
+                recyctmp=recyc(i,k)
+              endif
+              hlp_scp(j,k)=recyctmp
+            end do !}
+          else !}{
+            hlp_tt=.false.
+            do k=1,nstrat !{
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(k)
+              else
+                recyctmp=recyc(i,k)
+              endif
+              hlp_tt=hlp_tt.or.
+     1         abs(hlp_scp(j,k)-recyctmp).gt.rec_tol
+            end do !}
+            if(hlp_tt) then !{
+              write (0,*)
      1           'eirene_mc: different values of recyceir ',
      ,                                  'species,is= ',j,i
-                hlp_bad_isp=.true.
-              end if !}
+              hlp_bad_isp=.true.
             end if !}
-          end do !}
-          call xertst(.not.hlp_bad_isp,
+          end if !}
+        end do !}
+        call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
 
 csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
 c c*** "time layer"
-c          l_ddt=0
-c          if(crcstra(nstrat).eq.'T') l_ddt=nnlimi+nnstsi
-
-        end if !}
-
+c       l_ddt=0
+c       if(crcstra(nstrat).eq.'T') l_ddt=nnlimi+nnstsi
         hlp_tt=.false.
-      endif
+      end if !}
 
       if (ncall.eq.0 .and. ionising_core.ne.0) then
 cxpb compute core boundary surface area
