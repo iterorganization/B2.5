@@ -25,7 +25,7 @@
 *  3. description 
 *
 *     This routine computes:
-*     z2n_xy: squared charge weighted average density of the isonuclear ion
+*     z2n_xy: squared charge weighted average density of the one type of ions
 *     nal: average density of the isonuclear ion
 *     Ia: squared charge weighted density to squared charge weighted average density of the isonuclear ion ratio
 *     av_ualpha: Ia weighted average flow velocity of the isonuclear ion

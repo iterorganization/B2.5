@@ -1342,7 +1342,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2tral_Zhdanov_closure.eq.1, the Grad's-Zhdanov module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for the all ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al [S. O. Makarov et al, 2021]. Otherwise the standard SOLPS-ITER model is applied.
+					If b2tral_Zhdanov_closure.eq.1, the Grad's-Zhdanov module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al [S. O. Makarov et al, 2021]. Otherwise the standard SOLPS-ITER model is applied.
 				</description>
 			</switch>
 			<switch>
