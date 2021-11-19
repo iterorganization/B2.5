@@ -809,7 +809,7 @@ contains
         call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
             &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
             &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    &
-            &   INCLUDE_GHOST_CELLS, gmap )
+            &   INCLUDE_GHOST_CELLS, gmap, .false. )
         mapInitialized = .true.
 
         !! To be done only on the run of the first time step. If already

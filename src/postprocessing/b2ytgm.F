@@ -667,7 +667,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,
      &     leftix1,leftiy1,rightix1,rightiy1,
-     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1)
+     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1,.false.)
       map1Initialized = .true.
 
 * ..return
