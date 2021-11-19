@@ -722,7 +722,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
         call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .false.)
         mapInitialized = .true.
       endif
 

@@ -737,7 +737,7 @@ cdpc-debug
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
       mapInitialized = .true.
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
