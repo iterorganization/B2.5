@@ -576,9 +576,9 @@ contains
             &        cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,        & !som 03.11.21
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
-            &        cvsahz_drho, cvsa_drho,                                      &   !som 18.08.21
-            &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           &   !som 08.10.21
-            &        cvsa_hAdp_albe, cvsa_hBdp_al,                                &   !som 20.10.21
+            &        cvsahz_drho, cvsa_drho,                                      & !som 18.08.21
+            &        chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,           & !som 08.10.21
+            &        cvsa_hAdp_albe, cvsa_hBdp_al,                                & !som 20.10.21
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
             &        csig_stoch, chce_stoch)
 !  ..compute log-log charge exchange rate coefficients
@@ -596,11 +596,11 @@ contains
             &        fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        &
             &        fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,   &
             &        fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,         &
-            &        fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a, &      !srv 08.09.21
+            &        fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a, & !srv 08.09.21
             &        fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,        &
             &        fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,      &
-            &        cdna, cdpa, cvsa_cl, cvsa_drho,                             &!som 18.08.21
-            &        chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              &!som 20.10.21
+            &        cdna, cdpa, cvsa_cl, cvsa_drho,                             & !som 18.08.21
+            &        chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              & !som 20.10.21
             &        cvla, chce, chve, chci, chvi, calf,                         &
             &        rlsa, rlra, rlqa, rlcx, rlrd, rlbr,                         &
             &        rlza, rlz2, rlpt, rlpi,                                     &

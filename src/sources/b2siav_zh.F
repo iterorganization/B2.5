@@ -1,13 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb,              !srv 19.02.21
-     & zb,
+      subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
      & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,       !srv 01.07.09
      & cvsb, cvsb_cl, cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
-     & alpha1,
-     * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,             !som 08.10.21
-     & wrk0, wrk1, wrk2, rho_rel, avm_u) 
+     & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     & wrk0, wrk1, wrk2, rho_rel, avm_u)
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
@@ -16,7 +14,7 @@
       use b2mod_b2cmpa
       use b2mod_balance                                               !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf,
-     & b2siav_smovi0to3
+     &          b2siav_smovi0to3
       use b2mod_openmp
       use b2mod_plasma
      & , only : fac_vis                                               !srv 22.05.18
@@ -31,36 +29,34 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
-     & mb, lnlam(-1:nx,-1:ny),                                        !srv 01.07.09
-     & zb(-1:nx,-1:ny),
-     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
-     & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),             !srv 04.10.99 09.01.01
-     & cvsbhz_drho(-1:nx,-1:ny,0:1),                                  !som 18.08.21
-     & chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                         !som 08.10.21
-     & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
-     & cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),   !som 08.10.21
-     & cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
-     & rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny)                       !som 13.08.21
+     &  mb, lnlam(-1:nx,-1:ny), zb(-1:nx,-1:ny), ub(-1:nx,-1:ny),     !srv 01.07.09
+     &  wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
+     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
+     &  po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     &  chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                 !srv 23.07.99
+     &  cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),            !srv 04.10.99 09.01.01
+     &  cvsbhz_drho(-1:nx,-1:ny,0:1),                                 !som 18.08.21
+     &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                        !som 08.10.21
+     &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
+     &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
+     &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
+     &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny)                      !som 13.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
-     *   smbvi(-1:nx,-1:ny,0:3),                                      !som 13.08.21
-     &   kt_neo(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
+     *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
+     *  smbvi(-1:nx,-1:ny,0:3),                                       !som 13.08.21
+     &  kt_neo(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny)
-*   ..common blocks
+     *  wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     b2siav_zh computes a linearised representation of the additional
-*     viscosity if Zhdanov closure is applied
-*     
+*     B2SIAV_ZH computes a linearised representation of the additional
+*     viscosity if the Zhdanov closure is applied.
+*
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -72,21 +68,21 @@
       !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
       character chns*3, chns0*3, chk*1                              !srv 17.06.02
       real (kind=R8) ::
-     *     t0, ft,                                                  !srv 16.10.17
-     &     ft_h                                                     !som 11.10.21
+     *  t0, ft,                                                     !srv 16.10.17
+     &  ft_h                                                        !som 11.10.21
       real (kind=R8), save ::
-     &     addvis=1.0_R8, addvis1=1.0_R8, chip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
-     &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
+     &  addvis=1.0_R8, addvis1=1.0_R8, chip1 = 0.5e0_R8,            !srv 28.03.06 !srv 19.10.08
+     &  cvsa_mltpl = 1.0e0_R8                                       !iyv 06.12.13
       !$OMP THREADPRIVATE(addvis, addvis1, chip1, cvsa_mltpl)
       real (kind=R8) ::
-     *   tauia(-1:nx,-1:ny,0:ns-1), hip0(-1:nx,-1:ny),              !srv 23.07.99
-     *   hip1(-1:nx,-1:ny), hipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
-     *   hipgen_al(-1:nx,-1:ny,0:nspecies-1),                       !som 11.10.21
-     &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-     &   tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
-      real (kind=R8) :: hip0a(-1:nx,-1:ny), hip0b(-1:nx,-1:ny)
-     &                , tauia1(-1:nx,-1:ny)
-     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     *  tauia(-1:nx,-1:ny,0:ns-1), hip0(-1:nx,-1:ny),               !srv 23.07.99
+     *  hip1(-1:nx,-1:ny), hipgen(-1:nx,-1:ny),                     !srv 23.07.99 19.01.05
+     *  hipgen_al(-1:nx,-1:ny,0:nspecies-1),                        !som 11.10.21
+     &  tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                  !lk 23.05.06 05.07.07 {
+     &  tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
+      real (kind=R8) :: hip0a(-1:nx,-1:ny), hip0b(-1:nx,-1:ny),
+     &                  tauia1(-1:nx,-1:ny),
+     &                  nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
       real (kind=R8) :: u_res(-1:nx,-1:ny)                          !som 13.08.21
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
@@ -107,7 +103,7 @@
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'b2siav_zh OpenMP warning: no file out in ',
+         write(*,*) 'b2siav_zh OpenMP warning: no file output in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0
@@ -124,7 +120,7 @@
       smbvv = 0.0_R8
       smbvi = 0.0_R8                                                !som 13.08.21
 
-!      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
+!     if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
 !     if(isb.eq.ismain) then                                        !srv 19.02.21
       if (.not.is_neutral(isb)) then                                !som 11.10.21
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
@@ -259,28 +255,30 @@
             enddo
           enddo
 
-* ..calculate the parallel charge states averaged heat flux of all species
+* ..calculate the parallel charge state averaged heat flux of all species
           do inucl= 0, nspecies-1
             hip0 = 0.0e0_R8
-           
+
             if (hstyle .eq. 0 .and. minval(zb).gt.0.0_R8) then
               hip0a = 0.0e0_R8
               hip0b = 0.0e0_R8
-           
+
               do iy = 0, mintopcut-1    ! for inner surfaces
                 do ix = 0, nx
                   if(on_closed_surface(ix,iy)) then
                     hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
-     & /bb(ix,iy,0)/bbaverage2(iy))
-     & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1(ix,iy,inucl))*
-     &  (ti(topix(ix,iy),topiy(ix,iy))
-     &  -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &  (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &   0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &               /bb(ix,iy,0)/bbaverage2(iy))
+     &               *(nal(ix,iy,inucl)*ti(ix,iy)/
+     &                 qe*Z_to_m1(ix,iy,inucl))
+     &               *(ti(topix(ix,iy),topiy(ix,iy))
+     &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &                (hy1(ix,iy)+
+     &                 0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                 0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                   endif
                 enddo
               enddo
-           
+
               do iy = 0, mintopcut-1
                 do ix = -1, nx
                   if(on_closed_surface(ix,iy)) then
@@ -291,7 +289,7 @@
                   endif
                 enddo
               enddo
-           
+
               do iy = 0, mintopcut-1
                 do ix = -1, nx
                   if(on_closed_surface(ix,iy)) then
@@ -302,11 +300,11 @@
                   endif
                 enddo
               enddo
-           
+
             endif
-           
+
             if (hstyle.eq.1 .and. minval(zb).gt.0.0_R8) then
-           
+
               wrk0 = 0.0e0_R8
               do iy=0,ny-1
                 do ix=-1,nx
@@ -316,29 +314,30 @@
                   endif
                 enddo
               enddo
-           
+
               do iy=-1,ny
                 do ix=-1,nx-1
                   if(on_closed_surface(ix,iy)) then
                     if(rightix(ix,iy).ne.nx+1 .and.
      &                 topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
-     >               hip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
-     & wrk0(rightix(ix,iy),rightiy(ix,iy)))
-     & *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     & -2.5e0_R8*bb(ix,iy,2)
-     & /bb(ix,iy,0)/bb(ix,iy,3)
-     & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1(ix,iy,inucl))*
-     &  (ti(topix(ix,iy),topiy(ix,iy))
-     &  -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &  (hy1(ix,iy)+
-     &   0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &   0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     >               hip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)
+     &                +wrk0(rightix(ix,iy),rightiy(ix,iy)))
+     &                *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
+     &                -2.5e0_R8*bb(ix,iy,2)
+     &                /bb(ix,iy,0)/bb(ix,iy,3)
+     &                *(nal(ix,iy,inucl)*ti(ix,iy)
+     &                 /qe*Z_to_m1(ix,iy,inucl))
+     &                *(ti(topix(ix,iy),topiy(ix,iy))
+     &                 -ti(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                /(hy1(ix,iy)+
+     &                  0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                  0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                   endif
                 enddo
               enddo
-           
+
             endif
-           
+
             hip1 = 0.0e0_R8
             do iy=0,ny-1
               do ix=0,nx-1
@@ -347,12 +346,12 @@
      &                                  /sqrt(amnucl(inucl)*mp)
               enddo
             enddo
-           
+
             hipgen_al(-1:nx,-1:ny,inucl) = 0.0e0_R8
             do iy=0,ny-1
               do ix=0,nx-1
                 hipgen_al(ix,iy,inucl)=hip1(ix,iy)*
-     & atan(hip0(ix,iy)/hip1(ix,iy))*sqrt(bb(ix,iy,3))
+     &           atan(hip0(ix,iy)/hip1(ix,iy))*sqrt(bb(ix,iy,3))
               enddo
             enddo
           enddo
@@ -362,17 +361,17 @@
 *   at the face of cell
 
           wrk0=0.0_R8
-          wrk2 = sqrt(bb(:,:,3))    
+          wrk2 = sqrt(bb(:,:,3))
           wrk1 = log(hz*wrk2)
           do iy=0,ny-1
             do ix=-1,nx
               if(on_closed_surface(ix,iy)) then
                 if(leftix(ix,iy).ne.-2) then
                   do inucl=0,nspecies-1
-                    wrk0(ix,iy) = wrk0(ix,iy) + 
+                    wrk0(ix,iy) = wrk0(ix,iy) +
      &           (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
      &           nb(leftix(ix,iy),leftiy(ix,iy))/
-     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))* 
+     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
      &           ft_h*cvsahz_hAdp_albe(ix,iy,0,s2nucl(isb)-1,inucl)/
      &           (bb(ix,iy,0)*bb(ix,iy,3)*
      &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
@@ -395,7 +394,7 @@
             do ix=0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 t0=fac_vis(ix,iy)*addvis*                           !srv 22.05.18
-     &                 vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
+     &            vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
      &            sqrt(bb(ix,iy,3))*hz(ix,iy)
                 smbvh(ix,iy,0) = smbvh(ix,iy,0)
      &            +t0*(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
@@ -409,16 +408,16 @@
 *   at the face of cell
 
             wrk0=0.0_R8
-            wrk2 = sqrt(bb(:,:,3))   
+            wrk2 = sqrt(bb(:,:,3))
             wrk1 = log(hz*wrk2)
             do iy=0,ny-1
               do ix=-1,nx
                 if(on_closed_surface(ix,iy)) then
                   if(leftix(ix,iy).ne.-2) then
-                    wrk0(ix,iy) =  
+                    wrk0(ix,iy) =
      &           (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
      &           nb(leftix(ix,iy),leftiy(ix,iy))/
-     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))* 
+     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
      &           ft_h*cvsahz_hBdp_al(ix,iy,0,s2nucl(isb)-1)/
      &           (bb(ix,iy,0)*bb(ix,iy,3)*
      &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
@@ -442,8 +441,8 @@
             do iy=0,ny-1
               do ix=0,nx-1
                 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then
-                  t0=fac_vis(ix,iy)*addvis*                           !srv 22.05.18
-     &                   vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
+                  t0=fac_vis(ix,iy)*addvis*                         !srv 22.05.18
+     &              vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
      &              sqrt(bb(ix,iy,3))*hz(ix,iy)
                   smbvh(ix,iy,0) = smbvh(ix,iy,0)
      &             +t0*(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
@@ -454,7 +453,7 @@
         endif                                                       !lk 23.05.06 05.07.07
       endif                                                         !som 11.10.21
 
-        if (addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
+        if (addvis1.ne.0.0_R8) then                                 !srv 19.01.05 30.01.10
 
           wrk0=0
           wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
@@ -465,7 +464,7 @@
                 wrk0(ix,iy)=0.0e0_R8
               else
                 wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
-     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21 
+     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
               endif
             enddo
@@ -489,10 +488,10 @@
             enddo
           enddo                                                     !srv 19.01.05 }
 
-* viscousity source with contribution of other ions velosities      !som 13.08.21
+* viscosity source with contribution from other ion velocities      !som 13.08.21
           wrk0=0
-* calculate part of the mass average velocity which depends on the other
-* ions velosities
+* calculate part of the mass-averaged velocity which depends on the other
+* ion velocities
           u_res=avm_u-rho_rel*ub
           do iy=0,ny-1
             do ix=0,nx
@@ -554,27 +553,25 @@
         call my_out(70,nx,ny,cvsbhz(-1,-1,0),'b2siav_zh_cvsbhzx'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,1),'b2siav_zh_cvsbhzy'//chns)
 
-        call my_out(70,nx,ny,hipgen(-1,-1),
-     & 'b2siav_zh_hipgen'//chns)
-        call my_out(70,nx,ny,nb(-1,-1),
-     & 'b2siav_zh_nb'//chns)
+        call my_out(70,nx,ny,hipgen(-1,-1),'b2siav_zh_hipgen'//chns)
+        call my_out(70,nx,ny,nb(-1,-1),'b2siav_zh_nb'//chns)
         call my_out(70,nx,ny,1.0e0_R8/zb(-1:nx,-1:ny),
-     & 'b2siav_zh_zb_to_m1'//chns)
+     &   'b2siav_zh_zb_to_m1'//chns)
 
-            do k=0,ns-1
-             write (chns0,'(i3.3)') k 
-              call my_out(70,nx,ny,Ia(-1,-1,k),
-     & 'b2siav_zh_Ia'//chns//'_'//chns0)
-            enddo
-            do inucl=0,nspecies-1
-             write (chns0,'(i3.3)') inucl 
-              call my_out(70,nx,ny,hipgen_al(-1,-1,inucl),
-     & 'b2siav_zh_hipgen_al'//chns//'_'//chns0)
-              call my_out(70,nx,ny,nal(-1,-1,inucl),
-     & 'b2siav_zh_nal'//chns//'_'//chns0)
-              call my_out(70,nx,ny,Z_to_m1(-1,-1,inucl),
-     & 'b2siav_zh_Z_to_m1'//chns//'_'//chns0)
-            enddo
+        do k=0,ns-1
+          write (chns0,'(i3.3)') k
+          call my_out(70,nx,ny,Ia(-1,-1,k),
+     &     'b2siav_zh_Ia'//chns//'_'//chns0)
+        enddo
+        do inucl=0,nspecies-1
+          write (chns0,'(i3.3)') inucl
+          call my_out(70,nx,ny,hipgen_al(-1,-1,inucl),
+     &     'b2siav_zh_hipgen_al'//chns//'_'//chns0)
+          call my_out(70,nx,ny,nal(-1,-1,inucl),
+     &     'b2siav_zh_nal'//chns//'_'//chns0)
+          call my_out(70,nx,ny,Z_to_m1(-1,-1,inucl),
+     &     'b2siav_zh_Z_to_m1'//chns//'_'//chns0)
+        enddo
       endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised sources for balance

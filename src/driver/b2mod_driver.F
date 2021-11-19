@@ -40,6 +40,11 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_b2mrel
+     & , only : dealloc_b2mod_mrel
+      use b2mod_b2zhco
+      use b2mod_zhfrtf
+     & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
@@ -3146,9 +3151,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
+      call dealloc_b2mod_mrel
       call dealloc_b2mod_wall
+      call dealloc_b2mod_zhco
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_zhfrtf
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
@@ -3161,6 +3169,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
+      call dealloc_b2mod_zhfrtf_df
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
       call dealloc_b2mod_neoclassical

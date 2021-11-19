@@ -6,13 +6,18 @@
      *  rz2(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
      *  z22(-1:nx,-1:ny), am1(0:ns-1)
 *     ------------------------------------------------------------------
-*     B2XZMF computes z22:
-*       z22(,) = (sum over j /= i :: (m(j)./m(i).*kappa(i,j)).^2.*sqrt(mu(i,j)./m(i)).*Z_2_n_i(j)/Z_2_n_i(i).*(1+1088./433.*m(i)./m(j)+3672./433.*(m(i)./m(j))^2+1792./433.*(m(i)./m(j))^3+1400./433.*(m(i)./m(j))^4))
+*     B2XZ22 computes the z22 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       z22(,) = (sum over j /= i ::
+*                (m(j)/m(i)*kappa(i,j))^2*sqrt(mu(i,j)/m(i))*
+*                 Z_2_n_i(j)/Z_2_n_i(i)*(1+1088/433*m(i)/m(j)+
+*                 3672/433*(m(i)/m(j))^2+1792/433*(m(i)/m(j))^3+
+*                 1400/433*(m(i)/m(j))^4))
 *     ------------------------------------------------------------------
       integer n2, is
       external sfill
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xzmf')
+*$$$  call subini ('b2xz22')
       n2 = (nx+2)*(ny+2)
       call sfill (n2, 0.0_R8, z22, 1)
       do is = 0, ns-1

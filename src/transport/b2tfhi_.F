@@ -25,7 +25,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
+     * ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      * bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -194,7 +194,7 @@ cpax
       endif                                                             !srv 18.01.07
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &   .or. (iout_b2wdat.eq.4 .and. balance)) then                                    !srv 16.09.02 {
+     &   .or. (iout_b2wdat.eq.4 .and. balance)) then                    !srv 16.09.02 {
        allocate(
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny)
      *   ,w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
@@ -205,10 +205,10 @@ cpax
 
       fhi_mdf = 0.0_R8                                                  !srv 17.06.09
 * ..compute fluxes and linearization
-* ..velocity dependent part of the heat flux
+* ..velocity-dependent part of the heat flux
       floi_vhx = 0.0_R8                                                 !som 13.07.21
-      if(Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0
-     & .and. Zhdanov_vel_heat.eq.1) then                                !som 13.07.21
+      if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0 .and.
+     &    Zhdanov_vel_heat.eq.1) then                                   !som 13.07.21
         call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
       endif
 
@@ -221,7 +221,7 @@ cpax
          fhi(ix,iy,0)      = 0.0e0_R8
          fhi_mdf(ix,iy,0)  = 0.0e0_R8                                   !srv 13.10.06
          if (balance.and.(balance_netcdf.ne.0)) then
-           fhi_32(ix,iy,0) = 0.0_R8                               !djm Jan2017
+           fhi_32(ix,iy,0) = 0.0_R8                                     !djm Jan2017
            fhi_52(ix,iy,0) = 0.0_R8
            fhi_cond(ix,iy,0) = 0.0_R8
            fhi_dia(ix,iy,0) = 0.0_R8

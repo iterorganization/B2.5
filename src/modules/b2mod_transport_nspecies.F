@@ -15,13 +15,13 @@
       implicit none
       integer nxd,nyd,nspecies
 
-      print *, 'nspecies:', nspecies
+!      print *, 'nspecies:', nspecies
       allocate(chci_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))
       allocate(cvsa_hAdp_albe(-1:nxd,-1:nyd,0:1,
-     & 0:nspecies-1,0:nspecies-1))
+     &                         0:nspecies-1,0:nspecies-1))
       allocate(cvsa_hBdp_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))          !som 20.10.21
       allocate(cvsahz_hAdp_albe(-1:nxd,-1:nyd,0:1,
-     & 0:nspecies-1,0:nspecies-1))
+     &                           0:nspecies-1,0:nspecies-1))
       allocate(cvsahz_hBdp_al(-1:nxd,-1:nyd,0:1,0:nspecies-1))        !som 08.10.21
 
       return
@@ -33,9 +33,9 @@
       if (.not.allocated(chci_al)) return
       deallocate(chci_al)
       deallocate(cvsa_hAdp_albe)
-      deallocate(cvsa_hBdp_al)                                   !som 08.10.21
+      deallocate(cvsa_hBdp_al)                                        !som 08.10.21
       deallocate(cvsahz_hAdp_albe)
-      deallocate(cvsahz_hBdp_al)                                 !som 08.10.21
+      deallocate(cvsahz_hBdp_al)                                      !som 08.10.21
 
       return
       end subroutine dealloc_b2mod_transport_nspecies

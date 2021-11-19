@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv_zh (nx, ny, rho_rel, hz, cvsbhz_cl, flubv) 
+      subroutine b2nxfv_zh (nx, ny, rho_rel, hz, cvsbhz_cl, flubv)
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny                                       
+      integer nx, ny
       real (kind=R8) :: rho_rel(-1:nx,-1:ny),
-     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1)                   
+     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flubv(-1:nx,-1:ny,0:1)
@@ -20,9 +20,9 @@
 *
 *  1. purpose
 *
-*     b2nxfv_zh calculates the convective term due to new form of ion  
-*     viscosity term in the momentum correction equation if Zhdanov 
-*     closure is applied
+*     B2NXFV_ZH calculates the convective term due to new form of ion
+*     viscosity term in the momentum correction equation if Zhdanov
+*     closure is applied.
 *
 *----------------------------------------------------------------------
 *.declarations
@@ -30,7 +30,7 @@
 *   ..local variables
       integer ncall, ix, iy
       real (kind=R8) ::
-     *   ft                                                            
+     *   ft
       save ncall
       !$OMP THREADPRIVATE(ncall)
       external xertst, ipgeti, ipgetr, b2scopy
@@ -38,11 +38,6 @@
 *   ..initialization
       data ncall/0/
 
-*----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Description of some local variables:
-*
 *----------------------------------------------------------------------
 *.computation
 
@@ -61,9 +56,10 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
-          flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*                     
-     & ((log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))-
-     & (log(rho_rel(ix,iy))-log(rho_rel(leftix(ix,iy),leftiy(ix,iy)))))
+          flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*
+     &     ((log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))-
+     &      (log(rho_rel(ix,iy))-
+     &       log(rho_rel(leftix(ix,iy),leftiy(ix,iy)))))
          else
           flubv(ix,iy,0) = 0.0e0_R8
          endif
@@ -78,6 +74,6 @@
       return
 
 *----------------------------------------------------------------------
-*.end b2mxfv_zh
+*.end b2nxfv_zh
 
-      end subroutine b2nxfv_zh                                         
+      end subroutine b2nxfv_zh

@@ -6,13 +6,15 @@
      *  rz2(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
      *  zf1(-1:nx,-1:ny), am1(0:ns-1)
 *     ------------------------------------------------------------------
-*     B2XZMF computes zf1:
-*       zf1(,) = (sum over j /= i :: mu(i,j)./m(i).*sqrt(mu(i,j)./m(i)).*Z_2_n_i(j)/Z_2_n_i(i))
+*     B2XZF1 computes the zf1 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       zf1(,) = (sum over j /= i :: mu(i,j)/m(i)*sqrt(mu(i,j)/m(i))*
+*                                    Z_2_n_i(j)/Z_2_n_i(i))
 *     ------------------------------------------------------------------
       integer n2, is
       external sfill
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xzmf')
+*$$$  call subini ('b2xzf1')
       n2 = (nx+2)*(ny+2)
       call sfill (n2, 0.0_R8, zf1, 1)
       do is = 0, ns-1

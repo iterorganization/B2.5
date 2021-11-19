@@ -401,8 +401,7 @@
      &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni, chci, 
-     &                na,                                                !som 21.10.21
+     &                ne2, lnlam, te, ti, ni, chci, na,                  !som 21.10.21
      &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &                fchvisq_a, fchvisq)
 
@@ -560,7 +559,7 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
-     &                fchanml_a, fchanml)                                !srv 08.09.21 
+     &                fchanml_a, fchanml)                                !srv 08.09.21
         call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
      &                cvsa_drho, fac_vis,                                !som 18.08.21
      &                fchvispar_a, fchvispar)
@@ -570,7 +569,7 @@ cxpb
      &                po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni, chci, 
+     &                ne2, lnlam, te, ti, ni, chci,
      &                na,                                                !som 21.10.21
      &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &                fchvisq_a, fchvisq)
@@ -1219,7 +1218,7 @@ c     with diamagnetic drift part                                        !xpb
      &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
-     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17 
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                      !srv 09.07.08
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
@@ -1240,7 +1239,7 @@ c     with diamagnetic drift part                                        !xpb
      &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
-     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17 
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,              !srv 31.05.99
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)            !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }

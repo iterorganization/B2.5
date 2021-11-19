@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcn (nnucl, amnucl, N2, N3, N4, N5, N6, N8, N9,  
-     & N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)      !som 02.08.2021
+     &  N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)     !som 02.08.2021
       use b2mod_types
 !     use b2mod_b2cmpa
       use b2mod_subsys
@@ -11,35 +11,31 @@
       real (kind=R8) :: amnucl(0:nnucl-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::N2(0:nnucl-1,0:nnucl-1), N3(0:nnucl-1,0:nnucl-1),
-     & N4(0:nnucl-1,0:nnucl-1), N5(0:nnucl-1,0:nnucl-1),
-     & N6(0:nnucl-1,0:nnucl-1), N8(0:nnucl-1,0:nnucl-1),
-     & N9(0:nnucl-1,0:nnucl-1),
-     & N10(0:nnucl-1,0:nnucl-1), N11(0:nnucl-1,0:nnucl-1),
-     & N12(0:nnucl-1,0:nnucl-1),
-     & N13(0:nnucl-1,0:nnucl-1), N14(0:nnucl-1,0:nnucl-1),
-     & N15(0:nnucl-1,0:nnucl-1), N16(0:nnucl-1,0:nnucl-1),
-     & mu(0:nnucl-1,0:nnucl-1), mum(0:nnucl-1,0:nnucl-1),
-     & mdm(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1),
-     & rmd2(0:nnucl-1)
-
-
-
-*   ..common blocks
+     &  N4(0:nnucl-1,0:nnucl-1), N5(0:nnucl-1,0:nnucl-1),
+     &  N6(0:nnucl-1,0:nnucl-1), N8(0:nnucl-1,0:nnucl-1),
+     &  N9(0:nnucl-1,0:nnucl-1),
+     &  N10(0:nnucl-1,0:nnucl-1), N11(0:nnucl-1,0:nnucl-1),
+     &  N12(0:nnucl-1,0:nnucl-1),
+     &  N13(0:nnucl-1,0:nnucl-1), N14(0:nnucl-1,0:nnucl-1),
+     &  N15(0:nnucl-1,0:nnucl-1), N16(0:nnucl-1,0:nnucl-1),
+     &  mu(0:nnucl-1,0:nnucl-1), mum(0:nnucl-1,0:nnucl-1),
+     &  mdm(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1),
+     &  rmd2(0:nnucl-1)
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TRCN computes the N-coefficients and all mass related variables
+*     B2TRCN computes the N-coefficients and all mass-related variables.
 *
 *  3. description 
 *
 *     This routine computes:
-*     - mu: the reduced mass (in atom mass numbers)
-*     - rmu: the square root of the reduced mass (in atom mass numbers)
-*     - rmd2: the square root of the mass devided by 2 (in atom mass numbers)
+*     - mu: the reduced mass (in amu)
+*     - rmu: the square root of the reduced mass (in amu)
+*     - rmd2: the square root of the mass divided by 2 (in amu)
 *     - kappa: the energy transfer factor
-*     - mdm: the mass to mass ratio
+*     - mdm: the mass ratio
 *     - mum: the reduced mass to mass ratio
 *     - N*: the N-coefficients, which are used in the G-objects
 *

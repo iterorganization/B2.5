@@ -6,9 +6,7 @@
      &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
      &  hx, hy, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
-     &  fne, fch, fchstoch, cvsa,                                       !srv 24.08.21  
-     &  cvsa_cl,                                                        !som 16.08.21
-     *  cvsa_drho,                                                      !som 16.08.21
+     &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
      &  reshe, reshi, resht, corte, corti, ierr)
@@ -251,8 +249,7 @@
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho,                                                      !som 16.08.21
-     *  she0, shi0)     !srv 07.06.00 02.06.99 07.07.09
+     *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
@@ -265,7 +262,7 @@ cdjm Jan2017 update particle source components for balance
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
         call my_out(70,nx,ny,te,'b2nph9_te_inp')
         call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
-      endif                                                              !srv 31.01.21
+      endif                                                             !srv 31.01.21
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)

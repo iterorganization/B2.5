@@ -11,10 +11,10 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_zhfrtf ,
-     & only: b2mod_zhfrtf_tf,b2mod_zhfrtf_fr
-      use b2mod_b2zhco ,
-     & only: zhd_corr ,zhd_corrT ,zhflcorr                                !som 05.03.21
+      use b2mod_zhfrtf
+     & , only: b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
+      use b2mod_b2zhco
+     & , only: zhd_corr, zhd_corrT, zhflcorr                            !som 05.03.21
       use b2mod_plasma
      , , only : roxa
       use b2mod_transport
@@ -78,7 +78,7 @@
       integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
-     & Zhdanov_tf_fr = 1                                                !som 01.07.21
+     &  Zhdanov_tf_fr = 1                                               !som 01.07.21
       integer, save :: icase = 0                                        !som 05.03.21
 #ifdef NO_OPENMP_B2NPMO
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
@@ -100,7 +100,7 @@
      *  smbfrial_test(-1:nx,-1:ny,0:3),smbtfial_test(-1:nx,-1:ny,0:3),  !som 05.03.21
      *  smbtfial_nofl(-1:nx,-1:ny,0:3),                                 !som 06.03.21
      *  smbtfial_test_nofl(-1:nx,-1:ny,0:3)                             !som 06.03.21
-      real (kind=R8) :: temp     
+      real (kind=R8) :: temp
 #ifdef WITH_FTIMINGS
       logical :: do_parallel
 #endif
@@ -140,7 +140,7 @@
        call ipgeti ('b2sifrtf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
           !$OMP MASTER
-          write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode'
           !$OMP END MASTER
           iout = 0
@@ -148,7 +148,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
           !$OMP MASTER
-          write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode (b2wdat)'
           !$OMP END MASTER
           iout_b2wdat = 0
@@ -160,8 +160,8 @@
        call ipgeti ('b2tral_zhd_corr', zhd_corr)                        !som 05.03.21
        call ipgeti ('b2tral_zhd_corrT', zhd_corrT)                      !som 03.09.21
        call ipgeti ('b2tlnl_ii', icase)                                 !som 05.03.21
-       call xertst (0.eq.icase .or. 1.eq.icase, 
-     &               'faulty input b2tlnl_ii')
+       call xertst (0.eq.icase .or. 1.eq.icase,
+     &              'faulty input b2tlnl_ii')
       endif
 #ifdef WITH_FTIMINGS
       do_parallel = .not. in_parallel()
@@ -199,7 +199,7 @@
 !$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
 #ifndef NO_OPENMP_B2NPMO
 !$OMP& PRIVATE(styl0, phm0)
@@ -209,30 +209,28 @@
 !$OMP& REDUCTION(+: smbfrial)
 #endif
 *     ..contribution from friction between ions
-      if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
-     & Zhdanov_tf_fr.eq.1) then                                         !som 01.07.2021
+      if (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
+     &    Zhdanov_tf_fr.eq.1) then                                      !som 01.07.2021
 *     ..actual use of the Zhdanov closure
         do iy = -1, ny
           do ix = -1, nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then 
-            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)  
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &  smbfrial(ix,iy,0),
-     &  smbfrial(ix,iy,1))
+     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1))
            endif
           enddo
         enddo
       elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
-     & Zhdanov_tf_fr.eq.0)) then                                        !som 01.07.2021
+     &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbfrial_test=0
         do iy = -1, ny
           do ix = -1, nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then 
-            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)  
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &  smbfrial_test(ix,iy,0),
-     &  smbfrial_test(ix,iy,1))
+     &       smbfrial_test(ix,iy,0),smbfrial_test(ix,iy,1))
            endif
           enddo
         enddo
@@ -251,17 +249,16 @@
              !$omp critical (ionfriction)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     & coef*t0*ua(ix,iy,is)
+     &          coef*t0*ua(ix,iy,is)
                smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
              else if (styl0.eq.1) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     & coef*t0*ua(ix,iy,is)
+     &          coef*t0*ua(ix,iy,is)
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              else if (styl0.eq.2) then
                smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+
-     & coef*t0*ua(ix,iy,is)/
-     &                       roxa(ix,iy,isb)
+     &          coef*t0*ua(ix,iy,is)/roxa(ix,iy,isb)
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
@@ -288,17 +285,16 @@
              !$omp critical (ionfriction)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     & coef*t0*ua(ix,iy,is)
+     &          coef*t0*ua(ix,iy,is)
                smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
              else if (styl0.eq.1) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     & coef*t0*ua(ix,iy,is)
+     &          coef*t0*ua(ix,iy,is)
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              else if (styl0.eq.2) then
                smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+
-     & coef*t0*ua(ix,iy,is)/
-     &                       roxa(ix,iy,isb)
+     &          coef*t0*ua(ix,iy,is)/roxa(ix,iy,isb)
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
@@ -372,18 +368,18 @@
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
-     & Zhdanov_tf_fr.eq.1) then                                         !som 01.07.2021
+     &   Zhdanov_tf_fr.eq.1) then                                       !som 01.07.2021
 *     ..actual use of the Zhdanov closure
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     & smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0))
+     &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0))
             endif
            enddo
           enddo
       elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
-     & Zhdanov_tf_fr.eq.0)) then                                        !som 01.07.2021
+     &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbtfial_test=0
         smbtfial_test_nofl=0
@@ -391,7 +387,7 @@
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     & smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0))
+     &        smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0))
             endif
            enddo
           enddo
@@ -403,7 +399,7 @@
           ka    = fka(isb)
           kb    = fka(is)
           KabVp = fkabvp(isb,is)
-        
+
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -420,7 +416,7 @@ c        .. but we did not do it in order to have the same formulae as manual
      &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
 c   .... apply flux limit
              if(cflim(4).ne.0.0_R8.and.
-     & .not.on_closed_surface(ix,iy)) then
+     &         .not.on_closed_surface(ix,iy)) then
                jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
                t0 = abs(calfab*delti)/(cflim(4)*jabmax)
@@ -428,7 +424,7 @@ c   .... apply flux limit
              else
                fllim_al_ab = 1.0_R8
              endif
-        
+
              t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
              smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
@@ -439,7 +435,7 @@ c   .... apply flux limit
          endif
         enddo
       else
-*     ..standard thermal force calculation 
+*     ..standard thermal force calculation
         do is = 0, ns-1
          if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
@@ -448,7 +444,7 @@ c   .... apply flux limit
           ka    = fka(isb)
           kb    = fka(is)
           KabVp = fkabvp(isb,is)
-        
+
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -473,7 +469,7 @@ c   .... apply flux limit
              else
                fllim_al_ab = 1.0_R8
              endif
-        
+
              t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
              smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
@@ -530,7 +526,7 @@ c   .... apply flux limit
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
 
         wrk = vol*hz*(smbfrial_test(:,:,0)+
-     &        smbfrial_test(:,:,1)*ua(:,:,isb)+        
+     &        smbfrial_test(:,:,1)*ua(:,:,isb)+
      &        smbfrial_test(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfrial_test(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
         call my_out(70,nx,ny,wrk,'b2sifrtf_smofria_test'//chns)
@@ -560,8 +556,8 @@ c   .... apply flux limit
         call my_out(70,nx,ny,f_luc_sg,'b2sifrtf_f_luc_sg')
         call my_out(70,nx,ny,ce1,'b2sifrtf_ce1')
         call my_out(70,nx,ny,ce2,'b2sifrtf_ce2')
-        call my_out(70,nx,ny,cimp1(:,:,isb),'b2sifrtf_cimp1'//chns)              !som 13.11.20       
-        call my_out(70,nx,ny,cimp2(:,:,isb),'b2sifrtf_cimp2'//chns)              !som 13.11.20
+        call my_out(70,nx,ny,cimp1(:,:,isb),'b2sifrtf_cimp1'//chns)     !som 13.11.20
+        call my_out(70,nx,ny,cimp2(:,:,isb),'b2sifrtf_cimp2'//chns)     !som 13.11.20
         call my_out(70,nx,ny,alfx_c,'b2sifrtf_alfx_c')
         call my_out(70,nx,ny,sigx_c,'b2sifrtf_sigx_c')
         call my_out(70,nx,ny,zetae,'b2sifrtf_zetae')
@@ -583,10 +579,10 @@ c   .... apply flux limit
       real (kind=R8) :: fkabvp(-1:nx,-1:ny)
       if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp=cimp1(-1:nx,-1:ny,b)                                 !som 13.11.20 
+        fkabvp=cimp1(-1:nx,-1:ny,b)                                 !som 13.11.20
       elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp=cimp1(-1:nx,-1:ny,a)                                 !som 13.11.20 
+        fkabvp=cimp1(-1:nx,-1:ny,a)                                 !som 13.11.20
       elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=1.0_R8
@@ -605,7 +601,7 @@ c   .... apply flux limit
       real (kind=R8) :: fkabtf(-1:nx,-1:ny)
       if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabtf=cimp2(-1:nx,-1:ny,a)                                 !som 13.11.20 
+        fkabtf=cimp2(-1:nx,-1:ny,a)                                 !som 13.11.20
       elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=0.0_R8

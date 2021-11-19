@@ -6,13 +6,17 @@
      *  rz2(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
      *  z11(-1:nx,-1:ny), am1(0:ns-1)
 *     ------------------------------------------------------------------
-*     B2XZMF computes z11:
-*       z11(,) = (sum over j /= i :: (m(j)./m(i).*kappa(i,j)).*sqrt(mu(i,j)./m(i)).*Z_2_n_i(j)/Z_2_n_i(i).*(1+16./13.*m(i)./m(j)+30./13.*(m(i)./m(j))^2))
+*     B2XZ11 computes the z11 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       z11(,) = (sum over j /= i ::
+*                (m(j)/m(i)*kappa(i,j))*sqrt(mu(i,j)/m(i))*
+*                Z_2_n_i(j)/Z_2_n_i(i)*(1+16/13*m(i)/m(j)+
+*                                         30/13*(m(i)/m(j))^2))
 *     ------------------------------------------------------------------
       integer n2, is
       external sfill
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xzmf')
+*$$$  call subini ('b2xz11')
       n2 = (nx+2)*(ny+2)
       call sfill (n2, 0.0_R8, z11, 1)
       do is = 0, ns-1

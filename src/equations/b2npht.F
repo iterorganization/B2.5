@@ -6,7 +6,7 @@
      1  rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                      !srv 07.07.21
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
-     &  fchdia, uadia, wadia, vadia, vaecrb, 
+     &  fchdia, uadia, wadia, vadia, vaecrb,
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
      &  shef, shif, reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
@@ -254,8 +254,7 @@
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                 !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,           !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho,                                                       !som 16.08.21
-     *  she0, shi0)                                                      !srv 07.06.00 02.06.99 07.07.09
+     *  cvsa_drho, she0, shi0)                                           !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)
       do ix=-1,nx

@@ -64,7 +64,7 @@
        call ipgeti ('b2sicf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2SICF OpenMP warning: no file out in ',
+         write(*,*) 'B2SICF OpenMP warning: no file output in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0

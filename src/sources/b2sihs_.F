@@ -2,10 +2,9 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                         !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,           !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho,                                                       !som 16.08.21
-     *  she0, shi0)                                                      !srv 28.06.03 07.07.09
+     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                       !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho, she0, shi0)                                         !som 16.08.21!srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -16,11 +15,11 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2zhco ,
-     & only: zhd_corr                                                 !som 21.03.21
-      use b2mod_zhfrtf ,
-     & only: avm_u, rho_A_rel,                                        !som 21.03.21 16.08.21
-     & b2mod_zhfrtf_avm_u                                             !som 18.08.21
+      use b2mod_b2zhco
+     & , only: zhd_corr                                               !som 21.03.21
+      use b2mod_zhfrtf
+     & , only: avm_u, rho_A_rel,                                      !som 21.03.21 16.08.21
+     &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
       use b2mod_geo
      & , only : hy1
       use b2mod_balance !djm Jan2017
@@ -65,7 +64,7 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, k
       integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0,    !srv 11.09.09
@@ -76,7 +75,7 @@
       integer, save :: use_eirene = 0
       integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
-     & Zhdanov_tf_fr = 1                                              !som 01.07.21
+     &                 Zhdanov_tf_fr = 1                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1                               !som 16.08.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
@@ -89,7 +88,7 @@
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
@@ -98,21 +97,21 @@
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
-     4  ce2(-1:nx,-1:ny),  cimp1(-1:nx,-1:ny,0:ns-1), 
+     4  ce2(-1:nx,-1:ny),  cimp1(-1:nx,-1:ny,0:ns-1),
      *  cimp2(-1:nx,-1:ny,0:ns-1),                                    !som 13.11.20
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),            !srv 13.01.17 05.07.17 }
-     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                            !som 13.11.20
+     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),           !srv 13.01.17 05.07.17 }
+     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                           !som 13.11.20
      9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
      1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       character chk*1                                                 !srv 11.09.09 } !srv 05.07.17
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
       real (kind=R8) ::
-     *   t0, t1, ctaup, coef, czetap, czetae                          !srv 05.07.17
+     *  t0, t1, ctaup, coef, czetap, czetae                           !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -121,8 +120,8 @@
       data ncall/0/, style/0/
       data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
      &   rf4/1.0e0_R8/, phm0/1.0e0_R8/, phm1/1.0e0_R8/, phm2/1.0e0_R8/,
-     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/ !srv 02.06.99
-     &  ,phm7/0.0e0_R8/, phm8/1.0e0_R8/                                !srv 27.12.01 28.08.02
+     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/,!srv 02.06.99
+     &  phm7/0.0e0_R8/, phm8/1.0e0_R8/                                 !srv 27.12.01 28.08.02
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
@@ -151,32 +150,32 @@
        call ipgetr ('b2sihs_phm2', phm2)
        call ipgetr ('b2sihs_phm3', phm3)
        call ipgetr ('b2sihs_phm4', phm4)
-       call ipgetr ('b2sihs_phm5', phm5)                           !srv 02.06.99
-       call ipgetr ('b2sihs_phm6', phm6)                           !srv 02.06.99
-       call ipgetr ('b2sihs_phm7', phm7)                           !srv 27.12.01
-       call ipgetr ('b2sihs_phm8', phm8)                           !srv 28.08.02
+       call ipgetr ('b2sihs_phm5', phm5)                               !srv 02.06.99
+       call ipgetr ('b2sihs_phm6', phm6)                               !srv 02.06.99
+       call ipgetr ('b2sihs_phm7', phm7)                               !srv 27.12.01
+       call ipgetr ('b2sihs_phm8', phm8)                               !srv 28.08.02
        call xertst (0.le.style, 'faulty internal parameter style')
        call xertst (0.le.min(rf0,rf1,rf2,rf3,rf4),
      &   'faulty internal parameter rf0/1/2/3/4')
-       call xertst (0.le.min(phm0,phm1,phm2,phm3,phm4,phm5,phm6),  !srv 02.06.99
-     &   'faulty internal parameter phm0/1/2/3/4/5/6')             !srv 02.06.99
-       call ipgeti ('b2sihs_iout', iout)                           !srv 10.09.03
-       call ipgeti ('b2nph9_iout', iout_b2nph9)                    !srv 11.09.09
-       call ipgeti ('b2npht_iout', iout_b2npht)                    !srv 11.09.09
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                    !iys 17.04.17
+       call xertst (0.le.min(phm0,phm1,phm2,phm3,phm4,phm5,phm6),      !srv 02.06.99
+     &   'faulty internal parameter phm0/1/2/3/4/5/6')                 !srv 02.06.99
+       call ipgeti ('b2sihs_iout', iout)                               !srv 10.09.03
+       call ipgeti ('b2nph9_iout', iout_b2nph9)                        !srv 11.09.09
+       call ipgeti ('b2npht_iout', iout_b2npht)                        !srv 11.09.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
-       call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
-       call ipgeti ('b2sihs_istyle_Joule_heating', 
-     &                      istyle_Joule_heating)                  !srv 17.01.14
-       call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)               !lk 31.01.08
+       call ipgeti ('b2sihs_istyle_Joule_heating',
+     &                      istyle_Joule_heating)                      !srv 17.01.14
+       call ipgeti ('b2sigp_style', b2sigp_style)                      !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
-        impr_form_tf = 0                                               !som 13.11.20        
+        impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
         mass_multiplicator = 1.0_R8
-        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf) 
-        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)   
+        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
+        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
         call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
@@ -310,7 +309,7 @@
             wrk0(ix,iy) = 0.0e0_R8
           else
             wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1                hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     1         hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
      2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
           endif                                                       !srv 21.07.05 }
 !         if(leftix(ix,iy).eq.-2) then
@@ -331,7 +330,7 @@
           t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*       !srv 21.07.05 {
      &            ( wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))  !srv 21.07.05 }
 !          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*(     !srv 31.05.99
-!     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 { 
+!     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 {
 !     &        ua(rightix(ix,iy),rightiy(ix,iy),is)-
 !     &        pbs(ix,iy,0)*ua(ix,iy,is)
 !     &                                          )                    !srv 28.06.03 }
@@ -343,8 +342,8 @@
           shidu(ix,iy,3) = shidu(ix,iy,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
           b2divua(region(ix,iy,0))=b2divua(region(ix,iy,0))
      1         +t0*ni(ix,iy,0)*ti(ix,iy)
-          b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
-     1         t0*ni(ix,iy,0)*ti(ix,iy)
+          b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)
+     1         +t0*ni(ix,iy,0)*ti(ix,iy)
          endif                                                        !srv 26.11.02
         enddo
        enddo
@@ -386,7 +385,7 @@
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-!         wrk0(ix,iy) = bb(ix,iy,3)*vol(ix,iy)/hx(ix,iy)/hy(ix,iy)*(     
+!         wrk0(ix,iy) = bb(ix,iy,3)*vol(ix,iy)/hx(ix,iy)/hy(ix,iy)*(
 !     &      (po(topix(ix,iy),topiy(ix,iy))-
 !     &       po(bottomix(ix,iy),bottomiy(ix,iy)))
 !     &     *(OnedBsq(rightix(ix,iy),rightiy(ix,iy))-
@@ -471,15 +470,15 @@
           enddo
          enddo
         else
-         do iy = -1, ny                                                
+         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
            else
              wrk0(ix,iy) = (cvsa(ix,iy,0,is)-ft*cvsa_cl(ix,iy,0,is))*
-     & (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
-     & ft*cvsa_drho(ix,iy,0,is)*
-     & (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2            !som 16.08.21
+     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
+     &         ft*cvsa_drho(ix,iy,0,is)*
+     &        (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2    !som 16.08.21
            endif
           enddo
          enddo
@@ -489,7 +488,7 @@
           if(bottomiy(ix,iy).eq.-2) then
             wrk1(ix,iy) = 0.0e0_R8
           else
-            wrk1(ix,iy) = cvsa(ix,iy,1,is)*                             !srv 16.10.17
+            wrk1(ix,iy) = cvsa(ix,iy,1,is)*                           !srv 16.10.17
      *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2
           endif
          enddo
@@ -526,8 +525,8 @@
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
-      
+       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                    !som 13.11.20 {
+
        do iy = -1, ny
          do ix = -1, nx
            ce1(ix,iy)=fce1(zeff(ix,iy))
@@ -535,11 +534,11 @@
          enddo
        enddo
 
-       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     &  Zhdanov_tf_fr.eq.0) then                                       !som 01.07.21
+       if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &     Zhdanov_tf_fr.eq.0) then                                   !som 01.07.21
          mm(0:ns-1) = mass_multiplicator
          mm(ismain) = 1.0_R8
-         am1=mm*am           
+         am1=mm*am
          call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
          call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
          call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
@@ -547,7 +546,7 @@
          call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
          call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
          call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
-       
+
          if (impr_form_fr.eq.0) then
            do iy = -1, ny
              do ix = -1, nx
@@ -559,10 +558,10 @@
              do ix = -1, nx
                do is = 0, ns-1
                  cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
-     &    z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
-               enddo 
+     &            z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+               enddo
              enddo
-           enddo       
+           enddo
          endif
 
          if (impr_form_tf.eq.0) then
@@ -570,18 +569,18 @@
              do ix = -1, nx
                cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
              enddo
-           enddo       
+           enddo
          else
            do iy = -1, ny
              do ix = -1, nx
                do is = 0, ns-1
                  cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
-     &    z11(ix,iy),z12(ix,iy),z22(ix,iy))
-               enddo         
+     &            z11(ix,iy),z12(ix,iy),z22(ix,iy))
+               enddo
              enddo
-           enddo       
+           enddo
          endif
-       endif                                                          !som 13.11.20 }    
+       endif                                                          !som 13.11.20 }
 
 *   ..compute the Coulomb logarithm
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
@@ -593,8 +592,8 @@
        zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
        zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte
-       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     & Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
+       if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &     Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
@@ -647,13 +646,13 @@
      &                                               )
          endif
        enddo
-*   ..add contribution due to Zhdanov multispecies approach
+*   ..add contribution due to Zhdanov multi-species approach
        if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
-     & Zhdanov_tf_fr.eq.1) then                                       !som 01.07.21
+     &    Zhdanov_tf_fr.eq.1) then                                    !som 01.07.21
          shifr(:,:,0) = shifr(:,:,0)-zhd_corr*avm_u*shefr(:,:,0)
          shefr(:,:,0) = shefr(:,:,0)-zhd_corr*(avm_u/ue)*shefr(:,:,0)
        endif
-       shefr(:,:,0) =  ue*shefr(:,:,0)
+       shefr(:,:,0) = ue*shefr(:,:,0)
 
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8

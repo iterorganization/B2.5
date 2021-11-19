@@ -95,7 +95,7 @@
      4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                               !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 20.10.21
-     &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21   
+     &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
@@ -319,8 +319,7 @@
      &               po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &               fchvisper_a, fchvisper)
        call b2tvsq  (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
-     &               ne2, lnlam, te, ti, ni, chci, 
-     &               na,                                                !som 21.10.21
+     &               ne2, lnlam, te, ti, ni, chci, na,                  !som 21.10.21
      &               chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &               fchvisq_a, fchvisq)
 csw 30sep2013, added cdpa in call, uadia

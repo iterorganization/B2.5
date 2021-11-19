@@ -88,7 +88,7 @@
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2SIAV OpenMP warning: no file out in ',
+         write(*,*) 'B2SIAV OpenMP warning: no file output in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0

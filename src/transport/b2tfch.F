@@ -44,10 +44,10 @@
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
      & cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                                !som 18.08.21
-     & chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 20.10.21
-     & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21   
-     & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
-     & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
+     & chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                            !som 20.10.21
+     & chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                   !som 20.10.21
+     & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),        !som 20.10.21
+     & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
@@ -67,7 +67,7 @@
      2  fchdia(-1:nx,-1:ny,0:1),
      3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
-     5  avisper_a(-1:nx,-1:ny,0:1,0:ns-1), 
+     5  avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchvisper(-1:nx,-1:ny,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
@@ -223,8 +223,7 @@ c Drift terms
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci, 
-     &             na,                                                   !som 21.10.21
+     &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99

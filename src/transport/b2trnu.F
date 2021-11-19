@@ -1,6 +1,6 @@
 *.specification
 
-      subroutine b2trnu (ns,nnucl,znmax)                 !som 05.02.2021  
+      subroutine b2trnu (ns, nnucl, znmax)                             !som 05.02.2021
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_subsys
@@ -9,20 +9,19 @@
       integer ns
 *   ..output arguments (unspecified on entry)
       integer :: nnucl, znmax
-
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TRNU computes the number of different types of species (ions with the 
-*     different nucleus) and the maximal atom number Z in the plasma composition
+*     B2TRNU computes the number of isonuclear sequences (ions with
+*     different nuclei) and the maximal atom number Z in the plasma
+*     composition.
 *
-*  3. description 
+*  3. description
 *
 *     This routine computes:
-*     - nnucl: the number of different types of species 
+*     - nnucl: the number of isonuclear sequences
 *     - znmax: the maximal atom number Z in the plasma composition
 *
 *-----------------------------------------------------------------------
@@ -36,20 +35,19 @@
 *   ..subprogram start-up calls
       call subini ('b2trnu')
 *   ..main
-        zn_temp=zn(0)
-        am_temp=am(0)
-        nnucl=1 
-        znmax=0
-        do is = 0, ns-1
-          if (zn(is).ne.zn_temp .and. am(is).ne.am_temp) then
-           zn_temp=zn(is)
-           am_temp=am(is)
-           nnucl=nnucl+1 
-          endif 
+      zn_temp=zn(0)
+      am_temp=am(0)
+      nnucl=1
+      znmax=0
+      do is = 0, ns-1
+        if (zn(is).ne.zn_temp .and. am(is).ne.am_temp) then
+          zn_temp=zn(is)
+          am_temp=am(is)
+          nnucl=nnucl+1
+        endif
         znmax=max(znmax,nint(zn_temp))
-        enddo        
+      enddo
       call subend ()
       return
-
 
       end subroutine b2trnu

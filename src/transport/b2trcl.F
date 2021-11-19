@@ -92,38 +92,38 @@
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
       integer, save :: conductive_limit = 1                              !srv 16.06.08
       integer, save :: style = 2                                         !srv 13.01.17
-      integer, save :: Zhdanov_closure = 0                              !som 22.06.21
-      integer, save :: Zhdanov_test = 0                                 !som 22.06.21
-      integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
+      integer, save :: Zhdanov_closure = 0                               !som 22.06.21
+      integer, save :: Zhdanov_test = 0                                  !som 22.06.21
+      integer, save :: Zhdanov_cond = 1                                  !som 22.06.21
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
      &                 integral_modeling = 1
-      character(3) chns, chns0                                         !srv 17.06.08
-      integer mintopcut                                                !lk 19.09.07
+      character(3) chns, chns0                                           !srv 17.06.08
+      integer mintopcut                                                  !lk 19.09.07
       integer mode
       real (kind=R8) ::
-     *  cthiv, cthev, vis_par, jemax                                   !srv 13.01.17
-      real (kind=R8) ::                                                !srv 03.06.03
-     *   t0, dte, dti, flomx
+     *  cthiv, cthev, vis_par, jemax                                     !srv 13.01.17
+      real (kind=R8) ::                                                  !srv 03.06.03
+     *  t0, dte, dti, flomx
       real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
-     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)           !lk 19.09.07
+     &  k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)             !lk 19.09.07
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
-     &    k1(-1:nx,-1:ny), t1, t2, t3, tauVeff                           !lk 12.05.11 !som 22.06.21
+     &  k1(-1:nx,-1:ny), t1, t2, t3, tauVeff                             !lk 12.05.11 !som 22.06.21
       real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                             !srv 01.07.99 09.01.01
+     3  cfl(-1:nx,-1:ny), wrk(-1:nx,-1:ny)                               !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax                                                     !srv 22.04.16
+     *  smin, smax                                                       !srv 22.04.16
       external xertst, xerrab, sfill, smin, smax
-      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,         !xpb
-     &  ipgeti, ipgetr, b2ttia                                         !lk 19.09.07
+      external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,           !xpb
+     &  ipgeti, ipgetr, b2ttia                                           !lk 19.09.07
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
@@ -174,9 +174,9 @@ csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
         call ipgeti ('b2trcl_integral_modeling', integral_modeling)      !srv 01.11.11
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)   !som 22.06.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)         !som 22.06.21
-        call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)         !som 22.06.21
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 22.06.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 22.06.21
+        call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)                !som 22.06.21
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -230,10 +230,10 @@ csw 13mar2012
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nx, ny, mode, vol, gs, hx, qz,                   !sv
-     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))                !sv 01.07.99
-           call b2txcy (nx, ny, mode, vol, gs, hy, qz,                   !sv
-     &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))                !sv
+           call b2txcx (nx, ny, mode, vol, gs, hx, qz,                   !srv
+     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))                !srv 01.07.99
+           call b2txcy (nx, ny, mode, vol, gs, hy, qz,                   !srv
+     &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))                !srv
         endif
        enddo
       enddo
@@ -293,9 +293,9 @@ csw 13mar2012
       f_luc_ki = 1.0_R8
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
-      f_luc_al = 1.0_R8                                                  !srv 13.01.17 }
-      alpha1 = 1.0_R8                                                    !som 05.10.21
-      kt_neo = 2.7_R8                                                    !som 05.10.21
+      f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
+      alpha1 = 1.0_R8                                                   !som 05.10.21
+      kt_neo = 2.7_R8                                                   !som 05.10.21
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -406,16 +406,17 @@ csw 13mar2012
      &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
      &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
 
-           if(Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0
-     & .and. Zhdanov_cond.eq.1) then                                    !som 22.06.21
+           if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0 .and.
+     &         Zhdanov_cond.eq.1) then                                   !som 22.06.21
 
              tauVeff = 0.0e0_R8
              do is = 0, ns-1
                if(.not.is_neutral(is)) then
                  t3=sum(sqrt(2.0e0_R8*am(0:ns-1)/(am(is)+am(0:ns-1)))*
-     & rz2(ix,iy,0:ns-1)*na(ix,iy,0:ns-1))
+     &            rz2(ix,iy,0:ns-1)*na(ix,iy,0:ns-1))
                  tauVeff=tauVeff+(na(ix,iy,is)/ni(ix,iy,1))*
-     & tauia(ix,iy,is)*(ne2(ix,iy)/t3)*sqrt(ti(ix,iy)/(mp*am(is)))
+     &            tauia(ix,iy,is)*(ne2(ix,iy)/t3)*sqrt(ti(ix,iy)/
+     &           (mp*am(is)))
                endif
              enddo
 
@@ -441,7 +442,7 @@ csw 13mar2012
      &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))         
      &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu2(ix,iy))+
-     &           (nu2(ix,iy))**2*eps1(iy)**3))                        !som 05.10.21
+     &           (nu2(ix,iy))**2*eps1(iy)**3))                           !som 05.10.21
           endif
          enddo
         enddo                                                            !lk 19.09.07 }
@@ -466,7 +467,7 @@ csw 13mar2012
              cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
             endif                                                        !srv 10.07.02
            enddo
-! May need to use flux limiting factors calculated on cell faces
+! May need to use flux-limiting factors calculated on cell faces
            chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
            csig(ix,iy,0)=csig(ix,iy,0)*f_luc_sg(ix,iy)
            calf(ix,iy,0)=calf(ix,iy,0)*f_luc_al(ix,iy)
