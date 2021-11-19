@@ -83,6 +83,7 @@
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
       integer, save :: get_residuals = 0                                 !srv 22.05.18
+      integer, save :: visper_all_ions = 1
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
@@ -278,6 +279,7 @@ csw 26feb2014 some extra variables
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
        call ipgeti ('get_residuals', get_residuals)                      !srv 22.05.18
+       call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
       endif                                                              !srv 02.07.08
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -360,18 +362,20 @@ csw 01oct2012 initialize potential if necessary
       call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,              !srv 09.07.04 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb,        !srv 09.01.01 13.10.06 01.07.09
      2 lnlam, fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,      !srv 03.06.03
-     3 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                   !srv 04.10.99 23.12.03 13.10.06
+     3 cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,             !srv 04.10.99 23.12.03 13.10.06 !som 03.11.21
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
-      call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                fchvispar_a, fchvispar)
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
+      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar_a, fchvispar)
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
-     &              avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17   08.09.21 }
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21
+     &              avisper_a, bvisper_a, cvisper_a,
+     &              fchvisper_a, fchvisper)
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
@@ -395,7 +399,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
@@ -566,14 +570,16 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2scopy (n2, ne, 1, nep, 1)
       nip = ni                                                           !srv 07.07.21
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)         !srv 20.09.06 } 08.09.21 {
-      call b2tvspa (nx, ny, ns, bb, ua, cvsa_cl, fac_vis,
-     &                fchvispar_a, fchvispar)
-      call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,                     !srv 08.09.21
+      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 
+      call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl, fac_vis,        !srv 19.02.21
+     &              fchvispar_a, fchvispar)
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,                !srv 10.10.17
-     &             avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-      call b2tvsq   (nx, ny, ns, fac_vis,                                !srv 10.10.17  08.09.21 }
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21
+     &              avisper_a, bvisper_a, cvisper_a,
+     &              fchvisper_a, fchvisper)
+      call b2tvsq  (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 19.02.21
      &              ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -604,7 +610,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
 #endif
-!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
 !$OMP& SHARED(zn, zamax)
@@ -612,7 +618,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
 !$OMP& SHARED(cssb, vaecrb, vadia)
 !$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po)
-!$OMP& SHARED(cvla, cdna, cdpa, cddi, cvlahz, cdnahz, cdpahz)
+!$OMP& SHARED(cvla, cdna, cdpa, cddi, cdde, cvlahz, cdnahz, cdpahz)
 !$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
@@ -664,7 +670,8 @@ csw 16oct2012 init ier0
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -695,7 +702,7 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -836,7 +843,7 @@ csw 16oct2012 init ier0
      &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl,                 !srv 24.08.21
-     &    conc, avisper, bvisper, cvisper,
+     &    conc, avisper_a, bvisper_a, cvisper_a,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fch, fch_p, fchdia, fchin,
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
@@ -853,9 +860,9 @@ csw 16oct2012 init ier0
      &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
           else
-            call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 27.01.00 22.05.18
-     &       rxf2, ne, te, conc, avisper, bvisper, cvisper, sch, po,
-     &       fch, respo, corpo, ier0)
+            call b2npp7 (nx, ny, ns, ismain, nnreg(0), solving(3),       !srv 27.01.00 22.05.18
+     &       solvepo, ncall, rxf2, ne, te, conc, avisper_a, bvisper_a,
+     &       cvisper_a, sch, po, fch, respo, corpo, ier0)
           endif                                                          !srv 06.07.00
           t0=0.0_R8
 crfs      do iy = 0, ny-1
@@ -870,7 +877,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl,               !srv 24.08.21
-     &      conc, avisper, bvisper, cvisper,
+     &      conc, avisper_a, bvisper_a, cvisper_a,
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
      &      fch, fch_p, fchdia, fchin,
      &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
@@ -916,7 +923,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
@@ -977,10 +984,9 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB,
-     & vol, hx,                                                          !srv 29.01.20
-     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
-     2 chvemx, cddi, fch_p, fchstoch,
+      call b2tfhe_ (nx, ny, ns, ismain, facdrift, fac_ExB, vol, hx,      !srv 09.01.20 19.02.21
+     1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 17.05.99 11.07.99
+     & chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx,
@@ -1126,7 +1132,8 @@ c   recompute particle fluxes
 !         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-            if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
+            if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -1160,7 +1167,7 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
-              if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then        !srv 02.04.18
+              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)

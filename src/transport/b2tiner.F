@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, vol, gs, bb, na, ua,               !srv 20.09.06 {
+      subroutine b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,       !srv 20.09.06 {
      &                    facdrift, fchinert_a, fchinert)                !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -15,7 +15,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      & na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -42,6 +42,7 @@
       integer ncall, ix, iy, ib, is
       integer, save :: fch_inert_style                                   !srv 19.04.13
       integer, save :: no_current = 0
+      integer, save :: inert_all_ions = 1
       integer, save :: guard_flows
       real (kind=R8) ::
      &  fch_inert
@@ -61,6 +62,7 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2tiner_inert_all_ions', inert_all_ions)
        call ipgeti ('b2news_guard_flows', guard_flows)
        if (redef_gmtry.eq.0) then
           fch_inert_style = 1
@@ -208,15 +210,15 @@ c Drift terms
         endif
       endif                                                              !srv 07.07.99
 
-! it will be soon removed {
+      if (inert_all_ions.eq.0) then
        do is = 0, ns-1
-        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+        if (is.eq.ismain) then
          fchinert_a(:,:,:,is) = fchinert(:,:,:) 
         else
          fchinert_a(:,:,:,is) = 0.0_R8
         endif
        enddo
-! }
+      endif
 
       if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells

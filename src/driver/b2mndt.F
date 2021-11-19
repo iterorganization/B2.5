@@ -318,22 +318,24 @@ ctmp.dpc
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
-     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
+     2       cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,       !srv 13.10.06 !som 03.11.21
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
 !          if(style.gt.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)   !srv 20.09.06 } 08.09.21 {
-            call b2tvspa (nx, ny, ns, bb, ua,                            !srv 20.09.06 {
-     &                    cvsa_cl, fac_vis, fchvispar_a, fchvispar)
-            call b2tiner (nx, ny, ns, vol, gs, bb, na, ua,
+            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,       !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21 
+            call b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl,           !srv 20.09.06 { 19.02.21
+     &                    fac_vis, fchvispar_a, fchvispar)
+            call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
-            call b2tvspr (nx, ny, ns, fac_vis, vol, po, ti, na,          !srv 10.10.17
-     &             avisper, bvisper, cvisper, fchvisper_a, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, ne2,                       !srv 10.10.17 08.09.21 }
-     &                    lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
+            call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
+     &                    po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     &                    fchvisper_a, fchvisper)
+            call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
+     &               ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18

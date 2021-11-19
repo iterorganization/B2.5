@@ -508,7 +508,8 @@
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,is), flubv)      !srv 01.07.05 11.09.09 16.10.17
+       call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,is),     !19.02.21
+     &              flubv)                                             !srv 01.07.05 11.09.09 16.10.17
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
        endif
@@ -518,7 +519,7 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, am(is)*mp,
+       call b2siav (nx, ny, ns, is, ismain, am(is)*mp,                 !srv 19.02.21
      &   ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is),
@@ -530,7 +531,8 @@
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nx, ny, is, facdrift, fac_ExB, fchanml, smban)
+       call b2sian (nx, ny, is, ismain, facdrift, fac_ExB,             !srv 19.02.21
+     &   fchanml_a(-1,-1,0,is), smban)                                 !som 03.11.21
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)

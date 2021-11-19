@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, bb, ua,                           !srv 20.09.06 { 16.10.17
-     &           cvsa_cl, fac_vis, fchvispar_a, fchvispar)              !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, ismain, bb, ua, cvsa_cl,          !srv 20.09.06 { 16.10.17 19.02.21
+     &                    fac_vis, fchvispar_a, fchvispar)              !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -15,7 +15,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      & ua(-1:nx,-1:ny,0:ns-1),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 16.10.17
@@ -79,8 +79,9 @@ c Drift terms
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
        do is = 0, ns-1                                                  !srv 24.06.99
-        if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
-     &        .not.is_neutral(is)) then                                 !srv 24.06.99
+!        if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
+!     &      .not.is_neutral(is)) then                                  !srv 24.06.99
+        if(is.eq.ismain .and. .not.is_neutral(is)) then                 !srv 19.02.21
          do iy =-1, ny                                                  !srv 18.02.00
           do ix = 0, nx
            if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02 23.07.05 {

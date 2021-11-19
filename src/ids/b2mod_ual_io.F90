@@ -572,7 +572,7 @@ contains
             &        bb, conn, vol, gs, hx, hy, hz, qz, qc,                       &
             &        pbs, crx, cry, bzb, lnlam,                                   &
             &        fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,        &
-            &        cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,              &
+            &        cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,        & !som 03.11.21
             &        chvi, csig, csigin, calf, cthe, cthi,                        &
             &        cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,  &
             &        fllim0fhi, fllimvisc, csig_cl, calf_cl,                      &
@@ -4333,7 +4333,8 @@ contains
 #endif
 
             !! fchanml: Anomalous current
-            call b2tanml (nx, ny, ns, csig_an, po, fchanml_a, fchanml)
+            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           & !som 02.11.21
+                &         fchanml_a, fchanml)
             call divide_by_contact_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID

@@ -1,4 +1,4 @@
-      subroutine b2tvsq (nx, ny, ns, fac_vis,
+      subroutine b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 19.02.21
      &           ne2, lnlam, te, ti, ni, chci, fchvisq_a, fchvisq)
       use b2mod_types
       use b2mod_indirect
@@ -10,7 +10,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, ismain                                         !srv 19.02.21
       real (kind=R8) ::
      &   fac_vis(-1:nx,-1:ny),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
@@ -86,8 +86,8 @@
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.               !srv 16.10.17
      &   no_current.eq.0) then
          do is = 0,ns-1                                                 !srv 12.05.11
-          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
-!           is = ismain    !
+!          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 12.05.11
+          if(is.eq.ismain) then                                         !srv 19.02.21   !
            qip0  = 0.0e0_R8
            qip1  = 0.0e0_R8
            qipgen= 0.0e0_R8

@@ -91,6 +91,7 @@
       integer, save :: vlct_diagno = 1
       character chns*3                                                  !srv 16.09.02
       integer, save :: drift_style                                      !srv 21.06.08
+      integer, save :: dia_lim_all_ions = 1                             !som 04.11.21
       real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -209,6 +210,7 @@
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
+        call ipgeti ('b2tfnb_dia_lim_all_ions', dia_lim_all_ions)        !som 04.11.21
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -726,7 +728,53 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
       endif
 
-      if (isb.ne.ismain .and. .not.is_neutral(isb)) then                 !lk 02.06.11 {
+      if (dia_lim_all_ions .eq. 1) then                                  !som 04.11.21 
+       if (.not.is_neutral(isb)) then                                    !som 04.11.21 {
+        do iy = 0, ny
+          do ix = -1, nx
+            if (leftix(ix,iy).ne.-2) then
+              t0 = max(ti(ix,iy), ti(leftix(ix,iy),leftiy(ix,iy)))
+              t1 = (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy)))
+     &          /2.0_R8
+              vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))               !som 04.11.21 
+              t2 = 1.0_R8 + abs(fnbPSch(ix,iy,0))/(
+     &         vbar*t1*(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+     &          )
+              fnbPSch(ix,iy,0)= fnbPSch(ix,iy,0)/t2
+              vbdia(ix,iy,0)= vbdia(ix,iy,0)/
+     &                            (1.0_R8 + abs(vbdia(ix,iy,0))/vbar)
+              wbdia(ix,iy,0)= wbdia(ix,iy,0)/
+     &                            (1.0_R8 + abs(wbdia(ix,iy,0))/vbar)
+              ubdia(ix,iy,0)= ubdia(ix,iy,0)/
+     &                            (1.0_R8 + abs(ubdia(ix,iy,0))/vbar)
+              ub2dia(ix,iy,0)= ub2dia(ix,iy,0)/
+     &                            (1.0_R8 + abs(ub2dia(ix,iy,0))/vbar)
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
+              t1 = (nb(ix,iy) + nb(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         /2.0_R8
+              vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))               !som 04.11.21 
+              t2 = 1.0_R8 + abs(fnbPSch(ix,iy,1))/(
+     &         vbar*t1*(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         )
+              fnbPSch(ix,iy,1)= fnbPSch(ix,iy,1)/t2
+              vbdia(ix,iy,1)= vbdia(ix,iy,1)/
+     &         (1.0_R8 + abs(vbdia(ix,iy,1))/vbar)
+              wbdia(ix,iy,1)= wbdia(ix,iy,1)/
+     &         (1.0_R8 + abs(wbdia(ix,iy,1))/vbar)
+              ubdia(ix,iy,1)= ubdia(ix,iy,1)/
+     &         (1.0_R8 + abs(ubdia(ix,iy,1))/vbar)
+              ub2dia(ix,iy,1)= ub2dia(ix,iy,1)/
+     &         (1.0_R8 + abs(ub2dia(ix,iy,1))/vbar)
+            endif
+          enddo
+        enddo
+       endif                                                             !som 04.11.21 }
+      else
+       if (isb.ne.ismain .and. .not.is_neutral(isb)) then                !lk 02.06.11 {
         do iy = 0, ny
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) then
@@ -775,7 +823,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
             endif
           enddo
         enddo
-      endif                                                             !lk 02.06.11 }
+       endif                                                            !lk 02.06.11 }
+      endif
 
 * ..compute fluxes
 *   ..compute wrk0
@@ -852,6 +901,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+!         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!         if(isb.eq.ismain) then                                        !srv 19.02.21
          if(.not.is_neutral(isb)) then                                  !srv 08.09.21
           scur =
      &     (fchinert_b(ix,iy,0)+fchvispar_b(ix,iy,0)
@@ -1369,7 +1420,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fna_pschused(ix,iy,1,isb) = 0.0_R8
          endif
         else
-         if(.not.is_neutral(isb)) then                                 !srv 08.09.21 (
+!         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
+!         if(isb.eq.ismain) then                                        !srv 19.02.21
+         if(.not.is_neutral(isb)) then                                  !srv 08.09.21
           scur =
      &    (fchinert_b(ix,iy,1)+fchvispar_b(ix,iy,1)+
      &     fchanml_b(ix,iy,1)+vis_q*fchvisq_b(ix,iy,1))*ycur/           !srv 17.07.08 {  02.10.17
@@ -1548,6 +1601,7 @@ cdjm Jan2017 store components of fnb for balance
               endif
             endif
 !            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!            if(isb.eq.ismain) then                                      !srv 19.02.21
               fna_ch(ix,iy,1,isb) = scur*
      &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
 !            else
