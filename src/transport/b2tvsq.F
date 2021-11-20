@@ -748,17 +748,6 @@
        endif                                                             !som 20.10.21
       endif
 
-
-! it will be soon removed {
-       do is = 0, ns-1
-        if (is.eq.ismain) then
-         fchvisq_a(:,:,:,is) = fchvisq(:,:,:)
-        else
-         fchvisq_a(:,:,:,is) = 0.0_R8
-        endif
-       enddo
-! }
-
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB = 1,NNISO
         DO IX = NXISO1(IB), NXISO2(IB)
