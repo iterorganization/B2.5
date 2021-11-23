@@ -1,4 +1,4 @@
-      subroutine b2blnm(nx,ny,ns,iline)
+      subroutine b2blnm(nx,ny,ns,iline,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -11,6 +11,7 @@
       use b2mod_external
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -26,6 +27,7 @@ c----------------------------------------------------------------------
 c
 c
       integer nx, ny, ns, iline
+      type (switches), intent (in) :: switch
 c
 c*** lv    :  version number to appear in the file
 c*** lvm   :  version number corresponding to the last major change
@@ -85,7 +87,6 @@ c
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(-1:nx, -1:ny)
-      real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       logical ex,warn_tmp
       character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
@@ -280,7 +281,6 @@ c----------------------------------------------------------------------
 c
       ndiv=ndivx
       tab=char(9)
-      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -290,7 +290,7 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
   700   format('#   ',3i8/'#  ',a)
   701   format(a1,3x,3i8)

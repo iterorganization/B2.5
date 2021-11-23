@@ -1,4 +1,5 @@
-      subroutine b2usr_cost_function(nCv, nFc, nVx, ns, mpg, st, geo, J)
+      subroutine b2usr_cost_function(nCv, nFc, nVx, ns, mpg, st, geo,
+     & BoRiS, J)
       use b2mod_types
       use b2mod_constants
       use b2mod_user_namelist
@@ -36,8 +37,6 @@
       external subini, subend
 
       call subini('b2usr_cost_function')
-
-      BoRiS = 0.0_R8 !!FIXME 
 
       if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')

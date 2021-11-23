@@ -6,6 +6,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : b2tlv0_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -31,7 +35,6 @@
       real (kind=R8) ::
      *  alpha, gamma, qcl, qfl, tfl, maxfluxlimit(0:1),
      *  dubf(nFc,0:1), ubv(nVx)
-      real (kind=R8), save :: cutlo = 1.0e-60_R8
 *   ..initialization
 *   ..procedures
       intrinsic max, abs, sqrt
@@ -62,7 +65,7 @@
            qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
+           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl
             cvsahz(iFc,0,is) = cvsahz(iFc,0,is)*tfl
@@ -73,7 +76,7 @@
            qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
+           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cvsa(iFc,1,is)   = cvsa(iFc,1,is)*tfl
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
@@ -95,7 +98,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
            qfl = alpha*geo%fcS(iFc)*
      &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
      &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+cutlo))**gamma)
+           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
 *    ..poloidal
             cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl

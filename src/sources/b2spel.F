@@ -89,6 +89,7 @@
       ite = 0
       ine = 0
 *   ..loop over cells
+! $AD II-LOOP
       do iCv = 1,nCv
 *     ..set ltst0
         ltst0 = rtlt(0).le.log(te(iCv)/ev)

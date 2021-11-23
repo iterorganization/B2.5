@@ -18,7 +18,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfnb
+     & , only : ncall_b2tfnb, b2tfnb_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, ismain
@@ -53,11 +53,10 @@
       integer iCv, iFc, ib, meth                         !srv 13.10.06
       integer, save :: style_int_vel = 0
       character chns*3                                                   !srv 16.09.02
-      real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
-     *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
+     *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
@@ -65,7 +64,6 @@
      &   kmpr(nCv), kmprv(nVx)!,
 !     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
 !     &   rdiv                                                            !srv 05.03.16
-      parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
@@ -106,7 +104,6 @@ c      integer, save :: vlct_diagno = 1
 *   ..set internal parameters on first call
       if (ncall_b2tfnb.eq.0) then
         if (switch%b2tfnb_no_hybr .eq.1) meth = 0
-        call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
       endif
 *   ..extensive tests on first few calls
@@ -410,35 +407,36 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 
 *   ..compute convective coefficients (poloidal and radial)
       flo(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
-     &  (drift_hyb*dv%vaecrb(:,0,isb) + dv%vadia(:,0,isb))*
+     &  (switch%fnb_drift_hyb*dv%vaecrb(:,0,isb) + dv%vadia(:,0,isb))*
      &  geo%fcS*geo%fcQalf(:,0)
       flo(:,1) = co%cvla(:,1,isb) +
-     &  (drift_hyb*dv%vaecrb(:,1,isb) + dv%vadia(:,1,isb))*
+     &  (switch%fnb_drift_hyb*dv%vaecrb(:,1,isb) + dv%vadia(:,1,isb))*
      &  geo%fcS*geo%fcQalf(:,1)
       flo_mdf(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
-     &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+     &  switch%fnb_drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
-     &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
+     &  switch%fnb_drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       if (.not.is_neutral(isb).or.switch%tn_style.eq.0) then
         flo_he(:,0) = geo%fcPbs*wrk0 +
      &    5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
-     &    drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+     &    switch%fnb_drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
+     &    geo%fcQalf(:,0)
       else
         flo_he(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb)
 c csc To be added contribution of ubdia
       endif
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
-     &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
+     &  switch%fnb_drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +
      &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_53(:,1) =
      &  dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo2dia(:,0) = geo%fcPbshz*wrk0 + co%cvlahz(:,0,isb) +
-     &  (drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*dv%vadia(:,0,isb))*
-     &  geo%fcS*geo%fcQalf(:,0)*geo%fcHz
+     &  (switch%fnb_drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*
+     &  dv%vadia(:,0,isb))*geo%fcS*geo%fcQalf(:,0)*geo%fcHz
       flo2dia(:,1) = co%cvlahz(:,1,isb) +
-     &  (drift_hyb*dv%vaecrb(:,1,isb) + 2.0_R8*dv%vadia(:,1,isb))*
-     &  geo%fcS*geo%fcQalf(:,1)*geo%fcHz
+     &  (switch%fnb_drift_hyb*dv%vaecrb(:,1,isb) + 2.0_R8*
+     &  dv%vadia(:,1,isb))*geo%fcS*geo%fcQalf(:,1)*geo%fcHz
       flo_nodrift(:,0) = co%cvla(:,0,isb) + geo%fcPbs*wrk0
       flo_nodrift(:,1) = co%cvla(:,1,isb)
 
@@ -446,15 +444,19 @@ c csc To be added contribution of ubdia
       if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
         scur(:,0) = 
      &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
-     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%xcur/(qe*nbf)
+     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*
+     &      switch%b2tfnb_xcur/(qe*nbf)
         scur(:,1) = 
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
      &      switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
-     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur/(qe*nbf)
-        flo     = flo     + drift_hyb*scur
-        flo_mdf = flo_mdf + drift_hyb*scur
-        flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz
-        flo2dia(:,1) = flo2dia(:,1) + drift_hyb*scur(:,1)*geo%fcHz
+     &      switch%fnb_vis_q*dv%fchvisq(:,1))*
+     &      switch%b2tfnb_ycur/(qe*nbf)
+        flo     = flo     + switch%fnb_drift_hyb*scur
+        flo_mdf = flo_mdf + switch%fnb_drift_hyb*scur
+        flo2dia(:,0) = flo2dia(:,0) + switch%fnb_drift_hyb*
+     &    scur(:,0)*geo%fcHz
+        flo2dia(:,1) = flo2dia(:,1) + switch%fnb_drift_hyb*
+     &    scur(:,1)*geo%fcHz
       else
         scur = 0.0_R8
       end if
@@ -480,39 +482,43 @@ c csc To be added contribution of ubdia
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
 
 *   ..compute other fluxes
-      dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+      dv%fna(:,0,isb)      = fna_mdf0(:,0) + 
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
      &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
 
-      dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+      dv%fna(:,1,isb)      = fna_mdf0(:,1) + 
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +  
      &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
 
-      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) + 
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf - 
      &   co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
-      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) + 
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf - 
      &   co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
 
       dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz +
-     &  (1.0_R8-drift_hyb)*geo%fcHz*
+     &  (1.0_R8-switch%fnb_drift_hyb)*geo%fcHz*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf + 
      &  (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf - 
      &   co%cdpahz(:,0,isb)*dpb(:,0)
       dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz +
-     &  (1.0_R8-drift_hyb)*geo%fcHz*
+     &  (1.0_R8-switch%fnb_drift_hyb)*geo%fcHz*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf + 
      &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf - 
      &   co%cdpahz(:,1,isb)*dpb(:,1)
 
       dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) +
-     &  (1.0_R8-drift_hyb)*
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf + 
      &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
-     &  (1.0_R8-drift_hyb)*
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf + 
      &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
      &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
@@ -520,10 +526,12 @@ c csc To be added contribution of ubdia
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
       dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf
 
-      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
+      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) +
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
      &  (flo(:,0) - flo_mdf(:,0))*nbf
-      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
+      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) +
+     &  (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf
 
@@ -562,9 +570,9 @@ c csc To be added contribution of ubdia
 *   ..compute flob, conb
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,
      &    flo_mdf,co%cdna(:,:,isb),flob0,conb0)
-      flob0(:,0) = flob0(:,0) + (1.0_R8-drift_hyb)*
+      flob0(:,0) = flob0(:,0) + (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))
-      flob0(:,1) = flob0(:,1) + (1.0_R8-drift_hyb)*
+      flob0(:,1) = flob0(:,1) + (1.0_R8-switch%fnb_drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))
       if (switch%mdf_fnb .eq. 0) then
         flob0 = flob0 + flo - flo_mdf

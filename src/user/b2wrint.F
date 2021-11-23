@@ -1,4 +1,4 @@
-      subroutine b2wrint(nx,ny,ns,nregionv,iline)
+      subroutine b2wrint(nx,ny,ns,nregionv,iline,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -11,6 +11,7 @@
       use b2mod_external
       use b2mod_constants
       use b2mod_numerics_namelist
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
@@ -31,6 +32,7 @@ c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
       integer nx, ny, ns, nregionv, iline
+      type (switches), intent (in) :: switch
 c
       integer lv
 c      parameter (lv=970522)
@@ -197,7 +199,6 @@ c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
-      real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
@@ -470,7 +471,6 @@ c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
       tab=char(9)
-      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -480,7 +480,7 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
         read(lun,*,err=92) hlp_c, nv,
      &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,

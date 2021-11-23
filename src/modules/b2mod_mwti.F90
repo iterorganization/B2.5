@@ -27,7 +27,7 @@ module b2mod_mwti
 contains
   
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
-                     nCv, ns, geo, mpg, pl ,dv, co, &
+                     nCv, ns, geo, mpg, switch, pl ,dv, co, &
                      ismain, ismain0, BoRiS, lwti, lwav, luav)
 !    use b2mod_geo
 !    use b2mod_plasma
@@ -49,6 +49,7 @@ contains
     use b2us_plasma
     use b2mod_user_namelist &
     , only : nomp, omp, icsep
+    use b2mod_switches
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
     use eirmod_extrab25
@@ -58,6 +59,7 @@ contains
     !   ..input arguments (unchanged on exit)
     type(geometry), intent (in) :: geo
     type (mapping), intent (in) :: mpg
+    type (switches), intent (in) :: switch
     type (B2Plasma), intent (in) :: pl
     type (B2Derivatives), intent (in) :: dv
     type (B2Coeff), intent (in) :: co
@@ -150,7 +152,6 @@ contains
          tmhacore(1), tmhasol(1), tmhadiv(1) !, slice(-1:ny)
     real (kind=R8) :: &
          timesa(1), batchsa(1), tstepn(1)
-    real (kind=R8), save :: stim = 0.0_R8
     logical ex
     character*5 rw
     character*256, save :: filename, filename_av
@@ -262,8 +263,7 @@ contains
       if (b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,ex)
-        call ipgetr ('b2mndr_stim', stim)
-        if (.not.ex.or.stim.ge.0.0_R8) then
+        if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
           ntstep = 0
           write(6,'(a)') trim(filename)//' will be created'
           call b2crtimecdf(filename, nCv, nc, ns, write_2d, &
@@ -271,7 +271,7 @@ contains
           call check_cdf_status(iret)
           iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
-        else if (ex.and.stim.lt.0.0_R8) then
+        else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
           rw='read'
           iret = nf_open(filename,NF_NOWRITE,ncid)
           call check_cdf_status(iret)
@@ -310,7 +310,7 @@ contains
           write(*,*) 'nbatch = ', nbatch
           filename_av='b2batch.nc'
           call find_file(filename_av,ex)
-          if (.not.ex.or.stim.ge.0.0_R8) then
+          if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
             nastep = 0
             write(6,'(a)') trim(filename_av)//' will be created'
             call b2crtimecdf(filename_av, nCv, nc, ns, write_2d, &
@@ -318,7 +318,7 @@ contains
             call check_cdf_status(iret)
             iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
-          else if (ex.and.stim.lt.0.0_R8) then
+          else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
             rw='read'
             iret = nf_open(filename_av,NF_NOWRITE,ncid)
             call check_cdf_status(iret)

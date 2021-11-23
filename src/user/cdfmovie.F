@@ -1,4 +1,4 @@
-      subroutine cdfmovie(ncid,nx,ny,ns)
+      subroutine cdfmovie(ncid,nx,ny,ns,switch)
       use b2mod_types
       use b2mod_plasma
       use b2mod_sources
@@ -14,18 +14,19 @@
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_switches
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       integer ncid, nx, ny, ns
+      type (switches), intent (in) :: switch
 #ifndef NO_CDF
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 
      & dummy3(-1:nx, -1:ny, 1:ns)
       integer ix, iy, is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
-      real (kind=R8), save :: stim = 0.0_R8
       character*256 filename
       logical ex
       save ncall
@@ -35,8 +36,7 @@
       if (ncall.eq.0) then
         filename='b2movies.nc'
         call find_file(filename,ex)
-        call ipgetr ('b2mndr_stim', stim)
-        if (ex.and.stim.lt.0.0_R8) then
+        if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
           write(6,'(a)') trim(filename)//' will be appended'
           status=nf_open(filename,NF_WRITE,ncid)
           call check_cdf_status(status)
