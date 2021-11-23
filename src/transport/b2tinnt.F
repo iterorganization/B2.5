@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nx, ny, ns, facdrift, fac_ExB,
-     &       istemp, istemp0, vol, gs, hx, hy, qz, qc, bb,               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
+     &       vol, gs, hx, hy, qz, qc, bb,                                !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin)                         !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_indirect
@@ -20,7 +20,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, istemp, istemp0                                 !som 04.11.21
+      integer nx, ny, ns                                                  !som 04.11.21
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                       !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),

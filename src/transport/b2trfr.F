@@ -59,14 +59,14 @@
           do k = 0, nnucl-1
             if (k.ne.i) then
               temp=(rmu(i,k)/rmu(i,j))*(z2n(k)/z2n(j))
-*   ..first part (main for the light species)
+*   ..first part
               c_R_wA1=c_R_wA1-mum(i,k)*temp*
      &         (0.6_R8*c_hwA(j,i)-rel*mum(i,k)*c_rwA(j,i))
-*   ..second part (main for the heavy species)
+*   ..second part
               c_R_wA2=c_R_wA2+mum(k,i)*temp*
      &         (0.6_R8*c_hwA(j,k)-rel*mum(k,i)*c_rwA(j,k))
             endif
-*   ..third part (main for the heavy species)
+*   ..third part
             c_R_wA3=c_R_wA3-mum(j,i)*
      &       (0.6_R8*c_hwA(k,j)-rel*mum(j,i)*c_rwA(k,j))
           enddo

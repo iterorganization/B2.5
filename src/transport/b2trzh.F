@@ -265,8 +265,8 @@
      &       zetap(ix,iy), zeffne, ti(ix,iy), Ainv_fl_h,
      &       hci0_al(ix,iy,0:nspecies-1))
 *    ..calculate the velocity parts of heat flux and R-transport coefficient
-            call b2trhw(nspecies, G2, G8, mum, rmu,
-     &       z2n_xy(ix,iy,0:nspecies-1), Ainv, Ainv_mdf,
+            call b2trhw(nspecies, G2, G8, mum,
+     &       Ainv, Ainv_mdf,
      &       c_hwA(0:nspecies-1,0:nspecies-1),
      &       c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting

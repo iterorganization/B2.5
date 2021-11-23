@@ -389,7 +389,7 @@ csw 01oct2012 initialize potential if necessary
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
      &             fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -647,7 +647,7 @@ csw 16oct2012 init ier0
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
      &             fchvisq_a, fchvisq)
 
 *   ..iterate on momentum balance
@@ -724,8 +724,8 @@ c   extra call at this place within internal iteration)
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &    cdna, cdpa, cvsa_cl, cvsa_drho,                                  !som 18.08.21
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &    cdna, cdpa, cvsa_cl, cvsa_drho,                                !som 18.08.21
+     &    chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                         !som 20.10.21
      &    cvla, chce, chve, chci, chvi, calf,                            !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
@@ -841,11 +841,11 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents
-        call b2tfch_ (nx, ny, ns, ismain, ismain0, facdrift, fac_ExB,    !srv 09.01.20
+        call b2tfch_ (nx, ny, ns, ismain, facdrift, fac_ExB,             !srv 09.01.20
      &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
-     &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     &    chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                         !som 20.10.21
      &    conc, avisper_a, bvisper_a, cvisper_a,
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fch, fch_p, fchdia, fchin,
@@ -876,11 +876,11 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
           write(*,*) 'respo before solving',t0
           call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
-          call b2tfch_ (nx, ny, ns, ismain, ismain0, facdrift, fac_ExB,  !srv 09.01.20
+          call b2tfch_ (nx, ny, ns, ismain, facdrift, fac_ExB,           !srv 09.01.20
      &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
-     1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
-     &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
+     1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
+     &      chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                       !som 20.10.21
      &      conc, avisper_a, bvisper_a, cvisper_a,
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
      &      fch, fch_p, fchdia, fchin,

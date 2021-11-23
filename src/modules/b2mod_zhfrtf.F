@@ -118,7 +118,7 @@
       real (kind=R8) :: na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1)
 *   ..local variables
-      integer :: ix, iy, is, inucl, iz
+      integer :: ix, iy, inucl, iz
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -236,7 +236,7 @@
 *   ..local variables
       integer ix, iy, is, iz, inucl
       real (kind=R8) :: rho_A(0:ns-1), rho, w_A(0:ns-1),
-     &   t_A(-1:nx,-1:ny,0:ns-1), gti(-1:nx,-1:ny),
+     &   t_A(-1:nx,-1:ny,0:ns-1),
      &  gt_A(-1:nx,-1:ny,0:ns-1), gavm_u(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------

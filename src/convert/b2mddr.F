@@ -224,8 +224,8 @@
       write(*,*) 'mdsconnect'
       if(status.lt.0) then
         write(*,*) ' return status: ',status
-	call xertst (status.ge.0,
-     .	 'Error connecting to the MDSplus server ' // trim(mds_server))
+        call xertst (status.ge.0,
+     .   'Error connecting to the MDSplus server ' // trim(mds_server))
       endif
 
       if(overwrite_shotnumber.le.0) then

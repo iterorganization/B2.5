@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
-     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,       !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
+     & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
+     & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
      & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      & wrk0, wrk1, wrk2, rho_rel, avm_u)
       use b2mod_types
@@ -32,9 +32,8 @@
      &  mb, lnlam(-1:nx,-1:ny), zb(-1:nx,-1:ny), ub(-1:nx,-1:ny),     !srv 01.07.09
      &  wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     &  chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                 !srv 23.07.99
-     &  cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),            !srv 04.10.99 09.01.01
+     &  ne2(-1:nx,-1:ny),
+     &  cvsbhz(-1:nx,-1:ny,0:1),                                      !srv 04.10.99 09.01.01
      &  cvsbhz_drho(-1:nx,-1:ny,0:1),                                 !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                        !som 08.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
@@ -79,10 +78,10 @@
      *  hip1(-1:nx,-1:ny), hipgen(-1:nx,-1:ny),                     !srv 23.07.99 19.01.05
      *  hipgen_al(-1:nx,-1:ny,0:nspecies-1),                        !som 11.10.21
      &  tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                  !lk 23.05.06 05.07.07 {
-     &  tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
+     &  tt2(-1:ny), tt3(-1:ny)
       real (kind=R8) :: hip0a(-1:nx,-1:ny), hip0b(-1:nx,-1:ny),
      &                  tauia1(-1:nx,-1:ny),
-     &                  nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     &                  wrks(-1:nx,-1:ny)                           !lk !iyv 02.12.13
       real (kind=R8) :: u_res(-1:nx,-1:ny)                          !som 13.08.21
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
@@ -115,7 +114,6 @@
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
       ft_h =  8.0_R8/15.0_R8                                        !som 11.10.21
-      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
       smbvi = 0.0_R8                                                !som 13.08.21
@@ -139,7 +137,6 @@
           tt2 = 0.0e0_R8
           tt3 = 0.0e0_R8
           bbaverage2 = 0.0e0_R8
-          eps1 = 0.0e0_R8
 !pbwdk          mintopcut = ny
           mintopcut = -2
           if (nncut > 0) mintopcut = minval(topcut(1:nncut))
@@ -156,7 +153,6 @@
 
           do iy = 0, mintopcut-1
             bbaverage2(iy) = tt0(iy)/tt1(iy)
-            eps1(iy) = tt2(iy)**2/tt3(iy)
           enddo
 
 * ..calculate the parallel heat flux of the isb species

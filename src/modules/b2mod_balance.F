@@ -4,7 +4,8 @@
 
 *   ..Flux and source arrays required for balance postprocessing routines. For the
 *     sources, the linearised components are stored and then the total source is updated
-*     just before each residual calculation. Only this total source is output to balance.nc
+*     just before each residual calculation.
+*     Only this total source is output to balance.nc
 *   ..Arrays for particle balance:
 *     Fluxes
       real (kind=R8), allocatable, save ::
@@ -2724,6 +2725,8 @@ cdjm Update ion heat sources
      & , only : am
       use b2mod_constants
      & , only : mp,ev
+#else
+#     include "DIMENSIONS.F"
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -3217,6 +3220,12 @@ cdjm Update ion heat sources
 
       write(*,*) 'balance.nc written'
 #else
+*   ..procedures
+      external ipgeti, xertst
+
+      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
+      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
 #endif
 

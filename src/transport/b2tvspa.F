@@ -13,7 +13,7 @@
       use b2mod_geo
      , , only : hy1
       use b2mod_zhfrtf
-     , , only: avm_u, rho_A_rel,                                        !som 17.08.21
+     , , only: avm_u,                                                   !som 17.08.21
      &         b2mod_zhfrtf_avm_u                                       !som 18.08.21
       use b2mod_subsys
       implicit none
@@ -159,9 +159,9 @@ c Drift terms
      &        /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))            !srv 18.02.00
      &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv
      &        /3.0e0_R8                                                 !srv 18.02.00
-!     &        (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))         !srv
-!     &        /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))              !srv 18.02.00
-!     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv
+!     &        (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))        !srv
+!     &        /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !srv 18.02.00
+!     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv
 !     &        /3.0e0_R8                                                !srv 18.02.00
            endif                                                        !srv 26.11.02
           enddo

@@ -35,8 +35,8 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer :: i,j,k
-      real (kind=R8) :: sqrt2, temp, rel
+      integer :: i, j
+      real (kind=R8) :: sqrt2
       real (kind=R8) :: Z2s(0:nspecies-1), Z5s(0:nspecies-1),
      &  Z8s(0:nspecies-1), Z9s(0:nspecies-1), Z11s(0:nspecies-1),
      &  rz2n(0:nspecies-1),

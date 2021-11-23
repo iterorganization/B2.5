@@ -1,6 +1,6 @@
       subroutine b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
      &             fchvisq_a, fchvisq)
       use b2mod_types
       use b2mod_boundary_namelist                                        !som 21.10.21
@@ -26,7 +26,6 @@
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1),                                          !som 21.10.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 21.10.21
-     &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 21.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 21.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1)                       !som 21.10.21
 *   ..output arguments (unspecified on entry)
@@ -69,8 +68,6 @@
      *    dvq(-1:nx,-1:ny)                                               !som 21.10.21
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 20.10.21
       integer, save :: Zhdanov_vish = 1                                  !som 20.10.21
-      integer  k
-      character chns*3, chns0*3, chk*1                                   !srv 17.06.02
 *   ..procedures
       intrinsic abs
       external xertst

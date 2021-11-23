@@ -1,17 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trhw (nnucl, G2, G8, mum, rmu,
-     &  z2n, Ainv, Ainv_mdf, c_hwA, c_rwA)
+      subroutine b2trhw (nnucl, G2, G8, mum,
+     &  Ainv, Ainv_mdf, c_hwA, c_rwA)
       use b2mod_types
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nnucl
       real (kind=R8) ::
-     &  z2n(0:nnucl-1),
      &  G2(0:nnucl-1,0:nnucl-1), G8(0:nnucl-1,0:nnucl-1),
-     &  mum(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1)
+     &  mum(0:nnucl-1,0:nnucl-1)
       real (kind=R8) ::
      &  Ainv(0:2*nnucl-1,0:2*nnucl-1),
      &  Ainv_mdf(0:nnucl-1,0:2*nnucl-1)
@@ -36,7 +35,6 @@
 *.declarations
 *   ..local variables
       integer :: i,j,k
-      real (kind=R8) :: temp, rel
       real (kind=R8) ::
      &  c_hwAm(0:nnucl-1,0:nnucl-1,0:nnucl-1),
      &  c_rwAm(0:nnucl-1,0:nnucl-1,0:nnucl-1)

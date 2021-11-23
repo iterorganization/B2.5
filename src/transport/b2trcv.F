@@ -90,7 +90,9 @@
            print *, (C(i,j), j = 0, dnnucl-1 )
          enddo
          print *
+#ifndef NAGFOR
          call sleep(3)
+#endif
          flush(6)
          call xerrab ('Matrix is numerically singular!')
       end if

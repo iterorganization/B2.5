@@ -30,8 +30,8 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer :: i,j,k
-      real (kind=R8) :: sqrt2, temp, rel
+      integer :: i
+      real (kind=R8) :: sqrt2
       real (kind=R8) ::
      &  Z11pi(0:nspecies-1), Z12pi(0:nspecies-1), Z22pi(0:nspecies-1),
      &  rz2n(0:nspecies-1),

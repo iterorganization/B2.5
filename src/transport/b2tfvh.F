@@ -36,7 +36,6 @@
 *.declarations
 *   ..local variables
       integer ix,iy,is
-      real (kind=R8) :: temp
 *   ..procedures
       external intfaceh
 *-----------------------------------------------------------------------
@@ -51,7 +50,7 @@
 *   ..velocity-dependent heat flux in the cell center
       do iy = -1, ny
         do ix = -1, nx
-        cfloi_vh(ix,iy)=0.0_R8
+          cfloi_vh(ix,iy)=0.0_R8
           do is = 0, ns-1
             if (.not.is_neutral(is)) then
               cfloi_vh(ix,iy)=cfloi_vh(ix,iy)+na(ix,iy,is)*
@@ -59,8 +58,8 @@
      &        (ua(ix,iy,is)-av_ualpha(ix,iy,0:nspecies-1)))
             endif
           enddo
-        cfloi_vhx(ix,iy)=cfloi_vh(ix,iy)*(vol(ix,iy)/hx(ix,iy))*
-     &   (bb(ix,iy,0)/bb(ix,iy,3))
+          cfloi_vhx(ix,iy)=cfloi_vh(ix,iy)*(vol(ix,iy)/hx(ix,iy))*
+     &     (bb(ix,iy,0)/bb(ix,iy,3))
         enddo
       enddo
 

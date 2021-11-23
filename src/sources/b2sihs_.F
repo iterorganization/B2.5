@@ -18,7 +18,7 @@
       use b2mod_b2zhco
      & , only: zhd_corr                                               !som 21.03.21
       use b2mod_zhfrtf
-     & , only: avm_u, rho_A_rel,                                      !som 21.03.21 16.08.21
+     & , only: avm_u,                                                 !som 21.03.21 16.08.21
      &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
       use b2mod_geo
      & , only : hy1

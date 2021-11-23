@@ -71,7 +71,7 @@
         call intcor(nx,ny,wght,nete2,nete2c)
 
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
-!       do is = 0,ns-1                                                   !srv 12.05.11
+!       do is = 0, ns-1                                                  !srv 12.05.11
 !        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 12.05.11
 !       if(is.eq.ismain) then                                            !srv 19.02.21
 !        print *, 'style=0'

@@ -9,7 +9,6 @@
 *   ..input arguments (unchanged on exit)
       integer nnucl
       real (kind=R8) ::
-     &  amti(0:nnucl-1), nz2n(0:nnucl-1),
      &  G2(0:nnucl-1,0:nnucl-1), G8(0:nnucl-1,0:nnucl-1),
      &  mum(0:nnucl-1,0:nnucl-1), mdm(0:nnucl-1,0:nnucl-1)
       real (kind=R8) ::

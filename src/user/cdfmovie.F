@@ -17,11 +17,11 @@
 #endif
       use b2mod_subsys
       implicit none
+      integer ncid, nx, ny, ns
+#ifndef NO_CDF
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer ncid, nx, ny, ns
-#ifndef NO_CDF
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 
      & dummy3(-1:nx, -1:ny, 1:ns)
       integer ix, iy, is
@@ -130,6 +130,14 @@
 * ..return
       ncall = ncall+1
       call subend ()
+#else
+#     include <DIMENSIONS.F>
+*  ..procedures
+      external xertst
+
+      call xertst (0.lt.nx.and.nx.le.DEF_NXD, 'faulty input nx')
+      call xertst (0.lt.ny.and.ny.le.DEF_NYD, 'faulty input ny')
+      call xertst (0.lt.ns.and.ns.le.DEF_NSD, 'faulty input ns')
 #endif
       return
       end subroutine cdfmovie

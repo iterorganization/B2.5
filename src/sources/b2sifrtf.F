@@ -14,7 +14,7 @@
       use b2mod_zhfrtf
      & , only: b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
       use b2mod_b2zhco
-     & , only: zhd_corr, zhd_corrT, zhflcorr                            !som 05.03.21
+     & , only: zhd_corr, zhd_corrT                                      !som 05.03.21
       use b2mod_plasma
      , , only : roxa
       use b2mod_transport
@@ -177,6 +177,7 @@
 *    ..test sign of na, ni, ti, ne, ne2
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')

@@ -17,7 +17,7 @@
       integer ix,iy
       real (kind=R8) :: gamma                                           !som 20.03.21
       real (kind=R8) :: amnucl(0:nspecies-1), zetap,
-     &  amti(0:nspecies-1), c_hTA_an(0:nspecies-1), z2n(0:nspecies-1)
+     &  amti(0:nspecies-1), c_hTA_an(0:nspecies-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  cF_lim(0:nspecies-1),
@@ -43,7 +43,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer i,j
+      integer i
       real (kind=R8) :: coef,t0,t1,t2
 *-----------------------------------------------------------------------
 *.computation
