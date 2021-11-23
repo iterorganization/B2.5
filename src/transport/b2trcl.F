@@ -21,7 +21,8 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : my_out_folder, my_out_sf, ncall_b2trcl, ncall_b2tlnl,
-     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca
+     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
+     &          b2trcl_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
@@ -96,15 +97,11 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &    k2(nCv), tt0(mpg%nFs), tt1(mpg%nFs), eps1(mpg%nFs)          !lk 19.09.07
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
-
-      real (kind=R8), save :: cutlo = 1.0e-10_R8
       real (kind=R8) ::
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
      3  wrk(nFc), wrk1(nFc,2), wrkv(nVx)                              !srv 01.07.99 09.01.01
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
@@ -126,7 +123,6 @@ c      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.1
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
 c        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
-c        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
 c        call ipgeti ('b2trcl_lthf21',lthf21)
 c       call ipgeti ('b2trcl_lvis21',lvis21)
 c#ifdef NO_21
@@ -409,7 +405,7 @@ c        call ipgeti ('b2trcl_lluciani',lluciani)
           if(on_closed_surface(ix,iy)) then                               !srv 26.11.02
            f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
            f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
-           f_luc_et(ix,iy)=cvsa_mltpl/
+           f_luc_et(ix,iy)=switch%cvsa_mltpl/
      1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
      2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
@@ -532,7 +528,8 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     &      b2trcl_cutlo)
           fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*fllim_ke(iFc)
          endif
@@ -549,7 +546,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
      &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
+     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
+     &      b2trcl_cutlo)
           fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*fllim_ki(iFc)
          endif
@@ -565,7 +563,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
-     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     &        b2trcl_cutlo)
             fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)            !srv 13.01.17
 !WG_TODO            alfx_c(iCv)=alfx_c(iCv)*fllim_al(iCv)                !iyv 19.11.13 !srv 08.10.14
@@ -582,7 +581,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &       (pl%te(mpg%fcCv(iFc,1))+pl%te(mpg%fcCv(iFc,2)))/2.0_R8/me)*
      &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
      &        abs(geo%fcPbs(iFc))
-            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + cutlo)
+            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + 
+     &        b2trcl_cutlo)
             fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)                !srv 13.01.17
          endif
@@ -610,7 +610,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !             endif
              jemax = sqrt(pl%te(iCv)/me)*
      &               qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-             t0 = abs(alfx_c(iCv))*abs(gtec(iCv))/(cflim(3)*jemax + cutlo)
+             t0 = abs(alfx_c(iCv))*abs(gtec(iCv))/(cflim(3)*jemax + 
+     &         b2trcl_cutlo)
              fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
              alfx_c(iCv)=alfx_c(iCv)*fllim_al_c(iCv)                !iyv 19.11.13 !srv 08.10.14
 !WG_TODO           endif

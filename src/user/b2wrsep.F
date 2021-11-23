@@ -1,4 +1,4 @@
-      subroutine b2wrsep(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsep(nx,ny,ns,BoRiS,iline,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
@@ -15,6 +15,7 @@
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
@@ -32,6 +33,7 @@ c----------------------------------------------------------------------
 
       integer nx, ny, ns, iline
       real (kind=R8) :: BoRiS
+      type (switches), intent (in) :: switch
 c----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 
@@ -112,7 +114,6 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
-      real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
@@ -371,7 +372,6 @@ c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
       tab=char(9)
-      call ipgetr ('b2mndr_stim', stim)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
       if(nspecies.le.0) then !{
@@ -403,7 +403,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,
      ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
         lv_trc(ltrc)=nv

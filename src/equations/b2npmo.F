@@ -300,7 +300,7 @@ c        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.
      &  pl%ua(:,is), flub, co%cvsahz(:,:,is), flcb, cvcb, wrkf0)
 
 *    ..compute additional viscosity term
-       call b2siav (nCv, nFc, nVx, ns, is, geo, mpg, am(is)*mp,
+       call b2siav (nCv, nFc, nVx, ns, is, geo, mpg, switch, am(is)*mp,
      &   pl%ua(:,is), dv%wadia(:,:,is), dv%vaecrb(:,:,is), pl%te, pl%ti,
      &   pl%na(:,is), pl%po, dv%ni(:,1), dv%ne2, dv%lnlam, co%chci,
      &   co%cvsa(:,:,is), co%cvsa_cl(:,:,is),  co%cvsahz(:,:,is),

@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
-     &   solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub)
+      subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
+     &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub)
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_switches
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -15,6 +16,7 @@
       integer nCv, nFc, nVx, nregionv
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      *  rxf, pcm0, corpb(nCv), pccb0(nCv)
       logical ua_solve, solvereg(0:nregionv)
@@ -38,7 +40,6 @@
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nFc), wrk(nCv), wrkv(nVx)
-      real (kind=R8), save :: c_corr_core_dn = 1.0_R8                     !lk 30.06.17
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv) !,                                               !lk 30.06.17
 !WG_TODO     *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
@@ -52,10 +53,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2upco')
-*   ..set internal parameters on first call
-      if (ncall_b2upco.eq.0) then
-       call ipgetr ('b2upco_c_corr_core_dn', c_corr_core_dn)              !lk 30.06.2017
-      endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf, pcm0
@@ -76,7 +73,7 @@
         nb_(iCv) = t0*nb(iCv)                        !lk 30.06.2017
         pb_(iCv) = t0*pb(iCv)                        !lk 30.06.2017
       enddo
-      if(c_corr_core_dn.eq.1.0_R8) then                  !srv 25.07.17 {
+      if(switch%c_corr_core_dn.eq.1.0_R8) then                  !srv 25.07.17 {
         nb = nb_
         pb = pb_
       else                                               !srv 25.07.17 }
@@ -99,9 +96,9 @@
           do ix = -1,nx
             if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
               nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
-     *         c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
+     *         switch%c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
               pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +
-     *         c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
+     *         switch%c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
             else                                          !srv 25.07.17 {
               nb(ix,iy) = nb_(ix,iy)
               pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }

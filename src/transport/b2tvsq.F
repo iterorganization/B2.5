@@ -1,13 +1,15 @@
       subroutine b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,
-     &       ne2, lnlam, te, ti, ni, chci, fchvisq)
+     &       ne2, lnlam, te, ti, ni, chci, fchvisq, switch)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_rates
       use b2mod_b2cmpa
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
+      type (switches), intent (in) :: switch
       integer nx, ny, ns
       real (kind=R8) ::
      &   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
@@ -27,8 +29,6 @@
       integer, save :: ncall = 0
       integer, save :: qstyle = 0                                       !lk 23.05.06 05.07.07 {
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
-      real (kind=R8), save :: cqip1 = 0.5e0_R8                          !lk
-      real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                     !iyv 06.12.13
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)       !lk
      &                  , conn(-1:ny), tt2(-1:ny), tt3(-1:ny)
      &                  , eps1(-1:ny), fac_vism                         !srv 16.10.17
@@ -58,7 +58,6 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_vis_q', vis_q)                              !srv 11.07.99
        call ipgeti ('b2siav_style_qip', qstyle)                         !lk 23.05.06 05.07.07
-       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -195,7 +194,7 @@
         
            do iy=0,ny-1
             do ix=0,nx-1
-             qip1(ix,iy)=cqip1*ni(ix,iy)*ti(ix,iy)*
+             qip1(ix,iy)=switch%b2siav_cqip1*ni(ix,iy)*ti(ix,iy)*
      &        sqrt(te(ix,iy)+ti(ix,iy))/sqrt(am(is)*mp)
             enddo
            enddo
@@ -225,7 +224,7 @@
             do ix=0,nx
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
-	       tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/              !lk 20.11.07 { !iyv 06.12.13
+	       tauia1(ix,iy) = switch%cvsa_mltpl*tauia(ix,iy,is)/              !lk 20.11.07 { !iyv 06.12.13
      &         (1.0e0_R8+15.12e16_R8/conn(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &         /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
