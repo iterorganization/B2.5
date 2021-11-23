@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nCv, nFc, nVx, ns, isb, geo, mpg, mb,
+      subroutine b2siav (nCv, nFc, nVx, ns, isb, geo, mpg, switch, mb,
      & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
      & chci, cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
@@ -11,6 +11,7 @@
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_map
+      use b2mod_switches
 !WG_TODO      use b2mod_balance                                               !djm Jan2017
 !WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
@@ -22,6 +23,7 @@
       integer nCv, nFc, nVx, ns, isb
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      & mb, lnlam(nCv),                       !srv 01.07.09
      2 ub(nCv), wbdia(nFc,0:1), 
@@ -58,9 +60,6 @@
       character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
-      real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
-     &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
      &     wrks(nCv)
 !WG_TODO     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
@@ -84,13 +83,9 @@
       call subini ('b2siav')
 *   ..set internal parameters on first call
       if (ncall_b2siav.eq.0) then
-       call ipgetr ('b2siav_addvis', addvis)                        !srv 23.07.99
-       call ipgetr ('b2siav_addvis1', addvis1)                      !srv 04.10.99
-       call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
-       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
 !WG_TODO      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
@@ -98,7 +93,7 @@
       smbvv = 0.0_R8
 
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
+        if (switch%b2siav_addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
           call xerrab ('addvis not yet available for WG')
 #ifdef WG_TODO
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
@@ -212,7 +207,7 @@
             do ix=0,nx
               if(on_closed_surface(ix,iy)) then
                 if (lluciani.eq.3) then
-                  tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
+                  tauia1(ix,iy) = switch%cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
      &             (1.0e0_R8+15.12e16_R8/conn(iy)*
      &             (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &             /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
@@ -243,7 +238,7 @@
           qip1 = 0.0e0_R8
           do iy=0,ny-1
             do ix=0,nx-1
-              qip1(ix,iy)=cqip1*
+              qip1(ix,iy)=switch%b2siav_cqip1*
      &         ni(ix,iy)*ti(ix,iy)*sqrt(te(ix,iy)+ti(ix,iy))
      &                                /sqrt(am(isb)*mp)
             enddo
@@ -286,7 +281,7 @@
           do iy=0,ny-1
             do ix=0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                t0=addvis*vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
+                t0=switch%b2siav_addvis*vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
      &            sqrt(bb(ix,iy,3))*hz(ix,iy)
                 smbvh(ix,iy,0) = smbvh(ix,iy,0)
      &            +t0*(wrk1(rightix(ix,iy),rightiy(ix,iy))-wrk1(ix,iy))
@@ -296,8 +291,8 @@
 #endif
         endif                                                       !lk 23.05.06 05.07.07
 
-        if (addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
-          call xerrab ('addvis not yet available for WG')
+        if (switch%b2siav_addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
+          call xerrab ('addvis1 not yet available for WG')
 #ifdef WG_TODO
 
           wrk0=0

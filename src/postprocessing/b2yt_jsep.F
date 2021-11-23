@@ -1,4 +1,4 @@
-      subroutine b2yt_jsep(nx1,ny1,jxi1,jxa1,jsep1)
+      subroutine b2yt_jsep(nx1,ny1,jxi1,jxa1,jsep1,geom_match_dist)
       use b2mod_types
       use b2mod_geo2
       use b2mod_indirect
@@ -9,7 +9,6 @@
      * geom_match_dist
       intrinsic min
       external subini, xerrab, xertst, ipgetr, subend
-      data geom_match_dist/1.0e-6_R8/
       real (kind=R8) ::
      *   dist
       integer ix1,iy1,ip1,ix2,iy2,ip2
@@ -22,9 +21,6 @@
      2 geom_match_dist
 
       call subini ('b2yt_jsep')
-      call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
-      call xertst (geom_match_dist.gt.0.0_R8,
-     &  'faulty argument geom_match_dist')
       if(nnreg(0).eq.1) then
         jxi1=nx1/4
         jxa1=3*nx1/4

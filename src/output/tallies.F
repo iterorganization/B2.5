@@ -1,4 +1,4 @@
-      subroutine tallies(nx,ny,ns,BoRiS)
+      subroutine tallies(nx,ny,ns,BoRiS,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -15,10 +15,12 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_switches
       implicit none
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       real (kind=R8), save :: potave(0:nsdecl-1)
+      type (switches), intent (in) :: switch
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer status, ncid, xtypev, ndims, nvars, natts, unlimid, timd
@@ -26,7 +28,6 @@
       real (kind=R8) :: tim_arr(1)
       real (kind=R8) :: naregtmp(0:nnreg(0),0:ns-1)
       real (kind=R8) :: cdftmp(0:nnreg(0))
-      real (kind=R8), save :: stim = 0.0_R8
       character*(NF_MAX_NAME) :: dimname(1), varname
       character*256 filename
       logical :: ex
@@ -575,14 +576,13 @@
 	  if(ncall.eq.0) then
             filename='b2tallies.nc'
             call find_file(filename,ex)
-            call ipgetr ('b2mndr_stim', stim)
-            if (.not.ex.or.stim.ge.0.0_R8) then
+            if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
               ntstep = 0
               call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
               status=nf_open(filename,NF_WRITE,ncid)
               call check_cdf_status(status)
               write(6,'(a)') trim(filename)//' will be created'
-            else if (ex.and.stim.lt.0.0_R8) then
+            else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
               status=nf_open(filename,NF_NOWRITE,ncid)
               call check_cdf_status(status)
               status=nf_inq(ncid,ndims,nvars,natts,unlimid)

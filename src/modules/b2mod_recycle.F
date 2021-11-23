@@ -14,7 +14,7 @@ c     Mixed materials are not considered in this recycling model
       logical, save :: recycle_initialised
       data recycle_initialised /.false./
 
-
+      real (kind=R8),save::uold=0.0_R8,told=0.0_R8,mold=0.0_R8
       integer, save :: nm, nt, nshpottau,nx1,ny1,ns1
 
 c     Recycle_index and target_index refer for each species and boundary in which integer
@@ -1358,7 +1358,6 @@ c m = mass of a particle
      &    i3l,i3r,i4l,i4r,
      &    i5l,i5r,i6l,i6r  
       !internal variables
-      real (kind=R8),save::uold=0.0_R8,told=0.0_R8,mold=0.0_R8
       real (kind=R8):: vth,arg
 c      real (kind=R8):: S15AEC
       intrinsic erf

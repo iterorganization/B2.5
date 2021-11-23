@@ -156,7 +156,9 @@
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr);CHKERRA(ierr) 
       call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr);CHKERRA(ierr) 
       call TaoSetGradientRoutine(tao,FormGradient,0,ierr);CHKERRA(ierr) 
-      call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr);CHKERRA(ierr)
+      if (hessian) then
+        call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr);CHKERRA(ierr)
+      endif
 
       call TaoSetFromOptions(tao,ierr);CHKERRA(ierr) 
 

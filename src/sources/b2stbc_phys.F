@@ -30,7 +30,10 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbc_phys
+     & , only : ncall_b2stbc_phys, senepar, senipar, sconpar, scurpar,
+     &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
+     &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
+     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -87,12 +90,6 @@
       integer, save :: drift_style
       real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
-      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
-      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
-      real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
-     &                         scurpar
-      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
-     * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
@@ -113,12 +110,6 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
      *  dOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)                             !srv 23.09.08
-      real (kind=R8), save ::                                           !srv 16.02.12
-     *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
-      real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: corr_flux   = 0.0e0_R8                    !srv 25.07.05
-      real (kind=R8), save :: alfTeEh = 0.0_R8
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
@@ -129,14 +120,12 @@
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath, ic, ivar
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
-     1 bc_type13_norm, bc_type13_fac
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       save coreregno, coreregn2,  bc_type13_ref,
-     1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
-     2  bc_type21_ref, ndes_sol,
-     *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
+     1  bc_type16_ref, bc_type20_ref,
+     2  bc_type21_ref,
+     *  isfeedback, fix_fch_in_fhe_sheath
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
@@ -153,10 +142,9 @@
 *   ..initialisation
       data coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, 
-     * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
+     * isfeedback/0/, 
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
-     & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & bc_type21_ref/1/, drift_style/1/, ndes_sol/0.0_R8/
+     & bc_type21_ref/1/, drift_style/1/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
@@ -183,11 +171,9 @@
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
         call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c        call ipgetr ('b2tfhi_ycur', ycur)
 c        call ipgeti ('b2tfhe_conduction_only', conduction_only)
 c        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
 c        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
-c        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
 c        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
 c        call ipgeti ('b2stbc_coreregno', coreregno)
 c        call xertst (cbirso.le.coreregno.and.
@@ -205,23 +191,16 @@ c        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
 c        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
 c        call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
 c        call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
-c        call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
-c        call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
 c        call ipgeti ('b2tfnb_drift_style', drift_style)
 c        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
 c     1   fix_fch_in_fhe_sheath)
 c        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
 c     1   fix_sx_in_fhe_sheath)                                       !srv 08.05.09
 c        call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
-c        call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
 c        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
 c        call ipgeti ('b2stbc_type16_kinetic_energy',
 c     1   bc_type16_kinetic_energy)
 c        call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-c        call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
-c        call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
-c        call ipgetr ('b2stbc_bc_ref', bc_ref)
-c        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
 
       endif
 *   ..test nCv, nFc, ns
@@ -1175,11 +1154,8 @@ cwdk      compatibility for E/W boundaries
            call xertst(is.eq.isfeedback,
      1       'BCCON(,IS,1) = 12 for IS <> ISFEEDBACK!')
            call xertst(lfeedback, 'LFEEDBACK must be turned on!')
-           call ipgetr ('b2stbc_nesepm', nesepm)
-           call ipgetr ('b2stbc_ndes_sol', ndes_sol)
-           call ipgetr ('b2stbc_nesepm_overshoot', nesepm_overshoot)
-           call xertst ((0.0_R8.eq.nesepm.and.0.0_R8.eq.ndes_sol).or.
-     1      0.0_R8.eq.nesepm_overshoot,
+           call xertst ((0.0_R8.eq.switch%nesepm.and.0.0_R8.eq.
+     &      switch%ndes_sol).or.0.0_R8.eq.switch%nesepm_overshoot,
      1      'BCCON=12 coding incompatible with nesepm_overshoot!')
           endif
           IF (BCCHAR(IB).EQ.'S') THEN
@@ -1286,7 +1262,7 @@ c dpc
             FFAC=(1.0_R8+CONPAR(IS,IB,2)*
      1       (DFS-FS)/
      2       (abs(DFS)+abs(FS)+
-     3        abs(bc_type13_norm)+abs(NAS*bc_type13_fac)))
+     3        abs(switch%bc_type13_norm)+abs(NAS*switch%bc_type13_fac)))
             NAS=NAS*FFAC
             write(*,'(a,i3,1p,3(1x,e15.6))')
      1       'b2stbc_conpar=13: is,curr_flux,desired_flux,density ',
@@ -1325,7 +1301,7 @@ c dpc
             FFAC=(1.0_R8+CONPAR(IS,IB,2)*
      1       (DFS-FS)/
      2       (abs(DFS)+abs(FS)+
-     3        abs(bc_type13_norm)+abs(NAS*bc_type13_fac)))
+     3        abs(switch%bc_type13_norm)+abs(NAS*switch%bc_type13_fac)))
             NAS=NAS*FFAC
             write(*,'(a,i3,1p,3(1x,e15.6))')
      1       'b2stbc_conpar=13: is,curr_flux,desired_flux,density ',
@@ -1498,12 +1474,12 @@ cwdk       * need to correct this BC for hybrid scheme
                 ENDIF
               ENDDO
               NAS = NAS *
-     &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*(totflux-SCONPAR(IS))/
      &                 max(abs(totflux),SCONPAR(IS)))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NAS *
-!     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
+!     &         (1.0_R8-max(-switch%b2stbc_bc_ref,min(switch%b2stbc_bc_ref,T0)))
               write(*,"(' BCCON=16: NAS=',es14.7,' totflux=',es14.7,
      *         ' SCONPAR=',es14.7,' IS=',i3)")NAS,totflux,SCONPAR(IS),IS
               DO IBW=IB,NBC
@@ -1723,7 +1699,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 ENDIF
               ENDDO
               NAS = NAS *
-     &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*
+     &           (totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),SCONPAR(IS)))
               write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
@@ -2038,12 +2015,12 @@ cxpb Careful here because of BC number clash
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
-     &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*(totflux-SCONPAR(IS))/
      &           max(abs(totflux),SCONPAR(IS)))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
-!     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
+!     &         (1.0_R8-max(-switch%b2stbc_bc_ref,min(switch%b2stbc_bc_ref,T0)))
               write(*,"(' BCCON=22: NAS=',es14.7,' totflux=',es14.7,
      *                       '  SCONPAR=',es14.7,' IS=',i3)")
      .         NAS,totflux,SCONPAR(IS),IS
@@ -2201,7 +2178,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
-     &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*
+     &           (totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,"(' BCCON=23: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
@@ -2548,7 +2526,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
-     &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*(totflux-SCONPAR(IS))/
      &           max(abs(totflux),SCONPAR(IS)))
               write(*,"(' BCCON=26: NAS=',es14.7,' totflux=',es14.7,
      *                  ' SCONPAR=',es14.7,' IS=',i3)")
@@ -2721,7 +2699,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               t1=t1/t0        !
               NAS = NAS/t0    ! Volume-averaged density
               NAS = NAS*
-     &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
+     &         (1.0_R8-switch%b2stbc_bc_ref*
+     &           (totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,"(' BCCON=27: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
@@ -4249,7 +4228,7 @@ cxpb code segment analog to b2tfhe
      &         Tguess)/2.0_R8-cone0*(Tguess-
      &         te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .            bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))+
-     &         alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*ehy*
+     &         switch%alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*ehy*
      &         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &         Tguess)
@@ -4273,7 +4252,7 @@ cxpb code segment analog to b2tfhe
      .                                    bc_list_y(ix,ib)),
      .                           bottomiy(bc_list_x(ix,ib),
      .                                    bc_list_y(ix,ib)))) +
-     &         alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*
+     &         switch%alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*
      .         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      &                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &                            Tguess)*ehy
@@ -4387,7 +4366,7 @@ cxpb code segment analog to b2tfhe
      &         Tguess)/2.0_R8-cone0*
      &         (te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-Tguess)+
-     &         alfTeEh*calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     &         switch%alfTeEh*calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)*ehy*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),Tguess)
@@ -4409,7 +4388,7 @@ cxpb code segment analog to b2tfhe
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
      .         - t2 * (te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                    topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
-     .                 Tguess) + alfTeEh *
+     .                 Tguess) + switch%alfTeEh *
      &         calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -5168,7 +5147,7 @@ cwdk    Todo: corrections for BCCON.ne.14
                 ENDIF
               ENDDO
               TES = TES *
-     &         (1.0_R8-bc_ref_te*(totflux-SENEPAR)/                     !srv 11.04.13
+     &         (1.0_R8-switch%b2stbc_bc_ref_te*(totflux-SENEPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENEPAR))
               write(*,"(' BCENE=16: TES=',es14.7,' totflux=',es14.7,
      *         ' SENEPAR=',es14.7)") TES/ev, totflux, SENEPAR
@@ -7163,7 +7142,7 @@ cwdk    Todo: corrections for BCCON.ne.14
                ENDIF
              ENDDO
              TIS = TIS *
-     &         (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/                     !srv 11.04.13
+     &         (1.0_R8-switch%b2stbc_bc_ref_ti*(totflux-SENIPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENIPAR))
              write(*,"(' BCENI=16: TIS=',es14.7,' totflux=',es14.7,
      *         ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR
@@ -7814,7 +7793,7 @@ cwdk     * need to correct this BC for hybrid scheme
             t2=t2/t0
             t3=t3/t0
             TIS=TIS*
-     &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
+     &          (1.0_R8-switch%b2stbc_bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,"(' BCENI=24: TIS=',es14.7,' totflux=',es14.7,
      *        ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR
@@ -8145,7 +8124,7 @@ cwdk     * need to correct this BC for hybrid scheme
             TIS = TIS/NIVS
             t1=t1/t0
             TIS=TIS*
-     &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
+     &          (1.0_R8-switch%b2stbc_bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,"(' BCENI=27: TIS=',es14.7,' totflux=',es14.7,
      *        ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR

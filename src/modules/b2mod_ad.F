@@ -23,9 +23,20 @@
 
       integer, save :: b2sral_elm_count = 0
 
+      real (kind=R8), save :: b2news_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2trcl_cutlo = 1.0e-10_R8
+      real (kind=R8), save :: b2tlv0_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2tlh0_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2tlc0_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2tfnb_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2tfhi_cutlo = 1.0e-60_R8
+      real (kind=R8), save :: b2tfhe_cutlo = 1.0e-60_R8
+
       real (kind=R8), save :: b2sian_eps=1.0e-60_R8
 
       real (kind=R8), save :: b2tqna_keps_eps = 1.0e-10
+
+      real (kind=R8), save :: b2srst_kt_eps = 1.0e-60_R8
 
       logical, save :: b2npmo_solvedum(0:CVREGMAX) = .true.
 
@@ -37,6 +48,14 @@
 
       logical, save :: test_residual = .false. 
       integer, save :: b2mndt_itcnt = 0
+
+      real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
+     &                         scurpar
+      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
+     * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
+      real (kind=R8), save ::                                           !srv 16.02.12
+     *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
+     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
 
       character, save :: fmt(0:5)*32
       data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',

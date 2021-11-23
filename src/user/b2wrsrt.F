@@ -1,4 +1,4 @@
-      subroutine b2wrsrt(nx,ny,ns,nregionv,iline)
+      subroutine b2wrsrt(nx,ny,ns,nregionv,iline,switch)
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -12,6 +12,7 @@
       use b2mod_external
       use b2mod_constants
       use b2mod_numerics_namelist
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
@@ -31,6 +32,7 @@ c
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
+      type (switches), intent (in) :: switch
       integer nx, ny, ns, nregionv, iline
 c
       integer lv
@@ -98,7 +100,6 @@ c-----------------------------------------------------------------------
 c*** Local variables of general use
       integer lun, ltrc
       parameter (ltrc=ntrc_srt)
-      real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
@@ -213,7 +214,6 @@ c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
       tab=char(9)
-      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -228,7 +228,7 @@ c
       open(lun,file=f,err=90)
       rewind(lun)
 
-      if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
         read(lun,*,err=92) hlp_c, nv,
      &     nr_tmp, ns_tmp, na_tmp,

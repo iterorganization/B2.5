@@ -104,7 +104,6 @@
       integer ia, im
       character ch3*3
 #endif
-      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
       character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
@@ -123,10 +122,8 @@
      2  sput_chem_model,
      3  reflection_on, sputter_energy_on
       real (kind=R8) ::
-     1  sput_phys_alpha, in_dl
-      real (kind=R8) ::
      *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,neutral_rescale,
+     *  sum_start,sum_end,
      *  sum_strti,sum_ndi,sum_nde,
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  work(nCv,0:1), wrk2(nCv), wrk3(nCv),
@@ -139,7 +136,6 @@
 #include <netcdf.inc>
       integer :: status, ncid, ndims, nvars, natts, unlimid
       integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
-      real (kind=R8), save :: stim = 0.0_R8
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
       character*256 filename
@@ -151,15 +147,14 @@
       real (kind=R8) :: smax, smin
       intrinsic abs, mod, cpu_time
 *   ..initialisation
-      save sput_src, sput_phys_alpha, in_dl,
+      save sput_src,
      *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
-     1     neutral_rescale, coreregn2, sput_chem_model,
+     1     coreregn2, sput_chem_model,
      7     reflection_on, sputter_energy_on
       data sput_src/1/,
-     *     sput_phys_alpha/1.0e-2_R8/,
-     *     in_dl/0.001_R8/, in_no_of_angles/9/,
+     *     in_no_of_angles/9/,
      *     in_size_of_table/200000/,
-     1     neutral_rescale/1.0_R8/, coreregn2/4/,
+     1     coreregn2/4/,
      7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/
 !      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
@@ -182,14 +177,9 @@
         if (switch%use_eirene.eq.1) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-        call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
-     &                      recycled_neutrals_contr)
-        call xertst (0.0_R8.le.recycled_neutrals_contr,
-     &      'faulty internal parameter recycled_neutrals_contr')
         if(switch%b2stbr_first_flight.ne.0) then
         call xerrab ('b2stbr -- first flight options not av. for WG')
 #ifdef WG_TODO
-           call ipgetr ('b2stbr_first_flight_dl', in_dl)
            call ipgeti ('b2stbr_first_flight_no_of_flights',
      *          in_no_of_angles)
            call ipgeti ('b2stbr_first_flight_table_size',
@@ -202,7 +192,7 @@
            call cpu_time(start_time)
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
-     *          in_no_of_start_points,nx,ny,in_dl)
+     *          in_no_of_start_points,nx,ny,switch%in_dl)
            do ix=-1,nx
              do ib=-1,ny
                if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
@@ -233,16 +223,12 @@
 #ifdef WG_TODO
           call xertst (sput_dst.lt.ns,
      1     'faulty b2stbr_sput_dst')
-          call ipgetr ('b2stbr_sput_phys_alpha', sput_phys_alpha)
-          call xertst (0.0_R8.le.sput_phys_alpha,
-     1     'faulty b2stbr_sput_phys_alpha')
 #endif
         endif
 
         call ipgeti ('b2stbr_reflection_on', reflection_on)
         call ipgeti ('b2stbr_sputter_energy_on', sputter_energy_on)
-        call ipgetr ('b2mndr_rescale_neutrals', neutral_rescale)
-        if(switch%use_eirene.eq.0) neutral_rescale=1.0_R8
+        if(switch%use_eirene.eq.0) switch%neutral_rescale=1.0_R8
         if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
 
         call xertst (cbirso.le.switch%b2stbr_coreregno.and.
@@ -383,7 +369,7 @@ c   --> better solution wanted here..
      &  switch%b2stbc_boundary_namelist,
      &  switch%neutral_sources_rescale, 
      &  switch%b2stbr_core_sources_rescale,  
-     &  sput_src, switch%b2stbr_sput_chem_alpha, sput_phys_alpha, 
+     &  sput_src, switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha, 
      &  switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap,
      &  switch%b2stbr_sput_res, reflection_on, sputter_energy_on, 
      &  main_call, switch%b2stbr_output, switch%b2stbr_sput_frac_flag, 
@@ -393,7 +379,7 @@ c   --> better solution wanted here..
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  switch%b2stbr_temperature_at_guard_cell, 
      4  switch%b2stbr_potential_at_guard_cell,
-     5  recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb)
+     5  switch%recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
@@ -422,13 +408,13 @@ c   --> better solution wanted here..
      &   switch%neutral_sources_rescale, 
      &   switch%b2stbr_core_sources_rescale,
      &   sput_src, switch%b2stbr_sput_frc, switch%b2stbr_sput_phys,
-     &   switch%b2stbr_sput_chem_alpha, sput_phys_alpha, 
+     &   switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha, 
      &   switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap, 
      &   switch%b2stbr_sput_res, reflection_on, sputter_energy_on, 
      &   main_call, switch%b2stbr_sput_chem_cutoff_alpha, 
      &   switch%b2stbr_sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, switch%b2stbr_potential_at_guard_cell,
-     &   recycled_neutrals_contr)
+     &   switch%recycled_neutrals_contr)
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_bas_sna0to1=sna0-snatmp
@@ -799,12 +785,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         if(ncall_b2stbr.eq.0) then
           filename='b2wall.nc'
           call find_file(filename,ex)
-          call ipgetr ('b2mndr_stim', stim)
-          if (.not.ex.or.stim.ge.0.0_R8) then
+          if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
             ntstep_b2wall = 0
             write(6,'(a)') trim(filename)//' will be created'
             call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
-          else if (ex.and.stim.lt.0.0_R8) then
+          else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
             status=nf_open(filename,NF_WRITE,ncid)
             call check_cdf_status(status)
             status=nf_inq(ncid,ndims,nvars,natts,unlimid)

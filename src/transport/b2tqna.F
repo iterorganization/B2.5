@@ -3776,9 +3776,9 @@ cwdk same dna_ExB for all ion species
             hce0 = switch%keps_heat*dna0(:,ismain)*dv%ne*switch%keps_fac
      &          + (1.0_R8-switch%keps_fac)*hce0
           endif
-          if (switch%keps_heat_i.gt.0.0_R8) then
-            hci_ExB = hci_ExB + switch%keps_heat_i*dna_ExB*pl%na(:,is)
-            hcib(:,is) = switch%keps_heat_i*dna0(:,ismain)*pl%na(:,is)*
+          if (switch%keps_heat.gt.0.0_R8) then
+            hci_ExB = hci_ExB + switch%keps_heat*dna_ExB*pl%na(:,is)
+            hcib(:,is) = switch%keps_heat*dna0(:,ismain)*pl%na(:,is)*
      &        switch%keps_fac + (1.0_R8-switch%keps_fac)*hcib(:,is)
           endif
           dkt0 = switch%keps_dkt*dna0(:,ismain)*pl%na(:,ismain)

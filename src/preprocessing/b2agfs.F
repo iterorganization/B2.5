@@ -6,7 +6,7 @@
      1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax)
+     4 periodic_bc,nncut,nncutmax,switch)
 
       use b2mod_types
       use b2mod_constants
@@ -17,10 +17,12 @@
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
+      use b2mod_switches
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
+      type (switches), intent (in) :: switch
 *   .. output arguments
       real (kind=R8) ::
      * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
@@ -120,7 +122,7 @@
      6     wbbc(-1:nx1+1,-1:ny1+1,0:3)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, geom_match_dist, distval,
+     .  min_pitch, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
       integer ireg,errors
@@ -128,8 +130,7 @@
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/, 
-     .  geom_match_dist/1.0e-6_R8/
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
       external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
@@ -142,9 +143,9 @@
      1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
      2 (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
       logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
+c      match(ix1,iy1,ix2,iy2)=
+c     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
+c     2 switch%geom_match_dist
 
 *-----------------------------------------------------------------------
 *.computation
@@ -180,9 +181,6 @@
       call ipgetr ('b2agfs_min_pitch', min_pitch)
       call xertst (min_pitch.ge.0.0_R8 .and. min_pitch.lt.90.0_R8,
      &  'faulty argument min_pitch')
-      call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
-      call xertst (geom_match_dist.gt.0.0_R8,
-     &  'faulty argument geom_match_dist')
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
@@ -231,8 +229,8 @@
      & leftix1,leftiy1,rightix1,rightiy1, 
      & topix1,topiy1,bottomix1,bottomiy1, 
      & leftcut1,rightcut1,bottomcut1,topcut1, 
-     & periodic_bc,nncut,nncutmax, inseltop, inselbot, geom_match_dist, 
-     & istyle )
+     & periodic_bc,nncut,nncutmax, inseltop, inselbot, 
+     & switch%geom_match_dist, istyle )
 
       call test_connectivity(nx1,ny1,crx1,cry1,cflag,
      & leftix1,leftiy1,rightix1,rightiy1, 

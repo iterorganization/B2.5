@@ -128,8 +128,8 @@ cdjm Jan2017 update particle source components for balance
      &   sr%sna(:,1,isb), dv%flob, dv%conb,
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
-        call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
-     &   solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
+        call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
+     &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb), 
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb))
       endif                                                             !srv 22.05.18

@@ -321,15 +321,8 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
-      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width
+      real (kind=R8) :: hzconst, dux, duy, du
       intrinsic maxval
-      data width /1.0_R8/
-      save width
-
-      call ipgetr ('b2mndr_hz', fac_hz)
-      call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')
-      call ipgetr ('b2agmt_1d_width', width)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -431,22 +424,26 @@
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8
-      gm%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*gm%cvVol/gm%cvSz
+      gm%cvHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+switch%b2mndr_hz*
+     & gm%cvVol/gm%cvSz
 
 *   ..compute fcHz and fcPbshz
       if (switch%fcHz_style.eq.0) then
         call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcHz)
       else
         if (isymm.eq.0) then
-          gm%fcHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*width
+          gm%fcHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*
+            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &        switch%b2mndr_hz*
      &        pi*(gm%vxX(mpg%fcVx(iFc,1))+gm%vxX(mpg%fcVx(iFc,2)))
           enddo
         else if (isymm.eq.3 .or. isymm.eq.4) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*
+            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &        switch%b2mndr_hz*
      &        pi*(gm%vxY(mpg%fcVx(iFc,1))+gm%vxY(mpg%fcVx(iFc,2)))
           enddo
         endif
@@ -458,13 +455,14 @@
         call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
       else
         if (isymm.eq.0) then
-          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*width
+          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
-          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+
-     &      fac_hz*2.0_R8*pi*gm%vxX
+          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &      switch%b2mndr_hz*2.0_R8*pi*gm%vxX
         else if (isymm.eq.3 .or. isymm.eq.4) then
-          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+
-     &      fac_hz*2.0_R8*pi*gm%vxY
+          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+     &      switch%b2mndr_hz*2.0_R8*pi*gm%vxY
         endif
       endif
 

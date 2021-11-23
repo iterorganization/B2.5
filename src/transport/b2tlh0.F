@@ -9,7 +9,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tlh0
+     & , only : ncall_b2tlh0, b2tlh0_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -33,8 +33,6 @@
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dtn, vthi, maxfluxlimit(0:1),
      *  tnv(nVx), dtnf(nFc,0:1)
-      real (kind=R8), save :: cutlo = 1.0e-60_R8
-      save alpha, gamma
 *   ..initialisation
 *   ..procedures
       intrinsic max, abs, sqrt
@@ -69,7 +67,8 @@ c        flux_limit_min_tn=flux_limit_min_tn*ev
            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &       geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
            t2 = 1.0_R8/(1.0_R8 + 
-     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+     .       (dtn/(alpha*vthi*t1*t0 + b2tlh0_cutlo))**gamma)**
+     .        (1.0_R8/gamma)
            chcb(iFc,0,is) = chcb(iFc,0,is)*t2
            fllim0fhi(iFc,0,is) = t2
            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
@@ -78,7 +77,8 @@ c        flux_limit_min_tn=flux_limit_min_tn*ev
            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &      geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
            t2 = 1.0_R8/(1.0_R8 +
-     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+     .       (dtn/(alpha*vthi*t1*t0 + b2tlh0_cutlo))**gamma)**
+     .        (1.0_R8/gamma)
            chcb(iFc,1,is) = chcb(iFc,1,is)*t2
            fllim0fhi(iFc,1,is) = t2
            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
@@ -97,7 +97,8 @@ cwdk    or radial contributions, since neutral transport is isotropic
            dtn = chcib(iFc,is)*sqrt(dtnf(iFc,0)**2+dtnf(iFc,1)**2)
            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*geo%fcS(iFc)
            t2 = 1.0_R8/(1.0_R8 + 
-     .       (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+     .       (dtn/(alpha*vthi*t1*t0 + b2tlh0_cutlo))**gamma)**
+     .        (1.0_R8/gamma)
 *   .. limit in poloidal direction
            chcb(iFc,0,is) = chcb(iFc,0,is)*t2
            fllim0fhi(iFc,0,is) = t2

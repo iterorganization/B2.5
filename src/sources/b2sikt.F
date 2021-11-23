@@ -174,7 +174,7 @@ cwdk     parallel transport due to parallel current fluctuations
 *     ..sources
         do ic = 1, mpg%nCi
          if (mod(mpg%cvReg(ic),4) .eq. 1) then
-          fac_sheath = switch%b2sikt_fac_sheath_core
+          fac_sheath = switch%b2sikt_fac_sheath
          else
           fac_sheath = switch%b2sikt_fac_sheath
          endif

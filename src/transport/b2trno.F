@@ -80,7 +80,6 @@
       integer iCv, iFc, is, mode
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
-      real (kind=R8), save :: alpha_stoch = 1.0e0_R8                  !srv 17.12.13
       real (kind=R8) ::
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
@@ -109,7 +108,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
-        call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
+
       end if
 *   ..extensive tests on first few calls
       if (ncall_b2trno.lt.3) then
@@ -280,7 +279,8 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
-            chce_stoch(ix,iy)=alpha_stoch*1.6e0_R8*csig_stoch(ix,iy)/
+            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6e0_R8*
+     &      csig_stoch(ix,iy)/
      &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
            endif                                                          !srv 20.09.17
 	    enddo

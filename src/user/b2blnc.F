@@ -1,4 +1,4 @@
-      subroutine b2blnc(ns,geo,mpg,st,dtim,iline)
+      subroutine b2blnc(ns,geo,mpg,switch,st,dtim,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -15,6 +15,7 @@
      .   , only : nstra
       use eirmod_extrab25
 #endif
+      use b2mod_switches
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -30,6 +31,7 @@ c----------------------------------------------------------------------
 c
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
+      type (switches), intent (in) :: switch
       type(B2state), intent(in) :: st
 
       integer ns, iline
@@ -51,7 +53,6 @@ c<<<
       integer kst_hlp
       integer use_recyceir
       real (kind=R8) :: recyctmp
-      real (kind=R8), save :: stim = 0.0_R8
 c>>>
 c
 c*** lv    :  version number to appear in the file
@@ -671,7 +672,6 @@ c*** from 960727 on
      , flxid_tmp(nspecies),flxbl_tmp(nspecies),flxbr_tmp(nspecies),
 c*** from 960808 on
      , flxrl_tmp(nspecies))
-      call ipgetr ('b2mndr_stim', stim)
       if(.not.filedata(ntrc_bln)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -683,7 +683,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
         go to 42
