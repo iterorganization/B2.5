@@ -15,6 +15,13 @@ endif
 EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07adf=f07ade -Df06qff=f06qfe -Dd07ajf=d07aje -Dx05baf=x05bae -Dsamax=damax
 DEFINES += -DUSE_PXFGETENV -DNO_CDF
 
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
 ifdef USE_MPI
 DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
