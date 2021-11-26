@@ -457,6 +457,8 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
       use b2mod_par_opt
+      use b2mod_mwti
+     & , only: output_ds_us
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -616,12 +618,17 @@ cdjm Jan2017 Keep linearised sources for balance
             if (ifa.eq.1) goto 99
 #endif
 ! csc for now identify pr with r-coordinate of midplane CVs
-            pr = 0.0_R8
-            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
-     &             geo%cvX(omp(icsep))) ! FIXME should use distance of face center to neighbouring CV center?
-            do ic=1, nomp
-              pr(ic) = geo%cvX(omp(ic)) - rsep
-            end do
+! csvdk reworked the implementation to be consistent with structured 
+! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
+
+            call output_ds_us(mpg,geo,omp,nomp,icsep,pr)
+
+!            pr = 0.0_R8
+!            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
+!     &             geo%cvX(omp(icsep))) ! FIXME should use distance of face center to neighbouring CV center?
+!            do ic=1, nomp
+!              pr(ic) = geo%cvX(omp(ic)) - rsep
+!            end do
         
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
