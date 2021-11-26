@@ -3,7 +3,7 @@ module b2mod_mwti
   use b2mod_cdf
   implicit none
   private
-  public :: b2mwti, output_ds, dealloc_b2mod_mwti
+  public :: b2mwti, output_ds_us, dealloc_b2mod_mwti, output_ds
   real (kind=R8), allocatable, save :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
@@ -1584,6 +1584,71 @@ contains
     call subend ()
     return
   end subroutine output_ds
+
+  subroutine output_ds_us(mpg,geo,clist,nc,iref,ds)
+    ! Description
+    !============
+    ! Subroutine to compute relative distance between a set of cell 
+    ! centers (Euclidean). The distance is computed between each 
+    ! set of consecutive cells (i.e. x(iCv+1) - x(iCv) in 1D), but no
+    ! check is made whether the cells are ordened in a 'logical' way. 
+       
+    ! Initialize
+    !===========      
+    ! Modules
+    use b2mod_indirect
+    use b2us_geo
+    use b2us_map
+
+    ! Input variables
+    implicit none
+
+    type(geometry), intent(in) :: geo 
+    type(mapping), intent(in) :: mpg 
+
+    integer, intent(in) :: nc, iref, clist(1:nc)
+
+    ! Output variables
+    real (kind=R8), intent(out) :: ds(1:nc)
+    
+    ! Intermediate variables
+    real (kind=R8) :: dsref
+
+    integer :: iCv
+
+    ! External functions
+    external subini, subend, xertst
+
+    ! Intrinsic functions
+    intrinsic sqrt
+    
+    ! Main program
+    !=============
+    ! Call subini
+    call subini ('output_ds_us')
+
+    ! Compute the initial length as the distance of the first cell to 
+    ! the first boundary face
+    ds(1) = 0
+
+    ! Loop over number of cells
+    do iCv = 2,nc
+      ! Compute cumulative distance
+      ds(iCv) = ds(iCv-1) &
+        + sqrt( (geo%cvX(clist(iCv)) - geo%cvX(clist(iCv-1)) )**2 &
+        + (geo%cvY(clist(iCv)) - geo%cvY(clist(iCv-1)) )**2  )
+    enddo
+
+    ! Compute reference point
+    dsref = (ds(iref) + ds(iref-1))/2.0_R8
+
+    ! Subtract reference length
+    ds = ds - dsref
+    
+    ! Call subend and return
+    call subend ()
+    return
+end subroutine output_ds_us
 
 
   subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
