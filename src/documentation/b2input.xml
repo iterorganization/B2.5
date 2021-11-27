@@ -1383,24 +1383,6 @@
 				</description>
 			</switch>
 			<switch>
-			    <name>b2npmo_impr_form_fr</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2npmo_impr_form_fr.eq.1, the friction force is computed according to the method corresponding to b2sigp_style.eq.2.
-					This switch is subservient to b2tral_Zhdanov_closure.
-				</description>
-			</switch>
-			<switch>
-			    <name>b2npmo_impr_form_tf</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2npmo_impr_form_tf.eq.1, the thermal force is computed according to the method corresponding to b2sigp_style.eq.2.
-					This switch is subservient to b2tral_Zhdanov_closure.
-				</description>
-			</switch>
-			<switch>
 			    <name>b2tral_Zhdanov_visu</name>
 				<default>1</default>
 				<type>integer</type>
@@ -1423,6 +1405,42 @@
 				<type>real</type>
 				<description>
 					Additional flux-limiting coefficient multiplier for the heat flux.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature and Joule heating between Zhdanov and Braginskii.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corrT</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature between Zhdanov and Braginskii in the thermal force calculation.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr.eq.0, the corrections for the each ion charge state are disabled. 
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr_vq</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr_vq.eq.0, the corrections for the each ion charge state are disabled for the heat stress-viscosity. 
+					This switch is subservient to b2tral_Zhdanov_closure.
 				</description>
 			</switch>
 			<switch>
@@ -1449,6 +1467,33 @@
 				<description>
 					If b2tfhi_Zhdanov_vel_heat.eq.1, the Zhdanov velocity-dependent ion heat flux is used.
 					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_fr</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_fr.eq.1, the friction force is computed according to the method corresponding to b2sigp_style.eq.2.
+					Used only for b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_tf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_tf.eq.1, the thermal force is computed according to the method corresponding to b2sigp_style.eq.2.
+					Used only for b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo mass multiplicator</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Using this number the impurity mass can be artificialy increased.
+					Used only for b2tral_Zhdanov_closure is equal to 0.
 				</description>
 			</switch>
 			<switch>
