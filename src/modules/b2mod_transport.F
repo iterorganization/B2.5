@@ -230,7 +230,6 @@
         call cfrure (nread, size(f_luc_et), f_luc_et, 'f_luc_et')
         call cfrure (nread, size(f_luc_sg), f_luc_sg, 'f_luc_sg')
         call cfrure (nread, size(f_luc_al), f_luc_al, 'f_luc_al')
-        call cfrure (nread, size(alpha1), alpha1, 'alpha1')             !som 05.10.21
         call cfrure (nread, size(fllim_ke), fllim_ke, 'fllim_ke')
         call cfrure (nread, size(fllim_ki), fllim_ki, 'fllim_ki')
         call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
@@ -241,7 +240,6 @@
         f_luc_et=1.0_R8
         f_luc_sg=1.0_R8
         f_luc_al=1.0_R8
-        alpha1=1.0_R8                                                   !som 05.10.21
         fllim_ke=1.0_R8
         fllim_ki=1.0_R8
         fllim_al=1.0_R8
