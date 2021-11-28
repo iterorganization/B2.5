@@ -1430,7 +1430,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2tral_zhcscorr.eq.0, the corrections for the each ion charge state are disabled. 
+					If b2tral_zhcscorr.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled.
 					This switch is subservient to b2tral_Zhdanov_closure.
 				</description>
 			</switch>
@@ -1439,7 +1439,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2tral_zhcscorr_vq.eq.0, the corrections for the each ion charge state are disabled for the heat stress-viscosity. 
+					If b2tral_zhcscorr_vq.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled for the heat stress-viscosity.
 					This switch is subservient to b2tral_Zhdanov_closure.
 				</description>
 			</switch>
@@ -1470,12 +1470,21 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_zh_tf_toff</name>
+				<default>0</default>
+				<type>string</type>
+				<description>
+					String of integers with (nspecies*(nspecies+1))/2-nspecies digits. If a digit is {\tt 1}, turn off the thermal force between corresponding species starting from 1 and 2; 1 and 3;....; up to nspecies-1 and nspecies.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
 			    <name>b2npmo_impr_form_fr</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
 					If b2npmo_impr_form_fr.eq.1, the friction force is computed according to the method corresponding to b2sigp_style.eq.2.
-					Used only for b2tral_Zhdanov_closure is equal to 0.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
 				</description>
 			</switch>
 			<switch>
@@ -1484,7 +1493,7 @@
 				<type>integer</type>
 				<description>
 					If b2npmo_impr_form_tf.eq.1, the thermal force is computed according to the method corresponding to b2sigp_style.eq.2.
-					Used only for b2tral_Zhdanov_closure is equal to 0.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
 				</description>
 			</switch>
 			<switch>
@@ -1493,7 +1502,7 @@
 				<type>real</type>
 				<description>
 					Using this number the impurity mass can be artificialy increased.
-					Used only for b2tral_Zhdanov_closure is equal to 0.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
 				</description>
 			</switch>
 			<switch>
@@ -3755,7 +3764,7 @@
 				<default>0.05</default>
 				<type>real</type>
 				<description>
-					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.  
+					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
 			<switch>
@@ -3763,7 +3772,7 @@
 				<default>0.02</default>
 				<type>real</type>
 				<description>
-					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.  
+					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
 			<switch>

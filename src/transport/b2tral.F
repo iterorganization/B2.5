@@ -30,6 +30,7 @@
      &         rTdpgamma_out, rwdpgamma_out
       use b2mod_neoclassical
       use b2mod_subsys
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain      !srv 23.11.10
@@ -156,7 +157,7 @@
       save ncall, pol_anom_scale, pot_eq, no_solve, solving,
      .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
-      external xertst, ipgetr, b2saxpy
+      external xertst, ipgeti, ipgetr, b2saxpy
       external b2trcl, b2trql, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
@@ -221,7 +222,7 @@
         call ipgeti ('b2tral_zh_imp_analyt', zh_imp_analyt)       !som 21.03.21
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
         call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
-        call ipgeti ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
+        call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)

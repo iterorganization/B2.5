@@ -171,24 +171,24 @@
      &    N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)   !som 02.08.2021
 
 *   ..calculate the matrix of thermal force switches
-        tempi=zh_tf_toff
-        i=nspecies-1
-        j=i-1
-        do is = 1, (nspecies*(nspecies+1))/2-nspecies
-          if ((tempi-(tempi/10)*10).eq.1) then
-            tf_ton_mat(i,j)=0.0_R8
-            tf_ton_mat(j,i)=0.0_R8
-          else
-            tf_ton_mat(i,j)=1.0_R8
-            tf_ton_mat(j,i)=1.0_R8
-          endif
-          tempi=tempi/10
-          j=j-1
-          if (j.eq.-1) then
-            i=i-1
-            j=i-1
-          endif
-        enddo
+        if (nspecies.gt.1) then
+          i=nspecies-1
+          j=i-1
+          do is = (nspecies*(nspecies+1))/2-nspecies, 1, -1
+            if (zh_tf_toff(is:is).eq.'1') then
+              tf_ton_mat(i,j)=0.0_R8
+              tf_ton_mat(j,i)=0.0_R8
+            else
+              tf_ton_mat(i,j)=1.0_R8
+              tf_ton_mat(j,i)=1.0_R8
+            endif
+            j=j-1
+            if (j.eq.-1) then
+              i=i-1
+              j=i-1
+            endif
+          enddo
+        endif
       endif
 
 *   ..main part

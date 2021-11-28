@@ -41,6 +41,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
      , ,only: nx, ny, ns, wklng,
@@ -274,8 +275,8 @@ c 2002-09-11: logic revised
      & cbmsa1(0:7,0:cbnrmx-1), cbmsb1(0:7,0:ns-1,0:cbnrmx-1)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1, iss
       integer itrack1, itrack2, itrack3
       integer non_commensurate
@@ -478,13 +479,18 @@ c 2002-09-11: logic revised
      6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cvalip*80
+      character cnamip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line, ligne
+#if DEF_NATM > 1
+      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff1
+#else
+      character*1 :: zh_tf_toff1
+#endif
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
@@ -1423,6 +1429,8 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      zh_tf_toff = repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
+      call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1907,6 +1915,39 @@ c 2002-09-11: logic revised
           todo = .false.
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..character string switches
+      todo = .true.
+      CSWITCHES: select case (cnamip)
+        case('b2tral_zh_tf_toff')
+          if (same_atoms) then
+            todo = .false.
+          else
+            do i = 1, nspecies-1
+              do j = i+1, nspecies
+                i1 = ispecies1(i)
+                j1 = ispecies1(j)
+                if (i1.ne.-1 .and. j1.ne.-1) then
+                  ij = 0
+                  do k = 1, i-1
+                    ij = ij + (nspecies-k)
+                  end do
+                  ij = ij + (j-i)
+                  ij1 = 0
+                  do k = 1, min(i1,j1)-1
+                    ij1 = ij1 + (nspecies1-k)
+                  end do
+                  ij1 = ij1 + (max(i1,j1)-min(i1,j1))
+                  zh_tf_toff1(ij1:ij1) = zh_tf_toff(ij:ij)
+                end if
+              end do
+            end do
+            cswitch = trim(zh_tf_toff1)
+          end if
+        case default CSWITCHES
+          todo = .false.
+      end select CSWITCHES
+      if (todo) write(cvalip,'(a)') trim(cswitch)
+*   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
         if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
           write(nout(2),'(a1,a,a,a,a,a)')
