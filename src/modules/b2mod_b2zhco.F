@@ -5,9 +5,10 @@
       integer :: zhd_corr=1, zhd_corrT=1, zhcscorr=1, zhcscorr_vq=1,
      &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0
 #if DEF_NATM > 1
-      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff
+      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff =
+     & repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
 #else
-      character*1 :: zh_tf_toff
+      character*1 :: zh_tf_toff = '0'
 #endif
       real (kind=R8) :: zhflcorr=3.0_R8
       real (kind=R8) :: zhflcorrh=0.4_R8
@@ -63,7 +64,6 @@
       allocate(c_R_w(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
       allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
       tf_ton_mat=1.0_R8
-      zh_tf_toff=repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
 
       end subroutine alloc_b2mod_zhco
 
