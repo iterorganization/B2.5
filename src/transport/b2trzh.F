@@ -87,7 +87,6 @@
 *.declarations
       integer ncall
       integer ix, iy, is, inucl, iz,i, j
-      integer tempi
       real (kind=R8) :: temp
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1),

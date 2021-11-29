@@ -362,9 +362,9 @@ contains
         call xertst (count(Fcxi(:,:,TOP) == GRID_UNDEFINED) == 0,       &
             &  "b2CreateMap: there are unnumbered x-aligned faces" )
         call xertst (count(Fcyi(:,:,LEFT) == GRID_UNDEFINED) == 0,      &
-            &   "b2CreateMap: there are unnumbered y-aligned faces" )
+            &  "b2CreateMap: there are unnumbered y-aligned faces" )
         call xertst (count(Fcyi(:,:,RIGHT) == GRID_UNDEFINED) == 0,     &
-            &   "b2CreateMap: there are unnumbered y-aligned faces" )
+            &  "b2CreateMap: there are unnumbered y-aligned faces" )
 
         !! Fill in vertex numbers for remaining vertices
         !! A vertex can be shared among 4 cells (possibly more for special
