@@ -1941,6 +1941,7 @@ c 2002-09-11: logic revised
                 end if
               end do
             end do
+            if (nspecies1.eq.1) zh_tf_toff1='0'
             cswitch = trim(zh_tf_toff1)
           end if
         case default CSWITCHES
