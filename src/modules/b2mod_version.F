@@ -230,9 +230,9 @@ c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene sputer.F The
 c                        22.07.11 corrected grlib.F (dummy) and masr3.F
 c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA
 c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)
-c                        20.09.11 modyfied b2tlnl.F
+c                        20.09.11 modified b2tlnl.F
 c                        21.09.11 introduced nwtf in b2plot.F instead of 97
-c    Version 01.001.070  17.10.11 modyfied Braginsky formula in b2tlnl.F Introduced restriction lnlam >= 5
+c    Version 01.001.070  17.10.11 modified Braginskii formula in b2tlnl.F Introduced restriction lnlam >= 5
 c                        03.11.11 changed calculation of chci_koeff in b2trcl.F
 c                                 added the usage of -1 cell in b2mod_astra_to_b2.F
 c                        15.11.11 changed b2mwti.F and b2mndr.F in according to request of Bonnin

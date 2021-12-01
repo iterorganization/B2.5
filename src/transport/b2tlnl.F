@@ -75,7 +75,7 @@
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
         select case(icase)
-         case(0)      ! Braginsky formula
+         case(0)      ! Braginskii formula
           do iy = -1, ny
            do ix = -1, nx
             if(te(ix,iy)/ev .le. 50.0_R8) then

@@ -50,7 +50,7 @@
       call subini ('b2xehx')
 *   ..set internal parameters on first call                              !srv
       if (ncall.eq.0) then                                               !srv
-       call ipgeti ('b2tfhe_mode_ehx',mode_ehx)                          !srv 06.04.15
+       call ipgeti ('b2tfhe_mode_ehx', mode_ehx)                         !srv 06.04.15
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 29.01.20 {
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
