@@ -7,7 +7,7 @@
      1 ti, ni, na, fna, uadia, ua,
      1 csig, csigin, csig_stoch,                                         !srv 24.08.21
      & chci, calf, cvsa_cl, cvsa_drho,                                   !som 18.08.21
-     & chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                            !som 20.10.21
+     & chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                    !som 20.10.21
      & conc, avisper_a, bvisper_a, cvisper_a,
      & fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,       !srv 08.09.21
      & fch, fch_p, fchdia, fchin,
@@ -36,6 +36,7 @@
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
      &   cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 18.08.21
      &   chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                          !som 20.10.21
+     &   chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                 !som 20.10.21
      &   cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),      !som 20.10.21
      &   cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                     !som 20.10.21
      &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
@@ -174,7 +175,7 @@
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
-     &             chci_al, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 22.11.12
