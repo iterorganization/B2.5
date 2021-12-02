@@ -372,7 +372,8 @@ program b2_ual_write_b2mod
     !! If not at least shot, run, username, and database were defined, display
     !! the error message and and a full command example
     else if( narg .lt. 4 ) then
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
+            & input IMAS data-entry&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
@@ -380,7 +381,8 @@ program b2_ual_write_b2mod
             &  --database solps-iter --version 3 --step 250"
         call exit(0)
     else
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
+            & input IMAS data-entry&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
@@ -547,7 +549,7 @@ program b2_ual_write_b2mod
         end if
       end if
     else
-      write (0,*) "No previous IDS found, new one will be created"
+      write (0,*) "No previous IMAS data-entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
     end if
@@ -631,7 +633,7 @@ contains
         gridSubset_index = 3
 
         !! Open input datafile from local database
-        write (0,*) "Started reading input IDS", idx, shot, run
+        write (0,*) "Started reading input IMAS data-entry", idx, shot, run
 
         call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
@@ -656,7 +658,7 @@ contains
         call ids_deallocate( edge_profiles )
         call imas_close( idx, status )
         call xertst ( status.eq.0, 'Error closing IMAS database !')
-        write (0,*) "Finished reading input IDS"
+        write (0,*) "Finished reading input IMAS data-entry"
 
     end subroutine read_ids
 

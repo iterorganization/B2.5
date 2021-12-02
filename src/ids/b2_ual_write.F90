@@ -184,7 +184,7 @@ program b2_ual_write
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
+    write (0,*) "Checking if IMAS data-entry already exists : ", trim(database), shot, run
     call imas_open_env(treename, shot, run, idx, username, database, version, status)
     if (status.ne.0) then
       if (database.eq.'ITER') then
@@ -203,7 +203,7 @@ program b2_ual_write
     end if
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IDS ", trim(database), shot, run
+      write (0,*) "Reading old IMAS data-entry ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then
@@ -241,10 +241,10 @@ program b2_ual_write
           if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
             if (.not.streql(old_imas_version,imas_version)) then
               write(*,*) &
-               & 'Old IDS was written using IMAS version '// &
+               & 'Old IMAS data-entry was written using Data Dictionary version '// &
                &  trim(old_imas_version)//'.'
               write(*,*) &
-               & 'Recreating using IMAS version '// &
+               & 'Recreating using Data Dictionary version '// &
                &  trim(imas_version)//'.'
             end if
             if (database.eq.'iter') &
@@ -319,7 +319,7 @@ program b2_ual_write
         end if
       end if
     else
-      write (0,*) "No previous IDS found, new one will be created"
+      write (0,*) "No previous IMAS data-entry found, a new one will be created"
       idx = 0
       if (database.eq.'iter') database = 'ITER'
     end if

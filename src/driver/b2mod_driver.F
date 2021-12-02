@@ -2499,7 +2499,7 @@ c new CDF movie option
           status = 0
 #ifdef IMAS
           if (idx.eq.0.and.continued) then
-            write(*,*) "Checking if IDS already exists : ",
+            write(*,*) "Checking if IMAS data-entry already exists : ",
      .       trim(database), shot, run
             call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
@@ -2522,7 +2522,8 @@ c new CDF movie option
             end if
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
-              write(*,*) "Reading old IDS ", trim(database), shot, run
+              write(*,*)
+     .         "Reading old IMAS data-entry", trim(database), shot, run
               call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
      .          status)
@@ -2565,10 +2566,11 @@ c new CDF movie option
      &                database.eq.'iter') then
                     if (.not.streql(old_imas_version,imas_version)) then
                       write(*,*)
-     &                 'Old IDS was written using IMAS version '//
+     &                 'Old IMAS data-entry was written '//
+     &                 'using Data Dictionary version '//
      &                  trim(old_imas_version)//'.'
                       write(*,*)
-     &                 'Recreating using IMAS version '//
+     &                 'Recreating using Data Dictionary version '//
      &                  trim(imas_version)//'.'
                     end if
                     if (database.eq.'iter') write(*,*)
@@ -2649,7 +2651,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               end if
             else
               write(*,*)
-     .         "No previous IDS found, new one will be created"
+     .         "No previous IMAS data-entry found, "//
+     .         "a new one will be created"
               idx = 0
               if (database.eq.'iter') database = 'ITER'
             end if
@@ -2922,7 +2925,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      tim, dtim, shot, run, database, version,
      &      time_slice_index, num_time_slices )
         else if (continued) then
-          write(*,*) "Checking if IDS already exists : ",
+          write(*,*) "Checking if IMAS data-entry already exists : ",
      .      trim(database), shot, run
           call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
@@ -2945,7 +2948,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
-            write(*,*) "Reading old IDS ", trim(database), shot, run
+            write(*,*)
+     .       "Reading old IMAS data-entry", trim(database), shot, run
             call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
      .        status)
@@ -2988,10 +2992,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &              database.eq.'iter') then
                   if (.not.streql(old_imas_version,imas_version)) then
                     write(*,*)
-     &               'Old IDS was written using IMAS version '//
+     &               'Old IMAS data-entry was written '//
+     &               'using Data Dictionary version '//
      &                trim(old_imas_version)//'.'
                     write(*,*)
-     &               'Recreating using IMAS version '//
+     &               'Recreating using Data Dictionary version '//
      &                trim(imas_version)//'.'
                   end if
                   if (database.eq.'iter') write(*,*)
@@ -3071,7 +3076,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             end if
           else
             write(*,*)
-     .       "No previous IDS found, new one will be created"
+     .       "No previous IMAS data-entry found, "//
+     .       "a new one will be created"
             idx = 0
             if (database.eq.'iter') database = 'ITER'
           end if
