@@ -6496,7 +6496,7 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
-          if (switch%tn_style.eq.0.and.switch%kul_recycle.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
+          if (switch%tn_style.eq.0.and.switch%recycle_afn.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
           srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
      &                    sy
           else

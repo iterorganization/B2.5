@@ -1244,7 +1244,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 #endif
 
 cmb  Load pre-evaluated integrals for advanced recyling mocdel based on TRIM data
-      if (switch%kul_recycle.eq.1) call read_recycle_fnn(ns,mpg%nCg)            !mb 12.07.17
+      if (switch%recycle_afn.eq.1) call read_recycle_fnn(ns,mpg%nCg)            !mb 12.07.17
       call subend ()
       return
 
