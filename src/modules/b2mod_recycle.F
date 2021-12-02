@@ -8,7 +8,7 @@ c*******************************************************************************
 !mb   06/07/2017
 c   This module is only loaded for the advanced recycling boundary conditions 
 c     that make use of pre-evaluated integrals of TRIM data to consistently calculate 
-c     recycling coefficients. To turn on the model, the flag b2stbr_kul_recycle is set to '1'   
+c     recycling coefficients. To turn on the model, the flag b2stbr_recycle_afn is set to '1'   
 c     Mixed materials are not considered in this recycling model
 
       logical, save :: recycle_initialised

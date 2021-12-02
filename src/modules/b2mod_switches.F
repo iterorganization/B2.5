@@ -55,7 +55,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
 c Advanced fluid neutral models
       integer :: tn_style 
-      integer :: kul_recycle
+      integer :: recycle_afn
       integer :: use_uy_uz_0
       integer :: use_uy_uz_1
       integer :: remove_FC_el
@@ -526,7 +526,7 @@ c Feedback
 
 c Advanced fluid neutral models
       s % tn_style = 0
-      s % kul_recycle = 0
+      s % recycle_afn = 0
       s % use_uy_uz_0 = 0
       s % use_uy_uz_1 = 0
       s % remove_FC_el = 0
@@ -993,7 +993,7 @@ c b2siav
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style',s % tn_style)
-      call ipgeti ('b2stbr_kul_recycle', s % kul_recycle)  
+      call ipgeti ('b2stbr_recycle_afn', s % recycle_afn)  
       call ipgeti ('b2stbr_use_uy_uz_0', s % use_uy_uz_0)
       call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)  
