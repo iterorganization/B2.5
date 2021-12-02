@@ -250,7 +250,7 @@ c     output for analysis/debugging
 #endif
 
 c pre-computations for KUL fluid neutrals
-      if (switch%kul_recycle.ne.0) then
+      if (switch%recycle_afn.ne.0) then
 
 c     initialize debugging/analysis arrays
         fmomrec_out  = 0.0_R8
@@ -843,7 +843,7 @@ cdpc
          endif
 
 
-         if (switch%kul_recycle.eq.0) then !! default neutral recycling/reflection model
+         if (switch%recycle_afn.eq.0) then !! default neutral recycling/reflection model
          srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+b2recyc(is,istra)*t0
 #ifdef WG_TODO
          itrack=track_index(is0)
@@ -896,7 +896,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
 !! end of preliminary calculations
            if(erecyc(is,istra)>0.0_R8.or.
      2      mrecyc(is,istra)>0.0_R8)
-     3     write(*,*)'kul_recycle incompatible with user-defined '//
+     3     write(*,*)'recycle_afn incompatible with user-defined '//
      4     'momentum and energy recycling coefficients > 0'
 
            if (is.ne.is0) then !! ion species, recycling

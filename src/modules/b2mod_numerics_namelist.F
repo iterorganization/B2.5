@@ -107,7 +107,7 @@
       core_dt_factor=1.0_R8
       solveco=.true.
       solvemo=.true.
-      if (switch%kul_recycle.ne.1) then !! default, use total momentum equation
+      if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
         solvemt=.true.
       else
         solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
