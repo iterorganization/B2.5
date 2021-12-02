@@ -1596,7 +1596,6 @@ contains
     ! Initialize
     !===========      
     ! Modules
-    use b2mod_indirect
     use b2us_geo
     use b2us_map
 
