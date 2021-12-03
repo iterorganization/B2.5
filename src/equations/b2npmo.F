@@ -256,22 +256,11 @@
         smbfrea = 0.0_R8
         smbtfia = 0.0_R8
         smbtfea = 0.0_R8
-        if(switch%b2sifr_ver.eq.0) then                                !srv 26.10.08 {
-         call xerrab ('b2sifr_ver = 0 not available for WG')
-#ifdef WG_TODO
-         call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
-     &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,        !srv 11.09.09
-     &    smbch, smbtf,
-     &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &    wrk0, wrk1, wrk2)                                            !srv 02.07.08 01.07.09
-#endif
-        else
-         call b2sifr_ (nCv, nFc, nVx, ns, is, switch, geo, mpg,
+        call b2sifr_ (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &   pl%na, pl%ua, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2, rt%rza,
      &   rt%rz2, ehxp, dv%lnlam, co%cthe, co%cthi, st_ext,
      &   smbch, smbtf, smpr(:,is), smpt(:,is), smfr(:,is),
      &   wrk0, gti, gte)
-        endif                                                          !srv 26.10.08 }
        endif
 
 *    ..compute pressure gradient term

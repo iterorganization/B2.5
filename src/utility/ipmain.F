@@ -167,13 +167,13 @@
         endif
         if (ipnam(ip).eq.'b2mndt_style') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'New model is based on b2mndt_style = 1'
+     &     trim(ipnam(ip)),'New model is based on b2mndt_style = 1.'
           call xerrab
      &     ('Prohibited "b2mndt_style" switch usage!')
         endif
         if (ipnam(ip).eq.'b2news_guard_flows') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'Now obsolete'
+     &     trim(ipnam(ip)),'Now obsolete.'
           call xerrab
      &     ('Prohibited "b2news_guard_flows" switch usage!')
         endif
@@ -182,6 +182,18 @@
      &     trim(ipnam(ip)),'Now obsolete. Use b2tfhe_vis_par instead.'
           call xerrab
      &     ('Prohibited "b2tvspa_vis_par" switch usage!')
+        endif
+        if (ipnam(ip).eq.'b2npmo_b2sifr_') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'New model is based on b2npmo_b2sifr_ = 1.'
+          call xerrab
+     &     ('Prohibited "b2npmo_b2sifr_" switch usage!')
+        endif
+        if (ipnam(ip).eq.'b2sifr_styl1') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete.'
+          call xerrab
+     &     ('Prohibited "b2sifr_styl1" switch usage!')
         endif
       enddo
       return

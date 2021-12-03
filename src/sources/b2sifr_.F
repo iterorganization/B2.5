@@ -88,9 +88,8 @@
       if (ncall.eq.0) then
 csw 24sep2013
        call xertst (
-     &   0.le.switch%b2sifr_styl0.and.switch%b2sifr_styl0.lt.9.and.
-     &   0.le.switch%b2sifr_styl1.and.switch%b2sifr_styl1.lt.2, 
-     &   'faulty internal parameter styl0, styl1')
+     &   0.le.switch%b2sifr_styl0.and.switch%b2sifr_styl0.lt.9, 
+     &   'faulty internal parameter styl0')
        call xertst (
      &  0.0_R8.le.switch%b2sifr_phm0.and.
      &  0.0_R8.le.switch%b2sifr_phm1.and.
@@ -177,8 +176,7 @@ csw 24sep2013
       enddo
 *   ..compute thermal force
       if (.not.is_neutral(isb)) then
-       if (switch%b2sifr_styl1.eq.0) then
-        do iCv = 1, mpg%nCi
+       do iCv = 1, mpg%nCi
          t0 = na(iCv,isb)*
      &      (rza(iCv,isb)/(ne(iCv)-st_ext%ne(iCv))-
      &       rz2(iCv,isb)/(ne2(iCv)-st_ext%ne2(iCv)))
@@ -211,10 +209,7 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
      &        (ne(iCv)-st_ext%ne(iCv)))*
      1        geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
-        enddo
-       else if (switch%b2sifr_styl1.eq.1) then
-        call xerrab ('b2sifr_: option styl1.eq.1 removed')
-       endif
+       enddo
       endif
       if (iout.ne.0) then                                           !srv 17.06.02 {
          write (chns,'(i3.3)') isb    
