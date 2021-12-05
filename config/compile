@@ -1,4 +1,8 @@
 include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.common.${COMPILER}
+  MAKES += ${SRCB2}/config/config.common.${COMPILER}
+endif
 INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}
@@ -72,9 +76,7 @@ else
 	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
 endif
 
-ifndef CXX
-CXX = g++
-endif
+CXX ?= g++
 ${OBJDIR}/%.o : %.cxx	#cxx source files
 	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
 	${CXX} -c -o $@ ${CXXFLAGS} $^
