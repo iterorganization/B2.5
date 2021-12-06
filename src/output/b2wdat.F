@@ -1230,7 +1230,7 @@ c     calculate coordinates of cell centre
          do ix = -1,nx
            if(rightix(ix,iy).eq.nx+1) then
              ixx=min(nx,ix+1)
-             wdim(iw+1 )= crdy_c_cell(ixx-ishift,iy)
+             wdim(iw+1)= crdy_c_cell(ixx-ishift,iy)
              wdim(iw+2)= ne(ixx-ishift,iy)
              wdim(iw+3)= te(ixx-ishift,iy)/ev
              wdim(iw+4)= ti(ixx-ishift,iy)/ev
@@ -1578,8 +1578,8 @@ c     calculate coordinates of cell centre
          call b2wdat_open(70,'outer_jsat')                   !srv 03.04.13 { 26.09.17
        endif
        write(hlp_frm,'(a)') '(2(1x,2es14.6))'
-       wdim = 0.0_R8
        do iy = -1,ny
+         wdim = 0.0_R8
          iw = 0
          do ix = -1,nx
            if(leftix(ix,iy).eq.-2) then
@@ -1587,7 +1587,7 @@ c     calculate coordinates of cell centre
              iw = iw +1
              wdim(iw)= crdy_c_cell(ixx+ishift,iy)
              iw = iw +1
-             do is=0,ns-1
+             do is = 0, ns-1
                wdim(iw)= wdim(iw)+qe*rza(ixx+ishift,iy,is)*
      .                   na(ixx+ishift,iy,is)*cst_a(ixx+ishift,iy,is)
              enddo
@@ -1603,8 +1603,8 @@ c     calculate coordinates of cell centre
        else
          call b2wdat_open(70,'inner_jsat')                   !srv 03.04.13 { 26.09.17
        endif
-       wdim = 0.0_R8
        do iy = -1,ny
+         wdim = 0.0_R8
          iw = 0
          do ix = -1,nx
            if(rightix(ix,iy).eq.nx+1) then
@@ -1612,7 +1612,7 @@ c     calculate coordinates of cell centre
              iw = iw +1
              wdim(iw)= crdy_c_cell(ixx-ishift,iy)
              iw = iw +1
-             do is=0,ns-1
+             do is = 0, ns-1
                wdim(iw)= wdim(iw)+qe*rza(ixx-ishift,iy,is)*
      .                   na(ixx-ishift,iy,is)*cst_a(ixx-ishift,iy,is)
              enddo
@@ -1630,7 +1630,7 @@ c     calculate coordinates of cell centre
        do ix = -1,nx
         iw = 1
         wdim(iw)= lengthx(ix,iy)
-        do is=0,ns-1
+        do is = 0, ns-1
           iw = iw + 1
           wdim(iw)= ua(ix,iy,is)
         enddo

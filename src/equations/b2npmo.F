@@ -352,7 +352,7 @@
      &    Zhdanov_tf_fr.eq.0) then                                     !som 01.07.21
         mm(0:ns-1) = mass_multiplicator
         mm(ismain) = 1.0_R8
-        am1=mm*am
+        am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
         call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
         call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
         call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
