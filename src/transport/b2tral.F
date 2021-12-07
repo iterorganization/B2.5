@@ -304,7 +304,7 @@
       if (Zhdanov_closure.eq.1) then                                  !som 09.02.21
         if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
-          call xertst(nnucl.eq.nspecies,
+          call xertst (nnucl.eq.nspecies,
      &     'Error while building isonuclear sequences!')
         endif
         call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)

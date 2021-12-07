@@ -40,7 +40,8 @@
       nnucl=1
       znmax=0
       do is = 0, ns-1
-        if (zn(is).ne.zn_temp .and. am(is).ne.am_temp) then
+        if (nint(zn(is)).ne.nint(zn_temp) .or.
+     &      nint(am(is)).ne.nint(am_temp)) then
           zn_temp=zn(is)
           am_temp=am(is)
           nnucl=nnucl+1
