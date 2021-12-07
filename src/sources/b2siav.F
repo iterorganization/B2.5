@@ -241,7 +241,7 @@
      &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
                 kt_neo(ix,iy) =
      &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)         !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(ix,iy)*s2)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           +2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
      &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
               endif

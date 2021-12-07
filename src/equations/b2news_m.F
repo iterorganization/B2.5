@@ -388,7 +388,7 @@ csw 01oct2012 initialize potential if necessary
      &              po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
-     &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
+     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 
@@ -646,7 +646,7 @@ csw 16oct2012 init ier0
      &              avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
-     &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
+     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 
