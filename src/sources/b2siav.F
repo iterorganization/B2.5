@@ -68,7 +68,7 @@
      &   tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny)         !lk !iyv 02.12.13
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
       data ncall/0/
@@ -99,7 +99,6 @@
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
@@ -240,10 +239,10 @@
      &           0.7e0_R8*sqrt(nu1(ix,iy))+
      &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
                 kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)         !iyv 02.12.13
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))            !som 07.12.21 !iyv 02.12.13
      &           +2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
-     &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
+     &           0.7e0_R8*sqrt(nu1(ix,iy))+
+     &           (nu1(ix,iy))**2*eps1(iy)**3))
               endif
             enddo
           enddo
