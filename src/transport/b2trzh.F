@@ -88,8 +88,9 @@
       integer ncall
       integer ix, iy, is, inucl, iz,i, j
       real (kind=R8) :: temp
+      real (kind=R8) :: wrk(-1:nx,-1:ny), volhz(-1:nx,-1:ny)
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
-     &  zeffne, nz2n(0:nspecies-1),
+     &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
      &  G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
      &  Ainv(0:2*nspecies-1,0:2*nspecies-1),
      &  Ainv_mdf(0:nspecies-1,0:2*nspecies-1),
@@ -112,11 +113,16 @@
      &  eta_cl_fl(-1:nx,-1:ny,0:ns-1),
      &  eta_hAdp(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
      &  eta_hBdp(-1:nx,-1:ny,0:nspecies-1),
-     &  t0, t1, czetap,zetap(-1:nx,-1:ny),I_al(0:nspecies-1),
-     &  cF_limh(0:nspecies-1),cF_limBh(0:nspecies-1),
-     &  cF_lim(0:nspecies-1),cF_limB(0:nspecies-1),
+     &  t0, t1, czetap, zetap(-1:nx,-1:ny), I_al(0:nspecies-1),
+     &  cF_limh(0:nspecies-1), cF_limBh(0:nspecies-1),
+     &  cF_lim(0:nspecies-1), cF_limB(0:nspecies-1),
      &  cF_limv(0:ns-1),
-     &  hci0_nofl(-1:nx,-1:ny,0:1),hci0(-1:nx,-1:ny,0:1),
+     &  wrkc(0:nspecies-1), wrkcc(0:nspecies-1,0:nspecies-1),
+     &  wrkcA(0:nspecies-1,0:nspecies-1),
+     &  wrkcB(0:nspecies-1,0:nspecies-1),
+     &  wrkG2(0:nspecies-1,0:nspecies-1),
+     &  wrkG8(0:nspecies-1,0:nspecies-1),
+     &  hci0_nofl(-1:nx,-1:ny,0:1), hci0(-1:nx,-1:ny,0:1),
      &  hci0_al_nofl(-1:nx,-1:ny,0:nspecies-1),
      &  hci0_al(-1:nx,-1:ny,0:nspecies-1),
      &  hciB_al_nofl(0:nspecies-1),
@@ -153,7 +159,8 @@
         zn_temp=zn(0)
         am_temp=am(0)
         do is = 0, ns-1
-          if (zn(is).ne.zn_temp .and. am(is).ne.am_temp) then
+          if (nint(zn(is)).ne.nint(zn_temp) .or.
+     &        nint(am(is)).ne.nint(am_temp)) then
             inucl=inucl+1
             znnucl(inucl-1)=zn(is)
             amnucl(inucl-1)=am(is)
@@ -217,9 +224,9 @@
           nz2n=z2n_xy(ix,iy,0:nspecies-1)/zeffne
 *    ..calculate the correction for each charge state (heat flux/R-moment/friction)
           call b2trcc(nspecies, mum, mdm, nz2n,
-     &     c_R_TB_nofl(ix,iy,0:nspecies-1),
-     &     c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
-     &     c_hwB, c_rwB, c_hTB, c_rTB)
+     &     wrkc, wrkcB, c_hwB, c_rwB, c_hTB, c_rTB)
+          c_R_TB_nofl(ix,iy,0:nspecies-1) = wrkc
+          c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
 *    ..calculate the correction for each charge state (viscous stress tensor)
           call b2trcs(nspecies, mum, mdm, nz2n,
      &     c_pi_uB(0:nspecies-1), c_pi_hB(0:nspecies-1))
@@ -257,12 +264,12 @@
 
 *    ..calculate the classical ion conductivity without flux limiting
             call b2trht(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
-     &       zetap(ix,iy), zeffne, ti(ix,iy), Ainv,
-     &       hci0_al_nofl(ix,iy,0:nspecies-1))
+     &       zetap(ix,iy), zeffne, ti(ix,iy), Ainv, wrkc)
+            hci0_al_nofl(ix,iy,0:nspecies-1) = wrkc
 *    ..calculate the classical ion conductivity with flux limiting
             call b2trht(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
-     &       zetap(ix,iy), zeffne, ti(ix,iy), Ainv_fl_h,
-     &       hci0_al(ix,iy,0:nspecies-1))
+     &       zetap(ix,iy), zeffne, ti(ix,iy), Ainv_fl_h, wrkc)
+            hci0_al(ix,iy,0:nspecies-1) = wrkc
 *    ..calculate the velocity parts of heat flux and R-transport coefficient
             call b2trhw(nspecies, G2, G8, mum,
      &       Ainv, Ainv_mdf,
@@ -270,11 +277,15 @@
      &       c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
-     &       c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1))
+     &        wrkcc)
+            c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 *    ..calculate the thermal force transport coefficient with flux limiting
-            call b2trtf(nspecies, G2*tf_ton_mat, G8*tf_ton_mat,
+            wrkG2 = G2*tf_ton_mat
+            wrkG8 = G8*tf_ton_mat
+            call b2trtf(nspecies, wrkG2, wrkG8,
      &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
-     &        c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1))
+     &        wrkcc)
+           c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1
 *    ..calculate the transport coefficient of the velocity-dependent part
@@ -316,8 +327,9 @@
      &       c_hTA_an, c_rTA_an, c_R_TA_an_nofl)
 *    ..calculate the classical ion conductivity without flux limiting
             call b2trht_an(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
-     &       zetap(ix,iy),zeffne,ti(ix,iy),c_hTA_an,nz2n,rmd2,
-     &       hci0_al_nofl(ix,iy,0:nspecies-1))
+     &       zetap(ix,iy), zeffne, ti(ix,iy), c_hTA_an, nz2n, rmd2,
+     &       wrkc)
+            hci0_al_nofl(ix,iy,0:nspecies-1) = wrkc
 *    ..the thermal force transport coefficient without flux limiting
             do i = 0, nspecies-1
               temp = sum(c_R_TA_an_nofl(i,0:nspecies-1)*
@@ -341,7 +353,8 @@
 *    ..calculate the classical ion conductivity with flux limiting
             call b2trht_an(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
      &       zetap(ix,iy), zeffne, ti(ix,iy), c_hTA_an_fl, nz2n, rmd2,
-     &       hci0_al(ix,iy,0:nspecies-1))
+     &       wrkc)
+            hci0_al(ix,iy,0:nspecies-1) = wrkc
 *    ..the thermal force transport coefficient with flux limiting
             do i = 0, nspecies-1
               temp = sum(c_R_TA_an(i,0:nspecies-1)*
@@ -394,13 +407,14 @@
      &     c_R_TB_nofl(ix,iy,0:nspecies-1)
 
 *    ..calculate the friction force transport coefficient
-          call b2trfr(nspecies, mum, rmu,
-     &     z2n_xy(ix,iy,0:nspecies-1),
+          wrkc = z2n_xy(ix,iy,0:nspecies-1)
+          call b2trfr(nspecies, mum, rmu, wrkc,
      &     c_hwA(0:nspecies-1,0:nspecies-1),
      &     c_rwA(0:nspecies-1,0:nspecies-1),
-     &     c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1),
-     &     c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1),
-     &     c_R_w(ix,iy,0:nspecies-1,0:nspecies-1))
+     &     wrkcB, wrkcA, wrkcc)
+          c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
+          c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
+          c_R_w (ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
 *    ..calculate the classical eta coefficient including charge state correction
           eta_cl(ix,iy,0:ns-1) = 0.0_R8
@@ -428,8 +442,9 @@
           enddo
 
 *    ..calculate flux limiting for the viscous stress
-          call b2trfl_vis (ix, iy,ns, eta_cl(ix,iy,0:ns-1),
-     &     na(ix,iy,0:ns-1)*ti(ix,iy), gamma, cF_limv)
+          nati(0:ns-1) = na(ix,iy,0:ns-1)*ti(ix,iy)
+          eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
+          call b2trfl_vis (ix, iy, ns, eta_cl_xy, nati, gamma, cF_limv)
 
 *    ..the velocity-dependent part
           do is = 0, ns-1
@@ -468,8 +483,9 @@
      &     zetap(ix,iy), zeffne, ti(ix,iy), c_hTB, nz2n, rmd2,
      &     hciB_al_nofl(0:nspecies-1))
 *    ..calculate the classical ion conductivity correction with flux limiting
+          wrkc = cF_limBh*c_hTB
           call b2trht_an(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
-     &     zetap(ix,iy), zeffne, ti(ix,iy), cF_limBh*c_hTB, nz2n, rmd2,
+     &     zetap(ix,iy), zeffne, ti(ix,iy), wrkc, nz2n, rmd2,
      &     hciB_al(0:nspecies-1))
 
 *   ..apply charge state correction for the heat flux
@@ -570,32 +586,34 @@
       enddo
 
 *    ..ion velocity-dependent viscosity on the cell boundary
+      volhz = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,
-     &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is),
-     &   cvsahz0(-1,-1,0,is))
-       call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,
+        wrk(-1:nx,-1:ny) =
+     &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &   wrk, cvsahz0(-1,-1,0,is))
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &   wrk, cvsa0(-1,-1,0,is))
+        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
      &   eta_cl_fl(-1,-1,is), cvsahz_drho(-1,-1,0,is))
-       call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,
-     &   eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is),
-     &   cvsahz0_nofl(-1,-1,0,is))
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   eta_cl_fl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is),
-     &   cvsa0(-1,-1,0,is))
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+        wrk(-1:nx,-1:ny) =
+     &   eta_cl(-1:nx,-1:ny,is)*rho_A_rel(-1:nx,-1:ny,is)
+        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
+     &   wrk, cvsahz0_nofl(-1,-1,0,is))
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      &   eta_cl_fl(-1,-1,is), cvsa_drho(-1,-1,0,is))
       enddo
 
 *    ..ion heat flux dependent viscosity on the cell boundary
       do i = 0, nspecies-1
         do j = 0, nspecies-1
-          call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,
+          call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
      &     eta_hAdp(-1,-1,i,j), cvsahz_hAdp(-1,-1,0,i,j))
           call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      &     eta_hAdp(-1,-1,i,j), cvsa_hAdp(-1,-1,0,i,j))
         enddo
 
-        call b2txcx (nx, ny, mode, hz*vol, gs, hx, qz,
+        call b2txcx (nx, ny, mode, volhz, gs, hx, qz,
      &   eta_hBdp(-1,-1,i), cvsahz_hBdp(-1,-1,0,i))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz,
      &   eta_hBdp(-1,-1,i), cvsa_hBdp(-1,-1,0,i))
