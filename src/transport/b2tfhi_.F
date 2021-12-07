@@ -55,9 +55,7 @@
      *   floi0(nFc,0:1), flomx, coni0(nFc,0:1),
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
-     *   flon0(nFc,0:1), conn0(nFc,0:1), fhn0(nFc,0:1),
-     *   flokt0(nFc,0:1), conkt0(nFc,0:1),
-     *   flozt0(nFc,0:1), conzt0(nFc,0:1),
+     *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
      *   flo0_ExB(nFc,0:1)
 cpax      
       real (kind=R8) ::
@@ -136,19 +134,19 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
        do is = 0, ns-1
         if(.not.is_neutral(is)) then
 
-*   ..precompute face and vertex values of nati and nati2
+*      ..precompute face and vertex values of nati and nati2
          nati  = pl%na(:,is)*pl%ti
          nati2 = pl%na(:,is)*pl%ti*pl%ti
          call intvertex(nCv,nVx,mpg,geo%vxVol,nati,nativ)
          call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
 
-*   ..compute P.Sch heat flux
+*      ..compute P.Sch heat flux
          dv%fhiPSch(:,0) =  2.5_R8*switch%fhiPSch*
      &                       dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
          dv%fhiPSch(:,1) = -2.5_R8*switch%fhiPSch*
      &                       dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
-*     ..linearization coefficients for P.Sch flows
+*      ..linearization coefficients for P.Sch flows
          cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
          cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
          call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi,floi0,coni0)
@@ -242,92 +240,65 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
 
 *   ..convective coefficients
-      if (switch%tn_style.eq.0) then
-        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
-     &    flidia(:,0) + scur(:,0)
-        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
-     &    flidia(:,1) + scur(:,1)
+      !floi0
+      floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
+     &  flidia(:,0) + scur(:,0)
+      floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
+     &  flidia(:,1) + scur(:,1)
 
-        flon0(:,0) = 0.0_R8
-        flon0(:,1) = 0.0_R8
-      elseif (switch%tn_style.eq.1) then
-!! AFN_TODO when more contributions are considered (e.g. drifts), or multi-species cases, 
-!! additions (floi0 = floi0 + ...) must be considered instead of overwrites (floi0 = ...)
-        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &    flidia(:,0) + scur(:,0)
-        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
-     &    flidia(:,1) + scur(:,1)
-        flon0(:,0) = 0.0_R8
-        flon0(:,1) = 0.0_R8
-      else
-        floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &    flidia(:,0) + scur(:,0)
-        floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
-     &    flidia(:,1) + scur(:,1)
+      !floi0_mdf
+      floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
+     &  scur(:,0)
+      floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
+     &  scur(:,1)
+
+      !flon0
+      if (switch%tn_style.eq.2) then
         flon0(:,0) = 1.5e0_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
         flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
 
-
-      if (switch%tn_style.eq.0) then !! default combined ion-neutral energy equation
-      
-        floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
-     &    scur(:,0)
-        floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
-     &    scur(:,1)
-
 *   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
-     &    co%chci,fhi0_mdf,dumm0,dumm1)
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
+     &  co%chci,fhi0_mdf,dumm0,dumm1)
 
-*   ..compute fluxes
-        dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
-        dv%fhi(:,1) = fhi0_mdf(:,1) +  (floi0(:,1) - floi0_mdf(:,1))*tif
+*   ..compute ion fluxes
+      dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
+      dv%fhi(:,1) = fhi0_mdf(:,1) +  (floi0(:,1) - floi0_mdf(:,1))*tif
 
-        dv%fhi_mdf(:,0)  = fhi0_mdf(:,0) - dv%fhiPSch(:,0)
-        dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
+      dv%fhi_mdf(:,0)  = fhi0_mdf(:,0) - dv%fhiPSch(:,0)
+      dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
 
 *   ..compute floi, coni
-        floi0 = dv%floi
-        coni0 = dv%coni(:,:,0)
-        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
-     &    dv%floi,dv%coni)
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
+     &  floi0,coni0)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
-        dv%floi = dv%floi + floi0
-        dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
+      dv%floi = dv%floi + floi0
+      dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
-      elseif (switch%tn_style.eq.1) then
-        if(switch%mdf_fhi.eq.1) then
-          call xerrab('non-default energy eqs not yet for mdf')
-        endif
-*   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0,
-     &    co%chci,dv%fhi,dumm0,dumm1)
-*   ..compute floi, coni
-        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
+*   ..compute fhn, flon, conn
+      if (switch%tn_style.lt.2) then
+
+        !set zero if no separate equation for tn is solved
+        dv%fhn  = 0.0_R8
+        dv%flon = 0.0_R8
+        dv%conn = 0.0_R8
+        
       else
-        if(switch%mdf_fhi.eq.1) then
-          call xerrab('non-default energy eqs not yet for mdf')
-        endif
 
-*   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0,
-     &    co%chci,dv%fhi,dumm0,dumm1)
+*     ..apply discretization scheme
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%tn,flon0,
      &    co%chcn,dv%fhn,dumm0,dumm1)
 
-*   ..compute floi, coni
-        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
-*   ..compute flon, conn
+*     ..compute flon, conn
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
      &    dv%flon,dv%conn)
 
       endif
 
       if (switch%solve_keps.gt.0) then
+
 *     ..compute ExB heat fluxes (ion and electron (!))
         flo0_ExB = 1.5_R8*dv%fna_ExB
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,flo0_ExB,
@@ -335,6 +306,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,flo0_ExB,
      &    co%chce_ExB,dv%fhe_ExB,dumm0,dumm1)
 *     ..fluxes for k-equation
+
 cwdk    fflokt and fconkt: fudge factors to approximate enhanced parallel
 cwdk    transport of k due to term
 cwdk    related to (fluctuations in parallel current) * (fluctuations in potential)
@@ -881,12 +853,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
 c neutrals
        call my_out_us(70,nFc,1,dv%flon(1,0),'b2tfhi__flonx')
        call my_out_us(70,nFc,1,dv%flon(1,1),'b2tfhi__flony')
-       call my_out_us(70,nFc,1,dv%conn(1,0,0),'b2tfhi__connx0')
-       call my_out_us(70,nFc,1,dv%conn(1,0,1),'b2tfhi__connx1')
-       call my_out_us(70,nFc,1,dv%conn(1,0,2),'b2tfhi__connx2')
-       call my_out_us(70,nFc,1,dv%conn(1,1,0),'b2tfhi__conny0')
-       call my_out_us(70,nFc,1,dv%conn(1,1,1),'b2tfhi__conny1')
-       call my_out_us(70,nFc,1,dv%conn(1,1,2),'b2tfhi__conny2')
+       call my_out_us(70,nFc,1,dv%conn(1,0),'b2tfhi__connx')
+       call my_out_us(70,nFc,1,dv%conn(1,1),'b2tfhi__conny')
        call my_out_us(70,nFc,1,dv%fhn(1,0),'b2tfhi__fhnx')
        call my_out_us(70,nFc,1,dv%fhn(1,1),'b2tfhi__fhny')
       endif                                                             !srv 18.06.08 }

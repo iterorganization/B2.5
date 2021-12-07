@@ -60,9 +60,9 @@
         real(R8), dimension(:,:), allocatable :: conc
         real(R8), dimension(:,:), allocatable :: flob, floe, floi, 
      .                                           floe_noc, floi_noc,
-     .                                           flon, flokt, flozt
-        real(R8), dimension(:,:,:), allocatable :: conb, cone, coni,
-     .                                             conn, conkt, conzt
+     .                                           flon, flokt, flozt,
+     .                                           conn, conkt, conzt
+        real(R8), dimension(:,:,:), allocatable :: conb, cone, coni
         real(R8), dimension(:), allocatable :: fllime, fllimi
         
         ! residuals
@@ -684,9 +684,9 @@ cwdk move to dv
       allocate( dv % flokt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % flozt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % coni( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
-      allocate( dv % conn( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
-      allocate( dv % conkt( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
-      allocate( dv % conzt( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
+      allocate( dv % conn( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % conkt( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % conzt( nFc, 0:1 ), SOURCE=0._R8 )
       
 ! residuals
       allocate( dv % resmo( nCv, 0:ns-1 ) )

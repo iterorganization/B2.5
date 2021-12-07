@@ -165,8 +165,8 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
-           dv%flon        = dv%flon        + flo0
-           dv%conn(:,:,0) = dv%conn(:,:,0) + con0
+           dv%flon = dv%flon + flo0
+           dv%conn = dv%conn + con0
          endif
        endif
 
@@ -223,8 +223,8 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
-           dv%flon        = dv%flon        + flo0
-           dv%conn(:,:,0) = dv%conn(:,:,0) + con0
+           dv%flon = dv%flon + flo0
+           dv%conn = dv%conn + con0
          endif
        endif
 
