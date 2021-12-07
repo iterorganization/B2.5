@@ -29,7 +29,7 @@
      &  kt(nCv), zt(nCv), floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
      &  flokt(nFc,0:1), flozt(nFc,0:1),
      &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),
-     &  conn(nFc,0:1,0:2), conkt(nFc,0:1,0:2), conzt(nFc,0:1,0:2)
+     &  conn(nFc,0:1), conkt(nFc,0:1), conzt(nFc,0:1)
       real (kind=R8) ::
      *  she(nCv,0:3), shi(nCv,0:3), shn(nCv,0:3), skt(nCv,0:3),
      &  szt(nCv,0:3),  
@@ -146,7 +146,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 * ..total heat correction equation
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
-      con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn(:,:,0)
+      con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -613,7 +613,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       if (new_matrix.or..true.) call restart_ma28_for_us
 *   ..compute flo0, con0
       flo0        = flon
-      con0(:,:,0) = conn(:,:,0)
+      con0(:,:,0) = conn
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -761,7 +761,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call restart_ma28_for_us
 *   ..compute flo0, con0
        flo0        = flokt
-       con0(:,:,0) = conkt(:,:,0)
+       con0(:,:,0) = conkt
 *   ..initialize matrix to zero
        aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -904,7 +904,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call restart_ma28_for_us
 *   ..compute flo0, con0
        flo0        = flozt
-       con0(:,:,0) = conzt(:,:,0)
+       con0(:,:,0) = conzt
 *   ..initialize matrix to zero
        aa = 0.0e0_R8
 *   ..compute the nine-point matrix
