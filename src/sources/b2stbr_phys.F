@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
+     &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
@@ -23,6 +23,7 @@
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmfs
@@ -39,7 +40,7 @@
      *     reflection_on, sputter_energy_on, output,
      *     sput_frac_flag, potential_at_guard_cell
       logical main_call, new_sputter_namelist
-      real (kind=R8) :: dtim, BoRiS,
+      real (kind=R8) :: BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
@@ -351,7 +352,7 @@
               enddo
               call prehd2D(ns,rc_list_size(istra),
      &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,-1,
+     &         rc_list_y(1:rc_list_size(istra),istra),dteff,-1,
      &         flux_x(1:rc_list_size(istra)),
      &         flux_y(1:rc_list_size(istra)),1,
      &         area(1:rc_list_size(istra)),BoRiS)
@@ -392,7 +393,7 @@
               enddo
               call prehd2D(ns,rc_list_size(istra),
      &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,+1,
+     &         rc_list_y(1:rc_list_size(istra),istra),dteff,+1,
      &         rc_list_x(1:rc_list_size(istra),istra),
      &         rc_list_y(1:rc_list_size(istra),istra),1,
      &         area(1:rc_list_size(istra)),BoRiS)
@@ -436,7 +437,7 @@
               enddo
               call prehd2D(ns,rc_list_size(istra),
      &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,-1,
+     &         rc_list_y(1:rc_list_size(istra),istra),dteff,-1,
      &         flux_x(1:rc_list_size(istra)),
      &         flux_y(1:rc_list_size(istra)),0,
      &         area(1:rc_list_size(istra)),BoRiS)
@@ -476,7 +477,7 @@
               enddo
               call prehd2D(ns,rc_list_size(istra),
      &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,+1,
+     &         rc_list_y(1:rc_list_size(istra),istra),dteff,+1,
      &         rc_list_x(1:rc_list_size(istra),istra),
      &         rc_list_y(1:rc_list_size(istra),istra),0,
      &         area(1:rc_list_size(istra)),BoRiS)
@@ -835,7 +836,7 @@ cdpc-end
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
               call heatdiff1D(iwall,ns,qpl+qex,
-     .           dtim*plate_time_factor(iwall),wrk,output)
+     .           dteff*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             end if
             surface_temp = target_temp(iwall,1)
@@ -899,7 +900,7 @@ cxpb Whatever is not recycled is counted as deposition
          if(itrack.gt.0.and.itrack.le.ntrack
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
-     1           dtim*plate_time_factor(iwall)*
+     1           dteff*plate_time_factor(iwall)*
      2           (1.0_R8-recyc(is,istra))*t0
          endif
 cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
@@ -1005,7 +1006,7 @@ cxpb  without mixed materials model
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
      1                 iwall.gt.0.and.main_call)
      1                 erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1                 dtim*plate_time_factor(iwall)*t1
+     1                 dteff*plate_time_factor(iwall)*t1
                else
                   if(iwall.gt.0.and.main_call
      &                 .and.sput_frac_chem_sum.gt.0.0_R8) then
@@ -1019,7 +1020,7 @@ cxpb  with mixed materials model
                      if(itrack.gt.0.and.itrack.le.ntrack)
      &                    erosion(iwall,itrack) =
      &                    erosion(iwall,itrack) +
-     1                    dtim*plate_time_factor(iwall)*t1*
+     1                    dteff*plate_time_factor(iwall)*t1*
      &                    sput_frac_chem(0)/sput_frac_chem_sum
 cxpb  Removal from the deposited material if chemically sputtered
 cxpb  with mixed materials model
@@ -1027,7 +1028,7 @@ cxpb  with mixed materials model
                         if(itrack.gt.0.and.itrack.le.ntrack)
      &                       deposition(iwall,itrack) =
      &                       deposition(iwall,itrack) -
-     1                       dtim*plate_time_factor(iwall)*t1*
+     1                       dteff*plate_time_factor(iwall)*t1*
      &                       sput_frac_chem(itrack)/sput_frac_chem_sum
                      enddo
                   endif
@@ -1121,23 +1122,23 @@ cxpb  We count here as eroded all the sputtered material, including the promptly
 cxpb  We add this promptly redeposited fraction in the deposited material
                     if(sput_frac_flag.eq.0) then
                       erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1                 dtim*plate_time_factor(iwall)*t1/
+     1                 dteff*plate_time_factor(iwall)*t1/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk)*yself)
                       deposition(iwall,itrack) =
      .                 deposition(iwall,itrack) +
-     1                 dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
+     1                 dteff*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst)*yself))
                     else
                       erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1                 dtim*plate_time_factor(iwall)*t1/
+     1                 dteff*plate_time_factor(iwall)*t1/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk)*yself*
      4                  sput_frac(0))
                       deposition(iwall,itrack) =
      .                 deposition(iwall,itrack) +
-     1                 dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
+     1                 dteff*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst)*yself*
      4                  sput_frac(0)))
@@ -1203,7 +1204,7 @@ cxpb  with mixed materials model
                     if(iwall.gt.0.and.main_call)
      1                    deposition(iwall,itrack) =
      &                    deposition(iwall,itrack) -
-     1                    dtim*plate_time_factor(iwall)*t1
+     1                    dteff*plate_time_factor(iwall)*t1
                   enddo
                endif
                if(sputter_energy_on.ne.0) then
@@ -1343,7 +1344,7 @@ cxpb  Erosion from the bulk material if thermally evaporated
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -1399,7 +1400,7 @@ cxpb  without mixed materials model
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
      1               iwall.gt.0.and.main_call)
      1               erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1               dtim*plate_time_factor(iwall)*t1
+     1               dteff*plate_time_factor(iwall)*t1
                else
                   if(iwall.gt.0.and.main_call
      &                 .and.sput_frac_chem_sum.gt.0) then
@@ -1413,7 +1414,7 @@ cxpb  with mixed materials model
                      if(itrack.gt.0.and.itrack.le.ntrack)
      &                    erosion(iwall,itrack) =
      &                    erosion(iwall,itrack) +
-     1                    dtim*plate_time_factor(iwall)*t1*
+     1                    dteff*plate_time_factor(iwall)*t1*
      &                    sput_frac_chem(0)/sput_frac_chem_sum
 cxpb  Removal from the deposited material if RES sputtered
 cxpb  with mixed materials model
@@ -1421,7 +1422,7 @@ cxpb  with mixed materials model
                         if(itrack.gt.0.and.itrack.le.ntrack)
      &                    deposition(iwall,itrack) =
      &                    deposition(iwall,itrack) -
-     1                    dtim*plate_time_factor(iwall)*t1*
+     1                    dteff*plate_time_factor(iwall)*t1*
      &                    sput_frac_chem(itrack)/sput_frac_chem_sum
                      enddo
                   endif
@@ -1450,7 +1451,7 @@ cxpb  as deposition
                if(itrack.gt.0.and.itrack.le.ntrack
      1              .and.iwall.gt.0.and.main_call) then
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
-     1                 dtim*plate_time_factor(iwall)*t1
+     1                 dteff*plate_time_factor(iwall)*t1
                endif
                backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
                backscattering_energy(iwall,is) =

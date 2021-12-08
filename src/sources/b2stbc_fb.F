@@ -210,6 +210,7 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
@@ -271,7 +272,7 @@
      &                 pfrregno1, pfrregno2,
      &                 isfeedback, nesepm_istra, use_eirene
       real (kind=R8) ::
-     &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
+     &  na_feedback_current, na_feedback_rescale, vol_feedback,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
      &  dt_prev, sum_e, sum_s,
      &  total_flux, flux_old, target_flux,
@@ -298,7 +299,7 @@
       logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2, zeroslope
-      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
+      save ncall, dt_prev, na_feedback_prev, na_feedback_save,
      1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
@@ -319,7 +320,7 @@
       external b2xvsg
 *   ..initialisation
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  n_flux_zero/0/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
@@ -364,9 +365,7 @@
        call get_jsep(nx,ny,jxi,jxa,jsep)
        call read_b2mod_feedback_control(99)
        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
-       call ipgetr('b2mndr_dtim', dtim)
-       call xertst(dtim.gt.0.0_R8, 'faulty parameter dtim')
-       dt_prev = dtim
+       dt_prev = dteff
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
        call ipgeti ('b2sral_style', b2sral_style)
        call get_boundary_namelist
@@ -1198,7 +1197,7 @@
                   na_feedback_rescale =
      .               na_feedback_alpha(ispecies) *
      .             ((na_feedback_target(ispecies) -
-     .               na_feedback_current)/dtim +
+     .               na_feedback_current)/dteff +
      .              (na_feedback_prev(ispecies) -
      .               na_feedback_current)/dt_prev)
                   na_feedback_save(ispecies) = na_feedback_current
@@ -1245,7 +1244,7 @@
                   na_feedback_rescale =
      .               na_feedback_alpha(ispecies) *
      .             ((na_feedback_target(ispecies) -
-     .               na_feedback_current)/dtim +
+     .               na_feedback_current)/dteff +
      .              (na_feedback_prev(ispecies) -
      .               na_feedback_current)/dt_prev)
                   na_feedback_save(ispecies) = na_feedback_current
@@ -1267,7 +1266,7 @@
      &              na_feedback_target(ispecies),
      &              na_feedback_rescale,
      &              na_feedback_prev(ispecies),
-     &              dtim, dt_prev
+     &              dteff, dt_prev
 
 ! phase 3:
 
@@ -1441,7 +1440,7 @@
          feedback_namelist_used = feedback_namelist_used .or.
      &    na_feedback_actuator(ispecies).eq.1 .or.
      &    na_feedback_actuator(ispecies).eq.3
-         dt_prev = dtim
+         dt_prev = dteff
 
       endif
 

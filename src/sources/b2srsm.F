@@ -289,7 +289,7 @@ c check electron particle number
      1         abs(snesm(ix,iy,0) + snesm(ix,iy,1)*ne(ix,iy))
      2         /(ne(ix,iy)*vol(ix,iy))
               hlp = invtimescale*time_factor_required*
-     1         dtim*time_factor(ix,iy)
+     1         dteff*time_factor(ix,iy)
               if (hlp.gt.1.0_R8) then
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
@@ -297,7 +297,7 @@ c check electron particle number
                   write(*,*)
      ,             'WARNING: electron particle sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,             timescale,dtim*time_factor(ix,iy)
+     ,             timescale,dteff*time_factor(ix,iy)
                   write(*,'(a,2i4)') 'ix,iy = ', ix,iy
                   write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)

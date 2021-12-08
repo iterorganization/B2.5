@@ -311,7 +311,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 30
              &  divertors, &
 #endif
-             &  tim, dtim, shot, run, database, version, &
+             &  tim, dteff, shot, run, database, version, &
              &  time_slice_index, num_time_slices )
         else
           write (0,*) "Not a time continuation, IDS will be overwritten !"
@@ -335,7 +335,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 30
          &  divertors, &
 #endif
-         &  tim, dtim, shot, run, database, version )
+         &  tim, dteff, shot, run, database, version )
     end if
 
     !! Create/Write the set data to IDSs

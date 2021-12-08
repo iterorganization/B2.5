@@ -178,6 +178,7 @@
       if (ncall.eq.0) then
         call ipgeti('b2mndt_style', style_b2mndt)
         call ipgetr('b2mndr_dtim', dtim)
+        dteff = dtim
       end if
       call find_file(filename,file_ok)
       if(file_ok) then
@@ -205,19 +206,6 @@
         call xerrab ('No '//trim(filename))
       endif
 
-      ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
-      if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.minval(dtee(1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtee(1:nnreg(0))).and.
-     &    ttf.eq.minval(dtei(1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtei(1:nnreg(0)))) then
-        dteff = dtim*ttf
-        if (ttf.ne.1.0_R8) write(0,*)
-     &   'Effective plasma timestep rescaled to ', dteff,' seconds'
-      end if
-
       call xertst (0.0_R8.le.numerics_time_mod,
      . 'faulty input boundary_time_mod')
       call xertst (0.0_R8.le.numerics_time_switch,
@@ -242,6 +230,19 @@
      & 'faulty parameter dtee')
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
+
+      ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
+      if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.minval(dtei(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtei(1:nnreg(0)))) then
+        dteff = dtim*ttf
+        if (ttf.ne.1.0_R8) write(0,*)
+     &   'Effective plasma timestep rescaled to ', dteff,' seconds'
+      end if
 
 c additional time modification factor
       ttf=core_dt_suppression

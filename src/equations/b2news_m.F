@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news_m(nx, ny, ns, nscx, iscx,
+      subroutine b2news_m (nx, ny, ns, nscx, iscx,
      &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
