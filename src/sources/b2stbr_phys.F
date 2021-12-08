@@ -1089,8 +1089,25 @@ cxpb We first treat the bulk material
                   endif
                   t1=t0 * ytmp
                   if(ncall.ne.0 .or. sputter_namelist_used) then
+#ifdef DBG
+                     if(sputter_yield(ix,iy,is,2).gt.cutlo) then
+                       product = log(sputter_yield(ix,iy,is,2)) -
+     .                           log(1.0_R8+sput_phys_alpha)
+                       if(product.gt.cutll.and.t1.gt.0.0_R8) then
+#endif
                      t1=(sputter_yield(ix,iy,is,2)+sput_phys_alpha*t1)/
      *                 (1.0_R8+sput_phys_alpha)
+#ifdef DBG
+                       else if (product.le.cutll.and.t1.gt.0.0_R8) then
+                         t1 =
+     .                      t1*sput_phys_alpha/(1.0_R8+sput_phys_alpha)
+                       else
+                         t1 = 0.0_R8
+                       end if
+                     else
+                       t1 = t1*sput_phys_alpha/(1.0_R8+sput_phys_alpha)
+                     end if
+#endif
                   endif
                   if(sput_frac_flag.ne.0) then
                      ytmp=ytmp*sput_frac(0)
@@ -1121,6 +1138,12 @@ cxpb  Erosion from the bulk material if physically sputtered
 cxpb  We count here as eroded all the sputtered material, including the promptly redeposited fraction
 cxpb  We add this promptly redeposited fraction in the deposited material
                     if(sput_frac_flag.eq.0) then
+#ifdef DBG
+                      if (t1.gt.cutlo) then
+                       product =
+     .                  log(dteff)+log(plate_time_factor(iwall))+log(t1)
+                       if (product.gt.cutll) then
+#endif
                       erosion(iwall,itrack) = erosion(iwall,itrack) +
      1                 dteff*plate_time_factor(iwall)*t1/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))*
@@ -1130,7 +1153,17 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      1                 dteff*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst)*yself))
+#ifdef DBG
+                       endif
+                      endif
+#endif
                     else
+#ifdef DBG
+                      if (t1.gt.cutlo) then
+                       product =
+     .                  log(dteff)+log(plate_time_factor(iwall))+log(t1)
+                       if (product.gt.cutll) then
+#endif
                       erosion(iwall,itrack) = erosion(iwall,itrack) +
      1                 dteff*plate_time_factor(iwall)*t1/
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))*
@@ -1142,6 +1175,10 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3                 (1.0_R8-f_redep(ixn,iyn,sput_dst)*yself*
      4                  sput_frac(0)))
+#ifdef DBG
+                       endif
+                      endif
+#endif
                     endif
                  endif
                else
