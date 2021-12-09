@@ -3,7 +3,7 @@
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
      &  dtim, vol, hx, hz, bb, pbshz, lnlam,                           !srv 07.07.21
-     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,
+     &  cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,
      &  alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
@@ -86,7 +86,6 @@
      &  pbshz(-1:nx,-1:ny,0:1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),                           !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                         !som 08.10.21
@@ -474,7 +473,7 @@
 !$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
 !$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
-!$OMP& SHARED(zamax, cvsa_cl, wadia, vaecrb, smo, smq, smqdu, resmo)
+!$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, resmo)
 !$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
 !$OMP& SHARED(b2npmo_smav, fmo, solving, get_residuals, ro, solvemo)
 !$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, solvemt)
@@ -622,10 +621,9 @@
      &    (Zhdanov_visu.eq.0 .and. Zhdanov_vish.eq.0)) then            !som 13.08.21
          call b2siav (nx, ny, ns, is, ismain, am(is)*mp,               !srv 19.02.21
      &    ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &    te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,     !srv 01.07.09
-     &    cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
-     &    cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo,
-     &    wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     &    te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,         !srv 01.07.09
+     &    cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is),
+     &    smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)                      !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
          smbvi=0.0_R8                                                  !som 13.08.21
        elseif (Zhdanov_visu.eq.1.and.Zhdanov_vish.eq.1) then
          if(.not. is_neutral(is)) then
@@ -646,10 +644,9 @@
          if(.not. is_neutral(is)) then
            call b2siav (nx, ny, ns, is, ismain, am(is)*mp,             !srv 19.02.21
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &      te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,   !srv 01.07.09
-     &      cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
-     &      cvsahz_cl(-1,-1,0,is), smbvh, smbvtemp, kt_neo,
-     &      wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     &      te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,       !srv 01.07.09
+     &      cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is),
+     &      smbvh, smbvtemp, kt_neo, wrk0, wrk1, wrk2)                 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
            call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
@@ -667,10 +664,9 @@
          if(.not. is_neutral(is)) then
            call b2siav (nx, ny, ns, is, ismain, am(is)*mp,             !srv 19.02.21
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &      te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,   !srv 01.07.09
-     &      cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is),
-     &      cvsahz_cl(-1,-1,0,is), smbvtemp, smbvv, kt_neo,
-     &      wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     &      te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,       !srv 01.07.09
+     &      cvsahz(-1,-1,0,is), cvsahz_cl(-1,-1,0,is),
+     &      smbvtemp, smbvv, kt_neo, wrk0, wrk1, wrk2)                 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
            call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),

@@ -74,6 +74,7 @@
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
+      integer, save :: style_int_vel = 0                              !srv 01.04.19
       integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
@@ -81,7 +82,6 @@
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) :: ft                                            !som 16.08.21
-      integer, save :: style_int_vel = 0                              !srv 01.04.19
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -173,17 +173,17 @@
      &                      istyle_Joule_heating)                      !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                      !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
-        impr_form_tf = 0                                               !som 13.11.20
-        impr_form_fr = 0
-        mass_multiplicator = 1.0_R8
-        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
-        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
-        call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
-        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
-        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 18.08.21
-        call ipgeti ('b2sihs_style_int_vel', style_int_vel)            !srv 01.04.19
+       call ipgeti ('b2sihs_style_int_vel', style_int_vel)             !srv 01.04.19
+       impr_form_tf = 0                                                !som 13.11.20
+       impr_form_fr = 0
+       mass_multiplicator = 1.0_R8
+       call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
+       call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
+       call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
+       call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

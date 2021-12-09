@@ -548,9 +548,8 @@ cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,  !srv 13.01.17 24.05.21
      &    vol, hx, hz, bb, pbshz, lnlam,                                 !srv 01.07.09
-     &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,         !srv 02.07.08 som 18.08.21
-     &    alpha1,
-     *    chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,             !som 08.10.21
+     &    cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,                  !srv 02.07.08 som 18.08.21
+     &    alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      &    smo, smq, cthe, cthi, chci, smof,
      &    resmo, resmt, corua, corut, pcca, pccm, ier0)
         call xertst (ier0.eq.0, 'error return from b2npmo')
@@ -1211,7 +1210,7 @@ c     with diamagnetic drift part                                        !xpb
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
-     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, vol, gs, bb,           !srv 07.07.21
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
      &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1232,7 +1231,7 @@ c     with diamagnetic drift part                                        !xpb
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
-     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, vol, gs, bb,           !srv 07.06.00 02.06.99 07.07.21
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                   !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
      &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17

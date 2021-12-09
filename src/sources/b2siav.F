@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2siav (nx, ny, ns, isb, ismain, mb,                 !srv 19.02.21
-     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,       !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
+     & ub, wbdia, vbecrb, te, ti, nb, ni, ne2, lnlam, chci,           !srv 01.07.09
+     & cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_geo
@@ -25,9 +25,8 @@
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1),
      & vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),             !srv 04.10.99 09.01.01
+     & ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     & chci(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),                !srv 04.10.99 09.01.01
      & cvsbhz_cl(-1:nx,-1:ny,0:1)                                     !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

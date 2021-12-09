@@ -3,7 +3,7 @@
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
-     1  rxf, dtim, BoRiS, fac_ExB, hx, hy, qc, vol, gs, bb,              !srv 07.07.21
+     &  rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                      !srv 07.07.21
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,
@@ -29,9 +29,7 @@
       integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
       real (kind=R8) ::
      *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),        !srv 07.07.21
-     *  gs(-1:nx,-1:ny,0:2),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  qc(-1:nx,-1:ny),
      *  lnlam(-1:nx,-1:ny)                                               !srv 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
