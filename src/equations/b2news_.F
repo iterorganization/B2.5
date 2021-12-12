@@ -1075,7 +1075,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.ne.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
         call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,       !srv 05.07.17 22.05.18
      &   solveee, solveei, solveet, solvepo, solvemo,                    !srv 22.05.18
-     &   rxf3, dtim, BoRiS, fac_ExB, hx, hy, qc, vol, gs, bb,            !srv 07.06.00 02.06.99
+     &   rxf3, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                    !srv 07.06.00 02.06.99
      &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &   fne, fch, fchstoch, cvsa,                                       !srv 24.08.21
      &   cvsa_cl, cvsa_drho,                                             !som 16.08.21

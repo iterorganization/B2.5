@@ -1,6 +1,7 @@
 
       subroutine profile_average (laststep,itim,ntim_batch,nx,ny,ns)
       use b2mod_types
+      use b2mod_rates
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
@@ -34,14 +35,18 @@
      .                             e_shi(:,:),
      .                             e_sch(:,:)
 
-      integer :: io, iun, n2, itp, idum(0:2)
+      integer :: io, is, iun, n2, itp, idum(0:2)
 !      integer :: ix, iy, is
 !      real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
       character lble*120, lbli*120
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
+     *   zpdum(0:nsdecl-1,4), zero(-1:nx,-1:ny),
+     *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
+     *   swrk4(-1:nx,-1:ny,0:3), swrk4s(-1:nx,-1:ny,0:3,0:ns-1),
+     *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
+      external b2xpne, b2xpni
 
       n2 = (nx+2)*(ny+2)
 
@@ -125,12 +130,47 @@
                call cfrure (iun, n2,    po_mean, 'po_mean')
                call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
 
-               call cfrure (iun, n2*ns, sna_mean, 'sna_mean')
-               call cfrure (iun, n2,    sne_mean, 'sne_mean')
-               call cfrure (iun, n2,    she_mean, 'she_mean')
-               call cfrure (iun, n2,    shi_mean, 'shi_mean')
-               call cfrure (iun, n2,    sch_mean, 'sch_mean')
-               call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+               if (b2faveri_version.ge.'03.000.008') then
+                 call cfrure (iun, n2*ns, sna_mean, 'sna_mean')
+                 call cfrure (iun, n2,    sne_mean, 'sne_mean')
+                 call cfrure (iun, n2,    she_mean, 'she_mean')
+                 call cfrure (iun, n2,    shi_mean, 'shi_mean')
+                 call cfrure (iun, n2,    sch_mean, 'sch_mean')
+                 call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+               else
+                 zero = 0.0_R8
+                 call b2xpne ( nx, ny, ns, rza, na_mean, zero, ne_mean)
+                 call b2xpni ( nx, ny, ns, na_mean, ni_mean)
+                 call cfrure (iun, n2*2*ns, swrk2s, 'sna_mean')
+                 sna_mean(:,:,:) = swrk2s(:,:,0,:) +
+     .            swrk2s(:,:,1,:) * na_mean(:,:,:)
+                 call cfrure (iun, n2*2,    swrk2 , 'sne_mean')
+                 sne_mean(:,:) = swrk2(:,:,0) +
+     .            swrk2(:,:,1) * ne_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'she_mean')
+                 she_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * ne_mean(:,:) +
+     .            swrk4(:,:,2) * te_mean(:,:) +
+     .            swrk4(:,:,3) * ne_mean(:,:) * te_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'shi_mean')
+                 shi_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * ni_mean(:,:,0) +
+     .            swrk4(:,:,2) * ti_mean(:,:) +
+     .            swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'sch_mean')
+                 sch_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * po_mean(:,:) +
+     .            swrk4(:,:,2) * ne_mean(:,:) +
+     .            swrk4(:,:,3) * ne_mean(:,:) * po_mean(:,:)
+                 call cfrure (iun, n2*4*ns, swrk4s, 'smo_mean')
+                 do is = 0, ns-1
+                   smo_mean(:,:,is) = swrk4s(:,:,0,is) +
+     .              swrk4s(:,:,1,is) * ua_mean(:,:,is) +
+     .              swrk4s(:,:,2,is) * na_mean(:,:,is) * mp * am(is) +
+     .              swrk4s(:,:,1,is) * ua_mean(:,:,is) *
+     .                                 na_mean(:,:,is) * mp * am(is)
+                 end do
+               end if
 
                close (iun)
             end if

@@ -1401,7 +1401,6 @@ contains
         integer :: isize
         integer :: jsep, nxtl, nxtr, ix1, ix2, ix3, ix4
         character*128 RegionDescription
-        external get_jsep, get_nxt, xertst
 
         !! Procedures
         external get_jsep, get_nxt, xertst
@@ -2725,7 +2724,6 @@ contains
         integer :: ix   !< x-aligned cell index
         integer :: iy   !< y-aligned cell index
         integer :: iObj !< Object index
-        external xertst
 
         !! Procedures
         external xertst
