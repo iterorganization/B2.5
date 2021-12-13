@@ -26,7 +26,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny), zt(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1), 
+     &  fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
      &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
@@ -398,6 +399,14 @@
       call cfrure_opt (nget, n2, zt, 'zt')
 *   ..read fluxes
       if(b2fstat_version.ge.'03.001.000') then
+        call cfrure (nget, n2*4*ns, fna,    'fna')
+        call cfrure (nget, n2*4,    fhe,    'fhe')
+        call cfrure (nget, n2*4,    fhi,    'fhi')
+        call cfrure (nget, n2*4,    fhn,    'fhn')
+        call cfrure (nget, n2*4,    fch,    'fch')
+        call cfrure (nget, n2*4,    fch_32, 'fch_32')
+        call cfrure (nget, n2*4,    fch_52, 'fch_52')
+      elseif(b2fstat_version.ge.'03.001.000') then
         call cfrure (nget, n2*4*ns, fna,    'fna')
         call cfrure (nget, n2*4,    fhe,    'fhe')
         call cfrure (nget, n2*4,    fhi,    'fhi')
