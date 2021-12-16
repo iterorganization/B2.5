@@ -11,7 +11,8 @@
       logical, save :: flag_optim = .false.
       integer nnvar, nncon, nnjac
       double precision :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
-     &  gu(nvmx), jcol(nvmx*nvmx), jrow(nvmx*nvmx), jj(nvmx*nvmx)
+     &  gu(nvmx), jcol(nvmx*nvmx), jrow(nvmx*nvmx), jj(nvmx*nvmx),
+     &  par_rescale(nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
       character*256, save :: filename, limited_memory_update_type,
      &  hessian_approximation 
@@ -27,7 +28,7 @@
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
      & limited_memory_update_type, partype, sigma_opt, spatial_dep,
-     & spatial_points
+     & spatial_points, par_rescale
 
       contains
 
@@ -45,6 +46,7 @@
       xu = inf_opt*10.0
       gl = -inf_opt*10.0
       gu = inf_opt*10.0
+      par_rescale = 1.0
       NELE_JAC = 0
       nnjac = 0
       jcol = 0
@@ -80,6 +82,8 @@
       call xertst(nnvar.ge.0,'b2mod_par_opt: nnvar<0')
       call xertst(nncon.ge.0,'b2mod_par_opt: nncon<0')
       call xertst(nnjac.ge.0,'b2mod_par_opt: nnjac<0')
+      call xertst(all(par_rescale.gt.0.D0),
+     & 'b2mod_par_opt: par_rescale<=0')
 !     partype refers to the type of design variable:
 !     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
 !     1  - Dna, density driven particle diffusion coefficient

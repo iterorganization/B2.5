@@ -421,7 +421,7 @@
       endif
 !     FIXME remove from here for adjoint
       do ipar = 1, npar
-        grad(ipar) = DBLE(jd(1))
+        grad(ipar) = DBLE(jd(1))/par_rescale(ipar) ! rescale par to get order unity
       end do
 !     FIXME remove until here for adjoint
 !     FIXME remove from here for tangent
@@ -431,7 +431,8 @@
 !         spatially dependent coefficient
           do i = 1, spatial_points(ipar)
             grad(idir) = DBLE(tdatab(2,i,partype(ipar),1))
-            grad(idir) = grad(idir) + DBLE(par_opt_physb(idir)) !FIXME remove for tangent
+            grad(idir) = grad(idir) + DBLE(par_opt_physb(idir))
+            grad(idir) = grad(idir)/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           end do
         else
@@ -469,7 +470,8 @@
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
           end select
-          grad(idir) = grad(idir) + DBLE(par_opt_physb(idir)) !FIXME remove for tangent
+          grad(idir) = grad(idir) + DBLE(par_opt_physb(idir))
+          grad(idir) = grad(idir)/par_rescale(idir) ! rescale par to get order unity
           idir = idir + 1
         endif
       end do
@@ -477,7 +479,7 @@
         do ipar = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ipar)) then
-            grad(idir) = DBLE(sigmab(ipar))
+            grad(idir) = DBLE(sigmab(ipar))/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           endif
         end do
