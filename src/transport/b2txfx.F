@@ -18,8 +18,7 @@
       real (kind=R8) ::
      *   harm, smin, smax
       external subini, subend, xertst, smin, smax
-      external b2xvsg, b2xxgs
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
+      external b2xvsg, b2xxgs, harm
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txfx')

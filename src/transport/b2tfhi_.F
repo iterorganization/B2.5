@@ -76,10 +76,11 @@ c      integer, save :: b2kin=0, b2vis=0
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03 
+      real (kind=R8) :: upwind, hybr
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
-      external b2xvsg, b2xvff
+      external b2xvsg, b2xvff, upwind, hybr
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -284,7 +285,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         floi0 = dv%floi
         coni0 = dv%coni(:,:,0)
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
-     &    dv%floi,dv%coni)
+     &    dv%floi,dv%coni(1:nFc,0:1,0))
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
         dv%floi = dv%floi + floi0
@@ -299,7 +300,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
      &    co%chci,dv%fhi,dumm0,dumm1)
 *   ..compute floi, coni
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
+     &    dv%floi,dv%coni(1:nFc,0:1,0))
       else
         if(switch%mdf_fhi.eq.1) then
           call xerrab('non-default energy eqs not yet for mdf')
@@ -313,10 +314,10 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
 *   ..compute floi, coni
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
+     &    dv%floi,dv%coni(1:nFc,0:1,0))
 *   ..compute flon, conn
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
-     &    dv%flon,dv%conn)
+     &    dv%flon,dv%conn(1:nFc,0:1,0))
 
       endif
 
@@ -348,7 +349,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &           (dv%fhi_ExB + dv%fhe_ExB)
 *     ..compute flokt, conkt
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
-     &    dv%flokt,dv%conkt)
+     &    dv%flokt,dv%conkt(1:nFc,0:1,0))
       endif
 
 #ifdef WG_TODO

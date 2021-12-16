@@ -33,7 +33,8 @@
       type(B2Coeff), intent (inout) :: co
       type(B2Derivatives), intent (inout) :: dv
 *   ..local variables
-      real (kind=R8) :: upfac, hybfac !djm Jan2017
+      real (kind=R8) :: upfac, hybfac, harm !djm Jan2017
+      external harm
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -81,9 +82,10 @@ c      integer, save :: lim_flux = 0                                      !srv 0
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
+      real(kind=r8) :: upwind, hybr
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external subini, subend, xertst, upwind, hybr
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
 
@@ -212,7 +214,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       cone0 = dv%cone(:,:,0)
       call calccoef(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,floe0_mdf,co%chce,
-     &  dv%floe,dv%cone)
+     &  dv%floe,dv%cone(1:nFc,0:1,0))
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0

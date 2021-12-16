@@ -63,32 +63,8 @@ ifdef DIFF_D
 EXT_DIFF = .diff_d
 DIFF = yes
 endif
-ifdef DIFF_D1
-EXT_DIFF = .diff_d1
-DIFF = yes
-endif
-ifdef DIFF_D2
-EXT_DIFF = .diff_d2
-DIFF = yes
-endif
-ifdef DIFF_D3
-EXT_DIFF = .diff_d3
-DIFF = yes
-endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
-DIFF = yes
-endif
-ifdef DIFF_B1
-EXT_DIFF = .diff_b1
-DIFF = yes
-endif
-ifdef DIFF_B2
-EXT_DIFF = .diff_b2
-DIFF = yes
-endif
-ifdef DIFF_B3
-EXT_DIFF = .diff_b3
 DIFF = yes
 endif
 # Directory where objectcode/binaries will be created
@@ -320,19 +296,13 @@ CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B DIFF_B1 DIFF_B2 DIFF_B3 DIFF_D1 DIFF_D2 DIFF_D3 clean depend listobj tags echo local force
+.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B clean depend listobj tags echo local force
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${OEEXE} ${OTEXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D1: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D2: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D3: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B1: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B2: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B3: VERSION ${MNBEXE} ${OPTEXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
