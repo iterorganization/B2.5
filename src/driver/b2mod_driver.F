@@ -2148,6 +2148,7 @@ csw 09oct2012 set default potential already at this point (BCs)
             stack_ntim(stack_ptr)=ntim-itim     ! dpc 2000.06.24 was ntim+10
             stack_dtim(stack_ptr)=dtim
             dtim=dtim/10.0_R8
+            dteff=dteff/10.0_R8
             ntim=itim+10
             itim_plas=itim_plas-10
             na=na0
@@ -2167,7 +2168,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..produce data for movie
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
-          call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+          call b2mwmv (nout(3), nx, ny, ns, itim, tim, dteff)
         endif
 *    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
@@ -2220,14 +2221,16 @@ csw 09oct2012 set default potential already at this point (BCs)
           if(max_delta.gt.delta_max) then
             write(*,*) 'b2mndr_delta: max_delta > delta_max'
             dtim=max(dt_min,dtim*dt_change_dec)
-            write(*,*) 'b2mndr_dtim: dtim ',dtim
+            dteff=max(dt_min,dteff*dt_change_dec)
+            write(*,*) 'b2mndr_dtim: dtim ',dtim, dteff
           elseif(max_delta.lt.delta_min) then
             write(*,*) 'b2mndr_delta: max_delta < delta_min'
             dtim=min(dt_max,dtim*dt_change_inc)
-            write(*,*) 'b2mndr_dtim: dtim ',dtim
+            dteff=min(dt_max,dteff*dt_change_inc)
+            write(*,*) 'b2mndr_dtim: dtim ',dtim, dteff
           else
             write(*,*) 'b2mndr_delta: max_delta OK'
-            write(*,*) 'b2mndr_dtim: dtim ',dtim
+            write(*,*) 'b2mndr_dtim: dtim ',dtim, dteff
           endif
         endif
         do while(itim.eq.ntim.and.stack_ptr.gt.0)
@@ -2235,6 +2238,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_01:itim,dtim,ntim,stack_ptr',
      1                itim,dteff,ntim,stack_ptr
           ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
+          dteff=dteff*stack_dtim(stack_ptr)/dtim
           dtim=stack_dtim(stack_ptr)
           stack_ptr=stack_ptr-1
           write(*,'(a,i8,1p,g14.7,i8,i3)')
@@ -2639,7 +2643,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &              divertors,
 #endif
-     &              tim, dtim, shot, run, database, version,
+     &              tim, dteff, shot, run, database, version,
      &              time_slice_index, num_time_slices )
                   write_ids = .false.
                 else
@@ -2670,7 +2674,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &        divertors,
 #endif
-     &        tim, dtim, shot, run, database, version )
+     &        tim, dteff, shot, run, database, version )
             old_start_time = run_start_time
             write_ids = .false.
           else if (write_ids) then
@@ -2689,7 +2693,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &        divertors,
 #endif
-     &        tim, dtim, shot, run, database, version,
+     &        tim, dteff, shot, run, database, version,
      &        time_slice_index, num_time_slices )
             write_ids = .false.
           end if
@@ -2835,7 +2839,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end if
 *   ..produce data for last frame in movie if not yet done
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
-        call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+        call b2mwmv (nout(3), nx, ny, ns, itim, tim, dteff)
       endif
 *   ..produce last time-dependent file if not yet done
 #ifdef JET
@@ -2922,7 +2926,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      tim, dtim, shot, run, database, version,
+     &      tim, dteff, shot, run, database, version,
      &      time_slice_index, num_time_slices )
         else if (continued) then
           write(*,*) "Checking if IMAS data-entry already exists : ",
@@ -3065,7 +3069,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &            divertors,
 #endif
-     &            tim, dtim, shot, run, database, version,
+     &            tim, dteff, shot, run, database, version,
      &            time_slice_index, num_time_slices )
               else
                 write(*,'(a)')
@@ -3095,7 +3099,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      tim, dtim, shot, run, database, version )
+     &      tim, dteff, shot, run, database, version )
         end if
         if (ids_replace) then
           call new_ids_edge( edge_profiles, edge_sources,

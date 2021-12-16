@@ -1053,9 +1053,11 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
+      character*16 username
       logical open_file, uop, first_read, ex
       character uline*(line_length)
-      external xertst, open_file
+      character*16 usrnam
+      external xertst, open_file, usrnam
       intrinsic index, sqrt
       real (kind=R8) :: t0
 
@@ -1098,9 +1100,11 @@ c
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
+      username = usrnam()
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+     .   //'|modules/Carre/meshes/'//trim(device)//'/'//trim(username)
         call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
@@ -1157,6 +1161,7 @@ c
       elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
+     .   //'|modules/DivGeo/device/'//trim(device)//'/'//trim(username)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
      1     "Reading the geometry file assuming the Sonnet format"

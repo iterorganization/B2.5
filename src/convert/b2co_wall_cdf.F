@@ -7,7 +7,6 @@
 #     include <netcdf.inc>
 #endif
       real (kind=R8) :: tim
-      real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
@@ -36,8 +35,6 @@
 
       call subini ('b2co_wall_cdf')
       write(*,*) 'b2co_wall_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2wall.nc file
