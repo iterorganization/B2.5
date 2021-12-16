@@ -1892,6 +1892,9 @@ c b2stel
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
        endif
 
+c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
+       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+
       return
       end subroutine check_consistency_switches
 

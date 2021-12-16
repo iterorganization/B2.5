@@ -1598,7 +1598,7 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
           call CalcMinMfp(iRc1,isn,istra,
      &        pl,dv,rt,min_mfp,mfp)
           mfp_out(iRc1) = mfp
-          if (switch%use_auto_spatial_hyb.and.
+          if (switch%use_auto_spatial_hyb.ne.0 .and.
      &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
             if (mfp.le.switch%auto_spatial_hyb_mfp_1) then !! fluid treatment
               fluid_frac_hyb(iFc) = 1.0_R8
