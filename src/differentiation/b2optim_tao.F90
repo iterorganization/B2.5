@@ -294,7 +294,7 @@
       F = j(1)
 !     FIXME remove from here for adjoint
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)
+        g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
       end do
 !     FIXME remove until here for adjoint
 !     FIXME remove from here for tangent
@@ -304,7 +304,8 @@
 !         spatially dependent coefficient
           do i = 1, spatial_points(ipar)
             g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
-            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
+            g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           end do
         else
@@ -342,7 +343,8 @@
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
           end select
-          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
+          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
           idir = idir + 1
         endif
       end do
@@ -350,7 +352,7 @@
         do ipar = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ipar)) then
-            g_v(g_i+idir-1) = sigmab(ipar)
+            g_v(g_i+idir-1) = sigmab(ipar)/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           endif
         end do
@@ -436,7 +438,7 @@
       F = j(1)
 !     FIXME remove from here for adjoint
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)
+        g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
       end do
 !     FIXME remove until here for adjoint
 !     FIXME remove from here for tangent
@@ -446,7 +448,8 @@
 !         spatially dependent coefficient
           do i = 1, spatial_points(ipar)
             g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
-            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
+          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           end do
         else
@@ -484,7 +487,8 @@
             write(*,*) partype(ipar)
             call xerrab ('partype out of bounds')
           end select
-          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir) !FIXME remove for tangent
+          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
+          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
           idir = idir + 1
         endif
       end do
@@ -492,7 +496,7 @@
         do ipar = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ipar)) then
-            g_v(g_i+idir-1) = sigmab(ipar)
+            g_v(g_i+idir-1) = sigmab(ipar)/par_rescale(idir) ! rescale par to get order unity
             idir = idir + 1
           endif
         end do

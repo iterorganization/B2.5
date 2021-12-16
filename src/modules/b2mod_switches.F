@@ -272,6 +272,7 @@ c namelist switches
       integer :: b2stbr_neutrals_namelist
       integer :: b2tqna_transport_namelist
       integer :: b2srdt_numerics_namelist
+      integer :: b2optim_namelist
 
 
 c diagnostics switches
@@ -730,6 +731,7 @@ c b2trno
       s % b2stbr_neutrals_namelist = 0
       s % b2tqna_transport_namelist = 0
       s % b2srdt_numerics_namelist = 0
+      s % b2optim_namelist = 0
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
@@ -1200,6 +1202,7 @@ c namelist switches
      &                                      s%b2tqna_transport_namelist)
       call ipgeti ('b2srdt_numerics_namelist',
      &  s%b2srdt_numerics_namelist)
+      call ipgeti ('b2optim_namelist', s%b2optim_namelist)
 
 c diagnostic switches
       call ipgeti ('b2stbc_diagno',s % b2stbc_diagno)                              !xpb

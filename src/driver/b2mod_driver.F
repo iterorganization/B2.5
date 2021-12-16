@@ -1748,6 +1748,9 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
+      if (any(cftype.eq.6)) call xertst(
+     & flag_optim.or.(switch%b2optim_namelist.eq.1),
+     & 'cftype=6 requires b2.optimization.namelist')
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -1755,7 +1758,7 @@ c   --> better way doing this is necessary)
       call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
-      if (.not.flag_optim) then
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
         call read_b2mod_par_opt(ncon,nele_jac)
         allocate(par_opt_phys(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
