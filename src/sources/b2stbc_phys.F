@@ -129,7 +129,7 @@
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod, erf
       real (kind=R8) ::
-     *  machsfr, expu2, sy, bcint, syhz, sheath_g                        !srv 24.08.08
+     *  machsfr, expu2, sy, bcint, syhz                        !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps, expu2
@@ -153,13 +153,10 @@
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-!      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-!      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
+      external upwind, harm
       pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-!      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
-      sheath_g(t0) = 1.0_R8 + sqrt(pi)*t0*(1+erf(t0))*exp(t0**2)
+!      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+!     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.computation
 
@@ -9840,5 +9837,18 @@ cwdk    Todo: corrections for BCCON.ne.14
 
 *-----------------------------------------------------------------------
 *.end b2stbc_phys
+
+      contains
+
+      function sheath_g (t0)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: sheath_g, t0
+      intrinsic sqrt, erf, exp
+            
+      sheath_g = 1.0_R8 + sqrt(pi)*t0*(1+erf(t0))*exp(t0**2)
+   
+      return
+      end function
 
       end subroutine b2stbc_phys

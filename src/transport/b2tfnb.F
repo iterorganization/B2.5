@@ -50,7 +50,8 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, ib, meth                         !srv 13.10.06
+      integer iCv, iFc, ib                         !srv 13.10.06
+      integer :: meth
       integer, save :: style_int_vel = 0
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) ::
@@ -103,7 +104,6 @@ c      integer, save :: vlct_diagno = 1
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
       if (ncall_b2tfnb.eq.0) then
-        if (switch%b2tfnb_no_hybr .eq.1) meth = 0
         call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
       endif
 *   ..extensive tests on first few calls
@@ -541,9 +541,9 @@ c csc To be added contribution of ubdia
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..apply discretization scheme for density-part of fna_nodrift
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_nodrift,
-     &  co%cdna(:,:,isb),dv%fna_nodrift(:,:,isb),dv%fna_32nd(:,0,isb),
-     &  dv%fna_52nd(:,0,isb))
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),
+     &  flo_nodrift,co%cdna(:,:,isb),dv%fna_nodrift(:,:,isb),
+     &  dv%fna_32nd(:,0,isb),dv%fna_52nd(:,0,isb))
 
 *   ..compute _nodrift fluxes
       dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) - 

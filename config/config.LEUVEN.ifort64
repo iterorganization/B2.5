@@ -30,8 +30,7 @@ FC       = ifort
 endif
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all #-warn interfaces
-#FCOPTS   = -g1 -O3 -fno-inline -no-ip -no-ipo -fno-omit-frame-pointer -fno-optimize-sibling-calls
+FCOPTS   = -g -C -debug all -traceback -check all -warn interfaces
 else
 FCOPTS   = -O2 -vec_report0 -fp-model precise #-warn interfaces
 endif

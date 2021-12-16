@@ -47,9 +47,8 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, isb, ib, meth
-
-      integer, save :: no_hybr = 0
+      integer iCv, iFc, is, isb, ib
+      integer :: meth
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) ::
      *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
@@ -82,9 +81,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 0
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
-      if (ncall_b2tfrn.eq.0) then
-        call ipgeti ('b2tfnb_no_hybr', no_hybr)
-          if (no_hybr .eq.1) meth = 0
+c      if (ncall_b2tfrn.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
@@ -92,7 +89,7 @@ c        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 0
 c        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
 c        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 06.07.06
 c        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
-      endif
+c      endif
 *   ..extensive tests on first few calls
       if (ncall_b2tfrn.lt.3) then
 *    ..test sign of ne
