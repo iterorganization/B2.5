@@ -1479,6 +1479,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2npmo_smbvi_factor</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					The switch defines the fraction of the cross-ion part of the stress-visocity term, which is applied. The cross-ion part of the stress-visocity term can lead to numerical problems. In this case it is recommended to start from {\tt '0.0'} and increase it step by step.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
 			    <name>b2npmo_impr_form_fr</name>
 				<default>0</default>
 				<type>integer</type>
