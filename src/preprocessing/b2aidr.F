@@ -72,8 +72,8 @@
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
-     &  fhi1(:,:,:,:), fch1(:,:,:,:), fch_321(:,:,:,:),fch_521(:,:,:,:),
-     &  fch_p1(:,:,:,:), kinrgy1(:,:,:),
+     &  fhi1(:,:,:,:), fhn1(:,:,:,:), fch1(:,:,:,:), fch_321(:,:,:,:),
+     &  fch_521(:,:,:,:), fch_p1(:,:,:,:), kinrgy1(:,:,:),
      &  fna_mdf1(:,:,:,:,:), fhe_mdf1(:,:,:,:), fhi_mdf1(:,:,:,:),
      &  fna_fcor1(:,:,:,:,:),fna_nodrift1(:,:,:,:,:),fna_he1(:,:,:,:,:),
      &  fnaPSch1(:,:,:,:,:), fhePSch1(:,:,:,:), fhiPSch1(:,:,:,:),
@@ -88,7 +88,7 @@
      &  vaecrb1(:,:,:,:,:), vadia1(:,:,:,:,:), wadia1(:,:,:,:,:),
      &  veecrb1(:,:,:,:), vedia1(:,:,:,:),
      &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:), tn1(:,:), kt1(:,:),
-     &  zt1(:,:), fhn1(:,:,:,:)
+     &  zt1(:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
@@ -568,7 +568,8 @@
      &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
      &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),fhe1(-1:nx,-1:ny,0:1,0:1),
-     &  fhi1(-1:nx,-1:ny,0:1,0:1), fch1(-1:nx,-1:ny,0:1,0:1),
+     &  fhi1(-1:nx,-1:ny,0:1,0:1), fhn1(-1:nx,-1:ny,0:1,0:1), 
+     &  fch1(-1:nx,-1:ny,0:1,0:1),
      1  fch_321(-1:nx,-1:ny,0:1,0:1), fch_521(-1:nx,-1:ny,0:1,0:1),
      2  fch_p1(-1:nx,-1:ny,0:1,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
      &  fna_mdf1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
@@ -593,12 +594,11 @@
      &  wadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  veecrb1(-1:nx,-1:ny,0:1,0:1), vedia1(-1:nx,-1:ny,0:1,0:1),
      &  floe_noc1(-1:nx,-1:ny,0:1,0:1), floi_noc1(-1:nx,-1:ny,0:1,0:1) ,
-     &  tn1(-1:nx,-1:ny), kt1(-1:nx,-1:ny), zt1(-1:nx,-1:ny),
-     &  fhn1(-1:nx,-1:ny,0:1,0:1))
+     &  tn1(-1:nx,-1:ny), kt1(-1:nx,-1:ny), zt1(-1:nx,-1:ny))
 *   ..read initial state from the file
        call b2rups (ninp(3), idum(0), idum(1), idum(2),
      &  ne1, na1, ua1, uadia1, te1, ti1, tn1, po1, kt1, zt1,
-     &  fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
+     &  fna1, fhe1, fhi1, fhn1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
      &  fnaPSch1, fhePSch1, fhiPSch1,
      &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
@@ -635,10 +635,13 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne_st (nx, ny, ns, rza, na, zero, ne)                     !srv 20.12.18
-*   ..initialise te, ti, po
+*   ..initialise te, ti, tn, po, kt, zt
        te = te1
        ti = ti1
+       tn = tn1
        po = po1
+       kt = kt1
+       zt = zt1
 *   ..initialise fluxes
        do is = 0, min(ns,idum(2))-1
          fna(:,:,:,:,is)         = fna1(:,:,:,:,is)
@@ -672,6 +675,7 @@
        fhePSch   = fhePSch1
        fhe_eir   = fhe_eir1
        fhi       = fhi1
+       fhn       = fhn1
        fhi_mdf   = fhi_mdf1
        fhiPSch   = fhiPSch1
        fhi_eir   = fhi_eir1
@@ -688,8 +692,8 @@
        floe_noc  = floe_noc1
        floi_noc  = floi_noc1
        deallocate( zcdum, na1, ua1, ne1, uadia1, te1, ti1, po1,
-     &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
-     &    fna_mdf1, fhe_mdf1, fhi_mdf1,
+     &    fna1, fhe1, fhi1, fhn1, fch1, fch_321, fch_521, fch_p1,
+     &    kinrgy1, fna_mdf1, fhe_mdf1, fhi_mdf1,
      &    fna_fcor1, fna_nodrift1, fna_he1,
      &    fnaPSch1, fhePSch1, fhiPSch1,
      &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
@@ -712,10 +716,13 @@
        call b2xpne_st (nx, ny, ns, rza, na, zero, ne)             !srv 20.12.18
        call sfill (n2*4, 0.0_R8, veecrb, 1)                        !srv 20.12.18
        call sfill (n2*4, 0.0_R8, vedia, 1)                         !srv 20.12.18
-*   ..initialise te, ti, po
+*   ..initialise te, ti, tn, po, kt, zt
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)
+       call sfill (n2, ttini*ev, tn, 1)
        call sfill (n2, 3.1_R8*ttini, po, 1)
+       call sfill (n2, 0.0_R8, kt, 1)
+       call sfill (n2, 0.0_R8, zt, 1)
 *   ..initialise fluxes
        call sfill (n2*4*ns, 0.0_R8, fna, 1)
        call sfill (n2*4*ns, 0.0_R8, fna_mdf, 1)
@@ -735,6 +742,7 @@
        call sfill (n2*4, 0.0_R8, fhiPSch, 1)
        call sfill (n2*4, 0.0_R8, fhe, 1)
        call sfill (n2*4, 0.0_R8, fhi, 1)
+       call sfill (n2*4, 0.0_R8, fhn, 1)
        call sfill (n2*4, 0.0_R8, fch, 1)
        call sfill (n2*4, 0.0_R8, fne_32, 1)
        call sfill (n2*4, 0.0_R8, fne_52, 1)
@@ -770,6 +778,7 @@
       enddo
       write (nout(0),'(7x,a3,2x,1pe11.2)') 'te:', ttini
       write (nout(0),'(7x,a3,2x,1pe11.2)') 'ti:', ttini
+      write (nout(0),'(7x,a3,2x,1pe11.2)') 'tn:', ttini
       write (nout(0),'(7x,a3,2x,1pe11.2)') 'po:', 3.1_R8*ttini
 *   ..test plasma state
       call b2xvps_st (nx, ny, ns,                                             !srv 20.12.18
