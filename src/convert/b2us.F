@@ -234,8 +234,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call cfruch (ninp(3), 120, lblps, 'label')
       call b2ruzd (ninp(3), b2fstati_version, ns0, 
      & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
-     &  tn, po, kt, zt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p,
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,   !xpb
+     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
      &  kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
