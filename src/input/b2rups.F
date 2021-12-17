@@ -3,7 +3,7 @@
 
       subroutine b2rups (nget, nx, ny, ns,
      &  ne, na, ua, uadia, te, ti, tn, po, kt, zt,
-     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -398,18 +398,12 @@
       zt = 0.0_R8
       call cfrure_opt (nget, n2, zt, 'zt')
 *   ..read fluxes
+      fhn = 0.0_R8
       if(b2fstat_version.ge.'03.001.000') then
         call cfrure (nget, n2*4*ns, fna,    'fna')
         call cfrure (nget, n2*4,    fhe,    'fhe')
         call cfrure (nget, n2*4,    fhi,    'fhi')
-        call cfrure (nget, n2*4,    fhn,    'fhn')
-        call cfrure (nget, n2*4,    fch,    'fch')
-        call cfrure (nget, n2*4,    fch_32, 'fch_32')
-        call cfrure (nget, n2*4,    fch_52, 'fch_52')
-      elseif(b2fstat_version.ge.'03.001.000') then
-        call cfrure (nget, n2*4*ns, fna,    'fna')
-        call cfrure (nget, n2*4,    fhe,    'fhe')
-        call cfrure (nget, n2*4,    fhi,    'fhi')
+        call cfrure_opt (nget, n2*4,    fhn,    'fhn')
         call cfrure (nget, n2*4,    fch,    'fch')
         call cfrure (nget, n2*4,    fch_32, 'fch_32')
         call cfrure (nget, n2*4,    fch_52, 'fch_52')
