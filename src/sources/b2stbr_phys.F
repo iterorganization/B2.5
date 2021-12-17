@@ -1595,4 +1595,3 @@ c     (at core, cell faces will be aligned with flux surfaces)
 *.end b2stbr_phys
 
       end subroutine b2stbr_phys
-

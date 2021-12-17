@@ -11425,6 +11425,7 @@ c calculate neoclassical diagnostics
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.
       endif
+      return
       end subroutine initialize_neoclassical
 
       end subroutine b2plot
@@ -11442,5 +11443,5 @@ c calculate neoclassical diagnostics
      .    'tdata(1,',i,',',kind,',',is,')=',s_ref(i),',',
      1   ' tdata(2,',i,',',kind,',',is,')=',q(i),','
       enddo
+      return
       end subroutine write_crazy
-

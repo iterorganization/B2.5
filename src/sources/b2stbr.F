@@ -1550,4 +1550,3 @@ c        write(*,*) 'Called neutr_scl'
 *.end b2stbr_init
 
       end subroutine b2stbr_init
-
