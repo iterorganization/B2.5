@@ -63,8 +63,8 @@
         za(is) = (zamin(is) + zamax(is))/2.0_R8
       end do
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
-     &  ti, tn, po, kt, zt, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, 
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,  !xpb
+     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, 
      &  kinrgy, fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, 
      &  fna_he, fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, 
      &  fhi_eir, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
