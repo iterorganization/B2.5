@@ -147,6 +147,7 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,          !som 21.03.21
      &  Zhdanov_tf_fr = 1                                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1, Zhdanov_vish = 1              !som 13.08.21 18.10.21
+      real (kind=R8), save :: smbvi_factor = 1.0_R8                    !som 14.12.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                       !som 13.11.20
       character chns*3                                                 !srv 04.07.08
@@ -282,6 +283,7 @@
         call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
         call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
         call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)              !som 18.10.21
+        call ipgetr ('b2npmo_smbvi_factor', smbvi_factor)              !som 14.12.21
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -681,6 +683,7 @@
          endif
          smbvi=0.0_R8
        endif
+       smbvi=smbvi*smbvi_factor                                        !som 14.12.21
 *    ..compute centrifugal force term                                  !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz,
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
