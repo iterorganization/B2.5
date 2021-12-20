@@ -2598,7 +2598,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
-      if (.not.flag_optim) deallocate(par_opt_phys)
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) 
+     &  deallocate(par_opt_phys)
       deallocate(old_erosion, old_deposition)
 !WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag

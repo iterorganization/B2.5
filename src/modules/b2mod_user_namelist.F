@@ -7,8 +7,8 @@
      & , only : nncf, rrdata, vvdata, TMP1, TMP2
       implicit none
 #     include "DIMENSIONS.F"
-      integer npfrgrpd, nntrgrpd
-      parameter (npfrgrpd=6, nntrgrpd=16)
+      integer npfrgrpd, nntrgrpd, mxnCf
+      parameter (npfrgrpd=6, nntrgrpd=16, mxnCf=1000)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -34,8 +34,10 @@
       logical, save :: written = .false.
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
-      logical, save :: cfread(nncf), cfomp(nncf)
-      integer, save :: ncfdata(nncf), ncf
+      logical, save :: cfread(nncf) = .false.
+      integer, save :: cfdef(nncf)
+      integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
+     & cf_regp(nncf,2)
       real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
       parameter (nvmx = 50, nsigmx=10)
@@ -53,9 +55,9 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cfread, cftype, rzomp, cfomp, cfweight, 
+     ,  cftype, rzomp, cfdef, cfweight, 
      ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
-     ,  sigma
+     ,  sigma, cf_reg, cf_regP
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -132,8 +134,7 @@ c***  Standard setup:
       ncf = 0
       cfstart = 0
       cfend = 0
-      cfread = .false.
-      cfomp = .false.
+      cfdef = 0
       cftype = 0
       cfdata = 0.0_R8
       ncfdata = 0
@@ -146,6 +147,8 @@ c***  Standard setup:
 ! sc  Set prior range to (-inf,+inf)
       prior_range(:,1) = -inf_opt*10.0
       prior_range(:,2) = inf_opt*10.0
+      cf_reg = 0
+      cf_regP = 0
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -174,12 +177,13 @@ c***  Standard setup:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        dx, ic1, ic2
+     >        dx, ic1, ic2, icff, icv, ifc, ifcc
 
       logical :: file_ok
       character*260 filename, cffile
       character*1 str
       integer i, j, k, is, im, ndata
+      integer, allocatable :: cfReg(:)
       logical old_style, done, ifail, found
       logical, save :: hydrogen, helium, neon
       external subini, subend
@@ -206,12 +210,36 @@ c***  Standard setup:
         filedata(ntrc_usr) = .false.
       endif
 
+      nomp = 0
+      omp = 0 !Need to add check for monotonicity in list
+      call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
+     & 1, ifail)
+      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      do ic=2,nomp
+        if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
+     & call xerrab('OMP LIST NOT SORTED')
+      end do
+*   ..Definition of separatrix position in OMP list (to be improved for DN)
+      icsep = 0
+      ic = 1
+      found = .false.
+      do while (ic.le.nomp .and..not.found)
+        if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
+          found = .true.
+          icsep = ic+1
+        endif
+      ic = ic + 1 
+      end do
+
+      call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
       if (ncf > 0) then
         write (*,*) ' Number of cost functions: ',ncf
         m%nCf = ncf
-        m%mxnCf = count(m%fcLbl /= 0)
+        m%mxnCf = mxnCf
         call alloc_mapping_cf (m)
-        m%cfFcP = 0
+        m%cfRegP = 0
+        allocate(cfReg(mxnCf))
+        cfReg = 0
 
         open (newunit=idb,file='debug_user.out')        
         incf = 0
@@ -226,12 +254,19 @@ c***  Standard setup:
           if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
      &     ncf.lt.(cfend(icf)-cfstart(icf))+2) call xerrab (
      &     'cost functions specified for sum with cftype 0/6 > nCf')
-          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .and.
-     &         .not.cfread(icf)) call xerrab ('cftype=1,2,3 need to'//
-     &         ' read experimental profile')
-          if ((cftype(icf).ge.7 .and. cftype(icf).le.9) .and.
-     &         .not.cfread(icf)) call xerrab ('cftype=7,8,9 need to'//
-     &         ' read experimental profile')
+          if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
+     &     cfstart(icf).le.2 .and. cfend(icf).le.2) call xerrab (
+     &     'cost functions type 0/6 requires cfstart/cfend>1')
+          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.9)) 
+     >         cfread(icf) = .true.
+          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false. ! FIXME add jsat 
+          if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
+     &      call xerrab('cftype 5 must be defined using faces!') ! FIXME add jsat 
+!          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
+!     &        (cftype(icf).ge.7 .and. cftype(icf).le.9) .and.
+!     &         cfdef(icf).eq.2) call xerrab ('cftype=1-3,7-9 need '//
+!     &         'to be defined using cells')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -257,33 +292,135 @@ c***  Standard setup:
             enddo
             close(99)
           endif
-          if (cfstart(icf) /= 0 .and. cfend(icf) /= 0 .and.
-     &         cftype(icf).ne.0) then
+          if (cftype(icf).eq.0 .or. cftype(icf).eq.6) cycle !no need to specify domain here
+          done  = .false. 
+
+          select case(cfdef(icf))
+
+          case (1) !defined on OMP (only internal CVs)
+
+            call xertst(m%cfOnCv(icf), 'This cost function type '//
+     &       'cannot be evaluated on OMP')
+            call xertst(nomp.gt.0, 'Asking for OMP cost function '//
+     &       'but no OMP cells, check rzomp')
+            write (*,*) ' defining cost function ',icf,' on omp'
+            do icff = 1, icf-1
+              if (cfdef(icff) .eq. 1) then
+              m%cfRegP(icf,:) = m%cfRegP(icff,:)
+              done = .true.
+              endif
+            end do
+            if (done) cycle
+            m%cfRegP(icf,1) = incf +1
+            ndata = 0
+            do iCv=1,nomp
+              if (omp(iCv)>m%nCi) cycle !only use internal CVs
+              m%cfReg(incf +1+ndata) = omp(iCv)
+              ndata = ndata + 1
+            enddo
+            m%cfRegP(icf,2) = ndata
+            incf = incf + ndata
+
+          case (2) !defined using fclabel
+
+            call xertst(cfstart(icf) /= 0 .and. cfend(icf) /= 0,
+     &        'cfdef=2 requires cfstart/cfend>0')
+! check if other CFs have same domain (must have same start/end, same type of definition (fcLabl)
+! and also same type of domain (FcLabl can be used to identify either CVs or FCs)
+            do icff = 1, icf-1
+              if (cfstart(icf) .eq. cfstart(icff) .and.
+     &            cfend(icf) .eq. cfend(icff) .and.
+     &            cfdef(icff) .eq. 2 .and.
+     &            (m%cfOnCv(icf) .and. m%cfOnCv(icff))) then
+                m%cfRegP(icf,:) = m%cfRegP(icff,:)
+                done = .true.
+              endif
+            end do
+            if (done) cycle
+! this domain has not yet been done
+            m%cfRegP(icf,1) = incf +1 
             ncffc = 0
-            m%cfFcP(icf,1) = incf +1 
             noss = cfend(icf) - cfstart(icf) + 1
             do iss = 1, noss
               indss = cfstart(icf)+iss-1
               write (*,*) ' Defining cost function ',icf
-              write (*,*) ' surface index ',indss
+              write (*,*) ' surface label ',indss
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, incf, ncffc, 
-     >             m%mxncf,m%cfFc, m%cfFcOr, m, idb)
+     >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
             end do              ! iss	 
-            m%cfFcP(icf,2) = ncffc
-          else
-            if (cftype(icf).eq.0 .and. cfstart(icf).eq.0 .or.
-     &          cfend(icf).eq.0) call xerrab ('cfstart/cfend = 0 ')
-            if (cftype(icf).ne.0 .and. .not.cfomp(icf)) 
-     &        call xerrab ('cfstart/cfend = 0 ')
-            m%cfFcP(icf,1) = 0
-            m%cfFcP(icf,2) = 0
-          endif
-        end do
-        close(idb)
-      end if
+            m%cfRegP(icf,2) = ncffc
+! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
+            if (m%cfOnCv(icf)) then
+              do iFc = 1, m%cfRegP(icf,2)
+                ifcc = m%cfReg(m%cfRegP(icf,1)+ifc-1)
+                ic1 = min(m%fcCv(ifcc,1), m%fcCv(ifcc,2))
+                ic2 = max(m%fcCv(ifcc,1), m%fcCv(ifcc,2))
+                if (ic1 <= m%nCi) then
+                  m%cfReg(m%cfRegP(icf,1)+ifc-1) = ic1
+                elseif (ic2 <= m%nCi) then
+                  m%cfReg(m%cfRegP(icf,1)+ifc-1) = ic2
+                else
+                  call xerrab('cfdef=2 -- problem with boundary face') 
+                end if
+              end do
+            endif
 
-      call cf_to_struct(m)
+          case (3) !defined using cvlabel
+
+            call xertst(cfstart(icf) /= 0 .and. cfend(icf) /= 0,
+     &        'cfdef=3 requires cfstart/cfend>0')
+! check if other CFs have same domain !FIXME check if also cfdef is the same
+            do icff = 1, icf-1
+              if (cfstart(icf) .eq. cfstart(icff) .and.
+     &            cfend(icf) .eq. cfend(icff) .and.
+     &            cfdef(icff) .eq. 3) then
+                m%cfRegP(icf,:) = m%cfRegP(icff,:)
+                done = .true.
+              endif
+            end do
+            if (done) cycle
+! this domain has not yet been done
+            m%cfRegP(icf,1) = incf +1 
+            noss = cfend(icf) - cfstart(icf) + 1
+            do iss = 1, noss
+              indss = cfstart(icf)+iss-1
+              write (*,*) ' Defining cost function ',icf
+              write (*,*) ' cell label ',indss
+              do icv = 1, m%nCv
+                if (m%cvLbl(icv).eq.indss) then
+                  m%cfReg(incf+1) = icv
+                  incf = incf + 1
+                endif
+              end do
+            end do
+            ! FIXME no attempt to sort or check if they belong together somehow
+            m%cfRegP(icf,2) = incf+1 - m%cfRegP(icf,1)
+
+          case (4) !defined using cf_reg (No attempt whatsoever to check if they are sorted)
+
+            call xertst(cf_RegP(icf,2).gt.0,'cf_RegP not defined')
+            ! csc can we check somehow if this has already been filled?
+            m%cfRegP(icf,1) = incf +1
+            m%cfRegP(icf,2) = cf_RegP(icf,2)
+            if (any(cf_Reg(cf_RegP(icf,1) : cf_RegP(icf,1) +
+     &       cf_RegP(icf,2) - 1) .le. 0)) call xerrab('cf_Reg<=0')
+            m%cfReg(incf +1:incf +1+m%cfRegP(icf,2)-1) = 
+     &        cf_Reg(cf_RegP(icf,1):cf_RegP(icf,1)+cf_RegP(icf,2)-1)
+            incf = incf + cf_RegP(icf,2)
+
+          case default
+
+            call xerrab('cfDef undefined')
+
+          end select
+
+          call xertst(incf+1.le.m%mxncf,
+     &      'Increase size of mxnCf in b2mod_user_namelist')
+        end do !icf
+        close(idb)
+        if (allocated(cfReg)) deallocate(cfReg)
+      end if
 
 ! now allocate vector that will be used to interpolate solps onto data grid in loglikelihood for Bayesian MAP
       if (any(cftype.eq.6)) then
@@ -311,7 +448,7 @@ c***  Standard setup:
         ndata = maxval(ncfdata(1:ncf),1)
         allocate(vvdata(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
         allocate(TMP2(ndata)) !variable to store SOLPS data interpolated onto CF radial points
-        ndata = maxval(m%cfCvP(1:ncf,2)) !max number of CVs in a cost function
+        ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
         allocate(rrdata(ncf,ndata)) !store here values of cvX from SOLPS for interpolation
         allocate(TMP1(ndata)) !temporary variable to store SOLPS data for interpolation
         rrdata = 0.0_R8
@@ -446,56 +583,6 @@ c*** Set default values according to current species list
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
 #endif
-      call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
-      nomp = 0
-      omp = 0 !Need to add check for monotonicity in list
-      call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
-     & 1, ifail)
-      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
-      do ic=2,nomp
-        if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
-     & call xerrab('OMP LIST NOT SORTED')
-      end do
-      if (any(cfomp)) call xertst(nomp.gt.0,
-     & 'Asking for OMP cost function but no OMP cells, check rzomp')
-*   ..Redefine cost functions on midplane list
-      do icf = 1, ncf
-        if (cfomp(icf)) then
-          write (*,*) ' Re-defining cost function ',icf,' on omp'
-          dx = nomp - m%cfCvP(icf,2) !shift
-          m%cfCvP(icf,2) = nomp
-          if (icf + 1 .le. ncf) then
-            ic1 = m%cfCvP(icf+1,1) ! starting CV in next CF
-            ic2 = m%cfCvP(ncf,1) + m%cfCvP(ncf,2) - 1 ! last CV in last CF
-*         ..Shift CV list
-            call xertst(ic2+dx.le.m%mxnCf,
-     &       ' Shifting of cfCv list not possible, increase mxnCf')
-            m%cfCv(ic1+dx:ic2+dx) = m%cfCv(ic1:ic2)
-*         ..Shift cfCvP(1,:) list
-            do ic = icf + 1, ncf
-              m%cfCvP(ic,1) = m%cfCvP(ic,1) + dx
-            enddo
-          endif
-*       ..Insert OMP list
-          m%cfCv(m%cfCvP(icf,1):m%cfCvP(icf,1)+m%cfCvP(icf,2)-1) =
-     &      omp(1:nomp)
-*       ..For now zero-out faces belonging to OMP (to be improved)
-          m%cfFc(m%cfFcP(icf,1):m%cfFcP(icf,1)+m%cfFcP(icf,2)-1) = 0
-          m%cfFcP(icf,2) = 0
-        endif
-      end do
-
-*   ..Definition of separatrix position in OMP list (to be improved for DN)
-      icsep = 0
-      ic = 1
-      found = .false.
-      do while (ic.le.nomp .and..not.found)
-        if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
-          found = .true.
-          icsep = ic+1
-        endif
-      ic = ic + 1 
-      end do
 
       call subend ()
       return
@@ -512,37 +599,9 @@ c*** Set default values according to current species list
       return
       end subroutine write_b2mod_user_namelist
 
-***********************************************************************
-
-      subroutine cf_to_struct (m)
-      type(mapping), intent(inout) :: m
-      integer :: ic, icf, ic1, incf, ifc
-
-      m%nCf = ncf
-      m%mxnCf = count(m%fcLbl /= 0)
-      
-      call alloc_mapping_cf(m)
-
-      incf = 0 ! index in cfCv
-      do ic = 1,m%nCf
-        m%cfCvP(ic,1) = incf + 1
-        m%cfCvP(ic,2) = m%cfFcP(ic,2)
-        do icf = 1, m%cfFcP(ic,2)
-          incf = incf + 1
-          ifc = m%cfFc(m%cfFcP(ic,1)+icf-1)
-          ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
-          if (ic1 <= m%nCi) then
-            m%cfCv(incf) = ic1
-          else
-            call xerrab('cf_to_struct -- problem with boundary face') 
-          end if
-        end do
-      end do
-
-
-      end subroutine cf_to_struct
 
 
 ***********************************************************************
+
 
       end module b2mod_user_namelist
