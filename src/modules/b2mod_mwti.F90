@@ -1623,6 +1623,8 @@ contains
     !=============
     ! Call subini
     call subini ('output_ds_us')
+    ! csc added safety for possible reference not within list number
+    call xertst(iref.gt.1 .and. iref.le.nc, 'output_ds_us: iref out of range')
 
     ! Compute the initial length as the distance of the first cell to 
     ! the first boundary face
