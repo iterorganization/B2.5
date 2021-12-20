@@ -38,7 +38,7 @@
       integer, save :: cfdef(nncf)
       integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
      & cf_regp(nncf,2)
-      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
+      real (kind=R8), save :: cfdata(nncf,2,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
       parameter (nvmx = 50, nsigmx=10)
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
@@ -285,15 +285,17 @@ c***  Standard setup:
      &        'Cost function data limited to DEF_NLIM!')
             open(unit=99,file=cffile,status='old',action='read')
             do i=1,ncfdata(icf)
-!csc The data in the file are r, z, data. Stored in cfdata according to
-!    first dimension (# of cost functions), second dimension (r-z-data), third
+!csc The data in the file are (r-rsep), data. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data), third
 !    dimension (number of records/data points)
-              read(99,*) cfdata(icf,1:3,i) 
+              read(99,*) cfdata(icf,1:2,i) 
             enddo
             close(99)
           endif
           if (cftype(icf).eq.0 .or. cftype(icf).eq.6) cycle !no need to specify domain here
           done  = .false. 
+
+! FIXME need to add flag for reversing lists?
 
           select case(cfdef(icf))
 
