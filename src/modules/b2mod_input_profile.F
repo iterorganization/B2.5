@@ -457,8 +457,6 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
       use b2mod_par_opt
-      use b2mod_mwti
-     & , only: output_ds_us
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -486,6 +484,7 @@ cdjm Jan2017 Keep linearised sources for balance
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
       intrinsic sqrt
+      external calc_dist
 
       if(ncall.eq.0) then
         call xertst(CVREGMAX.ge.mpg%nnreg(0),
@@ -621,7 +620,7 @@ cdjm Jan2017 Keep linearised sources for balance
 ! csvdk reworked the implementation to be consistent with structured 
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 
-            call output_ds_us(mpg,geo,omp,nomp,icsep,pr)
+            call calc_dist(mpg,geo,omp,nomp,icsep,pr)
 
 !            pr = 0.0_R8
 !            rsep = 0.5_R8*(geo%cvX(omp(icsep-1)) + 
