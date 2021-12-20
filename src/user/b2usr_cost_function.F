@@ -34,7 +34,7 @@
       integer :: ij, jj
 #endif
       integer :: isigma
-      external subini, subend
+      external subini, subend, calc_dist
 
       call subini('b2usr_cost_function')
 
@@ -67,14 +67,15 @@
             ic2 = ic1 + mpg%cfRegP(icf,2) - 1
             n1 = mpg%cfRegP(icf,2)
             n2 = ncfdata(icf)
-            rrdata(icf,1:n1) = geo%cvX(mpg%cfReg(ic1:ic2))
+            call calc_dist(mpg,geo,mpg%cfReg(ic1:ic2),n1,icsep-1, !csc icsep-1 because non-internal cells have been excluded!
+     &        rrdata(icf,1:n1))
             TMP1(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
             call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
      &        TMP1(1:n1),vvdata(icf,1:n2))
             vold(icf) = sum(vvdata(icf,1:n2))
             do iCv = 1, n2
               cfnorm(icf) = cfnorm(icf) + 
-     &                      vvdata(icf,iCv)*cfdata(icf,3,iCv)
+     &                      vvdata(icf,iCv)*cfdata(icf,2,iCv)
             end do
           endif
         enddo 
@@ -91,7 +92,7 @@
       end do
       call calc_prior(prior, inrange)
       n1 = ncfdata(iicf)
-      call calc_loglikelihood(n1, ff, cfdata(iicf,3,1:n1),
+      call calc_loglikelihood(n1, ff, cfdata(iicf,2,1:n1),
      & lll_cum, isigma)
       if (inrange) then
         J(1) = -(log(prior) + lll_cum)*cfweight(1)
@@ -113,7 +114,7 @@
      &        TMP1(1:n1),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -123,7 +124,7 @@
      &        TMP1(1:n1),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -133,7 +134,7 @@
      &        TMP1(1:n1),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -145,7 +146,10 @@
           case (5) !max heat flux on desired FCs
             do iFc = ic1, ic2
               qq = 0.0
-              iCv = mpg%fcCv(mpg%cfReg(iFc),1)
+              iCv = min(mpg%fcCv(mpg%cfReg(iFc),1),
+     &                  mpg%fcCv(mpg%cfReg(iFc),2))
+              if (iCv.gt.mpg%nCi) iCv = max(mpg%fcCv(mpg%cfReg(iFc),1),
+     &          mpg%fcCv(mpg%cfReg(iFc),2))
               qq = st%dv%fhe(mpg%cfReg(iFc),0) + 
      &             st%dv%fhi(mpg%cfReg(iFc),0) + 
      &             (1-BoRiS)*st%dv%fne(mpg%cfReg(iFc),0)*st%pl%te(iCv)
@@ -154,8 +158,8 @@
      &               (st%rt%rpt(iCv,is)*ev + 
      &               (1-BoRiS)*(st%dv%kinrgy(iCv,is)+st%pl%ti(iCv)))
               end do
-              qq = abs(qq)
-              J(icf) = max(J(icf),qq)*cfweight(icf) !!FIXME to be better difined with cffcor...
+              qq = qq*mpg%cfFcOr(iFc)
+              J(icf) = max(J(icf),qq)*cfweight(icf)
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
             call calc_prior(prior, inrange)
@@ -192,7 +196,7 @@
               call interp1d(n1,n2,rrdata(iicf,1:n1),cfdata(iicf,1,1:n2),
      &          TMP1(1:n1),TMP2(1:n2))
               call calc_loglikelihood(n2, TMP2(1:n2), 
-     &          cfdata(iicf,3,1:n2), lll, isigma)
+     &          cfdata(iicf,2,1:n2), lll, isigma)
               lll_cum = lll_cum + lll
               isigma = isigma + 1
             end do
@@ -209,7 +213,7 @@
      &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -221,7 +225,7 @@
      &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -233,7 +237,7 @@
      &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,3,iCv))**2
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
