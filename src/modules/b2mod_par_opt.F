@@ -18,6 +18,7 @@
      &  hessian_approximation 
       double precision, save :: cpu_opt=0.0, tol_opt=1.0e-7
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0 
+      integer, save :: paris(nvmx),parib(nvmx)
       logical, save :: sigma_opt(nsigmx)
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
@@ -28,14 +29,14 @@
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
      & limited_memory_update_type, partype, sigma_opt, spatial_dep,
-     & spatial_points, par_rescale
+     & spatial_points, par_rescale, paris, parib
 
       contains
 
-      subroutine read_b2mod_par_opt(ncon, nele_jac)
+      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, nbc)
       use b2mod_types
       implicit none
-      integer ncon, nele_jac, ii, isigma
+      integer ncon, nele_jac, ns, nbc, ii, isigma
 
       filename='b2.optimization.parameters'
       write (*,*) 'OPTIM: max number of readable parameters '//
@@ -91,24 +92,42 @@
 !     3  - X_i, ion heat diffusion coefficient
 !     4  - X_e, electron heat diffusion coefficient
 !     5  - vlax, x component of the anomalous velocity
-!     6  - vlay, y component of the anomalous velocity
+!     6  - vlay, y component of the anomalous velocity FIXME not yet done
 !     7  - vsa, anomalous viscosity
 !     8  - sig, field-driven current radial conductivity
 !     9  - alf, temperature-driven current radial conductivity
-!     10 - enkpar(1,1), core k boundary condition 
+!     10 - enkpar(parib(ipar), 1), k boundary condition, parib(ipar) identifies boundary
 !     11 - b2sikt_fac_sheath, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in SOL & PFR)
 !     12 - b2sikt_fac_sheath_core, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in core)
 !     13 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
 !     14 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
 !     15 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
-      call xertst(any(partype(1:nnvar).ge.0).and.
-     &  any(partype(1:nnvar).le.15),
-     &  'b2mod_par_opt: partype<0 or partype>15')
-      call xertst(any(spatial_points(1:nnvar).ge.0),
+!     16 - enepar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     17 - enipar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     18 - conpar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     19 - mompar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     20 - potpar(parib(ipar), 1), with parib(ipar) identifies boundary
+      call xertst(any(partype(1:nnvar) .ge. 0) .and.
+     &  any(partype(1:nnvar) .le. 20),
+     &  'b2mod_par_opt: partype<0 or partype>20')
+      call xertst(any(spatial_points(1:nnvar) .ge. 0),
      &  'b2mod_par_opt: spatial_points<0')
-      call xertst(sum(spatial_points(1:nnvar)).le.nvmx,
+      call xertst(sum(spatial_points(1:nnvar)) .le. nvmx,
      &  'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
-      if (nsigma.gt.0 .and. any(sigma_opt(1:nsigma))) then
+      do ii=1,nnvar
+       if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
+     &     partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
+     &     partype(ii) .eq. 7 .or. partype(ii) .eq. 18 .or.
+     &     partype(ii) .eq. 19) 
+     >  call xertst((paris(ii) .ge. 0) .and. (paris(ii) .le. ns-1),
+     &  'b2mod_par_opt: paris<0 or >ns-1')
+       if (partype(ii) .eq. 10 .or. partype(ii) .eq. 16 .or.
+     &     partype(ii) .eq. 17 .or. partype(ii) .eq. 18 .or.
+     &     partype(ii) .eq. 19 .or. partype(ii) .eq. 20)
+     >  call xertst((parib(ii) .ge. 1) .and. (parib(ii) .le. nBc),
+     &   'b2mod_par_opt: parib<0 or >nBc')
+      enddo
+      if (nsigma .gt. 0 .and. any(sigma_opt(1:nsigma))) then
 !      calculate first how many sigmas are being optimized
        nsigma_opt = 0
        do ii = 1, nsigma
@@ -117,18 +136,18 @@
 !      check if sigmas are at the end of the parameter vector, if not, issue error
        isigma = nnvar - nsigma_opt + 1 ! position of first sigma in partype
        do ii = 1, nsigma_opt
-        call xertst(partype(ii+isigma-1).eq.0,'b2mod_par_opt: '//
+        call xertst(partype(ii+isigma-1) .eq. 0,'b2mod_par_opt: '//
      &   'partype 0 variables MUST be at the end of the vector')
        end do
       endif
 !     Suppose MAP estimation is turned on only when cftype(1)=6
-      if (cftype(1).eq.6) then
+      if (cftype(1) .eq. 6) then
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
 !      2 - Jeffrey's 1/sigma (only for sigma!!)
-       call xertst(any(prior_type(1:nnvar).ge.0).and.
-     &  any(prior_type(1:nnvar).le.2),
+       call xertst(any(prior_type(1:nnvar) .ge. 0).and.
+     &  any(prior_type(1:nnvar) .le. 2),
      &  'b2mod_par_opt: prior_type<0 or prior_type>2')
 !      prior_par refers to the prior parameters:
 !      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
@@ -141,12 +160,12 @@
      &   'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
        end do
       end if
-      if (nnjac.gt.0) then
-       call xertst(any(jcol(1:nnjac).gt.0),'b2mod_par_opt: jcol<=0')
-       call xertst(any(jrow(1:nnjac).gt.0),'b2mod_par_opt: jrow<=0')
-       call xertst(maxval(jcol(1:nnjac)).le.nncon,
+      if (nnjac .gt. 0) then
+       call xertst(any(jcol(1:nnjac) .gt. 0),'b2mod_par_opt: jcol<=0')
+       call xertst(any(jrow(1:nnjac) .gt. 0),'b2mod_par_opt: jrow<=0')
+       call xertst(maxval(jcol(1:nnjac)) .le. nncon,
      & 'b2mod_par_opt: jcol>ncon')
-       call xertst(maxval(jrow(1:nnjac)).le.nnvar,
+       call xertst(maxval(jrow(1:nnjac)) .le. nnvar,
      & 'b2mod_par_opt: jrow>nvar')
       endif
 

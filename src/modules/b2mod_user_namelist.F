@@ -255,7 +255,7 @@ c***  Standard setup:
      &     ncf.lt.(cfend(icf)-cfstart(icf))+2) call xerrab (
      &     'cost functions specified for sum with cftype 0/6 > nCf')
           if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
-     &     cfstart(icf).le.2 .and. cfend(icf).le.2) call xerrab (
+     &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
      &     'cost functions type 0/6 requires cfstart/cfend>1')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
      &        (cftype(icf).ge.7 .and. cftype(icf).le.9)) 
