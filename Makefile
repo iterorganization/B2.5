@@ -62,10 +62,41 @@ endif
 ifdef DIFF_D
 EXT_DIFF = .diff_d
 DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D1
+EXT_DIFF = .diff_d1
+DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D2
+EXT_DIFF = .diff_d2
+DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D3
+EXT_DIFF = .diff_d3
+DIFF = yes
+TGT = yes
 endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
 DIFF = yes
+endif
+ifdef DIFF_B1
+EXT_DIFF = .diff_b1
+DIFF = yes
+ADJ = yes
+endif
+ifdef DIFF_B2
+EXT_DIFF = .diff_b2
+DIFF = yes
+ADJ = yes
+endif
+ifdef DIFF_B3
+EXT_DIFF = .diff_b3
+DIFF = yes
+ADJ = yes
 endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
@@ -172,6 +203,12 @@ DEFINES += -DDBG
 endif
 ifdef FIXED_POINT
 DEFINES += -DFIXED_POINT
+endif
+ifdef TGT
+DEFINES += -DTGT
+endif
+ifdef ADJ
+DEFINES += -DADJ
 endif
 ifdef TEST_MAP
 DEFINES += -DTEST_MAP
@@ -296,13 +333,19 @@ CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B clean depend listobj tags echo local force
+.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B DIFF_B1 DIFF_B2 DIFF_B3 DIFF_D1 DIFF_D2 DIFF_D3 clean depend listobj tags echo local force
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${OEEXE} ${OTEXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D1: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D2: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D3: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B1: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B2: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B3: VERSION ${MNBEXE} ${OPTEXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
@@ -336,8 +379,8 @@ FFPATH += :${SRCDIR}/catalyst
 endif
 
 MODULES = ${patsubst %.F %.f %.F90 %.f90,%.o,${shell echo ${MODLIST} } }
-MODMODS = ${MODULES:%.o=${OBJDIR}/%.${MOD}}
 MODOBJS = ${MODULES:%.o=${OBJDIR}/%.o}
+MODMODS = $(filter-out ${IDSMODS},${MODOBJS:%.o=%.${MOD}})
 SOLPS4OBJS = ${patsubst ${SOLPS4}/%.F,${OBJDIR}/%.o,${shell echo ${S4LIST} } }
 EIR4MODS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.${MOD},${shell echo ${E4LIST} } }
 EIR4OBJS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.o,${shell echo ${E4LIST} } }
@@ -347,6 +390,8 @@ LIBOBJS = $(filter-out ${MODOBJS},${ALLOBJS})
 else
 LIBOBJS = ${ALLOBJS}
 endif
+
+mods : ${MODMODS}
 
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
 	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
@@ -829,6 +874,32 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+
+${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
+ifdef LD_NETCDF
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
+ifndef SOLPS_DEBUG
+	@-ln -sf $@ ${NCODIR}/$*
+ifeq (,$(findstring nc2text,${NC2TXT}))
+	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+endif
+endif
+else
+	$(warning NETCDF library not present!)
+endif
+
+${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/machsfr.o ${OBJDIR}/nagsubst.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${MAKES}
+ifdef LD_NETCDF
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBJDIR}/b2mod_ipmain.o ${OBJDIR}/b2mod_lwimai.o ${OBJDIR}/b2mod_lwmain.o ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_xerset.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/machsfr.o ${OBJDIR}/nagsubst.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
+ifndef SOLPS_DEBUG
+	@-ln -sf $@ ${NCODIR}/$*
+endif
+else
+	$(warning NETCDF library not present!)
+endif
+
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
@@ -851,6 +922,35 @@ ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
+
+test:	${TTEXE}
+
+nc2text: ${NCODIR}/nc2text
+
+${NCODIR}/nc2text: ${NCODIR}/nc2text_simple
+	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+
+nc2text_simple: ${NCEXE}
+
+nc_reduce: ${NREXE}
+
+${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
+ifdef LD_NETCDF
+	@-mkdir -p ${NCODIR}
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
+else
+	$(warning NETCDF library not present!)
+endif
+
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90
+ifdef LD_NETCDF
+	@-mkdir -p ${NCODIR}
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${INCLUDE} ${INCMODS} -o $*.o $*.F90
+else
+	$(warning NETCDF library not present!)
+endif
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o

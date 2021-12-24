@@ -456,7 +456,6 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
-      use b2mod_par_opt
       IMPLICIT NONE
       integer :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
@@ -480,7 +479,6 @@ cdjm Jan2017 Keep linearised sources for balance
       real (kind=R8) :: poloidal_scale_factor, rsep
       integer, save :: nlbl, ivar
       logical, save :: elm_time, elm_region, elm_data, found
-      character*260 filenamet
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
       intrinsic sqrt
@@ -489,9 +487,7 @@ cdjm Jan2017 Keep linearised sources for balance
       if(ncall.eq.0) then
         call xertst(CVREGMAX.ge.mpg%nnreg(0),
      1   'Increase CVREGMAX in b2mod_numerics_namelist')
-        filenamet=transport_ip_filename
         tr_ip_new_files = .true.
-        call read_transport_input         
 !  read the profile data
         if(transport_ip_time_mod.gt.0.0_R8) then
           call xerrab('ELM transport inputifile not coded yet for WG')
@@ -504,8 +500,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_ip_time_mod).gt.transport_ip_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filenamet=transport_ip_filename
-            call read_transport_input
+            call read_transport_input(transport_ip_filename)
             catch_up=transport_ip_time_mod.gt.0.0_R8
           else
             catch_up=.false.
@@ -528,9 +523,8 @@ cdjm Jan2017 Keep linearised sources for balance
      1     transport_ip_time_switch.or.
      2     int(tim/transport_ip_time_mod).gt.tr_ip_elm_count) then
             tr_ip_elm_count=tim/transport_ip_time_mod
-            filenamet=transport_ip_filename
             tr_ip_new_files = .true.
-            call read_transport_input
+            call read_transport_input(transport_ip_filename)
           endif
         endif
       endif
@@ -580,34 +574,6 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-! $AD DO-NOT-DIFF
-            if (flag_optim) then
-!             loop over all specified variables except sigmas
-!             the meaning here is that par_opt_phys is longer than partype because
-!             it contains all points of the spatially dependent coefficients, while
-!             partype specifies the type of coefficient only once for the spatially dependent
-!             example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
-!             --> par_opt_phys = [1 2 3 4 5] [6] [7 8 9 10 11]
-! FIXME perhpas not the best, most efficient solution now, but should work
-              ic = 0 !this indicates the different directions of multidirectional derivative mode
-              do ivar = 1, nnvar - nsigma_opt
-                if (spatial_dep(ivar)) then
-!                 spatially dependent coefficient
-                  if (partype(ivar).eq.kind_coeff) then
-                    if (spatial_points(ivar).ne.ndat) 
-     &               call xerrab('spatial_points =/ ndat')
-                    do i = 1, ndat
-                      f(i) = par_opt_phys(ic + i)
-                    end do
-                  endif
-                  ic = ic + spatial_points(ivar)
-                else
-!                 non spatially dependent --> specified in b2tqna
-                  ic = ic + 1
-                endif
-              end do
-            endif
-! $AD END-DO-NOT-DIFF
 #ifdef WG_TODO
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
@@ -847,12 +813,13 @@ cdjm Jan2017 Keep linearised sources for balance
 
       return
 
+      end subroutine transport_input
+
 *-----------------------------------------------------------------------
 
-      contains
-
-      subroutine read_transport_input
+      subroutine read_transport_input(filenamet)
       implicit none
+      character*256 filenamet
       logical file_ok
 
 c*** Clear data to forget previous profiles
@@ -890,8 +857,6 @@ c*** Clear data to forget previous profiles
       return
  999  call xerrab ('Error while reading TRANSPORT inputfile!')
       end subroutine read_transport_input
-
-      end subroutine transport_input
 
 *-----------------------------------------------------------------------
 

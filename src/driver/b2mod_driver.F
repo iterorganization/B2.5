@@ -1749,17 +1749,21 @@ c   --> better way doing this is necessary)
       enddo
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
       if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist.eq.1),
+     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
      & 'cftype=6 requires b2.optimization.namelist')
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
       endif
+!csc  reading transpot input is needed here otherwise when optimization is running it will override the optimized parameters
+      if (switch%b2tqna_transport_inputfile .eq. 1) then
+        call read_transport_input(transport_ip_filename) 
+      endif
       call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
-        call read_b2mod_par_opt(ncon,nele_jac)
+      if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg%nBc)
         allocate(par_opt_phys(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
       endif
@@ -2195,8 +2199,8 @@ c new CDF movie option
         endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(70,ns,nxtl,nxtr,ismain,dtim,switch%BoRiS,geo,
-     .                  mpg,state)
+     >     call b2trace(70,ns,nxtl,nxtr,ismain,dtim,switch%b2mndr_stim,
+     .                  switch%BoRiS,geo,mpg,state)
         endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
