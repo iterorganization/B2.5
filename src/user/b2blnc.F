@@ -1,4 +1,4 @@
-      subroutine b2blnc(ns,geo,mpg,switch,st,dtim,iline)
+      subroutine b2blnc(ns,geo,mpg,st,dtim,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -15,7 +15,6 @@
      .   , only : nstra
       use eirmod_extrab25
 #endif
-      use b2mod_switches
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -31,11 +30,10 @@ c----------------------------------------------------------------------
 c
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
-      type (switches), intent (in) :: switch
       type(B2state), intent(in) :: st
 
       integer ns, iline
-      real (kind=R8) :: dtim
+      real (kind=R8) :: dtim, stim
 c
       integer lun, ltrc
       parameter (ltrc=ntrc_bln)
@@ -652,7 +650,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnci(ns,geo,mpg,st,dtim,iline)
+      entry b2blnci(ns,geo,mpg,st,dtim,stim,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -683,7 +681,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
+      if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
         go to 42

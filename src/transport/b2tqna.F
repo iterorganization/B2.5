@@ -22,7 +22,6 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2mod_par_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -195,47 +194,6 @@
 
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
-! $AD DO-NOT-DIFF
-      if (flag_optim) then
-        ic = 1
-!       loop over all specified variables except sigmas
-!       the meaning here is that par_opt_phys is longer than partype because
-!       it contains all points of the spatially dependent coefficients, while
-!       partype specifies the type of coefficient only once for the spatially dependent
-!       example: partype = 1, 4, 3; spatially_dep = T,F,T, spatial_points = 5, 0, 5
-!       --> par_opt_phys = [1 1 1 1 1] [4] [3 3 3 3 3]
-        do ivar = 1, nnvar - nsigma_opt         
-          if (spatial_dep(ivar)) then
-!           spatially dependent coefficient -> par_opt_phys(ic:ic+spatial_points(ipar)) skipped
-            ic = ic + spatial_points(ivar)
-          else
-            select case (partype(ivar))
-            case (1) ! dna
-              parm_dna(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
-            case (2) ! dpa
-              parm_dpa(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
-            case (3) ! hci
-              parm_hci(1) = par_opt_phys(ic) ! FIXME to improve for multispecies
-            case (4) ! hce
-              parm_hce = par_opt_phys(ic)
-            case (5) ! vla
-              parm_vla = par_opt_phys(ic)
-            case (7) ! vsa
-              parm_vsa = par_opt_phys(ic)
-            case (8) ! sig
-              parm_sig = par_opt_phys(ic)
-            case (9) ! alf
-              parm_alf = par_opt_phys(ic)
-! csc removed defult as new parameters have been added further down the list...
-!            case default
-!              write(*,*) partype(ivar)
-!              call xerrab ('partype out of bounds')
-            end select
-            ic = ic + 1
-          endif
-        end do
-      endif
-! $AD END-DO-NOT-DIFF
       if(switch%b2tqna_transport_namelist.eq.1) then
         do is=0,ns-1
           if(.not.is_neutral(is)) then
@@ -3681,7 +3639,6 @@ c recompute hci0 and hcn0
       use b2mod_switches
       use b2mod_user_namelist
      , , only : nomp, omp, icsep
-      use b2mod_par_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -3717,28 +3674,6 @@ c recompute hci0 and hcn0
      &    'Invalid icsep value, check rzomp in b2.user.parameters')
         endif
       endif
-! $AD DO-NOT-DIFF
-      if (flag_optim) then
-        ic = 1
-!       loop over all specified variables except sigmas
-        do ivar = 1, nnvar - nsigma_opt         
-          if (spatial_dep(ivar)) then
-!           spatially dependent coefficient -> par_opt_phys(ic:ic+spatial_points(ipar)) skipped
-            ic = ic + spatial_points(ivar)
-          else
-            select case (partype(ivar))
-            case (13) ! keps_cd
-              switch%keps_cd = par_opt_phys(ic)
-            case (14) ! keps_heat
-              switch%keps_heat = par_opt_phys(ic)
-            case (15) ! keps_heat_i
-              switch%keps_heat_i = par_opt_phys(ic)
-            end select
-            ic = ic + 1
-          endif
-        end do
-      endif
-! $AD END-DO-NOT-DIFF
       hci_ExB = 0.0_R8
       do is=0,ns-1
         if(.not.is_neutral(is)) then

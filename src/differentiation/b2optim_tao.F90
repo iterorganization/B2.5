@@ -13,11 +13,6 @@
       , only : b2mn_init_d, b2mn_step, b2mn_step_d, b2mn_fin_d
       use b2mod_ad_diff &
       , only : nncf
-      use b2mod_user_namelist_diff &
-      , only : nsigma, sigma
-      use b2mod_transport_namelist_diff
-      use b2mod_input_profile_diff
-      use b2mod_boundary_namelist_diff
       use b2mod_switches_diff
       implicit none
 
@@ -28,7 +23,7 @@
       PetscReal            tol
       PetscViewer          viewer
 
-      integer :: ncon, nele_jac, ipar, isigma, idir, i
+      integer :: ncon, nele_jac, ipar
       logical :: streql, hessian
       external streql
       type(switches_diffv), save :: switchdiff
@@ -44,96 +39,16 @@
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
       call b2mn_init_d
-      call read_b2mod_par_opt(ncon, nele_jac)
-      allocate(par_opt_phys(npar_opt))
       par_opt_phys = 0.0_R8
-!     Initialize derivatives for diffusion coefficients
-!     FIXME initialization to 0.0_R8 should be done elsewhere?
-!     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
-!     FIXME remove from here for adjoint
-      call xertst(npar_opt.le.nbdirsmax,'Increase size of nbdirsmax in diffsizes.F')
-      tdatad = 0.0_R8
-      parm_dnad = 0.0_R8
-      parm_dpad = 0.0_R8
-      parm_hcid = 0.0_R8
-      parm_hced = 0.0_R8
-      parm_vlad = 0.0_R8
-      parm_vsad = 0.0_R8
-      parm_sigd = 0.0_R8
-      parm_alfd = 0.0_R8
-      enkpard = 0.0_R8
-      switchdiff%b2sikt_fac_sheath = 0.0_R8
-      switchdiff%b2sikt_fac_sheath_core = 0.0_R8
-      switchdiff%keps_cd = 0.0_R8
-      switchdiff%keps_heat = 0.0_R8
-      switchdiff%keps_heat_i = 0.0_R8
-      idir = 1 !this indicates the different directions of multidirectional derivative mode
-      do ipar = 1, nnvar - nsigma_opt
-        if (spatial_dep(ipar)) then
-!         spatially dependent coefficient
-          do i = 1, spatial_points(ipar)
-            tdatad(idir,2,i,partype(ipar),1) = 1.0_R8
-            idir = idir + 1
-          end do
-        else
-!         non spatially dependent --> specified in b2tqna
-          select case (partype(ipar))
-          case (1) ! dna
-            parm_dnad(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
-          case (2) ! dpa
-            parm_dpad(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
-          case (3) ! hci
-            parm_hcid(idir,1) = 1.0_R8 ! FIXME to improve for multispecies
-          case (4) ! hce
-            parm_hced(idir) = 1.0_R8
-          case (5) ! vla
-            parm_vlad(idir,1) = 1.0_R8
-          case (7) ! vsa
-            parm_vsad(idir,1) = 1.0_R8
-          case (8) ! sig
-            parm_sigd(idir) = 1.0_R8
-          case (9) ! alf
-            parm_alfd(idir) = 1.0_R8
-          case (10) ! enkpar(1,1)
-            enkpard(idir,1,1) = 1.0_R8
-          case (11) ! b2sikt_fac_sheath
-            switchdiff%b2sikt_fac_sheath(idir) = 1.0_R8
-          case (12) ! b2sikt_fac_sheath_core
-            switchdiff%b2sikt_fac_sheath_core(idir) = 1.0_R8
-          case (13) ! keps_cd
-            switchdiff%keps_cd(idir) = 1.0_R8
-          case (14) ! keps_heat
-            switchdiff%keps_heat(idir) = 1.0_R8
-          case (15) ! keps_heat_i
-            switchdiff%keps_heat_i(idir) = 1.0_R8
-          case default
-            write(*,*) partype(ipar)
-            call xerrab ('partype out of bounds')
-          end select
-          idir = idir + 1
-        endif
-      end do
-      if (nsigma_opt.gt.0) then
-        sigmad = 0.0_R8
-        isigma = npar_opt - nsigma_opt + 1
-        do ipar = 1, nsigma
-!         only if sigma is being optimized!
-          if (sigma_opt(ipar)) then
-            sigmad(isigma,ipar) = 1.0_R8
-            isigma = isigma + 1
-          endif
-        end do
-      endif
-      allocate(par_opt_physd(npar_opt,npar_opt))
-      do ipar = 1, npar_opt
-        par_opt_physd(ipar,ipar) = 1.0_R8
-      enddo
-!     FIXME remove until here for adjoint
+!     Initialize derivatives of estimated parameters
+#ifdef TGT
+      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+      call set_tgt_perturbation(switchdiff)
+#endif
 
-!     FIXME remove from here for tangent
-      allocate(par_opt_physb(npar_opt))
+#ifdef ADJ
       par_opt_physb = 0.0_R8
-!     FIXME remove until here for tangent
+#endif
 
 !     For the moment only steepest descent is available when specifiyng the Hessian
       hessian = .false.
@@ -186,6 +101,12 @@
 
       call b2mn_fin_d
       deallocate(par_opt_phys)
+#ifdef TGT
+      deallocate(par_opt_physd)
+#endif
+#ifdef ADJ
+      deallocate(par_opt_physb)
+#endif
       stop 'b2optim'
 
       stop
@@ -254,8 +175,8 @@
 
       subroutine FormFunctionGradient(tao, XX, F, grad, dummy, ierr)
       implicit none
-      real(kind=r8) j(nncf), jd(nncf)
-      integer ipar, isigma, idir, i
+      real(kind=r8) j(nncf), jd(nncf), gradd(npar_opt)
+      integer ipar, isigma
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -292,72 +213,17 @@
       end do
       call b2mn_step_d(j,jd,switchdiff)
       F = j(1)
-!     FIXME remove from here for adjoint
+#ifdef TGT
       do ipar = 1, npar_opt
         g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
       end do
-!     FIXME remove until here for adjoint
-!     FIXME remove from here for tangent
-      idir = 1 !this indicates the different directions of adjoint mode
-      do ipar = 1, nnvar - nsigma_opt
-        if (spatial_dep(ipar)) then
-!         spatially dependent coefficient
-          do i = 1, spatial_points(ipar)
-            g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
-            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
-            g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
-            idir = idir + 1
-          end do
-        else
-!         non spatially dependent --> specified in b2tqna
-          select case (partype(ipar))
-          case (1) ! dna
-            g_v(g_i+idir-1) = parm_dnab(1) ! FIXME to improve for multispecies
-          case (2) ! dpa
-            g_v(g_i+idir-1) = parm_dpab(1) ! FIXME to improve for multispecies
-          case (3) ! hci
-            g_v(g_i+idir-1) = parm_hcib(1) ! FIXME to improve for multispecies
-          case (4) ! hce
-            g_v(g_i+idir-1) = parm_hceb
-          case (5) ! vla
-            g_v(g_i+idir-1) = parm_vlab(1)
-          case (7) ! vsa
-            g_v(g_i+idir-1) = parm_vsab(1)
-          case (8) ! sig
-            g_v(g_i+idir-1) = parm_sigb
-          case (9) ! alf
-            g_v(g_i+idir-1) = parm_alfb
-          case (10) ! enkpar(1,1)
-            g_v(g_i+idir-1) = enkparb(1,1)
-          case (11) ! b2sikt_fac_sheath
-            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath
-          case (12) ! b2sikt_fac_sheath_core
-            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath_core
-          case (13) ! keps_cd
-            g_v(g_i+idir-1) = switchdiff%keps_cd
-          case (14) ! keps_heat
-            g_v(g_i+idir-1) = switchdiff%keps_heat
-          case (15) ! keps_heat_i
-            g_v(g_i+idir-1) = switchdiff%keps_heat_i
-          case default
-            write(*,*) partype(ipar)
-            call xerrab ('partype out of bounds')
-          end select
-          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
-          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
-          idir = idir + 1
-        endif
+#endif
+#ifdef ADJ
+      call set_adj_gradient(npar_opt,gradd,switchdiff)
+      do ipar = 1, npar_opt
+        g_v(g_i+ipar-1) = gradd(ipar)/par_rescale(ipar) ! rescale par to get order unity
       end do
-      if (nsigma_opt.gt.0) then
-        do ipar = 1, nsigma
-!         only if sigma is being optimized!
-          if (sigma_opt(ipar)) then
-            g_v(g_i+idir-1) = sigmab(ipar)/par_rescale(idir) ! rescale par to get order unity
-            idir = idir + 1
-          endif
-        end do
-      endif
-!     FIXME remove until here for tangent
+#endif
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0
@@ -366,7 +232,7 @@
       subroutine FormFunction(tao, XX, F, dummy, ierr)
       implicit none
       real(kind=r8) j(nncf)
-      integer ipar, isigma, idir, i
+      integer ipar, isigma
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -404,8 +270,8 @@
 
       subroutine FormGradient(tao, XX, grad, dummy, ierr)
       implicit none
-      real(kind=r8) j(nncf), jd(nncf)
-      integer ipar, isigma, idir, i
+      real(kind=r8) j(nncf), jd(nncf), gradd(npar_opt)
+      integer ipar, isigma
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -435,73 +301,17 @@
         endif
       end do
       call b2mn_step_d(j,jd,switchdiff)
-      F = j(1)
-!     FIXME remove from here for adjoint
+#ifdef TGT
       do ipar = 1, npar_opt
         g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
       end do
-!     FIXME remove until here for adjoint
-!     FIXME remove from here for tangent
-      idir = 1 !this indicates the different directions of adjoint mode
-      do ipar = 1, nnvar - nsigma_opt
-        if (spatial_dep(ipar)) then
-!         spatially dependent coefficient
-          do i = 1, spatial_points(ipar)
-            g_v(g_i+idir-1) = tdatab(2,i,partype(ipar),1)
-            g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
-          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
-            idir = idir + 1
-          end do
-        else
-!         non spatially dependent --> specified in b2tqna
-          select case (partype(ipar))
-          case (1) ! dna
-            g_v(g_i+idir-1) = parm_dnab(1) ! FIXME to improve for multispecies
-          case (2) ! dpa
-            g_v(g_i+idir-1) = parm_dpab(1) ! FIXME to improve for multispecies
-          case (3) ! hci
-            g_v(g_i+idir-1) = parm_hcib(1) ! FIXME to improve for multispecies
-          case (4) ! hce
-            g_v(g_i+idir-1) = parm_hceb
-          case (5) ! vla
-            g_v(g_i+idir-1) = parm_vlab(1)
-          case (7) ! vsa
-            g_v(g_i+idir-1) = parm_vsab(1)
-          case (8) ! sig
-            g_v(g_i+idir-1) = parm_sigb
-          case (9) ! alf
-            g_v(g_i+idir-1) = parm_alfb
-          case (10) ! enkpar(1,1)
-            g_v(g_i+idir-1) = enkparb(1,1)
-          case (11) ! b2sikt_fac_sheath
-            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath
-          case (12) ! b2sikt_fac_sheath_core
-            g_v(g_i+idir-1) = switchdiff%b2sikt_fac_sheath_core
-          case (13) ! keps_cd
-            g_v(g_i+idir-1) = switchdiff%keps_cd
-          case (14) ! keps_heat
-            g_v(g_i+idir-1) = switchdiff%keps_heat
-          case (15) ! keps_heat_i
-            g_v(g_i+idir-1) = switchdiff%keps_heat_i
-          case default
-            write(*,*) partype(ipar)
-            call xerrab ('partype out of bounds')
-          end select
-          g_v(g_i+idir-1) = g_v(g_i+idir-1) + par_opt_physb(idir)
-          g_v(g_i+idir-1) = g_v(g_i+idir-1)/par_rescale(idir) ! rescale par to get order unity
-          idir = idir + 1
-        endif
+#endif
+#ifdef ADJ
+      call set_adj_gradient(npar_opt,gradd,switchdiff)
+      do ipar = 1, npar_opt
+        g_v(g_i+ipar-1) = gradd(ipar)/par_rescale(ipar) ! rescale par to get order unity
       end do
-      if (nsigma_opt.gt.0) then
-        do ipar = 1, nsigma
-!         only if sigma is being optimized!
-          if (sigma_opt(ipar)) then
-            g_v(g_i+idir-1) = sigmab(ipar)/par_rescale(idir) ! rescale par to get order unity
-            idir = idir + 1
-          endif
-        end do
-      endif
-!     FIXME remove until here for tangent
+#endif
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0

@@ -1,4 +1,4 @@
-      subroutine b2trace(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,
+      subroutine b2trace(nput,ns,nxtl,nxtr,ismain,dtim,stim,BoRiS,
      .                   geo, mpg, st)
       use b2mod_types
       use b2mod_diag
@@ -28,7 +28,7 @@ c----------------------------------------------------------------------
       type(geometry), intent(in) :: geo
       type(B2state), intent(in) :: st
       integer nput, ns, nxtl, nxtr, ismain, lun
-      real (kind=R8) :: dtim, tim, BoRiS
+      real (kind=R8) :: dtim, tim, BoRiS, stim
       integer ix, iy, is, istra, iline
       integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
@@ -143,7 +143,7 @@ c*** Initialisation call
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
-      if(filedata(ntrc_bln)) call b2blnci(ns,geo,mpg,st,dtim,iline)
+      if(filedata(ntrc_bln)) call b2blnci(ns,geo,mpg,st,dtim,stim,iline)
 #ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns,iline)

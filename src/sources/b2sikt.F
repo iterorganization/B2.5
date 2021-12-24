@@ -23,7 +23,6 @@ c      use b2mod_keps
       use b2us_map
       use b2us_plasma
       use b2mod_switches
-      use b2mod_par_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -98,26 +97,6 @@ c      use b2mod_keps
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv*2, dv%ni, 1, 'ni', '.gt.')
       endif
-! $AD DO-NOT-DIFF
-      if (flag_optim) then
-        ic = 1
-!       loop over all specified variables except sigmas
-        do ivar = 1, nnvar - nsigma_opt         
-          if (spatial_dep(ivar)) then
-!           spatially dependent coefficient -> par_opt_phys(ic:ic+spatial_points(ipar)) skipped
-            ic = ic + spatial_points(ivar)
-          else
-            select case (partype(ivar))
-            case (11) ! b2sikt_fac_sheath
-              switch%b2sikt_fac_sheath = par_opt_phys(ic)
-            case (12) ! b2sikt_fac_sheath_core
-              switch%b2sikt_fac_sheath_core = par_opt_phys(ic)
-            end select
-            ic = ic + 1
-          endif
-        end do
-      endif
-! $AD END-DO-NOT-DIFF
 * ..compute heat source terms
 *   ..initialize sources to zero
       call sfill (nCv*4, 0.0e0_R8, she0, 1)
