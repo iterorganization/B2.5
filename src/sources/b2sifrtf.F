@@ -213,8 +213,8 @@
       if (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &    Zhdanov_tf_fr.eq.1) then                                      !som 01.07.2021
 *     ..actual use of the Zhdanov closure
-        do iy = -1, ny
-          do ix = -1, nx
+        do iy = 0, ny-1
+          do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
@@ -226,8 +226,8 @@
      &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbfrial_test=0
-        do iy = -1, ny
-          do ix = -1, nx
+        do iy = 0, ny-1
+          do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
