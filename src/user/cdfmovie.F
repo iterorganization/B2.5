@@ -19,6 +19,7 @@
       implicit none
       integer ncid, nx, ny, ns
 #ifndef NO_CDF
+#     include <netcdf.inc>
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif

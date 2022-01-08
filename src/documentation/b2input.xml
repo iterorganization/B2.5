@@ -2794,7 +2794,7 @@
 			  <default>0</default>
 			  <type>integer</type>
 			  <description>
-				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time.
+				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
 				If used, an IDS time slice will be written at the end of run.
 				If negative, a single IDS will be written at the end of the run.
 				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
@@ -2805,9 +2805,18 @@
 			  <default>0.0</default>
 			  <type>real</type>
 			  <description>
-				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save.
+				Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
 				If used, an IDS time slice will be written at the end of run.
 				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2mndr_ids_av</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				Frequency, in number of batch averages, at which an IDS is saved containing the averaged plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_time.
+				The averaged plasma state is saved as a separate occurrence of the edge_profiles and edge_sources IDSs.
 			  </description>
 			</switch>
 			<switch>

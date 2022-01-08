@@ -40,8 +40,8 @@
       implicit none
 
       integer, intent(in) :: nx, ny, ns
-
       integer :: n2, itp
+      external batch_average, batch_average_sq
 
       call subini ('running_average')
 
@@ -101,7 +101,8 @@
      *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
       character check*10
       character lbli*120
-      external b2xpne, b2xpni
+      external b2ruzd, b2xpne, b2xpni
+      external cfruch, cfruin, cfrure
 
       call subini ('run_av_init')
 
@@ -346,6 +347,8 @@
       character(*) :: savefile
       integer n2, iun, idum(0:2)
       character lble*120
+      external cfwuch, cfwuin, cfwure
+      external b2xxid, b2wuzd
 
       call subini ('run_av_save')
 
@@ -451,7 +454,7 @@
       end subroutine run_av_get_plasma
 
       subroutine run_av_get_sources (sna0, smo0, she0, shi0,
-     &                          sch0, sne0, nx, ny, ns)
+     &                               sch0, sne0, nx, ny, ns)
       implicit none
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(inout) ::

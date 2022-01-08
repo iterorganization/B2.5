@@ -19,8 +19,8 @@ c 2002-09-11: logic revised
       use b2mod_diag
       use b2mod_rates
       use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_movies
+      use b2mod_plasma
       use b2mod_sources
       use b2mod_sputter
       use b2mod_indirect
@@ -78,6 +78,9 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
+#ifndef NO_CDF
+#     include <netcdf.inc>
+#endif
       integer nxd,nyd,nsd_local
 c
 c  version : 27.07.96 20:37

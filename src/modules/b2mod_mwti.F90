@@ -4,21 +4,21 @@ module b2mod_mwti
   implicit none
   private
   public :: b2mwti, output_ds, dealloc_b2mod_mwti
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
          nesepa_av(:), tesepa_av(:), tisepa_av(:), &
          posepi_av(:), posepm_av(:), posepa_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_av(:), temxip_av(:), timxip_av(:), &
          nemxap_av(:), temxap_av(:), timxap_av(:), &
          pomxip_av(:), pomxap_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_std(:), tesepi_std(:), tisepi_std(:), &
          nesepm_std(:), tesepm_std(:), tisepm_std(:), &
          nesepa_std(:), tesepa_std(:), tisepa_std(:), &
          posepi_std(:), posepm_std(:), posepa_std(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
@@ -151,7 +151,8 @@ contains
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
-    external rratio
+    external ipgetr, get_jsep, find_file, rratio, &
+             check_cdf_status, batch_average_sq
 #endif
     !   ..initialisation
     save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
@@ -1509,6 +1510,9 @@ contains
     real (kind=R8) :: dvals(1)
     ! CDF format variable
     integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+    ! Procedures
+    external ipgeti, check_cdf_status
+
     ! Create and enter define mode
     call ipgeti ('b2mndr_cdf_default', cdf_default)
     if (cdf_default.eq.3 .or. cdf_default.eq.4) then
@@ -3051,7 +3055,7 @@ contains
 #else
     logical, parameter :: debug = .false.
 #endif
-    external xerrab
+    external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
@@ -3213,8 +3217,10 @@ contains
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
     real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
-    ! computation
+    ! Procedures
+    external xerrab
 
+    ! Computation
     select case (side)
     case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
