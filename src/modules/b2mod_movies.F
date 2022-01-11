@@ -2,7 +2,6 @@
       use b2mod_types
       use b2mod_constants
 #ifndef NO_CDF
-#     include <netcdf.inc>
       integer, save :: nxdim, nydim, nsdim, natmdim, nmoldim,
      & timedim, ntstep
 
@@ -11,6 +10,7 @@
       subroutine create_cdf_start(ncid, filename,
      & nx, ny, ns, natm, nmol)
       implicit none
+#     include <netcdf.inc>
       character*(*) filename
       integer ncid, nx, ny, ns, natm, nmol
 * variable shapes
@@ -49,6 +49,7 @@
 
       subroutine create_cdf_field2(ncid, name, long_name, units)
       implicit none
+#     include <netcdf.inc>
       character*(*) name, long_name, units
 * file id
       integer ncid
@@ -74,6 +75,7 @@
 
       subroutine create_cdf_field3(ncid, name, itype, long_name, units)
       implicit none
+#     include <netcdf.inc>
       integer ncid, itype
       character*(*) name, long_name, units
 * variable shapes
@@ -110,6 +112,7 @@
 
       subroutine create_cdf_end(ncid)
       implicit none
+#     include <netcdf.inc>
 * file id
       integer ncid
 * dimensions and variables
@@ -132,6 +135,7 @@
 
       subroutine put_cdf_start(ncid, filename, time)
       implicit none
+#     include <netcdf.inc>
       integer ncid
       character*(*) filename
       real (kind=R8) :: time(1)
@@ -163,6 +167,7 @@ c
 
       subroutine put_cdf_field2(ncid, name, z_xyt, nx, ny)
       implicit none
+#     include <netcdf.inc>
       integer ncid
       character*(*) name
       integer nx, ny
@@ -186,6 +191,7 @@ c
 
       subroutine put_cdf_field3(ncid, name, z_xyst, nx, ny, ns)
       implicit none
+#     include <netcdf.inc>
       integer ncid
       character*(*) name
       integer nx, ny, ns
@@ -211,6 +217,7 @@ c
 
       subroutine put_cdf_end(ncid)
       implicit none
+#     include <netcdf.inc>
       integer ncid
       integer iret
 c
@@ -221,6 +228,7 @@ c
 
       subroutine get_cdf_ntstep(filename, ntstep, ncid)
       implicit none
+#     include <netcdf.inc>
       character*(*) filename
       integer ntstep
       integer iret
@@ -242,6 +250,7 @@ c
       subroutine get_cdf(filename, ncid,
      &  ntstep, time, name, z_xyt, nx, ny)
       implicit none
+#     include <netcdf.inc>
       character*(*) filename, name
       integer ntstep, nx, ny
       real (kind=R8) :: time(1), z_xyt(-1:nx, -1:ny)
@@ -278,6 +287,7 @@ c OLD interface
       subroutine create_cdf(filename, ncid,
      &  nx, ny, name, long_name, units)
       implicit none
+#     include <netcdf.inc>
       character*(*) filename, name, long_name, units
       integer nx, ny
       integer index(1), ntstep
@@ -336,6 +346,7 @@ c     1 lnblnk(units), units, iret)
 
       subroutine put_cdf(ncid, filename, time, name, z_xyt, nx, ny)
       implicit none
+#     include <netcdf.inc>
       character*(*) filename, name
       integer nx, ny
       real (kind=R8) :: time(1), z_xyt(nx, ny)

@@ -819,9 +819,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,    !srv 13.01.17 24.05.21
      &   vol, hx, hz, bb, pbshz, lnlam,                                  !srv 23.07.99 09.01.01 01.07.09
-     &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,                       !srv 19.07.02
+     &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, cvsahz_drho, kt_neo,          !srv 19.07.02
      &   alpha1,
-     &   chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,             !som 08.10.21
+     &   chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,              !som 08.10.21
      &   smo, smq, cthe, cthi, chci, smof,                               !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 

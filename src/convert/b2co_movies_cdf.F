@@ -8,6 +8,7 @@
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
 #ifndef NO_CDF
+#     include <netcdf.inc>
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else

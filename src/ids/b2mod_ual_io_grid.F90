@@ -504,17 +504,22 @@ contains
 
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
+        integer, save :: ncall = 0
 
         !! Procedures
         external ipgetr, xertst
 
-        call ipgetr ('b2agmt_1d_width', width)
-        call xertst (0.0_R8.lt.width, 'faulty input width')
+        if (ncall.eq.0) then
+          call ipgetr ('b2agmt_1d_width', width)
+          call xertst (0.0_R8.lt.width, 'faulty input width')
+        end if
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
         !! Set grid subsets
         call fill_In_GridSubset_Desc()
+
+        ncall = ncall + 1
 
 contains
     !> Fill in the General Grid Description
@@ -1208,7 +1213,6 @@ contains
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description(1) )
           if (isymm.eq.0) then
-            call ipgetr ('b2agmt_1d_width', width)
             call gridSetupStruct1dSpace(                                      &
                 &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
                 &   (/                                                        &
@@ -1372,7 +1376,7 @@ contains
     !> Define grid subsets
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
-        integer :: geoId
+        integer, save :: geoId
 #if GGD_MINOR_VERSION > 8
         integer :: iRegion
         integer :: iPrivateB2
@@ -1399,7 +1403,8 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer :: jsep, nxtl, nxtr, ix1, ix2, ix3, ix4
+        integer :: ix1, ix2, ix3, ix4
+        integer, save :: jsep, nxtl, nxtr
         character*128 RegionDescription
 
         !! Procedures
@@ -1408,9 +1413,11 @@ contains
         external xerrab
 #endif
 
-        geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
-        call get_jsep( nx, ny, jxi, jxa, jsep )
-        call get_nxt ( nx, nxtl, nxtr )
+        if (ncall.eq.0) then
+          geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
+          call get_jsep( nx, ny, jxi, jxa, jsep )
+          call get_nxt ( nx, nxtl, nxtr )
+        end if
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
@@ -2816,11 +2823,18 @@ contains
 
     ! internal
     integer, parameter :: NDIM = 2
+    integer, save :: ncall = 0
 
-    call ipgetr('b2agmt_1d_width', width)
-    call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    ! procedures
+    external ipgetr, xertst
+
+    if (ncall.eq.0) then
+      call ipgetr('b2agmt_1d_width', width)
+      call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    end if
     call xertst( present( gs ) .EQV. present( qc ) , &
         "Assert error ( gz or qc missing ) in b2ITMFillGridDescription" )
+    ncall = ncall + 1
 
     call fill_In_Grid_Desc()
     call fillInSubGridDescription()

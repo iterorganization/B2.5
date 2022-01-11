@@ -998,4 +998,3 @@ c         fchi=0.0_R8
 *.end b2stbc_bas
 
       end subroutine b2stbc_bas
-

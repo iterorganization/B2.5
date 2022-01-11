@@ -542,6 +542,3 @@ C
       call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
       end subroutine b2yt_ntread
-
-
-

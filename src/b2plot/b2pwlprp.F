@@ -36,7 +36,7 @@ c======================================================================
       logical lim_cnf,target_east,target_west
 c<<<
       integer lun_w
-      parameter (lun_w=76)
+      parameter (lun_w=96)
       character tab
 c>>>
       integer use_eirene
@@ -342,7 +342,7 @@ c*** wsrttol : a tolerance parameter for defining coinciding segments
       parameter (wsrttol=1.0e-6_R8)
 c<<<
       integer lun_w, lfn_hlp
-      parameter (lun_w=76, lfn_hlp=mlblprtx+9)
+      parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       character tab, fn_hlp*(lfn_hlp)
 c
 c======================================================================
@@ -1067,6 +1067,7 @@ c*** The whole wall including the refined targets (shadowing)
         write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
       end do !}
       write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+      close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
@@ -1094,8 +1095,8 @@ c*** use the zone index to label the plot zone
      ,      tab,wldrfdst(i,il),tab,k
         end do !}
         write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+        close(lun_w)
       end do !}
-      close(lun_w)
 #ifdef DBG
       print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
       print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
