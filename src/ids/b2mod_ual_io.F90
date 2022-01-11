@@ -696,6 +696,7 @@ contains
 #endif
 
         integer, parameter :: nsources = 12
+        integer, save :: ncall = 0
         integer, save :: style = 1
         integer, save :: ismain = 1
         integer, save :: ismain0 = 0
@@ -721,39 +722,42 @@ contains
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
-        call ipgetr ('b2news_BoRiS', BoRiS)
-        call ipgeti ('b2mndt_style', style)
-        call ipgeti ('b2mndr_ismain', ismain)
-        call ipgeti ('b2sigp_style', ue_style)
-        call ipgeti ('ids_from_43', ids_from_43)
-        call ipgetr ('b2mndr_dtim', dtim)
-        call ipgetr ('b2mndr_rescale_neutrals_sources', neutral_sources_rescale)
-        call ipgeti ('balance_netcdf', balance_netcdf)
-        if (balance_netcdf.ne.0) then
-          filename='balance.nc'
-          call find_file(filename,exists)
-          if (.not.exists) then
-            write(*,*) 'Missing balance.nc file: data skipped!'
-            balance_netcdf = 0
+        if (ncall.eq.0) then
+          call ipgetr ('b2news_BoRiS', BoRiS)
+          call ipgeti ('b2mndt_style', style)
+          call ipgeti ('b2mndr_ismain', ismain)
+          call ipgeti ('b2sigp_style', ue_style)
+          call ipgeti ('ids_from_43', ids_from_43)
+          call ipgetr ('b2mndr_dtim', dtim)
+          call ipgetr ('b2mndr_rescale_neutrals_sources', &
+              &                 neutral_sources_rescale)
+          call ipgeti ('balance_netcdf', balance_netcdf)
+          if (balance_netcdf.ne.0) then
+            filename='balance.nc'
+            call find_file(filename,exists)
+            if (.not.exists) then
+              write(*,*) 'Missing balance.nc file: data skipped!'
+              balance_netcdf = 0
+            end if
           end if
-        end if
-        match_found = .false.
-        is = ismain
-        do while (is.ge.0 .and. .not.match_found)
-          if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and. am(is).eq.am(ismain)) then
-            ismain0 = is
-            match_found = .true.
+          match_found = .false.
+          is = ismain
+          do while (is.ge.0 .and. .not.match_found)
+            if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and. am(is).eq.am(ismain)) then
+              ismain0 = is
+              match_found = .true.
+            end if
+            is = is - 1
+          end do
+          if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
+          call ipgeti ('b2mwti_ismain0', ismain0)
+          if (redef_gmtry.eq.0) then
+            drift_style = 1
+          else
+            drift_style = 2
           end if
-          is = is - 1
-        end do
-        if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
-        call ipgeti ('b2mwti_ismain0', ismain0)
-        if (redef_gmtry.eq.0) then
-         drift_style = 1
-        else
-         drift_style = 2
+          call ipgeti ('b2tfnb_drift_style', drift_style)
         end if
-        call ipgeti ('b2tfnb_drift_style', drift_style)
 #ifdef B25_EIRENE
         if (ids_from_43.eq.0) then
           source = "SOLPS-ITER"
@@ -6099,6 +6103,7 @@ contains
         end if
 #endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
+        ncall = ncall + 1
 
         contains
 
@@ -7168,6 +7173,7 @@ contains
     logical, intent(in) :: do_summary_data
     integer :: i, ix, icnt
     integer :: idum(0:3)
+    integer, save :: ncall = 0
     real(IDS_real) :: parg(0:99)
     real(IDS_real), save :: pit_rescale = 1.0_IDS_real
     real(IDS_real) :: b0r0_ref, z_eq
@@ -7239,28 +7245,31 @@ contains
       end if
     end if
 
-    if (pit_rescale.eq.1.0_R8) then
-      filename='b2ag.dat'
-      call find_file(filename,exists)
-      if (exists) then
-        open(99,file=filename)
-        call b2agx0 (99, idum(0), idum(1), idum(2), idum(3))
-        read (99,'(a8)',err=2) id
-        read (99,*,err=2) parg
-    1   continue
-        read (99,'(a)',end=2,err=2) line
-        if (.not.is_comment(line)) then
-          ligne = line
-          call strip_spaces(ligne)
-          if (ligne(1:1).eq.'''') then
-            read (line,*) cnamip, cvalip
-            call ipsetc (cnamip, cvalip)
+    if (ncall.eq.0) then
+      call ipgetr ('b2agfs_pit_rescale', pit_rescale)
+      if (pit_rescale.eq.1.0_R8) then
+        filename='b2ag.dat'
+        call find_file(filename,exists)
+        if (exists) then
+          open(99,file=filename)
+          call b2agx0 (99, idum(0), idum(1), idum(2), idum(3))
+          read (99,'(a8)',err=2) id
+          read (99,*,err=2) parg
+    1     continue
+          read (99,'(a)',end=2,err=2) line
+          if (.not.is_comment(line)) then
+            ligne = line
+            call strip_spaces(ligne)
+            if (ligne(1:1).eq.'''') then
+              read (line,*) cnamip, cvalip
+              call ipsetc (cnamip, cvalip)
+            endif
           endif
-        endif
-        goto 1
-    2   continue
-        close(99)
-        call ipgetr ('b2agfs_pit_rescale', pit_rescale)
+          goto 1
+    2     continue
+          close(99)
+          call ipgetr ('b2agfs_pit_rescale', pit_rescale)
+          end if
         end if
       end if
 
@@ -7420,6 +7429,7 @@ contains
       end if
     end if
 
+    ncall = ncall + 1
     return
     end subroutine put_equilibrium_data
 
@@ -7436,7 +7446,6 @@ contains
 #endif
     real(IDS_real) :: gpff, gsum, gmid, gbot, gtop, area
     logical at_top, at_bot, at_mid
-    external ipgeti
 
     select case (GeometryType)
     case( GEOMETRY_LIMITER )
@@ -8746,7 +8755,7 @@ contains
     type (type_edge) :: edgecpo
 
     !! internal
-    type(B2GridMap) :: CPOmap
+    type(B2GridMap), save :: CPOmap
     logical, save :: CPOmapInitialized = .false.
     type(type_complexgrid_subgrid) :: sg_cell, sg_face, sg_bnd_core
     integer :: is, ns, nx, ny, i
