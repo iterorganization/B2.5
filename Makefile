@@ -962,7 +962,7 @@ ${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.F90
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${INCLUDE} ${INCMODS} -o $*.o $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${INCLUDE} ${INCMODS} ${OBJDEST} -o $*.o $*.F90
 else
 	$(warning NETCDF library not present!)
 endif
