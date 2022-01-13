@@ -1403,8 +1403,8 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer, save :: jsep, nxtl, nxtr
         integer :: ix1, ix2, ix3, ix4
+        integer, save :: jsep, nxtl, nxtr
         character*128 RegionDescription
 
         !! Procedures
@@ -2823,7 +2823,7 @@ contains
 
     ! internal
     integer, parameter :: NDIM = 2
-    integer, save : ncall = 0
+    integer, save :: ncall = 0
 
     ! procedures
     external ipgetr, xertst

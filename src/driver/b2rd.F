@@ -889,7 +889,7 @@
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #endif
-        fchdia(0:nx,-1:ny,0)=rfx(-1:nx,0:ny)
+        fchdia(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchdia(-1,:,0)=0.0_R8
         call mds_err_msg(status)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)

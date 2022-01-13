@@ -743,7 +743,8 @@ contains
           match_found = .false.
           is = ismain
           do while (is.ge.0 .and. .not.match_found)
-            if (is_neutral(is) .and. zn(is).eq.zn(ismain) .and. am(is).eq.am(ismain)) then
+            if (is_neutral(is) .and. zn(is).eq.zn(ismain) &
+                             & .and. am(is).eq.am(ismain)) then
               ismain0 = is
               match_found = .true.
             end if
@@ -3281,8 +3282,8 @@ contains
                 end do
                 call write_cell_scalar( edge_profiles,                      &
                       &   scalar = edge_sources%source(1)%                  &
-                    &   ggd( time_sind )%ion( is )%particles,               &
-                    &   b2CellData = totCv )
+                      &   ggd( time_sind )%ion( is )%particles,             &
+                      &   b2CellData = totCv )
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
                   tmpCv(:,:) = ext_sna(:,:,ispion(is,js)) / vol(:,:)
