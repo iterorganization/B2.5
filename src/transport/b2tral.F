@@ -22,7 +22,8 @@
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, alloc_input_profile,
-     &          nss, nrr, nkind_coeff, nkind_data
+     &          nss, nrr, nkind_coeff, nkind_data, poloidal_scaling,
+     &          transport_ip_filename, nscale
       use b2mod_ad
      & , only : my_out_folder, my_out_sf, b2news_solving, ncall_b2tral,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,

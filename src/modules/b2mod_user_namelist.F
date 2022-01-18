@@ -263,10 +263,6 @@ c***  Standard setup:
           if (cftype(icf).eq.5) m%cfOnCv(icf) = .false. ! FIXME add jsat 
           if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
      &      call xerrab('cftype 5 must be defined using faces!') ! FIXME add jsat 
-!          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
-!     &        (cftype(icf).ge.7 .and. cftype(icf).le.9) .and.
-!     &         cfdef(icf).eq.2) call xerrab ('cftype=1-3,7-9 need '//
-!     &         'to be defined using cells')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
