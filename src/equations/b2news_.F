@@ -50,7 +50,8 @@
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
-     &          nkind_data
+     &          nkind_data, poloidal_scaling, transport_ip_filename,
+     &          nscale
       use b2mod_ad
       implicit none
 *   ..input arguments (unchanged on exit)

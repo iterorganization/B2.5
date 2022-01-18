@@ -14,7 +14,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf
+     &             nCf, mxnCf, mxStencil
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -602,6 +602,9 @@ cwdk  can be derived directly from data in that file
         m%cvNvP(iCv,2) = i
         iNv = iNv + i
       enddo
+
+!csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
+      m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
       deallocate(indCv)
 

@@ -95,9 +95,9 @@
       allocate(G(ncon),G_L(ncon),G_U(ncon),LAM(ncon))
 
       do ipar = 1, npar_opt
-        X(ipar) = x0(ipar)
-        X_L(ipar) = xl(ipar)
-        X_U(ipar) = xu(ipar)
+        X(ipar) = x0(ipar)/par_rescale(ipar)
+        X_L(ipar) = xl(ipar)/par_rescale(ipar)
+        X_U(ipar) = xu(ipar)/par_rescale(ipar)
         if (X_L(ipar).lt.-inf_opt)
      &    write(*,*) 'IPOPT: warning, X_L(',ipar,') set to infty'
         if (X_U(ipar).gt.inf_opt)
@@ -280,7 +280,7 @@
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt
-          par_opt_phys(ipar) = real(XX(ipar),kind=r8)
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
@@ -289,7 +289,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
@@ -318,7 +318,7 @@
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt
-          par_opt_phys(ipar) = real(XX(ipar),kind=r8)
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
@@ -327,7 +327,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
@@ -339,13 +339,15 @@
       endif
 #ifdef TGT
       do ipar = 1, npar
-        grad(ipar) = DBLE(jd(1))/par_rescale(ipar) ! rescale par to get order unity
+        grad(ipar) = DBLE(jd(1))*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar,gradd,switchdiff)
       do ipar = 1, npar
-        grad(ipar) = DBLE(gradd(ipar))/par_rescale(ipar) ! rescale par to get order unity
+        grad(ipar) = DBLE(gradd(ipar))*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
 #endif
 

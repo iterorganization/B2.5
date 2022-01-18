@@ -129,18 +129,18 @@
       call VecSet(X_U,zero,ierr);CHKERRQ(ierr)
 
       do ipar = 1, npar
-        call VecSetValue(X,ipar-1,x0(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+        call VecSetValue(X,ipar-1,x0(ipar)/par_rescale(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
         if (xl(ipar).lt.-inf_opt) then
           write(*,*) 'TAO: warning, X_L(',ipar,') set to infty'
           call VecSetValue(X_L,ipar-1,PETSC_NINFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
         else
-          call VecSetValue(X_L,ipar-1,xl(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+          call VecSetValue(X_L,ipar-1,xl(ipar)/par_rescale(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
         endif
         if (xu(ipar).gt.inf_opt) then
           write(*,*) 'TAO: warning, X_U(',ipar,') set to infty'
           call VecSetValue(X_U,ipar-1,PETSC_INFINITY,INSERT_VALUES,ierr);CHKERRQ(ierr)
         else
-          call VecSetValue(X_U,ipar-1,xu(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
+          call VecSetValue(X_U,ipar-1,xu(ipar)/par_rescale(ipar),INSERT_VALUES,ierr);CHKERRQ(ierr)
         endif
       end do
       call VecAssemblyBegin(x,ierr);CHKERRQ(ierr)
@@ -196,7 +196,7 @@
 !     gx2=2*(x2-2) -2
 !     g_v(g_i+1) = 2.0*(x_v(x_i+1)-2.0) - 2.0
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -204,7 +204,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)
+          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
@@ -215,13 +215,15 @@
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = jd(1)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchdiff)
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = gradd(ipar)/par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
@@ -246,7 +248,7 @@
       call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
 
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -254,7 +256,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)
+          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
@@ -285,7 +287,7 @@
       call VecGetArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
 
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)
+        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -293,7 +295,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)
+          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
@@ -303,13 +305,15 @@
       call b2mn_step_d(j,jd,switchdiff)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)/par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = jd(1)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchdiff)
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = gradd(ipar)/par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
