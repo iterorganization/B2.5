@@ -1,6 +1,6 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
-LD_MSCL     ?= -L/opt/gcc/8.3.0/snos/lib64 -lgfortran -L${SOLPSLIB} -lmscl
+LD_MSCL     ?= -L${SOLPSLIB} -lmscl
 ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
