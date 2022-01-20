@@ -326,7 +326,7 @@ c residuals for separate neutral energy equation
         call b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, rxf, switch%b2npht_pcm0, dv%cortt,
-     &  dv%corte, dv%corti, dv%cortn, dv%corkt, dv%pccm(1,0), pl%na, 
+     &  dv%corte, dv%corti, dv%cortn, dv%corkt, dv%pccm(1:nCv,0), pl%na, 
      &  pl%ua, pl%te, pl%ti, pl%tn, pl%kt, pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return
