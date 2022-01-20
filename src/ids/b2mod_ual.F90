@@ -78,7 +78,7 @@ contains
             &   divertors, &
 #endif
             &   treename, shot, run, idx, username, database, version )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -231,7 +231,7 @@ contains
             &   divertors, &
 #endif
             &   idx )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -300,7 +300,7 @@ contains
             &   divertors, &
 #endif
             &   idx )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -583,11 +583,12 @@ contains
         integer :: status
         external xertst
 
-        call imas_close(idx, status)
-        call xertst ( status.eq.0, 'Error closing IMAS database !')
+        !! Close IDS
+        call imas_close( idx, status )
+        call xertst( status.eq.0, 'Error closing IMAS database !' )
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-        call euITM_close(idx)
+        call euITM_close( idx )
 # endif
 #endif
     end subroutine close_ual

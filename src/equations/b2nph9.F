@@ -30,7 +30,7 @@
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),       !srv 07.06.00 02.06.99 07.07.21
-     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
@@ -188,8 +188,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                     !srv 02.01.07

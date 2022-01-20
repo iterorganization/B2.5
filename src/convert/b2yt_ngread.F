@@ -2134,7 +2134,3 @@ c       = 4 : center
 
       return
       end function convert_eirdiag
-
-
-
-

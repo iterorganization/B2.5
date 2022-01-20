@@ -2711,6 +2711,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &        idx )
           else
+            if (database.eq.'iter') database = 'ITER'
             call put_ids_edge( edge_profiles, edge_sources,
      &        edge_transport, radiation, description,
 #if IMAS_MINOR_VERSION > 21

@@ -16,6 +16,7 @@
 #endif
       integer ncidcdf,istep
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer :: iret, start(4), count(4), varid
       real (kind=R8) :: time(1)
       real (kind=R8), allocatable :: dummy(:,:,:)

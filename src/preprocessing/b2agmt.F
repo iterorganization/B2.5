@@ -469,4 +469,3 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       end function dist
 
       end subroutine b2agmt
-
