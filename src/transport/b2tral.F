@@ -122,6 +122,7 @@
       integer, save :: Zhdanov_test = 0                                 !som 16.06.21
       integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
       integer, save :: Zhdanov_visu = 1                                 !som 10.08.21
+      integer, save :: zh_vis_type = 0                                  !som 13.01.22
       integer, save :: icase = 0                                        !som 05.03.21
       integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
@@ -223,6 +224,7 @@
         call ipgeti ('b2tral_zh_analyt_mdf', zh_analyt_mdf)       !som 21.03.21
         call ipgeti ('b2tral_zh_dist_fun', zh_dist_fun)           !som 10.06.21
         call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
+        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)           !som 13.01.22
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
@@ -322,6 +324,16 @@
         endif
 
         if (Zhdanov_test.eq.0 .and. Zhdanov_visu.eq.1) then           !som 10.08.21
+         if (zh_vis_type.eq.0) then                                   !som 13.01.22
+          cvsahz0(-1:nx,-1:ny,0:1,0:ns-1)=
+     &     cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsa0(-1:nx,-1:ny,0:1,0:ns-1)=
+     &     cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1)=
+     &     cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1)
+          cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1)=
+     &     cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
+         else if (zh_vis_type.eq.1) then
           cvsahz0(-1:nx,-1:ny,0:1,0:ns-1)=
      &     cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1)
           cvsa0(-1:nx,-1:ny,0:1,0:ns-1)=
@@ -330,6 +342,7 @@
      &     cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1)
           cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1)=
      &     cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1)
+         endif
         endif
 
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0

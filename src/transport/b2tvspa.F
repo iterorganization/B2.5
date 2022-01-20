@@ -54,6 +54,7 @@
       save ncall, vis_par
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
       integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
+      integer, save :: zh_vis_type = 0                                   !som 13.01.22
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -79,6 +80,7 @@
 *    ..test edge values of cvsa_cl
         call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                        !srv 16.10.17
         call ipgeti ('b2tfhe_no_current', no_current)
+        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
@@ -128,22 +130,41 @@ c Drift terms
          endif
         else
          if (.not.is_neutral(is)) then                                  !som 09.11.21
-          do iy = -1, ny
-           do ix = 0, nx
-            if(leftix(ix,iy).ne.-2) then
+          if (zh_vis_type.eq.0) then                          !som 13.01.22
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
 !           it has been considered that cvsa_cl was multiplied by bx**2
-             dvpar(ix,iy) =
-     &       (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
-     &        bb(leftix(ix,iy),leftiy(ix,iy),2)*
-     &        sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &             bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
-     &        cvsa_drho(ix,iy,0,is)*
-     &       (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
-     &       -avm_u(leftix(ix,iy),leftiy(ix,iy))*
-     &        sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
-            endif
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_drho(ix,iy,0,is)*
+     &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
+     &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
            enddo
-          enddo
+          else if (zh_vis_type.eq.1) then
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
+!           it has been considered that cvsa_cl was multiplied by bx**2
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_drho(ix,iy,0,is)*
+     &        (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
+     &        -avm_u(leftix(ix,iy),leftiy(ix,iy))*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
+           enddo
+          endif
          else
           dvpar=0.0_R8
          endif
