@@ -102,7 +102,7 @@
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwf)
 
       do iFc = 1, nFc
-        con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+        con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -180,7 +180,7 @@ c the logic statements could be simplified but for now this is not done to impro
 
        if (.not.is_neutral(is)) then
         do iFc = 1, nFc
-          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),is)*pl%ti(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -189,7 +189,7 @@ c the logic statements could be simplified but for now this is not done to impro
         enddo
        else
         do iFc = 1, nFc
-          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),0)*pl%tn(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
