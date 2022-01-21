@@ -79,6 +79,7 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1                               !som 16.08.21
+      integer, save :: zh_vis_type = 0                              !som 13.01.22
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) :: ft                                            !som 16.08.21
@@ -184,6 +185,7 @@
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -485,18 +487,31 @@
           enddo
          enddo
         else
-         do iy = -1, ny
-          do ix = -1, nx
-           if(leftix(ix,iy).eq.-2) then
+         if (zh_vis_type.eq.0) then                          !som 13.01.22
+          do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
-           else
+            else
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+            endif
+           enddo
+          enddo
+         else if (zh_vis_type.eq.1) then
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+            else
              wrk0(ix,iy) = (cvsa(ix,iy,0,is)-ft*cvsa_cl(ix,iy,0,is))*
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
      &         ft*cvsa_drho(ix,iy,0,is)*
      &        (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2    !som 16.08.21
-           endif
+            endif
+           enddo
           enddo
-         enddo
+         endif
         endif
         do iy = -1, ny
          do ix = -1, nx

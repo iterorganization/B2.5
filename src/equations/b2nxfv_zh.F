@@ -29,6 +29,7 @@
 
 *   ..local variables
       integer ncall, ix, iy
+      integer, save :: zh_vis_type = 0                              !som 13.01.22
       real (kind=R8) ::
      *   ft
       save ncall
@@ -46,6 +47,10 @@
       call subini ('b2nxfv_zh')
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
+      endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
       endif
@@ -56,10 +61,15 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
-          flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*
+          if (zh_vis_type.eq.0) then                          !som 13.01.22
+           flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*
+     &     (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
+          else if (zh_vis_type.eq.1) then
+           flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*
      &     ((log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))-
      &      (log(rho_rel(ix,iy))-
      &       log(rho_rel(leftix(ix,iy),leftiy(ix,iy)))))
+          endif
          else
           flubv(ix,iy,0) = 0.0e0_R8
          endif

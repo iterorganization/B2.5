@@ -64,6 +64,7 @@
       integer ncall, ix, iy, k, inucl
       integer, save :: hstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
+      integer, save :: zh_vis_type = 0                              !som 13.01.22
       !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
       character chns*3, chns0*3, chk*1                              !srv 17.06.02
       real (kind=R8) ::
@@ -110,6 +111,7 @@
        call ipgeti ('b2siav_style_qip', hstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
@@ -470,8 +472,13 @@
             do ix= 0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >         then
-                t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
+                if (zh_vis_type.eq.0) then                          !som 13.01.22
+                 t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
+     *             *wrk2(ix,iy)
+                else if (zh_vis_type.eq.1) then
+                 t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
      *             *wrk2(ix,iy)*rho_rel(ix,iy)                      !srv 01.07.05 } !som 13.08.21
+                endif
                 if (t0.gt.0.0e0) then
                   smbvv(ix,iy,0)=t0*ub(ix,iy)
                 else
@@ -488,8 +495,10 @@
           wrk0=0
 * calculate part of the mass-averaged velocity which depends on the other
 * ion velocities
-          u_res=avm_u-rho_rel*ub
-          do iy=0,ny-1
+          if (zh_vis_type.eq.1) then
+           u_res(-1:nx,-1:ny)=
+     &      avm_u(-1:nx,-1:ny)-rho_rel(-1:nx,-1:ny)*ub(-1:nx,-1:ny)
+           do iy=0,ny-1
             do ix=0,nx
               if(leftix(ix,iy).eq.-2) then
                 wrk0(ix,iy)=0.0e0_R8
@@ -507,9 +516,9 @@
      &           wrk2(leftix(ix,iy),leftiy(ix,iy)))
               endif
             enddo
-          enddo
+           enddo
 
-          do iy=0,ny-1
+           do iy=0,ny-1
             do ix=0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 smbvi(ix,iy,0)=vol(ix,iy)/hx(ix,iy)*hz(ix,iy)*
@@ -519,7 +528,8 @@
                 smbvi(ix,iy,0) = 0.0e0_R8
               endif
             enddo
-          enddo
+           enddo
+          endif
         endif
 !     endif                                                         !srv 26.10.08
 

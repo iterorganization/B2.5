@@ -1479,6 +1479,15 @@
 					This switch is subservient to b2tral_Zhdanov_closure.
 				</description>
 			</switch>
+		          <switch>
+			    <name>b2tral_zh_vis_type</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+				</description>
+			</switch>
 			<switch>
 				<name>b2npmo_smbvi_factor</name>
 				<default>1.0</default>
