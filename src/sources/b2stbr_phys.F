@@ -261,10 +261,6 @@ c     initialize debugging/analysis arrays
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
 
-        if (ns.gt.2) then
-          call xerrab('KUL recycling model not yet developed for'//
-     &                    'multi-species cases')
-        endif
         dnn = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
@@ -843,7 +839,7 @@ cdpc
          endif
 
 
-         if (switch%recycle_afn.eq.0) then !! default neutral recycling/reflection model
+         if (switch%recycle_afn.eq.0.or.zn(is0).ne.1) then !! default neutral recycling/reflection model (always for non-hydrogenic species)
          srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+b2recyc(is,istra)*t0
 #ifdef WG_TODO
          itrack=track_index(is0)
