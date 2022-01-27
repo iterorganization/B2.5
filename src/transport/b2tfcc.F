@@ -102,7 +102,7 @@
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwf)
 
       do iFc = 1, nFc
-        con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+        con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
@@ -135,7 +135,7 @@
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-       if (.not.is_neutral(is)) then
+       if (.not.is_neutral(is).or.zn(is).ne.1) then
          flo(:,0) = -switch%xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tif
          flo(:,1) = -switch%xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tif
          con(:,0) =  switch%xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tif
@@ -161,7 +161,7 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
        elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
-         if (.not.is_neutral(is)) then
+         if (.not.is_neutral(is).or.zn(is).ne.1) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
@@ -178,22 +178,22 @@ c the logic statements could be simplified but for now this is not done to impro
 *    ..interpolate nwe to cell faces
        call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
-       if (.not.is_neutral(is)) then
+       if (.not.is_neutral(is).or.zn(is).ne.1) then
         do iFc = 1, nFc
-          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
      &      pl%na(mpg%fcCv(iFc,1),is)*pl%ti(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
-     &      pl%na(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )/
+     &      pl%na(mpg%fcCv(iFc,2),is)*pl%ti(mpg%fcCv(iFc,2)) )/
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
         enddo
        else
         do iFc = 1, nFc
-          con(:,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &     (dv%pccm(mpg%fcCv(iFc,1),1)*
-     &      pl%na(mpg%fcCv(iFc,1),0)*pl%tn(mpg%fcCv(iFc,1))  +
+     &      pl%na(mpg%fcCv(iFc,1),is)*pl%tn(mpg%fcCv(iFc,1))  +
      &      dv%pccm(mpg%fcCv(iFc,2),1)*
-     &      pl%na(mpg%fcCv(iFc,2),0)*pl%tn(mpg%fcCv(iFc,2)) )/
+     &      pl%na(mpg%fcCv(iFc,2),is)*pl%tn(mpg%fcCv(iFc,2)) )/
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
         enddo
        endif
@@ -219,7 +219,7 @@ c the logic statements could be simplified but for now this is not done to impro
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          endif
        elseif (switch%tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
-         if (.not.is_neutral(is)) then
+         if (.not.is_neutral(is).or.zn(is).ne.1) then
            dv%floi        = dv%floi        + flo0
            dv%coni(:,:,0) = dv%coni(:,:,0) + con0
          else
