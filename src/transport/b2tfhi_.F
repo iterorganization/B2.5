@@ -268,8 +268,6 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
 
-
-      if (switch%tn_style.eq.0) then !! default combined ion-neutral energy equation
       
         floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
      &    scur(:,0)
@@ -297,35 +295,14 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         dv%floi = dv%floi + floi0
         dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
-      elseif (switch%tn_style.eq.1) then
-        if(switch%mdf_fhi.eq.1) then
-          call xerrab('non-default energy eqs not yet for mdf')
-        endif
-*   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0,
-     &    co%chci,dv%fhi,dumm0,dumm1)
-*   ..compute floi, coni
-        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
-      else
-        if(switch%mdf_fhi.eq.1) then
-          call xerrab('non-default energy eqs not yet for mdf')
-        endif
-
-*   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0,
-     &    co%chci,dv%fhi,dumm0,dumm1)
+!! neutrals 
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%tn,flon0,
      &    co%chcn,dv%fhn,dumm0,dumm1)
-
-*   ..compute floi, coni
-        call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0,co%chci,
-     &    dv%floi,dv%coni)
 *   ..compute flon, conn
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
      &    dv%flon,dv%conn)
 
-      endif
+
 
 *   ..compute ExB heat fluxes (ion and electron (!))
       flo0_ExB = 1.5_R8*dv%fna_ExB
