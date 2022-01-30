@@ -427,6 +427,14 @@ csw 26feb2013
       lneustra = switch%ineustra > 0
 !! set L_macro for EIRENE
       L_macro = switch%L_macro_AFN
+!! set other variables related to kinetic->fluid condensation
+      if (switch%do_prob_cond.eq.1) then
+        do_prob_cond = .true.
+      else
+        do_prob_cond = .false.
+      endif
+      prob_cond_min = switch%prob_cond_min
+      prob_cond_max = switch%prob_cond_max
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then 
           kin_frac_hyb = 1.0_R8
@@ -2356,7 +2364,6 @@ c     *             recyctmp*flux_scale(istrai)
                   t00=sni_av(ic,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)/
      *             dble(ih_end)
-
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
      1               'a default option that has been determined ' //
