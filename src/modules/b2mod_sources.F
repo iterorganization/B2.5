@@ -560,6 +560,7 @@
       call cfwure (nwrite, size(sch), sch, 'sch')
       call cfwure (nwrite, size(she), she, 'she')
       call cfwure (nwrite, size(shi), shi, 'shi')
+      call cfwure (nwrite, size(shn), shn, 'shn')
       call cfwure (nwrite, size(smo), smo, 'smo')
       call cfwure (nwrite, size(smq), smq, 'smq')
       call cfwure (nwrite, size(sna), sna, 'sna')
