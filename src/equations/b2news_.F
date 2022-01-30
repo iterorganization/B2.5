@@ -297,7 +297,8 @@ csw 01oct2012 initialize potential if necessary
 *   ..compute ni, ne, ne2
       call b2xpni (nCv, ns, pl%na,  dv%ni)
       call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne,  dv%ne )
-      call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne2, dv%ne2)
+      call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2) 
+
 !*   ..compute ceqp                                                      !srv 03.07.03 {
 !      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
 !      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)      !srv 03.07.03 }
