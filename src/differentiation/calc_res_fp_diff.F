@@ -1,4 +1,4 @@
-      subroutine calc_res_fp(nCv, ns, stated, stated0, res)
+      subroutine calc_res_fp_diff(nCv, ns, stated, stated0, res)
       use b2mod_types
       use b2us_plasma_diff
       implicit none
@@ -36,7 +36,7 @@
      &    sqrt(sum((stated%pl%kt-stated0%pl%kt)**2))/t0)
 
       return
-      end subroutine calc_res_fp
+      end subroutine calc_res_fp_diff
 
 
 
