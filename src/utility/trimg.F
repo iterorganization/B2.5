@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       function trimg (aa,bb,cc)
       use b2mod_types
       implicit none

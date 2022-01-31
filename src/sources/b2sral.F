@@ -31,9 +31,11 @@
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd
-!      use b2mod_eirdiag
-!     & , only : dab2, lkindi, lkindm, lkindp
+     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
+#ifndef B25_EIRENE
+      use b2mod_eirdiag
+     & , only : dab2, lkindi, lkindm, lkindp
+#endif
       use b2mod_ad
      & , only : b2sral_elm_count, my_out_folder,
 #ifdef WG_DEBUG

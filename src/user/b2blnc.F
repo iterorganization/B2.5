@@ -33,7 +33,7 @@ c
       type(B2state), intent(in) :: st
 
       integer ns, iline
-      real (kind=R8) :: dtim
+      real (kind=R8) :: dtim, stim
 c
       integer lun, ltrc
       parameter (ltrc=ntrc_bln)
@@ -51,7 +51,6 @@ c<<<
       integer kst_hlp
       integer use_recyceir
       real (kind=R8) :: recyctmp
-      real (kind=R8), save :: stim = 0.0_R8
 c>>>
 c
 c*** lv    :  version number to appear in the file
@@ -651,7 +650,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnci(ns,geo,mpg,st,dtim,iline)
+      entry b2blnci(ns,geo,mpg,st,dtim,stim,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -671,7 +670,6 @@ c*** from 960727 on
      , flxid_tmp(nspecies),flxbl_tmp(nspecies),flxbr_tmp(nspecies),
 c*** from 960808 on
      , flxrl_tmp(nspecies))
-      call ipgetr ('b2mndr_stim', stim)
       if(.not.filedata(ntrc_bln)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))

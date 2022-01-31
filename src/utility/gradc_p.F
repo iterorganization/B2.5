@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine gradc_p(nCv, nFc, nVx, mode, geo, mpg, fun, funv,
      &  gfunp)
       use b2mod_types

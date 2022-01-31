@@ -299,8 +299,14 @@ csw
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_boundary_namelist
+      use b2mod_user_namelist
+     , , only : sigma, nsigma
+      use b2mod_input_profile
+     , , only : tdata
       use b2mod_ad
      , , only: nncf
+      use b2mod_par_opt
+     & , only : par_opt_phys, npar_opt
       implicit none
       real(kind=R8) :: J(nncf)
 

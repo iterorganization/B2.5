@@ -65,14 +65,10 @@
       real (kind=R8) :: intface_s
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
-      real (kind=R8), allocatable, save :: wght(:,:)
+      real (kind=R8) :: wght(nFc,2)
       real (kind=R8), intent(in) :: kin_frac_hyb(nFc)
 
       call subini ('copy_background')
-      if(ncall.eq.0) then
-        allocate (wght(nFc,2))
-        wght = 1._r8
-      endif 
 
       evi = 1.0_R8 / ev
       if(switch%eirene_print_minmax.ne.0) then
@@ -184,6 +180,7 @@
 
 *   ..interpolate density to cell faces
 !pb      call intface1(nCv,nFc,ns-1,mpg%fcCv,gm%fcVol,pl%na,naf)
+      wght = 1.0_R8
       call intface1(nCv,nFc,ns-1,mpg%fcCv,wght,pl%na,naf)
 
       if (switch%eirene_uub_style.eq.1) then

@@ -14,7 +14,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf
+     &             nCf, mxnCf, mxStencil
         integer :: nnreg(0:1)
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -51,10 +51,9 @@
         integer, allocatable :: rcFc(:)                !         listing for each stratum the boundary faces
         real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
-        integer, allocatable :: cfCvP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfCv list, and its number of cells
-        integer, allocatable :: cfCv(:)                !         listing for each cost function the corresponding domain cells
-        integer, allocatable :: cfFcP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfFc list, and its number of faces
-        integer, allocatable :: cfFc(:)                !         listing for each cost function the corresponding faces
+        integer, allocatable :: cfRegP(:,:)            ! (nCf,2) pointing for each cost function to the first index in the cfReg list, and its number of items
+        integer, allocatable :: cfReg(:)               !         listing for each cost function the corresponding domain cells or faces
+        logical, allocatable :: cfOnCv(:)              ! (nCf) Logical to indicate whether a cf domain is on Cv (true) or Fc (false)
         real (kind=R8), allocatable :: cfFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
 !        real (kind=R8), allocatable :: intfaceV(:,:)   ! volume factors for interpolation from centers to faces; currently: geo%fcVol
@@ -386,18 +385,16 @@
       implicit none
       type(mapping), intent(in out) :: m
 
-      if (allocated(m%cfCvP)) return
+      if (allocated(m%cfRegP)) return
 
-      allocate (m%cfCvP  ( m % nCf,   2 ) )
-      allocate (m%cfCv   ( m % mxnCf    ) )
-      allocate (m%cfFcP  ( m % nCf,   2 ) )
-      allocate (m%cfFc   ( m % mxnCf    ) )
-      allocate (m%cfFcOr ( m % mxnCf    ) )
+      allocate (m%cfRegP  ( m % nCf,   2 ) )
+      allocate (m%cfReg   ( m % mxnCf    ) )
+      allocate (m%cfOnCv  ( m % nCf      ) )
+      allocate (m%cfFcOr  ( m % mxnCf    ) )
 
-      m%cfCvP = 0
-      m%cfCv = 0
-      m%cfFcP = 0
-      m%cfFc = 0
+      m%cfRegP = 0
+      m%cfReg = 0
+      m%cfOnCv = .true.
       m%cfFcOr = 0._R8
 
       return
@@ -410,12 +407,11 @@
       implicit none
       type(mapping), intent(in out) :: m
 
-      if (.not.allocated(m%cfCvP)) return
+      if (.not.allocated(m%cfRegP)) return
 
-      deallocate ( m % cfCvP  )
-      deallocate ( m % cfCv   )
-      deallocate ( m % cfFcP  )
-      deallocate ( m % cfFc   )
+      deallocate ( m % cfRegP  )
+      deallocate ( m % cfReg   )
+      deallocate ( m % cfOnCv )
       deallocate ( m % cfFcOr   )
       
       return
@@ -606,6 +602,9 @@ cwdk  can be derived directly from data in that file
         m%cvNvP(iCv,2) = i
         iNv = iNv + i
       enddo
+
+!csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
+      m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
       deallocate(indCv)
 

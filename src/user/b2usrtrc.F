@@ -1,4 +1,4 @@
-      subroutine b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      subroutine b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
@@ -14,6 +14,7 @@
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_parmmod
      .   , only : nstra, natm
@@ -34,6 +35,7 @@ c-----------------------------------------------------------------------
 
       integer nx, ny, ns, nxtl, nxtr, iline
       real (kind=R8) :: BoRiS
+      type (switches), intent (in) :: switch
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c*** lvmj  :  version number referring to the last major change
@@ -237,7 +239,6 @@ c-----------------------------------------------------------------------
       real (kind=R8) ::
      *  d, e, s, x
       real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
-      real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       integer i, j, k, l, m, n, ia, i0, im, is, ix, iy, js, ls, nv, irt,
      ,  iyp, j_he_i, l_pad_str, n_pad_str
@@ -1486,7 +1487,6 @@ c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 
       tab=char(9)
-      call ipgetr ('b2mndr_stim', stim)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -1500,7 +1500,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then !{
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then !{
         na_tmp=0
         np_tmp=0
         ns_tmp=0

@@ -6,6 +6,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : b2tlc0_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -30,11 +34,7 @@
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
-      real (kind=R8), save :: cutlo = 1.0e-60_R8
       character charns*3                                      
-      save alpha, gamma
-*   ..initialization
-      data alpha/0.0_R8/, gamma/2.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst
@@ -69,7 +69,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
      &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
             t2 = 1.0_R8/(1.0_R8 + 
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
             cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
@@ -80,7 +80,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
      &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
             t2 = 1.0_R8/(1.0_R8 + 
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
             cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
@@ -106,7 +106,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
      &        geo%fcS(iFc)
             t2 = 1.0_R8/(1.0_R8 + 
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
 *    ..poloidal
             cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2

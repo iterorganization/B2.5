@@ -48,7 +48,7 @@
       character chns*3
 #endif
       integer, save :: ncall = 0
-      real (kind=R8), save :: eps = 1.0e-60_R8
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *   fnac(nCv,0:1,0:ns-1), vntrc(nCv,0:1),                            !srv 08.07.09
      *   vntrf(nFc,0:1), tif(nFc), naf(nFc,0:ns-1), dpo(nFc,0:1),

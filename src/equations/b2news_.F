@@ -25,12 +25,13 @@
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
      &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
       use b2mod_transport_namelist
-     & , only : parm_hce, parm_hci, parm_dna
+     & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
+     &          parm_vsa, parm_alf, parm_sig
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd
+     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
       use b2mod_neutrals_namelist
      & , only : maxw_eff, nstraid
       use b2mod_b2cmpt
@@ -39,7 +40,8 @@
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
-     &          nkind_data
+     &          nkind_data, poloidal_scaling, transport_ip_filename,
+     &          nscale
       use b2mod_ad
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -96,10 +98,8 @@
 
 *   ..local variables
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
-      real (kind=R8), save :: cutlo = 1.0e-60_R8
       integer is, ier0, i, iCv, ireg
       character charns*3                                                 !srv 30.06.03
-      real (kind=R8), save :: BoRiS = 0.0_R8
       real (kind=R8) :: 
      *  rxf0, rxf1, rxf2, rxf3, t0                                       !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
@@ -148,7 +148,6 @@ c     ingeger, save :: nstg2 = 0
       call subini ('b2news_')
 *   ..set internal parameters on first call
       if (ncall_b2news_.eq.0) then
-       call ipgetr ('b2news_BoRiS', BoRiS)
 *    ..the table below shows which combination of equations will be solved
 *      depending on the value of switch 'b2news_no_solve'
 *----------------------------------------------------
@@ -333,8 +332,8 @@ c   extra call at this place within internal iteration)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
      &    nscx, nscxmax, switch%nsmin, switch%nsmax, iscx, ismain,
-     &    ismain0, dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw,
-     &    st_ext, sr, srw, psnc, psnl, wrong_flow, .false.)
+     &    ismain0, dtim, switch%BoRiS, switch, geo, mpg, pl, dv, co, rt,
+     &    rtw, st_ext, sr, srw, psnc, psnl, wrong_flow, .false.)
 #ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
@@ -373,7 +372,7 @@ c   extra call at this place within internal iteration)
         call b2srsm (nCv, ns, dtim, switch, geo, mpg, pl%na, pl%ua, 
      &    pl%te, pl%ti, dv%ne, dv%ni, sr, .false.)
 *     ..include contributions due to timestep                            !xpb
-        call b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
+        call b2srdt (nCv, ns, dtim, switch%BoRiS, switch, geo, mpg,
      &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
      &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt, psnc%zt,        !srv 23.07.21
      &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
@@ -388,7 +387,7 @@ c   extra call at this place within internal iteration)
      &   co%alfx_c, co%sigx_c, dv%fch_pi_c, pl%po, dv%ne, 
      &   pl%te, pl%na, pl%ua, st_ext, dv%ue)
       if (switch%b2sigp_style.ne.2 .or. switch%b2news_iout.ne.0) then
-        wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+        wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
         call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
         do is=0,ns-1
           wrk0 = wrk0 + rt%rza(:,is)*pl%ua(:,is)*pl%na(:,is)
@@ -505,7 +504,7 @@ csw 16oct2012 init ier0
 !WG_TODO     &             .or. iout_b2nph9.ne.0 .or. iout_b2nppo.ne.0
 !WG_TODO     &             .or. iout_b2npp7.ne.0 .or. iout_b2wdat.eq.4)
 !WG_TODO*    .. calculate contributions due to timestep for diagnostic 
-!WG_TODO     &  call b2srdt (nx, ny, ns, dtim, BoRiS, hz,
+!WG_TODO     &  call b2srdt (nx, ny, ns, dtim, switch%BoRiS, hz,
 !WG_TODO     &       vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
 !WG_TODO     &       na, ua, te, ti, ne, ni, kinrgy,
 !WG_TODO     &       snadt, smodt, shedt, shidt, schdt, snedt, .true.)
@@ -660,13 +659,14 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
       call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fna_53, dv%fne_53, 
      &  dv%fch, dv%fhe, dv%fhi, dv%fhn, rt%rpt, pl%te,
-     &  pl%ti, pl%tn, pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
+     &  pl%ti, pl%tn, pl%po, switch%BoRiS, dv%fhm, dv%fhp, dv%fhj,
+     &  dv%fht)
 
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nCv, nFc, nVx, ns, switch, geo, mpg, pl, dv, co, rt)
       if(switch%b2sigp_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-       wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+       wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,dv%ue)
        do is=0,ns-1
          dv%ue = dv%ue + rt%rza(:,is)*pl%ua(:,is)*pl%na(:,is)
@@ -683,7 +683,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0),
      &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,          !srv 22.05.18
      &  solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3,
-     &  BoRiS, pl, dv, co, rt, sr, st_ext, ier0)
+     &  switch% BoRiS, pl, dv, co, rt, sr, st_ext, ier0)
 csw 16aug2011 init potential 
       if(switch%pot_eq.eq.0) pl%po=0.0_R8                                 !srv 13.07.05
       if(switch%pot_eq.eq.2) pl%po=3.1_R8*pl%te/qe 

@@ -2,9 +2,9 @@
 *.specification
 
       subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
-     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
+     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, cdkt, csigin,          !xpb
-     4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
+     4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,              !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
       use b2mod_constants
@@ -25,7 +25,8 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2trcl, ncall_b2tlnl,
-     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca
+     &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
+     &          b2trcl_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
@@ -98,8 +99,6 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &    k2(nCv), tt0(mpg%nFt), tt1(mpg%nFt)                         !lk 19.09.07
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
-
-      real (kind=R8), save :: cutlo = 1.0e-10_R8
       real (kind=R8) ::
      *  hce(nCv,0:1), sig(nCv,0:1),
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
@@ -540,7 +539,8 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     &      b2trcl_cutlo)
           co%fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
          endif
@@ -557,7 +557,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
      &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
+     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
+     &      b2trcl_cutlo)
           co%fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
@@ -582,7 +583,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
-     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)            !srv 13.01.17
          endif
@@ -606,7 +608,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &       (pl%te(mpg%fcCv(iFc,1))+pl%te(mpg%fcCv(iFc,2)))/2.0_R8/me)*
      &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
      &        abs(geo%fcPbs(iFc))
-            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + cutlo)
+            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + 
+     &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                !srv 13.01.17
          endif
@@ -618,7 +621,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             jemax = sqrt(pl%te(iCv)/me)*
      &         qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
             t0 = abs(co%alfx_c(iCv))*abs(gtec(iCv))/
-     &         (cflim(3)*jemax + cutlo)
+     &         (cflim(3)*jemax + b2trcl_cutlo)
             co%fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
             co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)          !iyv 19.11.13 !srv 08.10.14
           endif

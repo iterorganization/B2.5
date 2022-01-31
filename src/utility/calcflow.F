@@ -1,7 +1,7 @@
 
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine calcflow(nCv,nFc,nVx,meth,geo,mpg,fun,flo,con,
      *  flow,flowf,flowc)
       use b2mod_types
@@ -42,17 +42,14 @@
 *   ..local variables
       integer iFc
       real (kind=R8) ::
-     *  dfun(nFc,0:1), funv(nVx), fl, df, t0, t1
+     *  dfun(nFc,0:1), funv(nVx), t0
       real (kind=R8), parameter :: eps = 1.0e-60_R8
 
 *   ..procedures
       real (kind=R8) ::
      *   hybr, upwind, cvmgp
-      external cvmgp
-      intrinsic abs, max, min, mod, sqrt, sign
-      hybr(fl,df) = max(abs(df),abs(fl/2.),sqrt(df**2+fl**2/4.)) !!!
-      upwind(fl,t0,t1) = max(fl,0.0_R8)*t0+min(fl,0.0_R8)*t1
-
+      external cvmgp, upwind, hybr
+      intrinsic abs
 *-----------------------------------------------------------------------
 *.computation      
 

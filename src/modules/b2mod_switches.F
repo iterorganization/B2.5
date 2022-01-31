@@ -19,7 +19,6 @@ c consistency checks for combinations of different switches (check_consistency_s
 
       type, public :: switches
 
-
       integer :: get_residuals !srv 22.05.18
       integer :: mdf_fhe       !srv 13.10.06
       integer :: mdf_fhi
@@ -74,8 +73,8 @@ c Advanced fluid neutral models
       real (kind=R8) :: PSch         !srv 17.01.07   
       real (kind=R8) :: fhePSch      !srv 17.01.07
       real (kind=R8) :: fhiPSch                
-      real (kind=R8) :: xcur         !xpb 27.09.17  
-      real (kind=R8) :: ycur         !srv 07.07.08
+      real (kind=R8) :: b2tfnb_xcur         !xpb 27.09.17  
+      real (kind=R8) :: b2tfnb_ycur         !srv 07.07.08
       real (kind=R8) :: fch_ion_neutral
       real (kind=R8) :: art_rad
       real (kind=R8) :: sna0ep
@@ -122,6 +121,7 @@ c Advanced fluid neutral models
       real (kind=R8) :: pol_anom_scale
       real (kind=R8) :: auto_spatial_hyb_mfp_1
       real (kind=R8) :: auto_spatial_hyb_mfp_2
+      real (kind=R8) :: neutral_sources_rescale
 
 
 c iout switches
@@ -287,6 +287,7 @@ c namelist switches
       integer :: b2stbr_neutrals_namelist
       integer :: b2tqna_transport_namelist
       integer :: b2srdt_numerics_namelist
+      integer :: b2optim_namelist
 
 
 c diagnostics switches
@@ -334,7 +335,6 @@ c Eirene coupling
       real (kind=R8) :: eir_ne_max
       real (kind=R8) :: eir_ua_min
       real (kind=R8) :: eir_ua_max
-      real (kind=R8) :: neutral_sources_rescale
 
 
 c k-enstrophy model
@@ -360,6 +360,7 @@ c k-enstrophy model
       integer :: b2sikt_local
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
+      integer :: b2sikt_min_source
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
@@ -418,6 +419,9 @@ c b2stbr
       real (kind=R8) :: b2stbr_sput_res
       real (kind=R8) :: b2stbr_sput_phys
       real (kind=R8) :: b2stbr_sput_chem_alpha
+      real (kind=R8) :: recycled_neutrals_contr       !srv 12.04.08
+      real (kind=R8) :: sput_phys_alpha
+      real (kind=R8) :: b2stbr_in_dl
 
 c b2sihs_
       real (kind=R8) :: b2sihs__rf0
@@ -456,10 +460,41 @@ c b2mndt
       real (kind=R8) :: facdrift_start
       real (kind=R8) :: facExB_start
 
+c b2mndr
+      real (kind=R8) :: b2mndr_hz
+      real (kind=R8) :: b2mndr_stim
+      real (kind=R8) :: neutral_rescale
+
+c b2ag
+      real (kind=R8) :: b2agmt_width
+      real (kind=R8) :: geom_match_dist
+
+c b2upco
+      real (kind=R8) :: c_corr_core_dn
+
 c b2siav
       integer :: b2siav_qstyle
-      real (kind=R8) :: addvis, addvis1, cqip1, cvsa_mltpl
+      real (kind=R8) :: addvis
+      real (kind=R8) :: addvis1
+      real (kind=R8) :: cqip1
 
+c b2trcl
+      real (kind=R8) :: cvsa_mltpl
+
+c b2stbc
+      real (kind=R8) :: b2stbc_cbc
+      real (kind=R8) :: b2stbc_bc_ref
+      real (kind=R8) :: b2stbc_bc_ref_te
+      real (kind=R8) :: b2stbc_bc_ref_ti
+      real (kind=R8) :: b2stbc_corr_flux
+      real (kind=R8) :: bc_type13_norm
+      real (kind=R8) :: bc_type13_fac
+      real (kind=R8) :: nesepm
+      real (kind=R8) :: ndes_sol
+      real (kind=R8) :: nesepm_overshoot
+
+c b2trno
+      real (kind=R8) :: b2trno_alpha_stoch
 c Feedback
       integer :: b2stbc_feedback
 
@@ -487,7 +522,6 @@ c Feedback
       implicit none
       integer, intent(in) :: ns
       type(switches), intent(in out) :: s
-
 
       s % get_residuals = 0
       s % mdf_fhe = 0
@@ -543,8 +577,8 @@ c Advanced fluid neutral models
       s % PSch        = 1.0e0_R8
       s % fhePSch        = 1.0e0_R8
       s % fhiPSch        = 1.0e0_R8
-      s % xcur        = 0.0e0_R8
-      s % ycur        = 1.0e0_R8
+      s % b2tfnb_xcur        = 0.0e0_R8
+      s % b2tfnb_ycur        = 1.0e0_R8
       s % fch_ion_neutral = 0.0e0_R8
       s % art_rad = 0.0e0_R8
       s % sna0ep = 1.0e-36_R8
@@ -591,6 +625,7 @@ c Advanced fluid neutral models
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_mfp_1 = 0.0_R8
       s % auto_spatial_hyb_mfp_2 = 100.0_R8
+      s % neutral_sources_rescale = 1.0_R8
 
 
       s % iout_b2wdat = 0
@@ -743,6 +778,7 @@ c Advanced fluid neutral models
       s % b2stbr_neutrals_namelist = 0
       s % b2tqna_transport_namelist = 0
       s % b2srdt_numerics_namelist = 0
+      s % b2optim_namelist = 0
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
@@ -813,6 +849,7 @@ c k-enstrophy model
       s % b2sikt_local = 1
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
+      s % b2sikt_min_source = 0
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
@@ -871,6 +908,9 @@ c b2stbr
       s % b2stbr_sput_res = 0.0_R8
       s % b2stbr_sput_phys = 0.0_R8
       s % b2stbr_sput_chem_alpha = 1.0e-2_R8
+      s % recycled_neutrals_contr = 1.0_R8
+      s % sput_phys_alpha = 1.0e-2_R8
+      s % b2stbr_in_dl = 0.001_R8 
 
 c b2sihs_
       s % b2sihs__rf0 = 1.0_R8
@@ -914,14 +954,39 @@ c b2mndt
 c Feedback
       s % b2stbc_feedback = 0
 
+c b2mndr
+      s % b2mndr_hz = 0.0_R8
+      s % b2mndr_stim = 0.0_R8
+      s % neutral_rescale = 1.0_R8
+
+c b2ag
+      s % b2agmt_width = 1.0_R8
+      s % geom_match_dist = 1.0e-6_R8
+
+c b2upco
+      s % c_corr_core_dn = 1.0_R8                                        !lk 30.06.17
 
 c b2siav
       s % b2siav_qstyle = 0
-      s % addvis  = 1.0_R8
+      s % addvis = 0.0_R8
       s % addvis1 = 1.0_R8
       s % cqip1 = 0.5_R8
       s % cvsa_mltpl = 1.0_R8
 
+c b2stbc_phys
+      s % b2stbc_cbc = 1.0e0_R8              !srv 14.10.99
+      s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
+      s % b2stbc_bc_ref_te = 0.01         !IYS 07.03.2013 11.04.13
+      s % b2stbc_bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
+      s % b2stbc_corr_flux   = 0.0e0_R8                    !srv 25.07.05
+      s % bc_type13_norm = 1.0e15_R8
+      s % bc_type13_fac = 1.0_R8
+      s % nesepm = 0.0_R8
+      s % nesepm_overshoot = 0.0_R8
+      s % ndes_sol = 0.0_R8
+
+c b2trno
+      s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
 
       return
       end subroutine set_defaults_switches
@@ -1007,9 +1072,9 @@ c Advanced fluid neutral models
       call ipgetr ('b2tfnb_PSch', s % PSch) 
       call ipgetr ('b2tfhe_PSch', s % fhePSch)   
       call ipgetr ('b2tfhi_PSch', s % fhiPSch)                                                     
-      call ipgetr ('b2tfnb_xcur', s % xcur)                         
-      call ipgetr ('b2tfnb_ycur', s % ycur)   
-      call ipgetr ('b2tfhe_neutral', s % fch_ion_neutral)
+      call ipgetr ('b2tfnb_xcur', s % b2tfnb_xcur)                         
+      call ipgetr ('b2tfnb_ycur', s % b2tfnb_ycur)   
+      call ipgetr ('b2tfhe_neutral', s % fch_ion_neutral)   
       call ipgetr ('b2sqel_artificial_radiation', s % art_rad)
       call ipgetr ('b2stbc_sna0ep', s % sna0ep)
       call ipgetr ('b2stbc_shi0ep', s % shi0ep)
@@ -1055,6 +1120,8 @@ c Advanced fluid neutral models
       call ipgetr ('b2trno_pol_anom_scale', s % pol_anom_scale)
       call ipgetr ('auto_spatial_hyb_mfp_1', s % auto_spatial_hyb_mfp_1)
       call ipgetr ('auto_spatial_hyb_mfp_2', s % auto_spatial_hyb_mfp_2)
+      call ipgetr ('b2mndr_rescale_neutrals_sources',
+     &                s % neutral_sources_rescale)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)                    
@@ -1219,6 +1286,7 @@ c namelist switches
      &                                      s%b2tqna_transport_namelist)
       call ipgeti ('b2srdt_numerics_namelist',
      &  s%b2srdt_numerics_namelist)
+      call ipgeti ('b2optim_namelist', s%b2optim_namelist)
 
 c diagnostic switches
       call ipgeti ('b2stbc_diagno',s % b2stbc_diagno)                              !xpb
@@ -1295,6 +1363,7 @@ c k-enstrophy model
       call ipgeti ('b2sikt_model', s % b2sikt_model)
       call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
+      call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
@@ -1373,6 +1442,10 @@ c b2stbr
       call ipgetr ('b2stbr_sput_res', s%b2stbr_sput_res)
       call ipgetr ('b2stbr_sput_phys', s%b2stbr_sput_phys)
       call ipgetr ('b2stbr_redep_alpha', s%b2stbr_redep_alpha)
+      call ipgetr ('b2stbr_recycled_neutrals_contr',
+     & s%recycled_neutrals_contr)
+      call ipgetr ('b2stbr_sput_phys_alpha', s%sput_phys_alpha)
+      call ipgetr ('b2stbr_first_flight_dl', s%b2stbr_in_dl)
 
 c b2sihs_
       call ipgetr ('b2sihs_rf0', s%b2sihs__rf0)
@@ -1415,14 +1488,43 @@ c b2mndt
       call ipgetr ('b2news_facdrift_start', s%facdrift_start)
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
 
+c b2mndr
+      call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
+      call ipgetr ('b2mndr_stim', s%b2mndr_stim)
+      call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
+      
+
+c b2ag
+      call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
+      call ipgetr ('b2agfs_geom_match_dist', s%geom_match_dist)
+
+c b2upco
+      call ipgetr ('b2upco_c_corr_core_dn', s%c_corr_core_dn)              !lk 30.06.2017
+
 c b2siav
-      call ipgetr ('b2siav_addvis', s%addvis)
-      call ipgetr ('b2siav_addvis1', s%addvis1)
+      call ipgetr ('b2siav_addvis', s%addvis)                        !srv 23.07.99
+      call ipgetr ('b2siav_addvis1', s%addvis1)                      !srv 04.10.99
       call ipgetr ('b2siav_cqip1', s%cqip1)
       call ipgeti ('b2siav_iout', s%b2siav_iout)
-      call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)
-      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)
+      call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)                          !srv 28.03.06
 
+c b2trcl
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)	                    !iyv 06.12.13
+
+c b2stbc
+        call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                              !srv 14.10.99
+        call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)                  !srv 11.04.13
+        call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
+        call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)                  !srv 11.04.13
+        call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)          !srv 25.07.05
+        call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
+        call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+        call ipgetr ('b2stbc_nesepm', s%nesepm)
+        call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
+        call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+
+c b2trno
+        call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)         !lk 31.01.08
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
@@ -1750,8 +1852,11 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_sheath_local .and. 
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
+      call xertst (0.le.s%b2sikt_min_source .and. 
+     &  s%b2sikt_min_source.le.2,
+     &  'b2sikt_min_source must be either 0, 1 or 2')
 
-c eirene coupling
+c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
 
@@ -1800,6 +1905,10 @@ c b2stbr
      &  'faulty input b2stbr_sput_phys')
       call xertst (0.0_R8.le.s%b2stbr_redep_alpha,
      &  'faulty internal parameter redep_alpha')
+      call xertst (0.0_R8.le.s%recycled_neutrals_contr,
+     &  'faulty internal parameter recycled_neutrals_contr')
+      call xertst (0.0_R8.le.s%sput_phys_alpha,
+     &  'faulty b2stbr_sput_phys_alpha')
 
 c b2sihs_
       call xertst (0.le.min(s%b2sihs__rf0,s%b2sihs__rf1,
@@ -1830,6 +1939,19 @@ c b2mndt
      &  'faulty internal parameter nstg_aresco')
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
+
+c b2mndr
+       call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
+     &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
+
+c b2upco
+      call xertst (0.0.lt.s%c_corr_core_dn,
+     & 'faulty parameter c_corr_core_dn')    !sc 16/11/2021 
+
+c b2ag
+      call xertst (s%geom_match_dist.gt.0.0_R8,
+     &  'faulty argument geom_match_dist')
+         
 
       return
       end subroutine check_values_switches
@@ -1914,6 +2036,9 @@ c b2stel
 c Eirene coupling
 c      call xertst (s%ionising_core.gt.0.or.abs(s%ionising_core).le.nbc,
 c     1   'faulty input ionising_core, abs(ionising_core) > NBC')
+
+c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
+       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
       return
       end subroutine check_consistency_switches

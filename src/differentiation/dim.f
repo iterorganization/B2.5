@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       function DIM(x, y)
       use b2mod_types
       implicit none

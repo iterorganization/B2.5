@@ -5,7 +5,7 @@
      &  ne, ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,   !sv 13.10.06
      &  fhePSch, fhiPSch, fne, fni, fch,                                !sv 25.02.00 21.10.02 28.10.02 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !sv 21.10.02
-     &  sna0, smo0, she0, shi0, sch0, wrong_flow)                       !sv 09.07.99 01.07.05
+     &  sna0, smo0, she0, shi0, sch0, wrong_flow, switch)               !sv 09.07.99 01.07.05
       use b2mod_types
       use b2mod_indirect
       use b2mod_anomalous_transport
@@ -16,8 +16,10 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmfs
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
+      type (switches), intent (in) :: switch
       integer nx, ny, ns
       real (kind=R8) ::
      *   facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),      !sv 09.07.99
@@ -104,10 +106,8 @@
      &                         fchy_visq_at_north = 0.0e0_R8,         !sv 21.10.02
      &                         fchy_visper_at_north = 0.0e0_R8,       !sv 21.10.02
      &                         fchy_inert_at_north = 0.0e0_R8         !sv 21.10.02
-      real (kind=R8) , save :: cbc = 1.0e0_R8                         !sv 14.10.99
       real (kind=R8) , save :: po_in_lower = 0.0e0_R8,
-     &                         po_in_upper = 0.0e0_R8,                !sv 16.11.04
-     &                         corr_flux   = 0.0e0_R8                 !sv 25.07.05
+     &                         po_in_upper = 0.0e0_R8                 !sv 16.11.04
       real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                         phm2 = 1.0e0_R8, ubig0 = 0.0e0_R8      !iyv 22.04.08
       character chns*3, chk*1                                         !sv 11.07.05
@@ -135,10 +135,10 @@
       call subini ('b2stbc_')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+! PLEASE CHECK IF THESE SWITCHES ARE ALREADY CONVERTED IN B2MOD_SWITCHES!
        call ipgetr ('b2stbc_phm0', phm0)                                  !sv 17.01.07
        call ipgetr ('b2stbc_phm1', phm1)                                  !sv 17.01.07
        call ipgetr ('b2stbc_phm2', phm2)                                  !sv 17.01.07
-       call ipgetr ('b2stbc_cbc', cbc)                                    !sv 14.10.99
        call ipgetr ('b2stbc_y_dia', y_dia)                                !sv 25.04.00
        call ipgetr ('b2stbc_y_inertia', y_inertia)                        !sv 25.04.00
        call ipgetr ('b2stbc_biasing_cur', biasing_cur)                    !sv 31.08.00
@@ -148,7 +148,6 @@
        call ipgeti ('b2stbc_ivplus', ivplus)                              !sv 24.03.05
        call ipgeti ('b2stbc_ivminus', ivminus)                            !sv 24.03.05
        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)              !sv 25.07.05
-       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)                !sv 25.07.05
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                                !sv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi)                                !sv 13.10.06 }
@@ -432,7 +431,7 @@
      &           tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy))   !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !sv 05.03.99 15.02.02
      &        )*uaaverage(is)                                         !sv 15.02.02
-     &        +corr_flux*s0hz                                         !sv 08.09.03 25.07.05
+     &        +switch%b2stbc_corr_flux*s0hz                                         !sv 08.09.03 25.07.05
             case (1)
              iy = -1                                                  !sv 15.02.02
              smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                     !sv 09.01.01 01.07.05
@@ -442,7 +441,7 @@
      &          tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy))    !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 05.03.99 15.02.02
      &       )*ua(ix,iy,is)                                           !sv 25.07.05
-     &       +corr_flux*s0hz                                          !sv 08.09.03 25.07.05
+     &       +switch%b2stbc_corr_flux*s0hz                                          !sv 08.09.03 25.07.05
 	     end select                                               !sv 25.07.05
 	    endif                                                     !sv 15.02.02
 	   endif                                                      !sv 27.07.05
@@ -778,15 +777,17 @@ c         fchi=0.0e0_R8                            ! was commented
             vwest=(-cst)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+           !sv 17.02.04 19.02.08
      &      hz(ix,iy)*vol(rightix(ix,iy),rightiy(ix,iy))/
      &                 hx(rightix(ix,iy),rightiy(ix,iy))      !*signmf*bb(ix,iy,2)/bb(ix,iy,3)   !sv 05.02.05
-     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc      !sv 17.02.04 19.02.08
+     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))
+     &       *switch%b2stbc_cbc      !sv 17.02.04 19.02.08
 !        vwest=(-cst)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+          !sv 17.02.04 {
 !     &    hz(ix,iy)*vol(ix,iy)/hx(ix,iy)  !*signmf*bb(ix,iy,2)/bb(ix,iy,3)   !sv 05.02.05
- !    &    *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*cbc           !sv 17.02.04 }
+ !    &    *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*switch%b2stbc_cbc           !sv 17.02.04 }
            else
             vwest=(-csb)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+        !sv 17.02.04 19.02.08
      &       hz(ix,iy)*vol(rightix(ix,iy),rightiy(ix,iy))/
      &                  hx(rightix(ix,iy),rightiy(ix,iy)) 
-     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc       !sv 17.02.04 19.02.08
+     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))
+     &       *switch%b2stbc_cbc       !sv 17.02.04 19.02.08
 	   endif                                                        !sv 25.04.08 }
 	   if(ivminus.eq.0) then                                        !sv 24.03.05
              vminus= vwest                                              !sv 28.01.05
@@ -838,7 +839,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
 !     &                     cst*pbshz(rightix(ix,iy),rightiy(ix,iy),0)
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc
+!     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*switch%b2stbc_cbc
 !!	    vwest = 0.0e0_R8                                            !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+  !sv 26.11.02
@@ -990,14 +991,14 @@ c         fchi=0.0e0_R8                      !sv was commented
 	     if(istyle_cs.eq.0) then                                    !sv 25.04.08 {
             veast = cst*pbshz(ix,iy,0)+                                 !sv 17.02.04 19.02.08 25.04.08 {
      &       hz(ix,iy)*vol(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy)     !*signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-     &           *(-vaecrb(ix,iy,0,0,is))*cbc                           !sv 17.02.04 19.02.08
+     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc                           !sv 17.02.04 19.02.08
 !        veast = cst*pbshz(ix,iy,0)+                                    !sv 17.02.04 {
 !     &       hz(ix,iy)*vol(ix,iy)/hx(ix,iy) !*signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(ix,iy,0,0,is))*cbc                          !sv 17.02.04 }
+!     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc                          !sv 17.02.04 }
            else
             veast = csb*pbshz(ix,iy,0)+                                 !sv 17.02.04 19.02.08
      &       hz(ix,iy)*vol(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy)
-     &           *(-vaecrb(ix,iy,0,0,is))*cbc                           !sv 17.02.04 19.02.08
+     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc                           !sv 17.02.04 19.02.08
 	     endif                                                      !sv 25.04.08 }
 	     if(ivplus.eq.0) then                                       !sv 24.03.05
 	      vplus=veast                                               !sv 28.01.05
@@ -1005,7 +1006,7 @@ c         fchi=0.0e0_R8                      !sv was commented
 	      vplus=(veast+abs(veast))*0.5e0_R8                         !sv 28.01.05
 	     endif                                                      !sv 24.03.05
 !        v0 =vol(ix,iy)/hx(ix,iy)*bb(ix,iy,2)/bb(ix,iy,3)               !sv 18.07.03 {
-!     &      *vaecrb(ix,iy,0,0,is)*cbc*signmf
+!     &      *vaecrb(ix,iy,0,0,is)*switch%b2stbc_cbc*signmf
 *     ..compute particle source
            sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+                         !sv 26.11.02
      &      cbsna(0,is,ireg)*s0+
@@ -1048,7 +1049,7 @@ c         sna0(nx,iy,1,1) = -1.0d160
 !	    write(*,*) '     cst*pbshz(ix,iy,0) = ',cst*pbshz(ix,iy,0)
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(ix,iy,0,0,is))*cbc
+!     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc
 !!	    veast = 0.0e0_R8                                            !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+                         !sv 26.11.02

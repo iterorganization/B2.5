@@ -17,7 +17,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfhi
+     & , only : ncall_b2tfhi, b2tfhi_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -68,8 +68,6 @@ cpax
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
 #endif
       real (kind=R8) :: upfac, hybfac, scur(nFc,0:1) !djm Jan2017
-      real (kind=R8) :: cutlo
-      parameter (cutlo = 1.0e-60_R8)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
 c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
@@ -224,11 +222,11 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
      &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*
-     &                                                   switch%xcur +
+     &                                          switch%b2tfnb_xcur +
      &  1.5e0_R8/qe*dv%fchviskt(:,0)
       scur(:,1) = 1.5e0_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
      &  dv%fchanml(:,1) + switch%fnb_vis_per*dv%fchvisper(:,1) + 
-     &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur +
+     &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur +
      &  1.5e0_R8/qe*dv%fchviskt(:,1)
 
       if (switch%b2tfhi_iout.eq.2) then
@@ -305,8 +303,8 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
      &    co%chci_ExB,dv%fhi_ExB,dumm0,dumm1)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,flo0_ExB,
      &    co%chce_ExB,dv%fhe_ExB,dumm0,dumm1)
-*     ..fluxes for k-equation
 
+*     ..fluxes for k-equation
 cwdk    fflokt and fconkt: fudge factors to approximate enhanced parallel
 cwdk    transport of k due to term
 cwdk    related to (fluctuations in parallel current) * (fluctuations in potential)
@@ -389,7 +387,7 @@ csw 30apr2014 for TESTING only
 
            coni0=dim(chci(ix,iy,0,0)/(1.d0+t0), abs(floi0)*
      .      max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .      max(cutlo,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .      max(b2tfhi_cutlo,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
 
@@ -421,18 +419,18 @@ csw 27nov2012  added check upwind (SOLPS4 style)
              fhi_ecrb(ix,iy,0,0) = 0.0_R8
              fhi_pschused(ix,iy,0,0) = 0.0_R8
              fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
-     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                    b2tfnb_xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
-     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                    b2tfnb_xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
-     &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                    b2tfnb_xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
            endif
@@ -455,14 +453,14 @@ csw 27nov2012  added check upwind (SOLPS4 style)
              fhi_ecrb(ix,iy,0,0) = 0.0_R8
              fhi_pschused(ix,iy,0,0) = 0.0_R8
              fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
            endif
           endif
@@ -557,23 +555,23 @@ csw 27nov2012 added check upwind (SOLPS4 style)
                fhi_ecrb(ix,iy,0,0) = 0.0_R8
                fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
                fhi_inert(ix,iy,0,0) =
-     &           1.5e0_R8/qe*fchinert(ix,iy,0,0)*xcur*
+     &           1.5e0_R8/qe*fchinert(ix,iy,0,0)*b2tfnb_xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
                fhi_vispar(ix,iy,0,0) =
-     &           1.5e0_R8/qe*fchvispar(ix,iy,0,0)*xcur*
+     &           1.5e0_R8/qe*fchvispar(ix,iy,0,0)*b2tfnb_xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
                fhi_visper(ix,iy,0,0) =
-     &           1.5e0_R8/qe*fchvisper(ix,iy,0,0)*xcur*
+     &           1.5e0_R8/qe*fchvisper(ix,iy,0,0)*b2tfnb_xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
                fhi_visq(ix,iy,0,0) =
-     &           1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &           1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
                fhi_anml(ix,iy,0,0) =
-     &           1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+     &           1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
              endif
@@ -610,19 +608,19 @@ csw 27nov2012 added check upwind (SOLPS4 style)
                fhi_ecrb(ix,iy,0,0) = 0.0_R8
                fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
                fhi_inert(ix,iy,0,0) =
-     &              1.5e0_R8/qe*fchinert(ix,iy,0,0)*xcur*
+     &              1.5e0_R8/qe*fchinert(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
                fhi_vispar(ix,iy,0,0) =
-     &              1.5e0_R8/qe*fchvispar(ix,iy,0,0)*xcur*
+     &              1.5e0_R8/qe*fchvispar(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
                fhi_visper(ix,iy,0,0) =
-     &              1.5e0_R8/qe*fchvisper(ix,iy,0,0)*xcur*
+     &              1.5e0_R8/qe*fchvisper(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
                fhi_visq(ix,iy,0,0) =
-     &              1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &              1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
                fhi_anml(ix,iy,0,0) =
-     &              1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+     &              1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              endif
            endif
@@ -649,14 +647,14 @@ csw 27nov2012 added check upwind (SOLPS4 style)
               fhi_ecrb(ix,iy,0,0) = 0.0_R8
               fhi_pschused(ix,iy,0,0) = 0.0_R8
               fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
-     &           xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &           b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
-     &           xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &           b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
-     &           xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &           b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+              fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+              fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
             endif
             if (balance.and.
@@ -673,14 +671,14 @@ csw 27nov2012 added check upwind (SOLPS4 style)
               fhi_ecrb(ix,iy,0,0) = 0.0_R8
               fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
               fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
-     &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
+              fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+              fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
             endif
           endif
@@ -695,16 +693,16 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_dia(ix,iy,1,1) = flidia(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_inert(ix,iy,1,1) = 1.5e0_R8/qe*fchinert(ix,iy,1,1)*ycur*
+           fhi_inert(ix,iy,1,1) = 1.5e0_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_vispar(ix,iy,1,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1,1)*
-     &      ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &      b2tfnb_ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_visper(ix,iy,1,1) =
-     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*               !srv 02.10.17
+     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*               !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_visq(ix,iy,1,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*  !srv 02.10.17
-     &      ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*ycur*
+     &      b2tfnb_ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+           fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_52(ix,iy,1,1) = 0.0_R8
            fhi_cond(ix,iy,1,1) = -coni0*
@@ -721,16 +719,16 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &      (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_dia(ix,iy,1,1) = 0.0_R8
-           fhi_inert(ix,iy,1,1) = 1.5e0_R8/qe*fchinert(ix,iy,1,1)*ycur*
+           fhi_inert(ix,iy,1,1) = 1.5e0_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_vispar(ix,iy,1,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1,1)*
-     &      ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+     &      b2tfnb_ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_visper(ix,iy,1,1) =
-     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*                  !srv 02.10.17
+     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*                  !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_visq(ix,iy,1,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*   !srv 02.10.17
-     &      ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*ycur*
+     &      b2tfnb_ycur*(ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+           fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_52(ix,iy,1,1) = 0.0_R8
            fhi_cond(ix,iy,1,1) = -coni0_mdf*

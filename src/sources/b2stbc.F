@@ -23,7 +23,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd, lfeedback
+     & , only : conpar, enepar, enipar, nbcd, lfeedback, enkpar, potpar,
+     &          mompar
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG

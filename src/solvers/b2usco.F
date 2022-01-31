@@ -107,6 +107,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
       aa = 0.0e0_R8
 
 *   ..compute the matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
@@ -116,7 +117,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
           aa(mpg%cvNvP(iCv,1)) = rscal(pb(iCv))
         endif
       enddo
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -208,6 +209,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
        endif
       enddo
 *   ..check for empty matrix lines and replace with dummy equation
+! $AD II-LOOP      
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
@@ -221,9 +223,11 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
         if (.not.solvereg(ireg)) rescb(iCv) = 0.0_R8
       enddo
 
+
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)                 !srv 18.05.02
 *   ..redo the scaling
+! $AD II-LOOP
       do iCv = 1, nCv
         corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
