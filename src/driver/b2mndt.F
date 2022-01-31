@@ -33,7 +33,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
-     & , only : parm_hce, parm_hci, parm_dna
+     & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
+     &          parm_vsa, parm_alf, parm_sig
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l
@@ -43,7 +44,8 @@
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
-     &          nkind_data
+     &          nkind_data, poloidal_scaling, transport_ip_filename,
+     &          nscale
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,

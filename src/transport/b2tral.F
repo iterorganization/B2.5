@@ -17,11 +17,13 @@
      &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
      &           cfhce, cfhci
       use b2mod_transport_namelist
-     & , only : parm_hce, parm_hci, parm_dna
+     & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
+     &          parm_vsa, parm_alf, parm_sig
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, alloc_input_profile,
-     &          nss, nrr, nkind_coeff, nkind_data
+     &          nss, nrr, nkind_coeff, nkind_data, poloidal_scaling,
+     &          transport_ip_filename, nscale
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG

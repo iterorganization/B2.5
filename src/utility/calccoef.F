@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine calccoef(nCv,nFc,nVx,meth,geo,mpg,flo,con,flo0,con0)
       use b2mod_types
       use b2us_geo
@@ -38,16 +38,14 @@
 *   ..local variables
       integer iFc
       real (kind=R8) ::
-     *  fl, df, t0, t1, t00, t01, t10, t11
+     *  t0, t1, t00, t01, t10, t11
       real (kind=R8), parameter :: eps = 1.0e-60_R8
 
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, upwind, cvmgp
-      external cvmgp
-      intrinsic abs, max, min, mod, sqrt, sign
-      hybr(fl,df) = max(abs(df),abs(fl/2.),sqrt(df**2+fl**2/4.)) !!!
-      upwind(fl,t0,t1) = max(fl,0.0_R8)*t0+min(fl,0.0_R8)*t1
+     *   hybr, cvmgp
+      external cvmgp, hybr
+      intrinsic abs
 
 *-----------------------------------------------------------------------
 *.computation      

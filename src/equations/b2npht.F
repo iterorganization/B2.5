@@ -338,14 +338,14 @@ c residuals for separate neutral energy equation
      &  dv%conn, dv%flokt, dv%conkt, dv%flozt, dv%conzt,
      &  she0, shi0, shn0, skt0, szt0, 
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn, dv%reskt,
-     &  dv% reszt, dv%cortt, dv%corte, 
-     &  dv%corti, dv%cortn, dv%corkt, dv%corzt, wrkf, wrkc, aa)
+     &  dv%cortt, dv%corte, 
+     &  dv%corti, dv%cortn, dv%corkt, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, switch%b2npht_pcm0,
-     &  dv%cortt, dv%corte, dv%corti, dv%cortn, dv%corkt, dv%corzt,
-     &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%kt, pl%zt,
+     &  dv%cortt, dv%corte, dv%corti, dv%cortn, dv%corkt,
+     &  dv%pccm(1:nCv,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%kt,
      &  pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return

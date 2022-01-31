@@ -87,12 +87,42 @@ endif
 ifdef DIFF_D
 EXT_DIFF = .diff_d
 DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D1
+EXT_DIFF = .diff_d1
+DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D2
+EXT_DIFF = .diff_d2
+DIFF = yes
+TGT = yes
+endif
+ifdef DIFF_D3
+EXT_DIFF = .diff_d3
+DIFF = yes
+TGT = yes
 endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
 DIFF = yes
 endif
-
+ifdef DIFF_B1
+EXT_DIFF = .diff_b1
+DIFF = yes
+ADJ = yes
+endif
+ifdef DIFF_B2
+EXT_DIFF = .diff_b2
+DIFF = yes
+ADJ = yes
+endif
+ifdef DIFF_B3
+EXT_DIFF = .diff_b3
+DIFF = yes
+ADJ = yes
+endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
 
@@ -211,6 +241,15 @@ DEFINES += -DDBG
 endif
 ifdef FIXED_POINT
 DEFINES += -DFIXED_POINT
+endif
+ifdef TGT
+DEFINES += -DTGT
+endif
+ifdef ADJ
+DEFINES += -DADJ
+endif
+ifdef TEST_MAP
+DEFINES += -DTEST_MAP
 endif
 
 # Switches to disable individual OpenMP regions, for debugging
@@ -339,6 +378,15 @@ ADEXTRA = ${CONTEXTAD}
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
 endif
+ifdef DIFF_B1
+ADEXTRA += ${STACKAD}
+endif
+ifdef DIFF_B2
+ADEXTRA += ${STACKAD}
+endif
+ifdef DIFF_B3
+ADEXTRA += ${STACKAD}
+endif
 ifdef AD_DEBUG
 ADEXTRA = ${DBGAD} ${STACKAD}
 endif
@@ -371,7 +419,7 @@ DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_B: VERSION ${MNBEXE}
+DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -673,6 +721,12 @@ ${OBJDIR}/eirmod_cai.o:
 
 ${OBJDIR}/eirmod_calstr_buffered.o:
 	ln -sf ${EIRDIR}/eirmod_calstr_buffered.o ${OBJDIR}
+
+${OBJDIR}/eirmod_caprmc.o:
+	ln -sf ${EIRDIR}/eirmod_caprmc.o ${OBJDIR}
+
+${OBJDIR}/eirmod_ccflux.o:
+	ln -sf ${EIRDIR}/eirmod_ccflux.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_ccona.o:
 	ln -sf ${EIRDIR}/eirmod_ccona.o ${OBJDIR}

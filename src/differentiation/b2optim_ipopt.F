@@ -1,15 +1,19 @@
       program b2optim_ipopt
-      use b2mod_par_opt
+      use b2mod_types
+      use b2mod_par_opt_diff
       use b2mod_main_diff
-     , , only : b2mn_init_d, b2mn_fin_d
+     , , only : b2mn_init_d, b2mn_step_d, b2mn_step, b2mn_fin_d
+      use b2mod_ad_diff
+     , , only : nncf
+      use b2mod_switches_diff
       implicit none
 
 !     include the Ipopt return codes
       include 'IpReturnCodes.inc'
 
 !     Size of the problem (number of variables and equality constraints)
-      integer :: nvar, ncon, nele_jac, NELE_HESS, IDX_STY
-      parameter  (NELE_HESS = 0, IDX_STY = 1 )
+      integer :: ncon, nele_jac, nele_hess, IDX_STY
+      parameter  (IDX_STY = 1 )
 !sc N = number design variables
 !   M number of constraints (it's 2 because the third one is the variable bound!
 !   NELE_JAC # of nonzeros in Jacobian of Lagrangian
@@ -42,34 +46,62 @@
       integer IPADDNUMOPTION, IPADDINTOPTION
       integer IPOPENOUTPUTFILE
       double precision F
-      integer ivar, icon
+      integer ipar, icon
+
+      type(switches_diffv), save :: switchdiff
 
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
 !     down in this file.
-      external EV_F, EV_G, EV_GRAD_F, EV_JAC_G, ITER_CB
+      external streql
+      logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
 
 !     ..START OF COMPUTATION
 
-      call read_b2mod_par_opt(nvar, ncon, nele_jac)
+!     Allocate and initialize par_opt variables to be used in B2.5
+      flag_optim  = .true.
+      call b2mn_init_d
+      par_opt_phys = 0.0_R8
+!     Initialize derivatives of estimated parameters
+#ifdef TGT
+      call xertst(npar_opt.le.nbdirsmax,
+     & 'Increase size of nbdirsmax in diffsizes.F')
+      call set_tgt_perturbation(switchdiff)
+#endif
+
+#ifdef ADJ
+      par_opt_physb = 0.0_R8
+#endif
+
       write (*,*) 'IPOPT, WARNING: setting only 1 hard-coded '//
      & 'trivial constraint'
-      ncon = 1 ! FIXME to be updated whenever nonlinear constraints are needed
+      ncon = 1 ! FIXME to be updated whenever nonlinear or state constraints are needed
       nele_jac = 1
 
-      allocate(X(nvar),X_L(nvar),X_U(nvar),Z_L(nvar),Z_U(nvar))
+!     For the moment only steepest descent is available when specifiyng the Hessian
+      hessian = .false.
+      nele_hess = 0
+      if (streql('exact',hessian_approximation)) then
+        hessian = .true.
+        write (*,*) 'IPOPT, WARNING: setting Hessian as '//
+     &   'identity matrix for Steepest Descent method'
+        nele_hess = npar_opt
+      endif
+
+      allocate(X(npar_opt),X_L(npar_opt),X_U(npar_opt))
+      allocate(Z_L(npar_opt),Z_U(npar_opt))
       allocate(G(ncon),G_L(ncon),G_U(ncon),LAM(ncon))
 
-      do ivar = 1, nvar
-        X(ivar) = x0(ivar)
-        X_L(ivar) = xl(ivar)
-        X_U(ivar) = xu(ivar)
-        if (X_L(ivar).lt.-inf_opt)
-     &    write(*,*) 'IPOPT: warning, X_L(',ivar,') set to infty'
-        if (X_U(ivar).gt.inf_opt)
-     &    write(*,*) 'IPOPT: warning, X_U(',ivar,') set to infty'
+      do ipar = 1, npar_opt
+        X(ipar) = x0(ipar)/par_rescale(ipar)
+        X_L(ipar) = xl(ipar)/par_rescale(ipar)
+        X_U(ipar) = xu(ipar)/par_rescale(ipar)
+        if (X_L(ipar).lt.-inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_L(',ipar,') set to infty'
+        if (X_U(ipar).gt.inf_opt)
+     &    write(*,*) 'IPOPT: warning, X_U(',ipar,') set to infty'
       end do
       do icon = 1, ncon
         G_L(icon) = -inf_opt*10!gl(icon)
@@ -82,17 +114,17 @@
 ! FIXME Z_L/Z_U
 
 
-!     Allocate and initialize par_opt variables to be used in B2.5
-
-      call b2mn_init_d
-      npar_opt = nvar
-      allocate(par_opt_phys(1:npar_opt))
-      par_opt_phys = 0.0_R8
-      flag_optim  = .true. !csc this will tell in b2tqna to use par_opt_phys for parm_dna
-
 !     First create a handle for the Ipopt problem (and read the options file)
-      IPROBLEM = IPCREATE(nvar, X_L, X_U, ncon, G_L, G_U, NELE_JAC, 
-     &     NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F, EV_JAC_G)
+!     If Hessian is provided or steepest descent is asked the additional argument needed
+      if (hessian) then
+        IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U,
+     &     NELE_JAC, NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F,
+     &     EV_JAC_G, EV_HESS)
+      else
+        IPROBLEM = IPCREATE(npar_opt, X_L, X_U, ncon, G_L, G_U,
+     &      NELE_JAC, NELE_HESS, IDX_STY, EV_F, EV_G, EV_GRAD_F,
+     &     EV_JAC_G)
+      endif
       if (IPROBLEM.eq.0) then
          write(*,*) 'Error creating an Ipopt Problem handle.'
          stop
@@ -121,9 +153,11 @@
       IERR = IPADDSTROPTION(IPROBLEM, 'hessian_approximation',
      & hessian_approximation)
       if (IERR.ne.0 ) goto 9990
-      IERR = IPADDSTROPTION(IPROBLEM, 'limited_memory_update_type',
-     & limited_memory_update_type)
-      if (IERR.ne.0 ) goto 9990
+      if (.not.hessian) then
+        IERR = IPADDSTROPTION(IPROBLEM, 'limited_memory_update_type',
+     &   limited_memory_update_type)
+        if (IERR.ne.0 ) goto 9990
+      endif
 
 !     Set max number of iterations
       call xertst (maxiter.gt.0, 'faulty internal parameter maxiter')
@@ -190,20 +224,20 @@
       write(*,*)
       write(*,*) 'The optimal values of X are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'X  (',ivar,') = ',X(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'X  (',ipar,') = ',X(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the lower bounds are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'Z_L(',ivar,') = ',Z_L(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'Z_L(',ipar,') = ',Z_L(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the upper bounds are:'
       write(*,*)
-      do ivar = 1, nvar
-        write(*,*) 'Z_U(',ivar,') = ',Z_U(ivar)
+      do ipar = 1, npar_opt
+        write(*,*) 'Z_U(',ipar,') = ',Z_U(ipar)
       enddo
       write(*,*)
       write(*,*) 'The multipliers for the equality constraints are:'
@@ -220,36 +254,48 @@
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
       deallocate(par_opt_phys)
+#ifdef TGT
+      deallocate(par_opt_physd)
+#endif
+#ifdef ADJ
+      deallocate(par_opt_physb)
+#endif
       stop 'b2optim'
  9990 continue
       write(*,*) 'Error setting an option'
       goto 9000
-      end program b2optim_ipopt
 
-      subroutine EV_F(nvar, XX, NEW_X, F, IDAT, DAT, IER)
-      use b2mod_types
-      use b2mod_main_diff
-     , , only : b2mn_step
-      use b2mod_ad
-     , , only : nncf
-      use b2mod_par_opt
+      contains
+
+      subroutine EV_F(npar, XX, NEW_X, F, IDAT, DAT, IER)
       implicit none
-      integer nvar, NEW_X
-      double precision F, XX(nvar)
+      integer npar, NEW_X
+      double precision F, XX(npar)
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, iv
+      integer IER, ipar, isigma
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        do iv = 1, nvar
-          par_opt_phys(iv) = real(XX(iv),kind=r8)
-          write(str,"(I1)") iv
-          if (iv.ge.10) write(str,"(I2)") iv
+        do ipar = 1, npar - nsigma_opt
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
+          write(str,"(I1)") ipar
+          if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
-     &     par_opt_phys(iv)
+     &     par_opt_phys(ipar)
+        enddo
+        isigma = npar - nsigma_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            write(str,"(I1)") isigma
+            if (ipar.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &       sigma(ipar)
+            isigma = isigma + 1
+          endif
         enddo
         call b2mn_step(j)
       endif
@@ -258,55 +304,61 @@
       return
       end subroutine EV_F
 
-      subroutine EV_GRAD_F(nvar, XX, NEW_X, GRAD, IDAT, DAT, IER)
-      use b2mod_types
-      use b2mod_main_diff
-     , , only : b2mn_step_d
-      use b2mod_ad
-     , , only : nncf
-      use b2mod_par_opt
+      subroutine EV_GRAD_F(npar, XX, NEW_X, GRAD, IDAT, DAT, IER)
       implicit none
-      integer nvar, NEW_X
-      double precision GRAD(nvar), XX(nvar)
-      real(kind=r8) j(nncf), jd(nncf), jb(nncf)
+      integer npar, NEW_X
+      double precision GRAD(npar), XX(npar)
+      real(kind=r8) j(nncf), jd(nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, iv
+      integer IER, ipar, isigma
       character*3 str
       save jd
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do iv = 1, nvar
-          par_opt_phys(iv) = real(XX(iv),kind=r8)
-          write(str,"(I1)") iv
-          if (iv.ge.10) write(str,"(I2)") iv
+        do ipar = 1, npar - nsigma_opt
+          par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
+          write(str,"(I1)") ipar
+          if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
-     &     par_opt_phys(iv)
+     &     par_opt_phys(ipar)
         enddo
-        call b2mn_step_d(j,jd)
+        isigma = npar - nsigma_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            write(str,"(I1)") isigma
+            if (ipar.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &       sigma(ipar)
+            isigma = isigma + 1
+          endif
+        enddo
+        call b2mn_step_d(j,jd,switchdiff)
       endif
-      do iv = 1, nvar
-        grad(iv) = DBLE(jd(1))
+#ifdef TGT
+      do ipar = 1, npar
+        grad(ipar) = DBLE(jd(1))*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
-!      if (new_x.eq.0) then
-!        call b2mn_init_b
-!        ss = real(XX(1),kind=r8)
-!        call b2mn_step_b(j, jb)
-!        call b2mn_fin_b
-!        grad(1) = DBLE(ssb)
-!      endif
-!      grad(1) = DBLE(ssb)
+#endif
+#ifdef ADJ
+      call set_adj_gradient(npar,gradd,switchdiff)
+      do ipar = 1, npar
+        grad(ipar) = DBLE(gradd(ipar))*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'IPOPT GRAD:', grad(ipar)
+      end do
+#endif
 
       IER = 0
       return
       end subroutine EV_GRAD_F
 
-      subroutine EV_G(nvar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
-      use b2mod_types
+      subroutine EV_G(npar, X, NEW_X, ncon, G, IDAT, DAT, IERR)
       implicit none
-      integer nvar, NEW_X, ncon
-      double precision G(ncon), X(nvar)
+      integer npar, NEW_X, ncon
+      double precision G(ncon), X(npar)
       double precision DAT(*)
       integer IDAT(*)
       integer IERR, icon
@@ -319,12 +371,10 @@
       return
       end subroutine EV_G
 
-      subroutine EV_JAC_G(TASK, nvar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
+      subroutine EV_JAC_G(TASK, npar, X, NEW_X, ncon, NZ, ACON, AVAR, A,
      &    IDAT, DAT, IERR)
-      use b2mod_types
-      use b2mod_par_opt
-      integer TASK, nvar, NEW_X, ncon, NZ
-      double precision X(nvar), A(NZ)
+      integer TASK, npar, NEW_X, ncon, NZ
+      double precision X(npar), A(NZ)
       integer ACON(NZ), AVAR(NZ), I
       double precision DAT(*)
       integer IDAT(*)
@@ -339,7 +389,7 @@
       data  AVAR1 /1/ !ROWS
       data  ACON1 /1/ !COLUMNS
       save  AVAR1, ACON1
-!csc WARNING to be updated whenever nonlinear constraints are needed
+!csc WARNING to be updated whenever nonlinear or state constraints are needed
       if( TASK.eq.0 ) then
         do I = 1, NZ
           AVAR(I) = 1!jrow(i)
@@ -353,6 +403,43 @@
       IERR = 0
       return
       end subroutine EV_JAC_G
+
+      subroutine EV_HESS(TASK, npar, X, NEW_X, OBJFACT, ncon, LAM,
+     &     NEW_LAM, NNZH, IRNH, ICNH, HESS, IDAT, DAT, IERR)
+      implicit none
+      integer TASK, npar, NEW_X, ncon, NEW_LAM, NNZH, i
+      double precision X(npar), OBJFACT, LAM(ncon), HESS(NNZH)
+      integer IRNH(NNZH), ICNH(NNZH)
+      double precision DAT(*)
+      integer IDAT(*)
+      integer IERR
+C
+C     structure of Hessian:
+C
+C     L = F + lambda*h
+
+c      integer IRNH1(10), ICNH1(10)
+c      data  IRNH1 /1, 2, 2, 3, 3, 3, 4, 4, 4, 4/
+c      data  ICNH1 /1, 1, 2, 1, 2, 3, 1, 2, 3, 4/
+c      save  IRNH1, ICNH1
+C     1  2  3  4
+C   1 *
+C   2    *
+C   3       *
+C   4          * 
+      if( TASK.eq.0 ) then
+         do i = 1, NNZH
+            IRNH(i) = i
+            ICNH(i) = i
+         enddo
+      else
+         do i = 1, NNZH
+            HESS(i) = 1.0d0
+         enddo
+      endif
+      IERR = 0
+      return
+      end subroutine EV_HESS
 
       subroutine ITER_CB(ALG_MODE, ITER_COUNT, OBJVAL, INF_PR, INF_DU, 
      &    MU, DNORM, REGU_SIZE, ALPHA_DU, ALPHA_PR, LS_TRIAL, IDAT, 
@@ -371,11 +458,13 @@
 
 !     And set ISTOP to 1 if you want Ipopt to stop now.  Below is just a
 !     simple example.
-      inquire(file='.quit',exist=quitexist)
-      inquire(file='_quit',exist=quitexist_)
+      inquire(file='.quit_opt',exist=quitexist)
+      inquire(file='_quit_opt',exist=quitexist_)
       if(quitexist)  write(*,*) 'IPOPT: stopping because .quit seen'
       if(quitexist_) write(*,*) 'IPOPT: stopping because _quit seen'
       if (quitexist.or.quitexist_) ISTOP = 1
 
       return
       end subroutine ITER_CB
+
+      end program b2optim_ipopt

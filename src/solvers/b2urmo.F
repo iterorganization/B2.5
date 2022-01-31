@@ -100,7 +100,6 @@ cwdk       viscosity, and will be zero if cvsb is zero
      &                       geo,mpg,ub,flub,cvsb,fmb,flf,flv)
 cwdk store effective viscosity, for use in viscous heating
       call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
-!$AD DEBUG-HERE b2urmo_user1 true true
       cvsb_eff  = -flv/(wrkf + eps)
 
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
@@ -108,7 +107,6 @@ cwdk store effective viscosity, for use in viscous heating
 !WG_TODO        fmo_flua(:,:,isb)=flf
 !WG_TODO      endif
 
-!$AD DEBUG-HERE b2urmo_user2 true true
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_graduax'//chns)
