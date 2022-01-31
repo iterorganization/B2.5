@@ -18,7 +18,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfnb
+     & , only : ncall_b2tfnb, b2tfnb_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, ismain
@@ -56,15 +56,14 @@
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
-     *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
+     *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
-     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                        !srv 21.10.10
+     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                         !srv 21.10.10
      &   kmpr(nCv), kmprv(nVx)!,
 !     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
 !     &   rdiv                                                            !srv 05.03.16
-      parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
@@ -370,13 +369,13 @@ c csc To be added contribution of ubdia
       if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
         scur(:,0) = 
      &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
-     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%xcur/(qe*nbf) +
-     &      dv%fchviskt(:,0)/(qe*nbf)
+     &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%b2tfnb_xcur/
+     &     (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
         scur(:,1) = 
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
      &      switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
-     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%ycur/(qe*nbf) +
-     &      dv%fchviskt(:,1)/(qe*nbf)
+     &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
+     &     (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz

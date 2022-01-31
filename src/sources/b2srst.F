@@ -15,7 +15,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2srst
+     & , only : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
@@ -49,7 +49,6 @@
      &  sktst(nCv,0:3), sztst(nCv,0:3), wrk0(nCv)
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0
-      real (kind=R8), save :: kt_eps = 1.0e-60_R8,  zt_eps = 1.0e-60_R8
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
@@ -172,25 +171,33 @@
      &    min(sr%shn(iCv,3)*tn(iCv),-switch%b2srst_rf2*t0,
      &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify skt(,,0:1)
-c        t0 = sr%skt(iCv,0)+sr%skt(iCv,1)*kt(iCv)
-c        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
-c        sr%skt(iCv,1) = (1.0_R8/(kt(iCv)+kt_eps))*
-c     &    min(sr%skt(iCv,1)*kt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
+        t0 = sr%skt(iCv,0)+sr%skt(iCv,1)*kt(iCv)
+        sr%skt(iCv,0) = max(sr%skt(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
+        sr%skt(iCv,1) = (1.0_R8/(kt(iCv)+b2srst_kt_eps))*
+     &    min(sr%skt(iCv,1)*kt(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify skt(,,2:3)
-c        t0 = sr%skt(iCv,2)+sr%skt(iCv,3)*kt(iCv)
-c        sr%skt(iCv,2) = max(sr%skt(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
-c        sr%skt(iCv,3) = (1.0_R8/(kt(iCv)+kt_eps))*
-c     &    min(sr%skt(iCv,3)*kt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
+        t0 = sr%skt(iCv,2)+sr%skt(iCv,3)*kt(iCv)
+        sr%skt(iCv,2) = max(sr%skt(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
+        sr%skt(iCv,3) = (1.0_R8/(kt(iCv)+b2srst_kt_eps))*
+     &    min(sr%skt(iCv,3)*kt(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify szt(,,0:1)
-c        t0 = sr%szt(iCv,0)+sr%szt(iCv,1)*zt(iCv)
-c        sr%szt(iCv,0) = max(sr%szt(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
-c        sr%szt(iCv,1) = (1.0_R8/(zt(iCv)+zt_eps))*
-c     &    min(sr%szt(iCv,1)*zt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
+        t0 = sr%szt(iCv,0)+sr%szt(iCv,1)*zt(iCv)
+        sr%szt(iCv,0) = max(sr%szt(iCv,0),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                  -switch%b2srst_rf2*t0)
+        sr%szt(iCv,1) = (1.0_R8/(zt(iCv)+b2srst_zt_eps))*
+     &    min(sr%szt(iCv,1)*zt(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 *     ..modify szt(,,2:3)
-c        t0 = sr%szt(iCv,2)+sr%szt(iCv,3)*zt(iCv)
-c        sr%szt(iCv,2) = max(sr%szt(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,-switch%b2srst_rf2*t0)
-c        sr%szt(iCv,3) = (1.0_R8/(zt(iCv)+zt_eps))*
-c     &    min(sr%szt(iCv,3)*zt(iCv),-switch%b2srst_rf2*t0,(1.0_R8+switch%b2srst_rf2)*t0)
+        t0 = sr%szt(iCv,2)+sr%szt(iCv,3)*zt(iCv)
+        sr%szt(iCv,2) = max(sr%szt(iCv,2),(1.0_R8+switch%b2srst_rf2)*t0,
+     &                 -switch%b2srst_rf2*t0)
+        sr%szt(iCv,3) = (1.0_R8/(zt(iCv)+b2srst_zt_eps))*
+     &    min(sr%szt(iCv,3)*zt(iCv),-switch%b2srst_rf2*t0,
+     &    (1.0_R8+switch%b2srst_rf2)*t0)
 
 
 *     ..make sch(,,1) negative

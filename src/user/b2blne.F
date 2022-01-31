@@ -1,4 +1,4 @@
-      subroutine b2blne(nx,ny,ns,BoRiS,iline)
+      subroutine b2blne(nx,ny,ns,BoRiS,iline,switch)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -12,6 +12,7 @@
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_external
+      use b2mod_switches
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -26,6 +27,7 @@ c-----------------------------------------------------------------------
       implicit none
       integer nx,ny,ns,iline
       real (kind=R8) :: BoRiS
+      type (switches), intent (in) :: switch
 c
 c*** lv    :  version number to appear in the file
 c
@@ -96,7 +98,6 @@ c*** Values by species
       real (kind=R8), allocatable :: radim_tmp(:)
       character*2, allocatable :: hlp_spc(:)
       character*2 hlp_hs(nspc_tmp)*8
-      real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
 c-----------------------------------------------------------------------
 c*** Values by surface. Here ntrg_tmp is the number of values,
@@ -568,7 +569,6 @@ c
       allocate(limp_tmp(nspecies))
       allocate(radim_tmp(nspecies))
       allocate(hlp_spc(nspecies))
-      call ipgetr ('b2mndr_stim', stim)
 c
       tab=char(9)
       nimp_tmp=0
@@ -680,7 +680,7 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex.and.stim.lt.0.0_R8) then !{
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then !{
         read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.

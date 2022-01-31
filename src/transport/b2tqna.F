@@ -24,7 +24,6 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2mod_par_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -118,7 +117,7 @@
       real (kind=R8) ::
      *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
-      integer elm_count, iv
+      integer elm_count, ivar
       save jxi, jxa, jsep
       logical catch_up
 *   ..procedures
@@ -197,21 +196,6 @@
 
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
-      if (flag_optim) then
-        do iv = 1, nnvar !loop over all design variables
-          select case (xtype(iv))
-          case (1) ! dna
-            parm_dna(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
-          case (2) ! hce
-            parm_hce = par_opt_phys(iv)
-          case (3) ! hci
-            parm_hci(1) = par_opt_phys(iv) ! FIXME to improve for multispecies
-          case default
-            write(*,*) xtype(iv)
-            call xerrab ('xtype out of bounds')
-          end select
-        end do
-      endif
       if(switch%b2tqna_transport_namelist.eq.1) then
         do is=0,ns-1
           if(.not.is_neutral(is)) then
@@ -3684,7 +3668,7 @@ c recompute hci0 and hcn0
      &   dna_ExB(nCv), hce_ExB(nCv),
      &   hci_ExB(nCv), rhol(nCv)
 *   ..local variables
-      integer :: is
+      integer :: is, ic, ivar
       real(kind=R8) ::
      1   wrkf(nFc), wrkc(nCv), shear(nCv)
 

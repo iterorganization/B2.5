@@ -1,9 +1,10 @@
-      subroutine b2file(it,ns,nnreg)
+      subroutine b2file(it,ns,nnreg,switch)
       use b2mod_types
       use b2mod_plasma
       use b2mod_version
       use b2mod_b2cmpa
       use b2mod_diag
+      use b2mod_switches
 c
 c  version : 21.12.2000 19:05
 c
@@ -24,6 +25,7 @@ c----------------------------------------------------------------------
       implicit none
 c
       integer ns, nnreg(0:2), it
+      type (switches), intent (in) :: switch
 c
       integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
       integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
@@ -48,7 +50,6 @@ c
      ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
       character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
-      real (kind=R8), save :: stim = 0.0_R8
       integer iline
 c
       external subini, subend, ipgetr, xertst
@@ -81,7 +82,6 @@ c
 c*** check the number of units specified in ntrc
 c
       call xertst(lf_tmp.le.len_ntrc,'b2file: too many tracing units')
-      call ipgetr('b2mndr_stim', stim)
 c----------------------------------------------------------------------
 c*** Test data - temporary
 c
@@ -93,7 +93,7 @@ c
       l=1
       open(ntrc(ntrc_tst),file=f,err=900)
       rewind(ntrc(ntrc_tst))
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
 c*** Old file to be appended - check it
         l=2
         read(ntrc(ntrc_tst),*,err=900) hlp_c,i,m,n
@@ -172,7 +172,7 @@ c
       l=1
       open(ntrc(ntrc_res),file=f,err=5)
       rewind(ntrc(ntrc_res))
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_res),*,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
@@ -250,7 +250,7 @@ c
       l=1
       open(ntrc(ntrc_src),file=f,err=30)
       rewind(ntrc(ntrc_src))
-      if(ex.and.stim.lt.0.0_R8) then
+      if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then

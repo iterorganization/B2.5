@@ -840,40 +840,41 @@ cdpc
 
 
          if (switch%recycle_afn.eq.0.or.zn(is0).ne.1) then !! default neutral recycling/reflection model (always for non-hydrogenic species)
-         srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+b2recyc(is,istra)*t0
+           srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + 
+     &      b2recyc(is,istra)*t0
 #ifdef WG_TODO
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
-         if(itrack.gt.0.and.itrack.le.ntrack
+           if(itrack.gt.0.and.itrack.le.ntrack
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
      1           dtim*plate_time_factor(iwall)*
      2           (1.0_R8-b2recyc(is,istra))*t0
-         endif
+           endif
 #endif
 cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
 c     (toroidal piec only, because poloidal piece of parallel velocity flips sign after reflection)
-         srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
-     &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
-     &    b2recyc(is,istra)*t0*geo%cvHz(iCv)
-         if (switch%lin_shi0.eq.1) then
-          srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*max(
-     &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0/
-     &      pl%ti(iCv)
-         else
-          srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
-     &      erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
-     &      (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
-         endif
-         if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
+           srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
+     &      am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/
+     &      geo%cvBb(iCv,3)**2*b2recyc(is,istra)*t0*geo%cvHz(iCv)
+           if (switch%lin_shi0.eq.1) then
+            srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*
+     &        max(erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0/
+     &        pl%ti(iCv)
+           else
+            srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*
+     &        max(erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
+           endif
+           if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
      &        recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
 
 
-        else !! use advanced fluid neutral boundary conditions by N. Horsten et. al 
+         else !! use advanced fluid neutral boundary conditions by N. Horsten et. al 
 c lvn1
 c**************************************************************************************
 c*****************     New KU Leuven recycling model for neutrals *********************

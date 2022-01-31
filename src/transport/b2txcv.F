@@ -26,9 +26,8 @@
       real (kind=R8) ::
      *   hy1, harm
       external subini, subend, xertst
-      external b2xxgs
+      external b2xxgs, harm
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcv')

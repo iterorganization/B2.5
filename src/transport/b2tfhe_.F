@@ -19,7 +19,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx
+     & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -35,9 +35,8 @@
       type (B2Coeff), intent (inout) :: co
       type (B2Derivatives), intent (inout) :: dv
 *   ..local variables
-      real (kind=R8) :: cutlo
-      parameter (cutlo = 1.0e-60_R8)
-      real (kind=R8) :: upfac, hybfac !djm Jan2017
+      real (kind=R8) :: upfac, hybfac, harm !djm Jan2017
+      external harm
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -239,19 +238,19 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
               endif
               fhe_thermj(ix,iy,0,0) = -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
      &          fch_pTe*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
-     &          /2.0_R8 + alfTeEh*alfe0*
+     &          /2.0_R8 + switch%alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_ecrb(ix,iy,0,0) = 0.0_R8
             endif
           else
             fhe(ix,iy,0,0) =
      &         upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)) , te(ix,iy))
-     &         -cone0*tex0 + alfTeEh*
+     &         -cone0*tex0 + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             fhe_mdf(ix,iy,0,0) =                                         !srv 13.06.06 {
      &         upwind(floe0_mdf,
      &                        te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
-     &         -cone0_mdf*tex0 + alfTeEh*
+     &         -cone0_mdf*tex0 + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0,0)                                        !srv 13.06.06 }
             if (balance.and.
@@ -278,7 +277,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
      &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &            (1.0_R8-upfac)*te(ix,iy))+
-     &           alfTeEh*alfe0*
+     &           switch%alfTeEh*alfe0*
      &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_ecrb(ix,iy,0,0) = 0.0_R8
               fhe_cond(ix,iy,0,0) = -cone0*tex0
@@ -305,7 +304,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
      &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &            (1.0_R8-upfac)*te(ix,iy))+
-     &           alfTeEh*alfe0*
+     &           switch%alfTeEh*alfe0*
      &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_ecrb(ix,iy,0,0) = 0.0_R8
               fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0
@@ -323,7 +322,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
      &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)= -cone0*tex0
-            if(alfTeEh.eq.1.0_R8)
+            if(switch%alfTeEh.eq.1.0_R8)
      &       w4(ix,iy)=
      *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             if(fch_pTe.eq.1.0_R8)
@@ -386,7 +385,7 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
 
            cone0=dim(chce(ix,iy,0,0)/(1.d0+t0), abs(floe0)*
      .      max(0.0d0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .      max(cutlo,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+     .      max(b2tfhe_cutlo,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
 
@@ -395,7 +394,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
              fhe(ix,iy,0,0) =
      &        upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
      &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
-     &         + alfTeEh*
+     &         + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
              if (balance.and.
      &           (balance_netcdf.ne.0).and.
@@ -421,7 +420,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &              -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
      &              (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &               (1.0_R8-upfac)*te(ix,iy))+
-     &              alfTeEh*alfe0*
+     &              switch%alfTeEh*alfe0*
      &              harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                fhe_ecrb(ix,iy,0,0) = 0.0_R8
                fhe_cond(ix,iy,0,0) = -cone0*
@@ -431,7 +430,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
           else
              fhe(ix,iy,0,0) =
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &         -cone0*tex0 + alfTeEh*
+     &         -cone0*tex0 + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
              if (balance.and.
      &           (balance_netcdf.ne.0).and.
@@ -448,7 +447,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
                fhe_thermj(ix,iy,0,0) = -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
      &            fch_pTe*
      &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            alfTeEh*alfe0*
+     &            switch%alfTeEh*alfe0*
      &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                fhe_ecrb(ix,iy,0,0) = 0.0_R8
                fhe_cond(ix,iy,0,0) = -cone0*tex0
@@ -500,7 +499,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
               fhe_mdf(ix,iy,0,0) =
      &         upwind(floe0_mdf,
      &                te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
-     &         -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
+     &         -cone0_mdf*tex0_mdf + switch%alfTeEh*alfe0_mdf*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               if (balance.and.
      &           (balance_netcdf.ne.0).and.
@@ -523,7 +522,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &             -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
      &             (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &              (1.0_R8-upfac)*te(ix,iy))+
-     &             alfTeEh*alfe0_mdf*
+     &             switch%alfTeEh*alfe0_mdf*
      &             harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                 fhe_ecrb(ix,iy,0,0) = 0.0_R8
                 fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0_mdf
@@ -533,7 +532,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
               fhe_mdf(ix,iy,0,0) = floe0_mdf*
      &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -abs(floe0_mdf/2.0_R8)*tex
-     &         -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
+     &         -cone0_mdf*tex0_mdf + switch%alfTeEh*alfe0_mdf*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               if (balance.and.
      &           (balance_netcdf.ne.0).and.
@@ -560,7 +559,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
      &           hybfac*c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
      &           fch_pTe/2.0_R8*tex+
-     &           alfTeEh*alfe0_mdf*
+     &           switch%alfTeEh*alfe0_mdf*
      &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                 fhe_ecrb(ix,iy,0,0) = 0.0_R8
                 fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0_mdf
@@ -643,7 +642,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
              fhe_dia(ix,iy,1,1) = 0.0_R8
            endif
            fhe_pschused(ix,iy,1,1) = -fhePSch(ix,iy,1,1)
-           fhe_thermj(ix,iy,1,1) = alfTeEh*calf(ix,iy,1,1)*
+           fhe_thermj(ix,iy,1,1) = switch%alfTeEh*calf(ix,iy,1,1)*
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
            fhe_ecrb(ix,iy,1,1) = 0.0_R8
          endif

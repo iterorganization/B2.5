@@ -1,3 +1,4 @@
+! $AD NOCHECKPOINT
       function uxcm (t0, t1)
       use b2mod_types
       implicit none

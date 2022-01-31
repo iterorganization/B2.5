@@ -88,6 +88,7 @@
 * ..compute the correction
       aa = 0.0_R8
 *   ..compute the nine-point matrix
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
@@ -103,6 +104,7 @@
          aad0(iCv) = 0.0_R8
         endif
       enddo
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -193,6 +195,7 @@
       enddo
 *   ..compute pccb
       pccb = 0.0_R8
+! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
@@ -205,10 +208,12 @@
         endif
       enddo
 *   ..contribution from linearization of centrifugal force
+! $AD II-LOOP
       do iCv = 1, nCv
         aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) - 
      &    min(0.0e0_R8,ctcfb(iCv))
       enddo
+! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)

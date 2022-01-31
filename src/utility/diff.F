@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-
+! $AD NOCHECKPOINT
       subroutine diff(nCv, nFc, nVx, mode, geo, mpg, fun, funv, dfun)
       use b2mod_types
       use b2us_geo
