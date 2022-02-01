@@ -31,7 +31,8 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rmz1(:,:,:,:,:),rmz2(:,:,:,:,:),re1(:,:,:,:,:),re2(:,:,:,:,:),
      &  rp11(:,:,:,:,:),rp12(:,:,:,:,:),rp21(:,:,:,:,:),
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
-     &  M_dummy(:), T_dummy(:), shpottau_dummy(:)        !nh 21.02.2020
+     &  M_dummy(:), T_dummy(:), shpottau_dummy(:),        !nh 21.02.2020
+     &  fna_mol(:,:)                                    !nh 30.03.2021
 
       real (kind=R8),save::int0l,int0r,
      &    int1l,int1r,int2l,int2r,
@@ -39,6 +40,17 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &    int5l,int5r,int6l,int6r 
 
       contains
+      
+      subroutine alloc_b2mod_recycle(nFcd,nsd)
+      implicit none
+      integer,intent(in) :: nFcd,nsd
+      
+      allocate(fna_mol(nFcd,0:nsd-1))
+      
+      fna_mol = 0.0_R8
+      
+      return
+      end subroutine alloc_b2mod_recycle
 
       subroutine read_recycle_fnn(nsd,nbnd)
       use b2mod_b2cmpa
@@ -219,7 +231,7 @@ c     Other initializations
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,safeguard,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten)
@@ -236,7 +248,7 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
+     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1, safeguard
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      2    pof,nef,isign,dnndy,dnndz, cosa, sina
 c     Output variables: 
@@ -363,7 +375,7 @@ c     Convert energy flux densities in net energy flux contributions
 
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni .lt. 0.0_R8) then
+      if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
      &            fnni,fmomni,
@@ -374,15 +386,15 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       return
       end subroutine CalcIncidentFluxesDiffusion
 
-      subroutine CalcIncidentFluxesMfp(mfp_b1,mfp_b2,
+      subroutine CalcIncidentFluxesKn(Kn_b1,Kn_b2,
      &            iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,L,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
-c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
+c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
@@ -395,20 +407,20 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
      &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy,dnndz,cosa, sina,
-     &    mfp_b1, mfp_b2
+     &    Kn_b1, Kn_b2,L
       real (kind=R8) :: t1, t_av
 c     Output variables
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
 c     Internal variables
-      real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th
+      real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th,Kn
       integer :: ic
       real (kind=R8):: fnniM,nnwwniM,nniM,feneniM,fmomniM
       real (kind=R8):: fnniD,nnwwniD,nniD,feneniD,fmomniD
 *   ..statement functions
       external subini, subend, expu
 
-      call subini ('CalcIncidentFluxesMfp')
+      call subini ('CalcIncidentFluxesKn')
 
 c     Calculate rate coefficients at boundary
       mn = am(isn)*mp
@@ -424,20 +436,21 @@ c     Calculate rate coefficients at boundary
       vtot =vion + vcx
       c_th = sqrt(tnf/mn)
       mfp = c_th/vtot
+      Kn = mfp/L !! L = macroscopic length scale
 
-c     if mfp is low, we use the diffusion approximation
-c     if mfp is larger, we use the drifting maxwellian approximation
-c     if the mfp is in between, we use a linear interpolation
-      if (mfp.lt.mfp_b1) then
+c     if Kn is low, we use the diffusion approximation
+c     if Kn is larger, we use the drifting maxwellian approximation
+c     if the Kn is in between, we use a linear interpolation
+      if (Kn.lt.Kn_b1) then
 
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnni,fmomni,nni,nnwwni,feneni)
 
-      elseif (mfp.gt.mfp_b2) then
+      elseif (Kn.gt.Kn_b2) then
 
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tnf,geo, cosa, sina,
@@ -453,29 +466,29 @@ c     if the mfp is in between, we use a linear interpolation
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
      &            fnniD,fmomniD,nniD,nnwwniD,feneniD)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,fnniD,  fnniM,   fnni)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomniD,fmomniM, fmomni)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,nniD,   nniM,    nni)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,nnwwniD,nnwwniM, nnwwni)
-        call CalcLinComb(mfp,mfp_b1,mfp_b2,feneniD,feneniM, feneni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,fnniD,  fnniM,   fnni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,fmomniD,fmomniM, fmomni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,nniD,   nniM,    nni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,nnwwniD,nnwwniM, nnwwni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,feneniD,feneniM, feneni)
       endif
 
       call subend ()
       return
-      end subroutine CalcIncidentFluxesMfp
+      end subroutine CalcIncidentFluxesKn
 
-      subroutine CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
+      subroutine CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
      &            use_uy_uz_0,use_uy_uz_1,
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
-c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
-c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
+c     It will decide which one to use based on the minimum Knudsen of the neutral atoms.
+c     If the choice is based on Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
+c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_rates
       use b2mod_b2cmpa
@@ -498,14 +511,14 @@ c     Output variables
 *   ..statement functions
       external subini, subend
 
-      call subini ('CalcIncidentFluxesMinMfp')
+      call subini ('CalcIncidentFluxesMinKn')
 
       if (maxw_eff(istra).eq.0) then
         call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
      &            isn,iscx0,isi,istra,
      &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
+     &            use_uy_uz_0,use_uy_uz_1,1, !! <- '1': = safeguard for diffusion BCs
      &            fnni,fmomni,nni,nnwwni,feneni)
       else
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
@@ -516,7 +529,7 @@ c     Output variables
 
       call subend ()
       return
-      end subroutine CalcIncidentFluxesMinMfp
+      end subroutine CalcIncidentFluxesMinKn
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tf,geo, cosa, sina,
@@ -611,10 +624,10 @@ c     Convert energy flux densities in net energy flux contributions
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
      &             isign,
      &            isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tef,pof,nif,nef,
      &            geo,mpg,t0, cosa, sina, use_uy_uz_0,
-     &            fmomrec,nnrec,nnwwnrec,fenerec)
+     &            fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten).
@@ -632,7 +645,7 @@ c     nif = plasma density on face, isn neutral species index
       integer, intent(in):: iCv, nCi, iFc,
      &     isn, iscx0, isi,iwall,istra,
      &     use_uy_uz_0
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nif,nef,t0,isign, tif, tef, cosa, sina,
      &    fluid_frac_hyb
 !! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
@@ -640,7 +653,7 @@ c     nif = plasma density on face, isn neutral species index
 !! on a single target stratum, this value can deviate from 1.
 c     Output variables: 
 c     fmomni: momentum flux of incident neutrals.
-      real (kind=R8),intent(out):: fmomrec,nnrec,nnwwnrec,fenerec
+      real (kind=R8),intent(out):: fnnrec,fmomrec,nnrec,nnwwnrec,fenerec
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    shpottauj,ishpottau,pf,pcorf,pt,vt,
@@ -649,7 +662,8 @@ c     Internal variables
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
      &    intp_3dtable,intp_3dtable0,intp_3dtable00,
-     &    tifev,upf
+     &    tifev,upf,
+     &    fna_mol_rec
       real (kind = R8):: tab(0:nM,0:nT,0:nshpottau),ff(0:1,0:1,0:1)
       integer :: ic,is,it,ilT,ilM,ilSh,ip1,ip2,ip3
       external subini, subend,intp_3dtable, intp_3dtable0, 
@@ -729,38 +743,45 @@ c     Calculate fast and thermal recycled parts
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
-
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
 c     once all thermal particles are pumped.
 
+cnh 22.02.2020
+c     Calculate the flux emitted as molecules. At the moment, molecules will be 
+c     treated kinetically.
+      fna_mol_rec = recycm*pt*fdni*area*0.5_R8
+      fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_rec
+      
+      fnnrec = max(0.0_R8,(recyc0*t0 - 2.0_R8*fna_mol_rec)*
+     1  fluid_frac_hyb)
+
 
 c     Recycled momentum flux densities
-      fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)
+      fmox = pcorf*mn*rmx1i*sign(1.0_R8,ux)*cs**2*fdni/(-i1l)*
+     1  fluid_frac_hyb
 
       fmoy = 0.0_R8
 
-      fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)
+      fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)*fluid_frac_hyb
     
-      fmoz = fmoz + 2.0_R8/3.0_R8*mn*pt*fdni*vt
+      fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*
+     1  fluid_frac_hyb
 c       Pressure of recycled neutrals 
-      pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)
+      pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)*fluid_frac_hyb
 
-      pnc = pnc + 2.0_R8/3.0_R8*mn*pt*fdni*vt
+      pnc = pnc + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*fluid_frac_hyb
 c       Density of recycled neutrals
-      nnrec = pcorf*rp21i*fdni/(-i1l)
-      nnrec = nnrec+pt*fdni*2.0_R8/vt
+      nnrec = pcorf*rp21i*fdni/(-i1l)*fluid_frac_hyb
+      nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt*fluid_frac_hyb
 c       product of density and toroidal velocity
-      nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)
+      nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)*
+     1  fluid_frac_hyb
 
 c     recycled total energy flux density of neutrals
-      fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)
-      fenec = fenec + 0.5_R8*mn*pt*fdni*vt**2
+      fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
+      fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
 
 
 c     Calculate recycled poloidal momentum flux of neutrals
@@ -777,11 +798,11 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            cosa, sina, use_uy_uz_0,safeguard,
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
@@ -796,8 +817,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, safeguard
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz,
      &    fluid_frac_hyb
@@ -807,8 +828,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
 c     Output variables:
 c     fmomni: momentum flux of 
 c     incident neutrals.
-      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &                             fene_el
+      real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
+     &                             nnwwnrefl,fenerefl,fene_el
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    pf,pcorf,pt,vt,vion,vcx,vtot,
@@ -818,7 +839,8 @@ c     Internal variables
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
      &    expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
-     &    upf, nif,mfp,c_th
+     &    upf, nif,mfp,c_th,
+     &    fna_mol_refl
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
       external subini, subend,intp_2dtable,intp_2dtable0, expu
@@ -947,41 +969,54 @@ c     Calculate fast and thermal reflected parts
       pcorf = min(pf,recyc0)/pf
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be reflected as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
-
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
 c     once all thermal particles are pumped.
 
+cnh 22.02.2020
+c     Calculate the part of the reflected flux emitted as molecules. At the moment,
+c     the molecules are treated kinetically.
+      if (fnni<0.0_R8) then
+        fna_mol_refl = recycm*pt*fnni_nodrifts*area*0.5_R8
+        fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
+        
+        fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
+     1    fluid_frac_hyb)
+      else
+        fnnrefl = 0.0_R8
+      endif
+
+
 c     reflected momentum flux densities
       fmox = pcorf*mn*vcx/vtot*(nnf*rmx1i*cs**2 + 
-     2     1.0_R8/vtot*dnndz*rmx2i*cs**3)*sign(1.0_R8,ux)
-      fmoy = -pcorf*mn*vcx/vtot**2*dnndy*rmy2i*cs**3
+     2     1.0_R8/vtot*dnndz*rmx2i*cs**3)*sign(1.0_R8,ux)*fluid_frac_hyb
+      fmoy = -pcorf*mn*vcx/vtot**2*dnndy*rmy2i*cs**3*fluid_frac_hyb
 
       fmoz = pcorf*mn*vcx/vtot*(nnf*rmz1i*cs**2 + 
-     2     1.0_R8/vtot*dnndz*rmz2i*cs**3)
+     2     1.0_R8/vtot*dnndz*rmz2i*cs**3)*fluid_frac_hyb
     
-      fmoz = fmoz + pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt
+      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+     1  fluid_frac_hyb
 c       Pressure of reflected neutrals 
       pn = pcorf*mn/3.0_R8*vcx/vtot*(nnf*rp11i*cs**2+
-     2     1.0_R8/vtot*dnndz*rp12i*cs**3)
+     2     1.0_R8/vtot*dnndz*rp12i*cs**3)*fluid_frac_hyb
 
-      pn = pn + pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt
+      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+     1  fluid_frac_hyb
 c       Density of reflected neutrals
-      nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)
-      nnrefl = nnrefl+pt*fnni_nodrifts*2.0_R8/vt
+      nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)*
+     1  fluid_frac_hyb
+      nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt*
+     1  fluid_frac_hyb
 c       product of density and toroidal velocity
       nnwwnrefl = pcorf*vcx/vtot*(nnf*rp31i*cs+
-     2     1.0_R8/vtot*dnndz*rp32i*cs**2)*sign(1.0_R8,ux)
+     2     1.0_R8/vtot*dnndz*rp32i*cs**2)*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
       fene = 0.5_R8*pcorf*mn*vcx/vtot*(nnf*re1i*cs**3+
-     2     1.0_R8/vtot*dnndz*re2i*cs**4)
-      fene = fene + pt*fnni_nodrifts*E_fc*ev
-      fene_el =   - pt*fnni_nodrifts*E_fc*ev    !! the Franck-Condon energy must at least be provided by the electrons.
+     2     1.0_R8/vtot*dnndz*re2i*cs**4)*fluid_frac_hyb
+      fene = fene + (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb
+      fene_el =   - (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb    !! the Franck-Condon energy must at least be provided by the electrons.
 
 
 
@@ -995,11 +1030,11 @@ c     Convert energy flux densities in energy fluxes
       fene_el =  fene_el*area
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
-      if (fnni .lt. 0.0_R8) then
+      if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,                        
+     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,                        
      &            pl,tnf, geo, mpg,cosa, sina,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       endif
 
 
@@ -1008,16 +1043,17 @@ c if incident flux is negative (this can happen if the diffusion approximation i
       return
       end subroutine CalcReflectedFluxesDiffusion
 
-      subroutine CalcReflectedFluxesMfp(mfp_b1,mfp_b2,
+      subroutine CalcReflectedFluxesKn(Kn_b1,Kn_b2,
      &             iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            cosa, sina, use_uy_uz_0,L,
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
-c     It will decide which one to use based on the mean free path (mfp) of the neutral atoms.
+c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_b2cmpa
       use b2mod_rates
       use b2us_geo
@@ -1030,22 +1066,24 @@ c     It will decide which one to use based on the mean free path (mfp) of the n
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,
-     2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy, dnndz, mfp_b1 , mfp_b2, fluid_frac_hyb
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
+     2    pof,nef,isign,tif,tnf,tef,L,
+     &    sina,cosa, dnndy, dnndz, Kn_b1 , Kn_b2, fluid_frac_hyb
 c     Output variables: 
-      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &                             fene_el
+      real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
+     &                             nnwwnrefl,fenerefl,fene_el
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    pf,pcorf,pt,vt,vion,vcx,vtot,
-     &     mn,expu,t1,t_av,mfp,c_th
+     &    mn,expu,t1,t_av,mfp,c_th,Kn
       integer :: ic
-      real (kind = R8):: fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM 
-      real (kind = R8):: fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD
+      real (kind = R8):: fnnreflM,fmomreflM,nnreflM,nnwwnreflM,
+     &    fenereflM,fene_elM 
+      real (kind = R8):: fnnreflD,fmomreflD,nnreflD,nnwwnreflD,
+     &    fenereflD,fene_elD
       external subini, subend, expu
 
-      call subini ('CalcReflectedFluxesMfp')
+      call subini ('CalcReflectedFluxesKn')
 
 c     Calculate rate coefficients at boundary
       mn = am(isn)*mp
@@ -1061,59 +1099,64 @@ c     Calculate rate coefficients at boundary
       vtot =vion + vcx
       c_th = sqrt(tnf/mn)
       mfp = c_th/vtot
+      Kn = mfp/L !! L = macroscopic length scale
 
 !!    zero out if incident flux has wrong sign
-      if (mfp.lt.mfp_b1) then
+      if (Kn.lt.Kn_b1) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
-      elseif (mfp.gt.mfp_b2) then
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
+      elseif (Kn.gt.Kn_b2) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,
+     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tnf,geo, mpg,cosa, sina,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tnf,                         
-     &            geo, mpg,cosa, sina,
-     &            fmomreflM,nnreflM,nnwwnreflM,fenereflM,fene_elM)
+     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
+     &            tnf,geo, mpg,cosa, sina,
+     &            fnnreflM,fmomreflM,nnreflM,nnwwnreflM,fenereflM,
+     &            fene_elM)
 
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,pl,tif,tnf,tef,pof,                           
-     &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
-     &            fmomreflD,nnreflD,nnwwnreflD,fenereflD,fene_elD)
-
-          call CalcLinComb(mfp,mfp_b1,mfp_b2,fmomreflD,fmomreflM,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,pl,tif,tnf,
+     &            tef,pof,nef,geo,mpg,rt,dnndy,dnndz,
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            fnnreflD,fmomreflD,nnreflD,nnwwnreflD,fenereflD,
+     &            fene_elD)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fnnreflD,fnnreflM,fnnrefl)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fmomreflD,fmomreflM,
      &                     fmomrefl)
-          call CalcLinComb(mfp,mfp_b1,mfp_b2,nnreflD,nnreflM,nnrefl)
-          call CalcLinComb(mfp,mfp_b1,mfp_b2,nnwwnreflD,  nnwwnreflM,
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,nnreflD,nnreflM,nnrefl)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,nnwwnreflD,  nnwwnreflM,
      &                     nnwwnrefl)
-          call CalcLinComb(mfp,mfp_b1,mfp_b2,fenereflD,fenereflM, 
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fenereflD,fenereflM, 
      &                     fenerefl)
-          call CalcLinComb(mfp,mfp_b1,mfp_b2,fene_elD,fene_elM,fene_el)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fene_elD,fene_elM,fene_el)
       endif
 
       call subend ()
       return
-      end subroutine CalcReflectedFluxesMfp
+      end subroutine CalcReflectedFluxesKn
 
-      subroutine CalcReflectedFluxesMinMfp(iCv,iCn,nCi,iFc,
+      subroutine CalcReflectedFluxesMinKn(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
-c     It will decide which one to use based on the minimum mean free path (mfp) of the neutral atoms.
-c     If the choice is based on the mfp at each boundary face (as is done in CalcIncidentFluxesMfp), additional convergence problems may arise.
-c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest mfp of that "stratum".
+c     It will decide which one to use based on the minimum Kn of the neutral atoms.
+c     If the choice is based on the Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
+c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_b2cmpa
       use b2mod_rates
@@ -1128,43 +1171,46 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
      &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz, fluid_frac_hyb
 c     Output variables: 
-      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &                             fene_el
+      real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
+     &                             nnwwnrefl,fenerefl,fene_el
       external subini, subend
 
-      call subini ('CalcReflectedFluxesMinMfp')
+      call subini ('CalcReflectedFluxesMinKn')
 
 
 !!    zero out if incident flux has wrong sign
       if (maxw_eff(istra).eq.0) then
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,fluid_frac_hyb,
+     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tnf,                         
-     &            geo, mpg,cosa, sina,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
+     &            pl,tnf,geo, mpg,cosa, sina,
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
       endif
 
 
       call subend ()
       return
-      end subroutine CalcReflectedFluxesMinMfp
+      end subroutine CalcReflectedFluxesMinKn
 
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,fluid_frac_hyb,pl,tf,                         
-     &            geo, mpg,cosa, sina,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
+     &            tf,geo, mpg,cosa, sina,
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &            fene_el)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
 c     for the incident neutrals.
@@ -1178,11 +1224,11 @@ c     for the incident neutrals.
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
-      real (kind=R8),intent(in):: area, recyc0, isign, tf, sina, cosa,
-     &                            fluid_frac_hyb
+      real (kind=R8),intent(in):: area, recyc0, recycm, isign, tf, sina, 
+     &                            cosa, fluid_frac_hyb
 c     Output variables
-      real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &                             fene_el
+      real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
+     &                             nnwwnrefl,fenerefl,fene_el
 c     Internal variables
       real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,
      &     pit,pit2,mn,nnf,ux,uz,
@@ -1190,7 +1236,8 @@ c     Internal variables
      &     rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &     rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &     fnni,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &     intp_2dtable,intp_2dtable0,tfev,unf
+     &     intp_2dtable,intp_2dtable0,tfev,unf,
+     &     fna_mol_refl
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
 *   ..statement functions
@@ -1290,33 +1337,40 @@ c     Calculate fast and thermal reflected parts
       pcorf = min(pf,recyc0)/pf 
       pt = recyc0-pf+1.0E-30_R8
 
-c in case of generealized spatially hybrid, only a fraction "fluid_frac_hyb" will be recycled as fluid.
-c (1-fluid_frac_hyb) = kin_frac_hyb will be done by Eirene.
-      pcorf = pcorf*fluid_frac_hyb
-      pt = pt*fluid_frac_hyb
 
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
 c     once all thermal particles are pumped.
 
+cnh 22.02.2020
+c     Calculate the part of the reflected flux emitted as molecules. At the moment,
+c     the molecules are treated kinetically. 
+      fna_mol_refl = recycm*pt*fnni*area*0.5_R8
+      fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
+      
+      fnnrefl = max(0.0_R8,(recyc0*fnni*area - 2.0_R8*fna_mol_refl)*
+     1  fluid_frac_hyb)
+      
+
 c     reflected momentum flux densities
-      fmox = pcorf*mn*nnf*rmx1i*cs**2*sign(1.0_R8,ux)
+      fmox = pcorf*mn*nnf*rmx1i*cs**2*sign(1.0_R8,ux)*fluid_frac_hyb
       fmoy = 0._R8
-      fmoz = pcorf*mn*nnf*rmz1i*cs**2
-      fmoz = fmoz + pt*2.0_R8/3.0_R8*mn*fnni*vt
+      fmoz = pcorf*mn*nnf*rmz1i*cs**2*fluid_frac_hyb
+      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*
+     1   fluid_frac_hyb
 c     Pressure of reflected neutrals 
-      pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2
-      pn = pn + pt*2.0_R8/3.0_R8*mn*fnni*vt
+      pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2*fluid_frac_hyb
+      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*fluid_frac_hyb
 c     Density of reflected neutrals
-      nnrefl = pcorf*nnf*rp21i
-      nnrefl = nnrefl+pt*fnni*2.0_R8/vt
+      nnrefl = pcorf*nnf*rp21i*fluid_frac_hyb
+      nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt*fluid_frac_hyb
 c     Product of density and toroidal velocity
-      nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)
+      nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
-      fene = 0.5_R8*pcorf*mn*nnf*re1i*cs**3
-      fene = fene + pt*fnni*E_fc*ev
-      fene_el =   - pt*fnni*E_fc*ev  !! the Franck-Condon energy is provided by the electrons
+      fene = 0.5_R8*pcorf*mn*nnf*re1i*cs**3*fluid_frac_hyb
+      fene = fene + (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb
+      fene_el =   - (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb  !! the Franck-Condon energy is provided by the electrons
 
 
 
@@ -1466,28 +1520,28 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       return
       end subroutine CalcMomentsMaxwellian
 
-      subroutine CalcLinComb(mfp,mfp1,mfp2,F1,F2,F)
+      subroutine CalcLinComb(Kn,Kn1,Kn2,F1,F2,F)
       implicit none
       !input variables
-      real (kind=R8),intent(in)::mfp,mfp1,mfp2,F1,F2
+      real (kind=R8),intent(in)::Kn,Kn1,Kn2,F1,F2
       !output variables
       real (kind=R8),intent(out)::F                       
 c                      F2
 c              F       |
 c       F1     |       |
 c       |      |       |
-c     mfp1----mfp----mfp2     
-      if (mfp.lt.mfp1.or.mfp.gt.mfp2) then
-        call xerrab('mfp should be between mfp1 and mfp2')
+c      Kn1----Kn------Kn2     
+      if (Kn.lt.Kn1.or.Kn.gt.Kn2) then
+        call xerrab('Kn should be between Kn1 and Kn2')
       endif
 
-      F = ((mfp-mfp1)*F2+(mfp2-mfp)*F1)/(mfp2-mfp1)
+      F = ((Kn-Kn1)*F2+(Kn2-Kn)*F1)/(Kn2-Kn1)
 
       return
       end subroutine CalcLinComb
 
-      subroutine CalcMinMfp(iCv,isn,istra,
-     &            pl,dv,rt,min_mfp,mfp)
+      subroutine CalcMinKn(iCv,isn,istra,
+     &            pl,dv,rt,L,min_Kn,Kn,mfp)
 c     This routine calculates the minimum mean free path for a certain stratum
       use b2mod_rates
       use b2mod_b2cmpa
@@ -1498,11 +1552,12 @@ c     This routine calculates the minimum mean free path for a certain stratum
       type (B2Derivatives), intent (in) :: dv
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv, istra, isn
+      real (kind=R8),intent(in):: L
 c     InOut variables
-      real (kind=R8),intent(inout) :: min_mfp(nstrat)
+      real (kind=R8),intent(inout) :: min_Kn(nstrat)
 c     Internal variables
       real (kind=R8):: vcx,vion,vtot,mn,expu,mfp,c_th,t1,t_av
-      real (kind=R8) :: tn, ti, ne, te
+      real (kind=R8) :: tn, ti, ne, te, Kn
       integer :: ic
 
 
@@ -1510,7 +1565,7 @@ c     Internal variables
       external subini, subend, expu
 
 
-      call subini ('CalcMinMfp')
+      call subini ('CalcMinKn')
 
 c     Calculate rate coefficients at boundary
       tn = pl.tn(iCv)
@@ -1530,14 +1585,20 @@ c     Calculate rate coefficients at boundary
       vtot =vion + vcx
       c_th = sqrt(tn/mn)
       mfp = c_th/vtot
+      Kn = mfp/L
 
-      min_mfp(istra) = min(mfp,min_mfp(istra))
+      min_Kn(istra) = min(Kn,min_Kn(istra))
 
 
       call subend ()
       return
-      end subroutine CalcMinMfp
+      end subroutine CalcMinKn
 
+      subroutine dealloc_b2mod_recycle
+      implicit none
+      deallocate(fna_mol)
+      return
+      end subroutine dealloc_b2mod_recycle
 
 
       subroutine dealloc_recycle_fnn
@@ -1547,7 +1608,9 @@ c     Calculate rate coefficients at boundary
       deallocate(target_index)
       deallocate(recycle_index)
       deallocate(M,T,shpottau,rc1,rc2,rmx1,rmx2,rmy1,rmy2,rmz1,rmz2)
-      deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
+      if (allocated(M_dummy)) then
+        deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
+      endif
       deallocate(re1,re2,rp11,rp12,rp21,rp22,rp31,rp32)
       recycle_initialised=.false.
       return
@@ -1577,7 +1640,12 @@ c     local variables
       integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
       real(kind=R8) :: nnVx(nVx),
-     &                 min_mfp(1:nstrat), mfp, mfp_out(nCv)
+     &                 neVx(nVx),tiVx(nVx),
+     &                 min_Kn(1:nstrat), mfp, mfp_out(nCv), 
+     &                 Kn,Kn_ti,Kn_ne,
+     &                 Kn_out(nCv),Kn_ti_out(nCv),Kn_ne_out(nCv),
+     &                 L_ne_out(nCv),L_ti_out(nCv),
+     &                 dti(nFc,0:1),dne(nFc,0:1), L_ti,L_ne,L
 
       if (ncall.eq.0) then
         call ipgeti ('b2sihs_style_visc', style_visc)
@@ -1585,31 +1653,51 @@ c     local variables
       isn = 0 !! AFN_TODO generalize species index for multi-speciescases? 
               !! For now KUL AFN models have only been developed for single species cases.
       call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
+      call intvertex(nCv,nVx,mpg,geo%vxVol,dv%ne,neVx)
+      call intvertex(nCv,nVx,mpg,geo%vxVol,pl%ti,tiVx)
       call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
+      call grad(nCv, nFc, nVx, 1, geo, mpg, pl%ti, tiVx, dti)
+      call grad(nCv, nFc, nVx, 1, geo, mpg, dv%ne, neVx, dne)
 
       mfp_out = 0.0_R8
 c     pre-computation of the minimal mean-free path along a boundary stratum
-      min_mfp(:) = 1.0_R8
+      min_Kn(:) = 1.0_R8
       do istra = 1, nstrai
 *   ..loop over boundary cells
         do i = 1, mpg%rcCvP(istra,2)
           iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
-          call CalcMinMfp(iRc1,isn,istra,
-     &        pl,dv,rt,min_mfp,mfp)
+          call CalcMinKn(iRc1,isn,istra,
+     &        pl,dv,rt,switch%L_macro_AFN,min_Kn,Kn,mfp)
           mfp_out(iRc1) = mfp
-          if (switch%use_auto_spatial_hyb.ne.0 .and.
+
+cc compute Knudsen number
+          L_ti = pl%ti(iRc1)/sqrt(dti(iFc,0)**2+dti(iFc,1)**2)  !! gradient length of Ti
+          L_ne = dv%ne(iRc1)/sqrt(dne(iFc,0)**2+dne(iFc,1)**2)  !! gradient length of ne
+c          L = min(L_ti,L_ne) !! shortest gradient length
+          Kn = mfp/switch%L_macro_AFN
+          Kn_ti = mfp/L_ti
+          Kn_ne = mfp/L_ne
+          Kn_out(iRc1) = Kn
+          Kn_ti_out(iRc1) = Kn_ti
+          Kn_ne_out(iRc1) = Kn_ne
+          L_ti_out(iRc1) = L_ti
+          L_ne_out(iRc1) = L_ne
+          
+
+cc compute fluid/kinetic fraction
+          if (switch%use_auto_spatial_hyb.eq.1.and.
      &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
-            if (mfp.le.switch%auto_spatial_hyb_mfp_1) then !! fluid treatment
+            if (Kn.le.switch%auto_spatial_hyb_Kn_1) then !! fluid treatment
               fluid_frac_hyb(iFc) = 1.0_R8
               kin_frac_hyb(iFc) = 0.0_R8
-            elseif (mfp.ge.switch%auto_spatial_hyb_mfp_2) then  !! kinetic treatment 
+            elseif (Kn.ge.switch%auto_spatial_hyb_Kn_2) then  !! kinetic treatment 
               fluid_frac_hyb(iFc) = 0.0_R8
               kin_frac_hyb(iFc) = 1.0_R8
             else
-!! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_mpf_1 and auto_mfp_2
-              kin_frac_hyb(iFc) = (mfp-switch%auto_spatial_hyb_mfp_1)/
-     &     (switch%auto_spatial_hyb_mfp_2-switch%auto_spatial_hyb_mfp_1)
+!! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_2
+              kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
+     &     (switch%auto_spatial_hyb_Kn_2-switch%auto_spatial_hyb_Kn_1)
               fluid_frac_hyb(iFc) = 1.0_R8 - kin_frac_hyb(iFc)
             endif
           else !! keep scaling factors both equal to 1.
@@ -1617,17 +1705,23 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
             kin_frac_hyb(iFc) = 1.0_R8
           endif
         enddo
-c     choose the type of neutral reflection boundary condition, based on the minimum mfp.
-        if (min_mfp(istra).lt.switch%mfp_b1) then
+
+cc  choose the type of neutral reflection boundary condition, based on the minimum Kn along that boundary (only used if maxw(istra) = 3).
+        if (min_Kn(istra).lt.switch%Kn_b1) then
           maxw_eff(istra) = 0
-        elseif (min_mfp(istra).gt.switch%mfp_b2) then
+        elseif (min_Kn(istra).gt.switch%Kn_b2) then
           maxw_eff(istra) = 1
         else
-c         do nothing to prevent oscillations if minimum mfp is just around mfp_b1
+c         do nothing to prevent oscillations if minimum Kn is just around Kn_b1
         endif
       enddo
       if (switch%AFN_out.ne.0) then
         call my_out_us(70,nCv,0,mfp_out,'AFN_mfp')
+        call my_out_us(70,nCv,0,Kn_out,'AFN_Kn')
+        call my_out_us(70,nCv,0,Kn_ti_out,'AFN_Kn_ti')
+        call my_out_us(70,nCv,0,Kn_ne_out,'AFN_Kn_ne')
+        call my_out_us(70,nCv,0,L_ti_out,'L_ti')
+        call my_out_us(70,nCv,0,L_ne_out,'L_ne')
       endif
 
       ncall = ncall + 1

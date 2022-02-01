@@ -116,11 +116,12 @@ c Advanced fluid neutral models
       real (kind=R8) :: fch_stochastic
       real (kind=R8) :: Qalfmin
       real (kind=R8) :: delpo
-      real (kind=R8) :: mfp_b1
-      real (kind=R8) :: mfp_b2
+      real (kind=R8) :: Kn_b1
+      real (kind=R8) :: Kn_b2
       real (kind=R8) :: pol_anom_scale
-      real (kind=R8) :: auto_spatial_hyb_mfp_1
-      real (kind=R8) :: auto_spatial_hyb_mfp_2
+      real (kind=R8) :: auto_spatial_hyb_Kn_1
+      real (kind=R8) :: auto_spatial_hyb_Kn_2
+      real (kind=R8) :: L_macro_AFN
       real (kind=R8) :: neutral_sources_rescale
 
 
@@ -620,11 +621,12 @@ c Advanced fluid neutral models
       s % fch_stochastic = 0.0_R8
       s % Qalfmin        = 1.0e-3_R8
       s % delpo          = 3.1e0_R8
-      s % mfp_b1         = 0.003e0_R8
-      s % mfp_b2         = 0.004e0_R8
+      s % Kn_b1         = 0.01e0_R8
+      s % Kn_b2         = 0.10e0_R8
       s % pol_anom_scale = 1.0_R8
-      s % auto_spatial_hyb_mfp_1 = 0.0_R8
-      s % auto_spatial_hyb_mfp_2 = 100.0_R8
+      s % auto_spatial_hyb_Kn_1 = 0.0_R8
+      s % auto_spatial_hyb_Kn_2 = 100.0_R8
+      s % L_macro_AFN = 0.10_R8
       s % neutral_sources_rescale = 1.0_R8
 
 
@@ -1063,6 +1065,7 @@ c Advanced fluid neutral models
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
       call ipgeti ('b2mn_do_volrec', s % do_volrec) 
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
+      call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard) 
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)      
@@ -1115,11 +1118,12 @@ c Advanced fluid neutral models
       call ipgetr ('b2tfhe_stochastic', s%fch_stochastic)           !lk 31.01.08
       call ipgetr ('b2stbc_Qalfmin', s % Qalfmin)
       call ipgetr ('b2stbc_delpo', s % delpo)
-      call ipgetr ('b2stbr_mfp_b1',s % mfp_b1)
-      call ipgetr ('b2stbr_mfp_b2',s % mfp_b2)
+      call ipgetr ('b2stbr_Kn_b1',s % Kn_b1)
+      call ipgetr ('b2stbr_Kn_b2',s % Kn_b2)
       call ipgetr ('b2trno_pol_anom_scale', s % pol_anom_scale)
-      call ipgetr ('auto_spatial_hyb_mfp_1', s % auto_spatial_hyb_mfp_1)
-      call ipgetr ('auto_spatial_hyb_mfp_2', s % auto_spatial_hyb_mfp_2)
+      call ipgetr ('auto_spatial_hyb_Kn_1', s % auto_spatial_hyb_Kn_1)
+      call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
+      call ipgetr ('L_macro_AFN', s % L_macro_AFN)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
 
@@ -2018,6 +2022,10 @@ c spatially hybrid neutrals
         call xerrab('automatic spatial hybrid needs spatial hybrid')
       endif
 
+      if(s%use_auto_spatial_hyb.ne.0.and.s%recycle_afn.eq.0) then
+        call xerrab('automatic spatial hybrid needs KUL neutral BCs')
+      endif
+
 c k-enstrophy model
       if (s%solve_keps.eq.0 .and. s%transport_keps.gt.0) then
         write(*,*) 'WARNING! b2mndr_solve_keps = ',
@@ -2032,10 +2040,6 @@ c b2stel
          write(*,*)
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
        endif
-
-c Eirene coupling
-c      call xertst (s%ionising_core.gt.0.or.abs(s%ionising_core).le.nbc,
-c     1   'faulty input ionising_core, abs(ionising_core) > NBC')
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
        if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0

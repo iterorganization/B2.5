@@ -955,6 +955,9 @@ ${OBJDIR}/eirmod_wneutrals.${MOD}:
 
 ${OBJDIR}/eirmod_module_avltree.${MOD}:
 	touch ${OBJDIR}/eirmod_module_avltree.${MOD}
+
+${OBJDIR}/eirmod_comsou.${MOD}:
+	touch ${OBJDIR}/eirmod_comsou.${MOD}
 endif
 
 ifeq ($(COMPILER),gfortran)
