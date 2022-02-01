@@ -23,13 +23,19 @@
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_neutr_src_scaling
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_trace
+      use b2mod_file
+      use b2mod_xerset
+      use b2mod_ipmain
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
@@ -79,9 +85,9 @@
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
-      integer :: neutrals_namelist = 0
-      real (kind=R8) :: BoRiS = 0.0_R8
-      real (kind=R8) :: dtim = 1.0_R8
+      integer :: neutrals_namelist = 0, numerics_namelist = 0
+      integer :: b2mndt_style = 1
+      integer :: nsmin, nsmax
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
       character b2fstate_only*256
@@ -95,7 +101,7 @@
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -208,6 +214,23 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  plasmastate_version)
+cxpb initialize the numerics data
+      call ipgeti ('b2mndt_style', b2mndt_style)
+      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
+      call alloc_b2mod_numerics(nx,ny,ns)
+      if(b2mndt_style.eq.2) then
+        solvemt=.false.
+        solveet=.false.
+      endif
+      if(numerics_namelist.ge.1) then
+        nsmin = 0
+        nsmax = ns
+        call ipgeti ('b2news_nsmin', nsmin)
+        call ipgeti ('b2news_nsmax', nsmax)
+        nsmin = max(0,min(nsmin,ns))
+        nsmax = max(0,min(nsmax,ns))
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
+      endif
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
       if (external_species.ne.0) then
@@ -251,8 +274,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 *   ..truncate tracing files
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
-      call ipgetr ('b2mndr_dtim', dtim)
-      call ipgetr ('b2news_BoRiS', BoRiS)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgeti ('b2stbr_sput_dst', sput_dst)
       call get_boundary_namelist
@@ -315,7 +336,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
@@ -356,10 +377,10 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2filei(0,ns,nnreg(0))
-        call b2filec(0,ns,nnreg(0))
+        call b2trci(nx,ny,ns,nnreg(0))
+        call b2trcc(nout(1),nx,nxtl,nxtr)
+        call b2filei(ns,nnreg(0))
+        call b2filec
       end if
 *   ..rewrite NetCDF files
 #ifdef NO_GETENV
@@ -415,7 +436,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(nx, ny, ns, tim)
+          call b2co_wall_cdf(tim)
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -428,7 +449,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(nx, ny, ns, tim)
+          call b2co_tally_cdf(ns, tim)
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//

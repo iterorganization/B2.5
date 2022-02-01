@@ -11,6 +11,7 @@
       use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows                                   !xpb !srv 08.09.01 !lk 02.06.11
@@ -53,7 +54,7 @@
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       save ncall, area_fix
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, area_fix/3/
@@ -254,11 +255,22 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fnbPSch(ix,-1,0) = 0.0_R8
-          endif
-        enddo
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fnbPSch(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fnbPSch(ix,-1,0) = 0.0_R8
+            endif
+          enddo
+        endif
 
       elseif(guard_flows.eq.1) then                                      !srv 20.06.08 {
 *   .. do nothing

@@ -1,12 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1  BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,           !srv 13.01.17
+      subroutine b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,      !srv 19.02.21
+     1  BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,                   !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
-     &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
+     &  cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06 !som 03.11.21
      &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -15,13 +16,16 @@
       use b2mod_rates                                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows                                    !xpb
+      integer nx, ny, ns, ismain, guard_flows                            !xpb 19.02.21
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
@@ -30,11 +34,11 @@
      1 csig(-1:nx,-1:ny,0:1),
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     & cddi(-1:nx,-1:ny,0:1,0:ns-1),                                     !srv 13.10.06
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     & cdde(-1:nx,-1:ny,0:1),                                            !som 03.11.21
+     1 hx(-1:nx,-1:ny),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
-      real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
+      real (kind=R8) :: fchstoch(-1:nx,-1:ny,0:1)                        !lk 31.01.08 24.08.21
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -73,18 +77,18 @@
       integer, save :: drift_style
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
+      integer, save :: style_b2mndt = 1
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1,
-     &   tex, tex0, cutlo,
+     *   ehx, ehy, floe0, flomx, cone0, alfe0, t0, t1,
+     &   tex, tex0,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
      &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                          !srv 13.01.17
-      parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
@@ -92,15 +96,8 @@
 #endif
       save ncall, no_current, conduction_only, no_hybr, pot_eq
 *   ..procedures
-      intrinsic dim, min, max, abs, sqrt
-      real (kind=R8) ::
-     *   harm, hybr, upwind, hy1
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
-      harm(t0,t1) = 2*t0*t1/(t0+t1)
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/,
      *  pot_eq/1/
@@ -129,11 +126,17 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       if (style_b2mndt.ge.1) then
+         call xertst (.not.(alfTeEh.eq.1.0_R8.and.fch_pTe.eq.0.0_R8),
+     &    ' Cannot set alfTeEh to 1.0 and fch_pTe to 0.0 when using'//
+     &    ' the SOLPS5.2 physics model!')
+       end if
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
       endif                                                              !xpb
 *   ..set n2
@@ -159,17 +162,17 @@
        call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
-      call b2tepsch(nx, ny, ns, facdrift,
-     &  cddi, te, ne, cone, fhePSch)
+      call b2tepsch(nx, ny, ns, ismain, facdrift, cdde, te, ne, cone,  !srv 19.02.21 !som 03.11.21
+     &   fhePSch)
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
+      call b2xehx (nx, ny, te, po, ne, ehx_)                             !srv 13.01.17 {
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
           do ix = -1, nx
-            c071(ix,iy) = fce2n(zeff(ix,iy))
+            c071(ix,iy) = zeff(ix,iy)*fce2n(zeff(ix,iy))                 !srv 21.07.21
           enddo
         enddo
       else
@@ -424,7 +427,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                 !srv 13.01.17
+      call b2xehy (nx, ny, te, po, ne, ehy_)                             !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
@@ -456,7 +459,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+
      1         2.5_R8*fne_52(ix,iy,1)-
-     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                     !lk 21.02.08 !srv 17.12.13
+     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy,1)/qe+                   !lk 21.02.08 !srv 17.12.13 24.08.21
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
@@ -593,26 +596,54 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fhe(ix,-1,0) = 0.0_R8
-            fhe_mdf(ix,-1,0) = 0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-              fhe_32(ix,-1,0) = 0.0_R8
-              fhe_52(ix,-1,0) = 0.0_R8
-              fhe_thermj(ix,-1,0) = 0.0_R8
-              fhe_cond(ix,-1,0) = 0.0_R8
-              fhe_dia(ix,-1,0) = 0.0_R8
-              fhe_ecrb(ix,-1,0) = 0.0_R8
-              fhe_strange(ix,-1,0) = 0.0_R8
-              fhe_pschused(ix,-1,0) = 0.0_R8
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fhe(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fhe_mdf(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                if (balance.and.(balance_netcdf.ne.0)) then              !djm Jan2017
+                  fhe_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhe_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhe_thermj(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhe_cond(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhe_dia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhe_ecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhe_strange(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhe_pschused(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                endif
+                fhet(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                floe(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                cone(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                fllime(bc_list_x(ix,ib),bc_list_y(ix,ib)) = 1.0_R8
+              enddo
             endif
-            fhet(ix,-1,0)=0.0_R8
-            floe(ix,-1,0) = 0.0_R8
-            cone(ix,-1,0,0) = 0.0_R8
-            fllime(ix,iy) = 1.0_R8
-          endif
-        enddo
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fhe(ix,-1,0) = 0.0_R8
+              fhe_mdf(ix,-1,0) = 0.0_R8
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
+                fhe_32(ix,-1,0) = 0.0_R8
+                fhe_52(ix,-1,0) = 0.0_R8
+                fhe_thermj(ix,-1,0) = 0.0_R8
+                fhe_cond(ix,-1,0) = 0.0_R8
+                fhe_dia(ix,-1,0) = 0.0_R8
+                fhe_ecrb(ix,-1,0) = 0.0_R8
+                fhe_strange(ix,-1,0) = 0.0_R8
+                fhe_pschused(ix,-1,0) = 0.0_R8
+              endif
+              fhet(ix,-1,0) = 0.0_R8
+              floe(ix,-1,0) = 0.0_R8
+              cone(ix,-1,0,0) = 0.0_R8
+              fllime(ix,-1) = 1.0_R8
+            endif
+          enddo
+        endif
       endif                                                              !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS

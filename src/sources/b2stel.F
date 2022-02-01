@@ -15,6 +15,8 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
@@ -29,6 +31,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -73,7 +76,7 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, ireg
+      integer ncall, styl0, n2, ix, iy, is, ireg
 !     integer k
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
@@ -93,15 +96,11 @@
       real (kind=R8) :: she0_ion(-1:nx,-1:ny,0:3),
      &                  she0_rec(-1:nx,-1:ny,0:3)
 *   ..procedures
-      intrinsic abs
-      logical lnext, streql
+      logical streql
       real (kind=R8) ::
-     *   samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+     *   samax
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg, streql
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
@@ -140,7 +139,7 @@
        call xertst
      &  (.not.(streql(b2frates_flag,'adpak').and.fix_recomb.ne.0),
      &   'fix_recomb should not be used with ADPAK rates!')
-*   ..identify impurity homonuclear sequences
+*   ..identify impurity isonuclear sequences
        nimp_tmp=0
        jimp_tmp=0
        do is = 1, nspecies !{
@@ -380,10 +379,10 @@
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
-c the default treatment is to have the entire ionization potential
+c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
-c this treatment changes this --- the ionization potential difference
+c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)

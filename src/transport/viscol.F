@@ -1,7 +1,7 @@
 
 
       subroutine viscol(nsdecl, nzdecl, nsl, is, ic, ntau, m, t,
-     +                  xi, ncl, x, den, nud, nue)
+     +                  xi, x, den, nud, nue)
 c--------------------------------------------------------------------
 c     this subroutine calculates the energy-dependent collision
 c     frequency and the energy-dependent energy scattering.
@@ -20,8 +20,6 @@ c              t      array(nsdecl+1) the temperature of the species
 c                     in kev
 c              xi     array(nsdecl+1,nzdecl) the relative weight of every
 c                     charge state
-c              ncl    array(nsdecl+1) the number of charge states for 
-c                     every species
 c              x      normalized (to thermal) velocity for which
 c                     the energy-dependent collision frequency is
 c                     to be calculated
@@ -40,7 +38,7 @@ c--------------------------------------------------------------------
       implicit none
 
       integer ::
-     *     nsdecl, nzdecl, is, ic, ncl(0:nsdecl), i, nsl
+     *     nsdecl, nzdecl, is, ic, i, nsl
       real (kind=R8) ::
      *       ntau(0:nsdecl,0:nsdecl), m(0:nsdecl), t(0:nsdecl),
      &       xi(0:nsdecl,0:nzdecl-1), x, nud, nue,

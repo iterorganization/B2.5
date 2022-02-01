@@ -3,9 +3,11 @@
 
       subroutine b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)
       use b2mod_types
+      use b2mod_math
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx
@@ -53,16 +55,12 @@
       integer ncall, n2, ix, iy, is, is0, k
       integer style
       real (kind=R8) ::
-     *   phm0, cutlo, cutll, rcx, t0
+     *   phm0, rcx, t0
       save ncall, phm0, style
 *   ..procedures
-      intrinsic sqrt, log, exp, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
-      external subini, subend, xertst, sfill, ipgetr, machsfr
+      intrinsic sqrt, log
+      external xertst, sfill, ipgetr, machsfr
       external b2xvsg
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, style/1/
 
@@ -87,8 +85,7 @@
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')

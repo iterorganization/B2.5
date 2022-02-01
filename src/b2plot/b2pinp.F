@@ -27,7 +27,7 @@ c
       immed=.false.
       mimp=lun
       fixkey=.false.
-      finish = repeat(' ',8)
+      finish = 'finish'
       promp(1) = repeat(' ',8)
       promp(2) = repeat(' ',8)
       ufile='param.dg'
@@ -66,13 +66,15 @@ c----------------------------------------------------------------------
 #endif
 #include "impcon.inc"
       integer nnns
-      parameter (nnns=20)
+      real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
+      parameter (nnns=22)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
      2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
      3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
-     4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str'/
+     4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str',
+     5        'radpower','sources '/
       integer i, j
       integer ll, lt, luswch, luskel
       logical streql
@@ -186,7 +188,20 @@ c*** Elements not for Eirene
 c*** Shadowing structure
         ll=1
         nwldprt=max(nwldprt,ll)
+        pltzlbl(ll)='Sh. Str.'
         call scipit
+      case (21)
+c*** Power radiated from the group of additional sources (single group)
+        call resime(add_rdi)
+        add_rad=add_rdi
+      case (22)
+c*** Coordinates of the additional source points
+        call rearre(add_srci,2*nadsrcm,nadsrc)
+        nadsrc=nadsrc/2
+        do i=1,nadsrc
+          addsrc_xy(1,i)=0.001_R8*add_srci(1,i)
+          addsrc_xy(2,i)=0.001_R8*add_srci(2,i)
+        end do
       case default
         call scipit
       end select

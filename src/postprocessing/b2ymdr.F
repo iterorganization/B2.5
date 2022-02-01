@@ -13,6 +13,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, ns
@@ -71,8 +73,8 @@
      *   tim, dtim, rdum(0:9)
 *   ..procedures
       logical streql, cfendf
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, cfrure, cfendf
       external b2wgdt, b2ruzd
 
 *-----------------------------------------------------------------------

@@ -10,6 +10,7 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_work
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -69,8 +70,7 @@
       integer ninp(0:3), nout(0:1), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
-     &  gclwk
+      external prgini, prgend, cfopen, gnopen, gopks, gclks, gclwk
       external b2yrdr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53/

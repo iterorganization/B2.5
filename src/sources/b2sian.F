@@ -1,23 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian (nx, ny, isb, facdrift, fac_ExB, bb, vol,        !srv 15.04.19 25.09.17 {
-     &           hx, hy, hz, qz, fchanml, smban)
+      subroutine b2sian (nx, ny, isb, ismain, facdrift, fac_ExB,         !srv 19.02.21
+     &  fchanml_b, smban)                                                !som 03.11.21
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
      & , only : b2sian_smo0to3, balance_netcdf
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb
+      integer nx, ny, isb, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                    !srv 15.04.19
-     &   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   fchanml(-1:nx,-1:ny,0:1)
+     &   fchanml_b(-1:nx,-1:ny,0:1)                                      !som 03.11.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smban(-1:nx,-1:ny,0:3)
@@ -28,7 +28,7 @@
 *  1. purpose
 *
 *     B2SIAN computes contribution to the parallel momentum source due
-*     to the anomalous current
+*     to the anomalous current.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -42,11 +42,8 @@
       save ncall, phm0
       !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
       data ncall/0/, phm0/1.0e0_R8/
 
@@ -62,7 +59,7 @@
        call ipgeti ('b2sian_iout', iout)
         if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2SIAN OpenMP warning: no file out in ',
+         write(*,*) 'B2SIAN OpenMP warning: no file output in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0
@@ -71,7 +68,9 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8
-      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+!      if (isb.eq.ismain) then                                           !srv 19.02.21
+      if (.not.is_neutral(isb)) then                                     !som 03.11.21
 *   ..  compute smban
         do iy = -1, ny
           do ix = -1, nx
@@ -86,8 +85,8 @@
             t0= phm0*min(facdrift(ix,iy),fac_ExB(ix,iy))                 !srv 15.04.19
             smban(ix,iy,0) = -t0*hz(ix,iy)*hy1(ix,iy)*                   !srv 15.04.19
      &          bb(ix,iy,0)/bb(ix,iy,2)*bb(ix,iy,3)*
-     &          (fchanml(ix,iy,1)+
-     &           fchanml(topix(ix,iy),topiy(ix,iy),1))*0.5_R8
+     &          (fchanml_b(ix,iy,1)+
+     &           fchanml_b(topix(ix,iy),topiy(ix,iy),1))*0.5_R8          !som 03.11.21
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8
             smban(ix,iy,3) = 0.0e0_R8

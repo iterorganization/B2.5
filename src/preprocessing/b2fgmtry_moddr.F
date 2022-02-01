@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -322,9 +323,7 @@
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
 

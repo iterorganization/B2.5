@@ -5,21 +5,23 @@
       use b2mod_plasma
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_subsys
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       integer ncidcdf,istep
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer :: iret, start(4), count(4), varid
       real (kind=R8) :: time(1)
       real (kind=R8), allocatable :: dummy(:,:,:)
 #endif
-      external subini, subend, xertst
+      external xertst
 
       call subini ('get_from_movie_cdf')
       call xertst (0.lt.ncidcdf, 'faulty input ncidcdf')

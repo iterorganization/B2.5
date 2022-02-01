@@ -15,6 +15,7 @@
       use b2mod_time
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny, ns
@@ -343,7 +344,7 @@
       integer n2, is
       real (kind=R8) :: time(1), zero(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, xertst, cfrure
+      external xertst, cfrure
       external b2xvsg, b2xpne
 
 *-----------------------------------------------------------------------

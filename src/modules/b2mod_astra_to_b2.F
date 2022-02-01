@@ -145,6 +145,7 @@
        end subroutine dealloc_b2mod_astra_to_b2
 
        subroutine read_astra_to_b2(nyd, nread)
+       use b2mod_subsys
        implicit none
        integer :: nyd, nread
 #ifdef ASTRA
@@ -155,7 +156,7 @@
        character(6)  :: chname
        real (kind=R8) :: b(1:nyd+2),c(1:nyd+2),d(1:nyd+2), dseval
 #endif
-       external subini, subend, xerrab
+       external xerrab
 
        call subini ('read_astra_to_b2')
        call xertst (0.le.nyd, 'faulty argument nyd')

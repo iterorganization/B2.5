@@ -40,4 +40,4 @@
       close (nwrite)
 
       return
-      end
+      end subroutine my_outi

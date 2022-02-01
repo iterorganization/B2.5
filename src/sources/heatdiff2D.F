@@ -9,6 +9,7 @@ c Program to solve the heat diffusion equation in 2 dimensions
       use b2mod_plasma
       use b2mod_constants
       use b2mod_external
+      use b2mod_subsys
       implicit none
 
       integer ns,isize,isign,idir
@@ -22,7 +23,7 @@ c Program to solve the heat diffusion equation in 2 dimensions
       real (kind=R8) :: qpl, qex
       real (kind=R8) :: Q(isize), Tp(isize,ndepth_nml)
 
-      external subini, subend, xertst
+      external xertst
       intrinsic max
 
       call subini ('prehd2D')
@@ -88,6 +89,7 @@ c  Tp = Target surface temperature (K).
       subroutine heatdiff2D(nw,ns,bndx,Q,dt,Tp)
       use b2mod_types
       use b2mod_wall
+      use b2mod_subsys
       implicit none
 
       integer nw, ns, n2
@@ -113,7 +115,6 @@ c  Tp = Target surface temperature (K).
      *   qevap, qrad, mass_density, cond_coef
       external Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT,
      *   qevap, qrad, mass_density, cond_coef
-      external subini, subend
       external slv5pt, fic
 
       call subini('heatdf2D')

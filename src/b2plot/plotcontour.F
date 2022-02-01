@@ -9,6 +9,7 @@ C =====================================================================
       use b2mod_b2plot_xy
       use b2mod_indirect
       use b2mod_boundary_namelist
+      use b2mod_subsys
       implicit none
 #include "graphics_vars.h"
       INTEGER NX,NY,NR,NZ,IS,LINLOG
@@ -36,7 +37,7 @@ cxpb  INTEGER NNCUT_L
       logical iniso
       integer lnblnk, no_available_colors
       real ceil
-      external lnblnk, no_available_colors, ceil, xertst, subini, subend
+      external lnblnk, no_available_colors, ceil, xertst
       intrinsic mod
       
       EXTERNAL FILL,CPDRPL

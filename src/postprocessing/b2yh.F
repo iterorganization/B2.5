@@ -10,6 +10,7 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -69,7 +70,7 @@
       logical ex
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin, cfruch
+      external prgini, prgend, xertst, cfopen, cfruin, cfruch
       external b2yhdr, b2rugm
 *   ..initialise input/output units
       data ninp/50,51,52/

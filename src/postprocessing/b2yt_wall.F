@@ -6,6 +6,7 @@
       use b2mod_wall2
       use b2mod_layer
       use b2mod_b2cmpb
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
@@ -17,7 +18,7 @@
       integer, allocatable :: iseg1(:)
       logical, allocatable :: flip_segment(:)
       real (kind=R8) :: rratio
-      external subini, subend, xertst, get_nxt, rratio
+      external xertst, get_nxt, rratio
 
       call subini('b2yt_wall_init')
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
@@ -324,7 +325,7 @@ cxpb lb and ub are lower and upper interval bounds
       return
       end subroutine b2yt_wall_init
 
-      subroutine b2yt_wall(nx1,ny1,ns,ns1,
+      subroutine b2yt_wall(ns,ns1,
      *   natm,natm1,nmol,nmol1,nion,nion1,
      *   is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      *   itrack1,itrack2,itrack3)
@@ -335,19 +336,18 @@ cxpb lb and ub are lower and upper interval bounds
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
 
-      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nmol1, nion, nion1
-      integer nwrite
+      integer ns, ns1, natm, natm1, nmol, nmol1, nion, nion1
       integer itrack1, itrack2, itrack3
       integer iatm1(natm), imol1(nmol), iion1(nion)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
       logical is_neutral1(0:ns1-1), l_chem_sput
 
-      integer ix, iy, iz, is, ibnd, ibnd1, imax, i, itrack
+      integer iz, is, ibnd, ibnd1, imax, i
       integer ibegin, iend, iw, iw1, ifail
-      integer ndepth1
       integer nsm, natmm, nmolm, nionm, nwallm
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
@@ -357,18 +357,14 @@ cxpb lb and ub are lower and upper interval bounds
       real (kind=R8), allocatable :: yy(:), yy1(:)
       real (kind=R8), allocatable :: fa(:,:), fx(:), d(:)
       real (kind=R8) :: fb(3,ndepth), fc(3)
-      logical wall_namelist_used, layer_model
-      save layer_model
-      data layer_model/.false./
+      logical wall_namelist_used
       character*400 line
       character*256 filename
-      character*17 numstr
       logical found
 
-      intrinsic max, min
-      logical streql
-      external xertst, subini, subend
-      external convert_bundle_r, streql
+      intrinsic max
+      external xertst
+      external convert_bundle_r
       external E01BEF, E01BFF
 
       call subini('b2yt_wall')
@@ -772,9 +768,23 @@ cxpb but in computational space
       deallocate(wall_data)
       call subend()
       return
+      end subroutine b2yt_wall
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      subroutine b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      use b2mod_wall
+      use b2mod_wall2
+      use b2mod_layer
+      implicit none
+      integer, intent(in) :: nwrite, nx1, ny1, ns1
+      integer :: i, is, ix, iy, ibnd1, itrack
+      logical :: wall_namelist_used
+      character*400 line
+      character*17 numstr
+
+      logical streql
+      external streql
+
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
@@ -1010,7 +1020,7 @@ cxpb  Use explicit writing of non-default elements only
       write(99,'(a1)') '/'
       close(99)
       return
-      end subroutine b2yt_wall
+      end subroutine b2yt_wall_final
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
      .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
@@ -1190,4 +1200,3 @@ cxpb Now for each new species, we do the space mapping
 
       return
       end subroutine b2yt_wall_bundle_sum
-

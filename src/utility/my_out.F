@@ -49,4 +49,4 @@
       close (nwrite)
       !$OMP END CRITICAL(synch_my_out)
       return
-      end
+      end subroutine my_out

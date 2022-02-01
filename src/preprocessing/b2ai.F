@@ -8,6 +8,7 @@
       use b2mod_work
       use b2mod_plasma
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -77,7 +78,7 @@
       integer ninp(0:3), nout(0:1), nx, ny, ns, io                   !srv 22.12.09
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
       external b2aix0, b2aidr
 *   ..initialise input/output units
       data ninp/50,51,52,53/                                         !srv 22.12.09

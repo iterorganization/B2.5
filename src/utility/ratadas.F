@@ -45,6 +45,7 @@ c     -------------------------------------------------------------------------
       use b2mod_types
       use b2mod_constants
       use b2mod_solpstop
+      use b2mod_subsys
 
       implicit none
 
@@ -178,8 +179,8 @@ c     ionisation potentials
       real (kind=R8) ::
      *   ip(0:nc-1)
 
-      logical silent_open
-      external silent_open, subini, subend, xerrab
+      logical silent_open, streql
+      external silent_open, streql, xerrab
 
 *   ..subprogram start-up calls
       call subini ('ratadas')
@@ -192,6 +193,7 @@ c     ionisation potentials
       rtbr=0.0_R8
       rtzz=-1.0_R8
       rtz2=-1.0_R8
+      rtpt=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
@@ -227,8 +229,11 @@ c     reading in filename and mass
         else
           uidin=trim(solpstop()) // '/' // trim(uidin(10:))
         endif
-        write(*,'(a,a)') 'ADAS UIDIN changed to ',trim(UIDIN)
-        write(nput,'(a,a)') 'ADAS UIDIN changed to ',trim(UIDIN)
+        write(*,'(a,a)') 'ADAS UIDIN changed to : ',trim(UIDIN)
+        write(nput,'(a,a)') 'ADAS UIDIN changed to : ',trim(UIDIN)
+      elseif(.not.streql(uidin,'adas')) then
+        write(*,'(a,a)') 'ADAS UIDIN changed to : ',trim(UIDIN)
+        write(nput,'(a,a)') 'ADAS UIDIN changed to : ',trim(UIDIN)
       endif
       read(99,*) maxne
       if (nc.gt.maxne) then
@@ -372,56 +377,104 @@ c     ADAS file names
       if(ex) then
         fnrec=trim(filename)
       else
-        fnrec=trim(UIDSTD)//fnrec
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnrec=trim(filename)
+        else
+          fnrec=trim(UIDSTD)//fnrec
+        endif
       endif
       filename=trim(UIDIN)//fnion
       call find_file(filename,ex)
       if(ex) then
         fnion=trim(filename)
       else
-        fnion=trim(UIDSTD)//fnion
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnion=trim(filename)
+        else
+          fnion=trim(UIDSTD)//fnion
+        endif
       endif
       filename=trim(UIDIN)//fncex
       call find_file(filename,ex)
       if(ex) then
         fncex=trim(filename)
       else
-        fncex=trim(UIDSTD)//fncex
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fncex=trim(filename)
+        else
+          fncex=trim(UIDSTD)//fncex
+        endif
       endif
       filename=trim(UIDIN)//fnprb
       call find_file(filename,ex)
       if(ex) then
         fnprb=trim(filename)
       else
-        fnprb=trim(UIDSTD)//fnprb
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnprb=trim(filename)
+        else
+          fnprb=trim(UIDSTD)//fnprb
+        endif
       endif
       filename=trim(UIDIN)//fnplt
       call find_file(filename,ex)
       if(ex) then
         fnplt=trim(filename)
       else
-        fnplt=trim(UIDSTD)//fnplt
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnplt=trim(filename)
+        else
+          fnplt=trim(UIDSTD)//fnplt
+        endif
       endif
       filename=trim(UIDIN)//fnzav
       call find_file(filename,ex)
       if(ex) then
         fnzav=trim(filename)
       else
-        fnzav=trim(UIDSTD)//fnzav
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnzav=trim(filename)
+        else
+          fnzav=trim(UIDSTD)//fnzav
+        endif
       endif
       filename=trim(UIDIN)//fnza2
       call find_file(filename,ex)
       if(ex) then
         fnza2=trim(filename)
       else
-        fnza2=trim(UIDSTD)//fnza2
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnza2=trim(filename)
+        else
+          fnza2=trim(UIDSTD)//fnza2
+        endif
       endif
       filename=trim(UIDIN)//fnpot
       call find_file(filename,ex)
       if(ex) then
         fnpot=trim(filename)
       else
-        fnpot=trim(UIDSTD)//fnpot
+        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        call find_file(filename,ex)
+        if(ex) then
+          fnpot=trim(filename)
+        else
+          fnpot=trim(UIDSTD)//fnpot
+        endif
       endif
 
       write(*,*) 'Using ADAS files:'
@@ -1098,7 +1151,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       use b2mod_types
 #endif
 #endif
-
+      use b2mod_subsys
       implicit none
 
 c     INPUT
@@ -1376,6 +1429,7 @@ cxpb Zero masses are required for older AMNS versions
       rtbr=0.0_R8
       rtzz=-1.0_R8
       rtz2=-1.0_R8
+      rtpt=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
         write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb,

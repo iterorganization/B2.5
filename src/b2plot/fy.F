@@ -6,21 +6,21 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
+      use b2mod_subsys
       implicit none
       character*12 hlp_frm
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,psign,
+     *   lmin,lmax,x1,x2,dsep,xmin,xmax,psign,
      1   y_transform,poffset,pnorm
       integer ix,ixl,ixr,iy,is,iiso,lnblnk
       integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
       logical iniso
       integer len_of_digits
-      intrinsic min,max,sqrt
-      external subini, subend, xertst, lnblnk, len_of_digits
-      dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
+      intrinsic min,max
+      external xertst, lnblnk, len_of_digits
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
@@ -198,34 +198,34 @@ c      if(nidim .ne. 2) call line(2)
           endif
         else
           if (iystart.le.jsep) then
-            wrk(iystart)=dist(cr(ixc,iystart),cz(ixc,iystart),
+            wrk(iystart)=points_dist(cr(ixc,iystart),cz(ixc,iystart),
      1            0.5_R8*(crx(ixc,iystart,0)+crx(ixc,iystart,1)),
      2            0.5_R8*(cry(ixc,iystart,0)+cry(ixc,iystart,1)))
           else
-            wrk(iystart)=dist(cr(ixx,iystart),cz(ixx,iystart),
+            wrk(iystart)=points_dist(cr(ixx,iystart),cz(ixx,iystart),
      1            0.5_R8*(crx(ixx,iystart,0)+crx(ixx,iystart,1)),
      2            0.5_R8*(cry(ixx,iystart,0)+cry(ixx,iystart,1)))
           end if
           do iy=iystart+1,jsep
-            wrk(iy)=wrk(iy-1)+dist(cr(ixc,iy-1),cz(ixc,iy-1),
-     1                             cr(ixc,iy),  cz(ixc,iy))
+            wrk(iy)=wrk(iy-1)+points_dist(cr(ixc,iy-1),cz(ixc,iy-1),
+     1                                    cr(ixc,iy),  cz(ixc,iy))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
           if (iystart.le.jsep+1.and.iyend.ge.jsep+1) then
             iy=jsep+1
-            wrk(iy)=wrk(iy-1)+dist(cr(ixc,iy-1),cz(ixc,iy-1),
+            wrk(iy)=wrk(iy-1)+points_dist(cr(ixc,iy-1),cz(ixc,iy-1),
      1                    0.5_R8*(crx(ixc,iy-1,2)+crx(ixc,iy-1,3)),
      2                    0.5_R8*(cry(ixc,iy-1,2)+cry(ixc,iy-1,3)))
-     2                       +dist(cr(ixx,iy),cz(ixx,iy),
+     2                       +points_dist(cr(ixx,iy),cz(ixx,iy),
      1                    0.5_R8*(crx(ixx,iy,0)+crx(ixx,iy,1)),
      2                    0.5_R8*(cry(ixx,iy,0)+cry(ixx,iy,1)))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           end if
           do iy=jsep+2,iyend
-            wrk(iy)=wrk(iy-1)+dist(cr(ixx,iy-1),cz(ixx,iy-1),
-     1                             cr(ixx,iy),  cz(ixx,iy))
+            wrk(iy)=wrk(iy-1)+points_dist(cr(ixx,iy-1),cz(ixx,iy-1),
+     1                                    cr(ixx,iy),  cz(ixx,iy))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
@@ -233,7 +233,7 @@ c      if(nidim .ne. 2) call line(2)
             if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
      &         (iystart.le.ysep.and.iyend.ge.ysep)) then
               dsep=wrk(ysep)+
-     1         dist(cr(ixx,ysep),cz(ixx,ysep),
+     1         points_dist(cr(ixx,ysep),cz(ixx,ysep),
      1            0.5_R8*(crx(ixx,ysep,2)+crx(ixx,ysep,3)),
      2            0.5_R8*(cry(ixx,ysep,2)+cry(ixx,ysep,3)))
             else
@@ -243,12 +243,12 @@ c      if(nidim .ne. 2) call line(2)
             if (iystart.le.iyref .and. iyend.ge.iyref) then
               if (iyref.le.jsep) then
                 dsep=wrk(iyref)+
-     1           dist(cr(ixc,iyref),cz(ixc,iyref),
+     1           points_dist(cr(ixc,iyref),cz(ixc,iyref),
      1              0.5_R8*(crx(ixc,iyref,2)+crx(ixc,iyref,3)),
      2              0.5_R8*(cry(ixc,iyref,2)+cry(ixc,iyref,3)))
               else
                 dsep=wrk(iyref)+
-     1           dist(cr(ixx,iyref),cz(ixx,iyref),
+     1           points_dist(cr(ixx,iyref),cz(ixx,iyref),
      1              0.5_R8*(crx(ixx,iyref,2)+crx(ixx,iyref,3)),
      2              0.5_R8*(cry(ixx,iyref,2)+cry(ixx,iyref,3)))
               endif
@@ -509,6 +509,7 @@ c      if(nidim .ne. 2) call line(2)
 c
       function y_transform(r,z)
       use b2mod_types
+      use b2mod_subsys
       real (kind=R8) ::
      *   y_transform
       real (kind=R8) ::
@@ -519,7 +520,7 @@ c
       integer n1,n2,i1,i2
       real (kind=R8) ::
      *   x, r0r
-      external subini, subend, xertst
+      external xertst
       save z1,s1,z2,s2,n1,n2,first
       data first /.true./
 

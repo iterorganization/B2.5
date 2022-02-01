@@ -5,7 +5,9 @@
      & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
      & cell_width, cell_height, leftix, leftiy, bottomiy)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
@@ -112,43 +114,22 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i, j
+      integer n2, ix, iy, i
       integer volhmk
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1
+     *   width, centroid(0:1), t0, t1
       real (kind=R8) ::
      *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
       integer, save :: qc_style = 1
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
       real (kind=R8) ::
      &  sin_t, cos_t, sin_tl, cos_tl, tt
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
 
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -478,5 +459,13 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       return
       end function YtriangleCentroid
 
-      end subroutine b2agmt
+      function dist(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
 
+      end subroutine b2agmt

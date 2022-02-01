@@ -4,7 +4,8 @@
 
 *   ..Flux and source arrays required for balance postprocessing routines. For the
 *     sources, the linearised components are stored and then the total source is updated
-*     just before each residual calculation. Only this total source is output to balance.nc
+*     just before each residual calculation.
+*     Only this total source is output to balance.nc
 *   ..Arrays for particle balance:
 *     Fluxes
       real (kind=R8), allocatable, save ::
@@ -167,6 +168,8 @@
      *  b2siav_smovh_bal(:,:,:),
      *  b2siav_smovv0to3(:,:,:,:),
      *  b2siav_smovv_bal(:,:,:),
+     *  b2siav_smovi0to3(:,:,:,:),             !som 13.08.21
+     *  b2siav_smovi_bal(:,:,:),               !som 13.08.21
      *  b2sicf_smo0to3(:,:,:,:),
      *  b2sicf_smo_bal(:,:,:),
      *  b2sian_smo0to3(:,:,:,:),               !srv 25.09.17
@@ -221,6 +224,7 @@
      *  b2sifr_smotfia_bal_av(:,:,:),
      *  b2siav_smovh_bal_av(:,:,:),
      *  b2siav_smovv_bal_av(:,:,:),
+     *  b2siav_smovi_bal_av(:,:,:),             !som 13.08.21
      *  b2sicf_smo_bal_av(:,:,:),
      *  b2sian_smo_bal_av(:,:,:),              !srv 25.07.17
      *  b2nxdv_smo_bal_av(:,:,:),
@@ -591,6 +595,8 @@
       allocate(b2siav_smovh_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovv0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2siav_smovv_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2siav_smovi0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))            !som 13.08.21
+      allocate(b2siav_smovi_bal(-1:nxd,-1:nyd,0:nsd-1))                !som 13.08.21
       allocate(b2sicf_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2sicf_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sian_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))              !srv 25.09.17
@@ -655,6 +661,8 @@
       b2siav_smovh_bal=0.0_R8
       b2siav_smovv0to3=0.0_R8
       b2siav_smovv_bal=0.0_R8
+      b2siav_smovi0to3=0.0_R8                  !som 13.08.21
+      b2siav_smovi_bal=0.0_R8                  !som 13.08.21
       b2sicf_smo0to3=0.0_R8
       b2sicf_smo_bal=0.0_R8
       b2sian_smo0to3=0.0_R8                    !srv 25.09.17
@@ -704,6 +712,7 @@
       allocate(b2sifr_smotfia_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovh_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovv_bal_av(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2siav_smovi_bal_av(-1:nxd,-1:nyd,0:nsd-1))        !som 13.08.21
       allocate(b2sicf_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sian_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))          !srv 25.09.17
       allocate(b2nxdv_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
@@ -1065,6 +1074,8 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2siav_smovh_bal)
       deallocate(b2siav_smovv0to3)
       deallocate(b2siav_smovv_bal)
+      deallocate(b2siav_smovi0to3)            !som 13.08.21
+      deallocate(b2siav_smovi_bal)            !som 13.08.21
       deallocate(b2sicf_smo0to3)
       deallocate(b2sicf_smo_bal)
       deallocate(b2sian_smo0to3)              !srv 25.09.17
@@ -1114,6 +1125,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2sifr_smotfia_bal_av)
       deallocate(b2siav_smovh_bal_av)
       deallocate(b2siav_smovv_bal_av)
+      deallocate(b2siav_smovi_bal_av)            !som 13.08.21
       deallocate(b2sicf_smo_bal_av)
       deallocate(b2sian_smo_bal_av)              !srv 25.09.17
       deallocate(b2nxdv_smo_bal_av)
@@ -1294,7 +1306,7 @@ cdjm Jan2017 Flux arrays:
      &          (nxd,nyd,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
@@ -1835,6 +1847,10 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2siav_smovv0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2siav_smovv0to3(ix,iy,2,isb)*rob(ix,iy)+
      &            b2siav_smovv0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2siav_smovi_bal(ix,iy,isb)=b2siav_smovi0to3(ix,iy,0,isb)+
+     &            b2siav_smovi0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2siav_smovi0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2siav_smovi0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)    !som 13.08.21
           b2sicf_smo_bal(ix,iy,isb)=b2sicf_smo0to3(ix,iy,0,isb)+
      &            b2sicf_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2sicf_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
@@ -2149,7 +2165,7 @@ cdjm Update ion heat sources
      & , only : rpt
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
 #else
@@ -2244,6 +2260,7 @@ cdjm Update ion heat sources
         b2sifr_smotfia_bal_av=0.0_R8
         b2siav_smovh_bal_av=0.0_R8
         b2siav_smovv_bal_av=0.0_R8
+        b2siav_smovi_bal_av=0.0_R8         !som 13.08.21
         b2sicf_smo_bal_av=0.0_R8
         b2sian_smo_bal_av=0.0_R8           !srv 25.09.17
         b2nxdv_smo_bal_av=0.0_R8
@@ -2504,6 +2521,8 @@ cdjm Update ion heat sources
      &                      curmlt*b2siav_smovh_bal
       b2siav_smovv_bal_av = avmlt*b2siav_smovv_bal_av +
      &                      curmlt*b2siav_smovv_bal
+      b2siav_smovi_bal_av = avmlt*b2siav_smovi_bal_av +
+     &                      curmlt*b2siav_smovi_bal       !som 13.08.21
       b2sicf_smo_bal_av = avmlt*b2sicf_smo_bal_av +
      &                    curmlt*b2sicf_smo_bal
       b2sian_smo_bal_av = avmlt*b2sian_smo_bal_av +
@@ -2706,6 +2725,8 @@ cdjm Update ion heat sources
      & , only : am
       use b2mod_constants
      & , only : mp,ev
+#else
+#     include "DIMENSIONS.F"
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -2727,7 +2748,7 @@ cdjm Update ion heat sources
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
-      external ipgeti
+      external ipgeti, get_jsep, ipgetr, species, check_cdf_status
 
       write(*,*) 'Begin writing balance.nc file'
 
@@ -2947,6 +2968,8 @@ cdjm Update ion heat sources
      &                   b2siav_smovh_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2siav_smovv_bal',
      &                   b2siav_smovv_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2siav_smovi_bal',
+     &                   b2siav_smovi_bal_av,vdims,3)          !som 13.08.21
       call write_cdf_double(ncid,'b2sicf_smo_bal',
      &                   b2sicf_smo_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sian_smo_bal',
@@ -3197,6 +3220,12 @@ cdjm Update ion heat sources
 
       write(*,*) 'balance.nc written'
 #else
+*   ..procedures
+      external ipgeti, xertst
+
+      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
+      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
 #endif
 
@@ -3215,6 +3244,7 @@ cdjm Update ion heat sources
       character*(NF_MAX_NAME) :: varname, dimname
       character*256 filename
       logical :: exists
+      external find_file, check_cdf_status
 
       write(*,*) 'Begin reading balance.nc file'
 
@@ -3405,6 +3435,8 @@ c only read a subset of the data as needed by the calling routine(s)
       real (kind=R8) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3432,6 +3464,8 @@ c only read a subset of the data as needed by the calling routine(s)
       real (kind=R8) :: var(1)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3458,6 +3492,8 @@ c only read a subset of the data as needed by the calling routine(s)
       integer :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3484,6 +3520,8 @@ c only read a subset of the data as needed by the calling routine(s)
       character*(*) :: varname
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
@@ -3510,6 +3548,8 @@ c only read a subset of the data as needed by the calling routine(s)
       character*(*) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
 *   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)

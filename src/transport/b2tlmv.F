@@ -1,12 +1,13 @@
-      subroutine b2tlmv (nx, ny, isb, cflmv, pbsx, qc, nb, tb, ub,
+      subroutine b2tlmv (nx, ny, isb, cfl, pbsx, qc, nb, tb, ub,
      &   cvsbx, cvsbxhz, fl)                                         !srv 09.01.01
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
-     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     *  cfl(-1:nx,-1:ny), pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny),
      &  nb(-1:nx,-1:ny), tb(-1:nx,-1:ny),
      &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),   !srv 09.01.01
      &  fl(-1:nx,-1:ny)
@@ -20,7 +21,7 @@
       real (kind=R8) ::
      *   qcl, qfl, tfl
       intrinsic abs
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external  b2xvsg
 *   ..initialisation
       data ncall/0/, area_fix/3/
@@ -31,7 +32,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test cflmv
-      call xertst (0.0_R8.le.cflmv, 'faulty argument cflmv')
+      call b2xvsg (n2, cfl, 1, 'cflmv', '.ge.')
 *   ..read switches
       if (ncall.eq.0) then
         call ipgeti ('b2news_area_fix', area_fix)
@@ -51,7 +52,7 @@
          if(leftix(ix,iy).ne.-2) then
           qcl = -cvsbx(ix,iy)*
      &          (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-          qfl = cflmv*abs(pbsx(ix,iy))*                              !srv 11.01.13
+          qfl = cfl(ix,iy)*abs(pbsx(ix,iy))*                         !srv 11.01.13
      &     (nb(leftix(ix,iy),leftiy(ix,iy))*
      &      tb(leftix(ix,iy),leftiy(ix,iy))+
      &      nb(ix,iy)*tb(ix,iy))/2.0_R8
@@ -81,7 +82,7 @@ c       fl(ix,iy)=1.0d0
      &              on_closed_surface(ix,iy))) then                  !srv 12.04.08
            qcl = -cvsbx(ix,iy)*
      &          (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-           qfl = cflmv*abs(pbsx(ix,iy))*                             !srv 11.01.13
+           qfl = cfl(ix,iy)*abs(pbsx(ix,iy))*                        !srv 11.01.13
      &          (nb(leftix(ix,iy),leftiy(ix,iy))*
      &           tb(leftix(ix,iy),leftiy(ix,iy))+
      &           nb(ix,iy)*tb(ix,iy))/2.0_R8

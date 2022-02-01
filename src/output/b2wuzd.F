@@ -1,5 +1,6 @@
       subroutine b2wuzd(nput, version, ns, zamin, zamax, zn, am)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, ns
@@ -13,7 +14,7 @@
      *  za(0:ns-1), za2(0:ns-1)
 
 *   ..procedures
-      external subini, subend, xertst, cfwure
+      external xertst, cfwure
 
 *   ..main computation
       call subini ('b2wuzd')

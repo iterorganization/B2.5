@@ -31,9 +31,6 @@ c
       real (kind=R8), allocatable :: n_hlp(:),v_hlp(:)
       character hlp_frmr*600, hlp_frm*200
       character*2, allocatable :: hlp_al(:)
-      real (kind=R8) :: pit
-c-----------------------------------------------------------------------
-      pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c

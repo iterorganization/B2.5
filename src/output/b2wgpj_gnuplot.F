@@ -7,6 +7,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -74,7 +75,7 @@
       integer lenval, ierror
 #endif
 #endif
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation

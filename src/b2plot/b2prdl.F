@@ -23,6 +23,9 @@ c=====================================================
       use b2mod_b2plot
       use b2mod_sources
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
       parameter (lun=96)

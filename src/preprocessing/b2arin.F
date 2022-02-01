@@ -4,6 +4,7 @@
       subroutine b2arin (nrid, nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, nnucm, nzmax
@@ -92,7 +93,7 @@
       integer inuc
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.computation

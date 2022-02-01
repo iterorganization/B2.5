@@ -3,6 +3,7 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_constants
+      use b2mod_subsys
       IMPLICIT NONE
 *..   input parameters (unchanged on exit)
       integer ns,nxd,nyd,nx,ny
@@ -40,7 +41,7 @@ c     log10 of rate coefficient (in cm3/s)
       CHARACTER*200 DSN
 *..   procedures
       logical, external :: open_file, streql
-      external lower_case, xxdata_11, xerrab, subini, subend
+      external lower_case, xxdata_11, xerrab
 
       call subini ('get_adas_data')
       is = 0
@@ -511,6 +512,7 @@ c           write(*,*) 'Do not yet know about ',h123
 
       SUBROUTINE SLREAC_b2plot(IR,FILNAM,H123,REAC,CRC)
       use b2mod_types
+      use b2mod_subsys
 c
 C  input
 C    filnam: read a&m data from file filnam, e.g. AMJUEL
@@ -600,7 +602,7 @@ C
       LOGICAL LCONST
       LOGICAL :: LGC1MIN,LGC1MAX,LGC2MIN,LGC2MAX
       logical open_file
-      external open_file, subini, subend, xerrab, xertst
+      external open_file, xerrab, xertst
 C
       call subini('slreac_b2plot')
       call xertst(ir.le.nreac, 'SLREAC_b2plot: IR > NREAC')
@@ -1163,17 +1165,17 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       END FUNCTION SLREAC_EXTRAP
 
       subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,
-     1 safetyfactor,cr,cz,crx,bb,ne,te,ti,na,transport)
+     1 safetyfactor,ne,te,ti,na,transport)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns,ismain,jsep,jxa
       real (kind=R8) :: lnlam(-1:nx,-1:ny),
-     1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)
@@ -1183,7 +1185,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
-      external subini,subend,xerrab
+      external xerrab
 
       call subini('old_chang_hinton')
       call b2tlnl(nx,ny,1,te,ti,ne,lnlam)

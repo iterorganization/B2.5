@@ -29,14 +29,9 @@ else
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 endif
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
-DEFINES += -DGRREAL=4 -DDOFLUSH -DNO_OPT # -DNO_CDF
+DEFINES += -DNO_OPT # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
-CPPOPTS  = -P -I${srcdir} ${EQUIVS}
-SED      = sed s:\#PREC\#:d:g
-SED      =
-LINK_MOD = 
 
 ifdef USE_MPI
 FC       = mpifort
@@ -47,11 +42,6 @@ else
 FC       = ifort
 endif
 endif
-
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
-endif
-
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
@@ -80,22 +70,6 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 ifndef SOLPS_CPP
 DEFINES += -DITM
-endif
-
-DBLFC    = ${FC}
-DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
-
-MOD      = mod
-
-BLD      = ar rucv
-
-GRLIBES  = ${LD_NCARG}
-PLLIBES  = ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_VERSION
@@ -131,11 +105,6 @@ endif
 endif
 
 LD_UAL += -lxml2 -lstdc++
-
-LD       = ${FC}
-
-LCPP     = ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

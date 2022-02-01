@@ -12,9 +12,12 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif     
@@ -46,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, k
+      integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -60,15 +63,10 @@
 #endif
       save ncall, styl0, rg0
 *   ..procedures
-      intrinsic abs
-      logical lnext
       real (kind=R8) ::
-     *  samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+     *  samax
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)
@@ -94,7 +92,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

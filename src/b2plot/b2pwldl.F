@@ -40,14 +40,14 @@ c*** Produce the output files - one for a zone
 
       print *,'  nwldprt:',nwldprt  !### 
       do 20 il=2,nwldprt !{
-        l=len_trim(lblwldpt(il))
-c        print *,'il,l,lblwldpt(il)=',il,l,' ',lblwldpt(il)    !###
+        l=len_trim(pltzlbl(il))
+c        print *,'il,l,pltzlbl(il)=',il,l,' ',pltzlbl(il)    !###
 c*** create the filename for the output
         if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
           write(fn_hlp,'(a,i2.2,a)') 'wlld_',il-1,'.dat'
         else !}{
-          fn_hlp='wlld_'//lblwldpt(il)(1:l)//'.dat'
+          fn_hlp='wlld_'//pltzlbl(il)(1:l)//'.dat'
         end if !}
 c*** Open the file and write the heading line
         print *,'About to open : ',fn_hlp,' :'

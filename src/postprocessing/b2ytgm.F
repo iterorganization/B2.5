@@ -4,10 +4,12 @@
       subroutine b2ytgm (nget, nx1, ny1, nncut, nnreg)
       use b2mod_types
       use b2mod_geo2
+      use b2mod_math
       use b2mod_version
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -178,19 +180,12 @@
      *   ebc1(-1:nx1,-1:ny1,0:1), ebf1(-1:nx1,-1:ny1,0:1),
      *   hzb(-1:nx1,-1:ny1), hzc(-1:nx1+1,-1:ny1+1)
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1
+     *   t0, t1
       logical qc_to_do, pbs_to_do
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
 *-----------------------------------------------------------------------
@@ -527,7 +522,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         end do
         wbbc1(nx1+1,ny1+1,0) =
      &   wbbr1(nx1,ny1,0) - (wbbc1(nx1,ny1,0) - wbbl1(nx1,ny1,0))
-        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1+1,ny1+1,3) / hzc(nx1+1,ny1+1)
+        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
 *   .. correct interpolation of magnetic field for diverted island case
 *      as B is not a periodic quantity
         if(periodic_bc.eq.1 .and. nncut.ge.1) then
@@ -672,7 +667,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,
      &     leftix1,leftiy1,rightix1,rightiy1,
-     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1)
+     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1,.false.)
       map1Initialized = .true.
 
 * ..return

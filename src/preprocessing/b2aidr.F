@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_geo
+      use b2mod_math
       use b2mod_time
       use b2mod_work
       use b2mod_plasma
@@ -12,6 +13,8 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1), nx, ny, ns                  !srv 22.12.09
@@ -66,9 +69,8 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9)
+      integer n2, is, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
-      real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
@@ -89,24 +91,17 @@
      &  veecrb1(:,:,:), vedia1(:,:,:),
      &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8, line*500
+      character lblps*120, lblgm*120, id*8, id0*8, line*500, ligne*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
       real (kind=R8) ::
-     *  amtol, naini(0:ns-1), ttini, na_min
-      parameter (amtol=1.0e-2_R8)
+     *  naini(0:ns-1), ttini, na_min
       logical oldversion, ex
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      logical ltst                                                  !srv 22.12.09
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, streql,
-     &  cfwuch, cfwuin, is_comment
+      external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))       !srv 22.12.09
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *  ..initialisation
       save na_min
       data na_min/1.0e4_R8/
@@ -489,9 +484,13 @@
     1 continue
        read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue

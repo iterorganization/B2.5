@@ -1,15 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgx0 (nx, ny, header, crx, cry)
+      subroutine b2wgx0 (nx, ny, header)
       use b2mod_types
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       character header*(*)
-      real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -34,9 +33,6 @@
 *
 *     header - character*(*), input.
 *     header specifies a label for the plots.
-*
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     See the calling routine for description.
 *
 *     (parameters in common:)
 *
@@ -77,7 +73,7 @@
      &  xlohi(0:1), ylohi(0:1)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst, pagini, pagend, gsln, gpl_d
+      external xertst, pagini, pagend, gsln, gpl_d
       external b2xgxy
 
 *-----------------------------------------------------------------------
@@ -97,7 +93,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..plot the grid
        call pagini (4, xc(-1), xc(nx), yc(-1), yc(ny), 'x', 'y',
      &   header)

@@ -8,6 +8,7 @@ c*** MUST be compiled in single precision!!!
 c======================================================================
       use b2mod_types
       use b2mod_b2plot_wall_loading
+      use b2mod_subsys
       implicit none
 #     include "impcon.inc"
       integer lun
@@ -15,7 +16,7 @@ c======================================================================
       integer i
       logical open_file, file_ok
       character*24 ufile
-      external b2pwinm, open_file, subini, subend, xerrab
+      external b2pwinm, open_file, xerrab
 c======================================================================
 c*** This routine works once
 c
@@ -55,12 +56,12 @@ c
       mimp=lun
       keylen=8
       fixkey=.false.
-      finish = repeat(' ',8)
+      finish = 'finish'
       promp(1) = repeat(' ',8)
       promp(2) = repeat(' ',8)
       ufile='param.dg'
       call find_file(ufile,file_ok)
-      if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
+      if(.not.open_file(lun,ufile,'modules/Uinp')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
         call subend ()

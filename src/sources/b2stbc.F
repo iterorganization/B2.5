@@ -3,17 +3,17 @@
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,        !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)      !xpb
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_boundary_namelist
@@ -30,15 +30,12 @@
       use b2mod_external
       use b2mod_time
       use b2mod_diag
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
@@ -62,6 +59,9 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
      &  fchinert(-1:nx,-1:ny,0:1),                                       !srv 21.10.02 }
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 25.02.00
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06
      &  fchanml(-1:nx,-1:ny,0:1),
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
@@ -112,12 +112,10 @@
 *   ..procedures
       intrinsic nint
       real (kind=R8) ::
-     *   b2ssum, hy1
-      external subini, subend, xertst, sfill, b2ssum, b2saxpy,
-     *   ipgetr, ipgeti
+     *   b2ssum
+      external xertst, sfill, b2ssum, b2saxpy, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1   shi0ep/1.0e-36_R8/, diagno/0/,
@@ -180,10 +178,6 @@
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
        call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -391,15 +385,17 @@
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1      vol, gs, na, ne, ni, te, ti,
-     &      fna, fhe, fhi, fhm, fch,
+     1      vol, gs, na, ne, ni, te, ti, kinrgy,
+     &      fna, fna_mdf, fna_fcor, fna_nodrift,
+     &      fna_he, fnaPSch, fna_eir, fna_32, fna_52,
+     &      fhe, fhi, fhm, fch,
      &      sna0, smo0, she0, shi0, sch0, sne0,
      &      main_call, diagno)
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
-     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,     !srv 24.08.08
-     1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
+     1   BoRiS, facdrift, fac_ExB,                                       !srv 24.08.08
+     1   na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      2   te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,           !srv 28.10.02
      1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
      &   fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,    !srv 16.02.12
@@ -417,8 +413,7 @@
         if(lbndusr) then
           if(ncall.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
-     1     facdrift, vol, hx, hy, qz, qc, gs,
-     1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &     sna0, smo0, she0, shi0, sch0, sne0,
      &     wrong_flow, main_call, diagno,
@@ -431,8 +426,7 @@
       else      !boundary_namelist.ge.1
 
         call b2stbc_bas(nx, ny, ns, ismain,
-     1   facdrift, vol, hx, hy, qz, qc, gs,
-     1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
@@ -444,7 +438,7 @@
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
      1 call b2stbc_fb_post(nx, ny, ns, ismain,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
+     1  na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
 
@@ -749,13 +743,8 @@ cdjm Jan2017 Keep linearised sources for balance
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer ix, iy
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
       external xertst, xerrab
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
 *.computation

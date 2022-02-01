@@ -15,8 +15,9 @@
       SUBROUTINE GFSUB3(KARD,NX,NY,NDIMX,NDIMY,NDIMS,DUMMY)
       use b2mod_types
       IMPLICIT NONE
-      INTEGER KARD,NX,NY,NDIMX,NDIMY, NDIMS, ND1, LIM, IS, IY, IX, III
-      REAL (kind=R8) ::
+      INTEGER, INTENT(IN) :: KARD,NX,NY,NDIMX,NDIMY,NDIMS
+      INTEGER ND1, LIM, IS, IY, IX, III
+      REAL (kind=R8), INTENT(IN) ::
      *   DUMMY(0:NDIMX+1,0:NDIMY+1,1:NDIMS)
       ND1 = NX + 2
       LIM = (ND1/5)*5 - 4
@@ -30,7 +31,7 @@
   110   CONTINUE
   120 CONTINUE
       RETURN
-  910 FORMAT(1P,5(E16.8))
+  910 FORMAT(1P,5(1X,1E15.8))
 *=======================================================================
 *//END GFSUB3//
 
@@ -44,6 +45,8 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+      use b2mod_rates
+      use b2mod_subsys
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -61,13 +64,13 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny,ns
-      real (kind=R8) :: BoRiS
+      integer, intent(in) :: nx,ny,ns
+      real (kind=R8), intent(in) :: BoRiS
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style, iout = 0                           !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrapolate,in,
      1 eirene_uub_style, print_minmax, eirene_background
-      external ipgetr, ipgeti, subini, subend, xerrab
+      external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
@@ -237,6 +240,7 @@ c
      1         wadiac(ix,iy,1,is)+vaecrbc(ix,iy,1,is),ua_max),ua_min)
               prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
      1         dnib(ix+1,iy+1,nflai)
+              zib(ix+1,iy+1,nflai)=rza(ix,iy,is)
 c     Velocities uub, vvb, wwb
 c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
@@ -440,6 +444,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(rightix(ix,iy)+1,rightiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
               endif
@@ -447,6 +453,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(leftix(ix,iy)+1,leftiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
               endif
@@ -454,6 +462,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(topix(ix,iy)+1,topiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(topix(ix,iy)+1,topiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(topix(ix,iy)+1,topiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
               endif
@@ -461,6 +471,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
               endif
@@ -524,7 +536,7 @@ c
       use b2mod_eirbra, only: fort_lc
 #endif
       implicit none
-      integer nx,ny
+      integer, intent(in) :: nx,ny
       integer ix,iy,i,nniso
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
@@ -716,7 +728,7 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny
+      integer, intent(in) :: nx,ny
       integer nxx,nyy
       real*8, allocatable :: dummy(:,:,:)
 
@@ -793,6 +805,8 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
+c average ion charge
+      CALL GFSUB3(31,NX,NY,NXx,NYy,NFLAI,ZIB(0,0,1))
 
       deallocate(dummy)
 

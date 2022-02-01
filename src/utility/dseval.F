@@ -48,4 +48,4 @@ C
    30 DX=U-X(I)
       DSEVAL=Y(I)+DX*(B(I)+DX*(C(I)+DX*D(I)))
       RETURN
-      END
+      END FUNCTION DSEVAL

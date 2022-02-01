@@ -41,6 +41,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
      , ,only: nx, ny, ns, wklng,
@@ -67,10 +68,12 @@ c 2002-09-11: logic revised
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
+      use eirmod_infcop
+      use eirmod_wneutrals
+     , ,only: eirene_wneutrals_init, eirene_wneutrals_dealloc
       use eirmod_extrab25
      , ,only: lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
-     ,        eirene_extrab25_cleanup
+     ,        eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
@@ -78,6 +81,8 @@ c 2002-09-11: logic revised
 #else
       use b2mod_braeir
 #endif
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 
@@ -158,7 +163,8 @@ c 2002-09-11: logic revised
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
       integer neutrals_namelist, use_eirene, redef_gmtry_save
-      integer numerics_namelist, sources_inputfile, b2stbc_feedback
+      integer numerics_namelist, style_b2mndt
+      integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
       integer ismain, ismain0, isfeedback, isfb
@@ -181,8 +187,7 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
-      character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
-     .          ligne*120
+      character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
@@ -216,21 +221,21 @@ c 2002-09-11: logic revised
      . ua_mean(:,:,:), po_mean(:,:),
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
-     . sna_mean(:,:,:,:), sne_mean(:,:,:),
-     . smo_mean(:,:,:,:), she_mean(:,:,:),
-     . shi_mean(:,:,:), sch_mean(:,:,:),
-     . e_sna(:,:,:,:), e_sne(:,:,:), e_smo(:,:,:,:),
-     . e_she(:,:,:), e_shi(:,:,:), e_sch(:,:,:)
+     . sna_mean(:,:,:), sne_mean(:,:),
+     . smo_mean(:,:,:), she_mean(:,:),
+     . shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
      . ua1_mean(:,:,:), po1_mean(:,:),
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
-     . sna1_mean(:,:,:,:), sne1_mean(:,:,:),
-     . smo1_mean(:,:,:,:), she1_mean(:,:,:),
-     . shi1_mean(:,:,:), sch1_mean(:,:,:),
-     . e_sna1(:,:,:,:), e_sne1(:,:,:), e_smo1(:,:,:,:),
-     . e_she1(:,:,:), e_shi1(:,:,:), e_sch1(:,:,:)
+     . sna1_mean(:,:,:), sne1_mean(:,:),
+     . smo1_mean(:,:,:), she1_mean(:,:),
+     . shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -270,8 +275,8 @@ c 2002-09-11: logic revised
      & cbmsa1(0:7,0:cbnrmx-1), cbmsb1(0:7,0:ns-1,0:cbnrmx-1)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1, iss
       integer itrack1, itrack2, itrack3
       integer non_commensurate
@@ -410,6 +415,7 @@ c 2002-09-11: logic revised
      .                        ISCLA(:)
       integer, allocatable :: ILBEG(:), ILEND(:)
       integer, allocatable :: NTGPR1(:)
+      integer :: INDPR1(12)
       real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
       real (kind=R8) :: ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
@@ -473,13 +479,18 @@ c 2002-09-11: logic revised
      6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cvalip*80
+      character cnamip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
-      character*500 line
+      character*500 line, ligne
+#if DEF_NATM > 1
+      character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff1
+#else
+      character*1 :: zh_tf_toff1
+#endif
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
@@ -509,7 +520,7 @@ c 2002-09-11: logic revised
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
-      character*10, allocatable :: species_name(:)
+      character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical time_dep_puff1(nstraid)
@@ -560,22 +571,21 @@ c 2002-09-11: logic revised
       intrinsic iabs, min0
 #endif
       integer conformal_convert
-      real (kind=R8) :: cr, cz, cr1, cz1, rratio
-      logical open_file, streql, is_comment, lnext1
-      external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, len_of_digits,
-     &  open_file, get_jsep, conformal_convert,
+      real (kind=R8) :: rratio
+      logical open_file, streql
+      logical is_comment, end_comment, only_comments
+      external xertst, xerrab, cfruch, cfrure, cfwuin,
+     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
+     &  open_file, get_jsep, conformal_convert, end_comment,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
-      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
+      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
       intrinsic nint, mod, index, sqrt
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data use_eirene/0/
+      data use_eirene/0/, style_b2mndt/1/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -605,17 +615,6 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-      cr1(ix,iy)=0.25_R8*
-     1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
-      cz1(ix,iy)=0.25_R8*
-     1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
-      lnext1(is,js) = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
-     &  .and.abs(am1(is)-am1(js)).lt.amtol
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -774,9 +773,13 @@ c 2002-09-11: logic revised
     3 continue
        read (ninp(0),'(a)',end=4,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 3
     4  continue
@@ -886,7 +889,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_SETPRM
       CALL EIRENE_ALLOC_CESTIM(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       CALL EIRENE_extrab25_eirpbls_init(nmol,nion,npls)
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
@@ -1009,9 +1012,7 @@ c 2002-09-11: logic revised
         call cfwuch (nout(6), 120, lblgm, 'label')
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &   cell_width, cell_height)
+        call b2wugm (nout(6), nx, ny)
         close(nout(6))
       endif
       call get_nxt(nx,nxtl,nxtr)
@@ -1063,18 +1064,18 @@ c 2002-09-11: logic revised
       allocate(e_te(-1:nx,-1:ny))
       allocate(e_ti(-1:nx,-1:ny))
       allocate(e_po(-1:nx,-1:ny))
-      allocate(sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(sne_mean(-1:nx,-1:ny,0:1))
-      allocate(smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(she_mean(-1:nx,-1:ny,0:3))
-      allocate(shi_mean(-1:nx,-1:ny,0:3))
-      allocate(sch_mean(-1:nx,-1:ny,0:3))
-      allocate(e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(e_sne(-1:nx,-1:ny,0:1))
-      allocate(e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(e_she(-1:nx,-1:ny,0:3))
-      allocate(e_shi(-1:nx,-1:ny,0:3))
-      allocate(e_sch(-1:nx,-1:ny,0:3))
+      allocate(sna_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(sne_mean(-1:nx,-1:ny))
+      allocate(smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(she_mean(-1:nx,-1:ny))
+      allocate(shi_mean(-1:nx,-1:ny))
+      allocate(sch_mean(-1:nx,-1:ny))
+      allocate(e_sna(-1:nx,-1:ny,0:ns-1))
+      allocate(e_sne(-1:nx,-1:ny))
+      allocate(e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate(e_she(-1:nx,-1:ny))
+      allocate(e_shi(-1:nx,-1:ny))
+      allocate(e_sch(-1:nx,-1:ny))
       allocate(na1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(ua1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(te1_mean(-1:nx1,-1:ny1))
@@ -1085,18 +1086,18 @@ c 2002-09-11: logic revised
       allocate(e_te1(-1:nx1,-1:ny1))
       allocate(e_ti1(-1:nx1,-1:ny1))
       allocate(e_po1(-1:nx1,-1:ny1))
-      allocate(sna1_mean(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(sne1_mean(-1:nx1,-1:ny1,0:1))
-      allocate(smo1_mean(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(she1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(shi1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(sch1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(e_sna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(e_sne1(-1:nx1,-1:ny1,0:1))
-      allocate(e_smo1(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(e_she1(-1:nx1,-1:ny1,0:3))
-      allocate(e_shi1(-1:nx1,-1:ny1,0:3))
-      allocate(e_sch1(-1:nx1,-1:ny1,0:3))
+      allocate(sna1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(sne1_mean(-1:nx1,-1:ny1))
+      allocate(smo1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(she1_mean(-1:nx1,-1:ny1))
+      allocate(shi1_mean(-1:nx1,-1:ny1))
+      allocate(sch1_mean(-1:nx1,-1:ny1))
+      allocate(e_sna1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_sne1(-1:nx1,-1:ny1))
+      allocate(e_smo1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_she1(-1:nx1,-1:ny1))
+      allocate(e_shi1(-1:nx1,-1:ny1))
+      allocate(e_sch1(-1:nx1,-1:ny1))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -1265,8 +1266,8 @@ c 2002-09-11: logic revised
             na1(:,:,is)=na1(:,:,is)*neutral_rescale
             na1_mean(:,:,is)=na1_mean(:,:,is)*neutral_rescale
             e_na1(:,:,is)=e_na1(:,:,is)*neutral_rescale**2
-            sna1_mean(:,:,:,is)=sna1_mean(:,:,:,is)*neutral_rescale
-            e_sna1(:,:,:,is)=e_sna1(:,:,:,is)*neutral_rescale**2
+            sna1_mean(:,:,is)=sna1_mean(:,:,is)*neutral_rescale
+            e_sna1(:,:,is)=e_sna1(:,:,is)*neutral_rescale**2
             fna1(:,:,:,is)=fna1(:,:,:,is)*neutral_rescale
             fna_mdf1(:,:,:,is)=fna_mdf1(:,:,:,is)*neutral_rescale
             fna_fcor1(:,:,:,is)=fna_fcor1(:,:,:,is)*neutral_rescale
@@ -1342,9 +1343,13 @@ c 2002-09-11: logic revised
     1 continue
        read (ninp(2),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -1423,6 +1428,9 @@ c 2002-09-11: logic revised
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
+      call ipgeti ('b2mndt_style', style_b2mndt)
+      zh_tf_toff = repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
+      call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1437,7 +1445,11 @@ c 2002-09-11: logic revised
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
-      if (numerics_namelist.ge.1) call alloc_b2mod_numerics(nx, ny, ns)
+      call alloc_b2mod_numerics(nx, ny, ns)
+      if(style_b2mndt.eq.2) then
+        solvemt=.false.
+        solveet=.false.
+      endif
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       filename='b2.feedback_save.parameters'
@@ -1710,15 +1722,30 @@ c 2002-09-11: logic revised
     5 continue
       read (ninp(2),'(a)',end=6,err=91) line
       if (.not.is_comment(line)) then
-        read (line,*) cnamip, cvalip
+        ligne = line
+        call strip_spaces(ligne)
+        if (ligne(1:1).eq.'''') then
+          read (line,*) cnamip, cvalip
+        else
+          cnamip = ' '
+          cvalip = ' '
+        end if
       else if (.not.streql(line,' ')) then
-        i = index(ligne,'''')
+        i = index(line,'''')
         if (i.gt.0) then
-          read (line(i:132),*) cnamip, cvalip
+          if (only_comments(line(1:i-1))) then
+            read (line(i:132),*) cnamip, cvalip
+          else
+            cnamip = ' '
+            cvalip = ' '
+          end if
         else
           cnamip = ' '
           cvalip = ' '
         endif
+      else
+        cnamip = ' '
+        cvalip = ' '
       endif
 *   ..integer switches
       todo = .true.
@@ -1874,6 +1901,11 @@ c 2002-09-11: logic revised
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
+          if (wait) then
+            rswitch = b2tvspa_vis_par
+          else
+            rswitch = b2tfhe_vis_par
+          end if
         case ('b2tfnb_ycur')
           rswitch = ycur
           ycur_done = .true.
@@ -1883,14 +1915,63 @@ c 2002-09-11: logic revised
           todo = .false.
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..character string switches
+      todo = .true.
+      CSWITCHES: select case (cnamip)
+        case('b2tral_zh_tf_toff')
+          if (same_atoms) then
+            todo = .false.
+          else
+            do i = 1, nspecies-1
+              do j = i+1, nspecies
+                i1 = ispecies1(i)
+                j1 = ispecies1(j)
+                if (i1.ne.-1 .and. j1.ne.-1) then
+                  ij = 0
+                  do k = 1, i-1
+                    ij = ij + (nspecies-k)
+                  end do
+                  ij = ij + (j-i)
+                  ij1 = 0
+                  do k = 1, min(i1,j1)-1
+                    ij1 = ij1 + (nspecies1-k)
+                  end do
+                  ij1 = ij1 + (max(i1,j1)-min(i1,j1))
+                  zh_tf_toff1(ij1:ij1) = zh_tf_toff(ij:ij)
+                end if
+              end do
+            end do
+            if (nspecies1.eq.1) zh_tf_toff1='0'
+            cswitch = trim(zh_tf_toff1)
+          end if
+        case default CSWITCHES
+          todo = .false.
+      end select CSWITCHES
+      if (todo) write(cvalip,'(a)') trim(cswitch)
+*   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
-        write(nout(2),'(a1,a,a,a,a1)')
-     .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
+          write(nout(2),'(a1,a,a,a,a,a)')
+     .     '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''//tab,
+     .     trim(line(i:))
+        else if (.not.streql(cnamip,' ')) then
+          write(nout(2),'(a1,a,a,a,a1)')
+     .     '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        else
+          write(nout(2),'(a)') trim(line)
+        end if
       else if (.not.streql(line,' ') .and. .not.streql(cnamip,' ')
      .   .and. .not.wait) then
-        write(nout(2),'(a,a2,a,a,a,a1)') line(1:1),
-     .   ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
-      else if (is_comment(line) .and. .not.streql(line,' ')) then
+        if (end_comment(line(2:),i)) then
+          write(nout(2),'(a1,a2,a,a,a,a)') line(1:1),
+     .     ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),
+     .     ''''//tab//trim(line(i:))
+        else
+          write(nout(2),'(a1,a2,a,a,a,a1)') line(1:1),
+     .     ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+        end if
+      else if (is_comment(line) .and. .not.streql(line,' ')
+     .   .and. .not.wait) then
         write(nout(2),'(a)') trim(line)
       else if (.not.wait) then
         write(nout(2),1028)
@@ -2472,6 +2553,30 @@ c 2002-09-11: logic revised
      .     'CFLMI=',cflmi,','
           if(cflmv.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMV=',cflmv,','
+          if(cflme_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_CORE=',cflme_core,','
+          if(cflme_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_SOL=',cflme_sol,','
+          if(cflme_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_A=',cflme_tanh_a,','
+          if(cflme_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_B=',cflme_tanh_b,','
+          if(cflmi_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_CORE=',cflmi_core,','
+          if(cflmi_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_SOL=',cflmi_sol,','
+          if(cflmi_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_A=',cflmi_tanh_a,','
+          if(cflmi_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_B=',cflmi_tanh_b,','
+          if(cflmv_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_CORE=',cflmv_core,','
+          if(cflmv_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_SOL=',cflmv_sol,','
+          if(cflmv_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_A=',cflmv_tanh_a,','
+          if(cflmv_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_B=',cflmv_tanh_b,','
           if(b2fstate_version.ge.'03.000.006') then
             if(cflal.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .       'CFLAL=',cflal,','
@@ -3425,7 +3530,6 @@ cxpb This will need to be checked !!!
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
         call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
         if (same_bundling) then
           if (first_pass) then
@@ -3929,43 +4033,61 @@ cxpb  Start reading input.dat file
           IREAD=1
         ELSE
           DO WHILE (I1 /= 0)
-            if (streql(eirene_format,'iter')) then ! no conversion necessary
-              WRITE(IUNOT,'(A80)') ZEILE
-            else
-              I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
-              I3 = SCAN(ZEILE(I2+1:),' ')
-              IH = MIN(I3,6)
-              HANDLE=REPEAT(' ',6)
-              HANDLE(1:IH) = ZEILE(I2:I2+IH-1)
 c   cfile card found. Is this one of the permitted external files?
+            I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
+            I3 = SCAN(ZEILE(I2+1:),' ')
+            IH = MIN(I3,6)
+            HANDLE=REPEAT(' ',6)
+            HANDLE(1:IH) = ZEILE(I2:I2+IH-1)
+            if (streql(handle,'gr_ext').or.streql(handle,'mo_ext')) then ! removed
+              continue
+            else if (streql(handle,'ADAS')) then
+              filename='ratadas.filelist'
+              call find_file(filename,ex)
+              if(silent_open(97,filename,
+     .          'data.local|modules/B2.5/Database',adasfile)) then !{
+                read(97,*) ULINE
+                close(97)
+              end if
+              if(streql(ULINE,' ').or.streql(ULINE,'adas')) then
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE ADAS   modules/adas/adf11                   '
+              else
+                if(ULINE(1:9).eq.'SOLPSTOP/') then
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   '//trim(ULINE(10:))//'/adf11'
+                else if (ULINE(1:5).eq.'adas/') then
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   modules/'//trim(ULINE)//'/adf11'
+                else
+                  WRITE(IUNOT,'(A)')
+     .             'CFILE ADAS   '//trim(ULINE)//'/adf11'
+                end if
+              end if
+            else if (.not.streql(eirene_format,'iter')) then
               if (streql(handle,'AMJUEL')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE AMJUEL Database/AMdata/amjuel.tex        '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE AMJUEL Database/AMdata/amjuel.tex           '
               else if (streql(handle,'HYDHEL')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE HYDHEL Database/AMdata/hydhel.tex        '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE HYDHEL Database/AMdata/hydhel.tex           '
               else if (streql(handle,'SPUTER')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE SPUTER Database/Surfacedata/SPUTER       '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE SPUTER Database/Surfacedata/SPUTER          '
               else if (streql(handle,'TRIM')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE TRIM   Database/Surfacedata/TRIM/trim.dat'
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE TRIM   Database/Surfacedata/TRIM/trim.dat   '
               else if (streql(handle,'METHAN')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE METHAN Database/AMdata/methane.tex       '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE METHAN Database/AMdata/methane.tex          '
               else if (streql(handle,'AMMONX')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE AMMONX Database/AMdata/ammoniaex.tex     '
-              else if (streql(handle,'gr_ext')) then ! removed
-                continue
-              else if (streql(handle,'mo_ext')) then ! removed
-                continue
-              else if (streql(handle,'ADAS')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE ADAS   modules/adas/adf11                '
+                WRITE(IUNOT,'(A50)')
+     .           'CFILE AMMONX Database/AMdata/AMMONX_Arrh-elast.tex'
               else
                 WRITE(IUNOT,'(A80)') ZEILE
-              ENDIF
+              end if
+            else
+              WRITE(IUNOT,'(A80)') ZEILE
             endif
             READ (IUNIN,'(A80)') ZEILE
             I1 = INDEX(ZEILE,'CFILE')
@@ -4698,7 +4820,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               IF (INDEX(REACZEILE,'ADAS') .NE. 0 .and.
      &           (INDEX(REACZEILE,'plt') .NE. 0 .or.
      &            INDEX(REACZEILE,'prb') .NE. 0) .and.
-     &            DPP .EQ. 0.0_R8) THEN ! Add missing ionization potential
+     &            DPP .EQ. 0.0_R8) THEN ! Add missing ionisation potential
                 found = .false.
                 is = 1
                 do while (.not.found.and.is.le.92)
@@ -4724,7 +4846,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                   end if
                 else
                   write(*,'(a,i3,a)') 'Reaction ',IREAC1(I),
-     .             ' is missing the ionization potential value.'
+     .             ' is missing the ionisation potential value.'
                   write(*,*) 'Could not find a species match!'
                   write(*,*) 'Needs to be added in by hand'
                   write(*,*) 'Check the Eirene input files!'
@@ -5003,7 +5125,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
               ELSE
                 EELECA(JATM,J) = EELECA(JATM,K)
                 IF (NCHARA(JATM).EQ.2) THEN
- ! Correct round-off of He ionization energy
+ ! Correct round-off of He ionisation energy
                   IF (ABS(EELECA(JATM,J)+24.55).LT.0.01) THEN
                     EELECA(JATM,J)=-24.5874
                   ENDIF
@@ -5520,9 +5642,42 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
             NCHARP(JPLS)=4
           END IF
           IF (NMASSP(JPLS).EQ.2.AND.NCHARP(JPLS).EQ.2.AND. ! Correcting another
-     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').GT.0) THEN
+     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').EQ.1) THEN
             NPRTP(JPLS)=2
           END IF
+          IF (NPRTP(JPLS).EQ.2.AND.INDEX(TEXTP(JPLS),'H2(B)').GT.1) THEN ! And another
+            I=INDEX(TEXTP(JPLS),'H2(B)')
+            DO JATM = 1, NATM
+              IF(streql(TEXTP(JPLS)(1:I-1),TEXTA(JATM)))
+     >         NPRTP(JPLS)=NPRTA(JATM)
+            END DO
+            DO JMOL = 1, NMOL
+              IF(streql(TEXTP(JPLS)(1:I-1),TEXTM(JMOL)))
+     >         NPRTP(JPLS)=NPRTM(JMOL)
+            END DO
+          END IF
+          FOUND = .FALSE.
+          DO JATM = 1, NATMI
+            IF (FOUND) CYCLE
+            FOUND = NMASSA(JATM).EQ.NMASSP(JPLS) .AND.
+     &              NCHARA(JATM).EQ.NCHARP(JPLS) .AND.
+     &              NPRTA (JATM).EQ.NPRTP (JPLS)
+            IF (FOUND.AND.INDEX(TEXTP(JPLS),'(B)').GT.0) THEN ! Make sure the BGK species matches the neutral
+              ISRFP(JPLS)=ISRFA(JATM)
+              ISRTP(JPLS)=ISRTA(JATM)
+            END IF
+          END DO
+          DO JMOL = 1, NMOLI
+            IF (FOUND) CYCLE
+            FOUND = NMASSM(JMOL).EQ.NMASSP(JPLS) .AND.
+     &              NCHARM(JMOL).EQ.NCHARP(JPLS) .AND.
+     &              NPRTM (JMOL).EQ.NPRTP (JPLS)
+            IF (FOUND.AND.INDEX(TEXTP(JPLS),'(B)').GT.0) THEN ! Make sure the BGK species matches the neutral
+              ISRFP(JPLS)=ISRFM(JMOL)
+              ISRTP(JPLS)=ISRTM(JMOL)
+            END IF
+          END DO
+          FOUND = .FALSE.
           IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
             LKINDP(JPLS)=ISRFP(JPLS)
           ELSE
@@ -7478,9 +7633,15 @@ cxpb We now rewrite the modified block 4
         IREAD = 0
 *5B.   PLASMA BACKGROUND DATA
   520   READ (IUNIN,'(A72)') ZEILE
-        WRITE(IUNOT,'(A72)') ZEILE
-        IF (ZEILE(1:1) .EQ. '*') GOTO 520
-        READ (ZEILE,6666) (INDPRO(J),J=1,12)
+        IF (ZEILE(1:1) .EQ. '*') THEN
+          WRITE(IUNOT,'(A72)') ZEILE
+          GOTO 520
+        ELSE
+          READ (ZEILE,6666) (INDPRO(J),J=1,12)
+          INDPR1(1:12) = INDPRO(1:12)
+          IF (bundled) INDPR1(11) = 6
+          WRITE(IUNOT,6666) (INDPR1(J),J=1,12)
+        END IF
         indpro(2)=indpro2_save
         DO J=1,12
           IF (ABS(INDPRO(J)) > 100) INDPRO(J) = MOD(INDPRO(J),100)
@@ -7779,6 +7940,54 @@ cxpb We now rewrite the modified block 4
           READ (IUNIN,'(A80)') ZEILE ! B0,B1,B2,B3,B4,B5
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
+        IF (INDPRO(11).NE.0.AND.INDPRO(11).LE.5) THEN
+          READ (IUNIN,6664) (ZI0(I),ZI1(I),ZI2(I),ZI3(I),ZI4(I),ZI5(I),
+     .                     I=1,NPLSI)
+          IF (IABS(INDPRO(11)).EQ.1 .OR. IABS(INDPRO(11)).EQ.3) THEN
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,P0,2)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,2)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ELSE IF (IABS(INDPRO(11)).EQ.2) THEN
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,P0,2)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ELSE
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI0,P0,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI1,P1,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI2,P2,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI3,P3,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI4,P4,3)
+            call e_bundle_transmit_r
+     .       (nplsi,nplsi1,e_bundle_contr,ZI5,P5,3)
+          ENDIF
+          DO IB = 1, NPLSI1
+            WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
+     .                        P3(IB),P4(IB),P5(IB)
+          ENDDO
+        END IF
         IF (INDPRO(12).EQ.5) THEN
           READ (IUNIN,'(A80)') ZEILE ! VL0,VL1,VL2,VL3,VL4,VL5
           WRITE(IUNOT,'(A80)') ZEILE
@@ -8371,7 +8580,11 @@ C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
               ENDDO
               SORIND(J,ISTRA) = rdum(0) + rdum(1)
             ELSE
-              SORIND(J,ISTRA) = rdum(0) + ISTEP
+              IF(INDIM(J,ISTRA).NE.0) THEN
+                SORIND(J,ISTRA) = rdum(0) + ISTEP
+              ELSE
+                SORIND(J,ISTRA) = rdum(0)
+              ENDIF
             ENDIF
             WRITE(IUNOT,6666) ISTEP,idum(2:9)
             WRITE(IUNOT,6664) SORWGT(J,ISTRA),SORLIM(J,ISTRA),
@@ -9788,10 +10001,10 @@ C  SKIP READING REST OF THIS BLOCK
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
           READ (IUNIN,'(A72)') ZEILE
-          call fix_logical_input(zeile,4)
-          READ (ZEILE,6665) ldum(0:3) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH
+          call fix_logical_input(zeile,5)
+          READ (ZEILE,6665) ldum(0:4) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH,LSPRCL
           IF (NLTRIMESH) ldum(3)=.true.
-          WRITE(IUNOT,6665) ldum(0:3)
+          WRITE(IUNOT,6665) ldum(0:4)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
@@ -9868,6 +10081,8 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
                 NSPZI(I,J)=1
                 NSPZE(I,J)=NS-NSPECIES
               ENDIF
+              ! Remove sheath acceleration for N/S boundaries
+              IF (NIXY(I,J).EQ.2 .AND. idum(10).eq.7) idum(10)=6
               idum(8) =
      .         iplsbeginrange(NSPZI(I,J),NSPZE(I,J),ns-nspecies,ipls1)
               idum(9) =
@@ -11002,7 +11217,7 @@ cxpb as they no longer necessarily point to the same species
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
 *  ..convert some wall arrays
         if(wall_namelist_used) then
-          call b2yt_wall(nx1,ny1,ns,ns1,
+          call b2yt_wall(ns,ns1,
      .     natm,natm1,nmol,nmol1,nion,nion1,
      .     is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
@@ -11996,12 +12211,14 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_CTRIG
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CESTIM
       CALL EIRENE_DEALLOC_COUTAU
       CALL EIRENE_DEALLOC_COMUSR
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
 #endif
@@ -12039,6 +12256,16 @@ cxpb as they no longer necessarily point to the same species
 
 *-----------------------------------------------------------------------
 *.end b2ytdr
+
+      contains
+
+      logical function lnext1(is,js)
+      implicit none
+      integer, intent(in) :: is, js
+      lnext1 = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
+     &  .and.abs(am1(is)-am1(js)).lt.amtol
+      return
+      end function lnext1
 
       end subroutine b2ytdr
 
@@ -13046,6 +13273,7 @@ cxpb  itype = 3 : Inherit value from first old species
       end subroutine e_bundle_transmit_i
 
       integer function B2IDEZ(I,J,IZIF)
+      use b2mod_subsys
       implicit none
       integer i, j, izif
 C
@@ -13061,7 +13289,7 @@ C                           J=3: IDEZ=12
 C                           J=4: ERROR, J GT IZIF
 C
       integer idif, iz, k, it, iq
-      external subini, subend, xertst
+      external xertst
 
       call subini('b2idez')
       IDIF=IZIF-J+1
@@ -13260,7 +13488,7 @@ C
      &      .or. itally.eq.84 .or. itally.eq.97 .or. itally.eq.98
      &      .or. itally.eq.99 .or. itally.eq.100.or. itally.eq.-2
      &      .or. itally.eq.-4 .or. itally.eq.-5 .or. itally.eq.-6
-     &      .or. itally.eq.-7 .or. itally.eq.-13) THEN ! these are NPLS volume tallies
+     &      .or. itally.eq.-7 .or. itally.eq.-13.or. itally.eq.-26) THEN ! these are NPLS volume tallies
           transform_tally = ipls1(ispc)
         ELSE
           transform_tally = ispc

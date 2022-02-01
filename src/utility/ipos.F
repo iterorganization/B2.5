@@ -25,4 +25,4 @@
         ipos=is
       endif
       return
-      end
+      end function ipos

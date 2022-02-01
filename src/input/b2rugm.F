@@ -6,12 +6,14 @@
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
       use b2mod_b2cmfs
       use b2mod_constants
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny
@@ -218,19 +220,12 @@
      *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1),
      *   hzc(-1:nx+1,-1:ny+1)
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1
+     *   t0, t1
       logical qc_to_do, pbs_to_do
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
 
@@ -346,7 +341,7 @@ cxpb-end
         call cfruin (nget, 1, idum, 'redef_gmtry')
         redef_gmtry=idum(0)
         call cfrure (nget, n2*4, wbbl, 'wbbl')
-        if (redef_gmtry.eq.0) write(*,*)
+        if (redef_gmtry.eq.0) write(*,'(a)')
      .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
      .   'because redef_gmtry.eq.0 !'
       else
@@ -727,7 +722,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
         call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .false.)
         mapInitialized = .true.
       endif
 

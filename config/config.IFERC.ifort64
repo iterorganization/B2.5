@@ -12,14 +12,7 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
-DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
-
 CPP      = /lib/cpp -C -traditional
-CPPOPTS  = -P -I${srcdir} ${EQUIVS}
-SED      = sed s:\#PREC\#:d:g
-SED      =
-LINK_MOD = 
 
 ifdef USE_MPI
 FC       = mpif90
@@ -29,10 +22,6 @@ FC       = mpif90
 else
 FC       = ifort
 endif
-endif
-
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifeq (${FC},mpif90)
@@ -63,22 +52,6 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
-endif
-
-DBLFC    = ${FC}
-DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
-
-MOD      = mod
-
-BLD      = ar rucv
-
-GRLIBES  = ${LD_NCARG}
-PLLIBES  = ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_VERSION
@@ -119,19 +92,6 @@ DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=
 endif
 IMASLIBS   = ${LD_UAL}
 endif
-
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
-ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
-endif
-
-LD       = ${FC}
-
-LCPP     = ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

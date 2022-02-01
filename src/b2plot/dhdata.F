@@ -9,6 +9,7 @@ C
      &                 )
       use b2mod_types
       use b2mod_elements
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -157,7 +158,6 @@ C
 C
       real (kind=R8) :: R8FUN1
       EXTERNAL R8FUN1
-      external subini, subend
       logical open_file, silent_open
       external open_file, silent_open
 C
@@ -434,6 +434,7 @@ C-----------------------------------------------------------------------
      &                   DY
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -638,7 +639,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       LOGICAL    LUVAL(0:NIOPT)
 C-----------------------------------------------------------------------
-      EXTERNAL   SUBINI, SUBEND, XERTST
+      EXTERNAL   XERTST
 C-----------------------------------------------------------------------
       SAVE QVAL , D2VAL , D3VAL , UVAL , LUVAL
       SAVE NOPT , NIN0

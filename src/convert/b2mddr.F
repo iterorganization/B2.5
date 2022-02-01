@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_version
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -21,6 +22,8 @@
       use b2mod_b2cmpt
       use b2mod_b2cmwg
       use b2mod_external
+      use b2mod_subsys
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -39,23 +42,21 @@
 *   ..local variables
       integer k, is, idum(0:9), nscx, iscx(0:nscxmax-1), ismain
       integer external_species
-      real (kind=R8) :: BoRiS, t0, t1
+      real (kind=R8) :: BoRiS
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-      character cnamip*80, cvalip*80, line*256
+      character cnamip*80, cvalip*80, line*256, ligne*256
 *   ..initialisation
       save BoRiS, ismain, external_species
       data BoRiS/0.0_R8/, ismain/1/, external_species/0/
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      logical is_comment
       external is_comment
-      external subini, subend, xertst, xerrab, cfruch, cfruin
-      external b2rups, b2rugm, b2rucp, b2mds, ipsetc, ipgetr
+      external xertst, xerrab, cfruch, cfruin
+      external b2rups, b2rugm, b2rucp, b2mds, ipgetr
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp
 *   ..namelist
@@ -91,9 +92,13 @@
     1 continue
        read (ninp(5),'(a80)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -219,6 +224,8 @@
       write(*,*) 'mdsconnect'
       if(status.lt.0) then
         write(*,*) ' return status: ',status
+        call xertst (status.ge.0,
+     .   'Error connecting to the MDSplus server ' // trim(mds_server))
       endif
 
       if(overwrite_shotnumber.le.0) then

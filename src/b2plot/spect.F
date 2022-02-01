@@ -332,6 +332,7 @@ cc    -------------------------------------------------------------------------
 
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.constants"
@@ -362,7 +363,6 @@ cc    -------------------------------------------------------------------------
      *   f
       integer index
       integer count,cc
-      external subini, subend
 
       call subini ('GetEmissivity')
       do count=1,dim
@@ -465,6 +465,7 @@ c     -------------------------------------------------------------------------
       subroutine GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,T)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.dimensions"
@@ -486,7 +487,6 @@ c     -------------------------------------------------------------------------
       character CINDM(NSTORE)*2
       character DSNREQ*256
       character ESYM*2
-      external subini, subend
 
 c     initialising
       call subini ('GetInfo')
@@ -523,6 +523,7 @@ C
      &                 )
 C
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -573,7 +574,7 @@ C                           ANALYSED.
 C                           1ST DIMENSION: ELECTRON TEMPERATURE INDEX
 C                           2ND DIMENSION: ELECTRON DENSITY     INDEX
 C  OUTPUT: (R*8)  PECA()  = SPLINE INTERPOLATED OR  EXTRAPOLATED
-C                           IONIZATIONS/PHOTON FOR THE USER ENTERED
+C                           IONISATIONS/PHOTON FOR THE USER ENTERED
 C                           ELECTRON TEMPERATURE/DENSITY PAIRS.
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
@@ -692,7 +693,7 @@ C-----------------------------------------------------------------------
       LOGICAL LTRNG(ITVAL)          , LDRNG(ITVAL)
 C-----------------------------------------------------------------------
       EXTERNAL   R8FUN1
-      external   subini, subend, xertst
+      external   xertst
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
@@ -804,6 +805,7 @@ CX
      &                 TITLX  , IRCODE
      &               )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 
 C-----------------------------------------------------------------------
@@ -1058,8 +1060,6 @@ C-----------------------------------------------------------------------
      &            TYPLST /' '/   ,
      &            EXTLST /' '/   , IZ0LST /0/   , IZLAST /0/       ,
      &            IUNIT  /15/
-C-----------------------------------------------------------------------
-      external subini, subend
 C-----------------------------------------------------------------------
 C
       call subini ('spec')
@@ -1610,6 +1610,7 @@ CX
      &                   PEC
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -1780,7 +1781,7 @@ C-----------------------------------------------------------------------
      &           CKEY3                 , CKEY4                ,
      &           CKEY5                 , CKEY6
       LOGICAL    STREQL
-      EXTERNAL   SUBINI, SUBEND, XERRAB, STREQL
+      EXTERNAL   XERRAB, STREQL
 C
 C-----------------------------------------------------------------------
 C
@@ -2262,6 +2263,7 @@ CX
      &                   DY    , LINTRP
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -2487,7 +2489,7 @@ C-----------------------------------------------------------------------
       SAVE NOPT
       SAVE X    , H     , Q     , D1   , D2   , D3
 C-----------------------------------------------------------------------
-      EXTERNAL SUBINI, SUBEND, XERTST
+      EXTERNAL XERTST
 C***********************************************************************
       CALL SUBINI ('xxsple')
       CALL XERTST (NKNOTS .GE. NIN,

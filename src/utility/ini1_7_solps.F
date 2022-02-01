@@ -17,6 +17,7 @@
       subroutine iniilu_7_w(n_nonzeros,n1,n2,irn,ish,jsh,ijsh,icn,nc0)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 c here: counting of indices from 1 to nx+2 and from 1 to ny+2
 c main code : indices from -1 to nx and from -1 to ny
@@ -32,7 +33,7 @@ c therefore: shift of neighbour indices necessary: i,j gets i-2,j-2
       INTEGER I1H(12),IS(12),JS(12), IJS(12)                       !sv 26.01.00
       INTEGER HOLD,HOLDI,HOLDJ, HOLDIJ
 
-      external subini, subend, xertst
+      external xertst
 
       call subini ('iniilu_7_w')
       n= n1*n2

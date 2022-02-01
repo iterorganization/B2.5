@@ -1,20 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,        !srv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                 !srv 27.01.00
-     &    sch, respo, corpo, aa7)                                  !srv 27.01.00
+      subroutine b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,  !srv 27.01.00
+     &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,                 !srv 27.01.00
+     &    sch, respo, corpo, aa7)                                        !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, itcnt
+      integer nx, ny, ns, ismain, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     4   cvisper(-1:nx,-1:ny,0:1),
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1), 
+     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -36,14 +38,15 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
+      integer ncall, n2, ix, iy, is, ixb, iyb, ixt, iyt, k         !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
+      integer, save :: visper_all_ions = 1
       character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot
-      real (kind=R8) :: aa7p2, aa7m2                               !srv 27.01.00
+      real (kind=R8) :: aa7p2, aa7m2, aa7p3, aa7m3                 !srv 27.01.00
       save ncall                                                   !srv 27.01.00
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation
       data ncall/0/                                                !srv 27.01.00
@@ -57,6 +60,7 @@
 *   ..set internal parameters on first call                        !srv
       if (ncall.eq.0) then                                         !srv
        call ipgeti ('b2usp7_iout', iout)                           !srv 08.07.08
+       call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
       endif                                                        !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -78,7 +82,7 @@
 
 * ..compute the correction
       aa7 = 0.0_R8
-*   ..compute the five-point matrix
+*   ..compute contribution from the five-point stencil
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -133,61 +137,77 @@
         endif
        enddo
       enddo
-
-      do iy = -1, ny
-       do ix = -1, nx                                              !srv 26.11.02
-         ireg = region(ix,iy,0)
-         ixt = topix(ix,iy)
-         iyt = topiy(ix,iy)
-         ixb = bottomix(ix,iy)
-         iyb = bottomiy(ix,iy)
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+      
+*   ..compute contribution from the seven-point y-stencil
+      
+      do is = 0,ns-1
+       if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then      
+        do iy = -1, ny
+         do ix = -1, nx                                              !srv 26.11.02
+           ireg = region(ix,iy,0)
+           ixt = topix(ix,iy)
+           iyt = topiy(ix,iy)
+           ixb = bottomix(ix,iy)
+           iyb = bottomiy(ix,iy)
+           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then   !srv 26.11.02 12.12.17 {
 *   .. do nothing
-         else
-           if(bottomiy(ixb,iyb).eq.-2) then
-              aa7(ix,iy, 3) =
-     &          avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
-             aa7m2 =
-     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-             aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m2
-             aa7p2 =
-     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
-     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-             aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
-             aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
-           elseif(topiy(ixt,iyt).eq.ny+1) then
-              aa7(ix,iy,-3) =
-     &         avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)
-             aa7m2 =
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)
-             aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =
-     &        avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-             aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2
-             aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            else
-             aa7(ix,iy,-3) =
-     &         avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)
-             aa7(ix,iy, 3) =
-     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &         cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
-             aa7m2 =
-     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)
-             aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =
-     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
-     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-             aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
-             aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
-           endif
-         endif                                                     !srv 26.11.02 12.12.17 }
-       enddo
+            if(bottomiy(ixb,iyb).eq.-2) then
+              aa7p3 =
+     &           avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+     &           cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+              aa7(ix,iy, 3) = aa7(ix,iy, 3) + aa7p3
+              aa7m2 =avisper_a(ixt,iyt,1,is)*
+     &               bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m2
+              aa7p2 =avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix ,iy ,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p3 - aa7p2
+              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
+            elseif(topiy(ixt,iyt).eq.ny+1) then
+              aa7m3 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+              aa7(ix,iy,-3) = aa7(ix,iy,-3) + aa7m3
+              aa7m2 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m3 - aa7m2
+              aa7p2 = avisper_a(ix,iy,1,is)*
+     &         bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2
+              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
+            else
+              aa7m3 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+              aa7(ix,iy,-3) = aa7(ix,iy,-3) + aa7m3
+              aa7p3 = avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+     &          cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+              aa7(ix,iy, 3) = aa7(ix,iy, 3) + aa7p3
+              aa7m2 = avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m3  - aa7m2
+              aa7p2 = avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p3 - aa7p2
+              aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2
+            endif
+           endif                                                     !srv 26.11.02 12.12.17 }
+         enddo
+        enddo
+       endif
       enddo
 
 *   ..correct RHS if not solving

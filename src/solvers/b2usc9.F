@@ -7,6 +7,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
@@ -65,12 +66,8 @@
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                   !srv 02.01.07
-!      rscal(t0) = t0
-      rscal(t0) = 1.0e0_R8                                              !srv 13.10.06
 *   ..initialization
       data ncall/0/
 
@@ -104,8 +101,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of nb, pb
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
@@ -272,5 +269,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2usc9
+
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+!      rscal = t0
+      rscal = 1.0e0_R8                                                  !srv 13.10.06
+      return
+      end function rscal
 
       end subroutine b2usc9

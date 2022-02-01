@@ -42,4 +42,4 @@
 *     ------------------------------------------------------------------
    91 call xerrab ('cfwuin--error return from inquire statement')
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfwuin

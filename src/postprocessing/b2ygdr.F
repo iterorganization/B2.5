@@ -6,6 +6,8 @@
       use b2mod_geo
       use b2mod_b2cmgs
       use b2mod_b2cmwg
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -76,8 +78,7 @@
       character lblgm*120, idout*80, id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruin, cfruch, lbfilx
+      external xertst, xerrab, streql, gacwk, gdawk, cfruin, cfruch
       external b2rugm, b2wfgm, b2wggm
 
 *-----------------------------------------------------------------------

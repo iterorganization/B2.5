@@ -7,6 +7,7 @@
       use b2mod_version
       use b2mod_indirect
       use b2mod_geo_corner
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -64,7 +65,7 @@
       character*120 lblgm
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin, cfruch
+      external prgini, prgend, cfopen, cfruin, cfruch
       external b2ahx0, b2ahdr, b2rugm
 *   ..initialise input/output units
       data ninp/50,51/

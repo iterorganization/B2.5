@@ -20,53 +20,31 @@ c***  lwlddir : orientation of the "plot zones" (true = CCW)
 c***  pp1,pp2 : completed arrays of the wall segments
 c======================================================================
       use b2mod_types
-      use b2mod_geo
-      use b2mod_diag
       use b2mod_b2plot
-      use b2mod_b2cmfs
       use b2mod_indirect
-      use b2mod_constants
       use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
-      real (kind=R8) ::
-     *   d,x
-      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,kkb,kke,
-     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),itmp,
-     ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical lim_cnf
-c
-      real (kind=R8) :: width,distance,distmin,xx1,xx2,yy1,yy2,
-     ,                  distmin1
-      integer, allocatable :: lwldlis_old(:)
-      logical, allocatable :: istarget(:)
-      integer :: nwldlis_old
-      integer, allocatable :: lis_ind(:)
-      data width /1.0_R8/
-      save width
-c*** wsrttol : a tolerance parameter for defining coinciding segments
-      real (kind=R8) ::
-     *   wsrttol
-      parameter (wsrttol=1.0e-6_R8)
+      integer i,j,k,n,il
+      logical lim_cnf,target_east,target_west
 c<<<
-      integer lun_w, lfn_hlp
-      parameter (lun_w=76, lfn_hlp=mlblprtx+9)
-      character tab, fn_hlp*(lfn_hlp)
+      integer lun_w
+      parameter (lun_w=96)
+      character tab
 c>>>
       integer use_eirene
       data use_eirene/0/
       save use_eirene
-      data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
-      intrinsic mod
-      external ipgeti, ipgetr, subini, subend, xerrab
+      external ipgeti, ipgetr, xerrab
 c======================================================================
       call subini ('b2pwlprp')
-      call ipgetr ('b2agmt_1d_width', width)
       call get_boundary_namelist
       call ipgeti ('b2mndr_eirene', use_eirene)
 c<<<
@@ -157,7 +135,7 @@ c      print *,'nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 c
@@ -188,25 +166,53 @@ c*** Check the topology of the grid and the list of target edges
       end if !}
       ntrgts=2
       if(nncut.eq.0 .and. .not.lim_cnf) then
-        if (use_eirene.ne.0) then
+        if (periodic_bc.eq.1) then
           ntrgts=0
-          do while (ltns(ntrgts+1).gt.0)
-            ntrgts=ntrgts+1
-          end do
+          itrg=0
         else if (boundary_namelist.ne.0) then
           ntrgts=0
           do i = 1, nbc
-            if(bcchar(i).eq.'E'.or.bcchar(i).eq.'W') then
-              if(bcene(i).eq. 3.or.bcene(i).eq.12.or.
-     &           bcene(i).eq.15) ntrgts=ntrgts+1
+            if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+              target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                      bcene(i).eq.15
+            end if
+            if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+               target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                       bcene(i).eq.15
             end if
           end do
-        else if (periodic_bc.eq.1) then
-          ntrgts=0
+          if (target_west) then
+            ntrgs=1
+            itrg(1)=1
+          end if
+          if (target_east) then
+            ntrgs=ntrgs+1
+            itrg(ntrgs)=2
+          end if
+        else if (use_eirene.ne.0) then
+          itrg=0
+          if (count(ktns(:)==1).eq.0) ntrgts=ntrgts-1
+          if (count(ktns(:)==2).eq.0) ntrgts=ntrgts-1
+          if (count(ktns(:)==1).gt.0) then
+            itrg(1)=1
+            if (count(ktns(:)==2).gt.0) itrg(2)=2
+          else if (count(ktns(:)==2).gt.0) then
+            itrg(1)=2
+          end if
         end if
       end if
-      if(nncut.eq.1 .or. lim_cnf) ntrgts=2
-      if(nncut.eq.2) ntrgts=4
+      if(nncut.eq.1 .or. lim_cnf) then
+        ntrgts=2
+        itrg(1)=1
+        itrg(2)=2
+      end if
+      if(nncut.eq.2) then
+        ntrgts=4
+        itrg(1)=1
+        itrg(2)=2
+        itrg(3)=3
+        itrg(4)=4
+      end if
       if(ntrgs.gt.ntrgts) then !{
         write(*,*) 'b2pwlprp: inconsistent topology. ',
      ,                                      'Check the "param.dg" file'
@@ -214,11 +220,14 @@ c*** Check the topology of the grid and the list of target edges
       end if !}
       if(ntrgs.eq.0) then !{
 c*** use the obsolete jedg[io][12] parameters
-        ltrgedge(1,1)=jedge(3) ! jedgo1
-        ltrgedge(2,1)=jedge(1) ! jedgi1
-        ltrgedge(1,ntrgts)=jedge(2) ! jedgi2
-        ltrgedge(2,ntrgts)=jedge(4) ! jedgo2
-        ntrgts=2
+        k=0
+        do i=1,2*max(1,nncut) !{
+          if (itrg(i).gt.0) then !{
+            ltrgedge(2-k,itrg(i))=jedge(i+(1-k)*ntrgsx) ! jedgo
+            ltrgedge(1+k,itrg(i))=jedge(i+k*ntrgsx)     ! jedgi
+          end if !}
+          k=1-k
+        end do !}
       end if !}
 c*** Check the target edge specifications and make them clear
       do i=1,ntrgts !{
@@ -233,11 +242,11 @@ c*** No PFR for limiter configuration
 
 c*** Prepare the list of grid indices for the target flux faces
 
-      if (lim_cnf.or.nncut.ge.1) then
+      if (itrg(1).eq.1) then
         ltrgpos(1)=-1
         lseppos(1)=topcut(1)-1
         lpfrpos(1)=leftcut(1)-1
-      else
+      else if (itrg(1).eq.2) then
         ltrgpos(1)=nx-1
         lseppos(1)=jsep
         lpfrpos(1)=3*nx/4
@@ -252,11 +261,11 @@ c*** Prepare the list of grid indices for the target flux faces
         lpfrpos(3)=rightcut(2)-1
         k=4
       end if !}
-      if (lim_cnf.or.nncut.ge.1) then
+      if (itrg(k).eq.ntrgts) then
         ltrgpos(k)=nx-1
         lseppos(k)=topcut(1)-1
         lpfrpos(k)=rightcut(1)
-      else
+      else if (itrg(k).eq.1) then
         ltrgpos(k)=-1
         lseppos(k)=jsep
         lpfrpos(k)=nx/4
@@ -287,12 +296,63 @@ c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
 c#endif
+      call b2pwltrg
+c======================================================================
+      call subend ()
+      return
+      end subroutine b2pwlprp
+
+      subroutine b2pwltrg
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_diag
+      use b2mod_b2cmfs
+      use b2mod_b2plot
+      use b2mod_constants
+      use b2mod_b2plot_wall_loading
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
+      implicit none
+      integer i,i1,i2,ii,il,is,ias,ind,iss,itmp,ix,iy,j,jj,
+     *  k,k1,k2,kb,ke,kk,kn,kkb,kke,l,n,cont,flagmin,flagmin1,ksel
+      integer ib(ntrgsx),ie(ntrgsx),it(ntrgsx),m_hlp(ntrgsx)
+      integer :: nwldlis_old
+      integer, allocatable :: lwldlis_old(:), leirlis_old(:)
+      integer, allocatable :: lis_ind(:)
+      real (kind=R8) :: xx1,xx2,yy1,yy2,distmin,distmin1,distance
+      logical lim_cnf
+      logical, allocatable :: istarget(:)
+      data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
+      real (kind=R8) ::
+     *   d,x
+c
+      real (kind=R8) :: width
+      data width /1.0_R8/
+      save width
+c*** wsrttol : a tolerance parameter for defining coinciding segments
+      real (kind=R8) ::
+     *   wsrttol
+      parameter (wsrttol=1.0e-6_R8)
+c<<<
+      integer lun_w, lfn_hlp
+      parameter (lun_w=96, lfn_hlp=mlblprtx+9)
+      character tab, fn_hlp*(lfn_hlp)
+c
+c======================================================================
+c*** Add segments for the B2 targets to the wall structures
+c======================================================================
+      call subini ('b2pwltrg')
+      call ipgetr ('b2agmt_1d_width', width)
+      lim_cnf=nncut.eq.0 .and. nnreg(0).eq.2
+      tab=char(9)
+c
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
@@ -306,7 +366,7 @@ c
       if(lwlddir(1)) then
         if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
      .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
-          write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
+          write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp1(1,l),pp1(2,l)
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
@@ -318,7 +378,7 @@ c
       else
         if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
      .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
-          write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
+          write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp2(1,l),pp2(2,l)
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
@@ -586,13 +646,13 @@ c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
 c*** Target still open...
-                write(*,'(2a,3i4)') 'b2pwlprp: unexpected error. ',
+                write(*,'(2a,3i4)') 'b2pwltrg: unexpected error. ',
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                write(*,*) 'lwldlis :'
+                write(*,*) 'lwldlis : ',pltzlbl(il)
                 write(*,*) (lwldlis(i1,il),i1=1,n)
-                call xerrab ('Missing CCW edge in b2pwlprp')
+                call xerrab ('Missing CCW edge in b2pwltrg')
               end if !}
               i1=2
               do i2=1,ntrgts !{
@@ -613,11 +673,11 @@ c*** CCW edge. Check to which target this edge belongs
               end do !}
               if(kb.eq.0) kb=kkb
               if (kb.ne.kkb .and. .not. lim_cnf) then !{
-                write(*,*) 'b2pwlprp: unexpected error. ',
+                write(*,*) 'b2pwltrg: unexpected error. ',
      ,                                  'Inner edge not found ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                call xerrab ('Inner edge not found in b2pwlprp')
+                call xerrab ('Inner edge not found in b2pwltrg')
               end if !}
               ie(kkb)=is
               it(kkb)=kkb
@@ -694,7 +754,7 @@ c*** CCW target
                   end do !}
 c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
                   if(kb.gt.0 .and. ke.gt.0) then !{
-                    write (*,*) 'b2pwlprp: a segment can appear in ',
+                    write (*,*) 'b2pwltrg: a segment can appear in ',
      ,                   'the grid edge lists no more than once.'
                     write (*,*) 'Segment ',lwldlis(j,il),',  list ',
      ,                                 il,',  targets ',it(kb),it(ke)
@@ -715,12 +775,32 @@ c*** The zone starts from a target: reset counters and insert the target
 c*** Limiter configuration. Add first the CW target face
                           do i=1,nytg !{
                             luwrk(i)=lppp+i
+                            do iss=1,nsts !{
+                              if (eirdiag_nds_typ(iss).ne.2) cycle
+                              if (eirdiag_nds_srf(iss).ne.
+     .                                               ltrgpos(1)+1) cycle
+                              if (eirdiag_nds_start(iss).gt.i) cycle
+                              if (eirdiag_nds_end(iss).lt.i) cycle
+                              ind=eirdiag_nds_ind(iss)
+                              ias=ind+1-(eirdiag_nds_start(iss)-1)
+                              lewrk(i)=nlim+ias+(i-1)
+                            end do !}
                           end do !}
                           kn=kn+nytg
                         end if !}
                         k=it(ke)
                         do i=1,nytg !{
                           luwrk(kn+i)=lppp+nytg*(k-1)+i
+                          do iss=1,nsts !{
+                            if (eirdiag_nds_typ(iss).ne.2) cycle
+                            if (eirdiag_nds_srf(iss).ne.
+     .                                           ltrgpos(k)+1) cycle
+                            if (eirdiag_nds_start(iss).gt.i) cycle
+                            if (eirdiag_nds_end(iss).lt.i) cycle
+                            ind=eirdiag_nds_ind(iss)
+                            ias=ind+1-(eirdiag_nds_start(iss)-1)
+                            lewrk(kn+i)=nlim+ias+(i-1)
+                          end do !}
                         end do !}
                         kn=kn+nytg
                         kke=-kke
@@ -728,20 +808,42 @@ c*** Limiter configuration. Add first the CW target face
                       end if !}
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
+                      lewrk(kn)=leirlis(j,il)
                     else if(kb.ne.0) then !}{
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
+                      lewrk(kn)=leirlis(j,il)
                       k=it(kb)
                       if(k.ne.-kke) then !{
                         if(j.ne.n .or. k.eq.kke) then !{
                           do i=1,nytg !{
                             luwrk(kn+i)=lppp+nytg*(k-1)+i
+                            do iss=1,nsts !{
+                              if (eirdiag_nds_typ(iss).ne.2) cycle
+                              if (eirdiag_nds_srf(iss).ne.
+     .                                             ltrgpos(k)+1) cycle
+                              if (eirdiag_nds_start(iss).gt.i) cycle
+                              if (eirdiag_nds_end(iss).lt.i) cycle
+                              ind=eirdiag_nds_ind(iss)
+                              ias=ind+1-(eirdiag_nds_start(iss)-1)
+                              lewrk(kn+i)=nlim+ias+(i-1)
+                            end do !}
                           end do !}
                           kn=kn+nytg
                           if(lim_cnf) then !{
 c*** Limiter configuration. Add the CCW target face
                             do i=1,nytg !{
                               luwrk(kn+i)=lppp+nytg+i
+                              do iss=1,nsts !{
+                                if (eirdiag_nds_typ(iss).ne.2) cycle
+                                if (eirdiag_nds_srf(iss).ne.
+     .                                               ltrgpos(2)+1) cycle
+                                if (eirdiag_nds_start(iss).gt.i) cycle
+                                if (eirdiag_nds_end(iss).lt.i) cycle
+                                ind=eirdiag_nds_ind(iss)
+                                ias=ind+1-(eirdiag_nds_start(iss)-1)
+                                lewrk(kn+i)=nlim+ias+(i-1)
+                              end do !}
                             end do !}
                             kn=kn+nytg
                           end if !}
@@ -750,11 +852,12 @@ c*** Limiter configuration. Add the CCW target face
                     else !}{
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
+                      lewrk(kn)=leirlis(j,il)
                     end if !}
                   else !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
-                        write(*,*) 'b2pwlprp: unexpected error. ',
+                        write(*,*) 'b2pwltrg: unexpected error. ',
      ,                        'Trying to close a target different ',
      ,                        'from the opened one.'
                         write(*,*) 'Segment ',lwldlis(j,il),
@@ -768,9 +871,10 @@ c*** Limiter configuration. Add the CCW target face
                       end if !}
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
+                      lewrk(kn)=leirlis(j,il)
                       k=0
                    else if(kb.ne.0) then !}{
-                      write(*,*) 'b2pwlprp: unexpected error. ',
+                      write(*,*) 'b2pwltrg: unexpected error. ',
      ,                         'Trying to open a target having one ',
      ,                         'already opened.'
                       write(*,*) 'Segment ',lwldlis(j,il),
@@ -786,11 +890,12 @@ c*** Limiter configuration. Add the CCW target face
                 end do !}
                 do i=1,kn !{
                   lwldlis(i,il)=luwrk(i)
+                  leirlis(i,il)=lewrk(i)
                 end do !}
                 nwldlis(il)=kn
 c                print *,'il,kn = ',il,kn                  !###
               else !}{
-                print *,'b2pwlprp: not yet provided for the CW target ',
+                print *,'b2pwltrg: not yet provided for the CW target ',
      ,                                                   'orientation.'
                 print *,'==> Check specification of the "Plot zones"',
      ,                            ' in the DG model.'
@@ -804,7 +909,7 @@ c!###{
 c      print *,'After correction. nwldprt =',nwldprt
 c      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt !{
-c       print '(a,i4/(20i4))','lwldlis :',il,
+c       print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
 c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
@@ -813,7 +918,9 @@ c!###}
 c*** Store original plot zones to be used for substituting proper elements inside targets
         nwldlis_old = nwldlis(il)
         allocate(lwldlis_old(size(lwldlis,1)))
+        allocate(leirlis_old(size(leirlis,1)))
         lwldlis_old(:)=lwldlis(:,il)
+        leirlis_old(:)=leirlis(:,il)
         allocate(lis_ind(nwldlis_old))
 ccc*** Order elements of original plot zone in CCW direction
         do i=1,nwldlis_old
@@ -843,6 +950,9 @@ ccc*** Order elements of original plot zone in CCW direction
           itmp=lwldlis_old(cont+i1-1)
           lwldlis_old(cont+i1-1)=lwldlis_old(i1)
           lwldlis_old(i1)=itmp
+          itmp=leirlis_old(cont+i1-1)
+          leirlis_old(cont+i1-1)=leirlis_old(i1)
+          leirlis_old(i1)=itmp
         end do
         deallocate(lis_ind)
 
@@ -895,6 +1005,7 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
           cont=1
           do i=flagmin,flagmin1
             lwldlis_old(cont)=lwldlis(i,1)
+            leirlis_old(cont)=leirlis(i,1)
             cont=cont+1
           end do
           nwldlis_old=cont-1
@@ -903,14 +1014,17 @@ c*** Now change also the new plot zone according to the CW or CCW order
           if (lwlddir(il)) then !CCW order
             do i=1,nwldlis(il)
               lwldlis(i,il)=lwldlis_old(i)
+              leirlis(i,il)=leirlis_old(i)
             end do
           else !CW order
             do i=1,nwldlis(il)
               lwldlis(i,il)=lwldlis_old(nwldlis(il)-i+1)
+              leirlis(i,il)=leirlis_old(nwldlis(il)-i+1)
             end do
           end if
         end if !}
       deallocate(lwldlis_old)
+      deallocate(leirlis_old)
       end do !}
 
       deallocate(istarget) 
@@ -953,22 +1067,23 @@ c*** The whole wall including the refined targets (shadowing)
         write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
       end do !}
       write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+      close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
 
       do il=2,nwldprt !{
-        l=len_trim(lblwldpt(il))
+        l=len_trim(pltzlbl(il))
 c*** create the filename for the output
         if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
           write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
         else !}{
-          fn_hlp='wlly_'//lblwldpt(il)(:l)//'.dat'
+          fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
         end if !}
         open(lun_w,file=fn_hlp)
         write(lun_w,'(4a)') '#Layout of plot zone ',
-     ,                                      lblwldpt(il)(:l),' : ',label
+     ,                                      pltzlbl(il)(:l),' : ',label
         write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
      ,    tab,'DG_elm'
         do i=1,nwldlis(il) !{
@@ -980,23 +1095,45 @@ c*** use the zone index to label the plot zone
      ,      tab,wldrfdst(i,il),tab,k
         end do !}
         write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+        close(lun_w)
       end do !}
-      close(lun_w)
-c<<<
-c      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
-c      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
-c      print '(16i5)',(nwldlis(i),i=1,nwldprt)
-c      print '(16l5)',(lwlddir(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(1x,8i11))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
-c     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
-c     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+#ifdef DBG
+      print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
+      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
+      print '(16i5)',(nwldlis(i),i=1,nwldprt)
+      print '(16l5)',(lwlddir(i),i=1,nwldprt)
+      do il=1,nwldprt
+        print '(a,i5,1x,a/(1x,8i11))','lwldlis :',il,pltzlbl(il),
+     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+        print '(a,i5/(1x,8i11))','leirlis :',il,
+     ,                                  (leirlis(i,il),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
+     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
+     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
+      end do
+#endif
+c*** Fill in the input arrays for b2pwrdld
+c
+      nwldrad=0
+      do j=1,ntrgts !{
+        do i=1,nytg !{
+          lwldrad(nwldrad+i)=lppp+nwldrad+i
+        end do !}
+        nwldrad=nwldrad+nytg
+      end do !}
+#ifdef DBG
+      print *,'%% b2pwltrg: nwldrad,nytg / lwldrad',nwldrad,nytg
+      k=0
+      do j=1,ntrgts !{
+        print '(20i4)',(lwldrad(k+i),i=1,nytg)
+        k=k+nytg
+      end do !}
+      print '(1x,a,i5/(20i4))','nwldlis / lwldlis',nwldlis(1),
+     ,                           (lwldlis(i,1),i=1,nwldlis(1))
+#endif
+
 c======================================================================
       call subend ()
       return
-      end subroutine b2pwlprp
+      end subroutine b2pwltrg

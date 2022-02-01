@@ -3,6 +3,7 @@
 
       subroutine b2mwq0 (nput, ns)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, ns
@@ -40,7 +41,7 @@
       save ncall, style
       character chtit*60, chlab*12, id*3, idr*7
 *   ..procedures
-      external subini, subend, xertst, ipgeti, cfwuin, cfwuch
+      external xertst, ipgeti, cfwuin, cfwuch
 *   ..initialisation
       data ncall/0/, style/1/
 
@@ -430,4 +431,4 @@
 *-----------------------------------------------------------------------
 *.end b2mwq0
 
-      end
+      end subroutine b2mwq0

@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10, save :: newversion ='03.000.007'
+      character*10, save :: newversion ='03.000.008'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -14,6 +14,57 @@
      7 boundary_version = '00.000.000',
      8 neutrals_version = '00.000.000',
      9 b2faveri_version = '00.000.000'
+
+      contains
+
+      subroutine cfverr(nget, readversion)
+      implicit none
+      integer, intent(in) :: nget
+      character*10 version_in, readversion
+      character*12 chf
+      character*7 label
+      logical streql
+      external streql
+
+      inquire (nget,form=chf,err=10)
+      if (streql(chf,'formatted')) then
+        read(nget,'(a,a)',err=10) label,version_in
+      else
+        read(nget,err=10) label,version_in
+      endif
+      if(label.eq.'VERSION') then
+        readversion=version_in
+        write(*,'(a,a)') 'VERSION set to: ',readversion
+        return
+      endif
+   10 continue
+      rewind(nget)
+      write(*,'(a,a)') 'VERSION defaulted to : ',newversion
+      readversion=newversion
+      return
+      end subroutine cfverr
+
+      subroutine cfverw(nput, writeversion)
+      implicit none
+      integer, intent(in) :: nput
+      character*10, intent(in) :: writeversion
+      character*12 chf
+      character*32 get_B25_hash
+      logical streql
+      external streql, get_B25_hash
+
+      inquire (nput,form=chf,err=20)
+      if (streql(chf,'formatted')) then
+        write(nput,'(a,a,1x,a)') 'VERSION',
+     .                          writeversion,get_B25_hash()
+      else
+        write(nput) 'VERSION',writeversion,' ',get_B25_hash()
+      endif
+      write(*,'(4a)') 'VERSION: ',writeversion,
+     .                ' GIT hash: ',get_B25_hash()
+   20 continue
+      return
+      end subroutine cfverw
 
       end module b2mod_version
 cxpb Version 1.1 corresponds to adding a version number and the UADIA array
@@ -179,9 +230,9 @@ c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene sputer.F The
 c                        22.07.11 corrected grlib.F (dummy) and masr3.F
 c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA
 c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)
-c                        20.09.11 modyfied b2tlnl.F
+c                        20.09.11 modified b2tlnl.F
 c                        21.09.11 introduced nwtf in b2plot.F instead of 97
-c    Version 01.001.070  17.10.11 modyfied Braginsky formula in b2tlnl.F Introduced restriction lnlam >= 5
+c    Version 01.001.070  17.10.11 modified Braginskii formula in b2tlnl.F Introduced restriction lnlam >= 5
 c                        03.11.11 changed calculation of chci_koeff in b2trcl.F
 c                                 added the usage of -1 cell in b2mod_astra_to_b2.F
 c                        15.11.11 changed b2mwti.F and b2mndr.F in according to request of Bonnin
@@ -245,7 +296,7 @@ c                                 inserted boundary conditions BCENI = 23 and 24
 c                                 changed subroutine intcor.F Complicated operator IF was splitted by two in order that debugger not complain about index
 c                        11.06.13 added calculation of integrated electron and ion heat sources due to atomic processes for B2-ASTRA coupling
 c
-c    Versions 02.00x.0xx  Reserved for SOLPS6.0
+c    Versions 02.00x.0xx          Reserved for SOLPS6.0
 c
 c    Version 03.000.000  09.02.15 Inaugural SOLPS-ITER version
 c                                 Added smcf centrifugal force array to b2fplasma
@@ -277,4 +328,5 @@ c    Version 03.000.007  01.07.19 Added fix_recomb and zmax_recomb to b2frates
 c                                 Replaced redef_pbs by redef_gmtry in b2fgmtry
 c                                 Added wbbl to b2fgmtry
 c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma
+c    Version 03.000.008  14.04.21 Reduced size of batch averaged sources to only include total values
 c

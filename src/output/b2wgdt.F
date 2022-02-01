@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -77,7 +78,7 @@
       real (kind=R8) ::
      *   scal10, samax
       logical strmas
-      external subini, subend, xertst, scal10, samax, strmas
+      external xertst, scal10, samax, strmas
       external b2wgxp
 
 *-----------------------------------------------------------------------

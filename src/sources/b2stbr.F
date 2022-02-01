@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
+      subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs,
      &  na, ua, te, ti, po, ne, ni,
@@ -19,6 +19,8 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
@@ -30,11 +32,14 @@
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_eirene
+     ,  , only : eirene_mc
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          ext_sna
-      use eirmod_extrab25
+     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
+      use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -50,7 +55,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
@@ -93,7 +98,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k               !iyv 07.03.18
+      integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
@@ -146,8 +151,6 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
       logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
@@ -162,13 +165,10 @@
       character*256, save :: filename
 #endif
 *   ..procedures
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
+      external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic abs, mod
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+      intrinsic mod
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -407,8 +407,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -469,9 +469,22 @@ c   --> better solution wanted here..
           if(is_neutral(is).and.lnext(is,is+1)) then
             do iy=-1,ny
               do ix=-1,nx
-                f_redep(ix,iy,is) = 1.0_R8 /
-     1           ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
-     2           (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                if (redep_alpha.gt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb R. Dux et al., Nucl. Fusion 51 (2011) 053002
+                  f_redep(ix,iy,is) = 1.0_R8 /
+     1             ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                else if (redep_alpha.lt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb D. Tskhakaya et al., JNM 463 (2015) 624
+cxpb Recommended value is abs(redep_alpha) = 0.01
+cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
+                  f_redep(ix,iy,is) = 1.0_R8 / ( 1.0_R8 +
+     1              abs(redep_alpha)*(ti(ix,iy)/te(ix,iy))*
+     2             (qe*bb(ix,iy,3)/(am(ismain)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy))) )
+                end if
               enddo
             enddo
             if(main_call.and.output.ge.1) then
@@ -494,7 +507,7 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+        call b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -523,9 +536,9 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
+        call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
+     &   hx, gs,
+     &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
@@ -681,7 +694,7 @@ c   --> better solution wanted here..
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, dtim, BoRiS,                     !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
@@ -860,6 +873,7 @@ cwdk i.e. fully replaced by the averaged values from b2faveri
 cwdk get the averaged sources
           call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
      &                            she0_eir_tot, shi0_eir_tot,
+     &                            sch0_eir_tot, sne0_eir_tot,
      &                            nx, ny, ns)
 
 cwdk note: only total Eirene source are averaged!
@@ -1014,7 +1028,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           enddo
           if (.not.over_erosion) then
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)
+     1       dteff*plate_time_factor(ibnd)
             do itrack = 1, ntargsp
               if (.not.equilibrium(itrack)) then
                 if (sput_frac_flag.ne.0)
@@ -1038,7 +1052,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             enddo
           else
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)*t_frac
+     1       dteff*plate_time_factor(ibnd)*t_frac
             do itrack = 1, ntargsp
               particle_inventory(ibnd,itrack)= max( 0.0_R8,
      .         particle_inventory(ibnd,itrack)+t_frac*
@@ -1285,6 +1299,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 *.end b2stbr
 
       subroutine b2stbr_neutr_scl(nx, ny, ns)
+#ifdef B25_EIRENE
+      use b2mod_eirene
+     , , only : neutr_scl
+#endif
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns
       integer ncall, use_eirene, ank_mods
@@ -1324,6 +1343,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -1352,7 +1372,7 @@ c        write(*,*) 'Called neutr_scl'
       character*256 filename
 *   ..procedures
       intrinsic mod
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr
+      external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,
      *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/
@@ -1530,4 +1550,3 @@ c        write(*,*) 'Called neutr_scl'
 *.end b2stbr_init
 
       end subroutine b2stbr_init
-

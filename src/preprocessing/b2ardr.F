@@ -6,6 +6,8 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_ipmain
+      use b2mod_subsys
 #ifdef IMAS
 #ifdef AMNS
       use amns_types       ! IGNORE
@@ -133,7 +135,7 @@
       integer, save :: ismain0 = 0
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
       character*32 ADAS_git_version
-      character line*500
+      character line*500, ligne*500
       real (kind=R8) ::
      *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef, am0, am1
       real (kind=R8), allocatable ::
@@ -166,10 +168,10 @@
       intrinsic log, exp
       logical streql, is_comment
       character*32 get_ADAS_hash
-      external subini, subend, xertst, xerrab, streql, cfwuch
+      external xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
-      external cfverr, cfruin, is_comment, get_ADAS_hash
+      external cfruin, is_comment, get_ADAS_hash
 *   ..initialisation
       data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/
 *-----------------------------------------------------------------------
@@ -299,7 +301,7 @@
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *
 *     npart - (0:nnucm-1) integer array.
-*     Specifies the number of partitions of the homonuclear sequence.
+*     Specifies the number of partitions of the isonuclear sequence.
 *
 *     izlo, izhi - (0:nnucm-1) integer array.
 *     For inuc in (0:nnuc-1), (izlo(inuc):izhi(inuc)) specifies the
@@ -375,9 +377,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         end if
        endif
        goto 1
     2 continue

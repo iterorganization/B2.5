@@ -3,7 +3,9 @@
 
       subroutine b2spcx (nx, ny, ns, ev, amh0, th0, ne, rlcx0)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
+      use b2mod_subsys
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -57,14 +59,9 @@
       real (kind=R8) ::
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
 *   ..procedures
-      intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
-      external subini, subend, xertst
+      intrinsic log
+      external xertst
       external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 *   ..initialisation
       data ncall/0/
 
