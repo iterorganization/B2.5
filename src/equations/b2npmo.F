@@ -401,7 +401,7 @@ c     ..compare matrices
          call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
-     &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(1,is),
+     &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(:,is),
      &     dv%pcca(:,:,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch

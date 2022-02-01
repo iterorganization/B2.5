@@ -125,6 +125,10 @@ c        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 0
       alpha = switch%b2tfnb_alpha
       gamma = switch%b2tfnb_gamma
 
+*   ..set dummy array
+      zeros = 0.0_R8
+      zeros1 = 0.0_R8
+
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
@@ -253,7 +257,6 @@ cwdk                   (original code: simple averaging)
 *     ..linearization coefficients for P.Sch flows
         cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk2
         cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk2
-        zeros = 0.0_R8
         call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
           dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
@@ -512,6 +515,7 @@ c csc To be added contribution of ubdia
      &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 0.25_R8*
      &     flob0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
       enddo
+
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
       zeros = 0.0_R8
@@ -521,6 +525,7 @@ c csc To be added contribution of ubdia
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
       dv%conb(:,1,1) = conb0(:,1)*kmprtif                           !wdk is this needed? correct? probably always zero?
       dv%conb(:,:,2) = dv%conb(:,:,1)
+
 *   ..flux limit
       if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.          !srv 20.11.08
      *     switch%b2tlc0_alpha.eq.0.0_R8 ) then                                   ! neutral flux limit

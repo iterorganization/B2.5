@@ -83,7 +83,7 @@
      &                  shetmp(nCv,0:3),
      &                  shitmp(nCv,0:3),
      &                  fluid_frac_hyb(nFc),
-     &                  kin_frac_hyb(nFc)
+     &                  kin_frac_hyb(nFc), fnn_inc(nFc,ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -383,7 +383,8 @@ c   --> better solution wanted here..
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  switch%b2stbr_temperature_at_guard_cell, 
      4  switch%b2stbr_potential_at_guard_cell,
-     5  switch%recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb)
+     5  switch%recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb,
+     &  fnn_inc)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
@@ -569,7 +570,7 @@ c   --> better solution wanted here..
         call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call, switch, geo, mpg, pl, dv, rt,
-     &                 kin_frac_hyb)
+     &                 kin_frac_hyb,fnn_inc)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1

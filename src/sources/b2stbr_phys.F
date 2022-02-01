@@ -13,7 +13,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb)
+     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb, fnn_inc)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -54,7 +54,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
       real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc), 
-     &                                  kin_frac_hyb(nFc)
+     &            kin_frac_hyb(nFc), fnn_inc(nFc,0:ns-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -260,13 +260,12 @@ c     initialize debugging/analysis arrays
         fenerefl_out = 0.0_R8
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
+        fna_mol      = 0.0_R8  !nh 30.03.21
 
         dnn = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals
-
-
 
       do istra = 1, nstrat
 #ifdef WG_TODO
@@ -566,10 +565,9 @@ c dnndz           the gradient of the main neutral species density across the bo
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 c new variables for advanced fluid neutral reflection/recycling model
-      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,
-     &     fmomrefl, 
-     &     fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,nnrec,
-     &     nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
+      real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,fnnrefl,fnnrec,
+     &     fmomrefl,fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,
+     &     nnrec,nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa
 
 
@@ -898,9 +896,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
 
            if (is.ne.is0) then !! ion species, recycling
 
-cmb   particle recycling
-             snan = b2recyc(is,istra)*fluid_frac_hyb(iFc)*t0  !! conservation of particles: t0 = incident ion flux
-             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
 
 cmb   net momentum sources from neutral particle recombination
 c            Calculate recycled neutral particle flux (assuming thin boundary cells)
@@ -908,18 +903,21 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
    
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
-     &              pl,tif,tef,pof,
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
+     &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,  
      &              cosa, sina, switch%use_uy_uz_0,     
-     &              fmomrec,nnrec,nnwwnrec,fenerec)
+     &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
              else
+                fnnrec = 0.0_R8
                 fmomrec = 0.0_R8
                 nnrec = 0.0_R8
                 nnwwnrec = 0.0_R8
                 fenerec = 0.0_R8
              endif
-
+             
+             snan = fnnrec*neutral_sources_rescale
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + snan
              smon = fmomrec*geo%cvhz(iCv)*neutral_sources_rescale         
              srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + smon
 
@@ -975,23 +973,25 @@ c          while B2.5 uses internal energy equations.
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1,
+     &              switch%diffusion_bc_safeguard, 
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.1) then
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
      &              istra,farea,pl,tnf,geo,cosa,sina,
      &              fnni,fmomni,nni,nnwwni,feneni)
              elseif (maxw(istra).eq.2) then
-               call CalcIncidentFluxesMfp(switch%mfp_b1,
-     &              switch%mfp_b2,
+               call CalcIncidentFluxesKn(switch%Kn_b1,
+     &              switch%Kn_b2,
      &              iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              switch%use_uy_uz_0,switch%use_uy_uz_1, 
+     &              switch%use_uy_uz_0,switch%use_uy_uz_1,
+     &              switch%L_macro_AFN,
      &              fnni,fmomni,nni,nnwwni,feneni)
              else
-               call CalcIncidentFluxesMinMfp(iCv,iCn,iFc,isign,
+               call CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
      &              is0,is2,isi,istra,
      &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
@@ -999,10 +999,13 @@ c          while B2.5 uses internal energy equations.
      &              fnni,fmomni,nni,nnwwni,feneni)
 
              endif
+             
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
+     &         fnni*neutral_sources_rescale
 
-             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+ 
-     &             (b2recyc(is,istra)*fluid_frac_hyb(iFc)-1)*
-     &             fnni*neutral_sources_rescale
+
+!! save the incident fluid neutral flux
+             fnn_inc(iFc,is0) = fnni*isign
 
 
 cmb   net momentum sources from neutral particle reflection
@@ -1010,47 +1013,59 @@ cmb   net momentum sources from neutral particle reflection
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),fluid_frac_hyb(iFc),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
+     &              fluid_frac_hyb(iFc),
      &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              switch%diffusion_bc_safeguard,
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,b2recyc(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tnf,
+     &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                elseif (maxw(istra).eq.2) then
-                 call CalcReflectedFluxesMfp(switch%mfp_b1,
-     &              switch%mfp_b2,
+                 call CalcReflectedFluxesKn(switch%Kn_b1,
+     &              switch%Kn_b2,
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
+     &              fene_el)
                else
-                 call CalcReflectedFluxesMinMfp(iCv,iCn,mpg%nCi,
+                 call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),
+     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0,
-     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
-             fmomrefl = 0.0_R8
-             nnrefl = 0.0_R8
-             nnwwnrefl = 0.0_R8
-             fenerefl = 0.0_R8
-             fene_el = 0.0_R8
+               fnnrefl = 0.0_R8
+               fmomrefl = 0.0_R8
+               nnrefl = 0.0_R8
+               nnwwnrefl = 0.0_R8
+               fenerefl = 0.0_R8
+               fene_el = 0.0_R8
              endif
+             
+cnh  adding the reflected particle source (with the molecular part subtracted)
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) + 
+     1         fnnrefl*neutral_sources_rescale
+             snan = fnnrefl
+
 
              if (switch%AFN_out.ne.0) then
                fmomni_out(iCv)   = fmomni
