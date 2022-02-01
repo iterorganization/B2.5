@@ -1,11 +1,11 @@
-      subroutine get_jsep(nx,ny,jxi,jxa,jsep,geom_match_dist)
+      subroutine get_jsep(nx,ny,jxi,jxa,jsep)
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
       implicit none
       integer nx,ny,jxi,jxa,jsep
       integer ix,iy
-      real (kind=R8) ::
+      real (kind=R8), save ::
      * geom_match_dist
       intrinsic min
       external subini, xerrab, xertst, ipgeti, subend
@@ -16,6 +16,7 @@
      1 sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
      2      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
       logical match
+      data geom_match_dist/1.0e-6_R8/
       match(ix1,iy1,ix2,iy2)=
      1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
      2 geom_match_dist

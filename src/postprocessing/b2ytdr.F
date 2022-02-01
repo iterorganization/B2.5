@@ -257,6 +257,7 @@ c 2002-09-11: logic revised
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
+      real (kind=R8), save :: geom_match_dist
       integer ns1, nsm, nxm, nym, natmm, nmolm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
@@ -548,6 +549,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/
+      data geom_match_dist/1.0e-6_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -718,7 +720,7 @@ c 2002-09-11: logic revised
       nncut1 = nncut
       nnreg1 = nnreg
       periodic_bc1 = periodic_bc
-      call b2yt_jsep (nx1, ny1, jxi1, jxa1, jsep1)
+      call b2yt_jsep (nx1, ny1, jxi1, jxa1, jsep1, geom_match_dist)
       call b2yt_nxt (nx1, nxtl1, nxtr1)
 *   ..read and echo code internal parameters from b2yt.dat
       write (nout(0),'(/2x,a)')
