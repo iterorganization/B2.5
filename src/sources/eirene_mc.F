@@ -1,6 +1,6 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
      1 BoRiS, sna0, smo0, she0, shi0, main_call, switch, geo, mpg, 
-     & pl, dv, rt, kin_frac_hyb)
+     & pl, dv, rt, kin_frac_hyb, fnn_inc)
 
 c  version : 26.07.2002 23:39
 
@@ -35,6 +35,8 @@ c  version : 26.07.2002 23:39
      &         eirene_mc_eppl_shi0to3,
      &         alloc_b2mod_eirene_sources,
      &         balance_netcdf
+      use b2mod_recycle !nh Feb2020
+     & ,only : fna_mol 
 #ifdef B25_EIRENE
       use b2mod_work
       use eirmod_parmmod
@@ -42,6 +44,10 @@ c  version : 26.07.2002 23:39
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+      use eirmod_comsou
+     &   , only : NPTS
+      use eirmod_comusr
+     &   , only : ALLOC
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -78,7 +84,8 @@ csw 19oct2012, added save attribute!!!
      * ndes, private_flux_puff, nesepm_sol,
      * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
 #endif
-     * recyctmp, kin_frac_hyb(nFc)
+     * recyctmp, kin_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
+     * fnn_inc(nFc,0:ns-1) !! incident fluid neutral flux
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
      1 SSEISTAB(:),
@@ -137,13 +144,13 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
      1 hlp_scl(:),hlp_scp(:,:),
-     2 hlp_stra(:), core_flux(:)
+     2 hlp_stra(:), core_flux(:), tflux0(:)
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
       logical, allocatable, save ::  hlp_pff(:,:)
       integer i,j,k,l,js,ls,kks,n,itmp,icount,ind
       integer, save :: l_ddt
-      integer, save, allocatable :: ispc_ref(:), ishigh(:)
+      integer, save, allocatable::ispc_ref(:), ishigh(:), NPTS_input(:)
       character*13, save, allocatable :: ion_name(:)
       character*3 :: chistrai
       character*3 :: chncall
@@ -281,6 +288,8 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(2,2+NATM))
+        allocate(NPTS_input(NSTRAI))
+        allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
           call alloc_b2mod_eirene_sources(nCv,nFc,ns,nstrat)
         endif
@@ -432,7 +441,7 @@ csw 26feb2013
 
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nCv,nFc,ns,switch,mpg,geo,pl,dv,BoRiS,
-     &                       kin_frac_hyb)
+     &                       kin_frac_hyb,fnn_inc)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -558,16 +567,26 @@ c*** recyc     : fudge factors for the sources in B2
         end if
       end do
 #endif
+#ifdef B25_EIRENE
+c for generalized spatially hybrid
+c adapt NPTS (number of MC histories) if a stratum is treated partially fluid and partially kinetic
+c first save the original NPTS provided by the Eirene input files.
+      if (ncall.eq.1) then!! npts not allocated yet on ncall = 0...
+        NPTS_input(:) = NPTS(:)
+      endif
+#endif
 
       tfl=0.0_R8
-      tflux=0.0_R8
+      tflux=0.0_R8            !! the actual flux passed to EIRENE
+      tflux0 = 0.0_R8         !! a local variable which is only relevant in case kin_frac_hyb < 1 (generalized spatially hybrid model). 
+                              !! tflux0 is the flux we would have had if kin_frac_hyb = 1 for every face of that stratum (standard Eirene approach)
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
         flux_scale(istrai)=1.0_R8
 
         if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
-            if(.not.is_neutral(is).or.lneustra) then !{    
+            if(.not.is_neutral(is).and.(mol(istrai).ne.1)) then !{    !! plasma species
               do i=1,mpg%rcFcP(istrai,2) !{
                 ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
@@ -576,13 +595,58 @@ c*** recyc     : fudge factors for the sources in B2
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
      &              kin_frac_hyb(ifc)
+                tflux0(istrai)=tflux0(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is)))*
      &              kin_frac_hyb(ifc)
               end do !}
-            end if !}
+            elseif(is_neutral(is).and.lneustra.and.(mol(istrai).ne.1)) 
+     &        then !{   !! fluid neutral species only if they are needed for hybrid fluid/kinetic models. In a standard Eirene run they are not used.
+              do i=1,mpg%rcFcP(istrai,2) !{
+                ind = mpg%rcFcP(istrai,1) + i - 1
+                ifc = mpg%rcFc(ind)
+                tflux(istrai)=tflux(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             fnn_inc(iFc,is))*
+     &              kin_frac_hyb(ifc)
+                tflux0(istrai)=tflux0(istrai)+
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             fnn_inc(iFc,is))
+                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
+     &            max(0.0_R8,mpg%rcFcOr(ind)*
+     &             fnn_inc(iFc,is))*
+     &              kin_frac_hyb(ifc)
+              end do !}
+            elseif (lneustra.and.(mol(istrai).eq.1)) then  !nh 31.03.21 stratum of molecules
+              do i=1,mpg%rcFcP(istrai,2) !{
+                ind = mpg%rcFcP(istrai,1) + i - 1
+                ifc = mpg%rcFc(ind)
+                tflux(istrai)=tflux(istrai) + 2.0_R8*fna_mol(ifc,is)
+                tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is)) + 
+     &            2.0_R8*fna_mol(ifc,is)
+              end do !}
+              flux_scale = 0.5_R8 ! Molecules consist of two atoms 
+            endif
           end do   
+
+#ifdef B25_EIRENE
+!! If a stratum is treated partially kinetic and partially fluid, adapt the number of EIRENE particles (NPTS).
+!! Do not adapt the number of particles if ALLOC =/= 0. If ALLOC =/= 0, NPTS is recomputed every timestep and 
+!! this procedure would not work.
+          if (istrai.le.nstrai.and.ncall.gt.0.and.
+     &     switch%use_auto_spatial_hyb.and.HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
+            if (ALLOC.eq.0.0_R8) then
+            NPTS(istrai) = 
+     &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai))
+            else
+              write(*,*) "WARNING: combination of generalized spatially"
+              write(*,*) "hybrid and ALLOC =/=0 not yet implemented"
+            endif
+          endif
+#endif
 
         else if(crcstra(istrai).eq.'C') then !}{
 #ifdef WG_RM
@@ -744,7 +808,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg, 
      &                          geo, pl, dv, BoRiS,
-     &                          kin_frac_hyb)
+     &                          kin_frac_hyb,fnn_inc)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -3291,6 +3355,8 @@ cxpb  core recycling into ions of the highest ionisation stage
         enddo
       else if (switch%ionising_core.lt.0) then
         ib=abs(switch%ionising_core)
+        call xertst (ib.le.nbc,
+     1   'faulty input ionising_core, abs(ionising_core) > NBC')
         do j = 1, nnatmi
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
@@ -3356,7 +3422,7 @@ C           call xerrab ('eirene_mc: bccon <> 13')
       end if
       call copy_background(nCv, nFc, ns, switch, 
      &                     mpg, geo, pl, dv, BoRiS,
-     &                     kin_frac_hyb)
+     &                     kin_frac_hyb,fnn_inc)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011

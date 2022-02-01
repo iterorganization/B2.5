@@ -65,7 +65,8 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), B2RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), 
+     *   RECYC(:,:), B2RECYC(:,:), RECYCM(:,:), ERECYC(:,:), 
+     *   MRECYC(:,:), RCION(:,:), 
      *   recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
@@ -99,6 +100,7 @@ cank }
      *   accel_ion(:),
      *   maxw(:),                                 !nh 11.07.18
      *   maxw_eff(:),
+     *   mol(:)                                   !nh 31.03.21
       real (kind=R8), allocatable, save ::
      *   RCFE(:), RCFI(:), e_fc
       logical, allocatable, save ::
@@ -112,6 +114,7 @@ cank }
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: RECYCM(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
@@ -154,6 +157,7 @@ cank }
       integer, save :: accel_ion(NSTRAID)
       integer, save :: maxw(NSTRAID)
       integer, save :: maxw_eff(NSTRAID)
+      integer, save :: mol(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
@@ -198,8 +202,8 @@ cank }
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      .  rcfe, rcfi,
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
-     4  recyc, b2recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, 
-     .  crcstra,
+     4  recyc, b2recyc, recycm, erecyc, mrecyc, rcion, recyceir, 
+     .  userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput, surf_mat, hyb_type,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
@@ -208,7 +212,7 @@ cank }
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end, b2species_start, b2species_end,
-     .  maxw, maxw_eff,
+     .  maxw, maxw_eff, mol,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
      ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
@@ -258,6 +262,7 @@ csw 21feb2012
       NATMID=natm_in
       allocate(RECYC(0:nsd-1,NSTRAID))
       allocate(B2RECYC(0:nsd-1,NSTRAID))
+      allocate(RECYCM(0:nsd-1,NSTRAID))
       allocate(ERECYC(0:nsd-1,NSTRAID))
       allocate(MRECYC(0:nsd-1,NSTRAID))
       allocate(RCION(0:nsd-1,NSTRAID))
@@ -295,6 +300,7 @@ csw 21feb2012
       allocate(b2species_end(NSTRAID))
       allocate(maxw(NSTRAID))
       allocate(maxw_eff(NSTRAID))
+      allocate(mol(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
       allocate(eb2atcr(natm_in))
@@ -370,6 +376,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       RECYC=0.0_R8
 cmb   b2recyc is set negative here to check whether the field was read. If not recyc is copied into b2recyc
       B2RECYC = -1.0_R8
+      RECYCM=0.0_R8
       ERECYC=0.0_R8
       MRECYC=0.0_R8
       do is = 1, nsd-1
@@ -408,6 +415,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       b2species_end(:)=-100
       maxw(:) = 1
       maxw_eff(:) = 1
+      mol(:) = 0
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -495,6 +503,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       if (.not.allocated(recyc)) return
       deallocate(RECYC)
       deallocate(B2RECYC)
+      deallocate(RECYCM)
       deallocate(ERECYC)
       deallocate(MRECYC)
       deallocate(RCION)
@@ -532,6 +541,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(b2species_end)
       deallocate(maxw)
       deallocate(maxw_eff)
+      deallocate(mol)
       deallocate(b2eatcr)
       deallocate(b2espcr)
       deallocate(eb2atcr)
@@ -820,8 +830,11 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
         call xertst (4.gt.maxw(istra), 'faulty input maxw')
+        call xertst (0.le.mol(istra).and.mol(istra).le.1, 
+     &   'faulty input mol')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
+          call xertst(0.0_R8.le.mrecyc(is,istra), 'faulty input mrecyc')
           call xertst (0.0_R8.le.erecyc(is,istra),
      .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
@@ -1479,6 +1492,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      .   'faulty inputs species_start > species_end')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
+          call xertst (0.0_R8.le.mrecyc(is,istra), 
+     .     'faulty input mrecyc')
           call xertst (0.0_R8.le.erecyc(is,istra),
      .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
@@ -2184,7 +2199,12 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
      .    'b2recyc(0,',istra,')= ',(b2recyc(is,istra),',',is=0,ns-1)
       end do
-
+      
+      do istra = 1, m%nRc
+        write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
+     .    'mrecyc(0,',istra,')= ',(mrecyc(is,istra),',',is=0,ns-1)
+      end do
+      
       do istra = 1, m%nRc
         write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
      .    'erecyc(0,',istra,')= ',(erecyc(is,istra),',',is=0,ns-1)
@@ -2211,6 +2231,9 @@ cwdk also need to correct for degenerate faces?
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
      .   'maxw= ',(maxw(is),',',is =1,nstrai)
+     
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+     .   'mol= ',(mol(is),',',is =1,nstrai)
 
       write (iout,'(1x,a,(1x,T12,10(i5,a1,1x)))') 
      .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)

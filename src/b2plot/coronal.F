@@ -31,7 +31,7 @@ c     -------------------------------------------------------------------------
       integer is,ite,ine
       logical ltst0
       external subini, subend, expu, trimg
-      intrinsic log, exp, max, min
+      intrinsic log, max, min
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
 
