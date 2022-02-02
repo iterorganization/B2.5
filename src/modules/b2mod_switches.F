@@ -627,8 +627,6 @@ c Advanced fluid neutral models
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
       s % L_macro_AFN = 0.10_R8
-      s % neutral_sources_rescale = 1.0_R8
-
 
       s % iout_b2wdat = 0
       s % b2sian_iout = 0
@@ -1124,8 +1122,6 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_1', s % auto_spatial_hyb_Kn_1)
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
-      call ipgetr ('b2mndr_rescale_neutrals_sources',
-     &                s % neutral_sources_rescale)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)                    

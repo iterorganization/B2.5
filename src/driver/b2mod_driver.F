@@ -1856,7 +1856,8 @@ c new CDF movie option (1st frame at t=0)
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(switches), intent (inout)      :: switch
-      real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc)
+      real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
+     * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
       integer i, is, js, icf
       character*256 filename, fort31name
@@ -2133,7 +2134,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo, 
      .                         state%pl, state%dv,switch%BoRiS,
-     .                         kin_frac_hyb) ! FIXME progapage somehow kint_frac_hyb
+     .                         kin_frac_hyb, fnn_inc) ! FIXME progapage somehow kint_frac_hyb
           call write_f31(mpg)
           close(31)
         end if
