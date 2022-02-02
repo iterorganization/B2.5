@@ -977,7 +977,7 @@ c     once all thermal particles are pumped.
 cnh 22.02.2020
 c     Calculate the part of the reflected flux emitted as molecules. At the moment,
 c     the molecules are treated kinetically.
-      if (fnni<0.0_R8) then
+      if (fnni.ge.0.0_R8) then
         fna_mol_refl = recycm*pt*fnni_nodrifts*area*0.5_R8
         fna_mol(iFc,isn) = fna_mol(iFc,isn) + fna_mol_refl
         
