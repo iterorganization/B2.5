@@ -26,12 +26,17 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid
+     & , only : maxw_eff, nstraid, userfluxparm
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
-     &          int5r, int5l, int1r, int1l, int4r, int4l
+     &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
       use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar
+     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
+     &          lfeedback
+      use b2us_feedback
+     & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     &          feedback_namelist_used
 #ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp

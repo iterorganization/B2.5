@@ -14,6 +14,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2sifrtf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -59,7 +63,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, iCv, is, k
+      integer iCv, is, k
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
       character chns*3, chk*1, chis*3
       real (kind=R8) ::
@@ -78,8 +82,6 @@
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialization
-      save ncall
-      data ncall/0/
       roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
 *-----------------------------------------------------------------------
 *.computation
@@ -88,7 +90,7 @@
 *   ..subprogram start-up calls
       call subini ('b2sifrtf')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2sifrtf.eq.0) then
        call xertst (0.le.switch%b2sifr_styl0.and.
      &              switch%b2sifr_styl0.le.2,
      &  'faulty internal parameter styl0')
@@ -104,7 +106,7 @@
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test sign of na, ni, ti, ne, ne2
@@ -269,7 +271,7 @@ c      .. apply flux limit
 
 
 * ..return
-      ncall = ncall+1
+      ncall_b2sifrtf = ncall_b2sifrtf+1
       call subend ()
       return
 

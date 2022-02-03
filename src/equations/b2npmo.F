@@ -26,11 +26,11 @@
       use b2mod_ad
      & , only : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
-     &          ncall_b2nxdu,
+     &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          my_out_folder, ncall_b2tlnl
+     &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, itcnt                          !srv 13.01.17

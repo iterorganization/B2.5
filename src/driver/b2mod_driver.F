@@ -17,7 +17,10 @@
 !WG_RM      use b2mod_work
       use b2mod_elements
       use b2us_feedback
-     & , only : write_b2us_feedback, init_feedback, dealloc_feedback
+     & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
+     &          fb_target, fb_prev, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     &          feedback_namelist_used
       use b2mod_sputter
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
@@ -1840,7 +1843,7 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold, 
-     &          told
+     &          told, fna_mol
       use b2mod_ad
       implicit none
 #ifdef JET

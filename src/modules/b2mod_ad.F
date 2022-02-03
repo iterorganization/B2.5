@@ -72,6 +72,7 @@
      & ncall_b2tqce = 0, ncall_b2tqin = 0, ncall_b2tqna = 0,
      & ncall_b2tral = 0, ncall_transp_keps = 0, ncall_b2trcl = 0,
      & ncall_b2treq = 0, ncall_b2trno = 0, ncall_b2trql = 0,
+     & ncall_b2ttia = 0,
 ! ncall variables from sources routines
      & ncall_b2siav = 0, ncall_b2sigp = 0, ncall_b2sihs_ = 0,
      & ncall_b2sikt = 0, ncall_b2spcx = 0, ncall_b2spel = 0,
@@ -79,7 +80,7 @@
      & ncall_b2srdt = 0, ncall_b2srsm = 0, ncall_b2srst = 0,
      & ncall_b2stbc = 0, ncall_b2stbc_phys = 0, ncall_b2stbr = 0,
      & ncall_b2stbr_phys = 0, ncall_b2stcx = 0, ncall_b2stel = 0,
-     & ncall_b2sicf,
+     & ncall_b2sicf = 0, ncall_b2sifr = 0, ncall_b2sifrtf = 0,
 ! ncall variables from equation routines
      & ncall_b2npco = 0, ncall_b2news_ = 0, ncall_b2npht = 0,
      & ncall_b2npmo = 0, ncall_b2nppo = 0, ncall_b2nxdp = 0,

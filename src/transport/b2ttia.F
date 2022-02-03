@@ -5,6 +5,10 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2ttia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -39,17 +43,15 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) ::
      *   fki, eta, ctaup, t0, t1
       parameter (fki=2.253e0_R8, eta=1.357e0_R8)
-      save ncall
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, sfill
       external b2xvsg
 *   ..initialization
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -74,7 +76,7 @@
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2ttia.lt.3) then
 *    ..test state
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, ne2, 1, 'ne2', '.gt.')
@@ -105,7 +107,7 @@
       enddo
 
 * ..return
-      ncall = ncall+1
+      ncall_b2ttia = ncall_b2ttia+1
       call subend ()
       return
 

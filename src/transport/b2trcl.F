@@ -26,7 +26,7 @@
 #endif
      &          ncall_b2trcl, ncall_b2tlnl,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
-     &          b2trcl_cutlo
+     &          b2trcl_cutlo, ncall_b2ttia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
