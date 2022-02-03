@@ -21,7 +21,7 @@
       type (B2Derivatives_diffv), intent (in) :: dv
       real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
-      type (B2Diagnostic), intent (inout) :: diag
+      type (B2Diagnostic_diffv), intent (inout) :: diag
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -82,15 +82,15 @@
         t0 = t0+abs(dv%resco(1,iCv,is))
         t1 = t1+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%aresco(is) = abs(t0/navi)
-       diag%aresmo(is) = abs(t1/movi)
+       diag%aresco(1,is) = abs(t0/navi)
+       diag%aresmo(1,is) = abs(t1/movi)
       enddo
 *   ..compute aresmt
       t0 = 0.0_R8
       do iCv = 1, mpg%nCi
        t0 = t0+abs(dv%resmt(1,iCv))
       enddo
-      diag%aresmt = abs(t0/mtvi)
+      diag%aresmt(1) = abs(t0/mtvi)
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8

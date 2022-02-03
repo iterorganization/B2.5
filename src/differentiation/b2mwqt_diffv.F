@@ -17,7 +17,7 @@
       type (geometry), intent (in) :: geo
       type (B2Plasma_diffv), intent (in) :: pl
       type (B2Derivatives_diffv), intent (in) :: dv
-      type (B2Diagnostic), intent (in) :: diag
+      type (B2Diagnostic_diffv), intent (in) :: diag
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -79,45 +79,45 @@
        k = k+1
 *    ..norms of residuals
        do is = 0, ns-1
-        z(k) = diag%aresco(is)
+        z(k) = diag%aresco(1,is)
         k = k+1
        enddo
        do is = 0, ns-1
-        z(k) = diag%aresmo(is)
+        z(k) = diag%aresmo(1,is)
         k = k+1
        enddo
-       z(k) = diag%aresmt
+       z(k) = diag%aresmt(1)
        k = k+1
-       z(k) = diag%areshe
+       z(k) = diag%areshe(1)
        k = k+1
-       z(k) = diag%areshi
+       z(k) = diag%areshi(1)
        k = k+1
-       z(k) = diag%areshn
+       z(k) = diag%areshn(1)
        k = k+1
-       z(k) = diag%arespo
+       z(k) = diag%arespo(1)
        k = k+1
-       z(k) = diag%areskt
+       z(k) = diag%areskt(1)
        k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
-        z(k) = diag%acorpa(is)
+        z(k) = diag%acorpa(1,is)
         k = k+1
        enddo
        do is = 0, ns-1
-        z(k) = diag%acorua(is)
+        z(k) = diag%acorua(1,is)
         k = k+1
        enddo
-       z(k) = diag%acorut
+       z(k) = diag%acorut(1)
        k = k+1
-       z(k) = diag%acorte/ev
+       z(k) = diag%acorte(1)/ev
        k = k+1
-       z(k) = diag%acorti/ev
+       z(k) = diag%acorti(1)/ev
        k = k+1
-       z(k) = diag%acortn/ev
+       z(k) = diag%acortn(1)/ev
        k = k+1
-       z(k) = diag%acorpo
+       z(k) = diag%acorpo(1)
        k = k+1
-       z(k) = diag%acorkt/ev
+       z(k) = diag%acorkt(1)/ev
        k = k+1
       endif
       if (2.le.switch%b2mwqt_style) then

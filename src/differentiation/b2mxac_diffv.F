@@ -9,7 +9,7 @@
       integer nCv, ns
       type (B2Derivatives_diffv), intent (in) :: dv
 *   ..output arguments (unspecified on entry)
-      type (B2Diagnostic), intent (inout) :: diag
+      type (B2Diagnostic_diffv), intent (inout) :: diag
 *-----------------------------------------------------------------------
 *.documentation
 * This is a modified version of b2mxac used in the B2.5 code differentiated
@@ -43,8 +43,8 @@
 * ..compute norms of the corrections
 *   ..compute acorpa, acorua
       do is = 0, ns-1
-       diag%acorpa(is) = samax(nCv,dv%corpa(1,1,is),1)
-       diag%acorua(is) = samax(nCv,dv%corua(1,1,is),1)
+       diag%acorpa(1,is) = samax(nCv,dv%corpa(1,1,is),1)
+       diag%acorua(1,is) = samax(nCv,dv%corua(1,1,is),1)
       enddo
 *   ..compute acorut, acorte, acorti, acorpo
       diag%acorut = samax(nCv,dv%corut,1)
