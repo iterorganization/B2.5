@@ -37,7 +37,7 @@
      &          parm_vsa, parm_alf, parm_sig
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
-     &          int5r, int5l, int1r, int1l, int4r, int4l
+     &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
       use b2mod_b2cmpt
      & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
      &          cfhce, cfhci
@@ -50,6 +50,10 @@
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
      &          rsamoreg
+      use b2us_feedback
+     & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     &          feedback_namelist_used
       use b2mod_ad
       implicit none
 *   ..input arguments (unchanged on exit)

@@ -51,7 +51,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
-     &          int5r, int5l, int1r, int1l, int4r, int4l
+     &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
       use b2mod_ad
      & , only : ntstep_b2wall, old_deposition, old_erosion,
      &          my_out_folder,

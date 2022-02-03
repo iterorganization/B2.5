@@ -6,7 +6,7 @@
      1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax,switch)
+     4 periodic_bc,nncut,nncutmax)
 
       use b2mod_types
       use b2mod_constants
@@ -17,12 +17,10 @@
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
-      use b2mod_switches
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
-      type (switches), intent (in) :: switch
 *   .. output arguments
       real (kind=R8) ::
      * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
@@ -128,6 +126,7 @@
       integer ireg,errors
       character*1 zone(-1:nx1)
       logical found, concave
+      real (kind=R8), save ::  geom_match_dist = 1.0e-6_R8
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
@@ -181,6 +180,9 @@ c     2 switch%geom_match_dist
       call ipgetr ('b2agfs_min_pitch', min_pitch)
       call xertst (min_pitch.ge.0.0_R8 .and. min_pitch.lt.90.0_R8,
      &  'faulty argument min_pitch')
+      call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
+      call xertst (geom_match_dist.gt.0.0_R8,
+     &  'faulty argument geom_match_dist')
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
@@ -230,7 +232,7 @@ c     2 switch%geom_match_dist
      & topix1,topiy1,bottomix1,bottomiy1, 
      & leftcut1,rightcut1,bottomcut1,topcut1, 
      & periodic_bc,nncut,nncutmax, inseltop, inselbot, 
-     & switch%geom_match_dist, istyle )
+     & geom_match_dist, istyle )
 
       call test_connectivity(nx1,ny1,crx1,cry1,cflag,
      & leftix1,leftiy1,rightix1,rightiy1, 

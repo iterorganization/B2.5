@@ -32,7 +32,8 @@
      &          b2news_solving, ncall_b2tral,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
      &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
-     &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl
+     &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl,
+     &          ncall_b2ttia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 

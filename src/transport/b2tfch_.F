@@ -15,7 +15,11 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfch, ncall_b2xehx, ncall_b2tcpa, ncall_b2tiner
+     & , only : my_out_folder, ncall_b2tfch, ncall_b2xehx, ncall_b2tcpa, 
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          ncall_b2tiner, ncall_b2ttia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
