@@ -18,7 +18,7 @@
      . nice_axes,bold
 
       character*256 extralabel,globalheader,device,wallbarlabel,
-     . targetbarlabel,color_file
+     . targetbarlabel,color_file,xlabel,ylabel
 
       common /graphics_vars/
      r xlo,xhi,ylo,yhi,xsize,ysize,xpos,ypos,wwidth,zwidth,
@@ -36,6 +36,6 @@
      . colprt,lalong,logx,logy,logz,want_aspect,lzero,label_same_lines,
      . target,color_map_loaded,nice_axes,bold,
      c extralabel,globalheader,device,wallbarlabel,targetbarlabel,
-     . color_file
+     . color_file,xlabel,ylabel
 
       save /graphics_vars/

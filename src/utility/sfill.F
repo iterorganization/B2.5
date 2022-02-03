@@ -1,6 +1,7 @@
       subroutine sfill (n, sa, sx, incx)
       use b2mod_types
       use b2mod_openmp
+      use b2mod_math
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -16,12 +17,10 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-      intrinsic max
 #ifndef NO_OPENMP_SFILL
       logical do_parallel
 #endif
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
+      external xerrab
 *     ------------------------------------------------------------------
 
       do_parallel =

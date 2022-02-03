@@ -12,7 +12,7 @@
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
      *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     *          cr, cz, natmi, nmoli, nioni, wklng,
+     *          natmi, nmoli, nioni, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
@@ -41,7 +41,8 @@
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
-      use eirmod_extrab25
+      use eirmod_infcop
+      use eirmod_wneutrals
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -50,23 +51,12 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_subsys
       implicit none
 
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
-      interface
-        integer function descr2(idtype,il1,il2,il3,iflag,ilen)
-        integer, intent(in) :: idtype
-        integer, intent(in) :: il1
-        integer, intent(in), optional :: il2
-        integer, intent(in), optional :: il3
-        integer, intent(in) :: iflag
-        integer, intent(in), optional :: ilen
-        end function descr2
-      end interface
-
-#     include "mdslib_b2.inc"
-      integer mdsput2
+#     include "mdslib.inc"
 #endif
       integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
       real (kind=R8) :: BoRiS
@@ -98,7 +88,7 @@ c
       integer i, icnt, nsw
       integer itmp(-1:nxd,-1:nyd)
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
      6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
@@ -130,7 +120,7 @@ c
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 c Function to check the correct parameters!
 c
@@ -190,7 +180,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
       call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
@@ -217,8 +207,6 @@ c
 #endif
 #endif
 #endif
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
 #ifdef MDSPLUS
       cr_x=0.0_R8
       cz_x=0.0_R8
@@ -250,13 +238,28 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .eq. 1) then
             imi=nint(am(is))
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(nint(am(is)).ne.nuclear_mass(il)) then
+              if(nint(am(is)).lt.10) then
+                write(textsp(iss),'(a1,i1,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else if (nint(am(is)).lt.100) then
+                write(textsp(iss),'(a1,i2,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else
+                write(textsp(iss),'(a1,i3,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -462,77 +465,141 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cr(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),cr,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cz(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),cz,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,iflag=0),cr_x,0)
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cr_x,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+1,ny+2,0),cr_x,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,iflag=0),cz_x,0)
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cz_x,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+1,ny+2,0),cz_x,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,iflag=0),cr_y,0)
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cr_y,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+1,0),cr_y,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,iflag=0),cz_y,0)
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cz_y,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+1,0),cz_y,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:R'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,iflag=0),crx,
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),crx,
      * 0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,4,0),crx,
+     * 0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:Z'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,iflag=0),cry,
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),cry,
      * 0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,4,0),cry,
+     * 0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      hy1(-1:nx,-1:ny)=hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny
@@ -558,23 +625,41 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'dspar :',(dspar(ix,jsep),ix=-1,nx)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSRAD'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dsrad,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dsrad,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),dsrad,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPOL'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dspol,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspol,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),dspol,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPAR'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,iflag=0),dspar,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspar,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),dspar,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
@@ -700,10 +785,17 @@ c
           tdi='build_with_units($,"m")'
           write(*,'(a,a,a,a)')
      1     'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
           status=mdsput2(
      *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
-     *     descr2(idtype_double,4,icnt,iflag=0),vesl,
+     *     descr2_i2(idtype_double,4,icnt,0),vesl,
      *     0)
+#else
+          status=mdsput2(
+     *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
+     *     descr2(idtype_double,4,icnt,0),vesl,
+     *     0)
+#endif
           call mds_err_msg(status)
           deallocate(vesl)
         else
@@ -768,7 +860,12 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
+      do iy=-1,ny
+       do ix=-1,nx
+        temp(ix,iy)=hy1(ix,iy)
+       end do
+      end do
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',
@@ -1127,9 +1224,15 @@ c
 
       tdi='build_with_units($,"K")'
       mds_signal_name='\TOP.SNAPSHOT:WALL_TEMP'
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nbnd,ndepth_nml,iflag=0),target_temp,0)
+     * descr2_i2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
+#endif
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
@@ -1392,7 +1495,9 @@ c
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra

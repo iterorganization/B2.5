@@ -78,11 +78,15 @@
      *  species_vapor_temp(ntrack),
      *  species_heat_sublim(ntrack)
 
+      logical, save :: layer_model
+      data layer_model /.false./
+
       contains
 
       subroutine alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       implicit none
       integer nx,ny,nncut,nlim,nsts
+      external xertst
 
 *   ..test arguments
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

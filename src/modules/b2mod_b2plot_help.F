@@ -4,8 +4,8 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=357,nfns=212,nsparameters=32,nelabels=36,
-     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
+      parameter(nlabels=357,nfns=212,nsparameters=34,nelabels=36,
+     *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels), edimensions(nelabels)
@@ -803,17 +803,17 @@
      5 'trgtemp' , 'trgwsel' , 'rtrgmmi' , 'rtrgmma' , 'trglt'   ,
      6 'trgle'   , 'trgeq'   , 'trgne'   , 'trggt'   , 'trgge'   ,
      7 'trglog'  , 'trgln'   , 'trgsqrt' , 'trgexp'  , 'trgchs'  ,
-     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgl'    ,
-     9 'trgsurf' , 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 
-     * 'kappapdt', 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 
-     1 'trgswap' , 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 
-     2 'trgr2'   , 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 
-     3 'trgwest' , 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 
-     4 'itrggt'  , 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   ,
-     5 'trgvol'  , 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  ,
-     6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
-     7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
-     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
+     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgsurf' ,
+     9 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 'kappapdt',
+     * 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 'trgswap' ,
+     1 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 'trgr2'   ,
+     2 'trgz1'   , 'trgz2'   , 'trgnorth', 'trgsouth', 'trgwest' ,
+     3 'trgeast' , 'trgseg'  , 'itrglt'  , 'itrgeq'  , 'itrggt'  ,
+     4 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   , 'trgvol'  ,
+     5 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  , 'ztrggt'  ,
+     6 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' , 'trglist' ,
+     7 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  , 'itrgge'  ,
+     8 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
       data elabels /
      1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
      2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
@@ -879,7 +879,7 @@
      4 'uedgegrd', 'expf' , 'outp', 'pdev'    , 'mprt',
      5 'mtab'    , 'amju' , 'adas', 'wallblbl', 'trgblbl',
      6 'glbl'    , 'wlbl' , 'tlbl', 'wslbl'   , 'tranprof',
-     7 'elbl'    , 'eslbl'/
+     7 'elbl'    , 'eslbl', 'xlab', 'ylab'/
       data constant_name /
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/

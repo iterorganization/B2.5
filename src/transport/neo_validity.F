@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,  !cjk
+      subroutine neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,  !cjk
      &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
@@ -15,11 +15,12 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
       real (kind=R8) ::
-     *   cr(-1:nx,-1:ny),safetyfactor(-1:ny)
+     *   safetyfactor(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),
@@ -88,8 +89,6 @@ c     conversion of constants to CGS units
 *   ..local variables
       integer n2, ix, iy, is, is2, ixref, iyref
       save ixref, iyref
-      real (kind=R8) ::
-     *   hy1(-1:nx,-1:ny)
       real (kind=R8) ::
      &   gradient, lnab, minlnlt, crmin, crmax
       real (kind=R8) ::
@@ -160,13 +159,6 @@ c     conversion of constants to CGS units
       deltab(:,:,:)=0._R8
       deltapar(:,:,:)=0._R8
       rmaj_(:)=0._R8
-
-*   ..calculate hy-projection
-      do ix=-1,nx
-        do iy=-1,ny
-          hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-        enddo
-      enddo
 
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
@@ -453,19 +445,19 @@ c     conversion of constants to CGS units
       end subroutine neo_validity
 
       subroutine chang_hinton(nx,ny,ns,jsep,jxa,safetyfactor,
-     1 cr,cz,crx,bb,ne,te,ti,na,transport)
+     1 ne,te,ti,na,transport)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_external
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns,jsep,jxa
       real (kind=R8) ::
-     1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)
@@ -477,7 +469,7 @@ c     conversion of constants to CGS units
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
       real (kind=R8) :: lnlam(-1:nx,-1:ny)
-      external subini, subend, xertst
+      external xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8

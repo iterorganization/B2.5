@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -74,15 +75,9 @@
       real (kind=R8) ::
      *   smin, smax, b2ssum
       logical strmas
-      real (kind=R8) ::
-     *   crxc, cryc
-      external subini, subend, xertst, smin, smax, b2ssum, strmas
+      external xertst, smin, smax, b2ssum, strmas
       external b2xvgm
       intrinsic max
-      crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+
-     &  crx(ix,iy,3))/4.0_R8
-      cryc(ix,iy) = (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+
-     &  cry(ix,iy,3))/4.0_R8
 
 *-----------------------------------------------------------------------
 *.computation
@@ -318,7 +313,7 @@ c---DPC problematic
        write (nprt,111)
        do ix = -1, nx
         write (nprt,'(2x,i4,1x,1p,2e11.3,2x,4e11.3,2(2x,2e11.3))')
-     &    ix, crxc(ix,-1), cryc(ix,-1), bb(ix,-1,0), bb(ix,-1,1),
+     &    ix, cr(ix,-1), cz(ix,-1), bb(ix,-1,0), bb(ix,-1,1),
      &    bb(ix,-1,2), bb(ix,-1,3), hx(ix,-1), gs(ix,0,1),
      &    qz(ix,-1,0), qz(ix,-1,1)
        enddo
@@ -330,7 +325,7 @@ c---DPC problematic
        write (nprt,112)
        do ix = -1, nx
         write (nprt,'(2x,i4,1x,1p,2e11.3,2x,4e11.3,2(2x,2e11.3))')
-     &    ix, crxc(ix,ny), cryc(ix,ny), bb(ix,ny,0), bb(ix,ny,1),
+     &    ix, cr(ix,ny), cz(ix,ny), bb(ix,ny,0), bb(ix,ny,1),
      &    bb(ix,ny,2), bb(ix,ny,3), hx(ix,ny), gs(ix,ny,1),
      &    qz(ix,ny,0), qz(ix,ny,1)
        enddo
@@ -342,7 +337,7 @@ c---DPC problematic
        write (nprt,113)
        do iy = -1, ny
         write (nprt,'(2x,i4,1x,1p,2e11.3,2x,4e11.3,2(2x,2e11.3))')
-     &    iy, crxc(-1,iy), cryc(-1,iy), bb(-1,iy,0), bb(-1,iy,1),
+     &    iy, cr(-1,iy), cz(-1,iy), bb(-1,iy,0), bb(-1,iy,1),
      &    bb(-1,iy,2), bb(-1,iy,3), hy(-1,iy), gs(0,iy,0),
      &    qz(-1,iy,0), qz(-1,iy,1)
        enddo
@@ -354,7 +349,7 @@ c---DPC problematic
        write (nprt,114)
        do iy = -1, ny
         write (nprt,'(2x,i4,1x,1p,2e11.3,2x,4e11.3,2(2x,2e11.3))')
-     &    iy, crxc(nx,iy), cryc(nx,iy), bb(nx,iy,0), bb(nx,iy,1),
+     &    iy, cr(nx,iy), cz(nx,iy), bb(nx,iy,0), bb(nx,iy,1),
      &    bb(nx,iy,2), bb(nx,iy,3), hy(nx,iy), gs(nx,iy,0),
      &    qz(nx,iy,0), qz(nx,iy,1)
        enddo

@@ -11,6 +11,7 @@
       use b2mod_b2plot
       use b2mod_version
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 #include "DIMENSIONS.F"
 
@@ -86,8 +87,8 @@
       integer io
       logical file_open
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, cfruin
-      external b2ytdr, b2ytx0, ipsetc, ipgeti
+      external prgini, prgfin, xertst, cfopen, cfruin
+      external b2ytdr, b2ytx0, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
       data nout/60,61,62,63,64,65,66/

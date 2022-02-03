@@ -23,20 +23,35 @@ c     ,                   onflag,inum,wmind,wmaxd,wlinlog
       if(wall) call ank_interface(inum)
 c     if(onflag) call ank_interface(inum)
       return
+      end subroutine wallon
 c======================================================================
-      entry set_wall_on(wmind,wmaxd,ilog)
+      subroutine set_wall_on(wmind,wmaxd,ilog)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      integer, intent(in) :: ilog
+      real (kind=R8), intent(in) :: wmind, wmaxd
       wmin=real(wmind,R4)
       wmax=real(wmaxd,R4)
       wlinlog=ilog
       wall=.true.
       return
+      end subroutine set_wall_on
 c======================================================================
-      entry set_wlinlog(ilog)
+      subroutine set_wlinlog(ilog)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      integer, intent(in) :: ilog
       wlinlog=ilog
       return
+      end subroutine set_wlinlog
 c======================================================================
-      entry walloff
+      subroutine walloff
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
       wall=.false.
       return
+      end subroutine walloff
 c======================================================================
-      end subroutine wallon

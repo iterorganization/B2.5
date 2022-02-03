@@ -82,4 +82,11 @@
       return
       end subroutine dealloc_b2mod_b2cmrc
 
+      logical function lrtnext(k,k1)
+      implicit none
+      integer, intent(in) :: k, k1
+      lrtnext = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
+      return
+      end function lrtnext
+
       end module b2mod_b2cmrc

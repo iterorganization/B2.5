@@ -6,6 +6,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, ns_ext
       real (kind=R8) ::

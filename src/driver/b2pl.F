@@ -17,6 +17,7 @@
       use b2mod_neutr_src_scaling
       use b2mod_ppout
       use b2mod_external
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -78,7 +79,7 @@
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2pldr
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56/

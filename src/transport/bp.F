@@ -99,7 +99,7 @@ c     calculate the viscosity
           enddo
           call viscos(nsdecl, nzdecl, nsl, i, j, nreg, bgradp, fc, 
      +                fm, mmx, nenergy, epsn, ntau, m, t, xi, den, 
-     +                ncl, mu)
+     +                mu)
           do k = 1, nleg
             do l = 1, nleg 
               visc(k,l,i,j) = mu(k,l)

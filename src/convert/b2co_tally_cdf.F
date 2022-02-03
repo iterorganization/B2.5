@@ -1,15 +1,15 @@
-      subroutine b2co_tally_cdf(nx, ny, ns, tim)
+      subroutine b2co_tally_cdf(ns, tim)
       use b2mod_types
       use b2mod_geo
       use b2mod_tallies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nx, ny, ns
+      integer ns
       real (kind=R8) :: tim
-      real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
@@ -36,12 +36,10 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_tally_cdf')
       write(*,*) 'b2co_tally_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2tallies.nc file

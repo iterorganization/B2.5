@@ -129,7 +129,7 @@
 !!          - \b shot:     The shot number of the database being created
 !!          - \b run:      The run number of the database being created
 !!          - \b username: Creator/owner of the IMAS IDS database
-!!          - \b database: IMAS IDS database name (i. e. solps-iter, iter, aug)
+!!          - \b database: IMAS IDS database name (i. e. solps-iter, ITER, aug)
 !!          - \b version:  Major version of the IMAS IDS database
 !!
 !!      Example of the command:
@@ -175,7 +175,7 @@
 !!      @subsection b2uw_b2mod_pv    Parameters/variables
 !!      @note   see also routine \b b2cdcv
 !!
-!!      @param  database - IMAS IDS database name (i. e. solps-iter, iter, aug)
+!!      @param  database - IMAS IDS database name (i. e. solps-iter, ITER, aug)
 !!      @param  edge_profiles - IDS designed to store data on edge plasma
 !!              profiles  (includes the scrape-off layer and possibly part
 !!              of the confined plasma)
@@ -213,7 +213,7 @@
 !!        !< (i.e. "edge_profiles" (mandatory) )
 !!      character(len=24) :: username   !< Creator/owner of the IMAS IDS database
 !!      character(len=24) :: database   !< IMAS IDS database name
-!!        !< (i. e. solps-iter, iter, aug)
+!!        !< (i. e. solps-iter, ITER, aug)
 !!      character(len=24) :: version    !< Major version of the IMAS IDS database
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
@@ -257,7 +257,7 @@ program b2_ual_write_b2mod
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual &
      & , only : new_ids_edge
     use b2mod_ual_io &
@@ -266,7 +266,7 @@ program b2_ual_write_b2mod
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
     use ids_schemas &   ! IGNORE
      & , only : ids_numerics
 #endif
@@ -317,6 +317,7 @@ program b2_ual_write_b2mod
 
     !! Set default value for IMAS major version and number of steps
     num_step = -1
+    status = 0
     version = "3"
     treename = 'ids'
     username = usrnam()
@@ -326,11 +327,15 @@ program b2_ual_write_b2mod
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+    CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
     call getenv ('DEVICE', device_env)
+    call getenv ('IMAS_VERSION', imas_version)
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
@@ -367,7 +372,8 @@ program b2_ual_write_b2mod
     !! If not at least shot, run, username, and database were defined, display
     !! the error message and and a full command example
     else if( narg .lt. 4 ) then
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
+            & input IMAS data-entry&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
@@ -375,7 +381,8 @@ program b2_ual_write_b2mod
             &  --database solps-iter --version 3 --step 250"
         call exit(0)
     else
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
+            & input IMAS data-entry&
             & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
@@ -408,9 +415,27 @@ program b2_ual_write_b2mod
     write (0,*) "Checking if IDS already exists : ", trim(database), shot, run
     call imas_create_env( treename, shot, run, 0, 0, idx, username, &
        &     database, version, status )
+    if (status.ne.0) then
+      if (database.eq.'ITER') then
+        write(*,*) "Did not find ITER database IDS file."
+        write(*,*) "Checking if old ''iter'' case exists."
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+       &     'iter', version, status )
+        if (status.eq.0) then
+          database = 'iter'
+          write(*,*) "Old database case found."
+          write(*,*) "Will be rewritten in new location."
+        end if
+      else if (database.eq.'iter') then
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+       &     'ITER', version, status )
+        database = 'ITER'
+      end if
+    end if
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
       write (0,*) "Reading old IDS ", trim(database), shot, run
+      call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then
         write (0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
@@ -431,7 +456,7 @@ program b2_ual_write_b2mod
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%dd_version)) then
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
           old_start_time = description%simulation%time_begin
           old_end_time = description%simulation%time_end
 #endif
@@ -442,83 +467,81 @@ program b2_ual_write_b2mod
            &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)
         continued = continued .or. &
            &        run_start_time.ge.ids_end_time
-        if (continued) then
-          if (.not.streql(old_imas_version,imas_version)) then
-            write(*,*) &
-             & 'Old IDS was written using IMAS version '// &
-             &  trim(old_imas_version)//'.'
-            write(*,*) &
-             & 'Recreating using IMAS version '// &
-             &  trim(imas_version)//'.'
+        if (continued.or.database.eq.'iter') then
+          if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
+            if (.not.streql(old_imas_version,imas_version)) then
+              write(*,*) &
+               & 'Old IDS was written using IMAS version '// &
+               &  trim(old_imas_version)//'.'
+              write(*,*) &
+               & 'Recreating using IMAS version '// &
+               &  trim(imas_version)//'.'
+            end if
+            if (database.eq.'iter') &
+               &  write(*,*) 'IDS file will be moved to ITER database.'
             call close_ual(idx)
             idx = 0
 !xpb Copy the IDS to a temporary location with the new DD and then bring it back
+            tmp_run = run
+            if (database.ne.'iter') then
+              tmp_run = run + 1000
+#if IMAS_MINOR_VERSION > 31
+              write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+                & 'idscp --setDatasetVersion'//                &
+                &       ' -si ',shot,' -ri ',run,              &
+                &       ' -so ',shot,' -ro ',tmp_run,          &
+                &       ' -d ',trim(database),' -u ',trim(username)
+#else
+              write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+                & 'idscp -si ',shot,' -ri ',run,               &
+                &      ' -so ',shot,' -ro ',tmp_run,           &
+                &      ' -d ',trim(database),' -u ',trim(username)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
+              call system(systemarg)
+#endif
+            end if
 #if IMAS_MINOR_VERSION > 31
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'idscp --setDatasetVersion'// &
-             &       ' -si ',shot,' -ri ',run,      &
-             &       ' -so ',shot,' -ro ',run+1000, &
+             & 'idscp --setDatasetVersion'//                 &
+             &       ' -si ',shot,' -ri ',tmp_run,           &
+             &       ' -so ',shot,' -ro ',run,               &
              &       ' -d ',trim(database),' -u ',trim(username)
 #else
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'idscp -si ',shot,' -ri ',run,      &
-             &      ' -so ',shot,' -ro ',run+1000, &
+             & 'idscp -si ',shot,' -ri ',tmp_run,            &
+             &      ' -so ',shot,' -ro ',run,                &
              &      ' -d ',trim(database),' -u ',trim(username)
 #endif
-            systemarg = trim(systemarg)//' edge_profiles'
-            systemarg = trim(systemarg)//' edge_sources'
-            systemarg = trim(systemarg)//' edge_transport'
-            systemarg = trim(systemarg)//' radiation'
-            systemarg = trim(systemarg)//' dataset_description'
-#if IMAS_MINOR_VERSION > 21
-            systemarg = trim(systemarg)//' summary'
-#endif
-#if IMAS_MINOR_VERSION > 25
-            systemarg = trim(systemarg)//' numerics'
-#endif
-#if IMAS_MINOR_VERSION > 30
-            systemarg = trim(systemarg)//' divertors'
-#endif
+            if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
             call system(systemarg)
 #endif
-#if IMAS_MINOR_VERSION > 31
-            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'idscp --setDatasetVersion'// &
-             &       ' -si ',shot,' -ri ',run+1000, &
-             &       ' -so ',shot,' -ro ',run,      &
-             &       ' -d ',trim(database),' -u ',trim(username)
-#else
-            write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-             & 'idscp -si ',shot,' -ri ',run+1000, &
-             &      ' -so ',shot,' -ro ',run,      &
-             &      ' -d ',trim(database),' -u ',trim(username)
-#endif
-#ifdef NAGFOR
-            call system(systemarg, status, ierror)
-#else
-            call system(systemarg)
-#endif
+            if (database.eq.'iter') database = 'ITER'
             call imas_open_env(treename, shot, run, idx, &
              &                 username, database, version, status)
           end if
-          write (0,*) "Appending a new time slice at t = ", tim, " s."
-          num_time_slices = num_time_slices + 1
+          if (continued) then
+            write (0,*) "Appending a new time slice at t = ", tim, " s."
+            num_time_slices = num_time_slices + 1
+          end if
           time_slice_index = num_time_slices
           call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, &
+             &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
              &  summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
              &  numerics, old_start_time, run_end_time, &
 #endif
 #if IMAS_MINOR_VERSION > 30
              &  divertors, &
 #endif
-             &  tim, dtim, shot, run, database, version, &
+             &  tim, dteff, shot, run, database, version, &
              &  time_slice_index, num_time_slices )
         else
           write (0,*) "Not a time continuation, IDS will be overwritten !"
@@ -526,25 +549,23 @@ program b2_ual_write_b2mod
         end if
       end if
     else
-      write (0,*) "No previous IDS found, new one will be created"
+      write (0,*) "No previous IMAS data-entry found, a new one will be created"
       idx = 0
+      if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, &
+         &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
          &  summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
          &  numerics, run_start_time, run_end_time, &
 #endif
 #if IMAS_MINOR_VERSION > 30
          &  divertors, &
 #endif
-         &  tim, dtim, shot, run, database, version )
-    call close_ual(idx)
-    idx = 0
-
+         &  tim, dteff, shot, run, database, version )
     end if
 
     !! Create Write the set data to IDSs
@@ -554,13 +575,28 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
-#if IMAS_MINOR_VERSION > 25
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         &   numerics, &
 #endif
 #if IMAS_MINOR_VERSION > 30
         &   divertors, &
 #endif
         &   treename, shot, run, idx, username, database, version )
+    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+        &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
+        &   radiation )
+    call dealloc_batch_edge( batch_profiles, batch_sources, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+        &   description )
+    call close_ual(idx)
+    idx = 0
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin
@@ -598,7 +634,7 @@ contains
         integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24), intent(in) :: database   !< IMAS IDS database name
-            !< (i. e. solps-iter, iter, aug)
+            !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
         !! Internal variables
         integer :: gridSubset_index !< >Grid subset base index
@@ -610,7 +646,7 @@ contains
         gridSubset_index = 3
 
         !! Open input datafile from local database
-        write (0,*) "Started reading input IDS", idx, shot, run
+        write (0,*) "Started reading input IMAS data-entry", idx, shot, run
 
         call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
@@ -635,7 +671,7 @@ contains
         call ids_deallocate( edge_profiles )
         call imas_close( idx, status )
         call xertst ( status.eq.0, 'Error closing IMAS database !')
-        write (0,*) "Finished reading input IDS"
+        write (0,*) "Finished reading input IMAS data-entry"
 
     end subroutine read_ids
 

@@ -3,14 +3,15 @@
 
       subroutine b2wsps (nspc, nx, ny, ns,
      &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+     &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height)
       use b2mod_types
       use b2mod_rates
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -20,13 +21,6 @@
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -54,12 +48,10 @@
 
 *   ..local variables
       real (kind=R8) ::
-     * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      1 wrk1(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
-     2 ni(-1:nx,-1:ny,0:1), 
      3 ro(-1:nx,-1:ny), rz(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpni, b2xppr, b2xpro, b2xpfe, b2xpfi, b2wsst
 
 *-----------------------------------------------------------------------
@@ -87,8 +79,7 @@
       call b2wsst (nspc, nx, ny, ns,
      &  crx, cry, bb, vol,
      &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ni,
-     &  pr, ro, rz, fne, fni, wrk0, wrk1)
+     &  pr, ro, rz, wrk0, wrk1)
 
 * ..return
       call subend ()

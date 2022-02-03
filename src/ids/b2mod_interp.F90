@@ -678,6 +678,7 @@ contains
   !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo , only: crx, cry, gs, qz, qc, qcb, pbs, vol
+  use b2mod_math
   use b2mod_indirect
 
   implicit none
@@ -690,15 +691,8 @@ contains
   integer cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   real (kind=R8) :: face(-1:nx,-1:ny,0:1,0:1), slant
-  real (kind=R8) :: p0x, p0y, p1x, p1y
   logical classical
   real (kind=R8) :: weight(-1:nx,-1:ny,TO_SELF:TO_TOP)
-  intrinsic min, max, sqrt
-  real (kind=R8) :: trim1, norm, sinang
-  norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-  trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-  sinang(p0x,p0y,p1x,p1y) = trim1( &
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
   classical = isClassicalGrid(cflags)
 !! If isparallel is .true., then the background flow is in the parallel direction
@@ -1612,6 +1606,9 @@ contains
     integer :: ix, iy, is, ixx, iyy
     real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
 
+    ! procedures
+    external xertst
+
     ! For every vertex, find connected cells and average values
     do ix = -1, nx
        do iy = -1, ny
@@ -2138,6 +2135,151 @@ contains
 
   return
   end subroutine value_to_side
+
+  function get_connection_length( iclass, imode, nx, ny, ix, iy, ivx )
+  use b2mod_types
+  use b2mod_geo
+  use b2mod_indirect
+#ifdef IMAS
+#if IMAS_MINOR_VERSION > 8
+  use ids_schemas  & ! IGNORE
+     & , only : IDS_REAL_INVALID
+#endif
+#endif
+  implicit none
+  integer, intent(in) :: iclass, imode
+  integer, intent(in) :: nx, ny, ix, iy
+  integer, intent(in), optional :: ivx
+  real(kind=R8) :: get_connection_length
+  external xertst, xerrab
+
+!  This function computes the connection length
+!  For nodes (iclass.eq.1), we compute the length along a field line
+!  For cells (iclass.eq.3), we compute the length of the flux tube
+!  If imode.eq.1, the full length
+!  If imode.eq.2, the length to closest solid surface
+
+  integer ix1, ixl, ixr, iyl, iop
+  real(kind=R8) :: t1, t2
+
+#ifdef IMAS
+#if IMAS_MINOR_VERSION > 8
+  get_connection_length = IDS_REAL_INVALID
+#else
+  get_connection_length = 0.0_R8
+#endif
+#else
+  get_connection_length = 0.0_R8
+#endif
+
+  call xertst(0.lt.nx, 'faulty input nx')
+  call xertst(0.lt.ny, 'faulty input ny')
+  call xertst(-1.le.ix .and. ix.le.nx, 'faulty input ix')
+  call xertst(-1.le.iy .and. iy.le.ny, 'faulty input iy')
+  call xertst(imode.eq.1 .or. imode.eq.2, 'faulty input imode')
+  call xertst(iclass.eq.3 .or. present(ivx), &
+     & 'iclass.eq.1 requires a vertex index !')
+  if (region(ix,iy,0).eq.0) return
+
+  select case ( iclass )
+     case ( 1 )  ! IDS_CLASS_NODE
+        select case ( ivx )
+        case( 0 )
+          iop = 1
+          iyl = iy
+        case( 1 )
+          iop = 0
+          iyl = iy
+        case( 2 )
+          iop = 3
+          iyl = min(ny,topiy(ix,iy))
+        case( 3 )
+          iop = 2
+          iyl = min(ny,topiy(ix,iy))
+        case default
+          call xerrab ('Unrecognized ivx value !')
+        end select
+        ixl=leftix(ix,iy)
+        t1=0.0_R8
+        if (ixl.ne.-2.and.(ivx.eq.1.or.ivx.eq.3)) then
+          if (region(ix,iy,0).ne.0) t1=dist(ix,iy,ivx,iop)/ &
+     &       (sqrt(wbbv(ix,iyl,0)**2+wbbv(ix,iyl,1)**2)/wbbv(ix,iyl,3))
+        endif
+        ix1=ixl
+        if (ixl.ne.-2) ixl=leftix(ix1,iy)
+        do while(ix1.ne.ix.and.ixl.ne.-2)
+          if (region(ix1,iy,0).ne.0) t1=t1+dist(ix1,iy,ivx,iop)/ &
+     &       (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+          ix1=ixl
+          ixl=leftix(ix1,iy)
+        end do
+        if(ix1.eq.ix.and.(ivx.eq.0.or.ivx.eq.2)) t1=t1+dist(ix,iy,ivx,iop)/ &
+     &    (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+        ixr=rightix(ix,iy)
+        t2=0.0_R8
+        if (ixr.ne.nx+1.and.(ivx.eq.0.or.ivx.eq.2)) then
+          if (region(ix,iy,0).ne.0) t2=dist(ix,iy,ivx,iop)/ &
+     &       (sqrt(wbbv(ix,iyl,0)**2+wbbv(ix,iyl,1)**2)/wbbv(ix,iyl,3))
+        endif
+        ix1=ixr
+        if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
+        do while(ix1.ne.ix.and.ixr.ne.nx+1)
+          if (region(ix1,iy,0).ne.0) t2=t2+dist(ix1,iy,ivx,iop)/ &
+     &     (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+          ix1=ixr
+          ixr=rightix(ix1,iy)
+        end do
+        if(ix1.eq.ix.and.(ivx.eq.1.or.ivx.eq.3)) t2=t2+dist(ix,iy,ivx,iop)/ &
+     &    (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+        if(imode.eq.1.and.ix1.ne.ix) then
+          get_connection_length = t1+t2
+        else
+          get_connection_length = min(t1,t2)
+        end if
+     case ( 3 )  ! IDS_CLASS_CELL
+        ixl=leftix(ix,iy)
+        t1=0.0_R8
+        if (ixl.ne.-2) then
+          if (region(ix,iy,0).ne.0) t1=hx(ix,iy)/2.0_R8/ &
+     &       (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+        endif
+        ix1=ixl
+        if (ixl.ne.-2) ixl=leftix(ix1,iy)
+        do while(ix1.ne.ix.and.ixl.ne.-2)
+          if (region(ix1,iy,0).ne.0) t1=t1+hx(ix1,iy)/ &
+     &       (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+          ix1=ixl
+          ixl=leftix(ix1,iy)
+        end do
+        if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/ &
+     &    (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+        ixr=rightix(ix,iy)
+        t2=0.0_R8
+        if (ixr.ne.nx+1) then
+          if (region(ix,iy,0).ne.0) t2=hx(ix,iy)/2.0_R8/ &
+     &       (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+        endif
+        ix1=ixr
+        if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
+        do while(ix1.ne.ix.and.ixr.ne.nx+1)
+          if (region(ix1,iy,0).ne.0) t2=t2+hx(ix1,iy)/ &
+     &       (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+          ix1=ixr
+          ixr=rightix(ix1,iy)
+        end do
+        if(ix1.eq.ix) t2=t2+hx(ix1,iy)/2.0_R8/ &
+     &    (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+        if(imode.eq.1.and.ix1.ne.ix) then
+          get_connection_length = t1+t2
+        else
+          get_connection_length = min(t1,t2)
+        end if
+     case default
+        call xerrab ( 'Unsupported class in get_connection_length !')
+  end select
+
+  return
+  end function get_connection_length
 
 end module b2mod_interp
 

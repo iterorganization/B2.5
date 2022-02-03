@@ -61,7 +61,7 @@ c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       use b2mod_b2plot
       use b2mod_b2plot_values
       use eirmod_ctrig
-      use eirmod_extrab25
+      use eirmod_wneutrals
       integer nz
       real (kind=R8) ::
      *   src(nz,1:ntrii),scale
@@ -144,9 +144,10 @@ c  Copy the top of the wall stack to the data array
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_ank
+      use b2mod_subsys
       implicit none
       integer is
-      external subini, subend, xertst
+      external xertst
 
       call subini('data_copy')
       if (iwwrk.eq.0) then

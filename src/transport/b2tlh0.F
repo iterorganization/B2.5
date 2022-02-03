@@ -1,15 +1,18 @@
-      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti,
+      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti,
      & hcib, chcb, hcimx, fllim0fhi)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *  vol(-1:nx,-1:ny),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
      *  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -35,10 +38,7 @@
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *   hy1
-      external subini, subend, xertst, ipgetr, ipgeti
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      external xertst, ipgetr, ipgeti
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')

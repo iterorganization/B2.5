@@ -17,13 +17,22 @@ c    ,                      onflag,trgmind,trgmaxd,trglog
       trglinlog=trglog
       target=onflag
       return
+      end subroutine targeton
 c======================================================================
-      entry set_trglinlog(trglog)
+      subroutine set_trglinlog(trglog)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      integer, intent(in) :: trglog
       trglinlog=trglog
       return
+      end subroutine set_trglinlog
 c======================================================================
-      entry targetoff
+      subroutine targetoff
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
       target=.false.
       return
+      end subroutine targetoff
 c======================================================================
-      end subroutine targeton

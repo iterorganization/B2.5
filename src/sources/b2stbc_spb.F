@@ -1,12 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, !sv 09.01.01
-     1  qz, pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po,   !sv 14.10.99 12.05.00 09.01.01
+      subroutine b2stbc_spb (nx, ny, ns, facdrift,                      !sv 09.01.01
+     1  na, ua, uadia, vaecrb, vadia, te, ti, po,                       !sv 14.10.99 12.05.00 09.01.01
      &  ne, ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,   !sv 13.10.06
      &  fhePSch, fhiPSch, fne, fni, fch,                                !sv 25.02.00 21.10.02 28.10.02 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !sv 21.10.02
      &  sna0, smo0, she0, shi0, sch0, wrong_flow)                       !sv 09.07.99 01.07.05
       use b2mod_types
+      use b2mod_geo
+      use b2mod_math
       use b2mod_indirect
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
@@ -16,14 +18,12 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmfs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),       !sv 09.07.99
-     *  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !sv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), !sv
-     1  bb(-1:nx,-1:ny,0:3)
+     *  facdrift(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
@@ -67,7 +67,7 @@
       logical wrong_flow
       real (kind=R8) ::
      *  sna0ep, she0ep, shi0ep,
-     1  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     1  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      4  csbm, cstm,   ! cstm1                                         !sv 14.10.99
      6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
@@ -111,15 +111,11 @@
       integer, save :: iout = 0, k                                    !sv 11.07.05
       save ncall, sna0ep, she0ep, shi0ep
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log
+      intrinsic abs, sqrt
       real (kind=R8) ::
-     *   machsfr, b2ssum, expu2, hy1
-      external subini, subend, xertst, machsfr, sfill, b2ssum, b2saxpy
+     *   b2ssum
+      external xertst, sfill, b2ssum, b2saxpy
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                  !sv 18.01.02
-      expu2(t0) = dim(exp(min(20.0e0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somehwat arbitrary level.)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1 shi0ep/1.0e-36_R8/
@@ -181,12 +177,6 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test state
        call b2xvps (nx, ny, ns, ne, na, ua, te, ti, po,
      &              fna, fhe, fhi, fch)
@@ -194,9 +184,6 @@
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialize sources to 0
       call sfill (n2*2*ns, 0.0e0_R8, sna0, 1)
       call sfill (n2*4*ns, 0.0e0_R8, smo0, 1)

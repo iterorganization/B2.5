@@ -69,6 +69,7 @@
       use b2mod_geo
       use b2mod_plasma
       use b2mod_constants
+      use b2mod_subsys
       implicit none
       integer ix0,iy0,nx,ny,output
       integer ix,iy,ia,curr,cnt,new
@@ -77,7 +78,7 @@
      *    t1,x,y,dx,dy
       logical inside
       character*1 orientation
-      external subini, subend, xerrab
+      external xerrab
 
       call subini ('setup_b2mod_first_flight')
       ptr_index=ptr_index+1
@@ -168,6 +169,7 @@
      *     dtim,src,sri,work,wrk2,wrk3,
      *     pfrpuff,mainpuff,corepuff)
       use b2mod_geo
+      use b2mod_math
       use b2mod_plasma
       use b2mod_rates
       use b2mod_indirect
@@ -183,14 +185,8 @@
      *     flight_time,flown_time,thru_time,
      *     work(-1:nx,-1:ny,0:1),wrk2(-1:nx,-1:ny),wrk3(-1:nx,-1:ny),
      *     pfrpuff,mainpuff,corepuff
-      real (kind=R8) ::
-     *   machsfr, expu, cutlo, cutll, t0
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
       if (on_closed_surface(ix0,iy0)) return   ! ignore core
+      if (.not.b2mod_math_initialised) call b2mod_math_init
       if (abs(src).lt.cutlo) return  ! jump over zero sources
       dist_start=src/no_of_slices
       eion=sri/src
@@ -207,7 +203,7 @@ cxpb  We follow the launched neutrals over their pre-computed trajectories
 cxpb  and distribute the associated sources along the way.
 cxpb  We must account for:
 cxpb   a. CX processes with ions
-cxpb   b. electron-impact ionization
+cxpb   b. electron-impact ionisation
 cxpb   c. electron-impact excitation (we use the S/XB factor to convert 
 cxpb      electron heat loss rate into number of collision events)
 cxpb   d. elastic collisions with neutrals

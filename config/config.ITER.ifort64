@@ -11,17 +11,12 @@ NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NAG    ?= -lnag_nag
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
-EQUIVS     = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Ds2min=d2min
-DEFINES   += -DGRREAL=4 -DDOFLUSH -DNO_OPT
+DEFINES   += -DNO_OPT
 ifndef SOLPS_CPP
 DEFINES   += -DNAG22 -DNO_F01AAF
 endif
 
 CPP        = /lib/cpp -traditional
-CPPOPTS    = -P -I${srcdir} ${EQUIVS}
-SED        = sed s:\#PREC\#:d:g
-SED        =
-LINK_MOD   = 
 
 ifdef USE_MPI
 FC         = mpiifort
@@ -39,10 +34,6 @@ endif
 else
 FC         = ifort
 endif
-endif
-
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
@@ -76,32 +67,10 @@ FCOPTS    += -vec_report0
 LDOPTS    += -i_dynamic
 endif
 
-DBLFC      = ${FC}
-DBLSED     = sed -e s:\#PREC\#:d:g
-DBLSED     = 
-
 INCMOD     = -I
-MOD        = mod
 OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
-BLD        = ar rucv
-
-GRLIBES    = ${LD_NCARG}
-PLLIBES    = ${LD_MSCL}
-LDLIBES    = ${LD_NETCDF} ${LD_NAG} -lz
-
-ifdef LD_CATALYST
-CXX        = c++
-CXXFLAGS   = -std=c++11 $(shell paraview-config --include)
-endif
-
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
-ifdef PERFMON
-LDLIBES   += -L${SOLPSLIB} -lperf
-endif
+LDLIBES    = -lz
 
 ifdef IMAS_VERSION
 GGD_VERSION ?= `pkg-config ggd --modversion`
@@ -129,7 +98,6 @@ endif
 IMASLIBS   = ${LD_UAL}
 endif
 
-LD         = ${FC}
 ifdef USE_MPI
 LDLIBES   += ${LD_MPI}
 else
@@ -137,9 +105,6 @@ ifdef USE_IMPGYRO
 LDLIBES   += ${LD_MPI}
 endif
 endif
-
-LCPP       = ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

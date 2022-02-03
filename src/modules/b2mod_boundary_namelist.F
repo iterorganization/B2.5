@@ -43,6 +43,8 @@ cank }
      *   BC_LIST_Y(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
+      logical, allocatable, save ::
+     *   core_boundary(:)
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
@@ -69,6 +71,7 @@ cank }
       integer, save :: NYISO2(NNISOD)
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
+      logical, save :: core_boundary(NBCD)
 #endif
       integer, save :: boundary_namelist
       logical, save :: boundary_namelist_set = .false.
@@ -102,6 +105,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       subroutine get_boundary_namelist
       implicit none
+      external ipgeti
 
 cxpb The default is to force usage of b2.boundary.namelist for DN cases
       if (boundary_namelist_set) return
@@ -116,10 +120,11 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
 
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
-      integer nx ,ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx ,ny, ns
+      real (kind=R8), intent(in) :: tim
       integer ix, iy, is, ib
       logical done, catch_up
+      external xertst
 
       call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
@@ -243,9 +248,10 @@ cxpb overwrite the defaults with the namelist data
 
       subroutine catchup_b2mod_boundary(nx, ny, ns, tim)
       implicit none
-      integer nx, ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(in) :: tim
       logical catch_up
+      external xertst
 
       if(boundary_time_mod.gt.0.0_R8) then
         write(*,'(a,1p,3(1x,e14.7),2i4)')
@@ -280,11 +286,9 @@ cxpb overwrite the defaults with the namelist data
 
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
       implicit none
-      integer nxd, nyd, nsd, nbcd_in, nnisod_in
+      integer, intent(in) :: nxd, nyd, nsd, nbcd_in, nnisod_in
       integer ix, iy
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
+      external ipgeti, xertst
 
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(CONPAR(0:nsd-1,nbcd_in,3))
@@ -310,6 +314,7 @@ cxpb overwrite the defaults with the namelist data
       allocate(NYISO2(nnisod_in))
       allocate(NIISO(0:nsd-1))
       allocate(lcbs(nbcd_in))
+      allocate(core_boundary(nbcd_in))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
@@ -344,6 +349,7 @@ cxpb overwrite the defaults with the namelist data
       gammai=1.0_R8
       gammae=0.5_R8
       lbndusr=.false.
+      core_boundary=.false.
 !DPC-2003-10-23 set as a ipget parameter      lfeedback=.false.
       nniso=0
       nxiso1=-2
@@ -399,6 +405,7 @@ cxpb Have to do this here already in case the namelist is not used
       end subroutine alloc_b2mod_boundary
 
       subroutine dealloc_b2mod_boundary
+      implicit none
 
       if (.not.allocated(iffboundx)) return
 #ifdef ALLOCATE_AND_NAMELIST
@@ -425,6 +432,7 @@ cxpb Have to do this here already in case the namelist is not used
       deallocate(NYISO2)
       deallocate(NIISO)
       deallocate(LCBS)
+      deallocate(core_boundary)
 #endif
       deallocate(iffboundx)
       deallocate(iffboundy)
@@ -436,14 +444,15 @@ cxpb Have to do this here already in case the namelist is not used
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
       implicit none
-      integer nx, ny, ns
-      logical dotest
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(in) :: dotest
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
-      logical file_ok, todo, assigned
+      logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
+      external find_file, xerrab, xertst
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8
@@ -502,68 +511,52 @@ c.. Make a list of core boundaries
         do ib=1,nbc
           if(bcchar(ib).eq.'S') then
             if(old_style(ib)) then
-              if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
-     .           on_closed_surface(bcend(ib),bcpos(ib))) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
-                  end if
-                end if
-              endif
+              is_closed = on_closed_surface(bcstart(ib),bcpos(ib)).and.
+     .                    on_closed_surface(bcend(ib),bcpos(ib))
             else
-              found = .true.
+              is_closed = .true.
               do ix = 1, bc_list_size(ib)
-                found = found .and.
+                is_closed = is_closed .and.
      .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
               end do
-              if (found) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already assigned!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
-                  end if
-                endif
-              endif
-            endif
-          endif
-        enddo
+            end if
+            if(.not.todo.and.is_closed) then
+              ncbs=ncbs+1
+              lcbs(ncbs)=ib
+              done(ncbs)=.true.
+              core_boundary(ib)=.true.
+            else if (todo.and.is_closed) then
+              ic = 1
+              assigned = .false.
+              do while (ic.le.ncbs)
+                if (lcbs(ic).eq.ib) then
+                  call xertst(.not.done(ic),
+     .             'Core boundary already assigned!')
+                  core_boundary(ib) = .true.
+                  assigned = .true.
+                  done(ic) = .true.
+                end if
+                ic = ic + 1
+              end do
+              if (.not.assigned) then
+                ncbs = ncbs + 1
+                done(ncbs) = .true.
+                lcbs(ncbs) = ib
+                core_boundary(ib) = .true.
+                write(*,*) 'Added boundary ',ib,
+     .           ' to list of core boundaries'
+              end if
+            else if (todo.and.nnreg(0).eq.1.and..not.assigned) then
+              do ic = 1, ncbs
+                if (lcbs(ic).eq.ib) then
+                  core_boundary(ib) = .true.
+                  done(ic) = .true.
+                end if
+              end do
+              assigned=.true.
+            end if
+          end if
+        end do
         if (ny.gt.1) then
           if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
@@ -574,6 +567,8 @@ c.. Make a list of core boundaries
      .     'faulty parameter lcbs')
           call xertst (done(ib),
      .     'Did not find all declared core boundaries!')
+          call xertst (core_boundary(lcbs(ib)),
+     .     'Faulty declaration of core boundaries!')
         enddo
         deallocate(done)
       endif
@@ -954,7 +949,7 @@ c.. Test consistency with region boundaries
       use b2mod_plasma
       implicit none
       real (kind=R8) :: get_phi_applied
-      integer boundary_namelist, ix, iy
+      integer, intent(in) :: boundary_namelist, ix, iy
       integer i, ib
       logical found
 

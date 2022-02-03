@@ -1,29 +1,34 @@
 module b2mod_mwti
   use b2mod_types , only : R8
+  use b2mod_subsys
   implicit none
   private
   public :: b2mwti, output_ds, dealloc_b2mod_mwti
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
          nesepa_av(:), tesepa_av(:), tisepa_av(:), &
          posepi_av(:), posepm_av(:), posepa_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_av(:), temxip_av(:), timxip_av(:), &
          nemxap_av(:), temxap_av(:), timxap_av(:), &
          pomxip_av(:), pomxap_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_std(:), tesepi_std(:), tisepi_std(:), &
          nesepm_std(:), tesepm_std(:), tisepm_std(:), &
          nesepa_std(:), tesepa_std(:), tisepa_std(:), &
          posepi_std(:), posepm_std(:), posepa_std(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
 
 #ifndef NO_CDF
+# include <netcdf.inc>
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+  character*(maxncnam), save :: timsav, batchsav
+  integer, save :: ntsav, nasav
+  data timsav /'!!!! INVALID NAME !!!!'/
 #endif
 
 contains
@@ -48,7 +53,7 @@ contains
     use b2mod_external
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
-    use eirmod_extrab25
+    use eirmod_wneutrals
 #endif
 #endif
     implicit none
@@ -120,7 +125,7 @@ contains
          nya, nyi, nybl, nybr, nytl, nytr, nc
 
     !   ..procedures
-    external subini, subend, xertst, ipgeti, batch_average
+    external xertst, ipgeti, batch_average
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
     integer, save :: ntstep, nastep
@@ -146,7 +151,8 @@ contains
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
-    external rratio
+    external ipgetr, get_jsep, find_file, rratio, &
+             check_cdf_status, batch_average_sq
 #endif
     !   ..initialisation
     save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
@@ -175,10 +181,10 @@ contains
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+      call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
+      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
+      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
+      call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
@@ -188,8 +194,8 @@ contains
         do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
+        call output_ds(ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
+        call output_ds(ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -1302,26 +1308,26 @@ contains
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      nesepm_std(1:nc) = ((nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
-      tesepm_std(1:nc) = ((tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
-      tisepm_std(1:nc) = ((tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
-      posepm_std(1:nc) = ((posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
-      nesepi_std(1:nc) = ((nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
-      tesepi_std(1:nc) = ((tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
-      tisepi_std(1:nc) = ((tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
-      posepi_std(1:nc) = ((posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
-      nesepa_std(1:nc) = ((nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
-      tesepa_std(1:nc) = ((tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
-      tisepa_std(1:nc) = ((tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
-      posepa_std(1:nc) = ((posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
-      nemxip_std(1:nc) = ((nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
-      temxip_std(1:nc) = ((temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
-      timxip_std(1:nc) = ((timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
-      pomxip_std(1:nc) = ((pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
-      nemxap_std(1:nc) = ((nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
-      temxap_std(1:nc) = ((temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
-      timxap_std(1:nc) = ((timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
-      pomxap_std(1:nc) = ((pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
+      nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
+      tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
+      tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
+      posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
+      nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
+      tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
+      tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
+      posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
+      nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
+      tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
+      tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
+      posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
+      nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
+      temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
+      timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
+      pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
+      nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
+      temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
+      timxap_std(1:nc) = (abs(timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
+      pomxap_std(1:nc) = (abs(pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
 
 !wdk write into b2time.nc
       imap(1)=1
@@ -1504,6 +1510,9 @@ contains
     real (kind=R8) :: dvals(1)
     ! CDF format variable
     integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+    ! Procedures
+    external ipgeti, check_cdf_status
+
     ! Create and enter define mode
     call ipgeti ('b2mndr_cdf_default', cdf_default)
     if (cdf_default.eq.3 .or. cdf_default.eq.4) then
@@ -3040,18 +3049,13 @@ contains
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
-    character*(*) timnam,batchnam
-    character*(maxncnam) timsav,batchsav
-    integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
 #ifdef DBG
     logical, parameter :: debug = .true.
 #else
     logical, parameter :: debug = .false.
 #endif
-    save timsav,ntsav,batchsav,nasav
-    data timsav /'!!!! INVALID NAME !!!!'/
-    external subini, subend, xerrab
+    external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
@@ -3064,7 +3068,7 @@ contains
     if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
     if (debug) write(*,*) "Variable has nvdims=", nvdims
-    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
@@ -3083,8 +3087,8 @@ contains
         start(i)=1
       endif
     enddo
-    if (debug) write(*,*) "start(:)=", start(1:nvdims)
-    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
@@ -3117,41 +3121,42 @@ contains
 
     call subend ()
     return
+  end subroutine rwcdf
     !
-    entry rwcdf_settime(timnam,ntstep)
+  subroutine rwcdf_settime(timnam,ntstep)
+    implicit none
+    character*(*) timnam
+    integer ntstep
     write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
     return
+  end subroutine rwcdf_settime
     !
-    entry rwcdf_setbatch(batchnam,nastep)
+  subroutine rwcdf_setbatch(batchnam,nastep)
+    implicit none
+    character*(*) batchnam
+    integer nastep
     write(*,*) 'Saving ',trim(batchnam),' as the batch dimension'
     write(*,*) 'nastep = ',nastep
     batchsav=batchnam
     nasav=nastep
     return
-  end subroutine rwcdf
+  end subroutine rwcdf_setbatch
 #endif
 !
-  subroutine output_ds(crx,cry,nx,ny,iref,target_offset, &
-       jsep,iystart,iyend,filename)
+  subroutine output_ds(ny,iref,target_offset,jsep,iystart,iyend,filename)
+    use b2mod_geo
     use b2mod_indirect
     implicit none
-    integer nx,ny,iref,jsep,iystart,iyend,target_offset
-    real (kind=R8) :: &
-         crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3)
+    integer ny,iref,jsep,iystart,iyend,target_offset
     real (kind=R8) :: &
          ds(-1:ny), ds_offset
     character*(*) filename
-    integer ix,iy
-    external subini, subend, xertst
+    integer iy
+    external xertst
     intrinsic sqrt
-    real (kind=R8) :: &
-         cr,cz
-
-    cr(ix,iy)=0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-    cz(ix,iy)=0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
     call subini ('output_ds')
     iystart=-1
@@ -3212,8 +3217,10 @@ contains
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
     real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
-    ! computation
+    ! Procedures
+    external xerrab
 
+    ! Computation
     select case (side)
     case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell

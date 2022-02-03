@@ -12,6 +12,7 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_anomalous_transport
       use b2mod_work
       use b2mod_ma28
@@ -25,6 +26,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_xerset
 #if MPI_MOD > 0
 #ifdef USE_MPI
       use mpi  ! IGNORE
@@ -167,7 +169,7 @@
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET
@@ -334,6 +336,7 @@ csw
       call dealloc_b2mod_indirect
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
+      call dealloc_b2mod_transport_nspecies
       call dealloc_b2mod_astra_to_b2
       call dealloc_b2mod_b2_to_astra
       call dealloc_anomalous_transport

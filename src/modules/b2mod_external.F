@@ -36,6 +36,7 @@
       subroutine alloc_b2mod_external(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
+      external xertst
 
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
@@ -145,7 +146,7 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       logical toread
       logical open_file
       integer lnblnk
-      external xertst, xerrab, open_file, lnblnk
+      external xertst, xerrab, open_file, find_file, extend, lnblnk
 
 *   ..test arguments
       call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
@@ -253,7 +254,7 @@ cxpb
           ta_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state temperature
         enddo
         read(74,*) dext(:,:)     ! electron particle source
-     &                           !    by ionization/recombination == ep_ir
+     &                           !    by ionisation/recombination == ep_ir
         sne_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         read(74,*) dext(:,:)     ! ion momentum source by Coulomb collision == im_cc
         smo_ext(0:nxd-1,0:nyd-1,ismain) = dext(:,:)
@@ -262,7 +263,6 @@ cxpb
         read(74,*) dext(:,:)     ! electron heat source by radiation = ee_rd
         she_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         deallocate(dext)
-        close(74)
         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
@@ -338,6 +338,7 @@ cxpb
       endif
 
       initialised_externals=.true.
+      close(74)
       return
   974 continue
       if (.not.initialised_externals)

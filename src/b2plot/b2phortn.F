@@ -10,6 +10,7 @@ c***
 c***  horton.dat with the data for L. Horton
 c----------------------------------------------------------------------
       use b2mod_types
+      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
@@ -17,6 +18,9 @@ c----------------------------------------------------------------------
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
 c

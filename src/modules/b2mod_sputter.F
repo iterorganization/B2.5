@@ -152,10 +152,12 @@
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)
+      use b2mod_math
       implicit none
       integer nwrite, nx, ny, ns
       character*4 edition
       integer ix, iy, is, ib
+      real (kind=R8) :: tmp1, tmp2
       character*256 filename
 
       if(maxval(sputter_yield).gt.0.0_R8.or.
@@ -180,13 +182,22 @@ cxpb  Replaced with explicit writing of nonzero elements only
      &            sputter_yield2(ix,iy,is,1).ne.0.0_R8 .or.
      &            sputter_yield2(ix,iy,is,2).ne.0.0_R8) then
                 do ib = 1, 2
+                  if (abs(sputter_yield(ix,iy,is,ib)).lt.cutlo) then
+                    tmp1 = 0.0_R8
+                  else
+                    tmp1 = sputter_yield(ix,iy,is,ib)
+                  end if
+                  if (abs(sputter_yield2(ix,iy,is,ib)).lt.cutlo) then
+                    tmp2 = 0.0_R8
+                  else
+                    tmp2 = sputter_yield2(ix,iy,is,ib)
+                  end if
                   write(nwrite,
      &             '(a14,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,'//
      &              'a17,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,a1)')
-     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield(ix,iy,is,ib),
-     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield2(ix,iy,is,ib),','
+     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=' ,tmp1,
+     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',tmp2,
+     .           ','
                 end do
               end if
             end do
@@ -202,6 +213,7 @@ cxpb  Replaced with explicit writing of nonzero elements only
       subroutine read_sputter_data(nsd,column,sput_model,refl_model)
       use b2mod_b2cmpa
       use b2mod_elements
+      use b2mod_subsys
       implicit none
       integer nsd, column, sput_model, refl_model
       integer nfile
@@ -225,7 +237,6 @@ cxpb  Replaced with explicit writing of nonzero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
-      external subini, subend
 
       if(sputter_initialised) return
       call subini ('read_sputter_data')
@@ -1304,21 +1315,14 @@ c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 
       subroutine heatdiff0D(ibnd,Qtot,Tp)
+      use b2mod_math
       implicit none
       integer ibnd
       real (kind=R8) :: Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      real (kind=R8), save :: cutll, cutlo
-      logical, save  :: lfirst, coating
+      logical, save  :: coating
       !$OMP THREADPRIVATE(coating)
-      real (kind=R8) :: t0
-      real (kind=R8) :: machsfr, expu2, layer_Kappa
-      external machsfr, layer_Kappa
-      intrinsic dim, exp, min, max
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
-*   ..initialisation
-      data lfirst /.true./
+      real (kind=R8) :: layer_Kappa
+      external layer_Kappa
 
 c  Inputs:
 c  Qtot -> incident heat flux (Joules/m^2/sec)
@@ -1341,15 +1345,6 @@ c  Td -> Temperature at interface between mixing layer and original wall materia
 
 c  Remarks:
 c  Consider adding the option of layer_thermal_contact
-
-*   ..set cutll, cutlo
-      if (lfirst) then
-        !$OMP CRITICAL (heatdiff0)
-        cutll = log(machsfr())
-        cutlo = max(machsfr(),exp(cutll))
-        lfirst = .false.
-        !$OMP END CRITICAL (heatdiff0)
-      end if
 
       TL = backplate_temp(ibnd)
       L = plate_thickness(ibnd)
@@ -1467,12 +1462,11 @@ c
 
       integer i, n
       integer, save :: icount
-      real (kind=R8) :: th, z1, z2, e, a1, a2, r, r0, as1, as2, sl,
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
-      real (kind=R8) :: f, fneps, rne
-      intrinsic sqrt, tan
+      intrinsic sqrt
 c
 c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
@@ -1579,11 +1573,6 @@ c  z2 = 91 - 92
 
       data icount/0/
 
-      f(z1,z2) = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
-      fneps(e,z1,a1,z2,a2) = 0.032534_R8 * e /
-     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
-      rne(th) = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
-     .  ( 2.0_R8 * as2 ) )
   600 format('  undefined projectile is called  ')
       n = 1
       go to 1
@@ -1756,6 +1745,29 @@ c       write(*,*) 'did light projectile calculation for rnion'
    88   rnion = r0
         return
       endif
+
+      contains
+
+      function f(z1,z2)
+      real(kind=R8) :: f, z1, z2
+      f = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
+      return
+      end function f
+
+      function fneps(e,z1,a1,z2,a2)
+      real(kind=R8) :: fneps, e, z1, a1, z2, a2
+      fneps = 0.032534_R8 * e /
+     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
+      return
+      end function fneps
+
+      function rne(th)
+      real(kind=R8) :: rne, th
+      intrinsic tan
+      rne = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
+     .  ( 2.0_R8 * as2 ) )
+      return
+      end function rne
 
       end function rnion
 c

@@ -5,12 +5,15 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_aggs
       use b2mod_version
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1
@@ -93,7 +96,7 @@
       integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
-      character line*500
+      character line*500, ligne*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
@@ -105,7 +108,7 @@
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
+      external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
@@ -310,9 +313,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -333,11 +340,7 @@
 *!!   be generated with dimensions (nx1,ny1).
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
-     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-     3 topix1,topiy1,bottomix1,bottomiy1,
-     4 leftcut1,rightcut1,bottomcut1,topcut1,
-     5 periodic_bc,nncut,nncutmax)
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
@@ -730,13 +733,11 @@ cdpc-debug
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
       mapInitialized = .true.
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')

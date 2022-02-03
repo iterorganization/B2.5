@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:0), nout(0:1), nx, ns
@@ -60,7 +61,7 @@
       integer idum(0:9)
       character lblcp*120
 *   ..procedures
-      external subini, subend, xertst, cfwuin, cfwuch, cfverw
+      external xertst, cfwuin, cfwuch
       external b2xxid, b2rflb, b2rfcp, b2wfcp, b2wucp, b2xvcp, b2xvps
 
 *-----------------------------------------------------------------------

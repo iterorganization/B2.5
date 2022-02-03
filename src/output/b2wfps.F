@@ -1,25 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wfps (nprt, idout, nx, ny, ns,
-     &  gs, qc, ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      subroutine b2wfps (nprt, idout, nx, ny, ns)
       use b2mod_types
       use b2mod_rates
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       character idout*(*)
-      real (kind=R8) ::
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -45,12 +39,10 @@
 
 *   ..local variables
       real (kind=R8) ::
-     *  fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      1  wrk0(-1:nx,-1:ny),
-     2  ni(-1:nx,-1:ny,0:1), 
      3  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpni, b2xppr, b2xpro, b2xpfe, b2xpfi, b2wfpj,
      &  b2wfpk
 
@@ -74,10 +66,8 @@
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..write state
-      call b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro, rz, fne, fni, wrk0)
-      call b2wfpk (nprt, idout, nx, ny, ns, gs, qc, 
-     &  fna, fhe, fhi, fch, fne, fni)
+      call b2wfpj (nprt, idout, nx, ny, ns, pr, ro, rz, wrk0)
+      call b2wfpk (nprt, idout, nx, ny, ns)
 
 * ..return
       call subend ()

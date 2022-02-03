@@ -3,6 +3,7 @@
 
       program b2yq
       use b2mod_types
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -62,8 +63,7 @@
       integer ninp(0:1), nout(0:1), nscr(0:0), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
-     &  gclwk
+      external prgini, prgend, cfopen, gnopen, gopks, gclks, gclwk
       external b2yqdr
 *   ..initialise input/output units
       data ninp/50,51/

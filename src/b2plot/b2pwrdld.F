@@ -7,12 +7,16 @@ c*** Calculates radiation load onto the specified wall sections
 c*** The list of the wall segments is to be specified in lwldrad
 c======================================================================
       use b2mod_types
+      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
 #     include "DIMENSIONS.F"
 #     include "rdload.inc"
@@ -22,7 +26,7 @@ c======================================================================
      *   u
 #ifdef DBG
       integer lun_w
-      parameter (lun_w=76)
+      parameter (lun_w=96)
       character tab
 #endif
 c======================================================================
@@ -59,7 +63,9 @@ c
       print *,'lbnd(i):'
       print '(20i4)',(lbnd(i),i=1,nplgs)
       print *,'luwrk:'
-      print '(20i4)',luwrk
+      print '(20i4)',(luwrk(i),i=1,nsgmx)
+      print *,'lewrk:'
+      print '(20i4)',(lewrk(i),i=1,nsgmx)
 #endif
 
       k=0
@@ -151,6 +157,8 @@ c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
       write(*,*)   '  Total radiation         : ',ttsrc
+      if (add_rad.gt.0.0_R8)
+     >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
         write(*,*) '  Reaching the targets    : ',tttrg
       else if (irdparm.eq.2) then

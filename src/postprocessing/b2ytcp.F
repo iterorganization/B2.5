@@ -9,6 +9,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nput, ns, ns1
@@ -304,7 +305,7 @@
       logical oldversion
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
       intrinsic max
 
 *-----------------------------------------------------------------------

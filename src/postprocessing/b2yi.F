@@ -10,6 +10,7 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -69,7 +70,7 @@
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
       logical file_open, ex
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgfin, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2yidr
 *   ..initialise input/output units

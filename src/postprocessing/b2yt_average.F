@@ -19,7 +19,10 @@
      &  she1_mean, shi1_mean, sch1_mean,
      &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_version
+      use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       character*256 filename
@@ -38,13 +41,13 @@
      . ua_mean(-1:nx,-1:ny,0:ns-1), po_mean(-1:nx,-1:ny),
      . e_na(-1:nx,-1:ny,0:ns-1), e_te(-1:nx,-1:ny), e_ti(-1:nx,-1:ny),
      . e_ua(-1:nx,-1:ny,0:ns-1), e_po(-1:nx,-1:ny),
-     . sna_mean(-1:nx,-1:ny,0:1,0:ns-1), sne_mean(-1:nx,-1:ny,0:1),
-     . smo_mean(-1:nx,-1:ny,0:3,0:ns-1), she_mean(-1:nx,-1:ny,0:3),
-     . shi_mean(-1:nx,-1:ny,0:3), sch_mean(-1:nx,-1:ny,0:3),
-     . e_sna(-1:nx,-1:ny,0:1,0:ns-1), e_sne(-1:nx,-1:ny,0:1),
-     . e_smo(-1:nx,-1:ny,0:3,0:ns-1),
-     . e_she(-1:nx,-1:ny,0:3), e_shi(-1:nx,-1:ny,0:3),
-     . e_sch(-1:nx,-1:ny,0:3)
+     . sna_mean(-1:nx,-1:ny,0:ns-1), sne_mean(-1:nx,-1:ny),
+     . smo_mean(-1:nx,-1:ny,0:ns-1), she_mean(-1:nx,-1:ny),
+     . shi_mean(-1:nx,-1:ny), sch_mean(-1:nx,-1:ny),
+     . e_sna(-1:nx,-1:ny,0:ns-1), e_sne(-1:nx,-1:ny),
+     . e_smo(-1:nx,-1:ny,0:ns-1),
+     . e_she(-1:nx,-1:ny), e_shi(-1:nx,-1:ny),
+     . e_sch(-1:nx,-1:ny)
       logical flip
 *   ..output arguments (unspecified on entry)
       integer naver, ntotdt
@@ -55,18 +58,18 @@
      . e_na1(-1:nx1,-1:ny1,0:ns1-1),
      . e_te1(-1:nx1,-1:ny1), e_ti1(-1:nx1,-1:ny1),
      . e_ua1(-1:nx1,-1:ny1,0:ns1-1), e_po1(-1:nx1,-1:ny1),
-     . sna1_mean(-1:nx1,-1:ny1,0:1,0:ns1-1),
-     . sne1_mean(-1:nx1,-1:ny1,0:1),
-     . smo1_mean(-1:nx1,-1:ny1,0:3,0:ns1-1),
-     . she1_mean(-1:nx1,-1:ny1,0:3),
-     . shi1_mean(-1:nx1,-1:ny1,0:3),
-     . sch1_mean(-1:nx1,-1:ny1,0:3),
-     . e_sna1(-1:nx1,-1:ny1,0:1,0:ns1-1),
-     . e_sne1(-1:nx1,-1:ny1,0:1),
-     . e_smo1(-1:nx1,-1:ny1,0:3,0:ns1-1),
-     . e_she1(-1:nx1,-1:ny1,0:3),
-     . e_shi1(-1:nx1,-1:ny1,0:3),
-     . e_sch1(-1:nx1,-1:ny1,0:3)
+     . sna1_mean(-1:nx1,-1:ny1,0:ns1-1),
+     . sne1_mean(-1:nx1,-1:ny1),
+     . smo1_mean(-1:nx1,-1:ny1,0:ns1-1),
+     . she1_mean(-1:nx1,-1:ny1),
+     . shi1_mean(-1:nx1,-1:ny1),
+     . sch1_mean(-1:nx1,-1:ny1),
+     . e_sna1(-1:nx1,-1:ny1,0:ns1-1),
+     . e_sne1(-1:nx1,-1:ny1),
+     . e_smo1(-1:nx1,-1:ny1,0:ns1-1),
+     . e_she1(-1:nx1,-1:ny1),
+     . e_shi1(-1:nx1,-1:ny1),
+     . e_sch1(-1:nx1,-1:ny1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -109,16 +112,19 @@
 *.declarations
 
 *   ..local variables
-      integer i, is, is1, n1, n2, idum(0:2)
+      integer is, is1, n1, n2, idum(0:2)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na_new, na_min, sum,
-     *   zpdum(0:ns-1,4)
+     *   zpdum(0:ns-1,4), zero(-1:nx,-1:ny), rza(-1:nx,-1:ny,0:ns-1),
+     *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
+     *   swrk4(-1:nx,-1:ny,0:3), swrk4s(-1:nx,-1:ny,0:3,0:ns-1),
+     *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
       character*120 :: label
       save na_new, na_min
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, b2saxpy
-      external b2xtvc
+      external xertst, ipgetr, sfill, b2saxpy
+      external b2xtvc, b2xpne, b2xpni
 
 *-----------------------------------------------------------------------
 *.computation
@@ -152,12 +158,12 @@
       call sfill (n2, 0.0_R8, e_te, 1)
       call sfill (n2, 0.0_R8, e_ti, 1)
       call sfill (n2, 0.0_R8, e_po, 1)
-      call sfill (n2*ns*2, 0.0_R8, sna_mean, 1)
-      call sfill (n2*ns*2, 0.0_R8, sne_mean, 1)
-      call sfill (n2*ns*4, 0.0_R8, smo_mean, 1)
-      call sfill (n2*4, 0.0_R8, she_mean, 1)
-      call sfill (n2*4, 0.0_R8, shi_mean, 1)
-      call sfill (n2*4, 0.0_R8, sch_mean, 1)
+      call sfill (n2*ns, 0.0_R8, sna_mean, 1)
+      call sfill (n2*ns, 0.0_R8, sne_mean, 1)
+      call sfill (n2*ns, 0.0_R8, smo_mean, 1)
+      call sfill (n2, 0.0_R8, she_mean, 1)
+      call sfill (n2, 0.0_R8, shi_mean, 1)
+      call sfill (n2, 0.0_R8, sch_mean, 1)
       call sfill (n2*ns*2, 0.0_R8, e_sna, 1)
       call sfill (n2*ns*2, 0.0_R8, e_sne, 1)
       call sfill (n2*ns*4, 0.0_R8, e_smo, 1)
@@ -183,12 +189,50 @@
       call cfrure (99, n2,    po_mean, 'po_mean')
       call cfrure (99, n2*ns, ua_mean, 'ua_mean')
       
-      call cfrure (99, n2*2*ns, sna_mean, 'sna_mean')
-      call cfrure (99, n2*2,    sne_mean, 'sne_mean')
-      call cfrure (99, n2*4,    she_mean, 'she_mean')
-      call cfrure (99, n2*4,    shi_mean, 'shi_mean')
-      call cfrure (99, n2*4,    sch_mean, 'sch_mean')
-      call cfrure (99, n2*4*ns, smo_mean, 'smo_mean')
+      if (b2faveri_version.ge.'03.000.008') then
+        call cfrure (99, n2*ns, sna_mean, 'sna_mean')
+        call cfrure (99, n2,    sne_mean, 'sne_mean')
+        call cfrure (99, n2,    she_mean, 'she_mean')
+        call cfrure (99, n2,    shi_mean, 'shi_mean')
+        call cfrure (99, n2,    sch_mean, 'sch_mean')
+        call cfrure (99, n2*ns, smo_mean, 'smo_mean')
+      else
+        zero = 0.0_R8
+        do is = 0, ns-1
+          rza(:,:,is) = (zamin(is)+zamax(is))/2.0_R8
+        end do
+        call b2xpne ( nx, ny, ns, rza, na_mean, zero, ne_mean)
+        call b2xpni ( nx, ny, ns, na_mean, ni_mean)
+        call cfrure (99, n2*2*ns, swrk2s, 'sna_mean')
+        sna_mean(:,:,:) = swrk2s(:,:,0,:) +
+     .                    swrk2s(:,:,1,:) * na_mean(:,:,:)
+        call cfrure (99, n2*2,    swrk2 , 'sne_mean')
+        sne_mean(:,:) = swrk2(:,:,0) +
+     .                  swrk2(:,:,1) * ne_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'she_mean')
+        she_mean(:,:) = swrk4(:,:,0) +
+     .                  swrk4(:,:,1) * ne_mean(:,:) +
+     .                  swrk4(:,:,2) * te_mean(:,:) +
+     .                  swrk4(:,:,3) * ne_mean(:,:) * te_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'shi_mean')
+        shi_mean(:,:) = swrk4(:,:,0) +
+     .                  swrk4(:,:,1) * ni_mean(:,:,0) +
+     .                  swrk4(:,:,2) * ti_mean(:,:) +
+     .                  swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'sch_mean')
+        sch_mean(:,:) = swrk4(:,:,0) +
+     .                  swrk4(:,:,1) * po_mean(:,:) +
+     .                  swrk4(:,:,2) * ne_mean(:,:) +
+     .                  swrk4(:,:,3) * ne_mean(:,:) * po_mean(:,:)
+        call cfrure (99, n2*4*ns, swrk4s, 'smo_mean')
+        do is = 0, ns-1
+          smo_mean(:,:,is) = swrk4s(:,:,0,is) +
+     .     swrk4s(:,:,1,is) * ua_mean(:,:,is) +
+     .     swrk4s(:,:,2,is) * na_mean(:,:,is) * mp * am(is) +
+     .     swrk4s(:,:,1,is) * ua_mean(:,:,is) *
+     .                        na_mean(:,:,is) * mp * am(is)
+        end do
+      end if
 
       call cfrure (99, n2*ns, e_na, 'e_na')
       call cfrure (99, n2,    e_te, 'e_te')
@@ -196,12 +240,44 @@
       call cfrure (99, n2,    e_po, 'e_po')
       call cfrure (99, n2*ns, e_ua, 'e_ua')
 
-      call cfrure (99, n2*2*ns, e_sna, 'e_sna')
-      call cfrure (99, n2*2,    e_sne, 'e_sne')
-      call cfrure (99, n2*4,    e_she, 'e_she')
-      call cfrure (99, n2*4,    e_shi, 'e_shi')
-      call cfrure (99, n2*4,    e_sch, 'e_sch')
-      call cfrure (99, n2*4*ns, e_smo, 'e_smo')
+      if (b2faveri_version.ge.'03.000.008') then
+        call cfrure (99, n2*ns, e_sna, 'e_sna')
+        call cfrure (99, n2,    e_sne, 'e_sne')
+        call cfrure (99, n2,    e_she, 'e_she')
+        call cfrure (99, n2,    e_shi, 'e_shi')
+        call cfrure (99, n2,    e_sch, 'e_sch')
+        call cfrure (99, n2*ns, e_smo, 'e_smo')
+      else
+        call cfrure (99, n2*2*ns, swrk2s, 'e_sna')
+        e_sna(:,:,:) = swrk2s(:,:,0,:) +
+     .                 swrk2s(:,:,1,:) * na_mean(:,:,:)
+        call cfrure (99, n2*2,    swrk2 , 'e_sne')
+        e_sne(:,:) = swrk2(:,:,0) +
+     .               swrk2(:,:,1) * ne_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'e_she')
+        e_she(:,:) = swrk4(:,:,0) +
+     .               swrk4(:,:,1) * ne_mean(:,:) +
+     .               swrk4(:,:,2) * te_mean(:,:) +
+     .               swrk4(:,:,3) * ne_mean(:,:) * te_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'e_shi')
+        e_shi(:,:) = swrk4(:,:,0) +
+     .               swrk4(:,:,1) * ni_mean(:,:,0) +
+     .               swrk4(:,:,2) * ti_mean(:,:) +
+     .               swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
+        call cfrure (99, n2*4,    swrk4 , 'e_sch')
+        e_sch(:,:) = swrk4(:,:,0) +
+     .               swrk4(:,:,1) * po_mean(:,:) +
+     .               swrk4(:,:,2) * ne_mean(:,:) +
+     .               swrk4(:,:,3) * ne_mean(:,:) * po_mean(:,:)
+        call cfrure (99, n2*4*ns, swrk4s, 'e_smo')
+        do is = 0, ns-1
+          e_smo(:,:,is) = swrk4s(:,:,0,is) +
+     .     swrk4s(:,:,1,is) * ua_mean(:,:,is) +
+     .     swrk4s(:,:,2,is) * na_mean(:,:,is) * mp * am(is) +
+     .     swrk4s(:,:,1,is) * ua_mean(:,:,is) *
+     .                        na_mean(:,:,is) * mp * am(is)
+        end do
+      end if
 
       close(99)
 
@@ -217,12 +293,12 @@
       call sfill (n1, 0.0_R8, e_te1, 1)
       call sfill (n1, 0.0_R8, e_ti1, 1)
       call sfill (n1, 0.0_R8, e_po1, 1)
-      call sfill (n1*ns1*2, 0.0_R8, sna1_mean, 1)
-      call sfill (n1*ns1*2, 0.0_R8, sne1_mean, 1)
-      call sfill (n1*ns1*4, 0.0_R8, smo1_mean, 1)
-      call sfill (n1*4, 0.0_R8, she1_mean, 1)
-      call sfill (n1*4, 0.0_R8, shi1_mean, 1)
-      call sfill (n1*4, 0.0_R8, sch1_mean, 1)
+      call sfill (n1*ns1, 0.0_R8, sna1_mean, 1)
+      call sfill (n1*ns1, 0.0_R8, sne1_mean, 1)
+      call sfill (n1*ns1, 0.0_R8, smo1_mean, 1)
+      call sfill (n1, 0.0_R8, she1_mean, 1)
+      call sfill (n1, 0.0_R8, shi1_mean, 1)
+      call sfill (n1, 0.0_R8, sch1_mean, 1)
       call sfill (n1*ns1*2, 0.0_R8, e_sna1, 1)
       call sfill (n1*ns1*2, 0.0_R8, e_sne1, 1)
       call sfill (n1*ns1*4, 0.0_R8, e_smo1, 1)
@@ -264,38 +340,34 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-            do i = 0, 1
-              call b2xtvc (nx, ny, nx1, ny1,
-     &          sna_mean(-1,-1,i,is), sna1_mean(-1,-1,i,is1),
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1,
-     &          wrk0)
-              call b2xtvc (nx, ny, nx1, ny1,
-     &          e_sna(-1,-1,i,is), e_sna1(-1,-1,i,is1),
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1,
-     &          wrk0)
-            end do
-            do i = 0, 3
-              call b2xtvc (nx, ny, nx1, ny1,
-     &          smo_mean(-1,-1,i,is), smo1_mean(-1,-1,i,is1),
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1,
-     &          wrk0)
-              call b2xtvc (nx, ny, nx1, ny1,
-     &          e_smo(-1,-1,i,is), e_smo1(-1,-1,i,is1),
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1,
-     &          wrk0)
-            end do
+            call b2xtvc (nx, ny, nx1, ny1,
+     &        sna_mean(-1,-1,is), sna1_mean(-1,-1,is1),
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+            call b2xtvc (nx, ny, nx1, ny1,
+     &        e_sna(-1,-1,is), e_sna1(-1,-1,is1),
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+            call b2xtvc (nx, ny, nx1, ny1,
+     &        smo_mean(-1,-1,is), smo1_mean(-1,-1,is1),
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+            call b2xtvc (nx, ny, nx1, ny1,
+     &        e_smo(-1,-1,is), e_smo1(-1,-1,is1),
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
           else if (bundle_frac(is1,is).gt.0.0_R8) then
             call b2xtvc (nx, ny, nx1, ny1, na_mean(-1,-1,is), wrk1,
      &        nncutmax, non_commensurate, flip,
@@ -325,38 +397,34 @@
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        e_ua1(-1,-1,is1), 1)
-            do i = 0, 1
-              call b2xtvc (nx, ny, nx1, ny1, sna_mean(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
-              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
-     &          sna1_mean(-1,-1,i,is1), 1)
-              call b2xtvc (nx, ny, nx1, ny1, e_sna(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
-              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
-     &          e_sna1(-1,-1,i,is1), 1)
-            end do
-            do i = 0, 3
-              call b2xtvc (nx, ny, nx1, ny1, smo_mean(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
-              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
-     &          smo1_mean(-1,-1,i,is1), 1)
-              call b2xtvc (nx, ny, nx1, ny1, e_smo(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate, flip,
-     &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &          leftcut, leftcut1, rightcut, rightcut1,
-     &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
-              call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
-     &          e_smo1(-1,-1,i,is1), 1)
-            end do
+            call b2xtvc (nx, ny, nx1, ny1, sna_mean(-1,-1,is), wrk1,
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
+     &        sna1_mean(-1,-1,is1), 1)
+            call b2xtvc (nx, ny, nx1, ny1, e_sna(-1,-1,is), wrk1,
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
+     &        e_sna1(-1,-1,is1), 1)
+            call b2xtvc (nx, ny, nx1, ny1, smo_mean(-1,-1,is), wrk1,
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
+     &        smo1_mean(-1,-1,is1), 1)
+            call b2xtvc (nx, ny, nx1, ny1, e_smo(-1,-1,is), wrk1,
+     &        nncutmax, non_commensurate, flip,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
+     &        e_smo1(-1,-1,is1), 1)
           endif
         enddo
         if (sum.eq.0.0_R8) then  ! this is a new species
@@ -393,54 +461,50 @@
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-      do i = 0, 1
-        call b2xtvc (nx, ny, nx1, ny1,
-     &        sne_mean(-1,-1,i), sne1_mean(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1,
+     &        sne_mean(-1,-1), sne1_mean(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1, e_sne(-1,-1,i), e_sne1(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1, e_sne(-1,-1), e_sne1(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-      end do
-      do i = 0, 3
-        call b2xtvc (nx, ny, nx1, ny1,
-     &        she_mean(-1,-1,i), she1_mean(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1,
+     &        she_mean(-1,-1), she1_mean(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1, e_she(-1,-1,i), e_she1(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1, e_she(-1,-1), e_she1(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1,
-     &        shi_mean(-1,-1,i), shi1_mean(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1,
+     &        shi_mean(-1,-1), shi1_mean(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1, e_shi(-1,-1,i), e_shi1(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1, e_shi(-1,-1), e_shi1(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1,
-     &        sch_mean(-1,-1,i), sch1_mean(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1,
+     &        sch_mean(-1,-1), sch1_mean(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-        call b2xtvc (nx, ny, nx1, ny1, e_sch(-1,-1,i), e_sch1(-1,-1,i),
+      call b2xtvc (nx, ny, nx1, ny1, e_sch(-1,-1), e_sch1(-1,-1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-      end do
 
 * ..return
       call subend ()

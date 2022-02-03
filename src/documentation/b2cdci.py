@@ -61,7 +61,7 @@ if DO_NOT_RESOLVE_ENTITIES:
         # The following entities are supported by default.
         if command in ["lt", "gt", "amp"]:
             continue
-        text_to_process = text_to_process.replace(f'&{command};', f'\{command}')
+        text_to_process = text_to_process.replace(f'&{command};', f'\\{command}')
 else:
     dtd_name = "xhtml-symbol.ent"
     xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'

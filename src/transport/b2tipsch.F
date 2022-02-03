@@ -13,6 +13,7 @@
      &  , only : bzbl
       use b2mod_geo
 !     &   , only : hzl,hzb
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -54,7 +55,7 @@
      *   facdriftm                                                       !srv 25.01.02
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
       data ncall/0/

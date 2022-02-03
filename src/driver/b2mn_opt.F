@@ -21,6 +21,7 @@
       use b2mod_par_opt
       use b2mod_exp_file_names
       use b2mod_driver
+      use b2mod_xerset
 #ifdef USE_MPI
 #if MPI_MOD > 0
       use mpi      ! IGNORE
@@ -146,7 +147,7 @@
       logical file_open
       real (kind=R8) :: cpu_s, cpu_f
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET

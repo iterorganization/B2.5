@@ -10,9 +10,14 @@ LD_NAG    ?= `pkg-config openblas --libs`
 endif
 LD_NETCDF ?=
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+
 ifndef SOLPS_CPP
 DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
 endif
 
 ifdef USE_MPI
@@ -37,7 +42,8 @@ endif
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef USE_MPI

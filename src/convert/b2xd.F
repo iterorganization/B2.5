@@ -12,6 +12,7 @@
       use b2mod_transport
       use b2mod_anomalous_transport
       use b2mod_work
+      use b2mod_xerset
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
@@ -71,7 +72,7 @@
       integer ninp(0:4), nout(0:2), io, nx, ny, ns, idum(0:9)
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2xddr
 *   ..initialise input/output units
       data ninp/50,51,52,53,54/

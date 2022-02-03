@@ -1,4 +1,4 @@
-      subroutine b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+      subroutine b2tdia(nx, ny, ns, vol, gs, bb,
      &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
@@ -7,12 +7,17 @@
       use b2mod_geo_corner
       use b2mod_geo
      &   , only : hyl, hxb                       ! IYS 04.03.2019
+#ifdef CLASSICAL_CURRENT
+      use b2mod_geo
+     &   , only : hy1
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     &  bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1),
      &  uadia(-1:nx,-1:ny,0:1,0:ns-1)
@@ -25,7 +30,7 @@
 *  1. purpose
 *
 *     B2TDIA computes the X and Y components of the divergent part of
-*     the diamagnetic current
+*     the diamagnetic current.
 *
 *  8. further comments
 *
@@ -39,18 +44,16 @@
      &  facdriftm
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
       integer, save :: drift_style                                       !IYS 11.02.2020
+      integer, save :: no_current = 0
 #ifdef CLASSICAL_CURRENT
       integer is
-      real (kind=R8) :: hy1,
+      real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
       external intcor
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 #endif
 *   ..procedures
-      real (kind=R8) ::
-     *   smin, smax
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -67,6 +70,7 @@
          drift_style = 2
        end if
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -75,20 +79,14 @@
 *   ..test nx, ny, ns
        call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
        call xertst (1.le.ns, 'faulty argument ns')
-*    ..test vol, hy, qz
+*    ..test vol
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
-     .              'faulty argument range qz(,,0)')
-       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &              smax(n2,qz(-1,-1,1),1).le.1.0_R8,
-     .              'faulty argument range qz(,,1)')
       endif
       
       fchdia = 0.0e0_R8
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8
+     &                        .and. no_current.eq.0) then                !srv 16.10.17
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
         if (drift_style.ne.2 .or. redef_gmtry.eq.0) then                 !IYS 11.02.2020

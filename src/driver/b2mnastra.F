@@ -21,6 +21,7 @@
       use b2mod_astra_to_b2
       use b2mod_b2_to_astra
       use b2mod_driver
+      use b2mod_xerset
 #ifdef USE_MPI
 #if MPI_MOD > 0
       use mpi      ! IGNORE
@@ -145,7 +146,7 @@
       real (kind=R8) :: cpu_s, cpu_f
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET

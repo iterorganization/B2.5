@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, !xpb !srv 05.07.17
+      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,     !xpb !srv 05.07.17
      1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
-     2  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)
+     2  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)   !srv 24.08.21
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -19,6 +19,11 @@
      &          balance_netcdf
       use b2mod_transport_fun                                            !srv 05.07.17
       use b2mod_external                                                 !srv 05.07.17
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_plasma
+     , , only : uasx, uasy, uesx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -27,12 +32,12 @@
      &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     1  ue(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)         !srv 01.07.09
+     1  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)                              !srv 01.07.09
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), fchstoch(-1:nx,-1:ny,0:1)        !srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
@@ -59,7 +64,6 @@
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
       integer, save :: use_eirene = 0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -83,20 +87,8 @@
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *  uasx, uesx, uasy, hy1                                           !srv 13.01.17
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      uasx(ix,iy,is)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1  hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
-     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-      uesx(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
-     1  hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
-     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-      uasy(ix,iy,is)=(hy1(ix,iy)*ua(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1  hy1(bottomix(ix,iy),bottomiy(ix,iy))*ua(ix,iy,is))/
-     2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
 *   ..initialisation
       data ncall/0/, style/0/
       data rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/,
@@ -220,8 +212,6 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
-     &      fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -230,17 +220,17 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy)*(hy(ix,iy)
-     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                                !srv 24.08.21
+     &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
-     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)             !srv 24.08.21
+     &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
           endif
         enddo
        enddo
-      endif                                                               !lk 31.01.08 }
-      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                  !srv 17.12.13
+      endif                                                              !lk 31.01.08 }
 *   ..contribution from divergence(ue,ve)
 !xpb !!! The radial derivative terms uesy are non-conservative !!!
 cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb
@@ -496,9 +486,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
 *    ..contribution from electron-atom friction
 *      (a.k.a. Joule heating)
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+       call b2xehx (nx, ny, te, po, ne, ehx)                             !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
-     &   call b2xehy (nx, ny, hy, qz, te, po, ne, ehy)                   !srv 13.01.17
+     &   call b2xehy (nx, ny, te, po, ne, ehy)                           !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        if (balance_netcdf.ne.0) then !djm Jan2017
@@ -744,7 +734,6 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       end subroutine b2sihs
 c
       subroutine b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,
-     . hy, qz,
      1 she, shi, facdrift)                                               !xpb
       use b2mod_types
       use b2mod_rates
@@ -755,6 +744,9 @@ c
       use b2mod_b2cmpa
       use b2mod_balance                                                  !djm Jan2017
      & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -763,8 +755,7 @@ c
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1)
+     *  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny)
       real (kind=R8) ::                                                  !xpb
      *  facdrift(-1:nx,-1:ny)                                            !xpb
 *   ..output arguments (unspecified on entry)
@@ -779,11 +770,8 @@ c
       save ncall, facgt
       real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
-      external subini, subend, xertst, b2xvsg, ipgetr
+      external xertst, b2xvsg, ipgetr
       intrinsic min, max
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, facgt/0.0_R8/
  

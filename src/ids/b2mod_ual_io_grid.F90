@@ -111,8 +111,11 @@ module b2mod_ual_io_grid
 
     use b2mod_grid_mapping
     use b2mod_indirect
+    use b2mod_interp
     use b2mod_b2cmfs
     use b2mod_ppout
+    use b2mod_geo
+    use b2mod_user_namelist
 
     implicit none
 
@@ -175,6 +178,9 @@ module b2mod_ual_io_grid
     ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1
     integer, parameter :: IDS_CLASS_NODE = 1    !< Object class tuple
         !< (IMAS class definition): Node
+    ! integer, parameter :: IDS_CLASS_EDGE
+    integer, parameter :: IDS_CLASS_EDGE = 2    !< Object class tuple
+        !< (IMAS class definition): Edge
     ! integer, parameter :: IDS_CLASS_RZ_EDGE = sum(CLASS_RZ_EDGE) + 1
     integer, parameter :: IDS_CLASS_RZ_EDGE = 2 !< Object class tuple
         !< (IMAS class definition): Edge
@@ -439,8 +445,8 @@ contains
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,       &
-        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells, vol, &
-        &   gs, qc )
+        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells,      &
+        &   vol, gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -451,6 +457,7 @@ contains
         type(ids_generic_grid_aos3_root), intent(out) :: grid_ggd !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
+        !! Input arguments
         integer, intent(in) :: nx   !< Number of interior cells
             !< along the first coordinate
             !< Used to define size of grid arrays: (-1:nx, -1:ny)
@@ -458,7 +465,6 @@ contains
             !< along the second coordinate
             !< Used to define size of grid arrays: (-1:nx, -1:ny)
 
-        !! Output arguments
         real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 )    !< Horizontal vertex
             !< coordinates of the four corners of the (ix, iy) cell
         real(R8), intent(in) :: cry( -1:nx, -1:ny, 0:3 )    !< Vertical vertex
@@ -489,28 +495,34 @@ contains
         !! Cell flags
         integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS ) !< Cell flag
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
-        !! Optional B2 measure information
-        real(R8), intent(in), optional :: vol( -1:nx, -1:ny) !< Cell volume
-        real(R8), intent(in), optional :: gs( -1:nx, -1:ny, 0:2)
-        real(R8), intent(in), optional :: qc(-1:nx,-1:ny)   !< Cosine of the
+        !! Geometrical B2 measure information
+        real(R8), intent(in) :: vol( -1:nx, -1:ny) !< Cell volume
+        real(R8), intent(in) :: gs( -1:nx, -1:ny, 0:2) !< Face areas
+        real(R8), intent(in) :: qc(-1:nx,-1:ny)   !< Cosine of the
             !< angle between flux line direction and left cell face
         real(R8), save :: width = 1.0_R8
 
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
+        integer, save :: ncall = 0
 
-        call ipgetr ('b2agmt_1d_width', width)
-        call xertst (0.0_R8.lt.width, 'faulty input width')
-        call xertst( present( gs ) .EQV. present( qc ) , &
-            "Assert error ( gz or qc missing ) in b2_IMAS_Fill_Grid_Desc" )
+        !! Procedures
+        external ipgetr, xertst
+
+        if (ncall.eq.0) then
+          call ipgetr ('b2agmt_1d_width', width)
+          call xertst (0.0_R8.lt.width, 'faulty input width')
+        end if
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
         !! Set grid subsets
         call fill_In_GridSubset_Desc()
 
+        ncall = ncall + 1
+
 contains
-    !> Fill in the general grid description
+    !> Fill in the General Grid Description
     subroutine fill_In_Grid_Desc()
         !! Internal variables
         integer :: iVx  !< Vertex/node index
@@ -554,7 +566,7 @@ contains
             &   'Poloidal plane cross-section'
 
         !! Set the space coordinates, also defining the dimension of the space
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(NDIM) )
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type( NDIM ) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1) = COORDTYPE_R
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
 
@@ -566,21 +578,80 @@ contains
         !! 0D vertices/nodes
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( gmap%nVx ) )
+            &   objects_per_dimension( IDS_CLASS_NODE )%object( gmap%nVx ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%name = "node_coordinates_connection"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%description =              &
+            &    "(R, Z) coordinates of nodes + "//         &
+            &    "connection length + distance to nearest surface"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%index = 11
+#endif
         !! 1D faces/edges
         !! For SN: gmap%nFcx + gmap%nFcy = nx*( ny+1 ) + ( nx+1 )*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   object( gmap%nFcx + gmap%nFcy ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%name = "edge_areas"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%description =              &
+            &   "Projected areas of edges: poloidal, radial, total"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%index = 21
+#endif
         !! 2D cells
         !! For SN: gmap%nCv = nx*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(3)%object( gmap%nCv ) )
+            &   objects_per_dimension( IDS_CLASS_CELL )%object( gmap%nCv ) )
+#if IMAS_MINOR_VERSION > 33
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%name = "face_indices_volume_connection"
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%description =              &
+            &    "(ix, iy) indices of B2.5 cell + "//       &
+            &    "cell volume + connection length + "//     &
+            &    "distance to nearest solid surface"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%index = 32
+#endif
 
         !! Fill in vertex/node information
         do iVx = 1, gmap%nVx
             !! Allocate geometry leaf for each vertex/node
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( iVx )%geometry(2) )
+                &   objects_per_dimension( IDS_CLASS_NODE )%    &
+                &   object( iVx )%geometry(4) )
             !! Set geometry (R and Z coordinates) of each vertex/node
             !! The way of writing vertices/nodes data identically to the
             !! conversion to IDS of
@@ -594,29 +665,51 @@ contains
             !! or
             !! /marconi_work/eufus_gw/work/g2kosl/imasdb/solps-iter/3/0
             if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
-              grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
-                  &   object( iVx )%geometry(1) = crx( gmap%mapVxix( iVx ),    &
-                                                   & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ) )
-              grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
-                  &   object( iVx )%geometry(2) = cry( gmap%mapVxix( iVx ),    &
-                                                   & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ) )
+              grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
+                  &   objects_per_dimension( IDS_CLASS_NODE )%       &
+                  &   object( iVx )%geometry(1) =                    &
+                  &   crx( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ), &
+                  &        gmap%mapVxIVx( iVx ) )
+              grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
+                  &   objects_per_dimension( IDS_CLASS_NODE )%       &
+                  &   object( iVx )%geometry(2) =                    &
+                  &   cry( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ), &
+                  &        gmap%mapVxIVx( iVx ) )
             else if (isymm.eq.3 .or. isymm.eq.4) then
-              grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
-                  &   object( iVx )%geometry(1) = cry( gmap%mapVxix( iVx ),    &
-                                                   & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ) )
-              grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%  &
-                  &   object( iVx )%geometry(2) = crx( gmap%mapVxix( iVx ),    &
-                                                   & gmap%mapVxiy( iVx ),      &
-                                                   & gmap%mapVxIVx( iVx ) )
+              grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
+                  &   objects_per_dimension( IDS_CLASS_NODE )%       &
+                  &   object( iVx )%geometry(1) =                    &
+                  &   cry( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ), &
+                  &        gmap%mapVxIVx( iVx ) )
+              grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
+                  &   objects_per_dimension( IDS_CLASS_NODE )%       &
+                  &   object( iVx )%geometry(2) =                    &
+                  &   crx( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ), &
+                  &        gmap%mapVxIVx( iVx ) )
             end if
 
+            !! Provide connection length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(3) =                      &
+                &   get_connection_length( IDS_CLASS_NODE, 1,        &
+                &   nx, ny, gmap%mapVxix( iVx ),                     &
+                &   gmap%mapVxiy( iVx ), gmap%mapVxIVx( iVx ) )
+
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(4) =                      &
+                &   get_connection_length( IDS_CLASS_NODE, 2,        &
+                &   nx, ny, gmap%mapVxix( iVx ),                     &
+                &   gmap%mapVxiy( iVx ), gmap%mapVxIVx( iVx ) )
+
             !! Set additional vertex/node index (REQUIRED!)
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( iVx )%nodes(1) )
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%nodes(1) )
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
                 &   object( iVx )%nodes(1) = iVx
         end do
 
@@ -630,74 +723,74 @@ contains
             do ix = 0, nx-1
                 iVx = iVx + 1 !! Lower left corners
                 if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(iVx)%geometry(1) =  &
-                        &   crx(ix,iy,0)
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(iVx)%geometry(2) =  &
-                        &   cry(ix,iy,0)
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_NODE )% &
+                        &   object(iVx)%geometry(1) = crx(ix,iy,0)
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_NODE )% &
+                        &   object(iVx)%geometry(2) = cry(ix,iy,0)
                 else if (isymm.eq.3 .or. isymm.eq.4) then
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(iVx)%geometry(1) =  &
-                        &   cry(ix,iy,0)
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(iVx)%geometry(2) =  &
-                        &   crx(ix,iy,0)
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_NODE )% &
+                        &   object(iVx)%geometry(1) = cry(ix,iy,0)
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_NODE )% &
+                        &   object(iVx)%geometry(2) =  crx(ix,iy,0)
                 end if
                 if( iVx .eq. gmap%nVx ) exit
                 if( ix.eq.nx-1) then
                     iVx = iVx + 1  !! Lower right corners
                     if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(iVx)%geometry(1) =  &
-                            &   crx( ix, iy, 1)
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(iVx)%geometry(2) =  &
-                            &   cry( ix, iy, 1)
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object(iVx)%geometry(1) = crx( ix, iy, 1)
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object(iVx)%geometry(2) = cry( ix, iy, 1)
                     else if (isymm.eq.3 .or. isymm.eq.4) then
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(iVx)%geometry(1) =  &
-                            &   cry( ix, iy, 1)
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(iVx)%geometry(2) =  &
-                            &   crx( ix, iy, 1)
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object(iVx)%geometry(1) = cry( ix, iy, 1)
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object(iVx)%geometry(2) = crx( ix, iy, 1)
                     end if
                     if( iVx .eq. gmap%nVx ) exit
                 end if
                 if( iy.eq.ny-1) then
                     iVx = iVx + 1  !! Upper left corners
                     if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%                       &
-                            &   objects_per_dimension(1)%object( iVx )%geometry(1) = &
-                            &   crx( ix, iy, 2 )
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%                       &
-                            &   objects_per_dimension(1)%object( iVx )%geometry(2) = &
-                            &   cry( ix, iy, 2 )
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object( iVx )%geometry(1) = crx( ix, iy, 2 )
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NOD E)% &
+                            &   object( iVx )%geometry(2) = cry( ix, iy, 2 )
                     else if (isymm.eq.3 .or. isymm.eq.4) then
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%                       &
-                            &   objects_per_dimension(1)%object( iVx )%geometry(1) = &
-                            &   cry( ix, iy, 2 )
-                        grid_ggd%space( SPACE_POLOIDALPLANE )%                       &
-                            &   objects_per_dimension(1)%object( iVx )%geometry(2) = &
-                            &   crx( ix, iy, 2 )
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object( iVx )%geometry(1) = cry( ix, iy, 2 )
+                        grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                            &   objects_per_dimension( IDS_CLASS_NODE )% &
+                            &   object( iVx )%geometry(2) = crx( ix, iy, 2 )
                     end if
                     if( iVx .eq. gmap%nVx ) exit
                     if( ix.eq.nx-1) then
                         iVx = iVx + 1  !! Upper right corners
                         if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
-                            grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                                &   objects_per_dimension(1)%object( iVx )% &
-                                &   geometry(1) = crx( ix, iy, 3 )
-                            grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                                &   objects_per_dimension(1)%object( iVx )% &
-                                &   geometry(2) = cry( ix, iy, 3 )
+                            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                                &   objects_per_dimension( IDS_CLASS_NODE )% &
+                                &   object( iVx )%geometry(1) = crx( ix, iy, 3 )
+                            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                                &   objects_per_dimension( IDS_CLASS_NODE )% &
+                                &   object( iVx )%geometry(2) = cry( ix, iy, 3 )
                         else if (isymm.eq.3 .or. isymm.eq.4) then
-                            grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                                &   objects_per_dimension(1)%object( iVx )% &
-                                &   geometry(1) = cry( ix, iy, 3 )
-                            grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                                &   objects_per_dimension(1)%object( iVx )% &
-                                &   geometry(2) = crx( ix, iy, 3 )
+                            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                                &   objects_per_dimension( IDS_CLASS_NODE )% &
+                                &   object( iVx )%geometry(1) = cry( ix, iy, 3 )
+                            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                                &   objects_per_dimension( IDS_CLASS_NODE )% &
+                                &   object( iVx )%geometry(2) = crx( ix, iy, 3 )
                         end if
                         if( iVx .eq. gmap%nVx ) exit
                     end if
@@ -709,9 +802,6 @@ contains
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 1D objects: faces/edges
         nFc = gmap%nFcx + gmap%nFcy !! Number of all faces/edges
-        !! Allocate 1D objects
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(2)%object( gmap%nFcx + gmap%nFcy ) )
         !! Each 1D object has two boundaries and two neighbours, in positive
         !! and negative coordinate direction, one on each side (for x-aligned
         !! edges: along flux surface, for y-aligned edges: orthogonal to flux
@@ -719,25 +809,35 @@ contains
         do iFc = 1, nFc
             !! Allocate and set all boundary & connectivity information to
             !! undefined
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(2)%object( iFc )%boundary(2) )
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%      &
+                &   object( iFc )%boundary(2) )
+            !! Allocate list of area projections of the 1D object
+            !! 1: poloidal projection, 2: radial projection, 3: total area
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%      &
+                &   object( iFc )%geometry(3) )
             !! Allocate list of 0D objects forming the 1D object
             !! Two 0D objects (vertices/nodes) form one 1D object (face/edge)
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(2)%object( iFc )%nodes(2) )
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%      &
+                &   object( iFc )%nodes(2) )
             do i = 1, 2
                 !! Boundary to undefined
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%            &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%  &
                     &   object( iFc )%boundary(i)%index = B2_GRID_UNDEFINED
                 !! Neighbours to undefined
-                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )% &
-                    &   objects_per_dimension(2)%object( iFc )%boundary(i)% &
-                    &   neighbours(2))
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(i)%neighbours(1) =   &
+                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )%   &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%  &
+                    &   object( iFc )%boundary(i)%neighbours(2))
+                grid_ggd%space( SPACE_POLOIDALPLANE )%            &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%  &
+                    &   object( iFc )%boundary(i)%neighbours(1) = &
                     &   B2_GRID_UNDEFINED
                 !! Nodes to undefined
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%            &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%  &
                     &   object( iFc )%nodes(i) = B2_GRID_UNDEFINED
             end do
         end do
@@ -753,52 +853,68 @@ contains
             select case ( gmap%mapFcIFace( iFc ) )
             case( BOTTOM )
                 !! start index: 1=start node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(1)%index =     &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%boundary(1)%index =        &
                     &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%nodes(1) =                 &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==       &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                      &
+                        &   "b2IMASFillGD: BOTTOM edge at ("     &
+                        &   //int2str(ix)//","//int2str(iy)//    &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(2)%index =     &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%boundary(2)%index =        &
                     &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%nodes(2) =                 &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) ==      &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM edge at (" &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                      &
+                        &   "b2IMASFillGD: BOTTOM edge at ("     &
+                        &   //int2str(ix)//","//int2str(iy)//    &
                         &   ") has no end node")
                 end if
             case( TOP )
                 !! start index: 1=start node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(1)%index =     &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%boundary(1)%index =        &
                     &   gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%nodes(1) =                 &
+                    &   gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==       &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                      &
+                        &   "b2IMASFillGD: TOP edge at ("        &
+                        &   //int2str(ix)//","//int2str(iy)//    &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(2)%index =     &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%boundary(2)%index =        &
                     &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                    &   object( iFc )%nodes(2) =                 &
+                    &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) ==      &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP edge at ("    &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                      &
+                        &   "b2IMASFillGD: TOP edge at ("        &
+                        &   //int2str(ix)//","//int2str(iy)//    &
                         &   ") has no end node")
                 end if
             end select
@@ -808,7 +924,8 @@ contains
             nix = leftix( ix, iy )
             niy = leftiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
@@ -816,17 +933,28 @@ contains
             nix = rightix( ix, iy )
             niy = rightiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%                &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%      &
                     &   object( iFc )%boundary(2)%neighbours(2) =     &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
 
-            !! 1d object measure: face area
-            if (present(gs)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%measure = &
-                    &   gs(ix, iy, ALIGNX)
-            end if
+            !! 1d object measure: edge length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                    &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%          &
+                &   object( iFc )%measure = dist( ix, iy, 0, 1)
+
+            !! Area projections
+            !! 1: poloidal projection, 2: radial projection, 3: total area
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                    &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%         &
+                &    object( iFc )%geometry(1) = gs(ix, iy, ALIGNX)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                    &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%         &
+                &    object( iFc )%geometry(2) = 0.0_R8
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                    &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%         &
+                &    object( iFc )%geometry(3) = gs(ix, iy, ALIGNX)
         end do
 
         !! y-aligned edges
@@ -843,53 +971,69 @@ contains
             select case ( gmap % mapFcIFace( iFc ) )
             case( LEFT )
                 !! start index: 1=start node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(1)%index =                       &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%boundary(1)%index =            &
                     &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%nodes(1) =                     &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==           &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                          &
+                        &   "b2IMASFillGD: LEFT edge at ("           &
+                        &   //int2str(ix)//","//int2str(iy)//        &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(2)%index =                       &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%boundary(2)%index =            &
                     &   gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%nodes(2) =                     &
+                    &    gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==           &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT edge at ("   &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                          &
+                        &   "b2IMASFillGD: LEFT edge at ("           &
+                        &   //int2str(ix)//","//int2str(iy)//        &
                         &   ") has no end node")
                 end if
 
             case( RIGHT )
                 !! start index: 1=start node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(1)%index =                       &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%boundary(1)%index =            &
                     &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%nodes(1) =                     &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) ==          &
                     &   B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                          &
+                        &   "b2IMASFillGD: RIGHT edge at ("          &
+                        &   //int2str(ix)//","//int2str(iy)//        &
                         &   ") has no start node")
                 end if
                 !! end vertex: 2=end node
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%boundary(2)%index =                       &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%boundary(2)%index =            &
                     &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
+                    &   object( iFc )%nodes(2) =                     &
+                    &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) ==          &
                     &    B2_GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT edge at ("  &
-                        &   //int2str(ix)//","//int2str(iy)//                &
+                    call logmsg(LOGWARNING,                          &
+                        &   "b2IMASFillGD: RIGHT edge at ("          &
+                        &   //int2str(ix)//","//int2str(iy)//        &
                         &   ") has no end node")
                 end if
             end select
@@ -899,7 +1043,8 @@ contains
             nix = bottomix( ix, iy )
             niy = bottomiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
@@ -907,59 +1052,74 @@ contains
             nix = topix( ix, iy )
             niy = topiy( ix, iy )
             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_EDGE )%     &
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
+
             !! 1d object measure: edge length
-            if (present(gs)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( iFc )%measure = &
-                    &   gs(ix, iy, ALIGNY)*qc(ix, iy)
-            end if
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%         &
+                &   object( iFc )%measure = dist( ix, iy, 0, 2)
+
+            !! Area projections
+            !! 1: poloidal projection, 2: radial projection, 3: total area
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%        &
+                &    object( iFc )%geometry(1) =                     &
+                &    gs(ix, iy, ALIGNY) * sqrt(1.0_R8 - qc(ix, iy)**2)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%        &
+                &    object( iFc )%geometry(2) =                     &
+                &    gs(ix, iy, ALIGNY) * qc(ix, iy)
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &    objects_per_dimension( IDS_CLASS_EDGE )%        &
+                &    object( iFc )%geometry(3) =                     &
+                &    gs(ix, iy, ALIGNY)
         end do
 
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 2D objects: Cells
-        ! write(0,*) "num_obj_2D: ", gmap%nCv
-        !! Allocate 2D objects
-        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
-            &   object( gmap%nCv ) )
-
         !! Each 2D object has four boundaries
         !! Each boundary has one neighbour
         do iCv = 1, gmap%nCv
             !! Allocate and set all boundary & connectivity information to
             !! undefined
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
-                &   objects_per_dimension(3)%object( iCv )%boundary(4) )
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%boundary(4) )
             !! Allocate list of 0D objects forming the 2D object
             !! Four 0D objects (vertices/nodes) form one 2D object (2D cell)
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(3)%object( iCv )%nodes(4) )
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%nodes(4) )
             !! Also store additional geometry information: position in
-            !! computational space
-            !! FIXME: this should go into alternate geometry, which is not
-            !!        available yet for grid objects
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
-                &   objects_per_dimension(3)%object( iCv )%geometry(2) )
+            !! computational space, total volume, and connection lengths
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(5) )
             do i = 1, 4
                 !! Boundary to undefined
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_CELL )%     &
                     &   object( iCv )%boundary(i)%index = B2_GRID_UNDEFINED
                 !! Neighbours to undefined
-                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )% &
-                    &   objects_per_dimension(3)%object( iCv )%boundary(i)% &
-                    &   neighbours(2))
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
-                    &   object( iCv )%boundary(i)%neighbours(1) =   &
+                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+                    &   objects_per_dimension( IDS_CLASS_CELL )%     &
+                    &   object( iCv )%boundary(i)%neighbours(2))
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_CELL )%     &
+                    &   object( iCv )%boundary(i)%neighbours(1) =    &
                     &   B2_GRID_UNDEFINED
                 !! Nodes to undefined
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                grid_ggd%space( SPACE_POLOIDALPLANE )%               &
+                    &   objects_per_dimension( IDS_CLASS_CELL )%     &
                     &   object( iCv )%nodes(i) = B2_GRID_UNDEFINED
-                !! Geometry to undefined
+                !! Geometry grid indices to undefined
                 if (i < 3) then
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_CELL )% &
                         &   object( iCv )%geometry(i) = B2_GRID_UNDEFINED
                 end if
             end do
@@ -969,40 +1129,65 @@ contains
             !! Set position in computational space
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
                 &   object( iCv )%geometry(1) = ix
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
                 &   object( iCv )%geometry(2) = iy
+            !! Provide cell volume
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(3) = vol(ix,iy)
+            !! Provide connection length
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(4) =                      &
+                &   get_connection_length( IDS_CLASS_CELL, 1, nx, ny, ix, iy )
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(5) =                      &
+                &   get_connection_length( IDS_CLASS_CELL, 2, nx, ny, ix, iy )
 
             !! Set edges composing the quadrilateral in the list:
             !! left edge (y-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                &   object( iCv )%boundary(1)%index = gmap%mapFcI( ix, iy, LEFT )
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%boundary(1)%index =                &
+                &   gmap%mapFcI( ix, iy, LEFT )
             !! bottom edge (x-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                &   object( iCv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%boundary(2)%index =                &
+                &   gmap%mapFcI( ix, iy, BOTTOM )
             !! right edge (y-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                &   object( iCv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%boundary(3)%index =                &
+                &   gmap%mapFcI( ix, iy, RIGHT )
             !! top edge (x-aligned)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                &   object( iCv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%boundary(4)%index =                &
+                &   gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
-                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
-                    &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
-                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,   &
-                    &   nix, niy ) ) then
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%          &
-                        &   objects_per_dimension(3)%object( iCv )% &
-                        &   boundary( dir + 1 )%neighbours(1) =     &
-                        &   gmap%mapCvI( nix, niy )
+                call get_Neighbour(nx, ny,                           &
+                    &   leftix, leftiy, rightix, rightiy,            &
+                    &   topix, topiy, bottomix, bottomiy,            &
+                    &   ix, iy, dir, nix, niy)
+                if ( .not. is_Unneeded_Cell( nx, ny, cflag,          &
+                    &   includeGhostCells, nix, niy ) ) then
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                        &   objects_per_dimension( IDS_CLASS_CELL )% &
+                        &   object( iCv )%boundary( dir + 1 )%       &
+                        &   neighbours(1) = gmap%mapCvI( nix, niy )
                 end if
             end do
             !! 2d object measure: cell area
-            if (present(vol)) then
-                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
-                    &   object( iCv )%measure = vol(ix, iy)
-            end if
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%measure = gs(ix, iy, 2)
         end do
 
         !! Set nodes list, composing the 2D objects - Cells, using a subroutine
@@ -1028,7 +1213,6 @@ contains
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description(1) )
           if (isymm.eq.0) then
-            call ipgetr ('b2agmt_1d_width', width)
             call gridSetupStruct1dSpace(                                      &
                 &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
                 &   (/                                                        &
@@ -1090,7 +1274,6 @@ contains
             !< data structure, designed for handling grid geometry data
 #endif
         !! Internal variables
-        integer, allocatable :: objects2Darray(:,:)
         integer :: num_nodes_2D     !< Total number of nodes forming one cell
         integer :: num_boundary_2D  !< Total number of boundary edges forming
             !< one cell
@@ -1107,32 +1290,28 @@ contains
         integer :: loop_count   !< Loop counter
 
 
-        !! Get the list of 0D objects forming the 2D objects and write it to IDS
-        allocate( objects2Darray( gmap%nCv, 4 ) )
-        ! objects2Darray = numpy.array([], dtype='int')
-
-        ! ids_dim_2D.object.resize(nCv)
-
         ! Already done
         if (.not.associated( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
-            &   objects_per_dimension(3)%object ) )                  &
+            &   objects_per_dimension( IDS_CLASS_CELL )%object ) )   &
             & allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%       &
-            &   objects_per_dimension(3)%object( gmap%nCv ) )
+            &   objects_per_dimension( IDS_CLASS_CELL )%object( gmap%nCv ) )
 
-        !! Get 2D objects geometry (nodes) data from CPO, sort them into more
-        !! orderly form  and put them into the IDS
+        !! Get 2D objects geometry (nodes) data from grid mapping,
+        !! sort them into more orderly form and put them into the IDS
         num_nodes_2D    = 4
         num_boundary_2D = 4
-        allocate( node_idx(4) )
-        allocate( free_edge(3) )
+        allocate( node_idx(num_nodes_2D) )
+        allocate( free_edge(num_boundary_2D-1) )
 
         do iCv = 1, gmap%nCv
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
             if (.not.associated( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
-                &   objects_per_dimension(3)%object(iCv)%nodes ) )       &
+                &   objects_per_dimension( IDS_CLASS_CELL )%             &
+                &   object(iCv)%nodes ) )                                &
                 & allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%       &
-                &   objects_per_dimension(3)%object(iCv)%nodes(num_nodes_2D) )
+                &   objects_per_dimension( IDS_CLASS_CELL )%object(iCv)% &
+                &   nodes(num_nodes_2D) )
 
             edge_idx = gmap%mapFcI( ix, iy, LEFT )
             free_edge(1) = gmap%mapFcI( ix, iy, BOTTOM )
@@ -1140,11 +1319,11 @@ contains
             free_edge(3) = gmap%mapFcI( ix, iy, TOP )
 
             node_idx(1) = grid_ggd%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(2)%object( edge_idx )%    &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%object( edge_idx )% &
                 &   boundary(1)%index
             last_idx = 2
             node_idx(last_idx) = grid_ggd%space( SPACE_POLOIDALPLANE )% &
-                &   objects_per_dimension(2)%object( edge_idx )%        &
+                &   objects_per_dimension( IDS_CLASS_EDGE )%object( edge_idx )% &
                 &   boundary(2)%index
 
             do loop_count = 1, 4
@@ -1155,11 +1334,11 @@ contains
                             continue
                         end if
                         node1 = grid_ggd%space( SPACE_POLOIDALPLANE )%   &
-                            &   objects_per_dimension(2)%object( edge_idx )% &
-                            &   boundary(1)%index
+                            &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                            &   object( edge_idx )%boundary(1)%index
                         node2 = grid_ggd%space( SPACE_POLOIDALPLANE )%   &
-                            &   objects_per_dimension(2)%object( edge_idx )% &
-                            &   boundary(2)%index
+                            &   objects_per_dimension( IDS_CLASS_EDGE )% &
+                            &   object( edge_idx )%boundary(2)%index
 
                         if (node_idx(last_idx) == node1) then
                             free_edge(m) = -1
@@ -1178,13 +1357,17 @@ contains
             end do
 
             !! Set nodes list, composing the 2D objects - Cells
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                &   objects_per_dimension( IDS_CLASS_CELL )% &
                 &   object( iCv )%nodes(1) = node_idx(1)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                &   objects_per_dimension( IDS_CLASS_CELL )% &
                 &   object( iCv )%nodes(2) = node_idx(4)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                &   objects_per_dimension( IDS_CLASS_CELL )% &
                 &   object( iCv )%nodes(3) = node_idx(3)
-            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                &   objects_per_dimension( IDS_CLASS_CELL )% &
                 &   object( iCv )%nodes(4) = node_idx(2)
         end do
 
@@ -1193,7 +1376,7 @@ contains
     !> Define grid subsets
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
-        integer :: geoId
+        integer, save :: geoId
 #if GGD_MINOR_VERSION > 8
         integer :: iRegion
         integer :: iPrivateB2
@@ -1220,12 +1403,21 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer :: jsep, nxtl, nxtr
+        integer :: ix1, ix2, ix3, ix4
+        integer, save :: jsep, nxtl, nxtr
         character*128 RegionDescription
 
-        geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
-        call get_jsep( nx, ny, jxi, jxa, jsep )
-        call get_nxt ( nx, nxtl, nxtr )
+        !! Procedures
+        external get_jsep, get_nxt, xertst
+#if GGD_MINOR_VERSION > 8
+        external xerrab
+#endif
+
+        if (ncall.eq.0) then
+          geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
+          call get_jsep( nx, ny, jxi, jxa, jsep )
+          call get_nxt ( nx, nxtl, nxtr )
+        end if
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
@@ -1256,6 +1448,10 @@ contains
         nGSubset = nGSubset + 2
         !! Inner/outer midplane separatrix
         if (jsep /= B2_GRID_UNDEFINED) nGSubset = nGSubset + 2
+        !! Neutral pressure calculation cells
+        if (lpfrs_pmp.ne.0 .or. lpfrb_i.ne.0 .or. lpfrb_o.ne.0 .or. &
+          &                     lpfrt_i.ne.0 .or. lpfrt_o.ne.0)     &
+          &  nGSubset = nGSubset + 1
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
             &//int2str(nGSubset)//" grid subsets" )
@@ -1264,8 +1460,8 @@ contains
         !! Set up generic grid subsets
         !! The 6 generic grid subsets MUST be declared in that order
         !! matching the order in ids_grid_common
-        !! GRID_SUBSET_NODES: all nodes, one implicit object list
 
+        !! GRID_SUBSET_NODES: all nodes, one implicit object list
         call createGridSubsetForClass( grid_ggd,                    &
             &   grid_ggd%grid_subset( GRID_SUBSET_NODES ),          &
             &   IDS_CLASS_NODE, SPACE_POLOIDALPLANE,                &
@@ -1279,8 +1475,8 @@ contains
             &   GRID_SUBSET_EDGES,                                  &
             &   "Edges", "All edges (1D objects) in the domain." )
 
-        !! GRID_SUBSET_X_ALIGNED_EDGES: x-aligned edges. One implicit object
-        !! list, range over x edges
+        !! GRID_SUBSET_X_ALIGNED_EDGES: x-aligned edges.
+        !! One implicit object list, range over x edges
         !! Create grid subset with one object list
         call createEmptyGridSubset(                                    &
             &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_EDGES ),   &
@@ -1294,8 +1490,8 @@ contains
             &   IDS_CLASS_POLOIDALRADIAL_EDGE, indexList1d,            &
             &   IDS_CLASS_POLOIDALRADIAL_EDGE, SPACE_POLOIDALPLANE )
 
-        !! GRID_SUBSET_Y_ALIGNED_EDGES: y-aligned edges. One implicit object
-        !! list, range over y edges
+        !! GRID_SUBSET_Y_ALIGNED_EDGES: y-aligned edges.
+        !! One implicit object list, range over y edges
         !! Create grid subset with one object list
         call createEmptyGridSubset(                                    &
             &   grid_ggd%grid_subset( GRID_SUBSET_Y_ALIGNED_EDGES ),   &
@@ -1395,6 +1591,115 @@ contains
 
             end do
         end do
+
+        !! Neutral pressure calculation cells
+        !! Hard-coded to index -101
+        if (lpfrs_pmp.ne.0 .or. lpfrb_i.ne.0 .or. lpfrb_o.ne.0 .or. &
+          &                     lpfrt_i.ne.0 .or. lpfrt_o.ne.0) then
+            cls = CLASS_CELL
+            GSubSetCount = GSubsetCount + 1
+            RegionDescription = "Cells used for neutral pressure calculation"
+
+            call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"// &
+                &   " add (private) grid subset #"//           &
+                &   int2str(GSubsetCount)//": "//              &
+                &   "Neutral pressure cells          " )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                        &
+                &   grid_ggd%grid_subset( GSubsetCount ),      &
+                &   -101, "Neutral pressure cells          ",  &
+                &   RegionDescription )
+
+            !! Get explicit cell list
+            deallocate( indexList2d )
+            nInd = 0
+            ix1 = B2_GRID_UNDEFINED
+            ix2 = B2_GRID_UNDEFINED
+            ix3 = B2_GRID_UNDEFINED
+            ix4 = B2_GRID_UNDEFINED
+            if (lpfrb_i.ne.0 .or. lpfrt_i.ne.0) then
+                if (lpfrb_i.ge.0) ix1 = lpfrb_i
+                if (lpfrt_i.ge.0) ix2 = lpfrt_i
+            end if
+            if (lpfrb_o.ne.0 .or. lpfrt_o.ne.0) then
+                if (lpfrb_o.ge.0) ix3 = lpfrb_o
+                if (lpfrt_o.ge.0) ix4 = lpfrt_o
+            end if
+            select case (lpfrs_pmp)
+            case (0, 1)
+                iy = 0
+                if (lpfrb_i.lt.0) ix1 = leftcut(1)-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = leftcut(1)-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nx-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = rightcut(1)-lpfrt_o
+            case (2)
+                iy = ny - 1
+                if (lpfrb_i.lt.0) ix1 = nx-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = nx-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nx-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = nx-1+lpfrt_o
+            case (3)
+                iy = 0
+                if (lpfrb_i.lt.0) ix1 = nxtl-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = leftcut(2)-lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nxtr-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = rightcut(2)-1+lpfrt_o
+            case (4)
+                iy = ny - 1
+                if (lpfrb_i.lt.0) ix1 = nxtl-1+lpfrb_i
+                if (lpfrt_i.lt.0) ix2 = nxtl-1+lpfrt_i
+                if (lpfrb_o.lt.0) ix3 = nxtl-1+lpfrb_o
+                if (lpfrt_o.lt.0) ix4 = nxtr+1-lpfrt_o
+            case default
+                call xerrab( "Unrecognized value of lpfrs_pmp!" )
+            end select
+            if (ix1.ne.B2_GRID_UNDEFINED .and. ix2.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix1,ix2), max(ix1,ix2)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
+                end do
+            end if
+            if (ix3.ne.B2_GRID_UNDEFINED .and. ix4.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix3,ix4), max(ix3,ix4)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
+                end do
+            end if
+            allocate( indexList2d(nInd, SPACE_COUNT) )
+            iInd = 0
+            if (ix1.ne.B2_GRID_UNDEFINED .and. ix2.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix1,ix2), max(ix1,ix2)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1
+                        call xertst(iInd <= nInd, &
+                            &   "Assert error 1 (index) in neutral pressure cells grid subset" )
+                        indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end do
+            end if
+            if (ix3.ne.B2_GRID_UNDEFINED .and. ix4.ne.B2_GRID_UNDEFINED) then
+                do ix = min(ix3,ix4), max(ix3,ix4)
+                    ind = gmap%mapCvI(ix,iy)
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1
+                        call xertst(iInd <= nInd, &
+                            &   "Assert error 1 (index) in neutral pressure cells grid subset" )
+                        indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end do
+            end if
+            call xertst( iInd == nInd, &
+                &  "Assert error 2 (index) in neutral pressure cells grid subset" )
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
+
+        end if
         deallocate(indexList2d)
 #endif
 
@@ -2427,6 +2732,9 @@ contains
         integer :: iy   !< y-aligned cell index
         integer :: iObj !< Object index
 
+        !! Procedures
+        external xertst
+
         rMin = huge(rMin)
         rMax = -huge(rMax)
 
@@ -2515,11 +2823,18 @@ contains
 
     ! internal
     integer, parameter :: NDIM = 2
+    integer, save :: ncall = 0
 
-    call ipgetr('b2agmt_1d_width', width)
-    call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    ! procedures
+    external ipgetr, xertst
+
+    if (ncall.eq.0) then
+      call ipgetr('b2agmt_1d_width', width)
+      call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    end if
     call xertst( present( gs ) .EQV. present( qc ) , &
         "Assert error ( gz or qc missing ) in b2ITMFillGridDescription" )
+    ncall = ncall + 1
 
     call fill_In_Grid_Desc()
     call fillInSubGridDescription()
@@ -2770,6 +3085,9 @@ contains
       integer :: cls(SPACE_COUNT_MAX)
       integer, allocatable :: xpoints(:,:)
 
+      !! procedures
+      external xertst
+
       geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
       !! Figure out total number of subgrids
@@ -2907,11 +3225,13 @@ contains
     real (ITM_R8), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
     integer, intent(out) :: xIn, yIn, xOut, yOut
 
-
     !! internal
     real(ITM_R8) :: rMin, rMax
     type(GridObject) :: obj
     integer :: ix, iy, iObj
+
+    !! procedures
+    external xertst
 
     rMin = huge(rMin)
     rMax = -huge(rMax)
@@ -2981,6 +3301,9 @@ contains
         integer :: niy
         integer :: nVx
         integer :: iVx
+
+        !! Procedures
+        external xertst
 
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
@@ -3072,6 +3395,9 @@ contains
         integer :: nVx
         integer :: iVx
 
+        !! Procedures
+        external xertst
+
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
         nVx = 1
@@ -3152,6 +3478,9 @@ contains
 
         !! internal
         integer :: ix, iy, nInd, iInd, ind
+
+        !! procedures
+        external xertst
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )
@@ -3243,6 +3572,9 @@ contains
         integer :: nInd
         integer :: iInd
         integer :: ind
+
+        !! Procedures
+        external xertst
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )

@@ -29,4 +29,4 @@
 *     job-id, and machine-id. Do not lightly change the character*26
 *     length specification.
 *     ------------------------------------------------------------------
-      end
+      end function jobnam

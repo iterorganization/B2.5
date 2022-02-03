@@ -5,108 +5,41 @@ LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext
 GLI_HOME  ?= ${EBROOTGLI}
 endif
 LD_NAG    ?= `pkg-config openblas --libs`
-NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
+NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-DEFINES += -DDOFLUSH -DNO_IEEE -DNO_OPT
+DEFINES += -DDOFLUSH -DNO_OPT
 ifndef SOLPS_CPP
-DEFINES += -DGFORTRAN -DNO_NAG -DNO_21
+DEFINES += -DNO_NAG -DNO_21
 endif
 
 CPP = /lib/cpp -traditional
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
-SED =
-LINK_MOD =
 
 ifdef USE_MPI
 FC = mpif90
-MPI_CPP ?= --with-pmi=pmi2
-LD_MPI  ?= -lpmi2
 else
 ifdef USE_IMPGYRO
 FC = mpif90
-MPI_CPP ?= --with-pmi=pmi2
-LD_MPI  ?= -lpmi2
 else
 FC = gfortran
 endif
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
-endif
-
-FCOPTS  = -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS += -g -gdwarf-2 -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
-else
-FCOPTS += -O2
+FCOPTS += -gdwarf-2
 endif
 
 ifdef USE_MPI
 FCOPTS += ${MPI_CPP}
 endif
 
-ifdef USE_OPENMP
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
-endif
-
-DBLFC = ${FC}
 DDBLOPTION =
-DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED =
 
-INCMOD = -B
-MOD = mod
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+LDLIBES =
 
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG}
-PLLIBES = ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF} -lm
-
-ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
-endif
-
-ifdef IMAS_VERSION
 GGD_VERSION ?= `pkg-config ggd --modversion`
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
-INCMODS  = `pkg-config imas-gfortran ggd --cflags`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-gfortran --libs` -lggd-gfortran
-INCMODS  = `pkg-config imas-gfortran --cflags`
-else
-GGD_MINOR_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-INCMODS  = `pkg-config imas-lowlevel imas-gfortran --cflags`
-endif
-endif
-ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
-IMASLIBS = ${LD_UAL}
-endif
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-LD = $(FC)
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

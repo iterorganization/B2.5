@@ -5,6 +5,7 @@
      1  rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nz, nt, nn
@@ -199,7 +200,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   hydfud
-      external adset, aderc, adbcxr, subini, subend, xertst
+      external adset, aderc, adbcxr, xertst
       hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
      1 temp**(-0.60_R8))
 *!!   (hydfud is the fudge factor for the density dependence in the

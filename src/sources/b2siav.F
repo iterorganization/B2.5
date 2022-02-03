@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nx, ny, ns, isb, mb, hx, hy, hz, vol, qz, bb,
-     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
+      subroutine b2siav (nx, ny, ns, isb, ismain, mb,                 !srv 19.02.21
+     & ub, wbdia, vbecrb, te, ti, nb, ni, ne2, lnlam, chci,           !srv 01.07.09
+     & cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_indirect
       use b2mod_geo_corner
@@ -15,20 +16,17 @@
       use b2mod_openmp
       use b2mod_plasma
      & , only : fac_vis                                               !srv 22.05.18
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, isb
+      integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
      & mb, lnlam(-1:nx,-1:ny),                                        !srv 01.07.09
-     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3),
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1),
      & vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),             !srv 04.10.99 09.01.01
+     & ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     & chci(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),                !srv 04.10.99 09.01.01
      & cvsbhz_cl(-1:nx,-1:ny,0:1)                                     !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -66,17 +64,15 @@
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
      &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
+     &   tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny)         !lk !iyv 02.12.13
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
       data ncall/0/
 *   ..procedures
-      intrinsic abs, sqrt
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      intrinsic sqrt
 *-----------------------------------------------------------------------
 *.computation
 
@@ -91,7 +87,7 @@
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2SIAV OpenMP warning: no file out in ',
+         write(*,*) 'B2SIAV OpenMP warning: no file output in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0
@@ -102,11 +98,11 @@
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
-      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
+!      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then      !srv 26.10.08
+      if(isb.eq.ismain) then                                        !srv 19.02.21
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
@@ -115,7 +111,6 @@
           tt1 = 0.0e0_R8
           tt2 = 0.0e0_R8
           tt3 = 0.0e0_R8
-          conn = 0.0e0_R8
           bbaverage2 = 0.0e0_R8
           eps1 = 0.0e0_R8
 !pbwdk          mintopcut = ny
@@ -126,8 +121,6 @@
               if(on_closed_surface(ix,iy)) then
                 tt0(iy) = tt0(iy) + bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
                 tt1(iy) = tt1(iy) + vol(ix,iy)
-                conn(iy) = conn(iy) +
-     .                     hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
                 tt2(iy) = tt2(iy) + hx(ix,iy)
                 tt3(iy) = tt3(iy) + vol(ix,iy)/hy1(ix,iy)
               endif
@@ -245,10 +238,10 @@
      &           0.7e0_R8*sqrt(nu1(ix,iy))+
      &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
                 kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)         !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(ix,iy)*s2)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
-     &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))            !som 07.12.21 !iyv 02.12.13
+     &           +2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu1(ix,iy))+
+     &           (nu1(ix,iy))**2*eps1(iy)**3))
               endif
             enddo
           enddo
@@ -347,10 +340,10 @@
       endif                                                         !srv 26.10.08
 
       if (iout.ne.0) then                                           !srv 17.06.02 {
-        call my_out(70,nx,ny,alpha1,'b2siav_alpha1')
-        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo')
-        call my_out(70,nx,ny,tauia1,'b2siav_tauia1')
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,alpha1,'b2siav_alpha1'//chns)
+        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo'//chns)
+        call my_out(70,nx,ny,tauia1,'b2siav_tauia1'//chns)
         do k=0,3
           write (chk,'(i1)') k
           call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smovv'//chk//chns)

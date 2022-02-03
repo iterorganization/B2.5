@@ -37,6 +37,7 @@ c  Tp = Target surface temperature (K).
       use b2mod_wall
       use b2mod_heatdiff_common
      &    , only: dx, x0, xn, x, Qtot, Tcbc, active, iwall, ns
+      use b2mod_subsys
       implicit none
       external lines2c
 
@@ -66,7 +67,7 @@ c  Tp = Target surface temperature (K).
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
       !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
-      external xertst, subini, subend
+      external xertst
 
       call subini('heatdiff1D')
       if (ncall.eq.0) then
@@ -828,13 +829,14 @@ c     Steel   | -14321.9 | 9.44    |
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
       implicit none
       integer ibnd, ns, is, itrack
       logical, save :: lfirst
       real (kind=R8) :: Ts, Tv, flxthev, qevap, Vapor_temp, qthev
       real (kind=R8), save :: therm_evap
       data lfirst /.true./, therm_evap /0.0_R8/
-      external subini, subend, ipgetr
+      external ipgetr
       intrinsic min
 
 c  Ts       ->  temperature of the plate in Kelvin.

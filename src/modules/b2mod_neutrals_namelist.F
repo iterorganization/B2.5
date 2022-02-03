@@ -22,6 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
+c*  ktns          : index of the target to which the Eirene surface belongs
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
@@ -84,7 +85,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
-     *   lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
@@ -135,7 +136,7 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid), micmp(natmid,nionid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),
+     ,  lcns(nstsid), ktns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
@@ -215,6 +216,7 @@ csw 21feb2012
       integer use_eirene
       character*12 hlp_frm
       intrinsic nint
+      external ipgeti, xertst
       data use_eirene /0/
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -257,6 +259,7 @@ csw 21feb2012
       allocate(micmp(natm_in,nion_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
+      allocate(ktns(nsts_in))
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
@@ -356,6 +359,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       micmp=0
       lcns=0
       ltns=0
+      ktns=0
       ncns=0
       ntns=0
       ksns=0
@@ -419,6 +423,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine alloc_b2mod_neutrals_save(NSTRAID_in)
       integer nstraid_in
+#ifndef ALLOCATE_AND_NAMELIST
+      external xertst
+#endif
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -472,6 +479,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(ltns)
       deallocate(lsns)
       deallocate(ksns)
+      deallocate(ktns)
       deallocate(msns)
       deallocate(textan)
       if (allocated(textmn)) deallocate(textmn)
@@ -509,6 +517,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
+      external find_file, xertst
 
       filename=neutrals_filename
       neutrals_time_mod = 0.0_R8
@@ -1117,6 +1126,10 @@ c.. Test consistency with physical edges within the computational domain
       character*256 filename
       integer istra
       logical file_ok
+      external find_file, xertst
+#ifdef USE_MPI
+      external xerrab
+#endif
 
       saved_volrec(:)=0.0_R8
 
@@ -1156,7 +1169,9 @@ c.. Test consistency with physical edges within the computational domain
       subroutine write_b2mod_neutrals_save(nwrite,edition)
       implicit none
       integer nwrite
+      integer i
       character*4 edition
+      character*24 hlp_frm
       character*256 filename
 
       if (edition.eq.'    ') then
@@ -1166,7 +1181,11 @@ c.. Test consistency with physical edges within the computational domain
       endif
       if (maxval(saved_volrec).gt.0.0_R8) then
         open(nwrite,file=trim(filename))
-        write(nwrite,neutrals_save)
+        write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1e15.8,1x,a1))'
+        write(nwrite,'(a)') '&NEUTRALS_SAVE'
+        write(nwrite,hlp_frm) 'SAVED_VOLREC= ',
+     .                        (saved_volrec(i),',',i=1,nstrat)
+        write(nwrite,'(a)') '/'
         close(nwrite)
         write(*,*) 'Saved ',trim(filename)
       endif
@@ -1181,6 +1200,7 @@ c.. Test consistency with physical edges within the computational domain
       integer ib, ix
       integer, allocatable :: bc(:,:), rc(:,:)
       logical, allocatable :: coincide(:)
+      external xertst
 
 ! Try to create a list which maps strata to boundaries
 ! LBCSTRA(ISTRA) will contain the index of the boundary condition corresponding

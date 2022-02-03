@@ -1,11 +1,12 @@
 c
       subroutine clvd(clvmin,clvmax,delta)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
       integer :: iclv
-      external subini, subend, xertst, xerrab
+      external xertst, xerrab
 
       call subini ('clvd')
       call xertst(delta.ne.0.0_R8, 'division by 0 in clvd')
@@ -27,11 +28,12 @@ c
 c
       subroutine eclvd(clvmin,clvmax,delta)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
       integer :: iclv
-      external subini, subend, xertst, xerrab
+      external xertst, xerrab
 
       call subini ('eclvd')
       call xertst (delta.ne.0.0_R8, 'division by 0 in eclvd')
@@ -55,11 +57,12 @@ c
 c
       subroutine wclvd(clvmin,clvmax,delta)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
       integer :: iclv
-      external subini, subend, xertst, xerrab
+      external xertst, xerrab
 
       call subini ('wclvd')
       call xertst (delta.ne.0.0_R8, 'division by 0 in wclvd')
@@ -82,11 +85,12 @@ c
 c
       subroutine tclvd(clvmin,clvmax,delta)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
       integer :: iclv
-      external subini, subend, xertst, xerrab
+      external xertst, xerrab
 
       call subini ('tcvld')
       call xertst(delta.ne.0.0_R8, 'division by 0 in tclvd')

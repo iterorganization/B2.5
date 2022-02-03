@@ -28,13 +28,12 @@ c
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
-#else
-      use b2mod_eirbra, only: fort, fort_lc
 #endif
+      use b2mod_subsys
       implicit none
 
 *  -- INPUT ARGUMENTS --
@@ -59,7 +58,6 @@ c
       character*32 :: get_B25_hash
       external ipgeti, ipgetr, xertst, get_B25_hash
 #endif
-      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//
@@ -544,6 +542,3 @@ C
       call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
       end subroutine b2yt_ntread
-
-
-

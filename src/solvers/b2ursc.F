@@ -4,6 +4,7 @@
       subroutine b2ursc (nx, ny, fun, sfn, ffn, resfn)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -49,7 +50,7 @@
       save ncall
       !$OMP THREADPRIVATE (ncall)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialisation
       data ncall/0/

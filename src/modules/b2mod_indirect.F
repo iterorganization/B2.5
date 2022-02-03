@@ -156,6 +156,9 @@
       integer :: ix, iy, nx, ny, gix, giy, iFace, iStruct
       character :: ctype
 
+! procedures
+      external xertst
+
       nx = ubound(cflags, 1)
       ny = ubound(cflags, 2)
 

@@ -19,8 +19,8 @@ c 2002-09-11: logic revised
       use b2mod_diag
       use b2mod_rates
       use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_movies
+      use b2mod_plasma
       use b2mod_sources
       use b2mod_sputter
       use b2mod_indirect
@@ -56,7 +56,8 @@ c 2002-09-11: logic revised
       use eirmod_ctrig
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
-      use eirmod_extrab25
+      use eirmod_wneutrals
+      use eirmod_infcop
       use eirmod_braeir
       use eirmod_cestim
       use eirmod_coutau
@@ -73,8 +74,13 @@ c 2002-09-11: logic revised
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_interp
+      use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
+#ifndef NO_CDF
+#     include <netcdf.inc>
+#endif
       integer nxd,nyd,nsd_local
 c
 c  version : 27.07.96 20:37
@@ -85,7 +91,7 @@ c
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
-     4   pz(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     4   pz(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -97,7 +103,8 @@ c
      *   wall_tmp(:,:), trg_tmp(:,:)
       real (kind=R8) ::
      *   fetx(-1:nxd,-1:nyd), fety(-1:nxd,-1:nyd),
-     *   fhtx(-1:nxd,-1:nyd), fhty(-1:nxd,-1:nyd)
+     *   fhtx(-1:nxd,-1:nyd), fhty(-1:nxd,-1:nyd),
+     *   lnlam(-1:nxd,-1:nyd)
       real (kind=R8) ::
      *   fnax(-1:nxd,-1:nyd,0:nsd_local-1),
      *   fnay(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -110,7 +117,6 @@ c
      *   vv(-1:nxd,-1:nyd,0:nsd_local-1),
      *   up(-1:nxd,-1:nyd,0:nsd_local-1),
      *   ww(-1:nxd,-1:nyd,0:nsd_local-1),
-     *   ue(-1:nxd,-1:nyd),
      *   safetyfactor(-1:nyd), shear(-1:nyd), rave(-1:nyd),
      1   cvsa_cl_x(-1:nxd,-1:nyd,0:nsd_local-1),
      2   cvsa_cl_y(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -197,7 +203,7 @@ c
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external open_file, streql, subini, subend,
+      external open_file, streql,
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits,
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
@@ -210,31 +216,28 @@ c
       integer iflag
 #ifdef B25_EIRENE
       character*72 zeile
-      integer ix_e2b
-      external ix_e2b
 #endif
 c
       real (kind=R8) ::
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time
-      real (kind=R8) ::
-     1 lambda, lnlam, hh, hhn, phi_app
+      real (kind=R8) :: hh, hhn, phi_app
       integer i,j,icell,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
-     2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
+     2 ikind,lnblnk,nz,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
       external lnblnk
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
      5     plate_kb/1.6e-3_R8/, plate_ka/1.3e-5_R8/,
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
-     8     sput_phys_model/1/, sput_phys/0.0_R8/, lambda/-5.0_R8/,
+     8     sput_phys_model/1/, sput_phys/0.0_R8/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      2     use_eirene/0/, ismain0/0/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
-     3     sput_phys_model, sput_phys_col, sput_phys, lambda, BoRiS,
+     3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
      4     neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
@@ -252,8 +255,6 @@ c
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      ixx(ix,iy)=mod(ix+1,nx+2)-1
-      iyy(ix,iy)=iy+(ix+1)/(nx+2)
 
 c Function to check the correct parameters!
 c
@@ -316,7 +317,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
       call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
@@ -383,13 +384,25 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
-            imi=nint(am(is))
+          imi=nint(am(is))
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .le. 1) then
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(imi.ne.nuclear_mass(il)) then
+              if(imi.lt.10) then
+                write(textsp(iss),'(a,i1,a)') ' ',imi,trim(elements(il))
+              else if(imi.lt.100) then
+                write(textsp(iss),'(a,i2,a)') ' ',imi,trim(elements(il))
+              else
+                write(textsp(iss),'(a,i3,a)') ' ',imi,trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -444,8 +457,6 @@ cxpb  quantities before their mapping to cell centers
         call copy_background(nx, ny, ns, BoRiS)
       endif
 c
-      call ipgetr ('b2trcl_lambda', lambda)
-      call xertst (0.0_R8.ne.lambda, 'faulty internal parameter lambda')
       call ipgeti ('b2stbr_refl_model', refl_model)
       call ipgeti ('b2stbr_plate_model', plate_model)
       if (plate_model.eq.0) then
@@ -815,7 +826,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         texttargsp(i)=' '//trim(track_species(i))
       end do
       call get_wall_data(nx,ny,ns,BoRiS,found)
-      hy1(:,:)=hy(:,:)*qz(:,:,1)
 cxpb  We now use the data already computed in init_wall
       do ibnd = 1, nbnd
         ix = imapx(ibnd)
@@ -1179,8 +1189,6 @@ c
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
       call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
       psi_sep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
       psi=0.25_R8*sum(fpsi,3)-psi_sep
       fbz=0.25_R8*sum(ffbz,3)
@@ -1484,7 +1492,9 @@ c
             CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
+            CALL EIRENE_DEALLOC_INFCOP
             CALL EIRENE_EXTRAB25_CLEANUP
+            CALL EIRENE_WNEUTRALS_DEALLOC
 #else
             call dealloc_b2mod_braeir
             call dealloc_b2mod_eirbra
@@ -1561,7 +1571,9 @@ c
           CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
+          CALL EIRENE_DEALLOC_INFCOP
           CALL EIRENE_EXTRAB25_CLEANUP
+          CALL EIRENE_WNEUTRALS_DEALLOC
 #else
           call dealloc_b2mod_braeir
           call dealloc_b2mod_eirbra
@@ -1576,6 +1588,20 @@ c
       goto 10
 
       contains
+
+      integer function ixx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      ixx = mod(ix+1,nx+2)-1
+      return
+      end function ixx
+
+      integer function iyy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      iyy = iy+(ix+1)/(nx+2)
+      return
+      end function iyy
 
       subroutine select_matrix
       integer ix, iy, is, iso, ibc
@@ -1946,7 +1972,12 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          call copy(hy1,1.0_R8,nz,textbl)
+          do iy = -1, ny
+            do ix = -1, nx
+              mach(ix,iy,0)=hy1(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('sx')
           description='sx (m^{2})'
           nz=1
@@ -2042,12 +2073,12 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          call b2xehx(nx, ny, hx, te, po, ne, mach(-1,-1,0))
+          call b2xehx(nx, ny, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
           nz=1
-          call b2xehy(nx, ny, hy, qz, te, po, ne, mach(-1,-1,0))
+          call b2xehy(nx, ny, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'
@@ -2539,41 +2570,8 @@ c
           nz=1
           do ix=-1,nx
             do iy=-1,ny
-              ixl=leftix(ix,iy)
-              if (ixl.ne.-2) then
-                t1=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t1=0.0_R8
-              endif
-              ix1=ixl
-              if (ixl.ne.-2) ixl=leftix(ix1,iy)
-              do while(ix1.ne.ix.and.ixl.ne.-2)
-                t1=t1+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixl
-                ixl=leftix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              ixr=rightix(ix,iy)
-              if (ixr.ne.nx+1) then
-                t2=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t2=0.0_R8
-              endif
-              ix1=ixr
-              if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
-              do while(ix1.ne.ix.and.ixr.ne.nx+1)
-                t2=t2+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixr
-                ixr=rightix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              mach(ix,iy,0)=min(t1,t2)
+              mach(ix,iy,0) =
+     &         get_connection_length( 3, 2, nx, ny, ix, iy)
             end do
           end do
           call copy(mach,1.0_R8,nz,textbl)
@@ -2645,11 +2643,21 @@ c
         case ('cr')
           description='CR (m)'
           nz=1
-          call copy(cr,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cr(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('cz')
           description='CZ (m)'
           nz=1
-          call copy(cz,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cz(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('na0')
           description='na at previous time step (m^{-3})'
           nz=ns
@@ -2702,7 +2710,7 @@ c
           nz=ns
           call copy(smcf,1.0_R8,nz,textpl)
         case ('pot')
-        description='Potential energy (eV) (cum. ionisation energy)'
+          description='Potential energy (eV) (cum. ionisation energy)'
           nz=ns
           call copy(rpt,1.0_R8,nz,textpl)
         case ('poti')
@@ -3502,29 +3510,24 @@ c
         case ('lnlam')
           description='ln \GK\R'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-!xpb lnlam is allowed to vary as per the NRL formulary using the
-!xpb formula for ion-ion collisions or may be set by user.
-!further modified to use Wesson
-              if (lambda.eq.-5.0_R8) then                    !srv 09.02.11
-                lnlam=max(-lambda,17.3_R8-
-     1           log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     2           1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-              elseif (lambda.eq.-4.0_R8) then                !srv 09.02.11 {
-                if(te(ix,iy)/ev .le. 50.0_R8) then
-                  lnlam=23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
-     *                            3.45_R8*log10(te(ix,iy)/ev)
-                else
-                  lnlam=25.3_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
-     *                            2.30_R8*log10(te(ix,iy)/ev)
-                endif                                         !srv 09.02.11 }
-              else
-                lnlam = lambda
-              endif
-              mach(ix,iy,0)=lnlam
-            end do
-          end do
+          isel=0
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+          end if
+          if (isel.eq.0) then
+            description=trim(description)//'_{Br}'
+          else if (isel.eq.1) then
+            description=trim(description)//'_{ii}'
+          else if (isel.eq.2) then
+            description=trim(description)//'_{ee}'
+          else if (isel.eq.3) then
+            description=trim(description)//'_{ei}'
+          else
+            write(*,*) 'selected value of ',isel,' out of range 0..3'
+            return
+          end if
+          call b2tlnl(nx,ny,isel,te,ti,ne,lnlam)
+          mach(-1:nx,-1:ny,0)=lnlam(-1:nx,-1:ny)
           call copy(mach,1.0_R8,nz,textbl)
         case ('q')
           description='q'
@@ -4435,7 +4438,7 @@ c     assumes that bb is OK for 1d cases
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
           call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,
-     1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
+     1     safetyfactor,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
@@ -5520,6 +5523,7 @@ c     assumes that bb is OK for 1d cases
           values(15)=maxval(wall_stack(1:nbnd,0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('xtow')     ! x dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5539,6 +5543,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('ytow')     ! y dimension of matrix --> wall array
           stack_req=(/1,0,0,1,0,0,0/)
@@ -5558,6 +5563,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(wall_stack(1:nwdim(1,iwwrk),0:nwdim(2,iwwrk)-1,iwwrk))
           wall_label(iwwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
+          call set_wallbarlabel(wall_label(iwwrk))
           goto 2059
         case('rtow')     ! real --> wall stack
           stack_req=(/0,1,0,0,0,0,0/)
@@ -6001,6 +6007,14 @@ c
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),stmp)
           call clear_extralabel(stmp)
+        case('xlab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_xlabel(stmp)
+        case('ylab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_ylabel(stmp)
         case('cltb')     ! colour table
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
@@ -6121,7 +6135,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6158,7 +6172,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6195,7 +6209,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -10127,11 +10141,6 @@ c
             enddo
           enddo
           close(99)
-        case('trgl')     ! ANK target loading
-          stack_req=(/2,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) return
-          call b2ptrg(istack,iistack)
-          call pop_stack(stack_req)
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
@@ -11414,11 +11423,12 @@ c calculate neoclassical diagnostics
       if(rerun_neoclassical) then
         call neo_diagnostics(nx, ny, ns, neo_ic, dn_neo, chi_neo,
      &   vn_neo, vw_neo)
-        call neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,
+        call neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.
       endif
+      return
       end subroutine initialize_neoclassical
 
       end subroutine b2plot
@@ -11436,58 +11446,5 @@ c calculate neoclassical diagnostics
      .    'tdata(1,',i,',',kind,',',is,')=',s_ref(i),',',
      1   ' tdata(2,',i,',',kind,',',is,')=',q(i),','
       enddo
+      return
       end subroutine write_crazy
-
-      function ix_e2b(ixe)
-      use b2mod_b2plot
-      use b2mod_indirect
-      implicit none
-      integer ix_e2b
-      integer ixe
-      integer ic, i
-
-      if (ixe.eq.-1 .or. ixe.eq.0) then
-        ix_e2b = -2
-      else
-        i = 1
-        ix_e2b = 0
-        do while (i.lt.ixe)
-          i = i + 1
-          ix_e2b = ix_e2b + 1
-          do ic = 1, nncut
-            if (ix_e2b.eq.leftcut(ic)) i = i + 1
-            if (ix_e2b.eq.rightcut(ic)) i = i + 1
-          end do
-          if (nncut.eq.2 .and. ix_e2b.eq.nxtr) i = i + 1
-        end do
-      end if
-      return
-      end function ix_e2b
-
-      function ix_b2e(ixb)
-      use b2mod_b2plot
-      use b2mod_indirect
-      implicit none
-      integer ix_b2e
-      integer ixb
-      integer i
-
-      if (ixb.eq.-2) then
-        ix_b2e = -1
-      else if (ixb.gt.nx) then
-        ix_b2e = -1
-      else if (ixb.eq.-1 .or. ixb.eq.nx) then
-        ix_b2e = -1
-      else if (nncut.eq.2 .and.
-     .        (ixb.ge.nxtl .and. ixb.le.nxtr)) then
-        ix_b2e = -1
-      else
-        ix_b2e = ixb + 1
-        do i = 1, nncut
-          if (ixb.ge.leftcut(i)) ix_b2e = ix_b2e + 1
-          if (ixb.ge.rightcut(i)) ix_b2e = ix_b2e + 1
-        end do
-        if (nncut.eq.2 .and. ixb.gt.nxtr) ix_b2e = ix_b2e + 1
-      end if
-      return
-      end function ix_b2e

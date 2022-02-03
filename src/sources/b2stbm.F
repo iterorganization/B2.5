@@ -15,7 +15,7 @@
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_geo
-     , , only : divide_by_areas
+     , , only : divide_by_poloidal_areas
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
@@ -23,8 +23,9 @@
      1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
      2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -76,7 +77,7 @@
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
-      external subini, subend, xertst, sfill,
+      external xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 *   ..initialisation
@@ -223,7 +224,8 @@ cxpb Must convert fluxes to flux densities
         else
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          call divide_by_areas(nx,ny,fna(-1,-1,0,is),fna0(-1,-1,0,is))
+          call divide_by_poloidal_areas(nx,ny,fna(-1,-1,0,is),
+     .                                       fna0(-1,-1,0,is))
         end if
       end do
       do is = 1, nnmoli
@@ -251,9 +253,9 @@ cxpb Must convert fluxes to flux densities
      .                 (na_tot(ix,iy) + ni(ix,iy,0))
         end do
       end do
-      call divide_by_areas(nx,ny,fhi,fhi0)
-      call divide_by_areas(nx,ny,fhe,fhe0)
-      call divide_by_areas(nx,ny,fch,fch0)
+      call divide_by_poloidal_areas(nx,ny,fhi,fhi0)
+      call divide_by_poloidal_areas(nx,ny,fhe,fhe0)
+      call divide_by_poloidal_areas(nx,ny,fch,fch0)
 
       if (ncall.eq.0 .or.
      & (main_call .and. mod(ncall,impgyro_mod).eq.0)) then

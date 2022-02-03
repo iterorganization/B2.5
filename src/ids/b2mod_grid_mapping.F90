@@ -187,7 +187,7 @@ contains
     !> Create B2GridMap, containing grid geometry information
     subroutine b2CreateMap( nx, ny, crx, cry, cflag, leftix, leftiy,    &
             &   rightix, rightiy, topix, topiy, bottomix, bottomiy,     &
-            &   includeGhostCells, gd)
+            &   includeGhostCells, gd, newMap)
 
         use b2mod_cellhelper
 
@@ -197,8 +197,6 @@ contains
                         !< along the first coordinate (poloidal)
         integer :: ny   !< Specifies the number of interior cells
                         !< along the second coordinate (radial)
-
-        !! Output arguments
         !! vertex coordinates
         real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 ) !< Horizontal vertex
             !< coordinates of the four corners of the (ix, iy) cell
@@ -222,7 +220,9 @@ contains
         integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
             !< radial (second coordinate) index
         logical, intent(in) :: includeGhostCells        !< Include "fake" cells
+        logical, intent(in) :: newMap                   !< Create a new vertex file
 
+        !! Output arguments
         type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -286,6 +286,7 @@ contains
         character(256) :: VERTEX_FILE_TEMP
         integer, parameter :: VERTEX_UNIT = 99
         logical :: vertexfileExists
+        external xertst, find_file
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" B2 grid" )
@@ -361,9 +362,9 @@ contains
         call xertst (count(Fcxi(:,:,TOP) == GRID_UNDEFINED) == 0,       &
             &  "b2CreateMap: there are unnumbered x-aligned faces" )
         call xertst (count(Fcyi(:,:,LEFT) == GRID_UNDEFINED) == 0,      &
-            &   "b2CreateMap: there are unnumbered y-aligned faces" )
+            &  "b2CreateMap: there are unnumbered y-aligned faces" )
         call xertst (count(Fcyi(:,:,RIGHT) == GRID_UNDEFINED) == 0,     &
-            &   "b2CreateMap: there are unnumbered y-aligned faces" )
+            &  "b2CreateMap: there are unnumbered y-aligned faces" )
 
         !! Fill in vertex numbers for remaining vertices
         !! A vertex can be shared among 4 cells (possibly more for special
@@ -720,7 +721,7 @@ contains
         !! Find out how many and which control volumes touch any given vertex
         VERTEX_FILE_TEMP = trim(VERTEX_FILE)
         call find_file(VERTEX_FILE_TEMP,vertexfileExists)
-        if (vertexfileExists) then
+        if (vertexfileExists.and..not.newMap) then
           ! read vertex file
           open(unit=VERTEX_UNIT, file=VERTEX_FILE_TEMP)
           read(VERTEX_UNIT,*) gd%mapCvixVx

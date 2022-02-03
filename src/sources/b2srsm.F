@@ -10,9 +10,12 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_plasma
+     , , only : roxa
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -57,9 +60,7 @@
      &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
-      real (kind=R8) :: roxa
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
-      external subini, subend, xertst, ipgeti, b2xvsg
+      external xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod
 *   ..initialisation
       save ncall, diagno, enable
@@ -288,7 +289,7 @@ c check electron particle number
      1         abs(snesm(ix,iy,0) + snesm(ix,iy,1)*ne(ix,iy))
      2         /(ne(ix,iy)*vol(ix,iy))
               hlp = invtimescale*time_factor_required*
-     1         dtim*time_factor(ix,iy)
+     1         dteff*time_factor(ix,iy)
               if (hlp.gt.1.0_R8) then
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
@@ -296,7 +297,7 @@ c check electron particle number
                   write(*,*)
      ,             'WARNING: electron particle sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,             timescale,dtim*time_factor(ix,iy)
+     ,             timescale,dteff*time_factor(ix,iy)
                   write(*,'(a,2i4)') 'ix,iy = ', ix,iy
                   write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
@@ -327,7 +328,7 @@ cdjm Store the total change in linearised sources for balance
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-!         call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
+!         call my_out(70,nx,ny,smosm(:,:,0,is)+                      !srv 07.10.09
 !     &        smosm(:,:,1,is)*ua(:,:,is)+
 !     &        smosm(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smosm(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
@@ -343,7 +344,7 @@ cdjm Store the total change in linearised sources for balance
         enddo
       endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-!        call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+            !srv 07.10.09
+!        call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+          !srv 07.10.09
 !     &   shesm(:,:,2)*ne + shesm(:,:,3)*te*ne,'b2srsm_shesm')
 !        call my_out(70,nx,ny,shism(:,:,0)+shism(:,:,1)*ti+
 !     &   shism(:,:,2)*ni(:,:,0) +

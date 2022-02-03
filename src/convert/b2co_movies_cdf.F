@@ -3,11 +3,12 @@
       use b2mod_geo
       use b2mod_movies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
-      real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
+#     include <netcdf.inc>
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else
@@ -32,12 +33,10 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2movies.nc file

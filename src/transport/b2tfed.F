@@ -8,6 +8,7 @@
       use b2mod_constants
       use b2mod_geo
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -37,11 +38,8 @@
       save ncall, drift_style, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
-      real (kind=R8) ::
-     * hy1
-      external subini, subend, ipgeti, ipgetr, xertst
+      external ipgeti, ipgetr, xertst
       external b2xvsg
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/,
      * poleldr/1.0_R8/, poldidr/1.0_R8/,

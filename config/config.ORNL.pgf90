@@ -12,91 +12,16 @@ LD_MSCL    ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG   ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG     ?= -L${SOLPSLIB} -lblaslapack
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-
 CPP = /lib/cpp -traditional
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
-LINK_MOD =
 
-FC = pgf90
-
-ifndef SOLPS_CPP
-DEFINES += -DPGF90
-endif
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V | grep "pgf90" | awk 'match($$0,/[0-9]+\.[0-9]+\-[0-9]+/){print substr($$0, RSTART, RLENGTH)}' | cut -d '.' -f 1 )
-DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -I
-FCOPTS   = -Mbackslash
 LDOPTS   = -Kieee
-ifdef SOLPS_DEBUG
-FCOPTS  += -C -g -Mchkptr -Mchkstk
-LDOPTS  += -g -C
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 19; echo $$?),0)
-FCOPTS  += -Mchkfpstk -Mpgicoff
-endif
-else
-FCOPTS  += -fast -Kieee
-endif
-ifdef USE_OPENMP
-FCOPTS += -mp=nonuma
-LDOPTS += -mp=nonuma
-endif
-ifdef USE_MPI
-FCOPTS  += -Mmpi=mpich
-INCMODS += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
+ifndef SOLPS_DEBUG
+FCOPTS  += -Kieee
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
-endif
-
-ifdef IMAS_VERSION
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
-INCMODS += `pkg-config imas-pgi ggd --cflags`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-pgi --libs` -lggd-pgi
-INCMODS += `pkg-config imas-pgi --cflags`
-else
-GGD_MINOR_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
-INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
-endif
-endif
-ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
-IMASLIBS = ${LD_UAL}
-endif
-
-DBLFC = ${FC}
 DBLOPTION =
 DBLSED =
-
-MOD = mod
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG}
-PLLIBES = ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-LD = ${FC}
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

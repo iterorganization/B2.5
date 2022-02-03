@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -57,7 +58,7 @@ c     local variables:
       integer   nz(ns+1)
       integer   i, ix, iy, ifail, nspec, ncharged
 
-      external subini, subend, xertst, b2xvff, b2xvsg, ipgeti
+      external b2xvff, b2xvsg, ipgeti
 
       integer, save :: icase = 0
       integer ncall, n2, failcount, failcount0
@@ -207,7 +208,7 @@ c       write(*,*) 'gte,gti',gte,gti
 c       write(*,*) 'nz',nz
 c       write(*,*) 'nspec',nspec
 c       write(*,*) 'ncharged',ncharged
-          call thermf( u, n, z(ix,iy,1), z2(ix,iy,1),
+          call thermf( u, n, z2(ix,iy,1),
      &     mm, tef, tif, gte, gti, lnlam(ix,iy),                     !srv 01.07.09
      *     nz, nspec, ncharged, ce, ci, he, hi, r, ifail, cond )
           fac=(atan(xscal*(cond-xpos))-atan(-xscal*xpos))/
@@ -324,6 +325,7 @@ c       ( ix )
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -357,7 +359,7 @@ c       ( ix )
       integer           nz(ns)
       integer           i, ix, iy, ifail, nspec, ncharged
 
-      external subini, subend, xertst, b2xvsg
+      external b2xvsg
 
       integer, save :: icase = 0
       integer ncall,n2,failcount,failcount0
@@ -457,7 +459,7 @@ c         write(*,*) 'ti(ix,iy)',ti(ix,iy)
 c         write(*,*) 'nz',nz
 c         write(*,*) 'nspec,ncharged',nspec,ncharged
 c         write(*,*) 'wwpp',wwpp
-            call viscalc(n, z(ix,iy,1), z2(ix,iy,1), mm, ti(ix,iy), nz,
+            call viscalc(n, z2(ix,iy,1), mm, ti(ix,iy), nz,
      *       nspec, ncharged, wwpp, visc, eta, lnlam(ix,iy), ifail,   !srv 01.07.09
      *       cond)
 c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
@@ -519,7 +521,6 @@ c
 *       Input:
 *       --------
 *       n  = ( ns  (s=1,...,nsz) ) :    density                 in m-3
-*       z  = ( ns  (s=1,...,nsz) ) :    charge                  in e
 *       z2 = ( ns  (s=1,...,nsz) ) :    square charge           in e**2
 *       mm = ( ms  (s=1,...,ns) )  :    mass                    in kg
 *       ti                         :    k*temperature           in J
@@ -543,7 +544,7 @@ c
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine viscalc(n, z, z2, mm, ti, nz, ns, nsz, w, pi_pp,        !xpb
+      subroutine viscalc(n, z2, mm, ti, nz, ns, nsz, w, pi_pp,           !xpb
      1 eta, lnlam, ifail, cond)                                          !srv 01.07.09
       use b2mod_types
       use b2mod_constants                                                !xpb
@@ -552,7 +553,7 @@ c
 
       integer           ns, nsz, nz(ns), ifail
       real (kind=R8) ::
-     *                  n(nsz), z(nsz), z2(nsz), mm(ns),
+     *                  n(nsz), z2(nsz), mm(ns),
      1 eta(nsz), pi_pp(nsz), w(nsz), ti                                  !xpb
 
 C       internal variables:
@@ -593,7 +594,7 @@ C       z2n:    Sum  n*Z**2 over Z
 *//COMPUTATION//
 
 C       n1(j):  index of vector element corresponding to first charge
-C               state of species j in vectors n, z, w, pi_pp, eta
+C               state of species j in vectors n, w, pi_pp, eta
       n1(1)= 1
       do i=2,ns
         n1(i) = n1(i-1) + nz(i-1)
@@ -787,16 +788,17 @@ c
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine thermf(up, n, z, z2, mm, te, ti, gte, gti, lnlam,    !srv 01.07.09
+      subroutine thermf(up, n, z2, mm, te, ti, gte, gti, lnlam,          !srv 01.07.09
      *                  nz, ns, nfl, ce, ci, he, hi, r, ifail, cond)
 
       use b2mod_types
       use b2mod_constants                                                !xpb
+      use b2mod_subsys
       implicit none
 
       integer     ns, nfl, nz(ns)
       real (kind=R8) ::
-     *    up(nfl), n(nfl), z(nfl), z2(nfl), mm(ns), r(nfl)
+     *    up(nfl), n(nfl), z2(nfl), mm(ns), r(nfl)
       real (kind=R8) :: te, ti, gte, gti, lnlam, he, hi, ce, ci          !srv 01.07.09
       integer     ifail
 
@@ -841,7 +843,6 @@ C       gt:                                     temperature gradient
       integer   i, j, k, l
       real (kind=R8) ::
      *          i1, i2, h1, hh1, const, cii
-      external subini, subend, xertst
 
       call subini ('thermf')
       call xertst( nz(1) .eq. 1 ,

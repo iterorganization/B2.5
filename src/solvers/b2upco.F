@@ -8,6 +8,9 @@
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dn
+      use b2mod_subsys
+      use b2mod_plasma                                                  !srv 07.07.21
+     & , only : uap
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb
@@ -45,7 +48,7 @@
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
       logical too_low_density                                             ! IYS 27.11.2017
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2xxgs
+      external xertst, ipgetr, b2xxgs
 *   ..initialisation
       data ncall/0/, nrings/0/
 
@@ -92,7 +95,7 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
-      if(corr_core_dn(isb).ne.1.0_R8 .and. 
+      if(corr_core_dn(isb).ne.1.0_R8 .and.
      &               (.not. is_neutral(isb))) then               !srv 25.07.17 {  IYS 19.12.2017
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
         tt0 = 0.0e0_R8
@@ -144,12 +147,14 @@
             enddo
           endif
         enddo                                             !lk 30.06.2017}
-      else         ! do not smooth the correction 
+      else         ! do not smooth the correction
         nb = nb_
         pb = pb_
       endif                                                !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
+       if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8))
+     &    uap(:,:,isb) = ub                                             !srv 07.07.21
        do iy = -1, ny
         do ix = -1, nx
 *       (note the further damping on the velocity correction)

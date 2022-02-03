@@ -24,18 +24,18 @@
       private
 
 #ifdef USE_MPI
-      integer :: mpi_err,mpi_stat
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
-      integer :: mpi_err,mpi_stat
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
-     &                      !    by ionization/recombination
+     &                      !    by ionisation/recombination
      &     im_cc (:,:,:),   ! ion momentum source by Coulomb collision
      &     ie_cc (:,:),     ! ion heat source by Coulomb collision
      &     ee_rd (:,:),     ! electron heat source by radiation

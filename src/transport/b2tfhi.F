@@ -2,21 +2,25 @@
 *.specification
 
       subroutine b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,
-     1  vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
+     1  vol, hx, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
      3  chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,                !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                 !srv 13.10.06
      &  balance)                                                         !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
      &          fhi_inert, fhi_vispar, fhi_visper, fhi_visq, fhi_anml
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -31,9 +35,7 @@
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
      &  chvi(-1:nx,-1:ny,0:1),
      &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:nx-1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
-     1  qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     &  hx(-1:nx,-1:ny),
      .  na(-1:nx,-1:ny,0:ns-1), 
      2  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
@@ -77,22 +79,16 @@
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8) ::
-     *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0,
-     1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
+     *  floi0, flomx, coni0, t0, t1, dti, dti0,
+     1  cum_flo_vadia, cum_flo_vaecrb, prefactor,
      &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf                   !srv 13.10.06
       real (kind=R8) :: w0(-1:nx,-1:ny,0:ns-1),
      1  w1(-1:nx,-1:ny,0:ns-1), w2(-1:nx,-1:ny,0:ns-1)
-      parameter (cutlo=1.0e-60_R8)
       save ncall, conduction_only, no_hybr
 *   ..procedures
-      intrinsic min, max, dim, abs, sqrt, sign
-      real (kind=R8) ::
-     *  hybr, upwind, hy1
-      external subini, subend, xertst, ipgeti
+      intrinsic min, max, dim, sign
+      external xertst, ipgeti
       external b2xvsg, b2xvff
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, conduction_only/0/, no_hybr/0/
 
@@ -684,29 +680,62 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fhi(ix,-1,0) = 0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-              fhi_32(ix,-1,0) = 0.0_R8
-              fhi_52(ix,-1,0) = 0.0_R8
-              fhi_cond(ix,-1,0) = 0.0_R8
-              fhi_dia(ix,-1,0) = 0.0_R8
-              fhi_ecrb(ix,-1,0) = 0.0_R8
-              fhi_strange(ix,-1,0) = 0.0_R8
-              fhi_pschused(ix,-1,0) = 0.0_R8
-              fhi_inert(ix,-1,0) = 0.0_R8
-              fhi_vispar(ix,-1,0) = 0.0_R8
-              fhi_visper(ix,-1,0) = 0.0_R8
-              fhi_visq(ix,-1,0) = 0.0_R8
-              fhi_anml(ix,-1,0) = 0.0_R8
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fhi(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                if (balance.and.(balance_netcdf.ne.0)) then              !djm Jan2017
+                  fhi_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_cond(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_dia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_ecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_strange(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhi_pschused(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhi_inert(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhi_vispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhi_visper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                          0.0_R8
+                  fhi_visq(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                  fhi_anml(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                endif
+                floi(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fhit(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                coni(bc_list_x(ix,ib),bc_list_y(ix,ib),0,:) = 0.0_R8
+                fllimi(bc_list_x(ix,ib),bc_list_y(ix,ib)) = 1.0_R8
+              enddo
             endif
-            floi(ix,-1,0) = 0.0_R8
-            fhit(ix,-1,0) = 0.0_R8
-            coni(ix,-1,0,:) = 0.0_R8
-            fllimi(ix,-1) = 1.0_R8
-          endif
-        enddo
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fhi(ix,-1,0) = 0.0_R8
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
+                fhi_32(ix,-1,0) = 0.0_R8
+                fhi_52(ix,-1,0) = 0.0_R8
+                fhi_cond(ix,-1,0) = 0.0_R8
+                fhi_dia(ix,-1,0) = 0.0_R8
+                fhi_ecrb(ix,-1,0) = 0.0_R8
+                fhi_strange(ix,-1,0) = 0.0_R8
+                fhi_pschused(ix,-1,0) = 0.0_R8
+                fhi_inert(ix,-1,0) = 0.0_R8
+                fhi_vispar(ix,-1,0) = 0.0_R8
+                fhi_visper(ix,-1,0) = 0.0_R8
+                fhi_visq(ix,-1,0) = 0.0_R8
+                fhi_anml(ix,-1,0) = 0.0_R8
+              endif
+              floi(ix,-1,0) = 0.0_R8
+              fhit(ix,-1,0) = 0.0_R8
+              coni(ix,-1,0,:) = 0.0_R8
+              fllimi(ix,-1) = 1.0_R8
+            endif
+          enddo
+        endif
       endif                                                              !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS

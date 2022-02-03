@@ -99,7 +99,7 @@ c                                       !number of particles per cell
      *   deltat                         !timestep between plots
       logical ls_active(0:ns-1)         !species active?
       integer isclvl(0:ns-1),iscol(0:ns-1)
-      character*16 texttraj(1:ns)
+      character*19 texttraj(1:ns)
 
       integer zaehler,zaehler2,ip,randzaehler
 

@@ -10,6 +10,7 @@
      &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
+      use b2mod_subsys
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -187,7 +188,7 @@
       endif
  
       if (new_files) then
-        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (96,file='dx2')
         if (maxval(nxdata).gt.0) open (95,file='dx1')
         if (maxval(nsdata).gt.0) open (94,file='da1')
         if (maxval(nsdata).gt.0) open (93,file='da2')
@@ -308,9 +309,9 @@
      &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
                   if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+                  if (new_files) write (96,*) xr(ix),xf(ix)
                 endif
               endif
-              if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0.or.debug) then
               if (ndat.gt.0) then
@@ -326,9 +327,9 @@
      &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
                 if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+                if (new_files) write (94,*) pr(iy),pf(iy)
               endif
             endif
-            if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
     1     continue
         enddo
@@ -897,7 +898,7 @@ c*** Clear data to forget previous profiles
       integer ixref, iyref
       character*256 filename
       logical exist
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
@@ -918,8 +919,7 @@ c*** Clear data to forget previous profiles
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-        call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'dsp')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -992,7 +992,7 @@ c*** Clear data to forget previous profiles
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref
       integer ireg
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, ncall
       data ncall/0/

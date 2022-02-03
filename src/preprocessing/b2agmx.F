@@ -15,11 +15,15 @@
      3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_geo2
+     , , only : dist1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
@@ -151,18 +155,10 @@
       real (kind=R8) ::
      *   t0, t1, t2, t3, t4, t5
       logical iniso, error
-      integer i, j
       integer pbs_from_basis_mesh
-      real (kind=R8) ::
-     *   p0x, p0y
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   norm, dist1
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      dist1(ix,iy,i,j) = norm (
-     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
       save pbs_from_basis_mesh

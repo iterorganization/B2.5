@@ -10,14 +10,9 @@ GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
-DEFINES += -DGRREAL=4 -DDOFLUSH -DNO_OPT # -DNO_CDF
+DEFINES += -DNO_OPT # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
-CPPOPTS  = -P -I${srcdir} ${EQUIVS}
-SED      = sed s:\#PREC\#:d:g
-SED      =
-LINK_MOD =
 
 ifdef USE_MPI
 FC       = mpiifort
@@ -27,10 +22,6 @@ FC       = mpiifort
 else
 FC       = ifort
 endif
-endif
-
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
@@ -55,31 +46,8 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 LDOPTS  += -i_dynamic
 endif
 
-DBLFC    = ${FC}
-DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   =
-
 INCMOD   = -I
-MOD      = mod
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD      = ar rucv
-
-GRLIBES  = ${LD_NCARG}
-PLLIBES  = ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
-ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
-endif
 
 ifndef SOLPS_CPP
 DEFINES += -DITM
@@ -105,7 +73,6 @@ LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS += `pkg-config imas-lowlevel imas-ifort --cflags`
 endif
 endif
-LD_UAL += -lxml2 -lstdc++
 ifndef SOLPS_CPP
 DEFINES += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
@@ -118,14 +85,7 @@ IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
 endif
 endif
 
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-LD       = ${FC}
-
-LCPP     = ${LD_SONNET}
-
+LD_UAL += -lxml2 -lstdc++
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -4,8 +4,10 @@
       subroutine b2ux5p (nx, ny, aa5, itcnt, resfun, corfun, name)   !srv 18.03.10
       use b2mod_types
       use b2mod_ma28
+      use b2mod_ilutern
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -71,7 +73,7 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
+      external xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
 !!FR The save variables used by ilutern need to be declared threadprivate 

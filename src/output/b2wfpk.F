@@ -1,21 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wfpk (nprt, idout, nx, ny, ns, gs, qc, 
-     &  fna, fhe, fhi, fch, fne, fni)
+      subroutine b2wfpk (nprt, idout, nx, ny, ns)
       use b2mod_types
+      use b2mod_geo
+      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       character idout*(*)
-      real (kind=R8) ::
-     *  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -72,7 +68,7 @@
       integer ix, iy, is
 *   ..procedures
       logical strmas
-      external subini, subend, xertst, strmas
+      external xertst, strmas
       external b2xvff
 
 *-----------------------------------------------------------------------
@@ -84,15 +80,6 @@
 *   ..test nprt, nx, ny
       call xertst (1.le.nprt, 'faulty argument nprt')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test edge values of fluxes
-      do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
-      enddo
-      call b2xvff (nx, ny, fhe, 'fhe')
-      call b2xvff (nx, ny, fhi, 'fhi')
-      call b2xvff (nx, ny, fch, 'fch')
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
 
 * ..write the flux densities
 *   ..write pzso segment?

@@ -5,7 +5,9 @@
      &  rtn, nn, zn, fix_recomb, zmax_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
@@ -144,18 +146,11 @@
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *  cutll, Rydberg, Ei, Ef, t0, zmin, zmax
+     *  Rydberg, Ei, Ef, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
-      intrinsic nint, int, max, exp, log
-      real (kind=R8) ::
-     *   machsfr, expu1
-      real (kind=R4) small_real_constant
-      external subini, subend, xertst, pagini, pagend, machsfr,
-     &  dashdc, curved_d
-      expu1(t0) = exp(max(t0,cutll))+small_real_constant
-*     (expu1 is the exponential function with underflow set to a tiny
-*     positive value.)
+      intrinsic nint, int, log
+      external xertst, pagini, pagend, dashdc, curved_d
 
 *-----------------------------------------------------------------------
 *.computation
@@ -171,9 +166,7 @@
       allocate (wn(0:nn))
       allocate (wt(0:nt))
 *   ..set cutll
-      cutll = log(2.0_R8*machsfr())
-      small_real_constant=tiny(small_real_constant)
-*!!   (increase cutll if a floating point error occurs.)
+      if (.not.b2mod_math_initialised) call b2mod_math_init
       Rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
 *   ..set izn0
       izn0 = nint(zn(0))
@@ -201,7 +194,7 @@
      &   'rtt', 'rtsa', header)
        do k = 0, ns0-2
         do i = 0, nt
-         wt(i) = expu1(rtlsa(i,j,k))
+         wt(i) = expu4(rtlsa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -226,7 +219,7 @@
      &   'rtn', 'rtsa', header)
        do k = 0, ns0-2
         do j = 0, nn
-         wn(j) = expu1(rtlsa(i,j,k))
+         wn(j) = expu4(rtlsa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -251,7 +244,7 @@
      &   'rtt', 'rtra', header)
        do k = 1, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlra(i,j,k))
+         wt(i) = expu4(rtlra(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -276,7 +269,7 @@
      &   'rtn', 'rtra', header)
        do k = 1, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlra(i,j,k))
+         wn(j) = expu4(rtlra(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -301,7 +294,7 @@
      &   'rtt', 'rtqa', header)
        do k = 0, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlqa(i,j,k))
+         wt(i) = expu4(rtlqa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -326,7 +319,7 @@
      &   'rtn', 'rtqa', header)
        do k = 0, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlqa(i,j,k))
+         wn(j) = expu4(rtlqa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -352,7 +345,7 @@
      &   'rtt', 'rtqa (fix_recomb)', header)
         do k = 0, ns0-1
          do i = 0, nt
-          wt(i) = expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+          wt(i) = expu4(rtlqa(i,j,k))-expu4(rtlra(i,j,k))*rtlpi(i,j,k)
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
@@ -377,7 +370,7 @@
      &   'rtt', '-rtqa (fix_recomb)', header)
         do k = 0, ns0-1
          do i = 0, nt
-          wt(i) = -expu1(rtlqa(i,j,k))+expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+          wt(i) = -expu4(rtlqa(i,j,k))+expu4(rtlra(i,j,k))*rtlpi(i,j,k)
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
@@ -402,7 +395,7 @@
      &   'rtn', 'rtqa (fix_recomb)', header)
         do k = 0, ns0-1
          do j = 0, nn
-          wn(j) = expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+          wn(j) = expu4(rtlqa(i,j,k))-expu4(rtlra(i,j,k))*rtlpi(i,j,k)
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
@@ -427,7 +420,7 @@
      &   'rtn', '-rtqa (fix_recomb)', header)
         do k = 0, ns0-1
          do j = 0, nn
-          wn(j) = -expu1(rtlqa(i,j,k))+expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+          wn(j) = -expu4(rtlqa(i,j,k))+expu4(rtlra(i,j,k))*rtlpi(i,j,k)
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
@@ -453,7 +446,7 @@
      &   'rtt', 'rtcx', header)
        do k = 1, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlcx(i,j,k))
+         wt(i) = expu4(rtlcx(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -478,7 +471,7 @@
      &   'rtn', 'rtcx', header)
        do k = 1, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlcx(i,j,k))
+         wn(j) = expu4(rtlcx(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)

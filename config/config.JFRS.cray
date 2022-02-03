@@ -1,6 +1,6 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
-LD_MSCL     ?= -L/opt/gcc/8.3.0/snos/lib64 -lgfortran -L${SOLPSLIB} -lmscl
+LD_MSCL     ?= -L${SOLPSLIB} -lmscl
 ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
@@ -20,10 +20,15 @@ LD_NAG      ?= `pkg-config sci --libs`
 endif
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+
 DEFINES += -DNO_OPT
 ifndef SOLPS_CPP
 DEFINES += -DCRAY -DF2003
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
 endif
 
 ifdef USE_MPI
