@@ -1859,6 +1859,9 @@ c new CDF movie option (1st frame at t=0)
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(switches), intent (inout)      :: switch
+#ifdef FIXED_POINT
+      type(B2State)   :: state0
+#endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
@@ -1897,6 +1900,7 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
+      state0 = state
 ! $AD FP-LOOP "state"
       do while (res_max.ge.res_quit)
 #else
@@ -2015,7 +2019,6 @@ csw 09oct2012 set default potential already at this point (BCs)
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
-#endif
 ! csc UNCOMMENT WITH AD
 !      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
 !      DO ICF=1, NCF
@@ -2055,7 +2058,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call update_average_balance(itim,ntim)
         endif
 #endif
-
+#endif
 *    ..increment
         itim = itim+1
         itim_plas = itim_plas + 1
@@ -2391,11 +2394,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
 #endif
 #ifdef FIXED_POINT
-*   ..loop test
-      if (quit .or. itim.ge.ntim .or. ierr.ne.0 .or.
-     &     (etim.le.tim .and. etim.gt.0.0_R8) ) then
-        exit
-      endif
+        call calc_res_fp(nCv, ns, state, state0, res_max)
+        write(*,*) 'MAX RESIDUAL ',res_max
+        state0 = state
 *   ..end loop
       end do
 *   ..call cost function

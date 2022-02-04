@@ -48,8 +48,8 @@
       endif
 
 *   ..compute poloidal and radial gradients
-      call gradc_div_p(nCv, nFc, nVx, 1, geo, mpg, fun, funf, gfun(1,0))
-      call gradc_div_r(nCv, nFc, nVx, 1, geo, mpg, fun, funf, gfun(1,1))
+      call gradc_div_p(nCv, nFc, nVx, 1, geo, mpg, fun, funf, gfun(:,0))
+      call gradc_div_r(nCv, nFc, nVx, 1, geo, mpg, fun, funf, gfun(:,1))
 
 *   ..return
       return

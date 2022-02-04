@@ -26,7 +26,7 @@
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
-      real (kind=R8), allocatable :: charge_frac(:)
+      real (kind=R8) :: charge_frac(DEF_NSD)
       real (kind=R8), parameter :: amtol = 1.0e-2_R8
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
@@ -1135,7 +1135,6 @@ cxpb size is changed in DIMENSIONS.F
               is_start = eb2spcr(b2espcr(fb_species(ifb)))
               is_end = eb2spcr(b2espcr(fb_species(ifb)))+
      &          nfluids(b2espcr(fb_species(ifb)))
-              allocate(charge_frac(1:is_end-is_start+1))
               charge_frac = 0.0_R8
               sum_s = 0.0_R8
               do is = is_start, is_end
@@ -1900,7 +1899,6 @@ cxpb size is changed in DIMENSIONS.F
      &          fb_actuator(ifb).eq.3)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
-            if (fb_type(ifb).eq.6) deallocate(charge_frac)
 
           endif
 
