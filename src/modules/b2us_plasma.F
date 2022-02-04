@@ -1122,6 +1122,7 @@ cwdk move to dv
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( snap % fhn( nFc, 0:1 ), SOURCE=0._R8 )    
       allocate( snap % fkt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fzt( nFc, 0:1 ), SOURCE=0._R8 )
       
@@ -1148,6 +1149,7 @@ cwdk move to dv
       deallocate( snap % fna )
       deallocate( snap % fhe )
       deallocate( snap % fhi )
+      deallocate( snap % fhn )
       deallocate( snap % kinrgy )
       deallocate( snap % kt )
       deallocate( snap % zt )
