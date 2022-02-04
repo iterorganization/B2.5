@@ -931,6 +931,7 @@ cwdk move to dv
       allocate( sr_eir % she( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % shi( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % smo( nCv, 0:ns-1 , nstra), SOURCE=0._R8 )
+      allocate( sr_eir % smq( nCv, 0:ns-1 , nstra), SOURCE=0._R8 )
       allocate( sr_eir % sna( nCv, 0:ns-1 , nstra), SOURCE=0._R8 )
       allocate( sr_eir % sne( nCv, nstra), SOURCE=0._R8 )
 
@@ -946,6 +947,7 @@ cwdk move to dv
       deallocate( sr_eir % she )
       deallocate( sr_eir % shi )
       deallocate( sr_eir % smo )
+      deallocate( sr_eir % smq )
       deallocate( sr_eir % sna )
       deallocate( sr_eir % sne )
 
