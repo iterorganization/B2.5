@@ -1018,7 +1018,7 @@ cmb   net momentum sources from neutral particle reflection
      &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0,switch%use_uy_uz_1,
      &              switch%diffusion_bc_safeguard,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
@@ -1039,9 +1039,9 @@ cmb   net momentum sources from neutral particle reflection
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,switch%L_macro_AFN,
-     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &              fene_el)
+     &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
+     &              switch%L_macro_AFN, fnnrefl,fmomrefl,nnrefl,
+     &              nnwwnrefl,fenerefl,fene_el)
                else
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
@@ -1049,7 +1049,7 @@ cmb   net momentum sources from neutral particle reflection
      &              fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0,
+     &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
                endif
              else
