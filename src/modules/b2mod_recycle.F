@@ -292,15 +292,16 @@ c     Calculate rate coefficients at boundary
       c_th = sqrt(tnf/mn)
       mfp = c_th/vtot
 
+      if (use_uy_uz_0.eq.0) then
+        uy = 0.0_R8
+        uz = 0.0_R8
+      endif
+
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
 c     Incident particle flux density
-      if (use_uy_uz_0.eq.0) then
-      uy = 0.0_R8
-      uz = 0.0_R8
-      endif
 
       fnni = vcx/vtot**2*(dnndy*uy*i1l + dnndz*i2l) - 
      &         nnf*vcx/vtot*i1l
@@ -309,8 +310,8 @@ c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
       if (use_uy_uz_1.eq.0) then
-      uy = 0.0_R8
-      uz = 0.0_R8
+        uy = 0.0_R8
+        uz = 0.0_R8
       endif
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
@@ -801,7 +802,7 @@ c     Convert energy flux densities in energy fluxes
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,safeguard,
+     &            cosa, sina, use_uy_uz_0,use_uy_uz_1,safeguard,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
@@ -817,7 +818,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, safeguard
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1,
+     &    safeguard
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz,
@@ -872,6 +874,11 @@ c     Calculate rate coefficients at boundary
       c_th = sqrt(tnf/mn)
       mfp = c_th/vtot
 
+      if (use_uy_uz_0.eq.0) then
+        uy = 0.0_R8
+        uz = 0.0_R8
+      endif
+
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
@@ -882,7 +889,7 @@ c     Calculate incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      if (use_uy_uz_0.eq.0) then
+      if (use_uy_uz_1.eq.0) then
         uy = 0.0_R8
         uz = 0.0_R8
       endif
@@ -1049,7 +1056,7 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,L,
+     &            cosa, sina, use_uy_uz_0, use_uy_uz_1, L,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
@@ -1065,7 +1072,7 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,L,
      &    sina,cosa, dnndy, dnndz, Kn_b1 , Kn_b2, fluid_frac_hyb
@@ -1108,7 +1115,7 @@ c     Calculate rate coefficients at boundary
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
       elseif (Kn.gt.Kn_b2) then
@@ -1127,7 +1134,7 @@ c     Calculate rate coefficients at boundary
      &            isign,isn,iscx0,isi,istra,iwall,
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,pl,tif,tnf,
      &            tef,pof,nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnreflD,fmomreflD,nnreflD,nnwwnreflD,fenereflD,
      &            fene_elD)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fnnreflD,fnnreflM,fnnrefl)
@@ -1150,7 +1157,7 @@ c     Calculate rate coefficients at boundary
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,
+     &            cosa, sina, use_uy_uz_0, use_uy_uz_1,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
 c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
@@ -1170,7 +1177,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz, fluid_frac_hyb
@@ -1189,7 +1196,7 @@ c     Output variables:
      &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tif,tnf,tef,pof,                           
      &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0,1,!! <- '1': = safeguard for diffusion BCs
+     &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
       else
