@@ -149,13 +149,13 @@
 *   ..compute rescoreg, resmoreg
        do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
-        diag%rescoreg(mpg%cvReg(iCv),is)=
-     .     diag%rescoreg(mpg%cvReg(iCv),is)+abs(dv%resco(1,iCv,is))
-        diag%resmoreg(mpg%cvReg(iCv),is)=
-     .     diag%resmoreg(mpg%cvReg(iCv),is)+abs(dv%resmo(1,iCv,is))
+        diag%rescoreg(1,mpg%cvReg(iCv),is)=
+     .     diag%rescoreg(1,mpg%cvReg(iCv),is)+abs(dv%resco(1,iCv,is))
+        diag%resmoreg(1,mpg%cvReg(iCv),is)=
+     .     diag%resmoreg(1,mpg%cvReg(iCv),is)+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%rescoreg(:,is) = abs(diag%rescoreg(:,is)/navi)
-       diag%resmoreg(:,is) = abs(diag%resmoreg(:,is)/movi)
+       diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
+       diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
       enddo
 *   ..compute prvi
       prvi = 0.0_R8
@@ -172,13 +172,13 @@
       diag%reshireg = 0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
-        diag%reshereg(mpg%cvReg(iCv)) = 
-     .    diag%reshereg(mpg%cvReg(iCv))+abs(dv%reshe(1,iCv))
-        diag%reshireg(mpg%cvReg(iCv)) = 
-     .    diag%reshireg(mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
+        diag%reshereg(1,mpg%cvReg(iCv)) = 
+     .    diag%reshereg(1,mpg%cvReg(iCv))+abs(dv%reshe(1,iCv))
+        diag%reshireg(1,mpg%cvReg(iCv)) = 
+     .    diag%reshireg(1,mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
       enddo
-      diag%reshereg = abs(diag%reshereg/((1.5_R8+BoRiS)*prvi))
-      diag%reshireg = abs(diag%reshireg/((1.5_R8+BoRiS)*prvi))
+      diag%reshereg(1,:) = abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
+      diag%reshireg(1,:) = abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
 
 * ..return
       ncall = ncall+1
