@@ -104,6 +104,11 @@ EXT_DIFF = .diff_d3
 DIFF = yes
 TGT = yes
 endif
+ifdef DIFF_D4
+EXT_DIFF = .diff_d4
+DIFF = yes
+TGT = yes
+endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
 DIFF = yes
@@ -120,6 +125,11 @@ ADJ = yes
 endif
 ifdef DIFF_B3
 EXT_DIFF = .diff_b3
+DIFF = yes
+ADJ = yes
+endif
+ifdef DIFF_B4
+EXT_DIFF = .diff_b4
 DIFF = yes
 ADJ = yes
 endif
@@ -387,6 +397,9 @@ endif
 ifdef DIFF_B3
 ADEXTRA += ${STACKAD}
 endif
+ifdef DIFF_B4
+ADEXTRA += ${STACKAD}
+endif
 ifdef AD_DEBUG
 ADEXTRA = ${DBGAD} ${STACKAD}
 endif
@@ -413,13 +426,21 @@ CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text DIFF_B1 DIFF_B2 DIFF_B3 DIFF_B4 DIFF_D1 DIFF_D2 DIFF_D3 DIFF_D4
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D1: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D2: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D3: VERSION ${MNDEXE} ${OPTEXE}
+DIFF_D4: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B1: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B2: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B3: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_B4: VERSION ${MNBEXE} ${OPTEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)

@@ -175,6 +175,8 @@
         iout_iout_ASTRA = 0
       endif
 
+      if (iout.eq.1) then                                         !srv begin if for iout
+
 #ifdef B25_EIRENE
        if (iout.ne.4) then
         open(70,file=trim(folder)//'eirdiag.dat')              !srv 26.09.17
@@ -246,261 +248,262 @@ c     calculate coordinates of cell centre
        close(70)
 
 
-      if (mpg%isClassicalGrid.eq.1) then
-        do iy = -1, ny
-          do ix = -1, nx
-            if(mpg%imapCv(ix,iy) /= 0) then
-              fun_st(ix,iy) = state%dv%ne(mpg%imapCv(ix,iy))  ! fun_us(imapCv(ix,iy))
-            endif
+        if (mpg%isClassicalGrid.eq.1) then
+          do iy = -1, ny
+            do ix = -1, nx
+              if(mpg%imapCv(ix,iy) /= 0) then
+                fun_st(ix,iy) = state%dv%ne(mpg%imapCv(ix,iy))  ! fun_us(imapCv(ix,iy))
+              endif
+            enddo
           enddo
-        enddo
-        call my_out(70, nx, ny, fun_st, 'ne_st_')
-      endif
+          call my_out(70, nx, ny, fun_st, 'ne_st_')
+        endif
 
-      if (mpg%isClassicalGrid.eq.1) then
+        if (mpg%isClassicalGrid.eq.1) then
 
-*    ..find the number of the last closed surface in CORE
-       ilast_closed_surface = -2
-       n_closed_surface = 0
-       ix = nx/2    !  nmdpl; may not work for DN?
-       do iy = -1, ny
-        if(mpg%imapCv(ix,iy) /= 0) then
-         if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
-          n_closed_surface = n_closed_surface + 1
-          ilast_closed_surface = iy
-         endif
-        endif
-       enddo
-       if (ilast_closed_surface.eq.-2) 
-     &  call xerrab('Problem identifying last closed surface')
-*    ..find the number of the first open surface in SOL
-       ifirst_open_surface = ilast_closed_surface
-       found = .false.
-       do iy = ilast_closed_surface + 1, ny
-        if(mpg%imapCv(ix,iy) /= 0 .and. .not.found) then
-         if(.not.mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
-          ifirst_open_surface = iy
-          found = .true.
-         endif
-        endif
-       enddo
-       if (ifirst_open_surface.eq.ilast_closed_surface) 
-     &  call xerrab('Problem identifying first open surface')
+*      ..find the number of the last closed surface in CORE
+         ilast_closed_surface = -2
+         n_closed_surface = 0
+         ix = nx/2    !  nmdpl; may not work for DN?
+         do iy = -1, ny
+          if(mpg%imapCv(ix,iy) /= 0) then
+           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+            n_closed_surface = n_closed_surface + 1
+            ilast_closed_surface = iy
+           endif
+          endif
+         enddo
+         if (ilast_closed_surface.eq.-2) 
+     &    call xerrab('Problem identifying last closed surface')
+*      ..find the number of the first open surface in SOL
+         ifirst_open_surface = ilast_closed_surface
+         found = .false.
+         do iy = ilast_closed_surface + 1, ny
+          if(mpg%imapCv(ix,iy) /= 0 .and. .not.found) then
+           if(.not.mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+            ifirst_open_surface = iy
+            found = .true.
+           endif
+          endif
+         enddo
+         if (ifirst_open_surface.eq.ilast_closed_surface) 
+     &    call xerrab('Problem identifying first open surface')
       
-*    ..find the poloidal number of midplane cell as a number of cell with min abs(Bz)
-*      and inner midplane as cell with max abs(Bz)
-       iy=ilast_closed_surface
-       first=.true.
-       do ix = -1, nx
-        if(mpg%imapCv(ix,iy) /= 0) then
-         if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
-          if(first) then
-              nmdpl = ix
-              nmdpl_i = ix
-              first = .false.
-          endif         
-          if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .lt. 
-     &       abs(geo%cvBb(mpg%imapCv(nmdpl,iy),2))) nmdpl = ix
-          if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .gt. 
-     &       abs(geo%cvBb(mpg%imapCv(nmdpl_i,iy),2))) nmdpl_i = ix
-         endif
-        endif
-       enddo
+*      ..find the poloidal number of midplane cell as a number of cell with min abs(Bz)
+*        and inner midplane as cell with max abs(Bz)
+         iy=ilast_closed_surface
+         first=.true.
+         do ix = -1, nx
+          if(mpg%imapCv(ix,iy) /= 0) then
+           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+            if(first) then
+                nmdpl = ix
+                nmdpl_i = ix
+                first = .false.
+            endif         
+            if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .lt. 
+     &         abs(geo%cvBb(mpg%imapCv(nmdpl,iy),2))) nmdpl = ix
+            if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .gt. 
+     &         abs(geo%cvBb(mpg%imapCv(nmdpl_i,iy),2))) nmdpl_i = ix
+           endif
+          endif
+         enddo
       
-       open(70,file=trim(folder)//'info.dat')
-       write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
-       write(70,"(' Number of inner midplane cell =',i4)") nmdpl_i  !srv 24.03.06 }
+         open(70,file=trim(folder)//'info.dat')
+         write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
+         write(70,"(' Number of inner midplane cell =',i4)") nmdpl_i  !srv 24.03.06 }
 !       write (70,*) ' nncut    =', nncut, ' nnreg =',nnreg          !srv
 !       write (70,*) ' leftcut  =',(leftcut(ix),ix=1,nncut)          !srv
 !       write (70,*) ' rightcut =',(rightcut(ix),ix=1,nncut)         !srv
-       write (70,"(' Number of the last closed surface in CORE =',i4)")
-     &           ilast_closed_surface
-       write (70,"(' Number of closed surfaces in CORE =',i4)")
+         write (70,"(' Number of the last closed surface in CORE ='"//
+     &           ",i4)") ilast_closed_surface
+         write (70,"(' Number of closed surfaces in CORE =',i4)")
      &           n_closed_surface
-       write (70,"(' Number of the first open surface in SOL =',i4)")
+         write (70,"(' Number of the first open surface in SOL =',i4)")
      &           ifirst_open_surface
-       close(70)
+         close(70)
      
-      endif
+        endif
 
-      wrk2=0.0_R8
-      do ib = 1, nbc
-          is=1
-          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            wrk2(iCv1)=state%pl%na(iCv1,is)
-          enddo          
-      enddo
-      call my_out_us(70,nCv,0,wrk2,'na_bnd')
-       
-      do ib = 1, nbc
-        write (chns,'(i3.3)') ib
         wrk2=0.0_R8
-          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            wrk2(iCv1)=state%dv%ne(iCv1)
-          enddo          
-        call my_out_us(70,nCv,0,wrk2,'ne_nbd_'//chns)
-      enddo
+        do ib = 1, nbc
+            is=1
+            do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+              iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+              iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+              wrk2(iCv1)=state%pl%na(iCv1,is)
+            enddo          
+        enddo
+        call my_out_us(70,nCv,0,wrk2,'na_bnd')
+       
+        do ib = 1, nbc
+          write (chns,'(i3.3)') ib
+          wrk2=0.0_R8
+            do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+              wrk2(iCv1)=state%dv%ne(iCv1)
+            enddo          
+          call my_out_us(70,nCv,0,wrk2,'ne_nbd_'//chns)
+        enddo
       
-      if (mpg%isClassicalGrid.eq.1) then
-        !! Identification of target boundaries currently based on (face) region
-        !! numbers as used in structured code.
-        !! To be generalized to unstructured grids; e.g. loop over all face regions?
+        if (mpg%isClassicalGrid.eq.1) then
+          !! Identification of target boundaries currently based on (face) region
+          !! numbers as used in structured code.
+          !! To be generalized to unstructured grids; e.g. loop over all face regions?
 
-        !! INNER TARGET
-        open(70,file=trim(folder)//'inner.dat')
+          !! INNER TARGET
+          open(70,file=trim(folder)//'inner.dat')
 
-        ! identify face region number of inner target
-        iReg = 0
-        if (maxval(mpg%cvReg).gt.1) iReg = 1
-        if (iReg.eq.0) call xerrab('Problem identifying inner target')
+          ! identify face region number of inner target
+          iReg = 0
+          if (maxval(mpg%cvReg).gt.1) iReg = 1
+          if (iReg.eq.0) call xerrab('Problem identifying inner target')
 
-        ! count number of faces in the region
-        nRFc = count(mpg%fcReg==iReg)
-        if (nRFc.eq.0) call xerrab('No faces on inner target')
-        allocate (regFaces(nRFc))
-        allocate (clength_s(nRFc))
+          ! count number of faces in the region
+          nRFc = count(mpg%fcReg==iReg)
+          if (nRFc.eq.0) call xerrab('No faces on inner target')
+          allocate (regFaces(nRFc))
+          allocate (clength_s(nRFc))
 
-        ! sort faces into continuous surface
-        call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
+          ! sort faces into continuous surface
+          call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
 !        write (*,*) 'Inner target faces, nRFc = ', nRFc, 
 !     &   ', indices = ', regFaces(1:nRFC)
 
-        ! compute distance along inner target
-        iRFc = 1
-        iFcp = regFaces(iRFc)
-        clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-        do iRFc = 2, nRFc
-         iFc = regFaces(iRFc)
-         clength_s(iRFc) = clength_s(iRFc-1) +
-     &      0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-         iFcp = iFc
-        enddo 
+          ! compute distance along inner target
+          iRFc = 1
+          iFcp = regFaces(iRFc)
+          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
+          do iRFc = 2, nRFc
+           iFc = regFaces(iRFc)
+           clength_s(iRFc) = clength_s(iRFc-1) +
+     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
+           iFcp = iFc
+          enddo 
       
-        shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
+          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
         
 !        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
 !     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
 
         ! write properties along inner target
-        do iRFc = 1, nRFc
-         iFc  = regFaces(iRFc)
-         iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
+          do iRFc = 1, nRFc
+           iFc  = regFaces(iRFc)
+           iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
 !         write (*,*) 'iFc, iCv1 = ', iFc, iCv1
-         if (iCv1.le.mpg%nCi) 
-     &     call xerrab('Problem identifying guard cell')
-         write(70,"(6es14.6)")  clength_s(iRFc)- shift,
+           if (iCv1.le.mpg%nCi) 
+     &       call xerrab('Problem identifying guard cell')
+           write(70,"(6es14.6)")  clength_s(iRFc)- shift,
      &           state%dv%ne(iCv1), state%pl%te(iCv1)/ev,
      &           state%pl%ti(iCv1)/ev
-        enddo          
-        deallocate (clength_s)
-        deallocate (regFaces)
-        close(70)
+          enddo          
+          deallocate (clength_s)
+          deallocate (regFaces)
+          close(70)
 
-        !! OUTER TARGET
-        open(70,file=trim(folder)//'outer.dat')
+          !! OUTER TARGET
+          open(70,file=trim(folder)//'outer.dat')
 
-        ! identify face region number of outer target
-        iReg = 0
-        if (maxval(mpg%cvReg).eq.1) iReg = 2 ! limiter case
-        if (maxval(mpg%cvReg).gt.1) iReg = 4 ! SN case
-        if (maxval(mpg%cvReg).gt.5) iReg = 8 ! DN case
-        if (iReg.eq.0) call xerrab('Problem identifying outer target')
+          ! identify face region number of outer target
+          iReg = 0
+          if (maxval(mpg%cvReg).eq.1) iReg = 2 ! limiter case
+          if (maxval(mpg%cvReg).gt.1) iReg = 4 ! SN case
+          if (maxval(mpg%cvReg).gt.5) iReg = 8 ! DN case
+          if (iReg.eq.0) call xerrab('Problem identifying outer target')
 
-        ! count number of faces in the region
-        nRFc = count(mpg%fcReg==iReg)
-        if (nRFc.eq.0) call xerrab('No faces on outer target')
-        allocate (regFaces(nRFc))
-        allocate (clength_s(nRFc))
+          ! count number of faces in the region
+          nRFc = count(mpg%fcReg==iReg)
+          if (nRFc.eq.0) call xerrab('No faces on outer target')
+          allocate (regFaces(nRFc))
+          allocate (clength_s(nRFc))
 
-        ! sort faces into continuous surface
-        call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
+          ! sort faces into continuous surface
+          call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
 !        write (*,*) 'Outer target faces, nRFc = ', nRFc, 
 !     &   ', indices = ', regFaces(1:nRFC)
 
-        ! compute distance along outer target
-        iRFc = 1
-        iFcp = regFaces(iRFc)
-        clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-        do iRFc = 2, nRFc
-         iFc = regFaces(iRFc)
-         clength_s(iRFc) = clength_s(iRFc-1) +
-     &      0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-         iFcp = iFc
-        enddo 
+          ! compute distance along outer target
+          iRFc = 1
+          iFcp = regFaces(iRFc)
+          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
+          do iRFc = 2, nRFc
+           iFc = regFaces(iRFc)
+           clength_s(iRFc) = clength_s(iRFc-1) +
+     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
+           iFcp = iFc
+          enddo 
       
-        shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
+          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
 !        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
 !     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
 
-        ! write properties along outer target
-        do iRFc = 1, nRFc
-         iFc  = regFaces(iRFc)
-         iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
+          ! write properties along outer target
+          do iRFc = 1, nRFc
+           iFc  = regFaces(iRFc)
+           iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
 !         write (*,*) 'iFc, iCv1 = ', iFc, iCv1
-         if (iCv1.le.mpg%nCi) 
-     &     call xerrab('Problem identifying guard cell')
-         write(70,"(6es14.6)")  clength_s(iRFc)- shift,
+           if (iCv1.le.mpg%nCi) 
+     &       call xerrab('Problem identifying guard cell')
+           write(70,"(6es14.6)")  clength_s(iRFc)- shift,
      &           state%dv%ne(iCv1), state%pl%te(iCv1)/ev,
      &           state%pl%ti(iCv1)/ev
-        enddo          
-        deallocate (clength_s)
-        deallocate (regFaces)
-        close(70)
+          enddo          
+          deallocate (clength_s)
+          deallocate (regFaces)
+          close(70)
 
-        open(70,file=trim(folder)//'midpln.dat')
-        ix = nmdpl
-        ncells = 0
-        do iy = -1, ny
-         if(mpg%imapCv(ix,iy) /= 0) then
-            ncells = ncells + 1
-         endif
-        enddo
+          open(70,file=trim(folder)//'midpln.dat')
+          ix = nmdpl
+          ncells = 0
+          do iy = -1, ny
+           if(mpg%imapCv(ix,iy) /= 0) then
+              ncells = ncells + 1
+           endif
+          enddo
 
-        allocate (clength_r(1:ncells))
-        first = .true.
-        icell = 1
-        do iy = -1, ny
-         if(mpg%imapCv(ix,iy) /= 0) then
-          if (first) then
-            clength_r(icell) = 0.0_R8
-            iCvp = mpg%imapCv(ix,iy)
-            first = .false.
-            icell = icell + 1
-          else
-            iCv = mpg%imapCv(ix,iy)
-            clength_r(icell)=clength_r(icell-1) +
-     &       sqrt((geo%cvX(iCv)-geo%cvX(iCvp))**2 +
-     &            (geo%cvY(iCv)-geo%cvY(iCvp))**2)
-            icell = icell + 1
-            iCvp  = iCv
-          endif  
-         endif
-        enddo
+          allocate (clength_r(1:ncells))
+          first = .true.
+          icell = 1
+          do iy = -1, ny
+           if(mpg%imapCv(ix,iy) /= 0) then
+            if (first) then
+              clength_r(icell) = 0.0_R8
+              iCvp = mpg%imapCv(ix,iy)
+              first = .false.
+              icell = icell + 1
+            else
+              iCv = mpg%imapCv(ix,iy)
+              clength_r(icell)=clength_r(icell-1) +
+     &         sqrt((geo%cvX(iCv)-geo%cvX(iCvp))**2 +
+     &              (geo%cvY(iCv)-geo%cvY(iCvp))**2)
+              icell = icell + 1
+              iCvp  = iCv
+            endif  
+           endif
+          enddo
       
-        shift =(clength_r(n_closed_surface) +
+          shift =(clength_r(n_closed_surface) +
      &          clength_r(n_closed_surface+1))/2.0_R8  ! to shift coordinate
 
-        icell = 1
-        do iy = -1, ny
-         if(mpg%imapCv(ix,iy) /= 0) then
-          iCv1=mpg%imapCv(ix,iy)
-          write(70,"(4es14.6)") clength_r(icell)-shift,
+          icell = 1
+          do iy = -1, ny
+           if(mpg%imapCv(ix,iy) /= 0) then
+            iCv1=mpg%imapCv(ix,iy)
+            write(70,"(4es14.6)") clength_r(icell)-shift,
      &            state%dv%ne(iCv1), state%pl%te(iCv1)/ev, 
      &            state%pl%ti(iCv1)/ev
-          icell = icell + 1
-         endif
-        enddo
+            icell = icell + 1
+           endif
+          enddo
         
-        deallocate (clength_r)
-        close(70)
+          deallocate (clength_r)
+          close(70)
 
-      endif      
+        endif   
+      endif              !srv   endif for iout=1   
 
       if(use_mms .and. iout.eq.10) then                                 !srv 26.02.18 {
 !WG_TODO        call calc_err(nx, ny, ns)
