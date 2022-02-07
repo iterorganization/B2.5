@@ -136,7 +136,7 @@ c*** User-specific data
 c
       return
 c======================================================================
-      entry b2trci(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,st)
+      entry b2trci(nput,ns,nxtl,nxtr,ismain,dtim,stim,BoRiS,geo,mpg,st)
 c*** Initialisation call
       if (tracing_initialised) return
 !wg_todo     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
