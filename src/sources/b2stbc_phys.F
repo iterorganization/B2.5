@@ -109,7 +109,7 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
      *  dOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)  
-      real (kind=R8), save :: cor9 = 1.0_R8                           !srv 23.09.08
+      real (kind=R8), save :: cor9 = 0.0_R8                           !srv 23.09.08
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
