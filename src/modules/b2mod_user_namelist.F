@@ -44,7 +44,7 @@
       parameter (nvmx = 50, nsigmx=10)
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
       real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
-      logical, save :: scale_sigma
+      logical, save :: scale_sigma(nsigmx) = .true.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
       private :: user
