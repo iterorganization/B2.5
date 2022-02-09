@@ -217,7 +217,7 @@
 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (switch%user_transport.eq.10) then 
+      if (switch%transport_afn.eq.1) then 
        do is = 0, ns-1
          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
            wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
