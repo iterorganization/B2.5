@@ -5,7 +5,6 @@
      &  pl, dv, diag)
       use b2mod_types
       use b2mod_constants
-!      use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
@@ -108,10 +107,17 @@
          do is = 0, ns-1
           prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
          enddo
-         prvn = prvi
-        else
+         prvn = prvi !dummy
+        elseif (switch%tn_style.eq.1) then
          do is = 0, ns-1
           if (.not.is_neutral(is)) then
+           prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
+          endif
+         enddo
+         prvn = prvi !dummy
+        else
+         do is = 0, ns-1
+          if (.not.is_neutral(is).or.zn(is).ne.1) then
            prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
           else
            prvn = prvn+geo%cvVol(iCv)*pl%na(iCv,is)*pl%tn(iCv)

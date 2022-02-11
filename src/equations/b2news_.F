@@ -112,7 +112,7 @@
      &  rz(nCv),                                                         !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
-     &  respo0(nCv), corpo0(nCv)
+     &  respo0(nCv), corpo0(nCv), fni0(nFc,0:1)
       logical solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
       logical inverted_ua, new_matrix
 *   ..procedures
@@ -285,8 +285,9 @@ csw 01oct2012 initialize potential if necessary
 !      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
 !      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
 * ..main computation
-*   ..compute ni, ne, ne2
+*   ..compute ni, nn, ne, ne2
       call b2xpni (nCv, ns, pl%na,  dv%ni)
+      call b2xpnn (nCv, ns, pl%na,  dv%nn)
       call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne,  dv%ne )
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)
 !*   ..compute ceqp                                                      !srv 03.07.03 {
@@ -375,16 +376,16 @@ c   extra call at this place within internal iteration)
 #endif
 *     ..smooth out sources
         call b2srsm (nCv, ns, dtim, switch, geo, mpg, pl%na, pl%ua, 
-     &    pl%te, pl%ti, dv%ne, dv%ni, sr, .false.)
+     &    pl%te, pl%ti, dv%ne, dv%ni, dv%nn, sr, .false.)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nCv, ns, dtim, switch%BoRiS, switch, geo, mpg,
      &    psnc%na, psnc%ua, psnc%te, psnc%ti, psnc%tn,
-     &    psnc%ne, psnc%ni, psnc%kinrgy, psnc%kt, psnc%zt,        !srv 23.07.21
+     &    psnc%ne, psnc%ni, psnc%nn, psnc%kinrgy, psnc%kt, psnc%zt,      !srv 23.07.21
      &    pl%na, pl%ua, pl%te, pl%ti, pl%tn, dv%ne, 
-     &    dv%ni, dv%kinrgy, pl%kt, pl%zt, sr, .false.)            !srv 23.07.21
-*     ..stabilise the source coefficients                         !xpb
-        call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
-     &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, pl%kt, pl%zt, sr)    !srv 23.07.21
+     &    dv%ni, dv%nn, dv%kinrgy, pl%kt, pl%zt, sr, .false.)            !srv 23.07.21
+*     ..stabilise the source coefficients                                !xpb
+        call b2srst (nCv, ns, switch, mpg, pl%na, pl%ua, pl%te,          !srv 01.07.08
+     &    pl%ti, pl%tn, pl%po, dv%ne, dv%ni, dv%nn, pl%kt, pl%zt, sr)    !srv 23.07.21
       endif
       if (switch%b2sigp_style.eq.2 .or. switch%b2news_iout.ne.0)
 *   ..compute ue, electron parallel velocity
@@ -636,20 +637,27 @@ c      with diamagnetic drift part                                       !srv 13
       call b2xpfe (nCv, nFc, ns, 0, geo, mpg, qe, 
      &      rt%rza, zero, dv%fna_52nd, zerof, dv%fch_52, dv%fne_52)
       if (switch%tn_style.eq.0) then
+        ! ti-equation: all species
         call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                      !srv 13.05.99 21.01.00
         call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                    !xpb
         call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                    !xpb
       elseif (switch%tn_style.eq.1) then
+        ! ti-equation: ions only
         call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
         call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
         call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
       else
-        call b2xpfz (nFc, ns, dv%fna_he, dv%fni_he)
-        call b2xpfz (nFc, ns, dv%fna_32nd, dv%fni_32)
-        call b2xpfz (nFc, ns, dv%fna_52nd, dv%fni_52)
+        ! ti-equation: all species except hydrogenic neutrals
+        ! tn-equation: hydrogenic neutrals only
+        call b2xpfi (nFc, ns, dv%fna_he, fni0)
         call b2xpfn (nFc, ns, dv%fna_he, dv%fnn)
+        dv%fni_he = fni0 - dv%fnn
+        call b2xpfi (nFc, ns, dv%fna_32nd,fni0)
         call b2xpfn (nFc, ns, dv%fna_32nd, dv%fnn_32)
+        dv%fni_32 = fni0 - dv%fnn_32
+        call b2xpfi (nFc, ns, dv%fna_52nd,fni0)
         call b2xpfn (nFc, ns, dv%fna_52nd, dv%fnn_52)
+        dv%fni_52 = fni0 - dv%fnn_52
       endif
 *      ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, dv%facdrift, 

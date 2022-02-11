@@ -7,8 +7,8 @@
       real (kind=R8) ::
      *   fna(nFc,0:1,0:ns-1), fni(nFc,0:1)
 *     ------------------------------------------------------------------
-*     B2XPFZ computes the total atom particle flux, fni:
-*       fni(,) = (sum is :: fna(,,is)) .
+*     B2XPFZ computes the total ion particle flux, fni:
+*       fni(,) = (sum is, .not.is_neutral(is) :: fna(,,is)) .
 *     ------------------------------------------------------------------
       integer is
       external sfill, b2saxpy

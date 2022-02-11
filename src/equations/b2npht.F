@@ -84,8 +84,7 @@
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
-     6 skt_prod(nCv), skt_diss(nCv),
-     7 deni(nCv), denn(nCv)                              
+     6 skt_prod(nCv), skt_diss(nCv)                      
       character chns*3                                                  !srv 17.07.05
       character chncall*5                                          
 *   ..procedures
@@ -172,9 +171,6 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
 
-      deni = dv%ni(:,0)
-      denn = dv%ni(:,0) - dv%ni(:,1)
-
 *   ..sources due to k-eps model
       sr%skt_prod = 0.0_R8
       sr%skt_diss = 0.0_R8
@@ -214,10 +210,10 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, deni, pl%ti, shi0, dv%fhi, 
-     &     dv%reshi)
+          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
+     &     dv%fhi, dv%reshi)
         else
-          call b2ursd (nCv, nFc, geo, mpg, deni, pl%ti, shi0,
+          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
@@ -237,13 +233,8 @@ c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
        if (any(solvnreg(0:nregionv)).or.switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
-        if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, denn, pl%tn, shn0, dv%fhn,
+          call b2ursd (nCv, nFc, geo, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
-        else
-          call xerrab('non-default energy equations not yet developed'// 
-     &                 'for mdf fluxes')
-        endif
        endif
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
@@ -317,8 +308,8 @@ c residuals for separate neutral energy equation
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2npht_shi')
         wrk0=shn0(:,0)+shn0(:,1)*pl%tn+
-     &       shn0(:,2)*denn+
-     &       shn0(:,3)*pl%tn*denn
+     &       shn0(:,2)*dv%nn+
+     &       shn0(:,3)*pl%tn*dv%nn
         call my_out_us(70,nCv,0,wrk0,'b2npht_shn')
         wrk0=skt0(:,0)+skt0(:,1)*pl%kt+
      &       skt0(:,2)*dv%ni(:,1)+skt0(:,3)*pl%kt*dv%ni(:,1)
@@ -333,9 +324,9 @@ c residuals for separate neutral energy equation
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv,
-     &  itcnt, switch%b2npht_rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn,
-     &  pl%kt, pl%zt, dv%floe, dv%cone, dv%floi, dv%coni, dv%flon,
-     &  dv%conn, dv%flokt, dv%conkt, dv%flozt, dv%conzt,
+     &  itcnt, switch%b2npht_rxg, dv%ne, dv%ni, dv%nn, pl%te, pl%ti,
+     &  pl%tn, pl%kt, pl%zt, dv%floe, dv%cone, dv%floi, dv%coni,
+     &  dv%flon, dv%conn, dv%flokt, dv%conkt, dv%flozt, dv%conzt,
      &  she0, shi0, shn0, skt0, szt0, 
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn, dv%reskt,
      &  dv%reszt, dv%cortt, dv%corte, 

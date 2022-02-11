@@ -5,19 +5,11 @@
      . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch, 
      . geo, mpg, st, st_ext, ierr)
       use b2mod_types
-!      use b2mod_anomalous_transport
-!      use b2mod_plasma
-!      use b2mod_rates
-!      use b2mod_residuals
-!      use b2mod_sources
-!      use b2mod_transport
       use b2mod_constants
       use b2mod_diag
      &   , only : nnatmi, alloc_b2mod_diag
-!      use b2mod_work
       use b2mod_time
       use b2mod_b2cmpa
-!      use b2mod_neoclassical
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
@@ -113,7 +105,6 @@
       integer :: ramp_slow, ier0, iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-      integer, save :: ion_vlct_restrict = 0, tn_style = 0                             !iyv 06.02.14
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
       save ramp_slow                                                     !xpb 
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
@@ -182,7 +173,6 @@
        if(boundary_sources.ne.0) call read_boundary_sources(nCv, ns)    !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       call ipgeti ('b2mn_tn_style', tn_style)
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -235,7 +225,7 @@ cwdk    For unstructured solver, start with simple reading of start-values
         st%dv%fac_vis  = switch%facvis_start
 
 c checks for use of new energy equations
-       if (tn_style.ne.0) then
+       if (switch%tn_style.ne.0) then
          call xertst(ns.eq.2,
      &        'new energy equations only for single species')
        endif
