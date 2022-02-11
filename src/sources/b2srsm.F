@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2srsm (nCv, ns, dtim, switch, geo, mpg, na, ua,
-     &   te, ti, ne, ni, sr, main_call)
+     &   te, ti, ne, ni, nn, sr, main_call)
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
@@ -31,7 +31,7 @@
       real (kind=R8) ::
      *  na(nCv,0:ns-1), 
      *  ua(nCv,0:ns-1), ni(nCv,0:1),
-     &  te(nCv), ti(nCv), ne(nCv)
+     &  te(nCv), ti(nCv), ne(nCv), nn(nCv)
       logical main_call 
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2srst (nCv, ns, switch, mpg, na, ua, te, ti, tn, po,   !srv 01.07.08
-     &  ne, ni, kt, zt, sr)
+     &  ne, ni, nn, kt, zt, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -24,7 +24,7 @@
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
      &  te(nCv), ti(nCv), tn(nCv), po(nCv),
-     &  ne(nCv), ni(nCv,0:1), kt(nCv), zt(nCv)
+     &  ne(nCv), ni(nCv,0:1), nn(nCv), kt(nCv), zt(nCv)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
 *   ..common blocks
